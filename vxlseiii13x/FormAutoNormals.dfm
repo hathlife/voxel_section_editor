@@ -56,8 +56,7 @@ object FrmAutoNormals: TFrmAutoNormals
       ' already provides excelent results. For this reason, we allow yo' +
       'u to choose one of the normalization methods used during the dev' +
       'elopment of the program. At this moment, we recommend everyone t' +
-      'o use Influence Normalizer, with RA2 Range and Smooth My Normals' +
-      ' not checked.'
+      'o use Tangent Plane Normalizer, with RA2 Range.'
     WordWrap = True
   end
   object GbNormalizationMethod: TGroupBox
@@ -83,11 +82,9 @@ object FrmAutoNormals: TFrmAutoNormals
         'alues higher than 3 will use too much processor and will hardly ' +
         'do any difference at all.'
       Caption = 'Influence AutoNormals (Auto Normals v7.0, recommended)'
-      Checked = True
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
-      TabStop = True
       OnClick = RbInfluenceClick
     end
     object RbCubed: TRadioButton
@@ -135,7 +132,9 @@ object FrmAutoNormals: TFrmAutoNormals
       Width = 313
       Height = 17
       Caption = 'Tangent Plane AutoNormals (Auto Normals 8.0 Beta)'
+      Checked = True
       TabOrder = 3
+      TabStop = True
       OnClick = RbTangentClick
     end
   end

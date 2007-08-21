@@ -17,7 +17,7 @@ const
    RANGE_DEFAULT = 1;
    RANGE_CUSTOM = 2;
 
-   AUTONORMALS_TANGENT = '7.99.001';
+   AUTONORMALS_TANGENT = '8.0';
    AUTONORMALS_INFLUENCE = '7.1';
    AUTONORMALS_CUBED = '5.6';
    AUTONORMALS_6FACED = '1.1';
@@ -82,6 +82,7 @@ begin
    CbInfluenceMap.Enabled := value and RbCubed.Checked;
    CbIncreaseContrast.Enabled := value and RbInfluence.Checked;
    EdContrast.Enabled := value and (not RbTangent.Checked);
+   EdSmooth.Enabled := value and (not RbTangent.Checked);
    CbNewPixelsOnly.Enabled := value and (not RbTangent.Checked);
 end;
 
@@ -91,11 +92,11 @@ begin
    ShowInfluenceOptions(true);
    LbRange.ItemIndex := RANGE_DEFAULT;
    LbRangeClick(Sender);
-   Caption := 'AutoNormals ' + AUTONORMALS_INFLUENCE;
-   RbTangent.Caption := 'Tangent Plane Auto Normals (Auto Normals v' + AUTONORMALS_TANGENT + ')';
-   RbInfluence.Caption := 'Influence Auto Normals (Auto Normals v' + AUTONORMALS_INFLUENCE + ', recommended)';
-   RbCubed.Caption := 'Cubed Auto Normals (Auto Normals v' + AUTONORMALS_CUBED + ')';
-   Rb6Faced.Caption := '6-Faced Auto Normals (Auto Normals v' + AUTONORMALS_6FACED + ')';
+   Caption := 'AutoNormals ' + AUTONORMALS_TANGENT;
+   RbTangent.Caption := 'Tangent Plane Auto Normals (v' + AUTONORMALS_TANGENT + ', recommended)';
+   RbInfluence.Caption := 'Influence Auto Normals (v' + AUTONORMALS_INFLUENCE + ')';
+   RbCubed.Caption := 'Cubed Auto Normals (v' + AUTONORMALS_CUBED + ')';
+   Rb6Faced.Caption := '6-Faced Auto Normals (v' + AUTONORMALS_6FACED + ')';
 end;
 
 procedure TFrmAutoNormals.LbRangeClick(Sender: TObject);
