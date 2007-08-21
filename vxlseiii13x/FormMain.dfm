@@ -15,9 +15,11 @@ object FrmMain: TFrmMain
   Menu = MainMenu1
   OldCreateOrder = False
   Position = poDefault
+  OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnDeactivate = FormDeactivate
   OnKeyDown = FormKeyDown
   OnResize = FormResize
   OnShow = FormShow

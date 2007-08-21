@@ -327,7 +327,7 @@ end;
 
 procedure TVoxelSection.SetHeaderName(Name: String);
 const
-   MAX_LEN = 16;
+   MAX_LEN = 15;
 var
    i: integer;
 begin

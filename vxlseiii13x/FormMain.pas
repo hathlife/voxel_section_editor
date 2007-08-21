@@ -332,6 +332,8 @@ type
     RenegadeProjects1: TMenuItem;
     RevoraCCForums1: TMenuItem;
     Display3DWindow1: TMenuItem;
+    procedure FormDeactivate(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure NewAutoNormals1Click(Sender: TObject);
     procedure Display3DWindow1Click(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -744,6 +746,10 @@ begin
 
 
    p_Frm3DPreview := nil;
+
+   Application.OnDeactivate := OnDeactivate;
+   Application.OnActivate := OnActivate;
+
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: FormCreate Loaded');
    {$endif}
@@ -761,13 +767,7 @@ begin
    DebugFile.Add('FrmMain: Idle');
    {$endif}
    Done := FALSE;
-   if not iseditable then
-   begin
-      Done := true;
-      exit;
-   end;
-
-   if not oglloaded then
+   if (not iseditable) or (not oglloaded) then
    begin
       Done := true;
       exit;
@@ -4378,6 +4378,20 @@ begin
    ApplyInfluenceNormalsToVXL(ActiveSection);
    Refreshall;
    VXLChanged := true;
+end;
+
+procedure TFrmMain.FormActivate(Sender: TObject);
+begin
+   // Activate the view.
+   if not Display3dView1.Checked then
+      Application.OnIdle := Idle
+   else
+      Application.OnIdle := nil;
+end;
+
+procedure TFrmMain.FormDeactivate(Sender: TObject);
+begin
+   Application.OnIdle := nil;
 end;
 
 end.
