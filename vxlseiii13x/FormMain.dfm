@@ -5019,6 +5019,11 @@ object FrmMain: TFrmMain
           ImageIndex = 18
           OnClick = Dezire1Click
         end
+        object PPMModdingForums1: TMenuItem
+          Caption = 'PPM Modding Forums'
+          ImageIndex = 18
+          OnClick = PPMModdingForums1Click
+        end
         object RA2FAQ1: TMenuItem
           Caption = 'RA2 FAQ'
           ImageIndex = 18
@@ -5093,20 +5098,25 @@ object FrmMain: TFrmMain
       end
       object ools3: TMenuItem
         Caption = 'Tools'
+        object RockTheBattlefield1: TMenuItem
+          Caption = 'Pad Software'
+          ImageIndex = 18
+          OnClick = RockTheBattlefield1Click
+        end
         object RedUtils1: TMenuItem
           Caption = 'Red Utils'
           ImageIndex = 18
           OnClick = RedUtils1Click
         end
-        object RockTheBattlefield1: TMenuItem
-          Caption = 'Rock The Battlefield'
-          ImageIndex = 18
-          OnClick = RockTheBattlefield1Click
-        end
         object ibEd1: TMenuItem
           Caption = 'TibEd'
           ImageIndex = 18
           OnClick = ibEd1Click
+        end
+        object VKHomepage1: TMenuItem
+          Caption = 'VK Homepage'
+          ImageIndex = 18
+          OnClick = VKHomepage1Click
         end
         object XCC1: TMenuItem
           Caption = 'XCC Utilities'
@@ -5121,6 +5131,10 @@ object FrmMain: TFrmMain
         Caption = 'VXLSE Help'
         ImageIndex = 14
         OnClick = VXLSEHelp1Click
+      end
+      object ProjectSVN1: TMenuItem
+        Caption = 'Project SVN'
+        OnClick = ProjectSVN1Click
       end
       object N14: TMenuItem
         Caption = '-'

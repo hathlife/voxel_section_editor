@@ -332,6 +332,12 @@ type
     RenegadeProjects1: TMenuItem;
     RevoraCCForums1: TMenuItem;
     Display3DWindow1: TMenuItem;
+    PPMModdingForums1: TMenuItem;
+    VKHomepage1: TMenuItem;
+    ProjectSVN1: TMenuItem;
+    procedure ProjectSVN1Click(Sender: TObject);
+    procedure VKHomepage1Click(Sender: TObject);
+    procedure PPMModdingForums1Click(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure NewAutoNormals1Click(Sender: TObject);
@@ -3984,7 +3990,7 @@ end;
 
 procedure TFrmMain.PPMForUpdates1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://www.ppmsite.com/');
+   OpenHyperLink('http://www.ppmsite.com/index.php?go=vxlseinfo');
 end;
 
 procedure TFrmMain.CGen1Click(Sender: TObject);
@@ -3995,6 +4001,11 @@ end;
 procedure TFrmMain.Dezire1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.deezire.net/');
+end;
+
+procedure TFrmMain.PPMModdingForums1Click(Sender: TObject);
+begin
+   OpenHyperLink('http://www.ppmsite.com/forum/index.php?f=309');
 end;
 
 procedure TFrmMain.PlanetCNC1Click(Sender: TObject);
@@ -4044,7 +4055,7 @@ end;
 
 procedure TFrmMain.RockTheBattlefield1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://rtb.strategy-x.com/');
+   OpenHyperLink('http://padsoft.sytes.net/');
 end;
 
 procedure TFrmMain.RA2FAQ1Click(Sender: TObject);
@@ -4059,7 +4070,7 @@ end;
 
 procedure TFrmMain.RevoraCCForums1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://forums.revora.net/index.php?showforum=1078');
+   OpenHyperLink('http://forums.revora.net/index.php?showforum=1676');
 end;
 
 procedure TFrmMain.AcidVat1Click(Sender: TObject);
@@ -4081,6 +4092,17 @@ procedure TFrmMain.iberiumSunCom1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.tiberiumweb.com/');
 end;
+
+procedure TFrmMain.VKHomepage1Click(Sender: TObject);
+begin
+   OpenHyperLink('http://vk.cncguild.net/');
+end;
+
+procedure TFrmMain.ProjectSVN1Click(Sender: TObject);
+begin
+   OpenHyperLink('http://svn.ppmsite.com/');
+end;
+
 
 procedure TFrmMain.test1Click(Sender: TObject);
 begin
