@@ -272,7 +272,7 @@ begin
       CurrentSection := 0;
       VoxelFile.InsertSection(0,'Body',x,y,z);
       ActiveSection := VoxelFile.Section[CurrentSection];
-// ActiveSection.Tailer.Unknown := Game;
+      ActiveSection.Tailer.Unknown := Game;
    except
       VoxelOpen := false;
       exit;

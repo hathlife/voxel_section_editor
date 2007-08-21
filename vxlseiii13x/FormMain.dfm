@@ -765,7 +765,7 @@ object FrmMain: TFrmMain
         end
         object XCursorBar: TTrackBar
           Left = 24
-          Top = 44
+          Top = 42
           Width = 105
           Height = 17
           Ctl3D = True
@@ -789,7 +789,7 @@ object FrmMain: TFrmMain
         end
         object ZCursorBar: TTrackBar
           Left = 24
-          Top = 26
+          Top = 24
           Width = 105
           Height = 17
           Ctl3D = True
@@ -831,7 +831,7 @@ object FrmMain: TFrmMain
         end
         object SpinButton1: TSpinButton
           Left = 127
-          Top = 24
+          Top = 26
           Width = 15
           Height = 17
           DownGlyph.Data = {
@@ -861,7 +861,7 @@ object FrmMain: TFrmMain
         end
         object SpinButton2: TSpinButton
           Left = 127
-          Top = 40
+          Top = 42
           Width = 15
           Height = 17
           DownGlyph.Data = {

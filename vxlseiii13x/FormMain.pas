@@ -551,6 +551,7 @@ type
     procedure N1x1Click(Sender: TObject);
     procedure CubedAutoNormals1Click(Sender: TObject);
     procedure SpeedButton13Click(Sender: TObject);
+    procedure UpdatePositionStatus(x,y,z : integer);
   private
     { Private declarations }
     procedure Idle(Sender: TObject; var Done: Boolean);
@@ -1923,7 +1924,7 @@ begin
    XCursorBar.Position := P.X;
    YCursorBar.Position := P.Y;
    ZCursorBar.Position := P.Z;
-   StatusBar1.Panels[3].Text :=  'Pos: ' + inttostr(P.X) + ',' + inttostr(P.Y) + ',' + inttostr(P.Z);
+   UpdatePositionStatus(P.X,P.Y,P.Z);
    StatusBar1.Refresh;
 
    MoveCursor(P.X,P.Y,P.Z,Repaint);
@@ -1959,7 +1960,7 @@ begin
    YCursorBar.Position := ActiveSection.Y;
    ZCursorBar.Position := ActiveSection.Z;
 
-   StatusBar1.Panels[3].Text := 'Pos: ' + inttostr(ActiveSection.X) + ',' + inttostr(ActiveSection.Y) + ',' + inttostr(ActiveSection.Z);
+   UpdatePositionStatus(ActiveSection.X,ActiveSection.Y,ActiveSection.Z);
    StatusBar1.Refresh;
 
    isCursorReset := false;
@@ -1976,7 +1977,7 @@ begin
    YCursorBar.Position := ActiveSection.Y;
    ZCursorBar.Position := ActiveSection.Z;
 
-   StatusBar1.Panels[3].Text := 'Pos: ' + inttostr(ActiveSection.X) + ',' + inttostr(ActiveSection.Y) + ',' + inttostr(ActiveSection.Z);
+   UpdatePositionStatus(ActiveSection.X,ActiveSection.Y,ActiveSection.Z);
    StatusBar1.Refresh;
 
    isCursorReset := false;
@@ -1994,7 +1995,7 @@ begin
    else
       StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(ActiveSection.Tailer.Unknown);
 
-   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(ActiveSection.Tailer.XSize) + ', Y Size: ' + inttostr(ActiveSection.Tailer.YSize) + ', Z Size: ' + inttostr(ActiveSection.Tailer.ZSize);
+   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(ActiveSection.Tailer.YSize) + ', Y Size: ' + inttostr(ActiveSection.Tailer.ZSize) + ', Z Size: ' + inttostr(ActiveSection.Tailer.XSize);
    StatusBar1.Panels[2].Text := '';
    StatusBar1.Refresh;
 end;
@@ -2011,7 +2012,7 @@ begin
       DebugFile.Add('FrmMain: CnvView0MouseMove');
       {$endif}
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      StatusBar1.Panels[2].Text := 'X: ' + inttostr(LastClick[0].x) + ', Y: ' + inttostr(LastClick[0].y) + ', Z: ' + inttostr(LastClick[0].z);
+      StatusBar1.Panels[2].Text := 'X: ' + inttostr(LastClick[0].Y) + ', Y: ' + inttostr(LastClick[0].Z) + ', Z: ' + inttostr(LastClick[0].X);
       StatusBar1.Refresh;
 
       if not isLeftMouseDown then
@@ -4234,6 +4235,11 @@ begin
       end;
    end;
    frm.Free;
+end;
+
+procedure TFrmMain.UpdatePositionStatus(x,y,z : integer);
+begin
+   StatusBar1.Panels[3].Text :=  'Pos: ' + inttostr(Y) + ',' + inttostr(Z) + ',' + inttostr(X);
 end;
 
 procedure TFrmMain.ToolButton9Click(Sender: TObject);

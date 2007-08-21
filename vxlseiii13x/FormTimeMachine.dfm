@@ -27,7 +27,7 @@ object FrmTimeMain: TFrmTimeMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 811
+    Height = 830
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
@@ -41,7 +41,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblSection: TLabel
         Left = 1
         Top = 1
-        Width = 150
+        Width = 42
         Height = 13
         Align = alTop
         Caption = '  Section'
@@ -57,7 +57,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblTools: TLabel
         Left = 1
         Top = 55
-        Width = 150
+        Width = 32
         Height = 13
         Align = alTop
         Caption = '  Tools'
@@ -73,7 +73,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblpalette: TLabel
         Left = 1
         Top = 257
-        Width = 150
+        Width = 39
         Height = 13
         Align = alTop
         Caption = '  Palette'
@@ -98,7 +98,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblLayer: TLabel
         Left = 1
         Top = 177
-        Width = 150
+        Width = 37
         Height = 13
         Align = alTop
         Caption = '  Layers'
@@ -114,7 +114,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblBrush: TLabel
         Left = 1
         Top = 129
-        Width = 150
+        Width = 33
         Height = 13
         Align = alTop
         Caption = '  Brush'
@@ -140,7 +140,7 @@ object FrmTimeMain: TFrmTimeMain
           Top = 12
           Width = 137
           Height = 21
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 0
           OnChange = SectionComboChange
         end
@@ -1175,7 +1175,7 @@ object FrmTimeMain: TFrmTimeMain
       Left = 656
       Top = 1
       Width = 205
-      Height = 809
+      Height = 828
       Align = alRight
       TabOrder = 1
       object CnvView2: TPaintBox
@@ -1203,7 +1203,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblView1: TLabel
         Left = 1
         Top = 1
-        Width = 203
+        Width = 63
         Height = 13
         Align = alTop
         Caption = '  View : Right'
@@ -1221,7 +1221,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblView2: TLabel
         Left = 1
         Top = 217
-        Width = 203
+        Width = 57
         Height = 13
         Align = alTop
         Caption = '  View : Top'
@@ -1239,7 +1239,7 @@ object FrmTimeMain: TFrmTimeMain
       object lbl3dview: TLabel
         Left = 1
         Top = 433
-        Width = 203
+        Width = 46
         Height = 13
         Align = alTop
         Caption = '  3D View'
@@ -1471,13 +1471,13 @@ object FrmTimeMain: TFrmTimeMain
       Left = 153
       Top = 1
       Width = 503
-      Height = 809
+      Height = 828
       Align = alClient
       TabOrder = 2
       object lblView0: TLabel
         Left = 1
         Top = 1
-        Width = 501
+        Width = 98
         Height = 13
         Align = alTop
         Caption = '  Editing View : Back'
@@ -4231,7 +4231,7 @@ object FrmTimeMain: TFrmTimeMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 811
+    Top = 830
     Width = 862
     Height = 19
     Panels = <
