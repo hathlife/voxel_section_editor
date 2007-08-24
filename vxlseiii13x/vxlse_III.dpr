@@ -4,7 +4,6 @@ program vxlse_III;
 
 uses
   Forms,
-  FormMain in 'FormMain.pas' {FrmMain},
   Voxel_Engine in 'Voxel_Engine.pas',
   ogl3dview_engine in 'ogl3dview_engine.pas',
   normals in 'normals.pas',
@@ -38,14 +37,15 @@ uses
   BZK2_File in 'BZK2_File.pas',
   FormPalettePackAbout in 'FormPalettePackAbout.pas' {FrmPalettePackAbout},
   FormTimeMachine in 'FormTimeMachine.pas' {FrmTimeMain},
-  Voxel_AutoNormals in 'Voxel_AutoNormals.pas';
+  Voxel_AutoNormals in 'Voxel_AutoNormals.pas',
+  FormMain in 'FormMain.pas' {FrmMain};
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.Title := 'Voxel Section Editor III';
-  Application.CreateForm(TFrmMain, FrmMain);
   //  Application.CreateForm(TFrmTimeMain, FrmTimeMain);
+  Application.CreateForm(TFrmMain, FrmMain);
   Application.Run;
 end.

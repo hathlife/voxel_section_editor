@@ -7,7 +7,7 @@ uses
   Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls, ToolWin,
   ImgList, Math, palette, Spin, Buttons, ogl3dview_engine,OpenGL15,FTGifAnimate,
   undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit,mouse,Registry,
-  Form3dpreview,Debug, FormAutoNormals;
+  Form3dpreview,Debug, FormAutoNormals, XPMan;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -335,6 +335,7 @@ type
     PPMModdingForums1: TMenuItem;
     VKHomepage1: TMenuItem;
     ProjectSVN1: TMenuItem;
+    XPManifest1: TXPManifest;
     procedure ProjectSVN1Click(Sender: TObject);
     procedure VKHomepage1Click(Sender: TObject);
     procedure PPMModdingForums1Click(Sender: TObject);

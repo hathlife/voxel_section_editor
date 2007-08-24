@@ -873,58 +873,50 @@ begin
         'SizeOf(TVoxelSectionTailer) = ' + IntToStr(SizeOf(TVoxelSectionTailer)),mtInformation);}
    ErrorCode := OK;
    Loaded := False;
-   Filename := FName;
-// open voxel file to read
-   AssignFile(F,Filename);
-   FileMode := 0; // read only
-   Reset(F,1); // file of byte
-// read in main header
-   BytesToRead := SizeOf(Header);
-   BlockRead(F,Header,BytesToRead,BytesRead);
-   if (BytesRead <> BytesToRead) then
-   begin
-      ErrorCode := ReadFailed;
-      {frm:=TLoadFrm.Create(Application);
-        frm.Visible:=False;
-        with frm do begin
-           loading.Left := 56;
-           loading.Caption := 'Error: Could not read Voxel Header';
-           butOK.Visible:=True;
-        end;
-        frm.ShowModal;
-        frm.Hide;
-        frm.Free; }
-      Showmessage('Error: Could not read Voxel Header');
-       // ErrorMsg := 'Could not read Voxel Header';
-        //DebugMsg(ErrorMsg,mtError);
-      CloseFile(F);
-      Exit;
-   end;
-   //DebugMsg('there are ' + IntToStr(Header.NumSections) + ' sections',mtInformation);
-// read in sections
-   // prepare section objects
-   SetLength(Section,Header.NumSections);
-   for i := 1 to Header.NumSections do
-      Section[i-1] := TVoxelSection.Create;
-   HeadOfs := SizeOf(Header); // starts immediately after header
-   BodyOfs := HeadOfs + (Header.NumSections * SizeOf(TVoxelSectionHeader)); // after all section headers
-   TailOfs := BodyOfs + Header.BodySize; // last part of file
-   // and load them
-   for i := 1 to Header.NumSections do
-   begin
-      ErrorCode := Section[i-1].LoadFromFile(F,HeadOfs,BodyOfs,TailOfs);
-      if (ErrorCode <> OK) then
+   try  // if file doesn't exist...
+      Filename := FName;
+      // open voxel file to read
+      AssignFile(F,Filename);
+      FileMode := fmOpenRead; // read only
+      Reset(F,1); // file of byte
+      // read in main header
+      BytesToRead := SizeOf(Header);
+      BlockRead(F,Header,BytesToRead,BytesRead);
+      if (BytesRead <> BytesToRead) then
       begin
-         ErrorMsg := 'Could not read Voxel Section Tailer[' + IntToStr(i) + ']';
-         DebugMsg(ErrorMsg,mtError);
+         ErrorCode := ReadFailed;
+         Showmessage('Error: Could not read Voxel Header');
+         CloseFile(F);
          Exit;
       end;
-      Inc(HeadOfs,SizeOf(TVoxelSectionHeader)); // next header
-      // BodyOfs doesn't change, as relative offset is in tailer
-      Inc(TailOfs,SizeOf(TVoxelSectionTailer)); // next tailer
+      //DebugMsg('there are ' + IntToStr(Header.NumSections) + ' sections',mtInformation);
+      // read in sections
+      // prepare section objects
+      SetLength(Section,Header.NumSections);
+      for i := 1 to Header.NumSections do
+         Section[i-1] := TVoxelSection.Create;
+      HeadOfs := SizeOf(Header); // starts immediately after header
+      BodyOfs := HeadOfs + (Header.NumSections * SizeOf(TVoxelSectionHeader)); // after all section headers
+      TailOfs := BodyOfs + Header.BodySize; // last part of file
+      // and load them
+      for i := 1 to Header.NumSections do
+      begin
+         ErrorCode := Section[i-1].LoadFromFile(F,HeadOfs,BodyOfs,TailOfs);
+         if (ErrorCode <> OK) then
+         begin
+            ErrorMsg := 'Could not read Voxel Section Tailer[' + IntToStr(i) + ']';
+            DebugMsg(ErrorMsg,mtError);
+            Exit;
+         end;
+         Inc(HeadOfs,SizeOf(TVoxelSectionHeader)); // next header
+         // BodyOfs doesn't change, as relative offset is in tailer
+         Inc(TailOfs,SizeOf(TVoxelSectionTailer)); // next tailer
+      end;
+      Loaded := True;
+      CloseFile(F);
+   except on E : EInOutError do // VK 1.36 U
+      MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
    end;
-   Loaded := True;
-   CloseFile(F);
 end;
 
 procedure TVoxel.SaveToFile(Fname: string);
@@ -963,87 +955,92 @@ begin
    if not Loaded then Exit; // cannot save an empty voxel?
    //-- when we save an empty voxel - this voxel will be unsupported - we must change this [Kamil ^aka Plasmadroid]
    ErrorCode := OK;
-   Filename := Fname;
-// create voxel file to write
-   AssignFile(F,Filename);
-   Rewrite(F,1); // file of byte
-// write main header (overwritten later)
-   ErrorCode := WriteBlank(SizeOf(TVoxelHeader));
-   if (ErrorCode <> OK) then
-   begin
-      ErrorMsg := 'Could not write Voxel Header (pass 2)';
-      DebugMsg(ErrorMsg,mtError);
-      Exit;
-   end;
-// write section heads (real data)
-   BytesToWrite := SizeOf(TVoxelSectionHeader);
-   for i := 1 to Header.NumSections do
-   begin
-      BlockWrite(F,Section[Pred(i)].Header,BytesToWrite,BytesWritten);
-      if (BytesWritten <> BytesToWrite) then
+   try
+      Filename := Fname;
+      // create voxel file to write
+      AssignFile(F,Filename);
+      FileMode := fmOpenWrite; // we save file, so write mode [VK]
+      Rewrite(F,1); // file of byte
+      // write main header (overwritten later)
+      ErrorCode := WriteBlank(SizeOf(TVoxelHeader));
+      if (ErrorCode <> OK) then
       begin
-         ErrorCode := WriteFailed;
-         ErrorMsg := 'Could not write Voxel Section Header #' + IntToStr(i) + '(pass 2)';
+         ErrorMsg := 'Could not write Voxel Header (pass 2)';
          DebugMsg(ErrorMsg,mtError);
          Exit;
       end;
-   end;
-// write section bodies (real data)
-   BodyStart := FilePos(F); // for later; could have calc'ed it instead
-   for i := 0 to (Header.NumSections - 1) do
-   begin
-      with Section[i] do
+      // write section heads (real data)
+      BytesToWrite := SizeOf(TVoxelSectionHeader);
+      for i := 1 to Header.NumSections do
       begin
-         // first, write blank data where the span starts / ends will be
-         ErrorCode := WriteBlank(Tailer.XSize*Tailer.YSize*4*2);
-         if (ErrorCode <> OK) then
+         BlockWrite(F,Section[Pred(i)].Header,BytesToWrite,BytesWritten);
+         if (BytesWritten <> BytesToWrite) then
          begin
-            ErrorMsg := 'Could not write Voxel Section Body #' + IntToStr(Succ(i)) + ' (pass 1)';
-            DebugMsg(ErrorMsg,mtError);
-            Exit;
-         end;
-         // now write the actual data
-         ErrorCode := SaveToFileBody(F);
-         if (ErrorCode <> OK) then
-         begin
-            ErrorMsg := 'Could not write Voxel Section Body #' + IntToStr(Succ(i)) + ' (pass 2)';
+            ErrorCode := WriteFailed;
+            ErrorMsg := 'Could not write Voxel Section Header #' + IntToStr(i) + '(pass 2)';
             DebugMsg(ErrorMsg,mtError);
             Exit;
          end;
       end;
-   end;
-   BodyEnd := FilePos(F); // for later; could have calc'ed it instead
-// write section tailers (real data)
-   BytesToWrite := SizeOf(TVoxelSectionTailer);
-   for i := 0 to (Header.NumSections - 1) do
-   begin
-      with Section[i].Tailer do
+      // write section bodies (real data)
+      BodyStart := FilePos(F); // for later; could have calc'ed it instead
+      for i := 0 to (Header.NumSections - 1) do
       begin
-         Dec(SpanStartOfs,BodyStart);
-         Dec(SpanEndOfs,BodyStart);
-         Dec(SpanDataOfs,BodyStart);
+         with Section[i] do
+         begin
+            // first, write blank data where the span starts / ends will be
+            ErrorCode := WriteBlank(Tailer.XSize*Tailer.YSize*4*2);
+            if (ErrorCode <> OK) then
+            begin
+               ErrorMsg := 'Could not write Voxel Section Body #' + IntToStr(Succ(i)) + ' (pass 1)';
+               DebugMsg(ErrorMsg,mtError);
+               Exit;
+            end;
+            // now write the actual data
+            ErrorCode := SaveToFileBody(F);
+            if (ErrorCode <> OK) then
+            begin
+               ErrorMsg := 'Could not write Voxel Section Body #' + IntToStr(Succ(i)) + ' (pass 2)';
+               DebugMsg(ErrorMsg,mtError);
+               Exit;
+            end;
+         end;
       end;
-      BlockWrite(F,Section[i].Tailer,BytesToWrite,BytesWritten);
+      BodyEnd := FilePos(F); // for later; could have calc'ed it instead
+      // write section tailers (real data)
+      BytesToWrite := SizeOf(TVoxelSectionTailer);
+      for i := 0 to (Header.NumSections - 1) do
+      begin
+         with Section[i].Tailer do
+         begin
+            Dec(SpanStartOfs,BodyStart);
+            Dec(SpanEndOfs,BodyStart);
+            Dec(SpanDataOfs,BodyStart);
+         end;
+         BlockWrite(F,Section[i].Tailer,BytesToWrite,BytesWritten);
+         if (BytesWritten <> BytesToWrite) then
+         begin
+            ErrorCode := WriteFailed;
+            ErrorMsg := 'Could not write Voxel Section Tailer #' + IntToStr(i) + '(pass 2)';
+            DebugMsg(ErrorMsg,mtError);
+            Exit;
+         end;
+      end;
+      // write main header (real data)
+      Seek(F,0); // go to start of file again
+      Header.BodySize := BodyEnd - BodyStart;
+      BytesToWrite := SizeOf(TVoxelHeader);
+      BlockWrite(F,Header,BytesToWrite,BytesWritten);
       if (BytesWritten <> BytesToWrite) then
       begin
-         ErrorCode := WriteFailed;
-         ErrorMsg := 'Could not write Voxel Section Tailer #' + IntToStr(i) + '(pass 2)';
+         ErrorMsg := 'Could not write Voxel Header (pass 2)';
          DebugMsg(ErrorMsg,mtError);
          Exit;
       end;
+      CloseFile(F);
+   except on E : EInOutError do // VK 1.36 U
+		MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
    end;
-// write main header (real data)
-   Seek(F,0); // go to start of file again
-   Header.BodySize := BodyEnd - BodyStart;
-   BytesToWrite := SizeOf(TVoxelHeader);
-   BlockWrite(F,Header,BytesToWrite,BytesWritten);
-   if (BytesWritten <> BytesToWrite) then
-   begin
-      ErrorMsg := 'Could not write Voxel Header (pass 2)';
-      DebugMsg(ErrorMsg,mtError);
-      Exit;
-   end;
-   CloseFile(F);
 end;
 
 function TVoxel.isOpen: Boolean; begin Result := Loaded; end;

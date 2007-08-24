@@ -10,32 +10,32 @@ uses dialogs,sysutils,Voxel_Engine,math3d;
 
 type
 THVA_Main_Header = packed record
-FilePath: array[1..16] of Char;  (* ASCIIZ string                      *)
-N_Frames,                        (* Number of animation frames         *)
-N_Sections : Longword;           (* Number of voxel sections described *)
+   FilePath: array[1..16] of Char;  (* ASCIIZ string                      *)
+   N_Frames,                        (* Number of animation frames         *)
+   N_Sections : Longword;           (* Number of voxel sections described *)
 end;
 
 TSectionName = array[1..16] of Char; (* ASCIIZ string - name of section *)
 TTransformMatrix = packed array[1..3,1..4] of Single;
 
 THVAData = packed record
-  SectionName : TSectionName;
-  TransformMatrixs : array of TTransformMatrix;
+   SectionName : TSectionName;
+   TransformMatrixs : array of TTransformMatrix;
 end;
 
 THVA = Record
-  Header : THVA_Main_Header;
-  Data : array of THVAData;
-  Data_no : integer;
+   Header : THVA_Main_Header;
+   Data : array of THVAData;
+   Data_no : integer;
 end;
 
 var
-HVAFile : THVA;
-HVASection : integer = 0;
-HVAFrame : integer = 0;
-{Transformations : TTransformations;
-Matrix : TMatrix;
-matrix2: array[0..15] of GLfloat;}
+   HVAFile : THVA;
+   HVASection : integer = 0;
+   HVAFrame : integer = 0;
+   {Transformations : TTransformations;
+   Matrix : TMatrix;
+   matrix2: array[0..15] of GLfloat;}
 
 Procedure LoadHVA(Filename : string);
 
@@ -54,25 +54,30 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('HVA: LoadHVA');
    {$endif}
-   AssignFile(F,Filename);  // Open file
-   Reset(F,1); // Goto first byte?
+   try
+      AssignFile(F,Filename);  // Open file
+      FileMode := fmOpenRead; // we only load HVA file [VK]
+      Reset(F,1); // Goto first byte?
 
-   BlockRead(F,HVAFile.Header,Sizeof(THVA_Main_Header)); // Read Header
+      BlockRead(F,HVAFile.Header,Sizeof(THVA_Main_Header)); // Read Header
 
-   HVAFile.Data_no := HVAFile.Header.N_Sections;
-   SetLength(HVAFile.Data,HVAFile.Data_no);
+      HVAFile.Data_no := HVAFile.Header.N_Sections;
+      SetLength(HVAFile.Data,HVAFile.Data_no);
 
-   For x := 0 to HVAFile.Header.N_Sections-1 do
-      BlockRead(F,HVAFile.Data[x].SectionName,Sizeof(TSectionName));
+      For x := 0 to HVAFile.Header.N_Sections-1 do
+         BlockRead(F,HVAFile.Data[x].SectionName,Sizeof(TSectionName));
 
-   For x := 0 to HVAFile.Header.N_Sections-1 do
-   begin
-      SetLength(HVAFile.Data[x].TransformMatrixs,HVAFile.Header.N_Frames);
-      For y := 0 to HVAFile.Header.N_Frames-1 do
-         BlockRead(F,HVAFile.Data[x].TransformMatrixs[y],Sizeof(TTransformMatrix));
+      For x := 0 to HVAFile.Header.N_Sections-1 do
+      begin
+         SetLength(HVAFile.Data[x].TransformMatrixs,HVAFile.Header.N_Frames);
+         For y := 0 to HVAFile.Header.N_Frames-1 do
+            BlockRead(F,HVAFile.Data[x].TransformMatrixs[y],Sizeof(TTransformMatrix));
+      end;
+
+      CloseFile(f);
+   except on E : EInOutError do // VK 1.36 U
+      MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
    end;
-
-   CloseFile(f);
 end;
 
 Function GetTMValue(Row,Col : integer) : single;

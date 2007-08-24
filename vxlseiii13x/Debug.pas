@@ -2,6 +2,9 @@ unit Debug;
 
 interface
 
+uses
+   Dialogs, SysUtils; // VK for EInOutError & MessageDlg
+
 type
    TDebugFile = class
         FileName : string;
@@ -20,19 +23,29 @@ implementation
       MyFile : System.Text;
    begin
       Filename := _Filename;
-      AssignFile(MyFile,Filename);
-      Rewrite(MyFile);
-      CloseFile(MyFile);
+      try
+         AssignFile(MyFile,Filename);
+         FileMode := fmOpenWrite;
+         Rewrite(MyFile);
+         CloseFile(MyFile);
+      except on E : EInOutError do // VK 1.36 U
+         MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
+      end;
    end;
 
    procedure TDebugFile.Add(const _Content:string);
    var
       MyFile : System.Text;
    begin
-      AssignFile(MyFile,Filename);
-      Append(MyFile);
-      Writeln(MyFile,_Content);
-      CloseFile(MyFile);
+      try
+         AssignFile(MyFile,Filename);
+         FileMode := fmOpenWrite;
+         Append(MyFile);
+         Writeln(MyFile,_Content);
+         CloseFile(MyFile);
+      except on E : EInOutError do // VK 1.36 U
+         MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
+      end;
    end;
 
 end.
