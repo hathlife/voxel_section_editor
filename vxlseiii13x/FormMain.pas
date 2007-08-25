@@ -1608,6 +1608,7 @@ begin
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Blue1Click(Sender: TObject);
@@ -1617,6 +1618,7 @@ begin
    RemapColour.X := RemapColourMap[1].R /255;
    RemapColour.Y := RemapColourMap[1].G /255;
    RemapColour.Z := RemapColourMap[1].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Green1Click(Sender: TObject);
@@ -1626,6 +1628,7 @@ begin
    RemapColour.X := RemapColourMap[2].R /255;
    RemapColour.Y := RemapColourMap[2].G /255;
    RemapColour.Z := RemapColourMap[2].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.White1Click(Sender: TObject);
@@ -1635,6 +1638,7 @@ begin
    RemapColour.X := RemapColourMap[3].R /255;
    RemapColour.Y := RemapColourMap[3].G /255;
    RemapColour.Z := RemapColourMap[3].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Orange1Click(Sender: TObject);
@@ -1644,6 +1648,7 @@ begin
    RemapColour.X := RemapColourMap[4].R /255;
    RemapColour.Y := RemapColourMap[4].G /255;
    RemapColour.Z := RemapColourMap[4].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Magenta1Click(Sender: TObject);
@@ -1653,6 +1658,7 @@ begin
    RemapColour.X := RemapColourMap[5].R /255;
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Purple1Click(Sender: TObject);
@@ -1662,6 +1668,7 @@ begin
    RemapColour.X := RemapColourMap[6].R /255;
    RemapColour.Y := RemapColourMap[6].G /255;
    RemapColour.Z := RemapColourMap[6].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Gold1Click(Sender: TObject);
@@ -1671,6 +1678,7 @@ begin
    RemapColour.X := RemapColourMap[7].R /255;
    RemapColour.Y := RemapColourMap[7].G /255;
    RemapColour.Z := RemapColourMap[7].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.DarkSky1Click(Sender: TObject);
@@ -1680,6 +1688,7 @@ begin
    RemapColour.X := RemapColourMap[8].R /255;
    RemapColour.Y := RemapColourMap[8].G /255;
    RemapColour.Z := RemapColourMap[8].B /255;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Front1Click(Sender: TObject);

@@ -128,7 +128,6 @@ type
     MouseButton : Integer;
     WireFrame  : Boolean;
     procedure DrawMe;
-    function GetCorrectColour(Color : integer) : TVector3f;
     procedure ClearRemapClicks;
     procedure BuildFont;
     procedure KillFont;
@@ -448,18 +447,6 @@ begin
    Result := Bitmap;
 end;
 
-function TFrm3DPReview.GetCorrectColour(Color : integer) : TVector3f;
-begin
-   if (Color > 15) and (Color < 32) then
-   begin
-      result.X := RemapColour.X;
-      result.Y := RemapColour.Y;
-      result.Z := RemapColour.Z;
-   end
-   else
-      result := TColorToTVector3f(VXLPalette[Color]);
-end;
-
 Function TFrm3DPReview.GetVXLColor(Color,Normal : integer) : TVector3f;
 Var
    T : TVector3f;
@@ -479,7 +466,7 @@ begin
    end;
 
    if SpectrumMode = ModeColours then
-      Result := GetCorrectColour(color)
+      Result := GetCorrectColour(color, RemapColour)
    else
    begin
 {

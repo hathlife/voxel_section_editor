@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 240
-    Height = 206
+    Height = 225
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered

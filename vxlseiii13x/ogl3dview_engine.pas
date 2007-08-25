@@ -131,6 +131,7 @@ procedure BuildFont;
 function CleanAngle(Angle: single): single;
 Function CleanVCCol(Color : TColor) : TVector3f;
 function CleanV3fCol(Color: TVector3f): TVector3f;
+function GetCorrectColour(Color: integer; RemapColour : TVector3f): TVector3f;
 
 function GetPosWithSize(Position: TVector3f; Size: single): TVector3f;
 
@@ -469,17 +470,20 @@ begin
    Result.Z := Result.Z / 255;
 end;
 
-function GetCorrectColour(Color: integer): TVector3f;
+function GetCorrectColour(Color: integer; RemapColour : TVector3f): TVector3f;
 var
    T: TVector3f;
 begin
    if (Color > 15) and (Color < 32) then
    begin
-      T.X := RemapColour.X * 255 + ((Color - 15) - 15 / 2);
-      T.Y := RemapColour.Y * 255 + ((Color - 15) - 15 / 2);
-      T.Z := RemapColour.Z * 255 + ((Color - 15) - 15 / 2);
+//      T.X := RemapColour.X * 255 + ((Color - 15) - 15 / 2);
+//      T.Y := RemapColour.Y * 255 + ((Color - 15) - 15 / 2);
+//      T.Z := RemapColour.Z * 255 + ((Color - 15) - 15 / 2);
+      T.X := RemapColour.X * ((32 - Color) / 16);
+      T.Y := RemapColour.Y * ((32 - Color) / 16);
+      T.Z := RemapColour.Z * ((32 - Color) / 16);
 
-      Result := CleanV3fCol(T);
+      Result := T; //CleanV3fCol(T);
    end
    else
       Result := TColorToTVector3f(VXLPalette[Color]);
@@ -511,14 +515,14 @@ begin
             N := 0;
          if N > NormalNum then
             N := NormalNum;
-         T := GetCorrectColour(color);
+         T := GetCorrectColour(color, RemapColour);
          T.X := T.X * 255 + (N - (NormalNum / 2)) / NormalDiv;
          T.Y := T.Y * 255 + (N - (NormalNum / 2)) / NormalDiv;
          T.Z := T.Z * 255 + (N - (NormalNum / 2)) / NormalDiv;
          Result := CleanV3fCol(T);
       end
       else
-         Result := GetCorrectColour(color)
+         Result := GetCorrectColour(color, RemapColour)
    else if (FrmMain.NormalsTest1.Checked) then
    begin
       N := Normal;
