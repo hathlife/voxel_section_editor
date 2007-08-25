@@ -1,5 +1,5 @@
 {\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fswiss\fcharset0 Arial;}{\f1\fnil\fcharset0 MS Sans Serif;}}
-\viewkind4\uc1\pard\b\f0\fs36 Voxel Section Editor III v1.2c Readme\fs28\par
+{\*\generator Msftedit 5.41.15.1507;}\viewkind4\uc1\pard\b\f0\fs36 Voxel Section Editor III v1.37 Readme\fs28\par
 \b0\fs20\par
 ---------------------\par
 1. Product Info\par
@@ -13,9 +13,9 @@
 \par
 \b\fs24 1. \ul Product Info\par
 \ulnone\b0\fs20\par
-\pard\tx1704  - Src:\tab Delphi 6.0 Personal Edition\par
- - Compiled:\tab November 23, 2005, 09:25 GMT\par
- - Current version:\tab 1.2c\par
+\pard\tx1704  - Src:\tab Delphi 2005 Personal Edition\par
+ - Compiled:\tab August 24th, 2007, 22:45 GMT\par
+ - Current version:\tab 1.37\par
  - Authors:\tab Banshee, Stucuk, Will, Plasmadroid & Koen\par
 \pard\par
 \par
@@ -23,7 +23,25 @@
 \ulnone\b0\fs20\par
 \ul\b VXLSE III History\ulnone\b0\par
 \par
-\ul\b Version 1.2\ulnone\b0\par
+\ul\b Version 1.37\ulnone\b0\par
+Auto Normals 8.0 get more realistic normals. This version also comes with several bug fixes on coordinates, Red Alert 2 new files, import sections. It also reduces the cpu load heavly when the program is not being used. Contributions from VK (coding) and IcySon55 (icons).\par
+\ul\b\par
+Version 1.36\ulnone\b0\par
+Auto Normals 7.0 finally allows the user to customize the way they want to normalize the voxel and also, it allows uber smoothed voxels. A critical bug with screenshots from the new 3d preview window was fixed users can export to other file formats such as bitmap, jpeg and png.\par
+\ul\b\par
+Version 1.35\ulnone\b0\par
+1.33 improves the Smoothed Cubed Normalizer a bit. 1.34 also comes with the New AutoNormals 6.0, which was faster and better during the tests. 1.35 improves both normalizers.\par
+\ul\b\par
+Version 1.32\ulnone\b0\par
+Smoothed Cubed Normalizer v2 has been improved again! Now the 3D Preview window is back. 1.33 improves the normalizer in few bits.\par
+\ul\b\par
+Version 1.31\ulnone\b0\par
+Smoothed Cubed Normalizer v2 was improved!\par
+\ul\b\par
+Version 1.3\ulnone\b0\par
+Smoothed Cubed Normalizer is the main feature of this version. All other auto-normalizers were removed. This version also runs much faster and renders your voxel much faster as well, in the 3d view. Mirror Left To Right returns and several bugs were fixed.\par
+\ul\b\par
+Version 1.2\ulnone\b0\par
 Flood Fill Erase is back, full custom scheme support, paste with and without transparency working and cubed normalizer. The old normalizer is now called 6-faced normalizer. It's still available just in case people dislike the cubed one. It also fixes some major bugs and update the links and redesign the button a bit. Thanks for all of those who reported bugs during almost one year a half at VXLSE forums at PPM. 1.2a fix a small issue in the original 1.2 that could cause trouble with future auto-upgrade tools and also fixes a problem with renaming sections. 1.2b gives an image to Zoom/Magnify button, fixes the hint from Flood Fill Erase and fixes Show Used Colours/Normals. 1.2c fixes Cubed Normalizer making it work perfectly.\par
 \par
 \ul\b Version 1.1\ulnone\b0\par
@@ -77,19 +95,65 @@ Sk8erkid\fs20\par
 \ulnone\b0\fs20\par
  - elipse tool, circle tool.\par
  - dirt tool\par
- - Try n fix the "checkers" effect on the Voxel texture(only happens on WinME).\par
- - Try n fix the Win 98 Bugs.\par
+ - Try and fix the "checkers" effect on the Voxel texture(only happens on WinME).\par
+ - Try and fix the Win 98 Bugs.\par
  - FLH finder\par
- - VH_Engine implementation\par
+ - OS 3D Engine implementation\par
 \pard\par
 \par
 \pard\tx1704\b\fs24 4. \ul Version History\par
 \ulnone\b0\fs20\par
 \b VXLSE III\b0\par
 \par
+\b 1.37\b0\par
+ - revisions by Banshee \par
+\b   - Added\b0 : Tangent Plane auto normals based on the article sent to SIBGRAPI 2007. This should find the lighting of the voxels in a more realistic way.\par
+\b   - Bug Fix\b0 :Import a section will no longer crash the system.\par
+\b   - Bug Fix\b0 :If the program is deactivated, the application will stop rendering, severely reducing the cpu load on idle moments.\par
+\b   - Bug Fix\b0 :Fixed some inconsistences with the coordinate system.\par
+\b   - Bug Fix\b0 :New Red Alert 2 voxels starts with normals of the type 4 (RA2) and no longer type 2 (TS).\par
+  - \b Bug Fix\b0 :Increased stability when opening and saving palettes, voxels and HVAs. Thanks VK.\par
+\b   - Updated\b0 : Community links, new program icon from IcySon55 and interface improved thanks to VK.\par
+\b\par
+1.36\b0\par
+ - revisions by Banshee \par
+   - \b Added\b0 : New Auto Normals 7.0 is now available. Users are able to customize the normalizing methods and the procedures done during the operation, as well as the range of normalization and smooth process. You can also use the old 6-Faced normalizer from VXLSE III 1.2c again.\par
+   - \b Added\b0 : The new 3D preview window now exports screenshots as PNG, JPG and Bitmap..\par
+   - \b Bug Fix\b0 : The screenshot feature from the new 3d preview window will no longer distort colours under certain sizes.\par
+   - \b Bug Fix\b0 : The chances of a access violation if you close the program before the 3d preview window are no more.\par
+\b\par
+1.33, 1.34 and 1.35\b0\par
+ - revisions by Banshee \par
+   - \b Added\b0 : New Auto Normals is now available on 1.34 and 1.35. This one also uses the concept of cubed neighborhood, but the reference map is all based on influences, instead of the old way that considered blocks inside the voxel and influence as separate things.\par
+   - \b Updated\b0 : The old Autonormalizer received few bug fixes and improvements.\par
+\b\par
+1.32\b0\par
+ - revisions by Banshee \par
+   - \b Added\b0 : 3D Preview window from VXLSE II 2.1 OpenGL edition is now back and it can render together with the current Preview (at half speed, in this case). It can also be resized and all features from the traditional preview were incorporated into it.\par
+   - \b Added:\b0  Shortcuts from VXLSE II are back. You can move the X, Y and Z axis by pressing x, y and z. To move backwards, add shift to it. Some other random shortcuts were added.\par
+   - \b Updated\b0 : Autonormalizer is now even better. Now it uses the concept of influence area to no longer miss the direction on few specific cases.\par
+\par
+\b 1.31\b0\par
+ - revisions by Banshee \par
+   - \b Updated\b0 : Autonormalizer is now even better. I doubt that there is a better way to normalize your voxels manually.\par
+\b\par
+1.3\b0\par
+ - revisions by Banshee \par
+   - \b Added\b0 : Ability to optimize your voxel/new section for land or air unit. The difference is the bounds calculation. When Land is selection, the minimum height is 0, while Air uses the old system.\par
+   - \b Added\b0 : Mirror -> Mirror Right to Left finally works.\par
+   - \b Updated\b0 : There is only one auto normalizer now: Smoothed Cubed AutoNormals, that brings almost perfect normals, better than the old Cubed AutoNormals. Cubed AutoNormals and 6-Faced Autonormals are gone.\par
+   - \b Updated\b0 : Voxels should be rendered about 20x faster, like in OS:VV 1.6 or better. However, this requires a bit more RAM memory.\par
+   - \b Updated\b0 : Program loads faster and acts faster. The code was also improved to waste less memory. Custom schemes also load considerably faster.\par
+   - \b Updated\b0 : Dropper is now the default tool from the program, instead of pencil. This prevents users from accidentally painting the voxels when creating new files or opening existing voxels.\par
+   - \b Bug Fix\b0 : The program will now load sections with no used voxels instead of giving range check error.\par
+   - \b Bug Fix\b0 : Failed to set data for 'Path' message won't appear anymore if you do not have administrative powers on your operational system.\par
+   - \b Bug Fix\b0 : When creating new voxels or on the resize operation, the x, y and z you determine will be the x, y and z from your voxel. The order is no longer messed up.\par
+   - \b Bug Fix\b0 : Normals are now copied correctly when copy is used with Spectrum -> Normals.\par
+\par
+\par
  \b 1.2\b0\par
   - revisions by Banshee\par
-    - \b Added:\b0  Cubed Normalizer: provide perfect normals! (Also, updated few wrong spelling bits from the old normalizer)\par
+    - \b Added:\b0  Cubed Normalizer: provide almost perfect normals! (Also, updated few wrong spelling bits from the old normalizer)\par
     - \b Added:\b0  Flood Fill Erase Tool. This tool used to exist on VXLSE II and now it's back. It allows users to erase faster neighboor pixels with the same colour.\par
     - \b Added:\b0  Full compatibility with all custom schemes types and new custom schemes included.\par
     - \b Updated\b0 : Tool Buttons re-organized.\par
@@ -336,7 +400,7 @@ Sk8erkid\fs20\par
  - \f1 leon256@tlen.pl\f0\par
  - koen@tibed.net \par
  - stuc_uk_2000@hotmail.com (Contact for SE Range)\par
- - bansheeppm@hotmail.com (for 1.2)\par
+ - bansheeppm@hotmail.com (for 1.2x and 1.3x)\par
 \par
 \pard\par
 \pard\tx1704\b\fs24 6. \ul Homepages/Links\par
@@ -348,6 +412,11 @@ http://www.tibed.net/voxel/\par
 \par
 Check our forums for updates and support at: \b http://vxlseforums.ppmsite.com\b0\par
 \par
+Check out the Voxel Section Editor III SVN located at \b http://svn.ppmsite.com/listing.php?repname=OS%20Voxel%20Tools&path=%2F&sc=1\par
+\par
+\b0 In order to checkout the SVN, use the url: \b svn://svn.ppmsite.com/voxel_tools\b0\par
+To commit, contact bansheeppm@hotmail.com with a name and a password that you don't use anywhere to get an account.\par
+\par
 \pard\par
 \pard\tx1704\b\fs24 7. \ul Source\par
 \ulnone\b0\fs20\par
@@ -355,5 +424,9 @@ Check our forums for updates and support at: \b http://vxlseforums.ppmsite.com\b
 To compile the source you need:\par
 \par
 TGIFImage installed onto delphi, you can download it here: http://www.torry.net/vcl/graphics/gif/gifimage.exe\par
+\par
+Note: The source includes the component TPNGImage, which was created by Gustavo Huffenbacher Daud, for PNG support. You can find more informations and download of the full component with a complete documentation at \b http://pngdelphi.sourceforge.net\b0 .\par
+\par
+The source code of the algorithm disclosed on "Finding Surface Normals From Voxels" article submitted to SIBGRAPI 2007 is located at Voxel_AutoNormals.pas.\par
 }
  
