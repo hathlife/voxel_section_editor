@@ -15,9 +15,11 @@ object Frm3DPReview: TFrm3DPReview
   Menu = MainMenu1
   OldCreateOrder = False
   Position = poScreenCenter
+  OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnDeactivate = FormDeactivate
   OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13

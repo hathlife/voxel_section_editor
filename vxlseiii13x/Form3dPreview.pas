@@ -67,6 +67,8 @@ type
     Display1: TMenuItem;
     CurrentSectionOnly1: TMenuItem;
     WholeVoxel1: TMenuItem;
+    procedure FormDeactivate(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure CurrentSectionOnly1Click(Sender: TObject);
     procedure akeScreenshotBMP1Click(Sender: TObject);
     procedure akeScreenshotPNG1Click(Sender: TObject);
@@ -1303,6 +1305,16 @@ begin
    CurrentSectionOnly1.Checked := not CurrentSectionOnly1.Checked;
    WholeVoxel1.Checked := not CurrentSectionOnly1.Checked;
    FrmMain.RefreshAll;
+end;
+
+procedure TFrm3DPReview.FormActivate(Sender: TObject);
+begin
+   FrmMain.OnActivate(sender);
+end;
+
+procedure TFrm3DPReview.FormDeactivate(Sender: TObject);
+begin
+   FrmMain.OnDeactivate(sender);
 end;
 
 end.
