@@ -399,13 +399,14 @@ begin
    else
    begin
       N := Color;
-      If N > NormalNum Then N := NormalNum;
-//      T.X := 127 + (N - (NormalNum/2))/NormalDiv;
-//      T.Y := 127 + (N - (NormalNum/2))/NormalDiv;
-//      T.Z := 127 + (N - (NormalNum/2))/NormalDiv;
-      T.X := N;
-      T.Y := N;
-      T.Z := N;
+      If N > NormalNum Then
+         N := NormalNum;
+      T.X := 127 + (N - (NormalNum/2))/NormalDiv;
+      T.Y := 127 + (N - (NormalNum/2))/NormalDiv;
+      T.Z := 127 + (N - (NormalNum/2))/NormalDiv;
+//      T.X := N;
+//      T.Y := N;
+//      T.Z := N;
       Result := CleanVCol(T);
    end;
 end;
