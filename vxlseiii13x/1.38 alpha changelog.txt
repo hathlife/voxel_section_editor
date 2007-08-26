@@ -1,0 +1,4 @@
+1.38 Alpha - 26/08/2007 - Status: Stable.
+  - revisions by Banshee
+    - Update: Rendering speed improved.
+	- (Not Completed) Bug Fix: Whole Voxel option at the Form 3D Preview works better, but it's not fully acurate because the program is not reading HVA files yet.

@@ -13,7 +13,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.37';
+   APPLICATION_VER = '1.38';
 
 type
   TFrmMain = class(TForm)
@@ -101,7 +101,6 @@ type
     Cameo41: TMenuItem;
     Options2: TMenuItem;
     DebugMode1: TMenuItem;
-    NormalsTest1: TMenuItem;
     RemapColour1: TMenuItem;
     Gold1: TMenuItem;
     Red1: TMenuItem;
@@ -112,12 +111,10 @@ type
     Green1: TMenuItem;
     DarkSky1: TMenuItem;
     White1: TMenuItem;
-    NormalsTest2: TMenuItem;
     N4: TMenuItem;
     BackgroundColour1: TMenuItem;
     extColour1: TMenuItem;
     N5: TMenuItem;
-    Normals2: TMenuItem;
     lblLayer: TLabel;
     pnlLayer: TPanel;
     XCursorBar: TTrackBar;
@@ -384,9 +381,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure NormalsTest1Click(Sender: TObject);
     procedure DebugMode1Click(Sender: TObject);
-    procedure NormalsTest2Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
     procedure btn3DRotateXClick(Sender: TObject);
     Procedure SetRotationAdders;
@@ -1462,23 +1457,9 @@ begin
    Popup3d.Popup(Left+SpeedButton1.Left+ RightPanel.Left +5,Top+ 90+ Panel7.Top + SpeedButton1.Top);
 end;
 
-procedure TFrmMain.NormalsTest1Click(Sender: TObject);
-begin
-   NormalsTest1.Checked := not NormalsTest1.Checked;
-   if NormalsTest1.Checked then
-      NormalsTest2.Checked := false;
-end;
-
 procedure TFrmMain.DebugMode1Click(Sender: TObject);
 begin
    DebugMode1.Checked := not DebugMode1.Checked;
-end;
-
-procedure TFrmMain.NormalsTest2Click(Sender: TObject);
-begin
-   NormalsTest2.Checked := not NormalsTest2.Checked;
-   if NormalsTest2.Checked then
-   NormalsTest1.Checked := false;
 end;
 
 Procedure TFrmMain.SetRotationAdders;

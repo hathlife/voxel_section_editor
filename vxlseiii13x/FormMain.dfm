@@ -6720,18 +6720,6 @@ object FrmMain: TFrmMain
     end
     object Options2: TMenuItem
       Caption = 'Options'
-      object Normals2: TMenuItem
-        Caption = 'Normals'
-        object NormalsTest1: TMenuItem
-          Caption = 'Simulate Normals'
-          OnClick = NormalsTest1Click
-        end
-        object NormalsTest2: TMenuItem
-          Caption = 'True Normals'
-          Checked = True
-          OnClick = NormalsTest2Click
-        end
-      end
       object DebugMode1: TMenuItem
         Caption = 'Debug Mode'
         OnClick = DebugMode1Click

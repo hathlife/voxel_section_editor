@@ -16,9 +16,14 @@ type
       Faces: array [1..6] of boolean;
    end;
 
-   TVoxelBoxGroup = record
+   TVoxelBoxSection = record
       Box : array of TVoxelBox;
-      List : integer;
+      List, ID : integer;
+   end;
+
+   TVoxelBoxGroup = record
+      Section : array of TVoxelBoxSection;
+      NumBoxes : integer;
    end;
 
    TVector3b = record
@@ -134,10 +139,12 @@ function CleanV3fCol(Color: TVector3f): TVector3f;
 function GetCorrectColour(Color: integer; RemapColour : TVector3f): TVector3f;
 
 function GetPosWithSize(Position: TVector3f; Size: single): TVector3f;
+Procedure GetScaleAndMinBounds(Const Vxl : TVoxel; Section : Integer; Var Scale,MinBounds : TVector3f);
 
 function ScreenShot_BitmapResult : TBitmap;
 
 function checkface(Vxl : TVoxelSection; x,y,z : integer) : boolean;
+procedure ClearVoxelBoxes(var VoxelBoxGroup : TVoxelBoxGroup);
 procedure Update3dViewVOXEL(Vxl : TVoxel);
 
 procedure DrawBox(VoxelPosition, Color: TVector3f; Size: single; VoxelBox: TVoxelBox);
@@ -344,6 +351,18 @@ begin
    end;
 end;
 
+// Adapted from OS: Voxel Viewer
+Procedure GetScaleAndMinBounds(Const Vxl : TVoxel; Section : Integer; Var Scale,MinBounds : TVector3f);
+begin
+   Scale.x := (Vxl.Section[Section].Tailer.MaxBounds[1]-Vxl.Section[Section].Tailer.MinBounds[1])/Vxl.Section[Section].Tailer.xSize;
+   Scale.y := (Vxl.Section[Section].Tailer.MaxBounds[2]-Vxl.Section[Section].Tailer.MinBounds[2])/Vxl.Section[Section].Tailer.ySize;
+   Scale.z := (Vxl.Section[Section].Tailer.MaxBounds[3]-Vxl.Section[Section].Tailer.MinBounds[3])/Vxl.Section[Section].Tailer.zSize;
+
+   MinBounds.x := Vxl.Section[Section].Tailer.MinBounds[1];
+   MinBounds.y := Vxl.Section[Section].Tailer.MinBounds[2];
+   MinBounds.z := Vxl.Section[Section].Tailer.MinBounds[3];
+end;
+
 // 1.3: Now with Hyper Speed! Kirov at 59/60fps :D
 procedure DrawBox(VoxelPosition, Color: TVector3f; Size: single; VoxelBox: TVoxelBox);
 var
@@ -359,8 +378,7 @@ begin
    glBegin(GL_QUADS);
    begin
       glColor3f(Color.X, Color.Y, Color.Z);      // Set The Color
-      if FrmMain.NormalsTest2.Checked then
-         DoNormals(VoxelBox.Normal);
+      DoNormals(VoxelBox.Normal);
 
       if VoxelBox.Faces[1] then
       begin
@@ -490,53 +508,11 @@ begin
 end;
 
 function GetVXLColor(Color, Normal: integer): TVector3f;
-var
-   T: TVector3f;
-   NormalNum: integer;
-   NormalDiv: single;
-   N: integer;
 begin
-   if ActiveSection.Tailer.Unknown = 4 then
-   begin
-      NormalNum := 244;
-      NormalDiv := 3;
-   end
-   else
-   begin
-      NormalNum := 35;
-      NormalDiv := 0.5;
-   end;
-
    if SpectrumMode = ModeColours then
-      if (FrmMain.NormalsTest1.Checked) then
-      begin
-         N := Normal;
-         if N < 0 then
-            N := 0;
-         if N > NormalNum then
-            N := NormalNum;
-         T := GetCorrectColour(color, RemapColour);
-         T.X := T.X * 255 + (N - (NormalNum / 2)) / NormalDiv;
-         T.Y := T.Y * 255 + (N - (NormalNum / 2)) / NormalDiv;
-         T.Z := T.Z * 255 + (N - (NormalNum / 2)) / NormalDiv;
-         Result := CleanV3fCol(T);
-      end
-      else
-         Result := GetCorrectColour(color, RemapColour)
-   else if (FrmMain.NormalsTest1.Checked) then
-   begin
-      N := Normal;
-      if N < 0 then
-         N := 0;
-      if N > NormalNum then
-         N := NormalNum;
-      T.X := 127 + (N - (NormalNum / 2)) / NormalDiv;
-      T.Y := 127 + (N - (NormalNum / 2)) / NormalDiv;
-      T.Z := 127 + (N - (NormalNum / 2)) / NormalDiv;
-      Result := CleanV3fCol(T);
-   end
+      Result := GetCorrectColour(color, RemapColour)
    else
-      Result := CleanV3fCol(SetVector(127, 127, 127));
+      Result := SetVector(0.5, 0.5, 0.5);
 end;
 
 function CleanAngle(Angle: single): single;
@@ -580,45 +556,35 @@ begin
    XRot := CleanAngle(XRot);
    YRot := CleanAngle(YRot);
 
-   // For true normals, we activate all OpenGL stuff.
-   if (FrmMain.NormalsTest2.Checked) then
-   begin
-      glEnable(GL_LIGHT0);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-   end
-   else // For simulated normals, we ignore OpenGL lighting.
-   begin
-      glDisable(GL_LIGHT0);
-      glDisable(GL_LIGHTING);
-      glDisable(GL_COLOR_MATERIAL);
-   end;
+   glEnable(GL_LIGHT0);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_COLOR_MATERIAL);
 
    // We'll only render anything if there is a voxel to render.
-   if VoxelBox_No > 0 then
+   if VoxelBoxes.NumBoxes > 0 then
    begin
       // Here we make the OpenGL list to speed up the render.
-      if (VoxelBoxes.List < 1) or RebuildLists then
+      if (VoxelBoxes.Section[0].List < 1) or RebuildLists then
       begin
-         if VoxelBoxes.List > 0 then
-            glDeleteLists(VoxelBoxes.List,1);
-         VoxelBoxes.List := glGenLists(1);
-         glNewList(VoxelBoxes.List, GL_COMPILE);
+         if VoxelBoxes.Section[0].List > 0 then
+            glDeleteLists(VoxelBoxes.Section[0].List,1);
+         VoxelBoxes.Section[0].List := glGenLists(1);
+         glNewList(VoxelBoxes.Section[0].List, GL_COMPILE);
          // Now, we hunt all voxel boxes...
          if (HVATEST) then
          begin
             glPushMatrix;
-            for x := 0 to VoxelBox_No - 1 do
+            for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
             begin
-               DrawBox(GetPosWithSize(ApplyMatrix(VoxelBoxes.Box[x].Position), Size), GetVXLColor(VoxelBoxes.Box[x].Color, VoxelBoxes.Box[x].Normal), Size, VoxelBoxes.Box[x]);
+               DrawBox(GetPosWithSize(ApplyMatrix(VoxelBoxes.Section[0].Box[x].Position), Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
             end;
          end
          else
          begin
             glPushMatrix;
-            for x := 0 to VoxelBox_No - 1 do
+            for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
             begin
-               DrawBox(GetPosWithSize(VoxelBoxes.Box[x].Position, Size), GetVXLColor(VoxelBoxes.Box[x].Color, VoxelBoxes.Box[x].Normal), Size, VoxelBoxes.Box[x]);
+               DrawBox(GetPosWithSize(VoxelBoxes.Section[0].Box[x].Position, Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
             end;
             glPopMatrix;
          end;
@@ -634,7 +600,7 @@ begin
       glRotatef(XRot, 1, 0, 0);
       glRotatef(YRot, 0, 0, 1);
 
-      glCallList(VoxelBoxes.List);
+      glCallList(VoxelBoxes.Section[0].List);
       glPopMatrix;
       // End of the final voxel rendering part.
       glDisable(GL_TEXTURE_2D);
@@ -714,6 +680,20 @@ begin
    end;
 end;
 
+procedure ClearVoxelBoxes(var VoxelBoxGroup : TVoxelBoxGroup);
+var
+   Section : integer;
+begin
+   if High(VoxelBoxGroup.Section) >= 0 then
+   begin
+      for Section := Low(VoxelBoxGroup.Section) to High(VoxelBoxGroup.Section) do
+      begin
+         SetLength(VoxelBoxGroup.Section[Section].Box,0);
+      end;
+   end;
+   SetLength(VoxelBoxGroup.Section,0);
+end;
+
 function checkface(Vxl : TVoxelSection; x,y,z : integer) : boolean;
 var
 v: TVoxelUnpacked;
@@ -745,8 +725,9 @@ begin
    FrmMain.Display3dView1.Checked := true;
 
    VoxelBox_No := 0;
-   SetLength(VoxelBoxes.Box, VoxelBox_No);
+   ClearVoxelBoxes(VoxelBoxes);
 
+   SetLength(VoxelBoxes.Section,1);
    for z := 0 to (Vxl.Tailer.zSize - 1) do
    begin
       for y := 0 to (Vxl.Tailer.YSize - 1) do
@@ -757,25 +738,26 @@ begin
 
             if v.Used = True then
             begin
-               SetLength(VoxelBoxes.Box, VoxelBox_No+1);
-               VoxelBoxes.Box[VoxelBox_No].Faces[1]   := CheckFace(Vxl, x, y + 1, z);
-               VoxelBoxes.Box[VoxelBox_No].Faces[2]   := CheckFace(Vxl, x, y - 1, z);
-               VoxelBoxes.Box[VoxelBox_No].Faces[3]   := CheckFace(Vxl, x, y, z + 1);
-               VoxelBoxes.Box[VoxelBox_No].Faces[4]   := CheckFace(Vxl, x, y, z - 1);
-               VoxelBoxes.Box[VoxelBox_No].Faces[5]   := CheckFace(Vxl, x - 1, y, z);
-               VoxelBoxes.Box[VoxelBox_No].Faces[6]   := CheckFace(Vxl, x + 1, y, z);
+               SetLength(VoxelBoxes.Section[0].Box, VoxelBox_No+1);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[1]   := CheckFace(Vxl, x, y + 1, z);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[2]   := CheckFace(Vxl, x, y - 1, z);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[3]   := CheckFace(Vxl, x, y, z + 1);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[4]   := CheckFace(Vxl, x, y, z - 1);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5]   := CheckFace(Vxl, x - 1, y, z);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6]   := CheckFace(Vxl, x + 1, y, z);
 
-               VoxelBoxes.Box[VoxelBox_No].Position.X := X - (Vxl.Tailer.xSize / 2);
-               VoxelBoxes.Box[VoxelBox_No].Position.Y := Y - (Vxl.Tailer.ySize / 2);
-               VoxelBoxes.Box[VoxelBox_No].Position.Z := Z - (Vxl.Tailer.zSize / 2);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := X - (Vxl.Tailer.xSize / 2);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := Y - (Vxl.Tailer.ySize / 2);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := Z - (Vxl.Tailer.zSize / 2);
 
-               VoxelBoxes.Box[VoxelBox_No].Color  := v.Colour;
-               VoxelBoxes.Box[VoxelBox_No].Normal := v.Normal;
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := v.Colour;
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := v.Normal;
                Inc(VoxelBox_No);
             end;
          end;
       end;
    end;
+   VoxelBoxes.NumBoxes := VoxelBox_No;
    RebuildLists := true;
    // Wake up 3d view, since everything is ready.
    FrmMain.Display3dView1.Checked := false;
@@ -796,10 +778,13 @@ begin
    // Shutup 3d view for setup purposes.
    FrmMain.Display3dView1.Checked := true;
 
-   VoxelBox_No := 0;
-   SetLength(VoxelBoxes.Box, VoxelBox_No);
+   VoxelBoxes.NumBoxes := 0;
+   ClearVoxelBoxes(VoxelBoxes);
 
-   for i := 0 to VXL.Header.NumSections - 1 do
+   SetLength(VoxelBoxes.Section,VXL.Header.NumSections);
+   for i := Low(VoxelBoxes.Section) to High(VoxelBoxes.Section) do
+   begin
+      VoxelBox_No := 0;
       for z := 0 to (Vxl.Section[i].Tailer.zSize - 1) do
       begin
          for y := 0 to (Vxl.Section[i].Tailer.YSize - 1) do
@@ -809,26 +794,28 @@ begin
                Vxl.Section[i].GetVoxel(x, y, z, v);
                if v.Used = True then
                begin
-                  SetLength(VoxelBoxes.Box, VoxelBox_No+1);
+                  SetLength(VoxelBoxes.Section[i].Box, VoxelBox_No+1);
 
-                  VoxelBoxes.Box[VoxelBox_No].Faces[1] := CheckFace(Vxl.Section[i], x, y + 1, z);
-                  VoxelBoxes.Box[VoxelBox_No].Faces[2] := CheckFace(Vxl.Section[i], x, y - 1, z);
-                  VoxelBoxes.Box[VoxelBox_No].Faces[3] := CheckFace(Vxl.Section[i], x, y, z + 1);
-                  VoxelBoxes.Box[VoxelBox_No].Faces[4] := CheckFace(Vxl.Section[i], x, y, z - 1);
-                  VoxelBoxes.Box[VoxelBox_No].Faces[5] := CheckFace(Vxl.Section[i], x - 1, y, z);
-                  VoxelBoxes.Box[VoxelBox_No].Faces[6] := CheckFace(Vxl.Section[i], x + 1, y, z);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl.Section[i], x, y + 1, z);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl.Section[i], x, y - 1, z);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl.Section[i], x, y, z + 1);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl.Section[i], x, y, z - 1);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl.Section[i], x - 1, y, z);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl.Section[i], x + 1, y, z);
 
-                  VoxelBoxes.Box[VoxelBox_No].Position.X := Vxl.Section[i].Tailer.Transform[1][3] + X - (Vxl.Section[i].Tailer.xSize / 2);
-                  VoxelBoxes.Box[VoxelBox_No].Position.Y := Vxl.Section[i].Tailer.Transform[2][3] + Y - (Vxl.Section[i].Tailer.ySize / 2);
-                  VoxelBoxes.Box[VoxelBox_No].Position.Z := Vxl.Section[i].Tailer.Transform[3][3] + Z - (Vxl.Section[i].Tailer.zSize / 2);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.X := Vxl.Section[i].Tailer.Transform[1][3] + X - (Vxl.Section[i].Tailer.xSize / 2);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Y := Vxl.Section[i].Tailer.Transform[2][3] + Y - (Vxl.Section[i].Tailer.ySize / 2);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Z := Vxl.Section[i].Tailer.Transform[3][3] + Z - (Vxl.Section[i].Tailer.zSize / 2);
 
-                  VoxelBoxes.Box[VoxelBox_No].Color  := v.Colour;
-                  VoxelBoxes.Box[VoxelBox_No].Normal := v.Normal;
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Color  := v.Colour;
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Normal := v.Normal;
                   Inc(VoxelBox_No);
+                  Inc(VoxelBoxes.NumBoxes);
                end;
             end;
          end;
       end;
+   end;
    RebuildLists := true;
    // Wake up 3d view, since everything is ready.
    FrmMain.Display3dView1.Checked := false;
@@ -848,54 +835,55 @@ begin
    FrmMain.Display3dView1.Checked := true;
 
    VoxelBox_No := 0;
-   SetLength(VoxelBoxes.Box, VoxelBox_No);
+   ClearVoxelBoxes(VoxelBoxes);
 
    if ActiveSection.Tailer.Unknown = 2 then
       num := 35
    else
       num := 243;
 
+   SetLength(VoxelBoxes.Section,1);
    for x := 0 to num do
       if ActiveSection.Tailer.Unknown = 4 then
       begin
-         SetLength(VoxelBoxes.Box, VoxelBox_No+1);
+         SetLength(VoxelBoxes.Section[0].Box, VoxelBox_No+1);
 
-         VoxelBoxes.Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) + 1, trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) - 1, trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) + 1);
-         VoxelBoxes.Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) - 1);
-         VoxelBoxes.Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) - 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) + 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) + 1, trunc(RA2Normals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) - 1, trunc(RA2Normals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) + 1);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) - 1);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) - 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) + 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
 
-         VoxelBoxes.Box[VoxelBox_No].Position.X := trunc(RA2Normals[x].x * 30.5);
-         VoxelBoxes.Box[VoxelBox_No].Position.Y := trunc(RA2Normals[x].y * 30.5);
-         VoxelBoxes.Box[VoxelBox_No].Position.Z := trunc(RA2Normals[x].z * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := trunc(RA2Normals[x].x * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := trunc(RA2Normals[x].y * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := trunc(RA2Normals[x].z * 30.5);
 
-         VoxelBoxes.Box[VoxelBox_No].Color  := 15;
-         VoxelBoxes.Box[VoxelBox_No].Normal := 0;
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := 15;
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := 0;
          Inc(VoxelBox_No);
       end
       else
       begin
-         SetLength(VoxelBoxes.Box, VoxelBox_No+1);
+         SetLength(VoxelBoxes.Section[0].Box, VoxelBox_No+1);
 
-         VoxelBoxes.Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) + 1, trunc(TSNormals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) - 1, trunc(TSNormals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) + 1);
-         VoxelBoxes.Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) - 1);
-         VoxelBoxes.Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) - 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
-         VoxelBoxes.Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) + 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) + 1, trunc(TSNormals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) - 1, trunc(TSNormals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) + 1);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) - 1);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) - 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) + 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
 
-         VoxelBoxes.Box[VoxelBox_No].Position.X := trunc(TSNormals[x].x * 30.5);
-         VoxelBoxes.Box[VoxelBox_No].Position.Y := trunc(TSNormals[x].y * 30.5);
-         VoxelBoxes.Box[VoxelBox_No].Position.Z := trunc(TSNormals[x].z * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := trunc(TSNormals[x].x * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := trunc(TSNormals[x].y * 30.5);
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := trunc(TSNormals[x].z * 30.5);
 
-         VoxelBoxes.Box[VoxelBox_No].Color  := 15;
-         VoxelBoxes.Box[VoxelBox_No].Normal := 0;
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := 15;
+         VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := 0;
          Inc(VoxelBox_No);
       end;
    RebuildLists := true;
-
+   VoxelBoxes.NumBoxes := VoxelBox_No;
    // Wake 3d view, since everything is ready.
    FrmMain.Display3dView1.Checked := false;
 end;

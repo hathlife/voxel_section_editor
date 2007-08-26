@@ -6,7 +6,7 @@ unit HVA;
 
 interface
 
-uses dialogs,sysutils,Voxel_Engine,math3d;
+uses dialogs,sysutils,Voxel_Engine,math3d, OpenGL;
 
 type
 THVA_Main_Header = packed record
@@ -15,6 +15,7 @@ THVA_Main_Header = packed record
    N_Sections : Longword;           (* Number of voxel sections described *)
 end;
 
+TGLMatrixf4 = array[0..3, 0..3] of Single;
 TSectionName = array[1..16] of Char; (* ASCIIZ string - name of section *)
 TTransformMatrix = packed array[1..3,1..4] of Single;
 
@@ -39,8 +40,11 @@ var
 
 Procedure LoadHVA(Filename : string);
 
-Function ApplyMatrix(V : TVector3f) : TVector3f;
+Function ApplyMatrix(V : TVector3f) : TVector3f; overload;
+Function ApplyMatrix(MyScale : single; V : TVector3f; Section, Frames : Integer) : TVector3f; overload;
 Procedure FloodMatrix;
+Function GetTMValue(Row,Col : integer) : single; overload;
+Function GetTMValue(Row,Col,Section : integer) : single; overload;
 
 implementation
 
@@ -85,6 +89,11 @@ begin
    Result := HVAFile.Data[HVASection].TransformMatrixs[HVAFrame][Row][Col];
 end;
 
+Function GetTMValue(Row,Col,Section : integer) : single;
+begin
+   Result := HVAFile.Data[Section].TransformMatrixs[HVAFrame][Row][Col];
+end;
+
 Function ApplyMatrixVXL(V : TVector3f) : TVector3f;
 var
    T : TVector3f;
@@ -96,6 +105,66 @@ begin
       Result.Y := ( T.x * Transform[2,1] + T.y * Transform[2,2] + T.z * Transform[2,3] + Transform[2,4]);
       Result.Z := ( T.x * Transform[3,1] + T.y * Transform[3,2] + T.z * Transform[3,3] + Transform[3,4]);
    end;
+end;
+
+// Copied from OS: Voxel Viewer.
+Function ApplyMatrix(MyScale : single; V : TVector3f; Section, Frames : Integer) : TVector3f;
+var
+   Matrix : TGLMatrixf4;
+begin
+   if Section = -1 then
+   begin
+      Exit;
+   end;
+
+   MyScale := VoxelFile.Section[Section].Tailer.Det;
+//   if HVAScale = 0 then HVAScale := 1;
+
+   if HVAFile.Header.N_Sections > 0 then
+   begin
+      Matrix[0,0] := GetTMValue(1,1,Section);
+      Matrix[0,1] := GetTMValue(2,1,Section);
+      Matrix[0,2] := GetTMValue(3,1,Section);
+      Matrix[0,3] := 0;
+
+      Matrix[1,0] := GetTMValue(1,2,Section);
+      Matrix[1,1] := GetTMValue(2,2,Section);
+      Matrix[1,2] := GetTMValue(3,2,Section);
+      Matrix[1,3] := 0;
+
+      Matrix[2,0] := GetTMValue(1,3,Section);
+      Matrix[2,1] := GetTMValue(2,3,Section);
+      Matrix[2,2] := GetTMValue(3,3,Section);
+      Matrix[2,3] := 0;
+
+      Matrix[3,0] := (GetTMValue(1,4,Section)* MyScale) * V.X * 2;
+      Matrix[3,1] := (GetTMValue(2,4,Section)* MyScale) * V.Y * 2;
+      Matrix[3,2] := (GetTMValue(3,4,Section)* MyScale) * V.Z * 2;
+      Matrix[3,3] := 1;
+   end
+   else
+   begin
+      Matrix[0,0] := 1;
+      Matrix[0,1] := 0;
+      Matrix[0,2] := 0;
+      Matrix[0,3] := 0;
+
+      Matrix[1,0] := 0;
+      Matrix[1,1] := 1;
+      Matrix[1,2] := 0;
+      Matrix[1,3] := 0;
+
+      Matrix[2,0] := 0;
+      Matrix[2,1] := 0;
+      Matrix[2,2] := 1;
+      Matrix[2,3] := 0;
+
+      Matrix[3,0] := MyScale * V.X * 2;
+      Matrix[3,1] := MyScale * V.Y * 2;
+      Matrix[3,2] := MyScale * V.Z * 2;
+      Matrix[3,3] := 1;
+   end;
+   glMultMatrixf(@Matrix[0,0]);
 end;
 
 Function Transform : TTransformMatrix;
