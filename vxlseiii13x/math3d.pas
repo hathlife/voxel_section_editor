@@ -16,6 +16,7 @@ function DEG2RAD(a : single) : single;
 function RAD2DEG(a : single) : single;
 function Normalize(var v : TVector3f) : single;
 function ScaleVector(v : TVector3f; s : single) : TVector3f;
+function ScaleVector3f(v,s : TVector3f) : TVector3f;
 function AddVector(v1, v2 : TVector3f) : TVector3f;
 function SubtractVector(v1, v2 : TVector3f) : TVector3f;
 function DotProduct(v1, v2 : TVector3f) : single;
@@ -85,6 +86,16 @@ begin
     y := v.y * s;
     z := v.z * s;
   end;
+end;
+
+function ScaleVector3f(v,s : TVector3f) : TVector3f;
+begin
+   with result do
+   begin
+      x := v.x * s.x;
+      y := v.y * s.y;
+      z := v.z * s.z;
+   end;
 end;
 
 function AddVector(v1, v2 : TVector3f) : TVector3f;

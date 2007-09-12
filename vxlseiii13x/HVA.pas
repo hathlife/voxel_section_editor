@@ -15,7 +15,6 @@ THVA_Main_Header = packed record
    N_Sections : Longword;           (* Number of voxel sections described *)
 end;
 
-TGLMatrixf4 = array[0..3, 0..3] of Single;
 TSectionName = array[1..16] of Char; (* ASCIIZ string - name of section *)
 TTransformMatrix = packed array[1..3,1..4] of Single;
 
@@ -38,19 +37,35 @@ var
    Matrix : TMatrix;
    matrix2: array[0..15] of GLfloat;}
 
-Procedure LoadHVA(Filename : string);
+function LoadHVA(Filename : string): boolean;
 
 Function ApplyMatrix(V : TVector3f) : TVector3f; overload;
 Function ApplyMatrix(MyScale : single; V : TVector3f; Section, Frames : Integer) : TVector3f; overload;
 Procedure FloodMatrix;
 Function GetTMValue(Row,Col : integer) : single; overload;
 Function GetTMValue(Row,Col,Section : integer) : single; overload;
+Procedure ClearHVA;
+function GetIdentityTM : TTransformMatrix;
 
 implementation
 
-uses FormMain;
+uses FormMain, Voxel;
 
-Procedure LoadHVA(Filename : string);
+procedure ClearHVA;
+var
+   Section : integer;
+begin
+   if High(HVAFile.Data) >= 0 then
+   begin
+      for Section := Low(HVAFile.Data) to High(HVAFile.Data) do
+      begin
+         SetLength(HVAFile.Data[Section].TransformMatrixs,0);
+      end;
+   end;
+   SetLength(HVAFile.Data,0);
+end;
+
+function LoadHVA(Filename : string): boolean;
 var
    f : file;
    x,y : integer;
@@ -58,7 +73,9 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('HVA: LoadHVA');
    {$endif}
+   Result := false;
    try
+      ClearHVA;
       AssignFile(F,Filename);  // Open file
       FileMode := fmOpenRead; // we only load HVA file [VK]
       Reset(F,1); // Goto first byte?
@@ -68,20 +85,43 @@ begin
       HVAFile.Data_no := HVAFile.Header.N_Sections;
       SetLength(HVAFile.Data,HVAFile.Data_no);
 
-      For x := 0 to HVAFile.Header.N_Sections-1 do
+      For x := Low(HVAFile.Data) to High(HVAFile.Data) do
          BlockRead(F,HVAFile.Data[x].SectionName,Sizeof(TSectionName));
 
-      For x := 0 to HVAFile.Header.N_Sections-1 do
+      For x := Low(HVAFile.Data) to High(HVAFile.Data) do
       begin
          SetLength(HVAFile.Data[x].TransformMatrixs,HVAFile.Header.N_Frames);
-         For y := 0 to HVAFile.Header.N_Frames-1 do
+         For y := Low(HVAFile.Data[x].TransformMatrixs) to High(HVAFile.Data[x].TransformMatrixs) do
             BlockRead(F,HVAFile.Data[x].TransformMatrixs[y],Sizeof(TTransformMatrix));
+         if HVAFile.Header.N_Frames = 0 then
+         begin
+            HVAFile.Header.N_Frames := 1;
+            SetLength(HVAFile.Data[x].TransformMatrixs,1);
+            HVAFile.Data[x].TransformMatrixs[0] := GetIdentityTM;
+         end;
       end;
 
       CloseFile(f);
    except on E : EInOutError do // VK 1.36 U
       MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
    end;
+   Result := true;
+end;
+
+function GetIdentityTM : TTransformMatrix;
+begin
+   Result[1,1] := 1;
+   Result[1,2] := 0;
+   Result[1,3] := 0;
+   Result[1,4] := 0;
+   Result[2,1] := 0;
+   Result[2,2] := 1;
+   Result[2,3] := 0;
+   Result[2,4] := 0;
+   Result[3,1] := 0;
+   Result[3,2] := 0;
+   Result[3,3] := 1;
+   Result[3,4] := 0;
 end;
 
 Function GetTMValue(Row,Col : integer) : single;
@@ -117,7 +157,7 @@ begin
       Exit;
    end;
 
-   MyScale := VoxelFile.Section[Section].Tailer.Det;
+//   MyScale := VoxelFile.Section[Section].Tailer.Det;
 //   if HVAScale = 0 then HVAScale := 1;
 
    if HVAFile.Header.N_Sections > 0 then

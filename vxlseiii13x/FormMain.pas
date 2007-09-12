@@ -609,6 +609,8 @@ then begin
 end;
 
 procedure TFrmMain.Open1Click(Sender: TObject);
+var
+   HVAName : string;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Open1Click');
@@ -621,8 +623,18 @@ begin
       SetIsEditable(LoadVoxel(OpenVXLDialog.FileName));
 
    if IsEditable then
+   begin
+      HVAName := copy(OpenVXLDialog.Filename,1,Length(OpenVXLDialog.FileName) - 3) + 'hva';
+      if FileExists(HVAName) then
+      begin
+         try
+            if not LoadHVA(HVAName) then
+               ClearHVA;
+         except
+         end;
+      end;
       DoAfterLoadingThings;
-
+   end;
    IsVXLLoading := false;
 end;
 
@@ -1269,6 +1281,7 @@ var
    l: Integer;
    Reg: TRegistry;
    LatestVersion: string;
+   VoxelName,HVAName: string;
 begin
    frm:=TLoadFrm.Create(Self);
    if testbuild then
@@ -1312,15 +1325,28 @@ begin
    VXLTool := 4;
 
    if ParamCount > 0 then
-   If FileExists(GetParamStr) then
-   Begin
-      IsVXLLoading := true;
-      SetIsEditable(LoadVoxel(GetParamStr));
-      if IsEditable then
-         DoAfterLoadingThings;
-
-      IsVXLLoading := false;
-   End;
+   begin
+      VoxelName := GetParamStr;
+      If FileExists(VoxelName) then
+      Begin
+         IsVXLLoading := true;
+         SetIsEditable(LoadVoxel(VoxelName));
+         if IsEditable then
+         begin
+            HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
+            if FileExists(HVAName) then
+            begin
+               try
+                  if not LoadHVA(HVAName) then
+                     ClearHVA;
+               except
+               end;
+            end;
+            DoAfterLoadingThings;
+         end;
+         IsVXLLoading := false;
+      End;
+   end;
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: FormShow Loaded');
    {$endif}
@@ -3167,7 +3193,7 @@ end;
 procedure TFrmMain.mnuHistoryClick(Sender: TObject);
 var
    p: ^TMenuItem;
-   s : string;
+   s,VoxelName,HVAName : string;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: MenuHistoryClick');
@@ -3186,9 +3212,21 @@ begin
       end;
 
       IsVXLLoading := true;
-      SetIsEditable(LoadVoxel(Config.GetHistory(p^.Tag)));
+      VoxelName := Config.GetHistory(p^.Tag);
+      SetIsEditable(LoadVoxel(VoxelName));
       if IsEditable then
+      begin
+         HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
+         if FileExists(HVAName) then
+         begin
+            try
+               if not LoadHVA(HVAName) then
+                  ClearHVA;
+            except
+            end;
+         end;
          DoAfterLoadingThings;
+      end;
       IsVXLLoading := false;
    end;
 end;

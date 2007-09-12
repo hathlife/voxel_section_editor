@@ -39,7 +39,7 @@ begin
   HVASection := FrmMain.SectionCombo.ItemIndex;
   Label1.Caption := 'Section: ' + FrmMain.SectionCombo.Items.Strings[HVASection];
   SpinEdit1.Value := HVAFrame;
-  HVATEST := true;
+//  HVATEST := true;
 //  PopulateMatrix;
 end;
 

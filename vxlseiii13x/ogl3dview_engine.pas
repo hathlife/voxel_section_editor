@@ -119,9 +119,6 @@ ambient:  TGLArrayf4=( 0.0, 0.0, 0.0, 1);
 Light0_Light:  TGLArrayf4=( 1, 1, 1, 1);
 Light0_Spec:  TGLArrayf4=( 1, 0.5, 0, 0);
 
-var
-HVATEST : boolean = false;
-
 function SetVector(x, y, z : single) : TVector3f;
 function SetVectori(x, y, z : integer) : TVector3i;
 Function TColorToTVector3f(Color : TColor) : TVector3f;
@@ -571,23 +568,12 @@ begin
          VoxelBoxes.Section[0].List := glGenLists(1);
          glNewList(VoxelBoxes.Section[0].List, GL_COMPILE);
          // Now, we hunt all voxel boxes...
-         if (HVATEST) then
+         glPushMatrix;
+         for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
          begin
-            glPushMatrix;
-            for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
-            begin
-               DrawBox(GetPosWithSize(ApplyMatrix(VoxelBoxes.Section[0].Box[x].Position), Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
-            end;
-         end
-         else
-         begin
-            glPushMatrix;
-            for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
-            begin
-               DrawBox(GetPosWithSize(VoxelBoxes.Section[0].Box[x].Position, Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
-            end;
-            glPopMatrix;
+            DrawBox(GetPosWithSize(VoxelBoxes.Section[0].Box[x].Position, Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
          end;
+         glPopMatrix;
          glEndList;
          RebuildLists := false;
       end;

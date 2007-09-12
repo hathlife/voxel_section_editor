@@ -382,22 +382,21 @@ begin
       exit;
    end;
 
-   //if SpectrumMode <> ModeColours then
-   if ActiveSection.Tailer.Unknown = 4 then
-   begin
-      NormalNum := 244;
-      NormalDiv := 3;
-   end
-   else
-   begin
-      NormalNum := 35;
-      NormalDiv := 0.5;
-   end;
-
    if SpectrumMode = ModeColours then
       Result := VXLPalette[color]
    else
    begin
+      if ActiveSection.Tailer.Unknown = 4 then
+      begin
+         NormalNum := 244;
+         NormalDiv := 3;
+      end
+      else
+      begin
+         NormalNum := 35;
+         NormalDiv := 0.5;
+      end;
+
       N := Color;
       If N > NormalNum Then
          N := NormalNum;

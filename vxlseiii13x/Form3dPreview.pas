@@ -462,6 +462,7 @@ procedure TFrm3DPReview.DrawMe();
 var
    x,Section : integer;
    Scale,MinBounds : TVector3f;
+//   Matrix : TGlmatrixf4;
 begin
    if (not Showing) then exit;
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
@@ -479,22 +480,18 @@ begin
    YRot := CleanAngle(YRot);
 
    // For true normals, we activate all OpenGL stuff.
- //  if (DebugMode1.Checked) then
- //  begin
-      glEnable(GL_LIGHT0);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-//   end
-//   else // For simulated normals, we ignore OpenGL lighting.
-//   begin
-//      glDisable(GL_LIGHT0);
-//      glDisable(GL_LIGHTING);
-//      glDisable(GL_COLOR_MATERIAL);
-//   end;
+   glEnable(GL_LIGHT0);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_COLOR_MATERIAL);
 
    // We'll only render anything if there is a voxel to render.
    if VoxelBoxes.NumBoxes > 0 then
    begin
+      glPushMatrix;
+      glLoadIdentity();                                       // Reset The View
+      glTranslatef(0, 0, Depth);
+      glRotatef(XRot, 1, 0, 0);
+      glRotatef(YRot, 0, 0, 1);
       // Here we make the OpenGL list to speed up the render.
       for Section := Low(VoxelBoxes.Section) to High(VoxelBoxes.Section) do
       begin
@@ -506,39 +503,25 @@ begin
             VoxelBoxes.Section[Section].List := glGenLists(1);
             glNewList(VoxelBoxes.Section[Section].List, GL_COMPILE);
             // Now, we hunt all voxel boxes...
-            if (HVATEST) then
+            glPushMatrix;
+            for x := Low(VoxelBoxes.Section[Section].Box) to High(VoxelBoxes.Section[Section].Box) do
             begin
-               glPushMatrix;
-               for x := Low(VoxelBoxes.Section[Section].Box) to High(VoxelBoxes.Section[Section].Box) do
-               begin
-                  DrawBox(GetPosWithSize(ApplyMatrix(VoxelBoxes.Section[Section].Box[x].Position), Size), GetVXLColor(VoxelBoxes.Section[Section].Box[x].Color, VoxelBoxes.Section[Section].Box[x].Normal), Size, VoxelBoxes.Section[Section].Box[x]);
-               end;
-            end
-            else
-            begin
-               glPushMatrix;
-               for x := Low(VoxelBoxes.Section[Section].Box) to High(VoxelBoxes.Section[Section].Box) do
-               begin
-                  DrawBox(GetPosWithSize(VoxelBoxes.Section[Section].Box[x].Position, Size), GetVXLColor(VoxelBoxes.Section[Section].Box[x].Color, VoxelBoxes.Section[Section].Box[x].Normal), Size, VoxelBoxes.Section[Section].Box[x]);
-               end;
-               glPopMatrix;
+               DrawBox(GetPosWithSize(ScaleVector3f(VoxelBoxes.Section[Section].Box[x].Position,Scale), Size), GetVXLColor(VoxelBoxes.Section[Section].Box[x].Color, VoxelBoxes.Section[Section].Box[x].Normal), Size, VoxelBoxes.Section[Section].Box[x]);
             end;
+            glPopMatrix;
             glEndList;
          end;
-         // The final voxel rendering part.
          glPushMatrix;
-         glLoadIdentity();                                       // Reset The View
-
-         glTranslatef(0, 0, Depth);
-
-         glRotatef(XRot, 1, 0, 0);
-         glRotatef(YRot, 0, 0, 1);
-
-         ApplyMatrix(VoxelFile.Section[VoxelBoxes.Section[Section].ID].Tailer.Det,ScaleVector(Scale,Size),VoxelBoxes.Section[Section].ID,HVAFrame);
-         glTranslatef(MinBounds.X*Size*2, MinBounds.Y*Size*2, MinBounds.Z*Size*2);
-         glCallList(VoxelBoxes.Section[Section].List);
+//            Matrix := VoxelFile.Section[VoxelBoxes.Section[Section].ID].GetTransformAsOpenGLMatrix;
+//            glMultMatrixf(@Matrix[0,0]);
+            ApplyMatrix(VoxelFile.Section[VoxelBoxes.Section[Section].ID].Tailer.Det,ScaleVector(Scale,Size),VoxelBoxes.Section[Section].ID,HVAFrame);
+            glTranslatef(MinBounds.X*Size*2, MinBounds.Y*Size*2, MinBounds.Z*Size*2);
+            glCallList(VoxelBoxes.Section[Section].List);
          glPopMatrix;
       end;
+      // The get camera settings.
+      glPopMatrix;
+
       RebuildLists := false;
       // End of the final voxel rendering part.
       glDisable(GL_TEXTURE_2D);
@@ -861,9 +844,9 @@ begin
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[5]   := CheckFace(VoxelFile.Section[Section], x - 1, y, z);
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[6]   := CheckFace(VoxelFile.Section[Section], x + 1, y, z);
 
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := X - (VoxelFile.Section[Section].Tailer.xSize / 2);
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := Y - (VoxelFile.Section[Section].Tailer.ySize / 2);
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := Z - (VoxelFile.Section[Section].Tailer.zSize / 2);
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := X;// - (VoxelFile.Section[Section].Tailer.xSize / 2);
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := Y;// - (VoxelFile.Section[Section].Tailer.ySize / 2);
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := Z;// - (VoxelFile.Section[Section].Tailer.zSize / 2);
 
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Color  := v.Colour;
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Normal := v.Normal;
@@ -897,9 +880,9 @@ begin
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5]   := CheckFace(Vxl, x - 1, y, z);
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6]   := CheckFace(Vxl, x + 1, y, z);
 
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := X - (Vxl.Tailer.xSize / 2);
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := Y - (Vxl.Tailer.ySize / 2);
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := Z - (Vxl.Tailer.zSize / 2);
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := X;// - (Vxl.Tailer.xSize / 2);
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := Y;// - (Vxl.Tailer.ySize / 2);
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := Z;// - (Vxl.Tailer.zSize / 2);
 
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := v.Colour;
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := v.Normal;

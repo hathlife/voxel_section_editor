@@ -34,7 +34,7 @@ object FrmReplaceColour: TFrmReplaceColour
     Align = alBottom
     Shape = bsBottomLine
   end
-  object Panel3: TPanel
+  object PanelTitle: TPanel
     Left = 0
     Top = 0
     Width = 490
@@ -81,16 +81,16 @@ object FrmReplaceColour: TFrmReplaceColour
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    object Button6: TButton
+    object BtOK: TButton
       Left = 327
       Top = 11
       Width = 75
       Height = 23
       Caption = 'Ok'
       TabOrder = 0
-      OnClick = Button6Click
+      OnClick = BtOKClick
     end
-    object Button7: TButton
+    object BtCancel: TButton
       Left = 408
       Top = 11
       Width = 75
@@ -98,7 +98,7 @@ object FrmReplaceColour: TFrmReplaceColour
       Cancel = True
       Caption = 'Cancel'
       TabOrder = 1
-      OnClick = Button7Click
+      OnClick = BtCancelClick
     end
   end
   object Panel5: TPanel
@@ -127,7 +127,7 @@ object FrmReplaceColour: TFrmReplaceColour
       AutoSize = False
       Caption = 'With Colour'
     end
-    object Label3: TLabel
+    object LabelReplace: TLabel
       Left = 200
       Top = 49
       Width = 65
@@ -135,7 +135,7 @@ object FrmReplaceColour: TFrmReplaceColour
       Alignment = taCenter
       AutoSize = False
     end
-    object Label4: TLabel
+    object LabelWith: TLabel
       Left = 288
       Top = 49
       Width = 65
@@ -158,22 +158,22 @@ object FrmReplaceColour: TFrmReplaceColour
       OnMouseUp = cnvPaletteMouseUp
       OnPaint = cnvPalettePaint
     end
-    object Panel1: TPanel
+    object PanelReplace: TPanel
       Left = 200
       Top = 32
       Width = 65
       Height = 17
       TabOrder = 0
-      OnClick = Panel1Click
+      OnClick = PanelReplaceClick
     end
-    object Panel2: TPanel
+    object PanelWith: TPanel
       Left = 288
       Top = 32
       Width = 65
       Height = 17
       BevelOuter = bvLowered
       TabOrder = 1
-      OnClick = Panel2Click
+      OnClick = PanelWithClick
     end
     object ListBox1: TListBox
       Left = 248
@@ -184,32 +184,32 @@ object FrmReplaceColour: TFrmReplaceColour
       TabOrder = 2
       OnClick = ListBox1Click
     end
-    object Button3: TButton
+    object BtAdd: TButton
       Left = 192
       Top = 104
       Width = 49
       Height = 25
       Caption = 'Add'
       TabOrder = 3
-      OnClick = Button3Click
+      OnClick = BtAddClick
     end
-    object Button4: TButton
+    object BtEdit: TButton
       Left = 192
       Top = 128
       Width = 49
       Height = 25
       Caption = 'Edit'
       TabOrder = 4
-      OnClick = Button4Click
+      OnClick = BtEditClick
     end
-    object Button5: TButton
+    object BtDelete: TButton
       Left = 192
       Top = 152
       Width = 49
       Height = 25
       Caption = 'Delete'
       TabOrder = 5
-      OnClick = Button5Click
+      OnClick = BtDeleteClick
     end
     object pnlPalette: TPanel
       Left = 24

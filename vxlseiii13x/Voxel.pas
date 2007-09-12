@@ -3,7 +3,7 @@ unit Voxel;
 interface
 
 uses
-   {LoadForm,} Forms, Classes;
+   {LoadForm,} Forms, Classes, OpenGL;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -25,6 +25,7 @@ type
    EVoxelViewOrient = (oriX, oriY, oriZ);
    EVoxelViewDir = (dirTowards, dirAway);
    TVoxelType = (vtLand, vtAir);
+   TGLMatrixf4 = array[0..3, 0..3] of Single;
 
    TVoxelHeader = packed record
       FileType: packed array[1..16] of Char; // always "Voxel Animation"
@@ -141,6 +142,7 @@ type
       procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
       procedure Mirror(MirrorView: EVoxelViewOrient);
       procedure Assign(const _VoxelSection : TVoxelSection);
+      function GetTransformAsOpenGLMatrix : TGlmatrixf4;
    end;
    PVoxelSection = ^TVoxelSection;
 
@@ -323,6 +325,29 @@ begin
          ThumbVisible[i] := False;
       end;
    end;
+end;
+
+function TVoxelSection.GetTransformAsOpenGLMatrix : TGlmatrixf4;
+begin
+   Result[0,0] := Tailer.Transform[1,1];
+   Result[0,1] := Tailer.Transform[2,1];
+   Result[0,2] := Tailer.Transform[3,1];
+   Result[0,3] := 0;
+
+   Result[1,0] := Tailer.Transform[1,2];
+   Result[1,1] := Tailer.Transform[2,2];
+   Result[1,2] := Tailer.Transform[3,2];
+   Result[1,3] := 0;
+
+   Result[2,0] := Tailer.Transform[1,3];
+   Result[2,1] := Tailer.Transform[2,3];
+   Result[2,2] := Tailer.Transform[3,3];
+   Result[2,3] := 0;
+
+   Result[3,0] := Tailer.Transform[1,4];
+   Result[3,1] := Tailer.Transform[2,4];
+   Result[3,2] := Tailer.Transform[3,4];
+   Result[3,3] := 1;
 end;
 
 procedure TVoxelSection.SetHeaderName(Name: String);
@@ -1441,7 +1466,7 @@ end;
 procedure TVoxel.setSpectrum(newspectrum: ESpectrumMode);
 var i: integer;
 begin
-   for i := 0 to Length(section) - 1 do
+   for i := Low(Section) to High(Section) do
       Section[i].setSpectrum(newspectrum);
 end;
 
