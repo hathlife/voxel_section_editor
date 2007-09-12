@@ -1,10 +1,10 @@
 object Frm3DPReview: TFrm3DPReview
   Left = 723
   Top = 264
-  Width = 248
-  Height = 275
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
+  ClientHeight = 232
+  ClientWidth = 240
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

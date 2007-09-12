@@ -844,10 +844,9 @@ begin
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[5]   := CheckFace(VoxelFile.Section[Section], x - 1, y, z);
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[6]   := CheckFace(VoxelFile.Section[Section], x + 1, y, z);
 
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := X;// - (VoxelFile.Section[Section].Tailer.xSize / 2);
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := Y;// - (VoxelFile.Section[Section].Tailer.ySize / 2);
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := Z;// - (VoxelFile.Section[Section].Tailer.zSize / 2);
-
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := X;
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := Y;
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := Z;
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Color  := v.Colour;
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Normal := v.Normal;
                      Inc(VoxelBox_No);

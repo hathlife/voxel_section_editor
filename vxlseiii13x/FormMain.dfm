@@ -1,10 +1,10 @@
 object FrmMain: TFrmMain
   Left = 154
   Top = 0
-  Width = 870
-  Height = 876
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
+  ClientHeight = 785
+  ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -29,10 +29,11 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 811
+    Height = 766
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 811
     object LeftPanel: TPanel
       Left = 1
       Top = 26
@@ -43,7 +44,7 @@ object FrmMain: TFrmMain
       object lblSection: TLabel
         Left = 1
         Top = 1
-        Width = 150
+        Width = 42
         Height = 13
         Align = alTop
         Caption = '  Section'
@@ -59,7 +60,7 @@ object FrmMain: TFrmMain
       object lblTools: TLabel
         Left = 1
         Top = 55
-        Width = 150
+        Width = 32
         Height = 13
         Align = alTop
         Caption = '  Tools'
@@ -75,7 +76,7 @@ object FrmMain: TFrmMain
       object lblpalette: TLabel
         Left = 1
         Top = 257
-        Width = 150
+        Width = 39
         Height = 13
         Align = alTop
         Caption = '  Palette'
@@ -100,7 +101,7 @@ object FrmMain: TFrmMain
       object lblLayer: TLabel
         Left = 1
         Top = 177
-        Width = 150
+        Width = 37
         Height = 13
         Align = alTop
         Caption = '  Layers'
@@ -116,7 +117,7 @@ object FrmMain: TFrmMain
       object lblBrush: TLabel
         Left = 1
         Top = 129
-        Width = 150
+        Width = 33
         Height = 13
         Align = alTop
         Caption = '  Brush'
@@ -142,7 +143,7 @@ object FrmMain: TFrmMain
           Top = 12
           Width = 137
           Height = 21
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 0
           OnChange = SectionComboChange
         end
@@ -1177,9 +1178,10 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 784
+      Height = 739
       Align = alRight
       TabOrder = 1
+      ExplicitHeight = 784
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1205,7 +1207,7 @@ object FrmMain: TFrmMain
       object lblView1: TLabel
         Left = 1
         Top = 1
-        Width = 203
+        Width = 63
         Height = 13
         Align = alTop
         Caption = '  View : Right'
@@ -1223,7 +1225,7 @@ object FrmMain: TFrmMain
       object lblView2: TLabel
         Left = 1
         Top = 217
-        Width = 203
+        Width = 57
         Height = 13
         Align = alTop
         Caption = '  View : Top'
@@ -1241,7 +1243,7 @@ object FrmMain: TFrmMain
       object lbl3dview: TLabel
         Left = 1
         Top = 433
-        Width = 203
+        Width = 46
         Height = 13
         Align = alTop
         Caption = '  3D View'
@@ -1473,13 +1475,14 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 503
-      Height = 784
+      Height = 739
       Align = alClient
       TabOrder = 2
+      ExplicitHeight = 784
       object lblView0: TLabel
         Left = 1
         Top = 1
-        Width = 501
+        Width = 98
         Height = 13
         Align = alTop
         Caption = '  Editing View : Back'
@@ -4243,9 +4246,7 @@ object FrmMain: TFrmMain
         Width = 858
         Height = 23
         Caption = 'ToolBar1'
-        EdgeBorders = []
         EdgeInner = esNone
-        Flat = True
         Images = ImageList1
         ParentShowHint = False
         ShowHint = True
@@ -4410,7 +4411,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 811
+    Top = 766
     Width = 862
     Height = 19
     Panels = <
@@ -4426,6 +4427,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
+    ExplicitTop = 811
   end
   object MainMenu1: TMainMenu
     Images = ImageList1

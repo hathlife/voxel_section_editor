@@ -27,6 +27,7 @@ type
       Distancia : single;
    end;
    TFiltroDistancia = array of array of array of TFiltroDistanciaUnidade;
+   TBooleanMap = array of array of array of Boolean;
 
 const
 // Essas constantes mapeam o nível de influência do pixel em relação ao
@@ -43,10 +44,10 @@ const
    // Constante de pesos, para se usar na hora de detectar a tendência da
    // massa
    PESO_FORA_DO_VOLUME = 0;
-   PESO_INFLUENCIA_DE_UM_EIXO = 0.000000000001;
-   PESO_INFLUENCIA_DE_DOIS_EIXOS = 0.00000001;
-   PESO_INFLUENCIA_DE_TRES_EIXOS = 0.000001;
-   PESO_PARTE_DO_VOLUME = 0.0001;
+   PESO_INFLUENCIA_DE_UM_EIXO = 0.000001;
+   PESO_INFLUENCIA_DE_DOIS_EIXOS = 0.0001;
+   PESO_INFLUENCIA_DE_TRES_EIXOS = 0.01;
+   PESO_PARTE_DO_VOLUME = 0.1;
    PESO_SUPERFICIE = 1;
 
 
@@ -74,7 +75,7 @@ procedure AcharPlanoTangenteEmXZ(const Mapa : TVoxelMap; const Filtro : TFiltroD
 
 // Outras funções
 function PontoValido (const x,y,z,maxx,maxy,maxz : integer) : boolean;
-function PegarValorDoPonto(const Mapa : TVoxelMap; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var PontosVisitados : TBooleanMap; const Ponto : TVector3f): single;
 
 
 implementation
@@ -932,6 +933,7 @@ var
    Direcao : single;
    Contador : integer;
    Posicao,PosicaoOposta,Centro : TVector3f;
+   PontosVisitados : TBooleanMap;
 begin
    // Esse é o ponto do Mapa equivalente ao ponto do voxel a ser avaliado.
    x := Alcance + _x;
@@ -1025,6 +1027,10 @@ begin
    PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
    Contador := 0;
    Direcao := 0;
+   // Adicionamos aqui uma forma de prevenir que o mesmo voxel conte mais do
+   // que uma vez, evitando um resultado errado.
+   SetLength(PontosVisitados,High(Mapa)+1,High(Mapa[0])+1,High(Mapa[0,0])+1);
+   PontosVisitados[x,y,z] := true;
    while Contador < C_TAMANHO_RAYCASTING do
    begin
       Posicao.X := Posicao.X + VetorNormal.X;
@@ -1034,7 +1040,7 @@ begin
       PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
       PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
       inc(Contador);
-      Direcao := Direcao + PegarValorDoPonto(Mapa,Posicao) - PegarValorDoPonto(Mapa,PosicaoOposta);
+      Direcao := Direcao + PegarValorDoPonto(Mapa,PontosVisitados,Posicao) - PegarValorDoPonto(Mapa,PontosVisitados,PosicaoOposta);
    end;
 
    // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
@@ -1337,19 +1343,36 @@ begin
    result := true;
 end;
 
+function Arredondar(valor : single): integer;
+var
+   decimal : single;
+   inteiro : integer;
+begin
+   inteiro := trunc(valor);
+   decimal := valor - inteiro;
+   if decimal > 0.5 then
+      Result := inteiro + 1
+   else
+      Result := inteiro;
+end;
+
 // Pega o valor no ponto do mapa para o falso raytracing em AplicarFiltro.
-function PegarValorDoPonto(const Mapa : TVoxelMap; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var PontosVisitados : TBooleanMap; const Ponto : TVector3f): single;
 var
    PontoI : TVector3i;
 begin
-   PontoI := SetVectorI(Trunc(Ponto.X),Trunc(Ponto.Y),Trunc(Ponto.Z));
+   PontoI := SetVectorI(Arredondar(Ponto.X),Arredondar(Ponto.Y),Arredondar(Ponto.Z));
    Result := 0;
-   if (PontoI.X < 0) or (PontoI.X > High(Mapa)) then exit;
-   if (PontoI.Y < 0) or (PontoI.Y > High(Mapa[0])) then exit;
-   if (PontoI.Z < 0) or (PontoI.Z > High(Mapa[0,0])) then exit;
-   Result := Mapa[PontoI.X,PontoI.Y,PontoI.Z];
-   if Result >= PESO_PARTE_DO_VOLUME then
-      Result := PESO_SUPERFICIE;
+   if PontoValido(PontoI.X,PontoI.Y,PontoI.Z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
+   begin
+      if not PontosVisitados[PontoI.X,PontoI.Y,PontoI.Z] then
+      begin
+         PontosVisitados[PontoI.X,PontoI.Y,PontoI.Z] := true;
+         Result := Mapa[PontoI.X,PontoI.Y,PontoI.Z];
+         if Result >= PESO_PARTE_DO_VOLUME then
+            Result := PESO_SUPERFICIE;
+      end;
+   end;
 end;
 
 

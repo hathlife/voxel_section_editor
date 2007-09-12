@@ -38,6 +38,7 @@ uses
   FormPalettePackAbout in 'FormPalettePackAbout.pas' {FrmPalettePackAbout},
   FormTimeMachine in 'FormTimeMachine.pas' {FrmTimeMain},
   Voxel_AutoNormals in 'Voxel_AutoNormals.pas',
+  Spin in 'Spin.pas',
   FormMain in 'FormMain.pas' {FrmMain};
 
 {$R *.res}
