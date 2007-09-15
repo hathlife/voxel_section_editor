@@ -27,7 +27,6 @@ type
       Distancia : single;
    end;
    TFiltroDistancia = array of array of array of TFiltroDistanciaUnidade;
-   TBooleanMap = array of array of array of Boolean;
 
 const
 // Essas constantes mapeam o nível de influência do pixel em relação ao
@@ -75,7 +74,7 @@ procedure AcharPlanoTangenteEmXZ(const Mapa : TVoxelMap; const Filtro : TFiltroD
 
 // Outras funções
 function PontoValido (const x,y,z,maxx,maxy,maxz : integer) : boolean;
-function PegarValorDoPonto(const Mapa : TVoxelMap; var PontosVisitados : TBooleanMap; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f): single;
 
 
 implementation
@@ -934,6 +933,7 @@ var
    Contador : integer;
    Posicao,PosicaoOposta,Centro : TVector3f;
    PontosVisitados : TBooleanMap;
+   UltimoVisitado,UltimoOpostoVisitado : TVector3i;
 begin
    // Esse é o ponto do Mapa equivalente ao ponto do voxel a ser avaliado.
    x := Alcance + _x;
@@ -1029,8 +1029,8 @@ begin
    Direcao := 0;
    // Adicionamos aqui uma forma de prevenir que o mesmo voxel conte mais do
    // que uma vez, evitando um resultado errado.
-   SetLength(PontosVisitados,High(Mapa)+1,High(Mapa[0])+1,High(Mapa[0,0])+1);
-   PontosVisitados[x,y,z] := true;
+   UltimoVisitado := SetVectorI(x,y,z);
+   UltimoOpostoVisitado := SetVectorI(x,y,z);
    while Contador < C_TAMANHO_RAYCASTING do
    begin
       Posicao.X := Posicao.X + VetorNormal.X;
@@ -1040,7 +1040,7 @@ begin
       PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
       PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
       inc(Contador);
-      Direcao := Direcao + PegarValorDoPonto(Mapa,PontosVisitados,Posicao) - PegarValorDoPonto(Mapa,PontosVisitados,PosicaoOposta);
+      Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao) - PegarValorDoPonto(Mapa,UltimoVisitado,PosicaoOposta);
    end;
 
    // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
@@ -1357,7 +1357,7 @@ begin
 end;
 
 // Pega o valor no ponto do mapa para o falso raytracing em AplicarFiltro.
-function PegarValorDoPonto(const Mapa : TVoxelMap; var PontosVisitados : TBooleanMap; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f): single;
 var
    PontoI : TVector3i;
 begin
@@ -1365,9 +1365,11 @@ begin
    Result := 0;
    if PontoValido(PontoI.X,PontoI.Y,PontoI.Z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
    begin
-      if not PontosVisitados[PontoI.X,PontoI.Y,PontoI.Z] then
+      if (Ultimo.X <> PontoI.X) or (Ultimo.Y <> PontoI.Y) or (Ultimo.Z <> PontoI.Z) then
       begin
-         PontosVisitados[PontoI.X,PontoI.Y,PontoI.Z] := true;
+         Ultimo.X := PontoI.X;
+         Ultimo.Y := PontoI.Y;
+         Ultimo.Z := PontoI.Z;
          Result := Mapa[PontoI.X,PontoI.Y,PontoI.Z];
          if Result >= PESO_PARTE_DO_VOLUME then
             Result := PESO_SUPERFICIE;

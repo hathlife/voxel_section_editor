@@ -512,8 +512,6 @@ begin
             glEndList;
          end;
          glPushMatrix;
-//            Matrix := VoxelFile.Section[VoxelBoxes.Section[Section].ID].GetTransformAsOpenGLMatrix;
-//            glMultMatrixf(@Matrix[0,0]);
             ApplyMatrix(VoxelFile.Section[VoxelBoxes.Section[Section].ID].Tailer.Det,ScaleVector(Scale,Size),VoxelBoxes.Section[Section].ID,HVAFrame);
             glTranslatef(MinBounds.X*Size*2, MinBounds.Y*Size*2, MinBounds.Z*Size*2);
             glCallList(VoxelBoxes.Section[Section].List);

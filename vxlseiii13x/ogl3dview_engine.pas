@@ -4,7 +4,8 @@ unit ogl3dview_engine;
 
 interface
 
-uses Geometry,Windows,SysUtils,Graphics,OpenGL15,forms,Voxel,Voxel_Engine,math, dialogs,HVA, math3d;
+uses Geometry,Windows,SysUtils,Graphics,OpenGL15,forms,Voxel,Voxel_Engine,math,
+      dialogs,HVA, math3d;
       {
 type TVector3f = record
   X, Y, Z : single;
@@ -491,9 +492,6 @@ var
 begin
    if (Color > 15) and (Color < 32) then
    begin
-//      T.X := RemapColour.X * 255 + ((Color - 15) - 15 / 2);
-//      T.Y := RemapColour.Y * 255 + ((Color - 15) - 15 / 2);
-//      T.Z := RemapColour.Z * 255 + ((Color - 15) - 15 / 2);
       T.X := RemapColour.X * ((32 - Color) / 16);
       T.Y := RemapColour.Y * ((32 - Color) / 16);
       T.Z := RemapColour.Z * ((32 - Color) / 16);
