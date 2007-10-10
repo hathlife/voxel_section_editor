@@ -84,6 +84,21 @@ begin
    EdContrast.Enabled := value and (not RbTangent.Checked);
    EdSmooth.Enabled := value and (not RbTangent.Checked);
    CbNewPixelsOnly.Enabled := value and (not RbTangent.Checked);
+   if RbInfluence.Checked then
+   begin
+      CbIncreaseContrast.Caption := 'Stretch Influence Map';
+      CbIncreaseContrast.Enabled := true;
+   end
+   else if RbTangent.Checked then
+   begin
+      CbIncreaseContrast.Caption := 'Treat Descontinuities';
+      CbIncreaseContrast.Enabled := true;
+   end
+   else
+   begin
+      CbIncreaseContrast.Caption := 'Stretch Influence Map';
+      CbIncreaseContrast.Enabled := false;
+   end;
 end;
 
 procedure TFrmAutoNormals.FormShow(Sender: TObject);
@@ -169,7 +184,7 @@ begin
          MessageBox(0,pchar('Range Value Is Invalid. It Must Be Positive and Higher Than 1. Using 3.54 (Default).'),'Auto Normals Warning',0);
          Range := RA2_MAGIC_NUMBER;
       end;
-      Res := AcharNormais(MyVoxel,Range);
+      Res := AcharNormais(MyVoxel,Range,CbIncreaseContrast.Checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_TANGENT + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Tangent Plane Auto Normal Results',0);
    end
    else If RbInfluence.Checked then

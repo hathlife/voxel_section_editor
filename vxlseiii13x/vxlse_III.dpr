@@ -39,7 +39,8 @@ uses
   FormTimeMachine in 'FormTimeMachine.pas' {FrmTimeMain},
   Voxel_AutoNormals in 'Voxel_AutoNormals.pas',
   Spin in 'Spin.pas',
-  FormMain in 'FormMain.pas' {FrmMain};
+  FormMain in 'FormMain.pas' {FrmMain},
+  Class3DPointList in 'Class3DPointList.pas';
 
 {$R *.res}
 

@@ -1,5 +1,7 @@
-1.38 Alpha - 14/09/2007 - Status: Stable.
+1.38 Alpha - 09/10/2007 - Status: Stable.
   - revisions by Banshee
     - Update: Rendering speed improved.
     - (Not Completed) Bug Fix: Whole Voxel option at the Form 3D Preview works better and the program is reading HVA files, but it only renders the first frame.
     - Bug Fix: Tangent Plain auto normals 8.1 will find less wrong (inversed) normals due to a fix in the final process.
+    - New Feature: Treat Discontinuities at Tangent Plane auto normals. This option changes the neighbor voxels from the voxel that is being analysed, improving the auto normals result.
+    - Update: Tangent Plane auto normals has a lightly different and smarter way to get the best tangent plane possible, considerably improving the auto normals results. 

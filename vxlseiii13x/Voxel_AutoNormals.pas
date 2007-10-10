@@ -2,7 +2,10 @@ unit Voxel_AutoNormals;
 
 interface
 
-uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d;
+uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList;
+
+{$define LIMITES}
+{$define RAY_LIMIT}
 
 type
 // Estruturas do Voxel_Tools and Voxel.
@@ -51,7 +54,7 @@ const
 
 
 // Função principal
-function AcharNormais(Voxel : TVoxelSection; Alcance : single) : TApplyNormalsResult;
+function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 
 // Funções de mapeamento
 procedure InicializaMapaDoVoxel(const Voxel: TVoxelSection; var Mapa : TVoxelMap; Alcance: integer);
@@ -63,25 +66,31 @@ procedure ConverteInfluenciasEmPesos(var Mapa : TVoxelMap);
 
 // Funções de filtro
 procedure GerarFiltro(var Filtro : TFiltroDistancia; Alcance : single);
-function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; Alcance : integer): integer;
-procedure AplicarFiltro(var Voxel : TVoxelSection; const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; var V : TVoxelUnpacked; Alcance,_x,_y,_z : integer);
+function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; Alcance : integer; TratarDescontinuidades : boolean): integer;
+procedure AplicarFiltro(var Voxel : TVoxelSection; const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; var V : TVoxelUnpacked; Alcance,_x,_y,_z : integer; TratarDescontinuidades : boolean = false);
+
+// 1.38: Funções de detecção de superfícies.
+procedure DetectarSuperficieContinua(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
+procedure DetectarSuperficieEsferica(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
+
 
 // Plano Tangente
-procedure AcharPlanoTangenteEmXY(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
-procedure AcharPlanoTangenteEmYZ(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
-procedure AcharPlanoTangenteEmXZ(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
+procedure AcharPlanoTangenteEmXY(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmYZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmXZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 
 
 // Outras funções
 function PontoValido (const x,y,z,maxx,maxy,maxz : integer) : boolean;
-function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f; var EstaNoVazio : boolean): single;
+procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : TBooleanMap);
 
 
 implementation
 
 // 1.37: Novo Auto-Normalizador baseado em planos tangentes
 // Essa é a função principal da normalização.
-function AcharNormais(Voxel : TVoxelSection; Alcance : single) : TApplyNormalsResult;
+function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 var
    MapaDoVoxel : TVoxelMap;
    Filtro : TFiltroDistancia;
@@ -110,7 +119,7 @@ begin
    // ----------------------------------------------------
    // Parte 3: Aplicando o filtro no mapa e achando as normais
    // ----------------------------------------------------
-   Result.applied := AplicarFiltroNoMapa(Voxel,MapaDoVoxel,Filtro,IntAlcance);
+   Result.applied := AplicarFiltroNoMapa(Voxel,MapaDoVoxel,Filtro,IntAlcance,TratarDescontinuidades);
 
    // ----------------------------------------------------
    // Parte 4: Libera memória.
@@ -177,51 +186,8 @@ end;
 
 // 3D Flood Fill para encontrar o volume interno do modelo
 procedure FloodFill3D(var Mapa: TVoxelMap);
-type
-   T3DPosition = ^T3DPositionItem;
-   T3DPositionItem = record
-      x,y,z : integer;
-      Next : T3DPosition;
-   end;
-   // Adiciona ponto na lista.
-   procedure AdicionaPonto (var InicioLista,FimLista : T3DPosition; x,y,z : integer);
-   var
-      NovaPosicao : T3DPosition;
-   begin
-      New(NovaPosicao);
-      NovaPosicao^.x := x;
-      NovaPosicao^.y := y;
-      NovaPosicao^.z := z;
-      NovaPosicao^.Next := nil;
-      if InicioLista <> nil then
-      begin
-         FimLista^.Next := NovaPosicao;
-      end
-      else
-      begin
-         InicioLista := NovaPosicao;
-      end;
-      FimLista := NovaPosicao;
-   end;
-   // Esta função pega as informações do ponto atual e o exclui da fila
-   procedure LerPonto (var InicioLista,FimLista : T3DPosition; var x,y,z : integer);
-   var
-      Temporario : T3DPosition;
-   begin // InicioLista nunca será nil, já que o FloodFill vai assegurar.
-      x := InicioLista^.x;
-      y := InicioLista^.y;
-      z := InicioLista^.z;
-      Temporario := InicioLista;
-      if FimLista = InicioLista then
-         FimLista := nil;
-      InicioLista := InicioLista^.Next;
-      Dispose(Temporario);
-   end;
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// 3D Flood Fill começa aqui
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 var
-   InicioLista,FimLista : T3DPosition;
+   Lista : C3DPointList; // Veja Class3DPointList.pas;
    x,y,z : integer;
    maxx,maxy,maxz : integer;
 begin
@@ -231,53 +197,52 @@ begin
    maxz := High(Mapa[0,0]);
 
    // Começa em (0,0,0);
-   InicioLista := nil;
-   FimLista := nil;
-   AdicionaPonto(InicioLista,FimLista,0,0,0);
+   Lista := C3DPointList.Create;
+   Lista.Add(0,0,0);
    Mapa[0,0,0] := 0;
    // Vai preencher enquanto houver elementos na lista.
-   while InicioLista <> nil do
+   while Lista.GetPosition(x,y,z) do
    begin
-      // Pega a posição atual
-      LerPonto(InicioLista,FimLista,x,y,z);
       // Confere e adiciona os vizinhos (6 faces)
       if PontoValido(x-1,y,z,maxx,maxy,maxz) then
          if Mapa[x-1,y,z] = 1 then
          begin
             Mapa[x-1,y,z] := 0;
-            AdicionaPonto(InicioLista,FimLista,x-1,y,z);
+            Lista.Add(x-1,y,z);
          end;
       if PontoValido(x+1,y,z,maxx,maxy,maxz) then
          if Mapa[x+1,y,z] = 1 then
          begin
             Mapa[x+1,y,z] := 0;
-            AdicionaPonto(InicioLista,FimLista,x+1,y,z);
+            Lista.Add(x+1,y,z);
          end;
       if PontoValido(x,y-1,z,maxx,maxy,maxz) then
          if Mapa[x,y-1,z] = 1 then
          begin
             Mapa[x,y-1,z] := 0;
-            AdicionaPonto(InicioLista,FimLista,x,y-1,z);
+            Lista.Add(x,y-1,z);
          end;
       if PontoValido(x,y+1,z,maxx,maxy,maxz) then
          if Mapa[x,y+1,z] = 1 then
          begin
             Mapa[x,y+1,z] := 0;
-            AdicionaPonto(InicioLista,FimLista,x,y+1,z);
+            Lista.Add(x,y+1,z);
          end;
       if PontoValido(x,y,z-1,maxx,maxy,maxz) then
          if Mapa[x,y,z-1] = 1 then
          begin
             Mapa[x,y,z-1] := 0;
-            AdicionaPonto(InicioLista,FimLista,x,y,z-1);
+            Lista.Add(x,y,z-1);
          end;
       if PontoValido(x,y,z+1,maxx,maxy,maxz) then
          if Mapa[x,y,z+1] = 1 then
          begin
             Mapa[x,y,z+1] := 0;
-            AdicionaPonto(InicioLista,FimLista,x,y,z+1);
+            Lista.Add(x,y,z+1);
          end;
+      Lista.GoToNextElement;
    end;
+   Lista.Free;
 end;
 
 procedure MesclarMapasBinarios(const Fonte : TVoxelMap; var Destino : TVoxelMap);
@@ -897,7 +862,7 @@ begin
    end;
 end;
 
-function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; Alcance : integer): integer;
+function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; Alcance : integer; TratarDescontinuidades : boolean): integer;
 var
    x,y,z : integer;
    v : TVoxelUnpacked;
@@ -913,26 +878,29 @@ begin
             Voxel.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z);
+               AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z,TratarDescontinuidades);
                inc(Result);
             end;
          end;
 end;
 
-procedure AplicarFiltro(var Voxel : TVoxelSection; const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; var V : TVoxelUnpacked; Alcance,_x,_y,_z : integer);
+procedure AplicarFiltro(var Voxel : TVoxelSection; const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; var V : TVoxelUnpacked; Alcance,_x,_y,_z : integer; TratarDescontinuidades : boolean = false);
 const
    C_TAMANHO_RAYCASTING = 12;
 var
    VetorNormal : TVector3f;
    x,y,z : integer;
    xx,yy,zz : integer;
-   Ponto : TVector3i;
-   PontoMin,PontoMax : TVector3i;
+   PontoMin,PontoMax,LimiteMin,LimiteMax,PseudoCentro: TVector3i;
    PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f;
    Direcao : single;
    Contador : integer;
+{$ifdef RAY_LIMIT}
+   ValorFrente,ValorOposto : real;
+{$endif}
+   PararRaioDaFrente,PararRaioOposto : boolean;
    Posicao,PosicaoOposta,Centro : TVector3f;
-   PontosVisitados : TBooleanMap;
+   MapaDaSuperficie : TBooleanMap;
    UltimoVisitado,UltimoOpostoVisitado : TVector3i;
 begin
    // Esse é o ponto do Mapa equivalente ao ponto do voxel a ser avaliado.
@@ -948,6 +916,39 @@ begin
    PontoMin.Z := z - Alcance;
    PontoMax.Z := z + Alcance;
 
+   // 1.38: Agora vamos conferir os voxels que farão parte da superfície
+   // analisada.
+   SetLength(MapaDaSuperficie,High(Filtro)+1,High(Filtro[0])+1,High(Filtro[0,0])+1);
+
+   // LimiteMin e LimiteMax são a 'bounding box' da região a ser avaliada.
+{$ifdef LIMITES}
+   LimiteMin := SetVectori(Alcance,Alcance,Alcance);
+   LimiteMax := SetVectori(Alcance,Alcance,Alcance);
+{$else}
+   LimiteMin := SetVectori(0,0,0);
+   LimiteMax := SetVectori(High(Filtro),High(Filtro[0]),High(Filtro[0,0]));
+{$endif}
+
+   if TratarDescontinuidades then
+   begin
+      DetectarSuperficieContinua(MapaDaSuperficie,Mapa,Filtro,x,y,z,PontoMin,PontoMax,LimiteMin,LimiteMax);
+   end
+   else
+   begin
+      // Senão, adicionaremos os pontos que façam parte da superfície do modelo.
+      DetectarSuperficieEsferica(MapaDaSuperficie,Mapa,Filtro,PontoMin,PontoMax,LimiteMin,LimiteMax);
+   end;
+
+{$ifdef LIMITES}
+   // Isso calcula o que será considerado o centro da região a ser avaliada.
+   PseudoCentro.X := (LimiteMin.X + LimiteMax.X) div 2;
+   PseudoCentro.Y := (LimiteMin.Y + LimiteMax.Y) div 2;
+   PseudoCentro.Z := (LimiteMin.Z + LimiteMax.Z) div 2;
+{$else}
+   PseudoCentro.X := Alcance;
+   PseudoCentro.Y := Alcance;
+   PseudoCentro.Z := Alcance;
+{$endif}
    // Resetamos os pontos do plano
    PontoSudoeste := SetVector(0,0,0);
    PontoNordeste := SetVector(0,0,0);
@@ -957,31 +958,27 @@ begin
    // Para encontrar o plano tangente, primeiro iremos ver qual é a
    // provável tendência desse plano, para evitar arestas pequenas demais
    // que distorceriam o resultado final.
-   for xx := PontoMin.X to PontoMax.X do
-      for yy := PontoMin.Y to PontoMax.Y do
-         for zz := PontoMin.Z to PontoMax.Z do
+   for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
+      for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
+         for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if MapaDaSuperficie[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               if (Filtro[Ponto.X,Ponto.Y,Ponto.Z].X >= 0) then
-                  PontoNordeste.X := PontoNordeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X)
+               if (Filtro[xx,yy,zz].X >= 0) then
+                  PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X
                else
-                  PontoSudoeste.X := PontoSudoeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
+                  PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
 
-               if (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y >= 0) then
-                  PontoNordeste.Y := PontoNordeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y)
+               if (Filtro[xx,yy,zz].Y >= 0) then
+                  PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y
                else
-                  PontoSudoeste.Y := PontoSudoeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
+                  PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
 
-               if (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z >= 0) then
-                  PontoNordeste.Z := PontoNordeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z)
+               if (Filtro[xx,yy,zz].Z >= 0) then
+                  PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z
                else
-                  PontoSudoeste.Z := PontoSudoeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+                  PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
@@ -990,20 +987,20 @@ begin
    begin
       if (PontoNordeste.Y - PontoSudoeste.Y) > (PontoNordeste.Z - PontoSudoeste.Z) then
       begin
-         AcharPlanoTangenteEmXY(Mapa,Filtro,x,y,z,PontoMin,PontoMax,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste);
+         AcharPlanoTangenteEmXY(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
       end
       else
       begin
-         AcharPlanoTangenteEmXZ(Mapa,Filtro,x,y,z,PontoMin,PontoMax,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste);
+         AcharPlanoTangenteEmXZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
       end;
    end
    else if (PontoNordeste.X - PontoSudoeste.X) > (PontoNordeste.Z - PontoSudoeste.Z) then
    begin
-      AcharPlanoTangenteEmXY(Mapa,Filtro,x,y,z,PontoMin,PontoMax,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste);
+      AcharPlanoTangenteEmXY(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
    end
    else
    begin
-      AcharPlanoTangenteEmYZ(Mapa,Filtro,x,y,z,PontoMin,PontoMax,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste);
+      AcharPlanoTangenteEmYZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
    end;
 
    // Agora vamos achar uma das direções do plano. A outra vai ser o
@@ -1025,14 +1022,48 @@ begin
    Centro := SetVector(x + 0.5,y + 0.5,z + 0.5);
    Posicao := SetVector(Centro.X,Centro.Y,Centro.Z);
    PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
+{$ifdef RAY_LIMIT}
+   PararRaioDaFrente := false;
+   PararRaioOposto := false;
+{$endif}
    Contador := 0;
    Direcao := 0;
    // Adicionamos aqui uma forma de prevenir que o mesmo voxel conte mais do
    // que uma vez, evitando um resultado errado.
    UltimoVisitado := SetVectorI(x,y,z);
    UltimoOpostoVisitado := SetVectorI(x,y,z);
+{$ifdef RAY_LIMIT}
+   while (not (PararRaioDaFrente and PararRaioOposto)) and (Contador < C_TAMANHO_RAYCASTING) do
+{$else}
    while Contador < C_TAMANHO_RAYCASTING do
+{$endif}
    begin
+{$ifdef RAY_LIMIT}
+      if not PararRaioDaFrente then
+      begin
+         Posicao.X := Posicao.X + VetorNormal.X;
+         Posicao.Y := Posicao.Y + VetorNormal.Y;
+         Posicao.Z := Posicao.Z + VetorNormal.Z;
+         ValorFrente := PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente);
+      end
+      else
+      begin
+         ValorFrente := 0;
+      end;
+      if not PararRaioOposto then
+      begin
+         PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
+         PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
+         PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
+         ValorOposto := PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+      end
+      else
+      begin
+         ValorOposto := 0;
+      end;
+      Direcao := Direcao + ValorFrente - ValorOposto;
+      inc(Contador);
+{$else}
       Posicao.X := Posicao.X + VetorNormal.X;
       Posicao.Y := Posicao.Y + VetorNormal.Y;
       Posicao.Z := Posicao.Z + VetorNormal.Z;
@@ -1040,7 +1071,8 @@ begin
       PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
       PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
       inc(Contador);
-      Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao) - PegarValorDoPonto(Mapa,UltimoVisitado,PosicaoOposta);
+      Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente) - PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+{$endif}
    end;
 
    // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
@@ -1065,15 +1097,308 @@ end;
 
 
 ///////////////////////////////////////////////////////////////////////
+///////////////// Detecção de Superficies /////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////
+/////////////////
+///////
+procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : TBooleanMap);
+begin
+   if PontoValido(x,y,z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
+   begin
+      if PontoValido(xFiltro,yFiltro,zFiltro,High(Filtro),High(Filtro[0]),High(Filtro[0,0])) then
+      begin
+         if not MapaDeVisitas[XFiltro,YFiltro,ZFiltro] then
+         begin
+            MapaDeVisitas[XFiltro,YFiltro,ZFiltro] := true;
+            if (Mapa[x,y,z] >= PESO_SUPERFICIE) and  ((Filtro[XFiltro,YFiltro,ZFiltro].X > 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Y > 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Z > 0)) then
+            begin
+               Lista.Add(x,y,z);
+               Direcao.Add(xdir,ydir,zdir);
+               if XFiltro > LimiteMax.X then
+               begin
+                  LimiteMax.X := XFiltro;
+               end
+               else if XFiltro < LimiteMin.X then
+               begin
+                  LimiteMin.X := XFiltro;
+               end;
+               if YFiltro > LimiteMax.Y then
+               begin
+                  LimiteMax.Y := YFiltro;
+               end
+               else if YFiltro < LimiteMin.Y then
+               begin
+                  LimiteMin.Y := YFiltro;
+               end;
+               if ZFiltro > LimiteMax.Z then
+               begin
+                  LimiteMax.Z := ZFiltro;
+               end
+               else if ZFiltro < LimiteMin.Z then
+               begin
+                  LimiteMin.Z := ZFiltro;
+               end;
+               MapaDeSuperficie[XFiltro,YFiltro,ZFiltro] := true;
+            end
+            else
+            begin
+               MapaDeSuperficie[XFiltro,YFiltro,ZFiltro] := false;
+            end;
+         end;
+      end;
+   end;
+end;
+
+procedure DetectarSuperficieContinua(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
+var
+   xx,yy,zz : integer;
+   xdir,ydir,zdir : integer;
+   Ponto : TVector3i;
+   Lista,Direcao : C3DPointList;
+   MapaDeVisitas : TBooleanMap;
+   Meio : integer;
+begin
+   // Reseta elementos
+   Lista := C3DPointList.Create;
+   Direcao := C3DPointList.Create;
+   SetLength(MapaDeVisitas,High(Filtro)+1,High(Filtro[0])+1,High(Filtro[0,0])+1);
+   for xx := Low(Filtro) to High(Filtro) do
+      for yy := Low(Filtro[0]) to High(Filtro[0]) do
+         for zz := Low(Filtro[0,0]) to High(Filtro[0,0]) do
+         begin
+            MapaDaSuperficie[xx,yy,zz] := false;
+            MapaDeVisitas[xx,yy,zz] := false;
+         end;
+   Meio := High(Filtro) shr 1;
+   MapaDaSuperficie[Meio,Meio,Meio] := true;
+   MapaDeVisitas[Meio,Meio,Meio] := true;
+
+   // Adiciona os elementos padrões, os vinte e poucos vizinhos cúbicos.
+   // Prioridade de eixos: z, y, x. Centro leva prioridade sobre as diagonais.
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y,z,1,0,0,Meio+1,Meio,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y,z,-1,0,0,Meio-1,Meio,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y+1,z,0,1,0,Meio,Meio+1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y+1,z,1,1,0,Meio+1,Meio+1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y+1,z,-1,1,0,Meio-1,Meio+1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y-1,z,0,-1,0,Meio,Meio-1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y-1,z,1,-1,0,Meio+1,Meio-1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y-1,z,-1,-1,0,Meio-1,Meio-1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y,z+1,0,0,1,Meio,Meio,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y,z+1,1,0,1,Meio+1,Meio,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y,z+1,-1,0,1,Meio-1,Meio,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y+1,z+1,0,1,1,Meio,Meio+1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y+1,z+1,1,1,1,Meio+1,Meio+1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y+1,z+1,-1,1,1,Meio-1,Meio+1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y-1,z+1,0,-1,1,Meio,Meio-1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y-1,z+1,1,-1,1,Meio+1,Meio-1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y-1,z+1,-1,-1,1,Meio-1,Meio-1,Meio+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y,z-1,0,0,-1,Meio,Meio,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y,z-1,1,0,-1,Meio+1,Meio,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y,z-1,-1,0,-1,Meio-1,Meio,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y+1,z-1,0,1,-1,Meio,Meio+1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y+1,z-1,1,1,-1,Meio+1,Meio+1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y+1,z-1,-1,1,-1,Meio-1,Meio+1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x,y-1,z-1,0,-1,-1,Meio,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y-1,z-1,1,-1,-1,Meio+1,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+   AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y-1,z-1,-1,-1,-1,Meio-1,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+
+//   AdicionaNaListaSuperficie(Mapa,Filtro,x,y,z,0,0,0,Meio,Meio,Meio,Lista,Direcao,MapaDeVisitas,MapaDaSuperficie);
+
+   while Lista.GetPosition(xx,yy,zz) do
+   begin
+      Direcao.GetPosition(xdir,ydir,zdir);
+
+      // Acha o ponto atual no filtro.
+      Ponto.X := xx - PontoMin.X;
+      Ponto.Y := yy - PontoMin.Y;
+      Ponto.Z := zz - PontoMin.Z;
+
+      // Vamos conferir o que adicionaremos a partir da direcao que ele veio
+      // O eixo z leva prioridade, em seguida o eixo y e finalmente o eixo x.
+
+      // Se um determinado eixo tem valor 1 ou -1, significa que o raio parte
+      // na direcao daquele eixo. Enquanto, no caso de ele ser 0, ele pode ir
+      // pra qualquer lado.
+
+      // Primeiro os elementos centrais.
+         // Primeiro os elementos centrais.
+      if xdir <> -1 then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy,zz,1,ydir,zdir,Ponto.X+1,Ponto.Y,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+      end;
+      if (xdir <> 1) then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy,zz,-1,ydir,zdir,Ponto.X-1,Ponto.Y,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+      end;
+      if ydir <> -1 then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy+1,zz,xdir,1,zdir,Ponto.X,Ponto.Y+1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         if xdir <> -1 then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy+1,zz,1,1,zdir,Ponto.X+1,Ponto.Y+1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if (xdir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy+1,zz,-1,1,zdir,Ponto.X-1,Ponto.Y+1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+      end;
+      if ydir <> 1 then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy-1,zz,xdir,-1,zdir,Ponto.X,Ponto.Y-1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         if xdir <> -1 then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy-1,zz,1,-1,zdir,Ponto.X+1,Ponto.Y-1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if (xdir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy-1,zz,-1,-1,zdir,Ponto.X-1,Ponto.Y-1,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+      end;
+
+      // Agora adiciona z = 1
+      if zdir <> -1 then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy,zz+1,xdir,ydir,1,Ponto.X,Ponto.Y,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         if xdir <> -1 then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy,zz+1,1,ydir,1,Ponto.X+1,Ponto.Y,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if (xdir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy,zz+1,1,ydir,1,Ponto.X-1,Ponto.Y,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if ydir <> -1 then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy+1,zz+1,xdir,1,1,Ponto.X,Ponto.Y+1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            if xdir <> -1 then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy+1,zz+1,1,1,1,Ponto.X+1,Ponto.Y+1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+            if (xdir <> 1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy+1,zz+1,-1,1,1,Ponto.X-1,Ponto.Y+1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+         end
+         else if (ydir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy-1,zz+1,xdir,-1,1,Ponto.X,Ponto.Y-1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            if xdir = 1 then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy-1,zz+1,1,-1,1,Ponto.X+1,Ponto.Y-1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+            if (xdir = -1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy-1,zz+1,-1,-1,1,Ponto.X-1,Ponto.Y-1,Ponto.Z+1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+         end;
+      end;
+      // Agora adiciona z = -1
+      if (z <> 1) then
+      begin
+         AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy,zz-1,xdir,ydir,-1,Ponto.X,Ponto.Y,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         if (xdir <> -1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy,zz-1,-1,ydir,-1,Ponto.X+1,Ponto.Y,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if (xdir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy,zz-1,-1,ydir,-1,Ponto.X-1,Ponto.Y,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+         end;
+         if (ydir <> -1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy+1,zz-1,xdir,1,-1,Ponto.X,Ponto.Y+1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            if (xdir <> -1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy+1,zz-1,1,1,-1,Ponto.X+1,Ponto.Y+1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end
+            else if (xdir <> 1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy+1,zz-1,-1,1,-1,Ponto.X-1,Ponto.Y+1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+         end;
+         if (ydir <> 1) then
+         begin
+            AdicionaNaListaSuperficie(Mapa,Filtro,xx,yy-1,zz-1,xdir,-1,-1,Ponto.X,Ponto.Y-1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            if (xdir <> -1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy-1,zz-1,1,-1,-1,Ponto.X+1,Ponto.Y-1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+            if (xdir <> 1) then
+            begin
+               AdicionaNaListaSuperficie(Mapa,Filtro,xx-1,yy-1,zz-1,-1,-1,-1,Ponto.X-1,Ponto.Y-1,Ponto.Z-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+            end;
+         end;
+      end;
+
+      Lista.GoToNextElement;
+      Direcao.GoToNextElement;
+   end;
+   Lista.Free;
+   Direcao.Free;
+end;
+
+
+procedure DetectarSuperficieEsferica(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
+var
+   xx,yy,zz : integer;
+   Ponto : TVector3i;
+begin
+   for xx := PontoMin.X to PontoMax.X do
+      for yy := PontoMin.Y to PontoMax.Y do
+         for zz := PontoMin.Z to PontoMax.Z do
+         begin
+            // Acha o ponto atual no filtro.
+            Ponto.X := xx - PontoMin.X;
+            Ponto.Y := yy - PontoMin.Y;
+            Ponto.Z := zz - PontoMin.Z;
+            // Confere a presença dele na superfície e no alcance do filtro
+            if (Mapa[xx,yy,zz] >= PESO_SUPERFICIE) and ((Filtro[Ponto.X,Ponto.Y,Ponto.Z].X > 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y > 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z > 0)) then
+            begin
+{$ifdef LIMITES}
+               if Ponto.X > LimiteMax.X then
+               begin
+                  LimiteMax.X := Ponto.X;
+               end
+               else if Ponto.X < LimiteMin.X then
+               begin
+                  LimiteMin.X := Ponto.X;
+               end;
+               if Ponto.Y > LimiteMax.Y then
+               begin
+                  LimiteMax.Y := Ponto.Y;
+               end
+               else if Ponto.Y < LimiteMin.Y then
+               begin
+                  LimiteMin.Y := Ponto.Y;
+               end;
+               if Ponto.Z > LimiteMax.Z then
+               begin
+                  LimiteMax.Z := Ponto.Z;
+               end
+               else if Ponto.Z < LimiteMin.Z then
+               begin
+                  LimiteMin.Z := Ponto.Z;
+               end;
+{$ENDIF}
+               MapaDaSuperficie[Ponto.X,Ponto.Y,Ponto.Z] := true;
+            end
+            else
+            begin
+               MapaDaSuperficie[Ponto.X,Ponto.Y,Ponto.Z] := false;
+            end;
+         end;
+end;
+
+///////////////////////////////////////////////////////////////////////
 ///////////////// Plano Tangente  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 //////////////////////////
 ////////////////
 ///////
 
-procedure AcharPlanoTangenteEmXY(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
+procedure AcharPlanoTangenteEmXY(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
-   Ponto : TVector3i;
    xx,yy,zz : integer;
 begin
    // Resetamos os pontos do plano
@@ -1083,82 +1408,65 @@ begin
    PontoNordeste := SetVector(0,0,0);
 
    // Vamos achar os quatro pontos da tangente.
-   // Ponto 1: Sudoeste. (X <= 0 e Y <= 0)
-   for xx := PontoMin.X to x do
-      for yy := PontoMin.Y to y do
-         for zz := PontoMin.Z to PontoMax.Z do
+   // Ponto 1: Sudoeste. (X <= Meio e Y <= Meio)
+   for xx := LimiteMin.X to Meio.X do
+      for yy := LimiteMin.Y to Meio.Y do
+         for zz := LimiteMin.Z to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudoeste.X := PontoSudoeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudoeste.Y := PontoSudoeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudoeste.Z := PontoSudoeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
+               PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 2: Noroeste. (X <= 0 e Y >= 0)
-   for xx := PontoMin.X to x do
-      for yy := y to PontoMax.Y do
-         for zz := PontoMin.Z to PontoMax.Z do
+   // Ponto 2: Noroeste. (X <= Meio e Y >= Meio)
+   for xx := LimiteMin.X to Meio.X do
+      for yy := Alcance to LimiteMax.Y do
+         for zz := LimiteMin.Z to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNoroeste.X := PontoNoroeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNoroeste.Y := PontoNoroeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNoroeste.Z := PontoNoroeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNoroeste.X := PontoNoroeste.X + Filtro[xx,yy,zz].X;
+               PontoNoroeste.Y := PontoNoroeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNoroeste.Z := PontoNoroeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 3: Sudeste. (X >= 0 e Y <= 0)
-   for xx := x to PontoMax.X do
-      for yy := PontoMin.Y to y do
-         for zz := PontoMin.Z to PontoMax.Z do
+   // Ponto 3: Sudeste. (X >= Meio e Y <= Meio)
+   for xx := Alcance to LimiteMax.X do
+      for yy := LimiteMin.Y to Meio.Y do
+         for zz := LimiteMin.Z to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudeste.X := PontoSudeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudeste.Y := PontoSudeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudeste.Z := PontoSudeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudeste.X := PontoSudeste.X + Filtro[xx,yy,zz].X;
+               PontoSudeste.Y := PontoSudeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudeste.Z := PontoSudeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 4: Nordeste. (X >= 0 e Y >= 0)
-   for xx := x to PontoMax.X do
-      for yy := y to PontoMax.Y do
-         for zz := PontoMin.Z to PontoMax.Z do
+   // Ponto 4: Nordeste. (X >= Meio e Y >= Meio)
+   for xx := Alcance to LimiteMax.X do
+      for yy := Alcance to LimiteMax.Y do
+         for zz := LimiteMin.Z to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNordeste.X := PontoNordeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNordeste.Y := PontoNordeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNordeste.Z := PontoNordeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X;
+               PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 end;
 
-procedure AcharPlanoTangenteEmYZ(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
+procedure AcharPlanoTangenteEmYZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
-   Ponto : TVector3i;
    xx,yy,zz : integer;
 begin
    // Resetamos os pontos do plano
@@ -1167,82 +1475,65 @@ begin
    PontoSudeste := SetVector(0,0,0);
    PontoNordeste := SetVector(0,0,0);
 
-   // Ponto 1: Sudoeste. (Y <= 0 e Z <= 0)
-   for xx := PontoMin.X to PontoMax.X do
-      for yy := PontoMin.Y to y do
-         for zz := PontoMin.Z to z do
+   // Ponto 1: Sudoeste. (Y <= Meio e Z <= Meio)
+   for xx := LimiteMin.X to LimiteMax.X do
+      for yy := LimiteMin.Y to Meio.Y do
+         for zz := LimiteMin.Z to Meio.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudoeste.X := PontoSudoeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudoeste.Y := PontoSudoeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudoeste.Z := PontoSudoeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
+               PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 2: Noroeste. (Y <= 0 e Z >= 0)
-   for xx := PontoMin.X to PontoMax.X do
-      for yy := PontoMin.Y to y do
-         for zz := z to PontoMax.Z do
+   // Ponto 2: Noroeste. (Y <= Meio e Z >= Meio)
+   for xx := LimiteMin.X to LimiteMax.X do
+      for yy := LimiteMin.Y to Meio.Y do
+         for zz := Alcance to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNoroeste.X := PontoNoroeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNoroeste.Y := PontoNoroeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNoroeste.Z := PontoNoroeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNoroeste.X := PontoNoroeste.X + Filtro[xx,yy,zz].X;
+               PontoNoroeste.Y := PontoNoroeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNoroeste.Z := PontoNoroeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 3: Sudeste. (Y >= 0 e Z <= 0)
-   for xx := PontoMin.X to PontoMax.X do
-      for yy := y to PontoMax.Y do
-         for zz := PontoMin.Z to z do
+   // Ponto 3: Sudeste. (Y >= Meio e Z <= Meio)
+   for xx := LimiteMin.X to LimiteMax.X do
+      for yy := Alcance to LimiteMax.Y do
+         for zz := LimiteMin.Z to Meio.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudeste.X := PontoSudeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudeste.Y := PontoSudeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudeste.Z := PontoSudeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudeste.X := PontoSudeste.X + Filtro[xx,yy,zz].X;
+               PontoSudeste.Y := PontoSudeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudeste.Z := PontoSudeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 4: Nordeste. (Y >= 0 e Z >= 0)
-   for xx := PontoMin.X to PontoMax.X do
-      for yy := y to PontoMax.Y do
-         for zz := z to PontoMax.Z do
+   // Ponto 4: Nordeste. (Y >= Meio e Z >= Meio)
+   for xx := LimiteMin.X to LimiteMax.X do
+      for yy := Alcance to LimiteMax.Y do
+         for zz := Alcance to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNordeste.X := PontoNordeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNordeste.Y := PontoNordeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNordeste.Z := PontoNordeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X;
+               PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 end;
 
-procedure AcharPlanoTangenteEmXZ(const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f);
+procedure AcharPlanoTangenteEmXZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
-   Ponto : TVector3i;
    xx,yy,zz : integer;
 begin
    // Resetamos os pontos do plano
@@ -1251,75 +1542,59 @@ begin
    PontoSudeste := SetVector(0,0,0);
    PontoNordeste := SetVector(0,0,0);
 
-   // Ponto 1: Sudoeste. (X <= 0 e Z <= 0)
-   for xx := PontoMin.X to x do
-      for yy := PontoMin.Y to PontoMax.Y do
-         for zz := PontoMin.Z to z do
+   // Ponto 1: Sudoeste. (X <= Meio e Z <= Meio)
+   for xx := LimiteMin.X to Meio.X do
+      for yy := LimiteMin.Y to LimiteMax.Y do
+         for zz := LimiteMin.Z to Meio.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudoeste.X := PontoSudoeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudoeste.Y := PontoSudoeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudoeste.Z := PontoSudoeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
+               PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 2: Noroeste. (X <= 0 e Z >= 0)
-   for xx := PontoMin.X to x do
-      for yy := PontoMin.Y to PontoMax.Y do
-         for zz := z to PontoMax.Z do
+   // Ponto 2: Noroeste. (X <= Meio e Z >= Meio)
+   for xx := LimiteMin.X to Meio.X do
+      for yy := LimiteMin.Y to LimiteMax.Y do
+         for zz := Alcance to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNoroeste.X := PontoNoroeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNoroeste.Y := PontoNoroeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNoroeste.Z := PontoNoroeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNoroeste.X := PontoNoroeste.X + Filtro[xx,yy,zz].X;
+               PontoNoroeste.Y := PontoNoroeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNoroeste.Z := PontoNoroeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 3: Sudeste. (X >= 0 e Z <= 0)
-   for xx := x to PontoMax.X do
-      for yy := PontoMin.Y to PontoMax.Y do
-         for zz := PontoMin.Z to z do
+   // Ponto 3: Sudeste. (X >= Meio e Z <= Meio)
+   for xx := Alcance to LimiteMax.X do
+      for yy := LimiteMin.Y to LimiteMax.Y do
+         for zz := LimiteMin.Z to Meio.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoSudeste.X := PontoSudeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoSudeste.Y := PontoSudeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoSudeste.Z := PontoSudeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoSudeste.X := PontoSudeste.X + Filtro[xx,yy,zz].X;
+               PontoSudeste.Y := PontoSudeste.Y + Filtro[xx,yy,zz].Y;
+               PontoSudeste.Z := PontoSudeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 
-   // Ponto 4: Nordeste. (X >= 0 e Z >= 0)
-   for xx := x to PontoMax.X do
-      for yy := PontoMin.Y to PontoMax.Y do
-         for zz := z to PontoMax.Z do
+   // Ponto 4: Nordeste. (X >= Meio e Z >= Meio)
+   for xx := Alcance to LimiteMax.X do
+      for yy := LimiteMin.Y to LimiteMax.Y do
+         for zz := Alcance to LimiteMax.Z do
          begin
-            if Mapa[xx,yy,zz] >= PESO_SUPERFICIE then
+            if Mapa[xx,yy,zz] then
             begin
-               // Acha o ponto no filtro.
-               Ponto.X := xx - PontoMin.X;
-               Ponto.Y := yy - PontoMin.Y;
-               Ponto.Z := zz - PontoMin.Z;
                // Aplica o filtro no ponto (xx,yy,zz)
-               PontoNordeste.X := PontoNordeste.X + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].X);
-               PontoNordeste.Y := PontoNordeste.Y + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y);
-               PontoNordeste.Z := PontoNordeste.Z + (Mapa[xx,yy,zz] * Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z);
+               PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X;
+               PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y;
+               PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z;
             end;
          end;
 end;
@@ -1357,7 +1632,7 @@ begin
 end;
 
 // Pega o valor no ponto do mapa para o falso raytracing em AplicarFiltro.
-function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f): single;
+function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f; var EstaNoVazio : boolean): single;
 var
    PontoI : TVector3i;
 begin
@@ -1373,8 +1648,11 @@ begin
          Result := Mapa[PontoI.X,PontoI.Y,PontoI.Z];
          if Result >= PESO_PARTE_DO_VOLUME then
             Result := PESO_SUPERFICIE;
+         EstaNoVazio := (Result <> PESO_SUPERFICIE);
       end;
-   end;
+   end
+   else
+      EstaNoVazio := true;
 end;
 
 
