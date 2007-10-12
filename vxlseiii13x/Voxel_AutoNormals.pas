@@ -2,10 +2,11 @@ unit Voxel_AutoNormals;
 
 interface
 
-uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList;
+uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList, SysUtils, Dialogs;
 
 {$define LIMITES}
-{$define RAY_LIMIT}
+//{$define RAY_LIMIT}
+//{$define DEBUG}
 
 type
 // Estruturas do Voxel_Tools and Voxel.
@@ -1009,6 +1010,30 @@ begin
    VetorNormal.Y := ((PontoNordeste.Z - PontoSudeste.Z) * (PontoSudoeste.X - PontoSudeste.X)) - ((PontoSudoeste.Z - PontoSudeste.Z) * (PontoNordeste.X - PontoSudeste.X));
    VetorNormal.Z := ((PontoNordeste.X - PontoSudeste.X) * (PontoSudoeste.Y - PontoSudeste.Y)) - ((PontoSudoeste.X - PontoSudeste.X) * (PontoNordeste.Y - PontoSudeste.Y));
 
+   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+   begin
+      VetorNormal.X := ((PontoNoroeste.Y - PontoNordeste.Y) * (PontoSudeste.Z - PontoNordeste.Z)) - ((PontoSudeste.Y - PontoNordeste.Y) * (PontoNoroeste.Z - PontoNordeste.Z));
+      VetorNormal.Y := ((PontoNoroeste.Z - PontoNordeste.Z) * (PontoSudeste.X - PontoNordeste.X)) - ((PontoSudeste.Z - PontoNordeste.Z) * (PontoNoroeste.X - PontoNordeste.X));
+      VetorNormal.Z := ((PontoNoroeste.X - PontoNordeste.X) * (PontoSudeste.Y - PontoNordeste.Y)) - ((PontoSudeste.X - PontoNordeste.X) * (PontoNoroeste.Y - PontoNordeste.Y));
+   end;
+   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+   begin
+      VetorNormal.X := ((PontoSudoeste.Y - PontoNoroeste.Y) * (PontoNordeste.Z - PontoNoroeste.Z)) - ((PontoNordeste.Y - PontoNoroeste.Y) * (PontoSudoeste.Z - PontoNoroeste.Z));
+      VetorNormal.Y := ((PontoSudoeste.Z - PontoNoroeste.Z) * (PontoNordeste.X - PontoNoroeste.X)) - ((PontoNordeste.Z - PontoNoroeste.Z) * (PontoSudoeste.X - PontoNoroeste.X));
+      VetorNormal.Z := ((PontoSudoeste.X - PontoNoroeste.X) * (PontoNordeste.Y - PontoNoroeste.Y)) - ((PontoNordeste.X - PontoNoroeste.X) * (PontoSudoeste.Y - PontoNoroeste.Y));
+   end;
+   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+   begin
+      VetorNormal.X := ((PontoSudeste.Y - PontoSudoeste.Y) * (PontoNoroeste.Z - PontoSudoeste.Z)) - ((PontoNoroeste.Y - PontoSudoeste.Y) * (PontoSudeste.Z - PontoSudoeste.Z));
+      VetorNormal.Y := ((PontoSudeste.Z - PontoSudoeste.Z) * (PontoNoroeste.X - PontoSudoeste.X)) - ((PontoNoroeste.Z - PontoSudoeste.Z) * (PontoSudeste.X - PontoSudoeste.X));
+      VetorNormal.Z := ((PontoSudeste.X - PontoSudoeste.X) * (PontoNoroeste.Y - PontoSudoeste.Y)) - ((PontoNoroeste.X - PontoSudoeste.X) * (PontoSudeste.Y - PontoSudoeste.Y));
+{$ifdef DEBUG}
+      if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+//      ShowMessage('(' + FloatToStr(VetorNormal.X) + ',' + FloatToStr(VetorNormal.Y) + ',' + FloatToStr(VetorNormal.Z) + ')');
+         ShowMessage('(0,0,0) with (' + FloatToStr(PontoSudoeste.X) + ',' + FloatToStr(PontoSudoeste.Y) + ',' + FloatToStr(PontoSudoeste.Z) + ') - (' + FloatToStr(PontoSudeste.X) + ',' + FloatToStr(PontoSudeste.Y) + ',' + FloatToStr(PontoSudeste.Z) + ') - (' + FloatToStr(PontoNordeste.X) + ',' + FloatToStr(PontoNordeste.Y) + ',' + FloatToStr(PontoNordeste.Z) + ') - (' + FloatToStr(PontoNoroeste.X) + ',' + FloatToStr(PontoNoroeste.Y) + ',' + FloatToStr(PontoNoroeste.Z) + '), at (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + '). MinLimit: (' + IntToStr(LimiteMin.X) + ',' + IntToStr(LimiteMin.Y) + ',' + IntToStr(LimiteMin.Z) + '). MaxLimit: ' +  IntToStr(LimiteMax.X) + ',' + IntToStr(LimiteMax.Y) + ',' + IntToStr(LimiteMax.Z) + '). Center at: ' + IntToStr(PseudoCentro.X) + ',' + IntToStr(PseudoCentro.Y) + ',' + IntToStr(PseudoCentro.Z) + ') with range ' + IntToStr(Alcance) +  '.');
+{$endif}
+   end;
+
    // A formula acima tá no livro da Aura:
    // X = (P3.Y - P2.Y)(P1.Z - P2.Z) - (P1.Y - P2.Y)(P3.Z - P2.Z)
    // Y = (P3.Z - P2.Z)(P1.X - P2.X) - (P1.Z - P2.Z)(P3.X - P2.X)
@@ -1111,7 +1136,7 @@ begin
          if not MapaDeVisitas[XFiltro,YFiltro,ZFiltro] then
          begin
             MapaDeVisitas[XFiltro,YFiltro,ZFiltro] := true;
-            if (Mapa[x,y,z] >= PESO_SUPERFICIE) and  ((Filtro[XFiltro,YFiltro,ZFiltro].X > 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Y > 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Z > 0)) then
+            if (Mapa[x,y,z] >= PESO_SUPERFICIE) and  ((Filtro[XFiltro,YFiltro,ZFiltro].X <> 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Y <> 0) or (Filtro[XFiltro,YFiltro,ZFiltro].Z <> 0)) then
             begin
                Lista.Add(x,y,z);
                Direcao.Add(xdir,ydir,zdir);
@@ -1176,6 +1201,7 @@ begin
 
    // Adiciona os elementos padrões, os vinte e poucos vizinhos cúbicos.
    // Prioridade de eixos: z, y, x. Centro leva prioridade sobre as diagonais.
+{
    AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y,z,1,0,0,Meio+1,Meio,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
    AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y,z,-1,0,0,Meio-1,Meio,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
    AdicionaNaListaSuperficie(Mapa,Filtro,x,y+1,z,0,1,0,Meio,Meio+1,Meio,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
@@ -1202,8 +1228,11 @@ begin
    AdicionaNaListaSuperficie(Mapa,Filtro,x,y-1,z-1,0,-1,-1,Meio,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
    AdicionaNaListaSuperficie(Mapa,Filtro,x+1,y-1,z-1,1,-1,-1,Meio+1,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
    AdicionaNaListaSuperficie(Mapa,Filtro,x-1,y-1,z-1,-1,-1,-1,Meio-1,Meio-1,Meio-1,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
+}
 
 //   AdicionaNaListaSuperficie(Mapa,Filtro,x,y,z,0,0,0,Meio,Meio,Meio,Lista,Direcao,MapaDeVisitas,MapaDaSuperficie);
+   Lista.Add(x,y,z);
+   Direcao.Add(0,0,0);
 
    while Lista.GetPosition(xx,yy,zz) do
    begin
@@ -1222,7 +1251,6 @@ begin
       // pra qualquer lado.
 
       // Primeiro os elementos centrais.
-         // Primeiro os elementos centrais.
       if xdir <> -1 then
       begin
          AdicionaNaListaSuperficie(Mapa,Filtro,xx+1,yy,zz,1,ydir,zdir,Ponto.X+1,Ponto.Y,Ponto.Z,Lista,Direcao,LimiteMin,LimiteMax,MapaDeVisitas,MapaDaSuperficie);
@@ -1353,7 +1381,7 @@ begin
             Ponto.Y := yy - PontoMin.Y;
             Ponto.Z := zz - PontoMin.Z;
             // Confere a presença dele na superfície e no alcance do filtro
-            if (Mapa[xx,yy,zz] >= PESO_SUPERFICIE) and ((Filtro[Ponto.X,Ponto.Y,Ponto.Z].X > 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y > 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z > 0)) then
+            if (Mapa[xx,yy,zz] >= PESO_SUPERFICIE) and ((Filtro[Ponto.X,Ponto.Y,Ponto.Z].X <> 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Y <> 0) or (Filtro[Ponto.X,Ponto.Y,Ponto.Z].Z <> 0)) then
             begin
 {$ifdef LIMITES}
                if Ponto.X > LimiteMax.X then
