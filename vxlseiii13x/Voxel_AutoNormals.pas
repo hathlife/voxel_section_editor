@@ -838,17 +838,17 @@ begin
             begin
                DistanciaAoCubo := Power(Distancia,3);
                if Meio <> x then
-                  Filtro[x,y,z].X :=  (3 * (Meio - x)) / DistanciaAoCubo
+                  Filtro[x,y,z].X :=  (Meio - x) / DistanciaAoCubo
                else
                   Filtro[x,y,z].X := 0;
 
                if Meio <> y then
-                  Filtro[x,y,z].Y :=  (3 * (Meio - y)) / DistanciaAoCubo
+                  Filtro[x,y,z].Y :=  (Meio - y) / DistanciaAoCubo
                else
                   Filtro[x,y,z].Y := 0;
 
                if Meio <> z then
-                  Filtro[x,y,z].Z :=  (3 * (Meio - z)) / DistanciaAoCubo
+                  Filtro[x,y,z].Z :=  (Meio - z) / DistanciaAoCubo
                else
                   Filtro[x,y,z].Z := 0;
             end
@@ -909,19 +909,17 @@ begin
    y := Alcance + _y;
    z := Alcance + _z;
 
-   // Temos os limites máximos e mínimos que serão verificados no processo
-   PontoMin.X := x - Alcance;
+   // Temos os limites máximos e mínimos da vizinhança que será verificada no
+   // processo
+   PontoMin.X := _x;
    PontoMax.X := x + Alcance;
-   PontoMin.Y := y - Alcance;
+   PontoMin.Y := _y;
    PontoMax.Y := y + Alcance;
-   PontoMin.Z := z - Alcance;
+   PontoMin.Z := _z;
    PontoMax.Z := z + Alcance;
 
-   // 1.38: Agora vamos conferir os voxels que farão parte da superfície
-   // analisada.
-   SetLength(MapaDaSuperficie,High(Filtro)+1,High(Filtro[0])+1,High(Filtro[0,0])+1);
-
-   // LimiteMin e LimiteMax são a 'bounding box' da região a ser avaliada.
+   // 1.38: LimiteMin e LimiteMax são a 'bounding box' do plano tangente a ser
+   // avaliado.
 {$ifdef LIMITES}
    LimiteMin := SetVectori(Alcance,Alcance,Alcance);
    LimiteMax := SetVectori(Alcance,Alcance,Alcance);
@@ -929,6 +927,10 @@ begin
    LimiteMin := SetVectori(0,0,0);
    LimiteMax := SetVectori(High(Filtro),High(Filtro[0]),High(Filtro[0,0]));
 {$endif}
+
+   // 1.38: Agora vamos conferir os voxels que farão parte da superfície
+   // analisada.
+   SetLength(MapaDaSuperficie,High(Filtro)+1,High(Filtro[0])+1,High(Filtro[0,0])+1);
 
    if TratarDescontinuidades then
    begin
@@ -941,7 +943,7 @@ begin
    end;
 
 {$ifdef LIMITES}
-   // Isso calcula o que será considerado o centro da região a ser avaliada.
+   // Isso calcula o que será considerado o centro do plano tangente.
    PseudoCentro.X := (LimiteMin.X + LimiteMax.X) div 2;
    PseudoCentro.Y := (LimiteMin.Y + LimiteMax.Y) div 2;
    PseudoCentro.Z := (LimiteMin.Z + LimiteMax.Z) div 2;
