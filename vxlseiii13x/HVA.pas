@@ -40,7 +40,7 @@ var
 function LoadHVA(Filename : string): boolean;
 
 Function ApplyMatrix(V : TVector3f) : TVector3f; overload;
-Function ApplyMatrix(MyScale : single; V : TVector3f; Section, Frames : Integer) : TVector3f; overload;
+Function ApplyMatrix(VoxelScale : TVector3f; Section, Frames : Integer) : TVector3f; overload;
 Procedure FloodMatrix;
 Function GetTMValue(Row,Col : integer) : single; overload;
 Function GetTMValue(Row,Col,Section : integer) : single; overload;
@@ -86,16 +86,24 @@ begin
       SetLength(HVAFile.Data,HVAFile.Data_no);
 
       For x := Low(HVAFile.Data) to High(HVAFile.Data) do
-         BlockRead(F,HVAFile.Data[x].SectionName,Sizeof(TSectionName));
-
-      For x := Low(HVAFile.Data) to High(HVAFile.Data) do
       begin
+         BlockRead(F,HVAFile.Data[x].SectionName,Sizeof(TSectionName));
          SetLength(HVAFile.Data[x].TransformMatrixs,HVAFile.Header.N_Frames);
-         For y := Low(HVAFile.Data[x].TransformMatrixs) to High(HVAFile.Data[x].TransformMatrixs) do
-            BlockRead(F,HVAFile.Data[x].TransformMatrixs[y],Sizeof(TTransformMatrix));
-         if HVAFile.Header.N_Frames = 0 then
+      end;
+
+      For y := 0 to HVAFile.Header.N_Frames-1 do
+      begin
+         For x := Low(HVAFile.Data) to High(HVAFile.Data) do
          begin
-            HVAFile.Header.N_Frames := 1;
+            BlockRead(F,HVAFile.Data[x].TransformMatrixs[y],Sizeof(TTransformMatrix));
+         end;
+      end;
+
+      if HVAFile.Header.N_Frames = 0 then
+      begin
+         HVAFile.Header.N_Frames := 1;
+         For x := Low(HVAFile.Data) to High(HVAFile.Data) do
+         begin
             SetLength(HVAFile.Data[x].TransformMatrixs,1);
             HVAFile.Data[x].TransformMatrixs[0] := GetIdentityTM;
          end;
@@ -148,18 +156,17 @@ begin
 end;
 
 // Copied from OS: Voxel Viewer.
-Function ApplyMatrix(MyScale : single; V : TVector3f; Section, Frames : Integer) : TVector3f;
+Function ApplyMatrix(VoxelScale: TVector3f; Section, Frames : Integer) : TVector3f;
 var
    Matrix : TGLMatrixf4;
+   SectionDet : single;
 begin
    if Section = -1 then
    begin
       Exit;
    end;
 
-//   MyScale := VoxelFile.Section[Section].Tailer.Det;
-//   if HVAScale = 0 then HVAScale := 1;
-
+   SectionDet := VoxelFile.Section[Section].Tailer.Det;
    if HVAFile.Header.N_Sections > 0 then
    begin
       Matrix[0,0] := GetTMValue(1,1,Section);
@@ -177,9 +184,9 @@ begin
       Matrix[2,2] := GetTMValue(3,3,Section);
       Matrix[2,3] := 0;
 
-      Matrix[3,0] := (GetTMValue(1,4,Section)* MyScale) * V.X * 2;
-      Matrix[3,1] := (GetTMValue(2,4,Section)* MyScale) * V.Y * 2;
-      Matrix[3,2] := (GetTMValue(3,4,Section)* MyScale) * V.Z * 2;
+      Matrix[3,0] := GetTMValue(1,4,Section) * VoxelScale.X * SectionDet;
+      Matrix[3,1] := GetTMValue(2,4,Section) * VoxelScale.Y * SectionDet;
+      Matrix[3,2] := GetTMValue(3,4,Section) * VoxelScale.Z * SectionDet;
       Matrix[3,3] := 1;
    end
    else
@@ -199,9 +206,9 @@ begin
       Matrix[2,2] := 1;
       Matrix[2,3] := 0;
 
-      Matrix[3,0] := MyScale * V.X * 2;
-      Matrix[3,1] := MyScale * V.Y * 2;
-      Matrix[3,2] := MyScale * V.Z * 2;
+      Matrix[3,0] := SectionDet * VoxelScale.X;
+      Matrix[3,1] := SectionDet * VoxelScale.Y;
+      Matrix[3,2] := SectionDet * VoxelScale.Z;
       Matrix[3,3] := 1;
    end;
    glMultMatrixf(@Matrix[0,0]);

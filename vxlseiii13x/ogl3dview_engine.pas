@@ -137,7 +137,7 @@ function CleanV3fCol(Color: TVector3f): TVector3f;
 function GetCorrectColour(Color: integer; RemapColour : TVector3f): TVector3f;
 
 function GetPosWithSize(Position: TVector3f; Size: single): TVector3f;
-Procedure GetScaleAndMinBounds(Const Vxl : TVoxel; Section : Integer; Var Scale,MinBounds : TVector3f);
+procedure GetScaleWithMinBounds(const _Vxl: TVoxelSection; var _Scale,_MinBounds: TVector3f);
 
 function ScreenShot_BitmapResult : TBitmap;
 
@@ -145,7 +145,7 @@ function checkface(Vxl : TVoxelSection; x,y,z : integer) : boolean;
 procedure ClearVoxelBoxes(var VoxelBoxGroup : TVoxelBoxGroup);
 procedure Update3dViewVOXEL(Vxl : TVoxel);
 
-procedure DrawBox(VoxelPosition, Color: TVector3f; Size: single; VoxelBox: TVoxelBox);
+procedure DrawBox(VoxelPosition, Color: TVector3f; Size: TVector3f; VoxelBox: TVoxelBox);
 
 //procedure Update3dViewWithRGBTEST;
 
@@ -349,29 +349,17 @@ begin
    end;
 end;
 
-// Adapted from OS: Voxel Viewer
-Procedure GetScaleAndMinBounds(Const Vxl : TVoxel; Section : Integer; Var Scale,MinBounds : TVector3f);
-begin
-   Scale.x := (Vxl.Section[Section].Tailer.MaxBounds[1]-Vxl.Section[Section].Tailer.MinBounds[1])/Vxl.Section[Section].Tailer.xSize;
-   Scale.y := (Vxl.Section[Section].Tailer.MaxBounds[2]-Vxl.Section[Section].Tailer.MinBounds[2])/Vxl.Section[Section].Tailer.ySize;
-   Scale.z := (Vxl.Section[Section].Tailer.MaxBounds[3]-Vxl.Section[Section].Tailer.MinBounds[3])/Vxl.Section[Section].Tailer.zSize;
-
-   MinBounds.x := Vxl.Section[Section].Tailer.MinBounds[1];
-   MinBounds.y := Vxl.Section[Section].Tailer.MinBounds[2];
-   MinBounds.z := Vxl.Section[Section].Tailer.MinBounds[3];
-end;
-
 // 1.3: Now with Hyper Speed! Kirov at 59/60fps :D
-procedure DrawBox(VoxelPosition, Color: TVector3f; Size: single; VoxelBox: TVoxelBox);
+procedure DrawBox(VoxelPosition, Color: TVector3f; Size: TVector3f; VoxelBox: TVoxelBox);
 var
    East,West,South,North,Floor,Ceil : single;
 begin
-   East := VoxelPosition.X + Size;
-   West := VoxelPosition.X - Size;
-   Ceil := VoxelPosition.Y + Size;
-   Floor := VoxelPosition.Y - Size;
-   North := VoxelPosition.Z + Size;
-   South := VoxelPosition.Z - Size;
+   East := VoxelPosition.X + Size.X;
+   West := VoxelPosition.X;
+   Ceil := VoxelPosition.Y + Size.Y;
+   Floor := VoxelPosition.Y;
+   North := VoxelPosition.Z + Size.Z;
+   South := VoxelPosition.Z;
 
    glBegin(GL_QUADS);
    begin
@@ -425,13 +413,10 @@ begin
 end;
 
 function GetPosWithSize(Position: TVector3f; Size: single): TVector3f;
-var
-   DoubleSize : single;
 begin
-   DoubleSize := 2 * Size;
-   Result.X := Position.X * DoubleSize;
-   Result.Y := Position.Y * DoubleSize;
-   Result.Z := Position.Z * DoubleSize;
+   Result.X := Position.X * Size;
+   Result.Y := Position.Y * Size;
+   Result.Z := Position.Z * Size;
 end;
 
 function CleanVCCol(Color: TColor): TVector3f;
@@ -526,6 +511,7 @@ end;
 procedure glDraw();
 var
    x : integer;
+   Scale,MinBounds : TVector3f;
 begin
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
    // Clear The Screen And The Depth Buffer
@@ -559,6 +545,9 @@ begin
    if VoxelBoxes.NumBoxes > 0 then
    begin
       // Here we make the OpenGL list to speed up the render.
+      glLoadIdentity();                                       // Reset The View
+      GetScaleWithMinBounds(VoxelFile.Section[VoxelBoxes.Section[0].ID],Scale,MinBounds);
+
       if (VoxelBoxes.Section[0].List < 1) or RebuildLists then
       begin
          if VoxelBoxes.Section[0].List > 0 then
@@ -569,7 +558,7 @@ begin
          glPushMatrix;
          for x := Low(VoxelBoxes.Section[0].Box) to High(VoxelBoxes.Section[0].Box) do
          begin
-            DrawBox(GetPosWithSize(VoxelBoxes.Section[0].Box[x].Position, Size), GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Size, VoxelBoxes.Section[0].Box[x]);
+            DrawBox(VoxelBoxes.Section[0].Box[x].Position, GetVXLColor(VoxelBoxes.Section[0].Box[x].Color, VoxelBoxes.Section[0].Box[x].Normal), Scale, VoxelBoxes.Section[0].Box[x]);
          end;
          glPopMatrix;
          glEndList;
@@ -577,7 +566,6 @@ begin
       end;
       // The final voxel rendering part.
       glPushMatrix;
-      glLoadIdentity();                                       // Reset The View
 
       glTranslatef(0, 0, Depth);
 
@@ -692,10 +680,22 @@ begin
       Result := false;
 end;
 
+procedure GetScaleWithMinBounds(const _Vxl: TVoxelSection; var _Scale,_MinBounds: TVector3f);
+begin
+   _Scale.X := ((_Vxl.Tailer.MaxBounds[1] - _Vxl.Tailer.MinBounds[1]) / _Vxl.Tailer.XSize) * Size;
+   _Scale.Y := ((_Vxl.Tailer.MaxBounds[2] - _Vxl.Tailer.MinBounds[2]) / _Vxl.Tailer.YSize) * Size;
+   _Scale.Z := ((_Vxl.Tailer.MaxBounds[3] - _Vxl.Tailer.MinBounds[3]) / _Vxl.Tailer.ZSize) * Size;
+
+   _MinBounds.X := _Vxl.Tailer.MinBounds[1] * Size;
+   _MinBounds.Y := _Vxl.Tailer.MinBounds[2] * Size;
+   _MinBounds.Z := _Vxl.Tailer.MinBounds[3] * Size;
+end;
+
 procedure Update3dView(Vxl: TVoxelSection);
 var
    x, y, z: byte;
    v:   TVoxelUnpacked;
+   Scale,MinBounds : TVector3f;
 begin
    if not IsEditable then exit;
 
@@ -710,6 +710,8 @@ begin
 
    VoxelBox_No := 0;
    ClearVoxelBoxes(VoxelBoxes);
+
+   GetScaleWithMinBounds(Vxl,Scale,MinBounds);
 
    SetLength(VoxelBoxes.Section,1);
    for z := 0 to (Vxl.Tailer.zSize - 1) do
@@ -730,9 +732,9 @@ begin
                VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5]   := CheckFace(Vxl, x - 1, y, z);
                VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6]   := CheckFace(Vxl, x + 1, y, z);
 
-               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := X - (Vxl.Tailer.xSize / 2);
-               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := Y - (Vxl.Tailer.ySize / 2);
-               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := Z - (Vxl.Tailer.zSize / 2);
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := (MinBounds.X + (X * Scale.X));
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := (MinBounds.Y + (Y * Scale.Y));
+               VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := (MinBounds.Z + (Z * Scale.Z));
 
                VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := v.Colour;
                VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := v.Normal;
@@ -752,6 +754,7 @@ procedure Update3dViewVOXEL(Vxl: TVoxel);
 var
    x, y, z, i: byte;
    v:   TVoxelUnpacked;
+   Scale,MinBounds : TVector3f;
 begin
    if FrmMain.Display3dView1.Checked then
       exit;
@@ -769,6 +772,7 @@ begin
    for i := Low(VoxelBoxes.Section) to High(VoxelBoxes.Section) do
    begin
       VoxelBox_No := 0;
+      GetScaleWithMinBounds(Vxl.Section[i],Scale,MinBounds);
       for z := 0 to (Vxl.Section[i].Tailer.zSize - 1) do
       begin
          for y := 0 to (Vxl.Section[i].Tailer.YSize - 1) do
@@ -787,9 +791,9 @@ begin
                   VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl.Section[i], x - 1, y, z);
                   VoxelBoxes.Section[i].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl.Section[i], x + 1, y, z);
 
-                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.X := Vxl.Section[i].Tailer.Transform[1][3] + X - (Vxl.Section[i].Tailer.xSize / 2);
-                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Y := Vxl.Section[i].Tailer.Transform[2][3] + Y - (Vxl.Section[i].Tailer.ySize / 2);
-                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Z := Vxl.Section[i].Tailer.Transform[3][3] + Z - (Vxl.Section[i].Tailer.zSize / 2);
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.X := (Vxl.Section[i].Tailer.Transform[1][3] + MinBounds.X + (X * Scale.X));
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Y := (Vxl.Section[i].Tailer.Transform[2][3] + MinBounds.Y + (Y * Scale.Y));
+                  VoxelBoxes.Section[i].Box[VoxelBox_No].Position.Z := (Vxl.Section[i].Tailer.Transform[3][3] + MinBounds.Z + (Z * Scale.Z));
 
                   VoxelBoxes.Section[i].Box[VoxelBox_No].Color  := v.Colour;
                   VoxelBoxes.Section[i].Box[VoxelBox_No].Normal := v.Normal;

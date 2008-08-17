@@ -495,7 +495,7 @@ begin
       // Here we make the OpenGL list to speed up the render.
       for Section := Low(VoxelBoxes.Section) to High(VoxelBoxes.Section) do
       begin
-         GetScaleAndMinBounds(VoxelFile,VoxelBoxes.Section[Section].ID,Scale,MinBounds);
+         GetScaleWithMinBounds(VoxelFile.Section[VoxelBoxes.Section[Section].ID],Scale,MinBounds);
          if (VoxelBoxes.Section[Section].List < 1) or RebuildLists then
          begin
             if VoxelBoxes.Section[Section].List > 0 then
@@ -503,17 +503,14 @@ begin
             VoxelBoxes.Section[Section].List := glGenLists(1);
             glNewList(VoxelBoxes.Section[Section].List, GL_COMPILE);
             // Now, we hunt all voxel boxes...
-            glPushMatrix;
             for x := Low(VoxelBoxes.Section[Section].Box) to High(VoxelBoxes.Section[Section].Box) do
             begin
-               DrawBox(GetPosWithSize(ScaleVector3f(VoxelBoxes.Section[Section].Box[x].Position,Scale), Size), GetVXLColor(VoxelBoxes.Section[Section].Box[x].Color, VoxelBoxes.Section[Section].Box[x].Normal), Size, VoxelBoxes.Section[Section].Box[x]);
+               DrawBox(VoxelBoxes.Section[Section].Box[x].Position, GetVXLColor(VoxelBoxes.Section[Section].Box[x].Color, VoxelBoxes.Section[Section].Box[x].Normal), Scale, VoxelBoxes.Section[Section].Box[x]);
             end;
-            glPopMatrix;
             glEndList;
          end;
          glPushMatrix;
-            ApplyMatrix(VoxelFile.Section[VoxelBoxes.Section[Section].ID].Tailer.Det,ScaleVector(Scale,Size),VoxelBoxes.Section[Section].ID,HVAFrame);
-            glTranslatef(MinBounds.X*Size*2, MinBounds.Y*Size*2, MinBounds.Z*Size*2);
+            ApplyMatrix(Scale,VoxelBoxes.Section[Section].ID,HVAFrame);
             glCallList(VoxelBoxes.Section[Section].List);
          glPopMatrix;
       end;
@@ -811,6 +808,7 @@ var x,y,z: Byte;
     v: TVoxelUnpacked;
     num : integer;
     Section : integer;
+    Scale,MinBounds : TVector3f;
 begin
    if not IsEditable then exit;
 
@@ -822,6 +820,7 @@ begin
       SetLength(VoxelBoxes.Section,VoxelFile.Header.NumSections);
       for Section := Low(VoxelBoxes.Section) to High(VoxelBoxes.Section) do
       begin
+         GetScaleWithMinBounds(VoxelFile.Section[Section],Scale,MinBounds);
          VoxelBoxes.Section[Section].ID := Section;
          VoxelBox_No := 0;
          for z := 0 to (VoxelFile.Section[Section].Tailer.zSize - 1) do
@@ -842,9 +841,9 @@ begin
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[5]   := CheckFace(VoxelFile.Section[Section], x - 1, y, z);
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Faces[6]   := CheckFace(VoxelFile.Section[Section], x + 1, y, z);
 
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := X;
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := Y;
-                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := Z;
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.X := (MinBounds.X + (X * Scale.X));
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Y := (MinBounds.Y + (Y * Scale.Y));
+                     VoxelBoxes.Section[Section].Box[VoxelBox_No].Position.Z := (MinBounds.Z + (Z * Scale.Z));
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Color  := v.Colour;
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Normal := v.Normal;
                      Inc(VoxelBox_No);
@@ -858,6 +857,7 @@ begin
    else
    begin
       SetLength(VoxelBoxes.Section,1);
+      GetScaleWithMinBounds(Vxl,Scale,MinBounds);
       VoxelBoxes.Section[0].ID := Vxl.Header.Number;
       for z := 0 to (Vxl.Tailer.zSize - 1) do
       begin
@@ -877,9 +877,9 @@ begin
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[5]   := CheckFace(Vxl, x - 1, y, z);
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Faces[6]   := CheckFace(Vxl, x + 1, y, z);
 
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := X;// - (Vxl.Tailer.xSize / 2);
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := Y;// - (Vxl.Tailer.ySize / 2);
-                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := Z;// - (Vxl.Tailer.zSize / 2);
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.X := (MinBounds.X + (X * Scale.X));
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Y := (MinBounds.Y + (Y * Scale.Y));
+                  VoxelBoxes.Section[0].Box[VoxelBox_No].Position.Z := (MinBounds.Z + (Z * Scale.Z));
 
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Color  := v.Colour;
                   VoxelBoxes.Section[0].Box[VoxelBox_No].Normal := v.Normal;

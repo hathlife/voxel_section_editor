@@ -708,7 +708,7 @@ begin
 
    BGColor   := CleanVCCol(GetVXLPaletteColor(-1));
    FontColor := SetVector(1,1,1);
-   Size      := 0.1;
+   Size      := 0.2;
 
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
