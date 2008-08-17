@@ -1653,12 +1653,7 @@ var
    decimal : single;
    inteiro : integer;
 begin
-   inteiro := trunc(valor);
-   decimal := valor - inteiro;
-   if decimal > 0.5 then
-      Result := inteiro + 1
-   else
-      Result := inteiro;
+   Result := trunc(valor);
 end;
 
 // Pega o valor no ponto do mapa para o falso raytracing em AplicarFiltro.
