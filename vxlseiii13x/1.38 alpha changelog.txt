@@ -1,7 +1,13 @@
+1.38 has been released on 19/08/2008. We'll start 1.39 development soon.
+
+1.39 plans:
+-> recode the way the program renders, making it more object oriented.
+-> Introduce HVA functions to the program.
+
 1.38 Alpha - 09/10/2007 - Status: Stable.
   - revisions by Banshee
     - Update: Rendering speed improved.
-    - (Not Completed) Bug Fix: Whole Voxel option at the Form 3D Preview works better and the program is reading HVA files, but it only renders the first frame.
+    - Bug Fix: Whole Voxel option at the Form 3D Preview works better and the program is reading HVA files.
     - Bug Fix: Tangent Plain auto normals 8.1 will find less wrong (inversed) normals due to a fix in the final process.
     - New Feature: Treat Discontinuities at Tangent Plane auto normals. This option changes the neighbor voxels from the voxel that is being analysed, improving the auto normals result.
     - Update: Tangent Plane auto normals has a lightly different and smarter way to get the best tangent plane possible, considerably improving the auto normals results. 

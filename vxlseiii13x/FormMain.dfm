@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 785
+  ClientHeight = 804
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,17 +29,19 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 766
+    Height = 785
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 766
     object LeftPanel: TPanel
       Left = 1
       Top = 26
       Width = 152
-      Height = 739
+      Height = 758
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 739
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1182,9 +1184,10 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 739
+      Height = 758
       Align = alRight
       TabOrder = 1
+      ExplicitHeight = 739
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1481,9 +1484,10 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 503
-      Height = 739
+      Height = 758
       Align = alClient
       TabOrder = 2
+      ExplicitHeight = 739
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1506,7 +1510,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 485
-        Height = 708
+        Height = 727
         Align = alClient
         PopupMenu = MainViewPopup
         OnMouseDown = CnvView0MouseDown
@@ -4198,7 +4202,7 @@ object FrmMain: TFrmMain
         Left = 486
         Top = 14
         Width = 16
-        Height = 708
+        Height = 727
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4207,15 +4211,17 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
+        ExplicitHeight = 708
       end
       object Panel5: TPanel
         Left = 1
-        Top = 722
+        Top = 741
         Width = 501
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
+        ExplicitTop = 722
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4418,7 +4424,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 766
+    Top = 785
     Width = 862
     Height = 19
     Panels = <
@@ -4434,6 +4440,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
+    ExplicitTop = 766
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -5032,11 +5039,6 @@ object FrmMain: TFrmMain
           ImageIndex = 18
           OnClick = PPMModdingForums1Click
         end
-        object RA2FAQ1: TMenuItem
-          Caption = 'RA2 FAQ'
-          ImageIndex = 18
-          OnClick = RA2FAQ1Click
-        end
         object RenegadeProjects1: TMenuItem
           Caption = 'Renegade Projects'
           ImageIndex = 18
@@ -5050,10 +5052,18 @@ object FrmMain: TFrmMain
       end
       object General1: TMenuItem
         Caption = 'General'
+        object CCFilefront1: TMenuItem
+          Caption = 'CnC: Filefront'
+          OnClick = CCFilefront1Click
+        end
         object CnCGuild1: TMenuItem
           Caption = 'CnC Guild'
           ImageIndex = 18
           OnClick = CnCGuild1Click
+        end
+        object CNCNZcom1: TMenuItem
+          Caption = 'CNCNZ.com'
+          OnClick = CNCNZcom1Click
         end
         object PlanetCNC1: TMenuItem
           Caption = 'Planet CNC'
@@ -5078,6 +5088,11 @@ object FrmMain: TFrmMain
           ImageIndex = 19
           OnClick = PixelOps1Click
         end
+        object MadHQGraphicsDump1: TMenuItem
+          Caption = 'MadHQ Graphics Dump'
+          ImageIndex = 16
+          OnClick = MadHQGraphicsDump1Click
+        end
         object ESource1: TMenuItem
           Caption = 'Raminator'#39's CnC Resources'
           ImageIndex = 18
@@ -5088,16 +5103,6 @@ object FrmMain: TFrmMain
           ImageIndex = 18
           OnClick = RA2GraphicsHeaven1Click
         end
-        object SavageWarTS1: TMenuItem
-          Caption = 'Savage War (TS)'
-          ImageIndex = 15
-          OnClick = SavageWarTS1Click
-        end
-        object SavageWarRA21: TMenuItem
-          Caption = 'Savage War (RA2)'
-          ImageIndex = 16
-          OnClick = SavageWarRA21Click
-        end
         object YRArgentina1: TMenuItem
           Caption = 'YR Argentina'
           ImageIndex = 18
@@ -5106,15 +5111,15 @@ object FrmMain: TFrmMain
       end
       object ools3: TMenuItem
         Caption = 'Tools'
-        object RockTheBattlefield1: TMenuItem
-          Caption = 'Pad Software'
-          ImageIndex = 18
-          OnClick = RockTheBattlefield1Click
-        end
         object RedUtils1: TMenuItem
           Caption = 'Red Utils'
           ImageIndex = 18
           OnClick = RedUtils1Click
+        end
+        object RockTheBattlefield1: TMenuItem
+          Caption = 'Rock Patch 2'
+          ImageIndex = 18
+          OnClick = RockTheBattlefield1Click
         end
         object ibEd1: TMenuItem
           Caption = 'TibEd'

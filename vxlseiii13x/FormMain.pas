@@ -188,8 +188,7 @@ type
     PlanetCNC1: TMenuItem;
     PixelOps1: TMenuItem;
     ESource1: TMenuItem;
-    SavageWarTS1: TMenuItem;
-    SavageWarRA21: TMenuItem;
+    MadHQGraphicsDump1: TMenuItem;
     YRArgentina1: TMenuItem;
     ibEd1: TMenuItem;
     XCC1: TMenuItem;
@@ -222,7 +221,6 @@ type
     Nudge1up1: TMenuItem;
     Nudge1Down1: TMenuItem;
     RedUtils1: TMenuItem;
-    RA2FAQ1: TMenuItem;
     Palette1: TMenuItem;
     iberianSunPalette1: TMenuItem;
     RedAlert2Palette1: TMenuItem;
@@ -333,6 +331,10 @@ type
     VKHomepage1: TMenuItem;
     ProjectSVN1: TMenuItem;
     XPManifest1: TXPManifest;
+    CNCNZcom1: TMenuItem;
+    CCFilefront1: TMenuItem;
+    procedure CCFilefront1Click(Sender: TObject);
+    procedure CNCNZcom1Click(Sender: TObject);
     procedure ProjectSVN1Click(Sender: TObject);
     procedure VKHomepage1Click(Sender: TObject);
     procedure PPMModdingForums1Click(Sender: TObject);
@@ -475,7 +477,7 @@ type
     procedure PixelOps1Click(Sender: TObject);
     procedure ESource1Click(Sender: TObject);
     procedure SavageWarTS1Click(Sender: TObject);
-    procedure SavageWarRA21Click(Sender: TObject);
+    procedure MadHQGraphicsDump1Click(Sender: TObject);
     procedure YRArgentina1Click(Sender: TObject);
     procedure ibEd1Click(Sender: TObject);
     procedure XCC1Click(Sender: TObject);
@@ -3229,6 +3231,7 @@ begin
       end;
 
       IsVXLLoading := true;
+      Application.OnIdle := nil;
       VoxelName := Config.GetHistory(p^.Tag);
       SetIsEditable(LoadVoxel(VoxelName));
       if IsEditable then
@@ -4081,9 +4084,9 @@ begin
    OpenHyperLink('http://ts.savagewar.co.uk/');
 end;
 
-procedure TFrmMain.SavageWarRA21Click(Sender: TObject);
+procedure TFrmMain.MadHQGraphicsDump1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://ra2.savagewar.co.uk/');
+   OpenHyperLink('http://zombapro.net/depot/');
 end;
 
 procedure TFrmMain.YRArgentina1Click(Sender: TObject);
@@ -4098,7 +4101,7 @@ end;
 
 procedure TFrmMain.XCC1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://xccu.sf.net/');
+   OpenHyperLink('http://xhp.xwis.net/');
 end;
 
 procedure TFrmMain.RedUtils1Click(Sender: TObject);
@@ -4108,7 +4111,7 @@ end;
 
 procedure TFrmMain.RockTheBattlefield1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://padsoft.sytes.net/');
+   OpenHyperLink('http://rp2.strategy-x.com/');
 end;
 
 procedure TFrmMain.RA2FAQ1Click(Sender: TObject);
@@ -4133,12 +4136,22 @@ end;
 
 procedure TFrmMain.RA2GraphicsHeaven1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://revenge.cncguild.net/');
+   OpenHyperLink('http://www.migeater.net/');
 end;
 
 procedure TFrmMain.CnCGuild1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.cncguild.net/');
+end;
+
+procedure TFrmMain.CCFilefront1Click(Sender: TObject);
+begin
+   OpenHyperLink('http://www.cnc-files.com/');
+end;
+
+procedure TFrmMain.CNCNZcom1Click(Sender: TObject);
+begin
+   OpenHyperLink('http://www.cncnz.com/');
 end;
 
 procedure TFrmMain.iberiumSunCom1Click(Sender: TObject);
