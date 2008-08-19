@@ -286,6 +286,11 @@ begin
    VoxelFile.Loaded := true;
    Result := true;
 
+   if FrmMain.p_Frm3DPreview <> nil then
+   begin
+      FrmMain.p_Frm3DPreview^.SpStopClick(nil);
+      FrmMain.p_Frm3DPreview^.SpFrame.MaxValue := 1;
+   end;
    SetupViews;
    SetNormalsCount;
    SetSpectrumMode;

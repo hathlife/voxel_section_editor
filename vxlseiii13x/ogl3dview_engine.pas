@@ -550,7 +550,7 @@ begin
 
       if (VoxelBoxes.Section[0].List < 1) or RebuildLists then
       begin
-         if VoxelBoxes.Section[0].List > 0 then
+         if (VoxelBoxes.Section[0].List > 0) then
             glDeleteLists(VoxelBoxes.Section[0].List,1);
          VoxelBoxes.Section[0].List := glGenLists(1);
          glNewList(VoxelBoxes.Section[0].List, GL_COMPILE);
@@ -660,20 +660,26 @@ begin
    begin
       for Section := Low(VoxelBoxGroup.Section) to High(VoxelBoxGroup.Section) do
       begin
+         if (VoxelBoxes.Section[Section].List > 0) then
+         begin
+            glDeleteLists(VoxelBoxes.Section[Section].List,1);
+            VoxelBoxes.Section[Section].List := 0;
+         end;
          SetLength(VoxelBoxGroup.Section[Section].Box,0);
       end;
    end;
    SetLength(VoxelBoxGroup.Section,0);
+   VoxelBoxGroup.NumBoxes := 0;
 end;
 
-function checkface(Vxl : TVoxelSection; x,y,z : integer) : boolean;
+function CheckFace(Vxl : TVoxelSection; x,y,z : integer) : boolean;
 var
 v: TVoxelUnpacked;
 begin
    Result := true;
-   if (X < 0) or (X > Vxl.Tailer.XSize-1) then Exit;
-   if (Y < 0) or (Y > Vxl.Tailer.YSize-1) then Exit;
-   if (Z < 0) or (Z > Vxl.Tailer.ZSize-1) then Exit;
+   if (X < 0) or (X >= Vxl.Tailer.XSize) then Exit;
+   if (Y < 0) or (Y >= Vxl.Tailer.YSize) then Exit;
+   if (Z < 0) or (Z >= Vxl.Tailer.ZSize) then Exit;
 
    Vxl.GetVoxel(x,y,z,v);
    if v.Used then

@@ -67,6 +67,15 @@ type
     Display1: TMenuItem;
     CurrentSectionOnly1: TMenuItem;
     WholeVoxel1: TMenuItem;
+    SpPlay: TSpeedButton;
+    SpStop: TSpeedButton;
+    Label1: TLabel;
+    SpFrame: TSpinEdit;
+    AnimationTimer: TTimer;
+    procedure AnimationTimerTimer(Sender: TObject);
+    procedure SpPlayClick(Sender: TObject);
+    procedure SpStopClick(Sender: TObject);
+    procedure SpFrameChange(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure CurrentSectionOnly1Click(Sender: TObject);
@@ -124,7 +133,6 @@ type
     Depth  : glFloat;
     Xcoord, Ycoord, Zcoord : Integer;
     MouseButton : Integer;
-    WireFrame  : Boolean;
     procedure DrawMe;
     procedure ClearRemapClicks;
     procedure BuildFont;
@@ -144,6 +152,7 @@ type
     FFrequency : int64;
     FoldTime : int64;    // last system time
     RebuildLists : boolean;
+    AnimationState : boolean;
     IsReady : boolean;
     procedure Update3dView(Vxl : TVoxelSection);
     Procedure SetRotationAdders;
@@ -308,7 +317,7 @@ end;
 procedure TFrm3DPReview.ScreenShot(Filename : string);
 var
    buffer: array of byte;
-   x,y,i, c, temp: integer;
+   i, c, temp: integer;
    f: file;
 begin
    MakeMeAScreenshotName(Filename,'.tga');
@@ -364,7 +373,6 @@ begin
    if Filename = '' then
       exit;
 
-  Bitmap := TBitmap.Create;
   Bitmap := ScreenShot_BitmapResult;
   JPEGImage := TJPEGImage.Create;
   JPEGImage.Assign(Bitmap);
@@ -383,7 +391,6 @@ begin
    if Filename = '' then
       exit;
 
-  Bitmap := TBitmap.Create;
   Bitmap := ScreenShot_BitmapResult;
   Bitmap.SaveToFile(Filename);
   Bitmap.Free;
@@ -400,7 +407,6 @@ begin
    if Filename = '' then
       exit;
 
-  Bitmap := TBitmap.Create;
   Bitmap := ScreenShot_BitmapResult;
   PNGImage := TPNGObject.Create;
   PNGImage.Assign(Bitmap);
@@ -464,6 +470,7 @@ var
    Scale,MinBounds : TVector3f;
 //   Matrix : TGlmatrixf4;
 begin
+   try
    if (not Showing) then exit;
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
    glClearColor(BGColor.X, BGColor.Y, BGColor.Z, 1.0); 	   // Black Background
@@ -498,7 +505,7 @@ begin
          GetScaleWithMinBounds(VoxelFile.Section[VoxelBoxes.Section[Section].ID],Scale,MinBounds);
          if (VoxelBoxes.Section[Section].List < 1) or RebuildLists then
          begin
-            if VoxelBoxes.Section[Section].List > 0 then
+            if (VoxelBoxes.Section[Section].List > 0) then
                glDeleteLists(VoxelBoxes.Section[Section].List,1);
             VoxelBoxes.Section[Section].List := glGenLists(1);
             glNewList(VoxelBoxes.Section[Section].List, GL_COMPILE);
@@ -624,6 +631,9 @@ begin
 
       glEnable(GL_DEPTH_TEST);
    end;
+   except
+      exit;
+   end;
 end;
 
 
@@ -682,6 +692,10 @@ begin
    QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
    QueryPerformanceCounter(FoldTime);
 
+   SpFrame.Value := 1;
+   SpFrame.MaxValue := HVAFile.Header.N_Frames;
+   HVAFrame := 0;
+
    RebuildLists := false;
    Update3dView(ActiveSection);
    IsReady := true;
@@ -717,6 +731,8 @@ end;
 {------------------------------------------------------------------}
 procedure TFrm3DPReview.FormResize(Sender: TObject);
 begin
+   if width < 323 then
+      Width := 323;
    wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
    glViewport(0, 0, Panel2.Width, Panel2.Height);    // Set the viewport for the OpenGL window
    glMatrixMode(GL_PROJECTION);        // Change Matrix Mode to Projection
@@ -806,7 +822,6 @@ end;
 procedure TFrm3DPReview.Update3dView(Vxl : TVoxelSection);
 var x,y,z: Byte;
     v: TVoxelUnpacked;
-    num : integer;
     Section : integer;
     Scale,MinBounds : TVector3f;
 begin
@@ -847,11 +862,11 @@ begin
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Color  := v.Colour;
                      VoxelBoxes.Section[Section].Box[VoxelBox_No].Normal := v.Normal;
                      Inc(VoxelBox_No);
-                     Inc(VoxelBoxes.NumBoxes);
                   end;
                end;
             end;
          end;
+         VoxelBoxes.NumBoxes := VoxelBoxes.NumBoxes + VoxelBox_No;
       end;
    end
    else
@@ -968,6 +983,51 @@ end;
 procedure TFrm3DPReview.spin3DjmpChange(Sender: TObject);
 begin
    SetRotationAdders;
+end;
+
+procedure TFrm3DPReview.SpPlayClick(Sender: TObject);
+begin
+   // Enable timer here.
+   if not AnimationTimer.Enabled then
+   begin
+      SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp');
+      AnimationTimer.Enabled := true;
+   end
+   else
+   begin
+      AnimationTimer.Enabled := false;
+      SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+   end;
+end;
+
+procedure TFrm3DPReview.SpStopClick(Sender: TObject);
+begin
+   AnimationTimer.Enabled := false;
+   HVAFrame := 0;
+   SpFrame.Value := 1;
+   SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+end;
+
+procedure TFrm3DPReview.AnimationTimerTimer(Sender: TObject);
+begin
+   if HVAFile.Header.N_Frames = 1 then
+   begin
+      SpStopClick(Sender);
+   end;
+   HVAFrame := (HVAFrame + 1) mod SpFrame.MaxValue;
+   SpFrame.Value := HVAFrame + 1;
+end;
+
+procedure TFrm3DPReview.SpFrameChange(Sender: TObject);
+begin
+   if StrToIntDef(SpFrame.Text,-1) <> -1 then
+   begin
+      if SpFrame.Value > SpFrame.MaxValue then
+         SpFrame.Value := 1
+      else if SpFrame.Value < 1 then
+         SpFrame.Value := SpFrame.MaxValue;
+      HVAFrame := SpFrame.Value-1;
+   end;
 end;
 
 procedure TFrm3DPReview.FontColor1Click(Sender: TObject);
@@ -1255,6 +1315,8 @@ end;
 procedure TFrm3DPReview.FormDeactivate(Sender: TObject);
 begin
    FrmMain.OnDeactivate(sender);
+   AnimationState := AnimationTimer.Enabled;
+   AnimationTimer.Enabled := false;
 end;
 
 end.

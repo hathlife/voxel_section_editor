@@ -4,7 +4,7 @@ object Frm3DPReview: TFrm3DPReview
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
   ClientHeight = 232
-  ClientWidth = 240
+  ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -26,7 +26,7 @@ object Frm3DPReview: TFrm3DPReview
   object Panel2: TPanel
     Left = 0
     Top = 26
-    Width = 240
+    Width = 363
     Height = 206
     Cursor = crCross
     Align = alClient
@@ -40,11 +40,14 @@ object Frm3DPReview: TFrm3DPReview
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 240
+    Width = 363
     Height = 26
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
+    DesignSize = (
+      363
+      26)
     object SpeedButton2: TSpeedButton
       Left = 2
       Top = 3
@@ -153,10 +156,11 @@ object Frm3DPReview: TFrm3DPReview
     object Bevel1: TBevel
       Left = 0
       Top = 0
-      Width = 240
+      Width = 363
       Height = 2
       Align = alTop
       Shape = bsTopLine
+      ExplicitWidth = 240
     end
     object SpeedButton1: TSpeedButton
       Left = 118
@@ -220,6 +224,58 @@ object Frm3DPReview: TFrm3DPReview
       Transparent = False
       OnClick = btn3DRotateXClick
     end
+    object SpPlay: TSpeedButton
+      Left = 225
+      Top = 3
+      Width = 23
+      Height = 22
+      Anchors = [akTop, akRight]
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00001000000000000000000000000000
+        800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        33333333333333333333333333333333333333FFFFFFFFFFFFF3300000000000
+        003337777777777777F330F777777777703337F33333333337F330F333333333
+        703337F3333F333337F330F333033333703337F3337FF33337F330F333003333
+        703337F33377FF3337F330F333000333703337F333777FF337F330F333000033
+        703337F33377773337F330F333000333703337F33377733337F330F333003333
+        703337F33377333337F330F333033333703337F33373333337F330F333333333
+        703337F33333333337F330FFFFFFFFFFF03337FFFFFFFFFFF7F3300000000000
+        0033377777777777773333333333333333333333333333333333}
+      NumGlyphs = 2
+      OnClick = SpPlayClick
+    end
+    object SpStop: TSpeedButton
+      Left = 248
+      Top = 3
+      Width = 23
+      Height = 22
+      Anchors = [akTop, akRight]
+      Glyph.Data = {
+        76010000424D7601000000000000760000002800000020000000100000000100
+        04000000000000010000130B0000130B00001000000000000000000000000000
+        800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
+        FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+        33333333333333333333333333333333333333FFFFFFFFFFFFF3300000000000
+        003337777777777777F330F777777777703337F33333333337F330F333333333
+        703337F33333333337F330F333333333703337F333FFFFF337F330F330000033
+        703337F3377777F337F330F330000033703337F3377777F337F330F330000033
+        703337F3377777F337F330F330000033703337F3377777F337F330F330000033
+        703337F33777773337F330F333333333703337F33333333337F330F333333333
+        703337F33333333337F330FFFFFFFFFFF03337FFFFFFFFFFF7F3300000000000
+        0033377777777777773333333333333333333333333333333333}
+      NumGlyphs = 2
+      OnClick = SpStopClick
+    end
+    object Label1: TLabel
+      Left = 277
+      Top = 8
+      Width = 32
+      Height = 13
+      Anchors = [akTop, akRight]
+      Caption = 'Frame:'
+    end
     object spin3Djmp: TSpinEdit
       Left = 144
       Top = 3
@@ -235,6 +291,19 @@ object Frm3DPReview: TFrm3DPReview
       TabOrder = 0
       Value = 10
       OnChange = spin3DjmpChange
+    end
+    object SpFrame: TSpinEdit
+      Left = 315
+      Top = 3
+      Width = 50
+      Height = 22
+      Anchors = [akTop, akRight]
+      MaxLength = 1
+      MaxValue = 1
+      MinValue = 1
+      TabOrder = 1
+      Value = 1
+      OnChange = SpFrameChange
     end
   end
   object MainMenu1: TMainMenu
@@ -396,5 +465,12 @@ object Frm3DPReview: TFrm3DPReview
         OnClick = White1Click
       end
     end
+  end
+  object AnimationTimer: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = AnimationTimerTimer
+    Left = 176
+    Top = 72
   end
 end

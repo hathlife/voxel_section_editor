@@ -1,10 +1,10 @@
 object FrmTimeMain: TFrmTimeMain
   Left = 154
   Top = 0
-  Width = 870
-  Height = 876
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
+  ClientHeight = 849
+  ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

@@ -62,7 +62,14 @@ begin
          SetLength(HVAFile.Data[Section].TransformMatrixs,0);
       end;
    end;
-   SetLength(HVAFile.Data,0);
+   SetLength(HVAFile.Data,1);
+   HVAFrame := 0;
+   HVASection := 0;
+   HVAFile.Header.N_Frames := 1;
+   HVAFile.Header.N_Sections := 1;
+   SetLength(HVAFile.Data[0].TransformMatrixs,1);
+   HVAFile.Data[0].TransformMatrixs[0] := GetIdentityTM;
+   HVAFile.Data_no := 1;
 end;
 
 function LoadHVA(Filename : string): boolean;

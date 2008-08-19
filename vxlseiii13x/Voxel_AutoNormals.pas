@@ -1648,20 +1648,12 @@ begin
    result := true;
 end;
 
-function Arredondar(valor : single): integer;
-var
-   decimal : single;
-   inteiro : integer;
-begin
-   Result := trunc(valor);
-end;
-
 // Pega o valor no ponto do mapa para o falso raytracing em AplicarFiltro.
 function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f; var EstaNoVazio : boolean): single;
 var
    PontoI : TVector3i;
 begin
-   PontoI := SetVectorI(Arredondar(Ponto.X),Arredondar(Ponto.Y),Arredondar(Ponto.Z));
+   PontoI := SetVectorI(Trunc(Ponto.X),Trunc(Ponto.Y),Trunc(Ponto.Z));
    Result := 0;
    if PontoValido(PontoI.X,PontoI.Y,PontoI.Z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
    begin

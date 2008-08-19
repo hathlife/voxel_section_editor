@@ -3609,7 +3609,7 @@ end;
 procedure TFrmTimeMain.Importfrommodel1Click(Sender: TObject);
 var
    tempvxl : TVoxel;
-   i, SectionIndex,tempsectionindex,u1,u2,{u3,}num: Integer;
+   i, SectionIndex,tempsectionindex: Integer;
    frm: Tfrmimportsection;
 begin
    if not isEditable then exit;

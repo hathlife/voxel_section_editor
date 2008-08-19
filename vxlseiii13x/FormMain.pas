@@ -624,6 +624,11 @@ begin
 
    if IsEditable then
    begin
+      if p_Frm3DPreview <> nil then
+      begin
+         p_Frm3DPreview^.SpFrame.MaxValue := 1;
+         p_Frm3DPreview^.SpStopClick(nil);
+      end;
       HVAName := copy(OpenVXLDialog.Filename,1,Length(OpenVXLDialog.FileName) - 3) + 'hva';
       if FileExists(HVAName) then
       begin
@@ -632,7 +637,9 @@ begin
                ClearHVA;
          except
          end;
-      end;
+      end
+      else
+         ClearHVA;
       DoAfterLoadingThings;
    end;
    IsVXLLoading := false;
@@ -2392,8 +2399,14 @@ begin
    UpdateUndo_RedoState;
    SelectCorrectPalette;
    PaintPalette(cnvPalette,True);
+   if p_Frm3DPreview <> nil then
+   begin
+      p_Frm3DPreview^.SpFrame.MaxValue := HVAFile.Header.N_Frames;
+      p_Frm3DPreview^.SpFrame.Value := 1;
+   end;
    if not Display3dView1.Checked then
-      Application.OnIdle := Idle
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle
    else
       Application.OnIdle := nil;
 
@@ -2844,11 +2857,15 @@ begin
       if p_Frm3DPreview = nil then
          Application.OnIdle := nil
       else
-         Application.OnIdle := Idle;
+      begin
+         if @Application.OnIdle = nil then
+            Application.OnIdle := Idle;
+      end;
       OGL3DPreview.Refresh;
    end
    else
-      Application.OnIdle := Idle;
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle;
 end;
 
 procedure TFrmMain.About1Click(Sender: TObject);
@@ -3216,6 +3233,11 @@ begin
       SetIsEditable(LoadVoxel(VoxelName));
       if IsEditable then
       begin
+         if p_Frm3DPreview <> nil then
+         begin
+            p_Frm3DPreview^.SpFrame.MaxValue := 1;
+            p_Frm3DPreview^.SpStopClick(nil);
+         end;
          HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
          if FileExists(HVAName) then
          begin
@@ -3224,7 +3246,9 @@ begin
                   ClearHVA;
             except
             end;
-         end;
+         end
+         else
+            ClearHVA;
          DoAfterLoadingThings;
       end;
       IsVXLLoading := false;
@@ -4410,7 +4434,8 @@ begin
       new(p_Frm3DPreview);
       p_Frm3DPreview^ := TFrm3DPreview.Create(self);
       p_Frm3DPreview^.Show;
-      Application.OnIdle := Idle;
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle;
    end;
 end;
 
@@ -4440,8 +4465,15 @@ end;
 procedure TFrmMain.FormActivate(Sender: TObject);
 begin
    // Activate the view.
-   if not Display3dView1.Checked then
-      Application.OnIdle := Idle
+   if (not Display3dView1.Checked)  then
+   begin
+      if p_Frm3DPreview <> nil then
+      begin
+         p_Frm3DPreview^.AnimationTimer.Enabled := p_Frm3DPreview^.AnimationState;
+      end;
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle;
+   end
    else
       Application.OnIdle := nil;
 end;
