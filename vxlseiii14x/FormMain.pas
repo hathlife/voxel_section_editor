@@ -633,16 +633,7 @@ begin
          p_Frm3DPreview^.SpStopClick(nil);
       end;
       HVAName := copy(OpenVXLDialog.Filename,1,Length(OpenVXLDialog.FileName) - 3) + 'hva';
-      if FileExists(HVAName) then
-      begin
-         try
-            if not LoadHVA(HVAName) then
-               ClearHVA;
-         except
-         end;
-      end
-      else
-         ClearHVA;
+      HVAFile.LoadFile(HVAName,@VoxelFile);
       DoAfterLoadingThings;
    end;
    IsVXLLoading := false;
@@ -681,6 +672,7 @@ begin
    BuildReopenMenu;
    Height := 768;
 
+   HVAFile := THVA.Create;
 
    for i := 0 to 2 do
    begin
@@ -1348,14 +1340,7 @@ begin
          if IsEditable then
          begin
             HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
-            if FileExists(HVAName) then
-            begin
-               try
-                  if not LoadHVA(HVAName) then
-                     ClearHVA;
-               except
-               end;
-            end;
+            HVAFile.LoadFile(HVAName,@VoxelFile);
             DoAfterLoadingThings;
          end;
          IsVXLLoading := false;
@@ -3247,16 +3232,7 @@ begin
             p_Frm3DPreview^.SpStopClick(nil);
          end;
          HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
-         if FileExists(HVAName) then
-         begin
-            try
-               if not LoadHVA(HVAName) then
-                  ClearHVA;
-            except
-            end;
-         end
-         else
-            ClearHVA;
+         HVAFile.LoadFile(HVAName,@VoxelFile);
          DoAfterLoadingThings;
       end;
       IsVXLLoading := false;
@@ -3370,6 +3346,7 @@ begin
       p_Frm3DPreview := nil;
    end;
    VXLPalette.Free;
+   HVAFile.Free;
 end;
 
 procedure TFrmMain.SpeedButton7Click(Sender: TObject);

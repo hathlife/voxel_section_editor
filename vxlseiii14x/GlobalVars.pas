@@ -2,10 +2,11 @@ unit GlobalVars;
 
 interface
 
-uses Palette;
+uses Palette, HVA;
 
 var
    VXLPalette : TPalette;
+   HVAFile : THVA;
 
 implementation
 

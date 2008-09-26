@@ -35,13 +35,13 @@ object FrmTimeMain: TFrmTimeMain
       Left = 1
       Top = 1
       Width = 152
-      Height = 809
+      Height = 828
       Align = alLeft
       TabOrder = 0
       object lblSection: TLabel
         Left = 1
         Top = 1
-        Width = 42
+        Width = 150
         Height = 13
         Align = alTop
         Caption = '  Section'
@@ -53,11 +53,12 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 42
       end
       object lblTools: TLabel
         Left = 1
         Top = 55
-        Width = 32
+        Width = 150
         Height = 13
         Align = alTop
         Caption = '  Tools'
@@ -69,11 +70,12 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 32
       end
       object lblpalette: TLabel
         Left = 1
         Top = 257
-        Width = 39
+        Width = 150
         Height = 13
         Align = alTop
         Caption = '  Palette'
@@ -85,6 +87,7 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 39
       end
       object cnvPalette: TPaintBox
         Left = 1
@@ -98,7 +101,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblLayer: TLabel
         Left = 1
         Top = 177
-        Width = 37
+        Width = 150
         Height = 13
         Align = alTop
         Caption = '  Layers'
@@ -110,11 +113,12 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 37
       end
       object lblBrush: TLabel
         Left = 1
         Top = 129
-        Width = 33
+        Width = 150
         Height = 13
         Align = alTop
         Caption = '  Brush'
@@ -126,6 +130,7 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 33
       end
       object Panel3: TPanel
         Left = 1
@@ -140,7 +145,7 @@ object FrmTimeMain: TFrmTimeMain
           Top = 12
           Width = 137
           Height = 21
-          ItemHeight = 0
+          ItemHeight = 13
           TabOrder = 0
           OnChange = SectionComboChange
         end
@@ -1203,7 +1208,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblView1: TLabel
         Left = 1
         Top = 1
-        Width = 63
+        Width = 203
         Height = 13
         Align = alTop
         Caption = '  View : Right'
@@ -1217,11 +1222,12 @@ object FrmTimeMain: TFrmTimeMain
         ParentFont = False
         PopupMenu = mnuDirectionPopup
         OnClick = lblView1Click
+        ExplicitWidth = 63
       end
       object lblView2: TLabel
         Left = 1
         Top = 217
-        Width = 57
+        Width = 203
         Height = 13
         Align = alTop
         Caption = '  View : Top'
@@ -1235,11 +1241,12 @@ object FrmTimeMain: TFrmTimeMain
         ParentFont = False
         PopupMenu = mnuDirectionPopup
         OnClick = lblView2Click
+        ExplicitWidth = 57
       end
       object lbl3dview: TLabel
         Left = 1
         Top = 433
-        Width = 46
+        Width = 203
         Height = 13
         Align = alTop
         Caption = '  3D View'
@@ -1251,6 +1258,7 @@ object FrmTimeMain: TFrmTimeMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
+        ExplicitWidth = 46
       end
       object OGL3DPreview: TPanel
         Left = 1
@@ -1477,7 +1485,7 @@ object FrmTimeMain: TFrmTimeMain
       object lblView0: TLabel
         Left = 1
         Top = 1
-        Width = 98
+        Width = 501
         Height = 13
         Align = alTop
         Caption = '  Editing View : Back'
@@ -1490,18 +1498,20 @@ object FrmTimeMain: TFrmTimeMain
         ParentColor = False
         ParentFont = False
         PopupMenu = mnuDirectionPopup
+        ExplicitWidth = 98
       end
       object CnvView0: TPaintBox
         Left = 1
         Top = 14
         Width = 485
-        Height = 778
+        Height = 797
         Align = alClient
         PopupMenu = MainViewPopup
         OnMouseDown = CnvView0MouseDown
         OnMouseMove = CnvView0MouseMove
         OnMouseUp = CnvView0MouseUp
         OnPaint = CnvView0Paint
+        ExplicitHeight = 778
       end
       object TopBarImageHolder: TImage
         Left = 0
@@ -4186,7 +4196,7 @@ object FrmTimeMain: TFrmTimeMain
         Left = 486
         Top = 14
         Width = 16
-        Height = 778
+        Height = 797
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4198,7 +4208,7 @@ object FrmTimeMain: TFrmTimeMain
       end
       object Panel5: TPanel
         Left = 1
-        Top = 792
+        Top = 811
         Width = 501
         Height = 16
         Align = alBottom

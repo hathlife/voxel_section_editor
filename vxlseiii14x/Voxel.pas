@@ -163,6 +163,7 @@ type
       procedure InsertSection(SectionIndex: Integer; Name: String; XSize,YSize,ZSize: Integer);
       procedure RemoveSection(SectionIndex: Integer);
    end;
+   PVoxel = ^TVoxel;
 
    TVoxelViewCell = packed record
       Colour: Word; // 16-bits; 256 is transparent

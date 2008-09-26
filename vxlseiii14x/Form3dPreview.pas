@@ -229,7 +229,7 @@ Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
 
 implementation
 
-uses FormMain;
+uses FormMain, GlobalVars;
 
 {$R *.DFM}
 
@@ -517,7 +517,7 @@ begin
             glEndList;
          end;
          glPushMatrix;
-            ApplyMatrix(Scale,VoxelBoxGroup3D.Section[Section].ID,HVAFrame);
+            HVAFile.ApplyMatrix(Scale,VoxelBoxGroup3D.Section[Section].ID);
             glCallList(VoxelBoxGroup3D.Section[Section].List);
          glPopMatrix;
       end;
@@ -694,7 +694,7 @@ begin
 
    SpFrame.Value := 1;
    SpFrame.MaxValue := HVAFile.Header.N_Frames;
-   HVAFrame := 0;
+   HVAFile.Frame := 0;
 
    RebuildLists := false;
    Update3dView(ActiveSection);
@@ -1003,7 +1003,7 @@ end;
 procedure TFrm3DPReview.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
-   HVAFrame := 0;
+   HVAFile.Frame := 0;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
@@ -1014,8 +1014,8 @@ begin
    begin
       SpStopClick(Sender);
    end;
-   HVAFrame := (HVAFrame + 1) mod SpFrame.MaxValue;
-   SpFrame.Value := HVAFrame + 1;
+   HVAFile.Frame := (HVAFile.Frame + 1) mod SpFrame.MaxValue;
+   SpFrame.Value := HVAFile.Frame + 1;
 end;
 
 procedure TFrm3DPReview.SpFrameChange(Sender: TObject);
@@ -1026,7 +1026,7 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-      HVAFrame := SpFrame.Value-1;
+      HVAFile.Frame := SpFrame.Value-1;
    end;
 end;
 

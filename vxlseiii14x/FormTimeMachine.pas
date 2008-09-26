@@ -504,6 +504,8 @@ begin
    BuildReopenMenu;
    Height := 768;
 
+   HVAFile := THVA.Create;
+
    for i := 0 to 2 do
    begin
       cnvView[i].ControlStyle := cnvView[i].ControlStyle + [csOpaque];
@@ -3127,6 +3129,7 @@ begin
       p_Frm3DPreview := nil;
    end;
    VXLPalette.Free;
+   HVAFile.Free;
 end;
 
 procedure TFrmTimeMain.SpeedButton7Click(Sender: TObject);
