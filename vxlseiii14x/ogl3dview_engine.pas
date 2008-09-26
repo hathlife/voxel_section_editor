@@ -4,7 +4,7 @@ unit ogl3dview_engine;
 
 interface
 
-uses Geometry,Windows,SysUtils,Graphics,OpenGL15,forms,Voxel,Voxel_Engine,math,
+uses Geometry,Windows,SysUtils,Graphics,dglOpenGL,forms,Voxel,Voxel_Engine,math,
       dialogs,HVA, math3d;
       {
 type TVector3f = record

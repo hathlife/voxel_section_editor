@@ -7,7 +7,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, {model,} OpenGL15, {Textures,} Menus, voxel, Spin,
+  StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,Voxel_Engine, Normals, Ogl3dview_engine,
   HVA,JPEG,PNGImage, math3d;
 

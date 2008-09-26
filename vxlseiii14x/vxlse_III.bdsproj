@@ -164,8 +164,9 @@
 			<VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
 			<VersionInfoKeys Name="ProductName"></VersionInfoKeys>
 			<VersionInfoKeys Name="ProductVersion">1.4.0.0</VersionInfoKeys>
-			<VersionInfoKeys Name="Comments"></VersionInfoKeys>  <VersionInfoKeys Name="SpecialBuild">Alpha 01</VersionInfoKeys>
-    </VersionInfoKeys>
+			<VersionInfoKeys Name="Comments"></VersionInfoKeys>
+			<VersionInfoKeys Name="SpecialBuild">Alpha 01</VersionInfoKeys>
+		</VersionInfoKeys>
 		<Language>
 			<Language Name="ActiveLang"></Language>
 			<Language Name="ProjectLang">$00000000</Language>

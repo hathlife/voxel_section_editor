@@ -147,7 +147,7 @@ object FrmMain: TFrmMain
           Top = 12
           Width = 137
           Height = 21
-          ItemHeight = 0
+          ItemHeight = 13
           TabOrder = 0
           OnChange = SectionComboChange
         end

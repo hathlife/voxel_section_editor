@@ -3,7 +3,7 @@ Welcome to the OS Voxel Tools SVN. This SVN is dedicated to Voxel Section Editor
 - VXLSE III 1.3x (for the 1.3 series of Voxel Section Editor III). The current version is the 1.38.
 - VXLSE III 1.4x (for the 1.4 series of Voxel Section Editor III). The current version is the 1.39.01.
 
-You can download the latest unstable version by simply downloading the vxlseiii13x directory and using the program from there.
+You can download the latest unstable version by simply downloading the vxlseiii14x directory and using the program from there.
 
 
 You can browse it as guest at http://svn.ppmsite.com

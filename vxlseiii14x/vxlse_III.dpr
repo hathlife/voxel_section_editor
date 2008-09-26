@@ -41,7 +41,8 @@ uses
   Spin in 'Spin.pas',
   FormMain in 'FormMain.pas' {FrmMain},
   Class3DPointList in 'Class3DPointList.pas',
-  GlobalVars in 'GlobalVars.pas';
+  GlobalVars in 'GlobalVars.pas',
+  dglOpenGL in 'dglOpenGL.pas';
 
 {$R *.res}
 

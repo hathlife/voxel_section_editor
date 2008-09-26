@@ -3,7 +3,7 @@ unit Voxel;
 interface
 
 uses
-   {LoadForm,} Forms, Classes, OpenGL;
+   {LoadForm,} Forms, Classes, dglOpenGL;
 
 {$INCLUDE Global_Conditionals.inc}
 

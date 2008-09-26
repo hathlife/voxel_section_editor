@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls, ToolWin,
-  ImgList, Math, palette, Spin, Buttons, ogl3dview_engine,OpenGL15,FTGifAnimate,
+  ImgList, Math, palette, Spin, Buttons, ogl3dview_engine,dglOpenGL,FTGifAnimate,
   undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit,mouse,Registry,
   Form3dpreview,Debug, FormAutoNormals;
 

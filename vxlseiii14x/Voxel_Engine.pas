@@ -2,8 +2,8 @@ unit Voxel_Engine;
 
 interface
 
-uses Windows,Voxel,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,cls_config,Constants,
-     Menus,Clipbrd,mouse, forms, Dialogs;
+uses Windows,Voxel,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,cls_config,
+      Constants,Menus,Clipbrd,mouse, forms, Dialogs;
 
 {$INCLUDE Global_Conditionals.inc}
 type
