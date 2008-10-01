@@ -656,6 +656,7 @@ begin
    RemapColour.Z := RemapColourMap[0].B /255;
 
    // PixelFormat
+{
    pfd.nSize:=sizeof(pfd);
    pfd.nVersion:=1;
    pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER or 0;
@@ -667,6 +668,8 @@ begin
 
    rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
    wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
+}
+   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,0,0,0,0);
    ActivateRenderingContext(DC, RC);
 
    glClearColor(0.0, 0.0, 0.0, 0.0); 	   // Black Background
@@ -747,8 +750,9 @@ end;
 {------------------------------------------------------------------}
 procedure TFrm3DPReview.FormDestroy(Sender: TObject);
 begin
-//   wglMakeCurrent(0,0);
+   DeactivateRenderingContext; // Deactivates the current context
    wglDeleteContext(rc);
+   ReleaseDC(Handle, DC);
    FrmMain.p_Frm3DPreview := nil;
 end;
 

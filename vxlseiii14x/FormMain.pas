@@ -13,7 +13,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.02';
+   APPLICATION_VER = '1.39.03';
 
 type
   TFrmMain = class(TForm)
@@ -716,19 +716,20 @@ begin
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
-
+{
    // PixelFormat
    pfd.nSize:=sizeof(pfd);
    pfd.nVersion:=1;
-   pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER or 0;
+   pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;
    pfd.iPixelType:=PFD_TYPE_RGBA;      // PFD_TYPE_RGBA or PFD_TYPEINDEX
    pfd.cColorBits:=32;
 
    pf :=ChoosePixelFormat(dc, @pfd);   // Returns format that most closely matches above pixel format
    SetPixelFormat(dc, pf, @pfd);
-
-   rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
-   wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
+}
+ //  rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
+   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,0,0,0,0);
+//   wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
 
    ActivateRenderingContext(DC, RC);
 
@@ -1417,8 +1418,9 @@ end;
 
 procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
-   wglMakeCurrent(0,0);
+   DeactivateRenderingContext;
    wglDeleteContext(rc);
+   ReleaseDC(Handle, DC);
    UpdateHistoryMenu;
    Config.SaveSettings;
 end;
