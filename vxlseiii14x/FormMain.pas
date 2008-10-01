@@ -769,6 +769,12 @@ begin
    Application.OnDeactivate := OnDeactivate;
    Application.OnActivate := OnActivate;
 
+   // Setting up nudge shortcuts.
+   Nudge1Left1.ShortCut := ShortCut(VK_LEFT,[ssShift,ssCtrl]);
+   Nudge1Right1.ShortCut := ShortCut(VK_RIGHT,[ssShift,ssCtrl]);
+   Nudge1Up1.ShortCut := ShortCut(VK_UP,[ssShift,ssCtrl]);
+   Nudge1Down1.ShortCut := ShortCut(VK_DOWN,[ssShift,ssCtrl]);
+
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: FormCreate Loaded');
    {$endif}
