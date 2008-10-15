@@ -27,7 +27,9 @@ type
    public
       // Constructors
       constructor Create;
+      procedure Initialize;
       constructor CreateFromFile(_Filename : string);
+      constructor CreateFromPalette(const _Palette : TPalette);
       destructor Destroy; override;
 
       // Input and Output
@@ -36,6 +38,9 @@ type
 
       // Gets
       function GetColourFromPalette(_colour : TColor): longword;
+
+      // Copies
+      procedure Assign(const _Palette : TPalette);
 
       // Misc
       procedure PaletteGradient(_StartNum,_EndNum :longword; _StartColour,_EndColour : TColor);
@@ -54,17 +59,26 @@ uses Dialogs;
 // Constructors
 constructor TPalette.Create;
 begin
-   NumBits := 24;
-   SetLength(FPalette,0);
+   Initialize;
 end;
 
 constructor TPalette.CreateFromFile(_Filename: string);
 begin
    if not LoadPalette(_Filename) then
    begin
-      NumBits := 24;
-      SetLength(FPalette,0);
+      Initialize;
    end;
+end;
+
+constructor TPalette.CreateFromPalette(const _Palette : TPalette);
+begin
+   Assign(_Palette);
+end;
+
+procedure TPalette.Initialize;
+begin
+   NumBits := 24;
+   SetLength(FPalette,0);
 end;
 
 destructor TPalette.Destroy;
@@ -354,6 +368,24 @@ begin
          FPalette[_id] := (_colour.r or (_colour.g shl 8) or (_colour.b shl 16));
       end;
    end;
+end;
+
+// Copies
+procedure TPalette.Assign(const _Palette: TPalette);
+var
+   i : longword;
+begin
+   NumBits := _Palette.NumBits;
+   if High(_Palette.FPalette) > 0 then
+   begin
+      SetLength(FPalette,High(_Palette.FPalette)+1);
+      for i := Low(FPalette) to High(FPalette) do
+      begin
+         FPalette[i] := _Palette.FPalette[i];
+      end;
+   end
+   else
+      SetLength(FPalette,0);
 end;
 
 // Misc

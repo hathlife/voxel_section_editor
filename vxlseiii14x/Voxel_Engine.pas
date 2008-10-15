@@ -15,8 +15,16 @@ type
       X, Y, Z : single;
    end;
 
+   TVector2f = record
+      U, V : single;
+   end;
+
    TVector3i = record
       X, Y, Z : integer;
+   end;
+
+   TRectangle3f = record
+      Min, Max : TVector3f;
    end;
 
    TTempViewData = record

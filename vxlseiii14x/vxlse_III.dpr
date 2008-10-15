@@ -42,7 +42,14 @@ uses
   FormMain in 'FormMain.pas' {FrmMain},
   Class3DPointList in 'Class3DPointList.pas',
   GlobalVars in 'GlobalVars.pas',
-  dglOpenGL in 'dglOpenGL.pas';
+  dglOpenGL in 'dglOpenGL.pas',
+  Render in 'Render.pas',
+  RenderEnvironment in 'RenderEnvironment.pas',
+  Camera in 'Camera.pas',
+  Actor in 'Actor.pas',
+  Mesh in 'Mesh.pas',
+  GLConstants in 'GLConstants.pas',
+  Model in 'Model.pas';
 
 {$R *.res}
 

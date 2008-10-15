@@ -131,7 +131,6 @@ procedure glDraw();
 procedure Update3dView(Vxl : TVoxelSection);
 
 procedure BuildFont;
-function CleanAngle(Angle: single): single;
 Function CleanVCCol(Color : TColor) : TVector3f;
 function CleanV3fCol(Color: TVector3f): TVector3f;
 function GetCorrectColour(Color: integer; RemapColour : TVector3f): TVector3f;
@@ -493,16 +492,6 @@ begin
       Result := GetCorrectColour(color, RemapColour)
    else
       Result := SetVector(0.5, 0.5, 0.5);
-end;
-
-function CleanAngle(Angle: single): single;
-begin
-   Result := Angle;
-
-   if Result < 0 then
-      Result := 360 + Result
-   else if Result > 360 then
-      Result := Result - 360;
 end;
 
 {------------------------------------------------------------------}

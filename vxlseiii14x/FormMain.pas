@@ -728,7 +728,7 @@ begin
    SetPixelFormat(dc, pf, @pfd);
 }
  //  rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
-   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,0,0,0,0);
+   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,8,0,0,0);
 //   wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
 
    ActivateRenderingContext(DC, RC);
@@ -805,9 +805,8 @@ begin
 
       QueryPerformanceCounter(tmp);
       t2 := tmp-FoldTime;
-      FPS := t2/FFrequency;
+      FPS := FFrequency/t2;
       FoldTime := TMP;
-      FPS := 1/FPS;
 
       wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
       glDraw();                         // Draw the scene
@@ -1426,7 +1425,7 @@ procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
    DeactivateRenderingContext;
    wglDeleteContext(rc);
-   ReleaseDC(Handle, DC);
+   ReleaseDC(OGL3DPreview.Handle, DC);
    UpdateHistoryMenu;
    Config.SaveSettings;
 end;

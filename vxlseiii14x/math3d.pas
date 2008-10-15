@@ -27,6 +27,7 @@ function CrossProduct(const V1, V2: TVector3f): TVector3f;
 function ClassifyPoint(point, PlaneNormal : TVector3f; PlaneDistance : single) : single; overload;
 function ClassifyPoint(PlaneNormal : TVector3f; PlaneDistance : single) : single; overload;
 function ClassifyPoint(Point, PointOnPlane, PlaneNormal : TVector3f) : single; overload;
+function CleanAngle(Angle: single): single;
 
 implementation
 
@@ -200,5 +201,13 @@ begin
  else
    result := 0;
 end;
+
+function CleanAngle(Angle: single): single;
+begin
+   Result := (360 + Angle);
+   if Result > 360 then
+      Result := Result - 360;
+end;
+
 
 end.
