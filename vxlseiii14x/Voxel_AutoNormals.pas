@@ -4,7 +4,7 @@ interface
 
 uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList, SysUtils, Dialogs;
 
-{$define LIMITES}
+//{$define LIMITES}
 //{$define RAY_LIMIT}
 //{$define DEBUG}
 
@@ -917,6 +917,7 @@ var
    PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f;
    Direcao : single;
    Contador : integer;
+   contaEixoProblematico: byte;
 {$ifdef RAY_LIMIT}
    ValorFrente,ValorOposto : real;
 {$endif}
@@ -942,8 +943,8 @@ begin
    // 1.38: LimiteMin e LimiteMax são a 'bounding box' do plano tangente a ser
    // avaliado.
 {$ifdef LIMITES}
-   LimiteMin := SetVectori(Alcance,Alcance,Alcance);
-   LimiteMax := SetVectori(Alcance,Alcance,Alcance);
+   LimiteMin := SetVectori(High(Filtro),High(Filtro[0]),High(Filtro[0,0]));
+   LimiteMax := SetVectori(0,0,0);
 {$else}
    LimiteMin := SetVectori(0,0,0);
    LimiteMax := SetVectori(High(Filtro),High(Filtro[0]),High(Filtro[0,0]));
@@ -963,185 +964,213 @@ begin
       DetectarSuperficieEsferica(MapaDaSuperficie,Mapa,Filtro,PontoMin,PontoMax,LimiteMin,LimiteMax);
    end;
 
-{$ifdef LIMITES}
-   // Isso calcula o que será considerado o centro do plano tangente.
-   PseudoCentro.X := (LimiteMin.X + LimiteMax.X) div 2;
-   PseudoCentro.Y := (LimiteMin.Y + LimiteMax.Y) div 2;
-   PseudoCentro.Z := (LimiteMin.Z + LimiteMax.Z) div 2;
-{$else}
-   PseudoCentro.X := Alcance;
-   PseudoCentro.Y := Alcance;
-   PseudoCentro.Z := Alcance;
-{$endif}
-   // Resetamos os pontos do plano
-   PontoSudoeste := SetVector(0,0,0);
-   PontoNordeste := SetVector(0,0,0);
-   // Vetor Normal
-   VetorNormal := SetVector(0,0,0);
 
-   // Para encontrar o plano tangente, primeiro iremos ver qual é a
-   // provável tendência desse plano, para evitar arestas pequenas demais
-   // que distorceriam o resultado final.
-   for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
-      for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
-         for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
-         begin
-            if MapaDaSuperficie[xx,yy,zz] then
-            begin
-               // Aplica o filtro no ponto (xx,yy,zz)
-               if (Filtro[xx,yy,zz].X >= 0) then
-                  PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X
-               else
-                  PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
+   // O plano tangente requer que haja pelo menos dois pontos distintos em 2 eixos
+   contaEixoProblematico := 0;
+   if ((LimiteMax.X - LimiteMin.X) < 1) then
+      inc(contaEixoProblematico);
+   if ((LimiteMax.Y - LimiteMin.Y) < 1) then
+      inc(contaEixoProblematico);
+   if ((LimiteMax.Z - LimiteMin.Z) < 1) then
+      inc(contaEixoProblematico);
 
-               if (Filtro[xx,yy,zz].Y >= 0) then
-                  PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y
-               else
-                  PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
-
-               if (Filtro[xx,yy,zz].Z >= 0) then
-                  PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z
-               else
-                  PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
-            end;
-         end;
-
-   // Com a tendência acima, vamos escolher os dois maiores eixos
-   if (PontoNordeste.X - PontoSudoeste.X) > (PontoNordeste.Y - PontoSudoeste.Y) then
+   if contaEixoProblematico < 2 then
    begin
-      if (PontoNordeste.Y - PontoSudoeste.Y) > (PontoNordeste.Z - PontoSudoeste.Z) then
+{$ifdef LIMITES}
+      // Isso calcula o que será considerado o centro do plano tangente.
+      PseudoCentro.X := (LimiteMin.X + LimiteMax.X) div 2;
+      PseudoCentro.Y := (LimiteMin.Y + LimiteMax.Y) div 2;
+      PseudoCentro.Z := (LimiteMin.Z + LimiteMax.Z) div 2;
+{$else}
+      PseudoCentro.X := Alcance;
+      PseudoCentro.Y := Alcance;
+      PseudoCentro.Z := Alcance;
+{$endif}
+      // Resetamos os pontos do plano
+      PontoSudoeste := SetVector(0,0,0);
+      PontoNordeste := SetVector(0,0,0);
+      // Vetor Normal
+      VetorNormal := SetVector(0,0,0);
+
+      // Para encontrar o plano tangente, primeiro iremos ver qual é a
+      // provável tendência desse plano, para evitar arestas pequenas demais
+      // que distorceriam o resultado final.
+      for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
+         for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
+            for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
+            begin
+               if MapaDaSuperficie[xx,yy,zz] then
+               begin
+                  // Aplica o filtro no ponto (xx,yy,zz)
+                  if (Filtro[xx,yy,zz].X >= 0) then
+                     PontoNordeste.X := PontoNordeste.X + Filtro[xx,yy,zz].X
+                  else
+                     PontoSudoeste.X := PontoSudoeste.X + Filtro[xx,yy,zz].X;
+
+                  if (Filtro[xx,yy,zz].Y >= 0) then
+                     PontoNordeste.Y := PontoNordeste.Y + Filtro[xx,yy,zz].Y
+                  else
+                     PontoSudoeste.Y := PontoSudoeste.Y + Filtro[xx,yy,zz].Y;
+
+                  if (Filtro[xx,yy,zz].Z >= 0) then
+                     PontoNordeste.Z := PontoNordeste.Z + Filtro[xx,yy,zz].Z
+                  else
+                     PontoSudoeste.Z := PontoSudoeste.Z + Filtro[xx,yy,zz].Z;
+               end;
+            end;
+
+      // Com a tendência acima, vamos escolher os dois maiores eixos
+      if (PontoNordeste.X - PontoSudoeste.X) > (PontoNordeste.Y - PontoSudoeste.Y) then
+      begin
+         if (PontoNordeste.Y - PontoSudoeste.Y) > (PontoNordeste.Z - PontoSudoeste.Z) then
+         begin
+            AcharPlanoTangenteEmXY(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
+         end
+         else
+         begin
+            AcharPlanoTangenteEmXZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
+         end;
+      end
+      else if (PontoNordeste.X - PontoSudoeste.X) > (PontoNordeste.Z - PontoSudoeste.Z) then
       begin
          AcharPlanoTangenteEmXY(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
       end
       else
       begin
-         AcharPlanoTangenteEmXZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
+         AcharPlanoTangenteEmYZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
       end;
-   end
-   else if (PontoNordeste.X - PontoSudoeste.X) > (PontoNordeste.Z - PontoSudoeste.Z) then
-   begin
-      AcharPlanoTangenteEmXY(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
-   end
-   else
-   begin
-      AcharPlanoTangenteEmYZ(MapaDaSuperficie,Filtro,Alcance,PseudoCentro,PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste,LimiteMin,LimiteMax);
-   end;
 
-   // Agora vamos achar uma das direções do plano. A outra vai ser o
-   // negativo dessa.
-   VetorNormal.X := ((PontoNordeste.Y - PontoSudeste.Y) * (PontoSudoeste.Z - PontoSudeste.Z)) - ((PontoSudoeste.Y - PontoSudeste.Y) * (PontoNordeste.Z - PontoSudeste.Z));
-   VetorNormal.Y := ((PontoNordeste.Z - PontoSudeste.Z) * (PontoSudoeste.X - PontoSudeste.X)) - ((PontoSudoeste.Z - PontoSudeste.Z) * (PontoNordeste.X - PontoSudeste.X));
-   VetorNormal.Z := ((PontoNordeste.X - PontoSudeste.X) * (PontoSudoeste.Y - PontoSudeste.Y)) - ((PontoSudoeste.X - PontoSudeste.X) * (PontoNordeste.Y - PontoSudeste.Y));
+      // Agora vamos achar uma das direções do plano. A outra vai ser o
+      // negativo dessa.
+      VetorNormal.X := ((PontoNordeste.Y - PontoSudeste.Y) * (PontoSudoeste.Z - PontoSudeste.Z)) - ((PontoSudoeste.Y - PontoSudeste.Y) * (PontoNordeste.Z - PontoSudeste.Z));
+      VetorNormal.Y := ((PontoNordeste.Z - PontoSudeste.Z) * (PontoSudoeste.X - PontoSudeste.X)) - ((PontoSudoeste.Z - PontoSudeste.Z) * (PontoNordeste.X - PontoSudeste.X));
+      VetorNormal.Z := ((PontoNordeste.X - PontoSudeste.X) * (PontoSudoeste.Y - PontoSudeste.Y)) - ((PontoSudoeste.X - PontoSudeste.X) * (PontoNordeste.Y - PontoSudeste.Y));
 
-   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
-   begin
-      VetorNormal.X := ((PontoNoroeste.Y - PontoNordeste.Y) * (PontoSudeste.Z - PontoNordeste.Z)) - ((PontoSudeste.Y - PontoNordeste.Y) * (PontoNoroeste.Z - PontoNordeste.Z));
-      VetorNormal.Y := ((PontoNoroeste.Z - PontoNordeste.Z) * (PontoSudeste.X - PontoNordeste.X)) - ((PontoSudeste.Z - PontoNordeste.Z) * (PontoNoroeste.X - PontoNordeste.X));
-      VetorNormal.Z := ((PontoNoroeste.X - PontoNordeste.X) * (PontoSudeste.Y - PontoNordeste.Y)) - ((PontoSudeste.X - PontoNordeste.X) * (PontoNoroeste.Y - PontoNordeste.Y));
-   end;
-   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
-   begin
-      VetorNormal.X := ((PontoSudoeste.Y - PontoNoroeste.Y) * (PontoNordeste.Z - PontoNoroeste.Z)) - ((PontoNordeste.Y - PontoNoroeste.Y) * (PontoSudoeste.Z - PontoNoroeste.Z));
-      VetorNormal.Y := ((PontoSudoeste.Z - PontoNoroeste.Z) * (PontoNordeste.X - PontoNoroeste.X)) - ((PontoNordeste.Z - PontoNoroeste.Z) * (PontoSudoeste.X - PontoNoroeste.X));
-      VetorNormal.Z := ((PontoSudoeste.X - PontoNoroeste.X) * (PontoNordeste.Y - PontoNoroeste.Y)) - ((PontoNordeste.X - PontoNoroeste.X) * (PontoSudoeste.Y - PontoNoroeste.Y));
-   end;
-   if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
-   begin
-      VetorNormal.X := ((PontoSudeste.Y - PontoSudoeste.Y) * (PontoNoroeste.Z - PontoSudoeste.Z)) - ((PontoNoroeste.Y - PontoSudoeste.Y) * (PontoSudeste.Z - PontoSudoeste.Z));
-      VetorNormal.Y := ((PontoSudeste.Z - PontoSudoeste.Z) * (PontoNoroeste.X - PontoSudoeste.X)) - ((PontoNoroeste.Z - PontoSudoeste.Z) * (PontoSudeste.X - PontoSudoeste.X));
-      VetorNormal.Z := ((PontoSudeste.X - PontoSudoeste.X) * (PontoNoroeste.Y - PontoSudoeste.Y)) - ((PontoNoroeste.X - PontoSudoeste.X) * (PontoSudeste.Y - PontoSudoeste.Y));
-{$ifdef DEBUG}
       if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
-//      ShowMessage('(' + FloatToStr(VetorNormal.X) + ',' + FloatToStr(VetorNormal.Y) + ',' + FloatToStr(VetorNormal.Z) + ')');
-         ShowMessage('(0,0,0) with (' + FloatToStr(PontoSudoeste.X) + ',' + FloatToStr(PontoSudoeste.Y) + ',' + FloatToStr(PontoSudoeste.Z) + ') - (' + FloatToStr(PontoSudeste.X) + ',' + FloatToStr(PontoSudeste.Y) + ',' + FloatToStr(PontoSudeste.Z) + ') - (' + FloatToStr(PontoNordeste.X) + ',' + FloatToStr(PontoNordeste.Y) + ',' + FloatToStr(PontoNordeste.Z) + ') - (' + FloatToStr(PontoNoroeste.X) + ',' + FloatToStr(PontoNoroeste.Y) + ',' + FloatToStr(PontoNoroeste.Z) + '), at (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + '). MinLimit: (' + IntToStr(LimiteMin.X) + ',' + IntToStr(LimiteMin.Y) + ',' + IntToStr(LimiteMin.Z) + '). MaxLimit: ' +  IntToStr(LimiteMax.X) + ',' + IntToStr(LimiteMax.Y) + ',' + IntToStr(LimiteMax.Z) + '). Center at: ' + IntToStr(PseudoCentro.X) + ',' + IntToStr(PseudoCentro.Y) + ',' + IntToStr(PseudoCentro.Z) + ') with range ' + IntToStr(Alcance) +  '.');
+      begin
+         VetorNormal.X := ((PontoNoroeste.Y - PontoNordeste.Y) * (PontoSudeste.Z - PontoNordeste.Z)) - ((PontoSudeste.Y - PontoNordeste.Y) * (PontoNoroeste.Z - PontoNordeste.Z));
+         VetorNormal.Y := ((PontoNoroeste.Z - PontoNordeste.Z) * (PontoSudeste.X - PontoNordeste.X)) - ((PontoSudeste.Z - PontoNordeste.Z) * (PontoNoroeste.X - PontoNordeste.X));
+         VetorNormal.Z := ((PontoNoroeste.X - PontoNordeste.X) * (PontoSudeste.Y - PontoNordeste.Y)) - ((PontoSudeste.X - PontoNordeste.X) * (PontoNoroeste.Y - PontoNordeste.Y));
+      end;
+      if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+      begin
+         VetorNormal.X := ((PontoSudoeste.Y - PontoNoroeste.Y) * (PontoNordeste.Z - PontoNoroeste.Z)) - ((PontoNordeste.Y - PontoNoroeste.Y) * (PontoSudoeste.Z - PontoNoroeste.Z));
+         VetorNormal.Y := ((PontoSudoeste.Z - PontoNoroeste.Z) * (PontoNordeste.X - PontoNoroeste.X)) - ((PontoNordeste.Z - PontoNoroeste.Z) * (PontoSudoeste.X - PontoNoroeste.X));
+         VetorNormal.Z := ((PontoSudoeste.X - PontoNoroeste.X) * (PontoNordeste.Y - PontoNoroeste.Y)) - ((PontoNordeste.X - PontoNoroeste.X) * (PontoSudoeste.Y - PontoNoroeste.Y));
+      end;
+      if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+      begin
+         VetorNormal.X := ((PontoSudeste.Y - PontoSudoeste.Y) * (PontoNoroeste.Z - PontoSudoeste.Z)) - ((PontoNoroeste.Y - PontoSudoeste.Y) * (PontoSudeste.Z - PontoSudoeste.Z));
+         VetorNormal.Y := ((PontoSudeste.Z - PontoSudoeste.Z) * (PontoNoroeste.X - PontoSudoeste.X)) - ((PontoNoroeste.Z - PontoSudoeste.Z) * (PontoSudeste.X - PontoSudoeste.X));
+         VetorNormal.Z := ((PontoSudeste.X - PontoSudoeste.X) * (PontoNoroeste.Y - PontoSudoeste.Y)) - ((PontoNoroeste.X - PontoSudoeste.X) * (PontoSudeste.Y - PontoSudoeste.Y));
+{$ifdef DEBUG}
+         if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
+//          ShowMessage('(' + FloatToStr(VetorNormal.X) + ',' + FloatToStr(VetorNormal.Y) + ',' + FloatToStr(VetorNormal.Z) + ')');
+            ShowMessage('(0,0,0) with (' + FloatToStr(PontoSudoeste.X) + ',' + FloatToStr(PontoSudoeste.Y) + ',' + FloatToStr(PontoSudoeste.Z) + ') - (' + FloatToStr(PontoSudeste.X) + ',' + FloatToStr(PontoSudeste.Y) + ',' + FloatToStr(PontoSudeste.Z) + ') - (' + FloatToStr(PontoNordeste.X) + ',' + FloatToStr(PontoNordeste.Y) + ',' + FloatToStr(PontoNordeste.Z) + ') - (' + FloatToStr(PontoNoroeste.X) + ',' + FloatToStr(PontoNoroeste.Y) + ',' + FloatToStr(PontoNoroeste.Z) + '), at (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + '). MinLimit: (' + IntToStr(LimiteMin.X) + ',' + IntToStr(LimiteMin.Y) + ',' + IntToStr(LimiteMin.Z) + '). MaxLimit: ' +  IntToStr(LimiteMax.X) + ',' + IntToStr(LimiteMax.Y) + ',' + IntToStr(LimiteMax.Z) + '). Center at: ' + IntToStr(PseudoCentro.X) + ',' + IntToStr(PseudoCentro.Y) + ',' + IntToStr(PseudoCentro.Z) + ') with range ' + IntToStr(Alcance) +  '.');
 {$endif}
-   end;
+      end;
 
-   // A formula acima tá no livro da Aura:
-   // X = (P3.Y - P2.Y)(P1.Z - P2.Z) - (P1.Y - P2.Y)(P3.Z - P2.Z)
-   // Y = (P3.Z - P2.Z)(P1.X - P2.X) - (P1.Z - P2.Z)(P3.X - P2.X)
-   // Z = (P3.X - P2.X)(P1.Y - P2.Y) - (P1.X - P2.X)(P3.Y - P2.Y)
+      // A formula acima tá no livro da Aura:
+      // X = (P3.Y - P2.Y)(P1.Z - P2.Z) - (P1.Y - P2.Y)(P3.Z - P2.Z)
+      // Y = (P3.Z - P2.Z)(P1.X - P2.X) - (P1.Z - P2.Z)(P3.X - P2.X)
+      // Z = (P3.X - P2.X)(P1.Y - P2.Y) - (P1.X - P2.X)(P3.Y - P2.Y)
 
-   // Transforma o vetor normal em vetor unitário. (Normalize em math3d)
-   Normalize(VetorNormal);
+      // Transforma o vetor normal em vetor unitário. (Normalize em math3d)
+      Normalize(VetorNormal);
 
-   // Pra qual lado vai a normal?
-   // Responderemos essa pergunta com um falso raycasting limitado.
-   Centro := SetVector(x + 0.5,y + 0.5,z + 0.5);
-   Posicao := SetVector(Centro.X,Centro.Y,Centro.Z);
-   PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
+      // Pra qual lado vai a normal?
+      // Responderemos essa pergunta com um falso raycasting limitado.
+      Centro := SetVector(x + 0.5,y + 0.5,z + 0.5);
+      Posicao := SetVector(Centro.X,Centro.Y,Centro.Z);
+      PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
 {$ifdef RAY_LIMIT}
-   PararRaioDaFrente := false;
-   PararRaioOposto := false;
+      PararRaioDaFrente := false;
+      PararRaioOposto := false;
 {$endif}
-   Contador := 0;
-   Direcao := 0;
+      Contador := 0;
+      Direcao := 0;
    // Adicionamos aqui uma forma de prevenir que o mesmo voxel conte mais do
    // que uma vez, evitando um resultado errado.
-   UltimoVisitado := SetVectorI(x,y,z);
-   UltimoOpostoVisitado := SetVectorI(x,y,z);
+      UltimoVisitado := SetVectorI(x,y,z);
+      UltimoOpostoVisitado := SetVectorI(x,y,z);
 {$ifdef RAY_LIMIT}
-   while (not (PararRaioDaFrente and PararRaioOposto)) and (Contador < C_TAMANHO_RAYCASTING) do
+      while (not (PararRaioDaFrente and PararRaioOposto)) and (Contador < C_TAMANHO_RAYCASTING) do
 {$else}
-   while Contador < C_TAMANHO_RAYCASTING do
+      while Contador < C_TAMANHO_RAYCASTING do
 {$endif}
-   begin
-{$ifdef RAY_LIMIT}
-      if not PararRaioDaFrente then
       begin
+{$ifdef RAY_LIMIT}
+         if not PararRaioDaFrente then
+         begin
+            Posicao.X := Posicao.X + VetorNormal.X;
+            Posicao.Y := Posicao.Y + VetorNormal.Y;
+            Posicao.Z := Posicao.Z + VetorNormal.Z;
+            ValorFrente := PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente);
+         end
+         else
+         begin
+            ValorFrente := 0;
+         end;
+         if not PararRaioOposto then
+         begin
+            PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
+            PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
+            PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
+            ValorOposto := PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+         end
+         else
+         begin
+            ValorOposto := 0;
+         end;
+         Direcao := Direcao + ValorFrente - ValorOposto;
+         inc(Contador);
+{$else}
          Posicao.X := Posicao.X + VetorNormal.X;
          Posicao.Y := Posicao.Y + VetorNormal.Y;
          Posicao.Z := Posicao.Z + VetorNormal.Z;
-         ValorFrente := PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente);
-      end
-      else
-      begin
-         ValorFrente := 0;
-      end;
-      if not PararRaioOposto then
-      begin
          PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
          PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
          PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
-         ValorOposto := PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
-      end
-      else
-      begin
-         ValorOposto := 0;
-      end;
-      Direcao := Direcao + ValorFrente - ValorOposto;
-      inc(Contador);
-{$else}
-      Posicao.X := Posicao.X + VetorNormal.X;
-      Posicao.Y := Posicao.Y + VetorNormal.Y;
-      Posicao.Z := Posicao.Z + VetorNormal.Z;
-      PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
-      PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
-      PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
-      inc(Contador);
-      Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente) - PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+         inc(Contador);
+         Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente) - PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
 {$endif}
-   end;
+      end;
 
-   // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
-   // é porque estamos indo para dentro do volume e não para fora.
-   If Direcao > 0 then
-   begin
-      VetorNormal.X := -VetorNormal.X;
-      VetorNormal.Y := -VetorNormal.Y;
-      VetorNormal.Z := -VetorNormal.Z;
-   end
-   else if Direcao = 0 then
-   begin
-      // Nesse caso temos um empate técnico. Quem tiver o maior z vence.
-      if VetorNormal.Z < 0 then
+      // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
+      // é porque estamos indo para dentro do volume e não para fora.
+      If Direcao > 0 then
       begin
          VetorNormal.X := -VetorNormal.X;
          VetorNormal.Y := -VetorNormal.Y;
          VetorNormal.Z := -VetorNormal.Z;
+      end
+      else if Direcao = 0 then
+      begin
+         // Nesse caso temos um empate técnico. Quem tiver o maior z vence.
+         if VetorNormal.Z < 0 then
+         begin
+            VetorNormal.X := -VetorNormal.X;
+            VetorNormal.Y := -VetorNormal.Y;
+            VetorNormal.Z := -VetorNormal.Z;
+         end;
       end;
+   end
+   else // Caso seja impossível fazer o plano tangente, adaptamos o método do Cubed Normalizer.
+   begin
+      VetorNormal := SetVector(0,0,0);
+      for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
+         for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
+            for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
+            begin
+               if MapaDaSuperficie[xx,yy,zz] then
+               begin
+                  VetorNormal.X := VetorNormal.X + Filtro[xx,yy,zz].X;
+                  VetorNormal.Y := VetorNormal.Y + Filtro[xx,yy,zz].Y;
+                  VetorNormal.Z := VetorNormal.Z + Filtro[xx,yy,zz].Z;
+               end;
+            end;
+      Normalize(VetorNormal);
    end;
-
    // Pega a normal mais próxima da paleta de normais (Norm2IndexXXX em Voxel_Tools)
    if Voxel.Tailer.Unknown = 4 then
       V.Normal := Norm2IndexRA2(VetorNormal)
