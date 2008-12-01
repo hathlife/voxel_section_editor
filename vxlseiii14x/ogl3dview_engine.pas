@@ -325,14 +325,11 @@ begin
    N := Normal;
    HighestNormal := Normal;
 
-   if N = -1 then
+   if N < 0 then
    begin
       glNormal3f(0, 0, 0);
       exit;
    end;
-
-   if N < 0 then
-      N := 0;
 
    if ActiveSection.Tailer.Unknown = 4 then
    begin

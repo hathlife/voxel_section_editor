@@ -867,20 +867,41 @@ function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; 
 var
    x,y,z : integer;
    v : TVoxelUnpacked;
+   contaVazio : integer;
 begin
    Result := 0;
    for x := 0 to Voxel.Tailer.XSize-1 do
       for y := 0 to Voxel.Tailer.YSize-1 do
          for z := 0 to Voxel.Tailer.ZSize-1 do
          begin
-            // Get voxel data and calculate it (added +1 to
-            // each, since binary map has propositally a
-            // border to avoid bound checking).
+            // Confere se o voxel é usado.
             Voxel.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z,TratarDescontinuidades);
-               inc(Result);
+               // Confere se o voxel é superfície
+               if Mapa[x+Alcance,y+Alcance,z+Alcance] = PESO_SUPERFICIE then
+               begin
+                  // Confere se ele é matematicamente viável.
+                  contaVazio := 0;
+                  if (Mapa[x+Alcance+1,y+Alcance,z+Alcance] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance-1,y+Alcance,z+Alcance] = PESO_FORA_DO_VOLUME)  then
+                     inc(contaVazio);
+                  if (Mapa[x+Alcance,y+Alcance+1,z+Alcance] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance,y+Alcance-1,z+Alcance] = PESO_FORA_DO_VOLUME)  then
+                     inc(contaVazio);
+                  if (Mapa[x+Alcance,y+Alcance,z+Alcance+1] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance,y+Alcance,z+Alcance-1] = PESO_FORA_DO_VOLUME)  then
+                     inc(contaVazio);
+                  if contaVazio < 2 then
+                  begin
+                     AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z,TratarDescontinuidades);
+                     inc(Result);
+                  end;
+{
+                  else
+                  begin
+                     v.Normal := 0;
+                     Voxel.setVoxel(x,y,z,v);
+                  end;
+}
+               end;
             end;
          end;
 end;
@@ -1109,6 +1130,16 @@ begin
       VetorNormal.X := -VetorNormal.X;
       VetorNormal.Y := -VetorNormal.Y;
       VetorNormal.Z := -VetorNormal.Z;
+   end
+   else if Direcao = 0 then
+   begin
+      // Nesse caso temos um empate técnico. Quem tiver o maior z vence.
+      if VetorNormal.Z < 0 then
+      begin
+         VetorNormal.X := -VetorNormal.X;
+         VetorNormal.Y := -VetorNormal.Y;
+         VetorNormal.Z := -VetorNormal.Z;
+      end;
    end;
 
    // Pega a normal mais próxima da paleta de normais (Norm2IndexXXX em Voxel_Tools)
