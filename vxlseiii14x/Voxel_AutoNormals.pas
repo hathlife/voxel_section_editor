@@ -4,7 +4,7 @@ interface
 
 uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList, SysUtils, Dialogs;
 
-//{$define LIMITES}
+{$define LIMITES}
 //{$define RAY_LIMIT}
 //{$define DEBUG}
 
@@ -867,7 +867,6 @@ function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; 
 var
    x,y,z : integer;
    v : TVoxelUnpacked;
-   contaVazio : integer;
 begin
    Result := 0;
    for x := 0 to Voxel.Tailer.XSize-1 do
@@ -882,25 +881,8 @@ begin
                if Mapa[x+Alcance,y+Alcance,z+Alcance] = PESO_SUPERFICIE then
                begin
                   // Confere se ele é matematicamente viável.
-                  contaVazio := 0;
-                  if (Mapa[x+Alcance+1,y+Alcance,z+Alcance] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance-1,y+Alcance,z+Alcance] = PESO_FORA_DO_VOLUME)  then
-                     inc(contaVazio);
-                  if (Mapa[x+Alcance,y+Alcance+1,z+Alcance] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance,y+Alcance-1,z+Alcance] = PESO_FORA_DO_VOLUME)  then
-                     inc(contaVazio);
-                  if (Mapa[x+Alcance,y+Alcance,z+Alcance+1] = PESO_FORA_DO_VOLUME) and (Mapa[x+Alcance,y+Alcance,z+Alcance-1] = PESO_FORA_DO_VOLUME)  then
-                     inc(contaVazio);
-                  if contaVazio < 2 then
-                  begin
-                     AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z,TratarDescontinuidades);
-                     inc(Result);
-                  end;
-{
-                  else
-                  begin
-                     v.Normal := 0;
-                     Voxel.setVoxel(x,y,z,v);
-                  end;
-}
+                  AplicarFiltro(Voxel,Mapa,Filtro,v,Alcance,x,y,z,TratarDescontinuidades);
+                  inc(Result);
                end;
             end;
          end;
@@ -967,25 +949,57 @@ begin
 
    // O plano tangente requer que haja pelo menos dois pontos distintos em 2 eixos
    contaEixoProblematico := 0;
-   if ((LimiteMax.X - LimiteMin.X) < 1) then
+   if ((LimiteMax.X - LimiteMin.X) < 2) then
       inc(contaEixoProblematico);
-   if ((LimiteMax.Y - LimiteMin.Y) < 1) then
+   if ((LimiteMax.Y - LimiteMin.Y) < 2) then
       inc(contaEixoProblematico);
-   if ((LimiteMax.Z - LimiteMin.Z) < 1) then
+   if ((LimiteMax.Z - LimiteMin.Z) < 2) then
       inc(contaEixoProblematico);
 
-   if contaEixoProblematico < 2 then
+   if contaEixoProblematico = 3 then
    begin
-{$ifdef LIMITES}
+      // Temos um ponto ou cubo isolado.
+      VetorNormal := SetVector(0,0,0);
+   end
+   else if contaEixoProblematico = 2 then
+   begin
+      if ((LimiteMax.X - LimiteMin.X) < 1) then
+         VetorNormal := SetVector(1,0,0);
+      if ((LimiteMax.Y - LimiteMin.Y) < 1) then
+         VetorNormal := SetVector(0,1,0);
+      if ((LimiteMax.Z - LimiteMin.Z) < 1) then
+         VetorNormal := SetVector(0,0,1)
+      else
+      begin
+         // Temos uma linha de im pixel.
+         VetorNormal := SetVector(0,0,0);
+         for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
+            for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
+               for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
+               begin
+                  if MapaDaSuperficie[xx,yy,zz] then
+                  begin
+                     VetorNormal.X := VetorNormal.X + Filtro[xx,yy,zz].X;
+                     VetorNormal.Y := VetorNormal.Y + Filtro[xx,yy,zz].Y;
+                     VetorNormal.Z := VetorNormal.Z + Filtro[xx,yy,zz].Z;
+                  end;
+               end;
+      end;
+   end
+   else if contaEixoProblematico < 2 then
+   begin
+//{$ifdef LIMITES}
       // Isso calcula o que será considerado o centro do plano tangente.
+{
       PseudoCentro.X := (LimiteMin.X + LimiteMax.X) div 2;
       PseudoCentro.Y := (LimiteMin.Y + LimiteMax.Y) div 2;
       PseudoCentro.Z := (LimiteMin.Z + LimiteMax.Z) div 2;
-{$else}
+}
+//{$else}
       PseudoCentro.X := Alcance;
       PseudoCentro.Y := Alcance;
       PseudoCentro.Z := Alcance;
-{$endif}
+//{$endif}
       // Resetamos os pontos do plano
       PontoSudoeste := SetVector(0,0,0);
       PontoNordeste := SetVector(0,0,0);
@@ -1069,108 +1083,93 @@ begin
             ShowMessage('(0,0,0) with (' + FloatToStr(PontoSudoeste.X) + ',' + FloatToStr(PontoSudoeste.Y) + ',' + FloatToStr(PontoSudoeste.Z) + ') - (' + FloatToStr(PontoSudeste.X) + ',' + FloatToStr(PontoSudeste.Y) + ',' + FloatToStr(PontoSudeste.Z) + ') - (' + FloatToStr(PontoNordeste.X) + ',' + FloatToStr(PontoNordeste.Y) + ',' + FloatToStr(PontoNordeste.Z) + ') - (' + FloatToStr(PontoNoroeste.X) + ',' + FloatToStr(PontoNoroeste.Y) + ',' + FloatToStr(PontoNoroeste.Z) + '), at (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + '). MinLimit: (' + IntToStr(LimiteMin.X) + ',' + IntToStr(LimiteMin.Y) + ',' + IntToStr(LimiteMin.Z) + '). MaxLimit: ' +  IntToStr(LimiteMax.X) + ',' + IntToStr(LimiteMax.Y) + ',' + IntToStr(LimiteMax.Z) + '). Center at: ' + IntToStr(PseudoCentro.X) + ',' + IntToStr(PseudoCentro.Y) + ',' + IntToStr(PseudoCentro.Z) + ') with range ' + IntToStr(Alcance) +  '.');
 {$endif}
       end;
+   end;
 
-      // A formula acima tá no livro da Aura:
-      // X = (P3.Y - P2.Y)(P1.Z - P2.Z) - (P1.Y - P2.Y)(P3.Z - P2.Z)
-      // Y = (P3.Z - P2.Z)(P1.X - P2.X) - (P1.Z - P2.Z)(P3.X - P2.X)
-      // Z = (P3.X - P2.X)(P1.Y - P2.Y) - (P1.X - P2.X)(P3.Y - P2.Y)
+   // A formula acima tá no livro da Aura:
+   // X = (P3.Y - P2.Y)(P1.Z - P2.Z) - (P1.Y - P2.Y)(P3.Z - P2.Z)
+   // Y = (P3.Z - P2.Z)(P1.X - P2.X) - (P1.Z - P2.Z)(P3.X - P2.X)
+   // Z = (P3.X - P2.X)(P1.Y - P2.Y) - (P1.X - P2.X)(P3.Y - P2.Y)
 
-      // Transforma o vetor normal em vetor unitário. (Normalize em math3d)
-      Normalize(VetorNormal);
+   // Transforma o vetor normal em vetor unitário. (Normalize em math3d)
+   Normalize(VetorNormal);
 
-      // Pra qual lado vai a normal?
-      // Responderemos essa pergunta com um falso raycasting limitado.
-      Centro := SetVector(x + 0.5,y + 0.5,z + 0.5);
-      Posicao := SetVector(Centro.X,Centro.Y,Centro.Z);
-      PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
+   // Pra qual lado vai a normal?
+   // Responderemos essa pergunta com um falso raycasting limitado.
+   Centro := SetVector(x + 0.5,y + 0.5,z + 0.5);
+   Posicao := SetVector(Centro.X,Centro.Y,Centro.Z);
+   PosicaoOposta := SetVector(Centro.X,Centro.Y,Centro.Z);
 {$ifdef RAY_LIMIT}
-      PararRaioDaFrente := false;
-      PararRaioOposto := false;
+   PararRaioDaFrente := false;
+   PararRaioOposto := false;
 {$endif}
-      Contador := 0;
-      Direcao := 0;
+   Contador := 0;
+   Direcao := 0;
    // Adicionamos aqui uma forma de prevenir que o mesmo voxel conte mais do
    // que uma vez, evitando um resultado errado.
-      UltimoVisitado := SetVectorI(x,y,z);
-      UltimoOpostoVisitado := SetVectorI(x,y,z);
+   UltimoVisitado := SetVectorI(x,y,z);
+   UltimoOpostoVisitado := SetVectorI(x,y,z);
 {$ifdef RAY_LIMIT}
-      while (not (PararRaioDaFrente and PararRaioOposto)) and (Contador < C_TAMANHO_RAYCASTING) do
+   while (not (PararRaioDaFrente and PararRaioOposto)) and (Contador < C_TAMANHO_RAYCASTING) do
 {$else}
-      while Contador < C_TAMANHO_RAYCASTING do
+   while Contador < C_TAMANHO_RAYCASTING do
 {$endif}
-      begin
+   begin
 {$ifdef RAY_LIMIT}
-         if not PararRaioDaFrente then
-         begin
-            Posicao.X := Posicao.X + VetorNormal.X;
-            Posicao.Y := Posicao.Y + VetorNormal.Y;
-            Posicao.Z := Posicao.Z + VetorNormal.Z;
-            ValorFrente := PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente);
-         end
-         else
-         begin
-            ValorFrente := 0;
-         end;
-         if not PararRaioOposto then
-         begin
-            PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
-            PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
-            PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
-            ValorOposto := PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
-         end
-         else
-         begin
-            ValorOposto := 0;
-         end;
-         Direcao := Direcao + ValorFrente - ValorOposto;
-         inc(Contador);
-{$else}
+      if not PararRaioDaFrente then
+      begin
          Posicao.X := Posicao.X + VetorNormal.X;
          Posicao.Y := Posicao.Y + VetorNormal.Y;
          Posicao.Z := Posicao.Z + VetorNormal.Z;
+         ValorFrente := PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente);
+      end
+      else
+      begin
+         ValorFrente := 0;
+      end;
+      if not PararRaioOposto then
+      begin
          PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
          PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
          PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
-         inc(Contador);
-         Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente) - PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
-{$endif}
+         ValorOposto := PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+      end
+      else
+      begin
+         ValorOposto := 0;
       end;
+      Direcao := Direcao + ValorFrente - ValorOposto;
+      inc(Contador);
+{$else}
+      Posicao.X := Posicao.X + VetorNormal.X;
+      Posicao.Y := Posicao.Y + VetorNormal.Y;
+      Posicao.Z := Posicao.Z + VetorNormal.Z;
+      PosicaoOposta.X := PosicaoOposta.X - VetorNormal.X;
+      PosicaoOposta.Y := PosicaoOposta.Y - VetorNormal.Y;
+      PosicaoOposta.Z := PosicaoOposta.Z - VetorNormal.Z;
+      inc(Contador);
+      Direcao := Direcao + PegarValorDoPonto(Mapa,UltimoVisitado,Posicao,PararRaioDaFrente) - PegarValorDoPonto(Mapa,UltimoOpostoVisitado,PosicaoOposta,PararRaioOposto);
+{$endif}
+   end;
 
-      // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
-      // é porque estamos indo para dentro do volume e não para fora.
-      If Direcao > 0 then
+   // Se a direção do vetor normal avaliado tiver mais peso do que a oposta
+   // é porque estamos indo para dentro do volume e não para fora.
+   If Direcao > 0 then
+   begin
+      VetorNormal.X := -VetorNormal.X;
+      VetorNormal.Y := -VetorNormal.Y;
+      VetorNormal.Z := -VetorNormal.Z;
+   end
+   else if Direcao = 0 then
+   begin
+      // Nesse caso temos um empate técnico. Quem tiver o maior z vence.
+      if VetorNormal.Z < 0 then
       begin
          VetorNormal.X := -VetorNormal.X;
          VetorNormal.Y := -VetorNormal.Y;
          VetorNormal.Z := -VetorNormal.Z;
-      end
-      else if Direcao = 0 then
-      begin
-         // Nesse caso temos um empate técnico. Quem tiver o maior z vence.
-         if VetorNormal.Z < 0 then
-         begin
-            VetorNormal.X := -VetorNormal.X;
-            VetorNormal.Y := -VetorNormal.Y;
-            VetorNormal.Z := -VetorNormal.Z;
-         end;
       end;
-   end
-   else // Caso seja impossível fazer o plano tangente, adaptamos o método do Cubed Normalizer.
-   begin
-      VetorNormal := SetVector(0,0,0);
-      for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
-         for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
-            for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
-            begin
-               if MapaDaSuperficie[xx,yy,zz] then
-               begin
-                  VetorNormal.X := VetorNormal.X + Filtro[xx,yy,zz].X;
-                  VetorNormal.Y := VetorNormal.Y + Filtro[xx,yy,zz].Y;
-                  VetorNormal.Z := VetorNormal.Z + Filtro[xx,yy,zz].Z;
-               end;
-            end;
-      Normalize(VetorNormal);
    end;
+
    // Pega a normal mais próxima da paleta de normais (Norm2IndexXXX em Voxel_Tools)
    if Voxel.Tailer.Unknown = 4 then
       V.Normal := Norm2IndexRA2(VetorNormal)
@@ -1202,27 +1201,27 @@ begin
             begin
                Lista.Add(x,y,z);
                Direcao.Add(xdir,ydir,zdir);
-               if XFiltro > LimiteMax.X then
+               if (XFiltro > LimiteMax.X) then
                begin
                   LimiteMax.X := XFiltro;
                end
-               else if XFiltro < LimiteMin.X then
+               else if (XFiltro < LimiteMin.X) then
                begin
                   LimiteMin.X := XFiltro;
                end;
-               if YFiltro > LimiteMax.Y then
+               if (YFiltro > LimiteMax.Y) then
                begin
                   LimiteMax.Y := YFiltro;
                end
-               else if YFiltro < LimiteMin.Y then
+               else if (YFiltro < LimiteMin.Y) then
                begin
                   LimiteMin.Y := YFiltro;
                end;
-               if ZFiltro > LimiteMax.Z then
+               if (ZFiltro > LimiteMax.Z) then
                begin
                   LimiteMax.Z := ZFiltro;
                end
-               else if ZFiltro < LimiteMin.Z then
+               else if (ZFiltro < LimiteMin.Z) then
                begin
                   LimiteMin.Z := ZFiltro;
                end;
