@@ -949,11 +949,11 @@ begin
 
    // O plano tangente requer que haja pelo menos dois pontos distintos em 2 eixos
    contaEixoProblematico := 0;
-   if ((LimiteMax.X - LimiteMin.X) < 2) then
+   if ((LimiteMax.X - LimiteMin.X) < 3) then
       inc(contaEixoProblematico);
-   if ((LimiteMax.Y - LimiteMin.Y) < 2) then
+   if ((LimiteMax.Y - LimiteMin.Y) < 3) then
       inc(contaEixoProblematico);
-   if ((LimiteMax.Z - LimiteMin.Z) < 2) then
+   if ((LimiteMax.Z - LimiteMin.Z) < 3) then
       inc(contaEixoProblematico);
 
    if contaEixoProblematico = 3 then
@@ -964,18 +964,18 @@ begin
    else if contaEixoProblematico = 2 then
    begin
       if ((LimiteMax.X - LimiteMin.X) < 1) then
-         VetorNormal := SetVector(1,0,0);
-      if ((LimiteMax.Y - LimiteMin.Y) < 1) then
-         VetorNormal := SetVector(0,1,0);
-      if ((LimiteMax.Z - LimiteMin.Z) < 1) then
+         VetorNormal := SetVector(1,0,0)
+      else if ((LimiteMax.Y - LimiteMin.Y) < 1) then
+         VetorNormal := SetVector(0,1,0)
+      else if ((LimiteMax.Z - LimiteMin.Z) < 1) then
          VetorNormal := SetVector(0,0,1)
       else
       begin
-         // Temos uma linha de im pixel.
+         // Temos uma emulação de um Cubed Normalizer de raio 1 que é confiável.
          VetorNormal := SetVector(0,0,0);
-         for xx := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
-            for yy := Low(MapaDaSuperficie[xx]) to High(MapaDaSuperficie[xx]) do
-               for zz := Low(MapaDaSuperficie[xx,yy]) to High(MapaDaSuperficie[xx,yy]) do
+         for xx := (Alcance-1) to (Alcance+1) do
+            for yy := (Alcance-1) to (Alcance+1) do
+               for zz := (Alcance-1) to (Alcance+1) do
                begin
                   if MapaDaSuperficie[xx,yy,zz] then
                   begin
