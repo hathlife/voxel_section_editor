@@ -963,16 +963,16 @@ begin
    end
    else if contaEixoProblematico = 2 then
    begin
+      VetorNormal := SetVector(0,0,0);
       if ((LimiteMax.X - LimiteMin.X) < 1) then
-         VetorNormal := SetVector(1,0,0)
-      else if ((LimiteMax.Y - LimiteMin.Y) < 1) then
-         VetorNormal := SetVector(0,1,0)
-      else if ((LimiteMax.Z - LimiteMin.Z) < 1) then
-         VetorNormal := SetVector(0,0,1)
-      else
+         VetorNormal.X := 1;
+      if ((LimiteMax.Y - LimiteMin.Y) < 1) then
+         VetorNormal.Y := 1;
+      if ((LimiteMax.Z - LimiteMin.Z) < 1) then
+         VetorNormal.Z := 1;
+      if (VetorNormal.X = 0) and (VetorNormal.Y = 0) and (VetorNormal.Z = 0) then
       begin
          // Temos uma emulação de um Cubed Normalizer de raio 1 que é confiável.
-         VetorNormal := SetVector(0,0,0);
          for xx := (Alcance-1) to (Alcance+1) do
             for yy := (Alcance-1) to (Alcance+1) do
                for zz := (Alcance-1) to (Alcance+1) do
