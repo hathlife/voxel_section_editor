@@ -172,10 +172,13 @@ var
 begin
    if Valid and BZKMap then
    begin
-      AssignFile(MyFile,_Filename);
-      Rewrite(MyFile);
-      WriteToFile(MyFile);
-      CloseFile(MyFile);
+      try
+         AssignFile(MyFile,_Filename);
+         Rewrite(MyFile);
+         WriteToFile(MyFile);
+      finally
+         CloseFile(MyFile);
+      end;
    end;
 end;
 
@@ -211,7 +214,7 @@ begin
       WriteLn(MyFile,'<?xml-stylesheet type="text/xsl" href="./bzkmap.xsl" ?>');
    WriteLn(MyFile,'<BZK2>');
    WriteLn(MyFile,'<Version>');
-   WriteLn(MyFile,'0.6');
+   WriteLn(MyFile,'0.5');
    WriteLn(MyFile,'</Version>');
    WriteLn(MyFile,'<Number.of.Sectors>');
    WriteLn(MyFile,GetNumSectors);

@@ -60,7 +60,7 @@ type
          Name : string;
          Connections : array [TBzkFacesDirection] of integer;
          ConnectionMaps : array [TBzkFacesDirection] of string;
-         ConnectionColours : array [TBzkFacesDirection] of TVector3i;
+         ConnectionColours : array [TBzkFacesDirection] of TVector4i;
          Triggers : array of integer;
          Colour : TVector4i;
          ForceRenderFace : array[0..5] of boolean;
@@ -77,8 +77,19 @@ type
          procedure WriteForceRenderFace (var MyFile : System.Text);
    end;
 
+function SetVector4i(x,y,z,w: integer): TVector4i;
+
 
 implementation
+
+function SetVector4i(x,y,z,w: integer): TVector4i;
+begin
+   Result.X := x;
+   Result.Y := y;
+   Result.Z := z;
+   Result.W := w;
+end;
+
 
 // Constructors & Destructors
 constructor TBZK2Sector.Create;
@@ -101,12 +112,12 @@ begin
    ConnectionMaps[bfdWest] := '';
    ConnectionMaps[bfdFloor] := '';
    ConnectionMaps[bfdCeiling] := '';
-   ConnectionColours[bfdNorth] := SetVectorI(0,0,0);
-   ConnectionColours[bfdEast] := SetVectorI(0,0,0);
-   ConnectionColours[bfdSouth] := SetVectorI(0,0,0);
-   ConnectionColours[bfdWest] := SetVectorI(0,0,0);
-   ConnectionColours[bfdFloor] := SetVectorI(0,0,0);
-   ConnectionColours[bfdCeiling] := SetVectorI(0,0,0);
+   ConnectionColours[bfdNorth] := SetVector4I(0,0,0,0);
+   ConnectionColours[bfdEast] := SetVector4I(0,0,0,0);
+   ConnectionColours[bfdSouth] := SetVector4I(0,0,0,0);
+   ConnectionColours[bfdWest] := SetVector4I(0,0,0,0);
+   ConnectionColours[bfdFloor] := SetVector4I(0,0,0,0);
+   ConnectionColours[bfdCeiling] := SetVector4I(0,0,0,0);
    SetLength(Triggers,0);
    Colour.X := 0;
    Colour.Y := 0;
@@ -286,7 +297,6 @@ begin
    end;
 end;
 
-
 // Adds
 procedure TBZK2Sector.AddTrigger(value : integer);
 begin
@@ -318,8 +328,8 @@ procedure TBZK2Sector.WriteToFile (var MyFile : System.Text);
 begin
    WriteLn(MyFile,'<Sector>');
    WriteTriggers(MyFile);
-   WriteVolume(MyFile);
    WriteName(MyFile);
+   WriteVolume(MyFile);
    WriteConnections(MyFile);
    WriteConnectionColours(MyFile);
    WriteColour(MyFile);
@@ -388,11 +398,12 @@ end;
 
 procedure TBZK2Sector.WriteConnectionColour (var MyFile : System.Text; Direction : TBZKFacesDirection);
 begin
-   WriteLn(MyFile,'<RGB>');
+   WriteLn(MyFile,'<RGBA>');
    WriteLn(MyFile,ConnectionColours[Direction].X);
    WriteLn(MyFile,ConnectionColours[Direction].Y);
    WriteLn(MyFile,ConnectionColours[Direction].Z);
-   WriteLn(MyFile,'</RGB>');
+   WriteLn(MyFile,ConnectionColours[Direction].W);
+   WriteLn(MyFile,'</RGBA>');
 end;
 
 procedure TBZK2Sector.WriteConnectionColours (var MyFile : System.Text);
