@@ -1403,33 +1403,33 @@ procedure TVoxelView.getPhysicalCursorCoords(var X, Y: integer);
    procedure TranslateX;
    begin
       if SwapY then
-         X := Width - Voxel.Y
+         X := Width - 1 - Voxel.Y
       else
          X := Voxel.Y;
       if SwapZ then
-         Y := Height - Voxel.Z
+         Y := Height - 1 - Voxel.Z
       else
          Y := Voxel.Z;
    end;
    procedure TranslateY;
    begin
       if SwapX then
-         X := Width - Voxel.X
+         X := Width - 1 - Voxel.X
       else
          X := Voxel.X;
       if SwapZ then
-         Y := Height - Voxel.Z
+         Y := Height - 1 - Voxel.Z
       else
          Y := Voxel.Z;
    end;
    procedure TranslateZ;
    begin
       if SwapX then
-         X := Width - Voxel.X
+         X := Width - 1 - Voxel.X
       else
          X := Voxel.X;
       if SwapY then
-         Y := Height - Voxel.Y
+         Y := Height - 1 - Voxel.Y
       else
          Y := Voxel.Y;
    end;
@@ -1439,7 +1439,6 @@ begin
       oriY: TranslateY;
       oriZ: TranslateZ;
    end;
-   Dec(y);
 end;
 
 procedure TVoxelView.setDir(newdir: EVoxelViewDir);
