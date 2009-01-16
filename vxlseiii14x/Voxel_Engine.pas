@@ -15,6 +15,9 @@ type
       X, Y, Z : single;
    end;
 
+   TAVector3f = array of TVector3f;
+   PAVector3f = ^TAVector3f;
+
    TVector2f = record
       U, V : single;
    end;

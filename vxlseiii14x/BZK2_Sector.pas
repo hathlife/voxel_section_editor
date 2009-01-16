@@ -12,6 +12,10 @@ type
       Z,
       W : integer;
    end;
+   TBZK2FaceTexture = record
+      Local : string;
+      Face : integer;
+   end;
 
    TBZK2Sector = class
       public
@@ -29,9 +33,11 @@ type
          function GetVoxelPosition : TVector3i;
          function GetVolume : TVector3i;
          function GetName : string;
+         function GetMesh : string;
+         function GetLight: integer;
          function GetConnection(Direction : TBZKFacesDirection) : integer;
          function GetConnectionMap(Direction : TBZKFacesDirection) : string;
-         function GetConnectionColours(Direction : TBZKFacesDirection) : TVector3i;
+         function GetConnectionColours(Direction : TBZKFacesDirection) : TVector4i;
          function GetTrigger(ID : integer): integer;
          function GetNumTriggers: integer;
          function GetColour : TVector4i;
@@ -42,10 +48,12 @@ type
          procedure SetVolume( value : TVector3i); overload;
          procedure SetVolume( value : integer); overload;
          procedure SetName( const value : string);
+         procedure SetMesh( const value : string);
+         procedure SetLight( value : integer);
          procedure SetConnection( Direction : TBZKFacesDirection; value : integer);
          procedure SetConnections( north, east, south, west, floor, ceil : integer);
          procedure SetConnectionMap( Direction : TBZKFacesDirection; value : string);
-         procedure SetConnectionColours( Direction : TBZKFacesDirection; value : TVector3i);
+         procedure SetConnectionColours( Direction : TBZKFacesDirection; value : TVector4i);
          function SetTrigger( ID, Value : integer): Boolean;
          procedure SetColour( value : TVector4i);
          function SetRenderFace( ID : integer; Value : boolean): Boolean;
@@ -61,20 +69,25 @@ type
          Connections : array [TBzkFacesDirection] of integer;
          ConnectionMaps : array [TBzkFacesDirection] of string;
          ConnectionColours : array [TBzkFacesDirection] of TVector4i;
+         Light : integer;
+         Textures : array of TBZK2FaceTexture;
          Triggers : array of integer;
          Colour : TVector4i;
          ForceRenderFace : array[0..5] of boolean;
+         Mesh : string;
          // I/O
          procedure WriteTriggers (var MyFile : System.Text);
          procedure WritePosition (var MyFile : System.Text);
          procedure WriteVolume (var MyFile : System.Text);
          procedure WriteName (var MyFile : System.Text);
+         procedure WriteMesh (var MyFile : System.Text);
          procedure WriteConnection (var MyFile : System.Text; Direction : TBZKFacesDirection);
          procedure WriteConnections (var MyFile : System.Text);
          procedure WriteConnectionColour (var MyFile : System.Text; Direction : TBZKFacesDirection);
          procedure WriteConnectionColours (var MyFile : System.Text);
          procedure WriteColour (var MyFile : System.Text);
          procedure WriteForceRenderFace (var MyFile : System.Text);
+         procedure WriteLight (var MyFile : System.Text);
    end;
 
 function SetVector4i(x,y,z,w: integer): TVector4i;
@@ -100,6 +113,8 @@ begin
    VoxelPosition := SetVectorI(0,0,0);
    Volume := SetVectorI(0,0,0);
    Name := '';
+   Mesh := '';
+   Light := 0;
    Connections[bfdNorth] := 0;
    Connections[bfdEast] := 0;
    Connections[bfdSouth] := 0;
@@ -119,6 +134,7 @@ begin
    ConnectionColours[bfdFloor] := SetVector4I(0,0,0,0);
    ConnectionColours[bfdCeiling] := SetVector4I(0,0,0,0);
    SetLength(Triggers,0);
+   SetLength(Textures,0);
    Colour.X := 0;
    Colour.Y := 0;
    Colour.Z := 0;
@@ -161,6 +177,16 @@ begin
    Result := Name;
 end;
 
+function TBZK2Sector.GetMesh : string;
+begin
+   Result := Mesh;
+end;
+
+function TBZK2Sector.GetLight: integer;
+begin
+   Result := Light;
+end;
+
 function TBZK2Sector.GetConnection(Direction : TBZKFacesDirection) : integer;
 begin
    Result := Connections[Direction];
@@ -171,11 +197,12 @@ begin
    Result := ConnectionMaps[Direction];
 end;
 
-function TBZK2Sector.GetConnectionColours(Direction : TBZKFacesDirection) : TVector3i;
+function TBZK2Sector.GetConnectionColours(Direction : TBZKFacesDirection) : TVector4i;
 begin
    Result.X := ConnectionColours[Direction].X;
    Result.Y := ConnectionColours[Direction].Y;
    Result.Z := ConnectionColours[Direction].Z;
+   Result.W := ConnectionColours[Direction].W;
 end;
 
 function TBZK2Sector.GetTrigger(ID : integer): integer;
@@ -242,6 +269,16 @@ begin
    Name := Value;
 end;
 
+procedure TBZK2Sector.SetMesh( const value : string);
+begin
+   Mesh := Value;
+end;
+
+procedure TBZK2Sector.SetLight( value : integer);
+begin
+   Light := Value;
+end;
+
 procedure TBZK2Sector.SetConnection( Direction : TBZKFacesDirection; value : integer);
 begin
    Connections[Direction] := Value;
@@ -262,11 +299,12 @@ begin
    Connections[bfdCeiling] := Ceil;
 end;
 
-procedure TBZK2Sector.SetConnectionColours( Direction : TBZKFacesDirection; value : TVector3i);
+procedure TBZK2Sector.SetConnectionColours( Direction : TBZKFacesDirection; value : TVector4i);
 begin
    ConnectionColours[Direction].X := Value.X;
    ConnectionColours[Direction].Y := Value.Y;
    ConnectionColours[Direction].Z := Value.Z;
+   ConnectionColours[Direction].W := Value.W;
 end;
 
 function TBZK2Sector.SetTrigger( ID, Value : integer): Boolean;
@@ -327,11 +365,13 @@ end;
 procedure TBZK2Sector.WriteToFile (var MyFile : System.Text);
 begin
    WriteLn(MyFile,'<Sector>');
+   WriteMesh(MyFile);
    WriteTriggers(MyFile);
    WriteName(MyFile);
    WriteVolume(MyFile);
    WriteConnections(MyFile);
    WriteConnectionColours(MyFile);
+   WriteLight(MyFile);
    WriteColour(MyFile);
    WriteForceRenderFace(MyFile);
    WriteLn(MyFile,'</Sector>');
@@ -374,6 +414,26 @@ begin
    WriteLn(MyFile,'<Name>');
    WriteLn(MyFile,Name);
    WriteLn(MyFile,'</Name>');
+end;
+
+procedure TBZK2Sector.WriteMesh (var MyFile : System.Text);
+begin
+   if (Length(Mesh) > 0) then
+   begin
+      WriteLn(MyFile,'<Mesh>');
+      WriteLn(MyFile,Mesh);
+      WriteLn(MyFile,'</Mesh>');
+   end;
+end;
+
+procedure TBZK2Sector.WriteLight (var MyFile : System.Text);
+begin
+   if (Light > 0) then
+   begin
+      WriteLn(MyFile,'<Light>');
+      WriteLn(MyFile,Light);
+      WriteLn(MyFile,'</Light>');
+   end;
 end;
 
 procedure TBZK2Sector.WriteConnection (var MyFile : System.Text; Direction : TBZKFacesDirection);
@@ -454,6 +514,8 @@ begin
    SetVoxelPosition(Sector.GetVoxelPosition);
    SetVolume(Sector.GetVolume);
    SetName(Sector.GetName);
+   SetMesh(Sector.GetMesh);
+   SetLight(Sector.GetLight);
    SetConnections(Sector.GetConnection(bfdNorth),Sector.GetConnection(bfdEast),Sector.GetConnection(bfdSouth),Sector.GetConnection(bfdWest),Sector.GetConnection(bfdFloor),Sector.GetConnection(bfdCeiling));
    SetConnectionMap(bfdNorth,Sector.GetConnectionMap(bfdNorth));
    SetConnectionMap(bfdEast,Sector.GetConnectionMap(bfdEast));

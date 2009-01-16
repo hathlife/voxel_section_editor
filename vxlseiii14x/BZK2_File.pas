@@ -12,7 +12,7 @@ type
       UseBZKMapXSL : boolean;
       LocalLighting : TVector3f;
       UseTrueMasterSectorSize : Boolean;
-      MasterSectorColours : array [TBzkFacesDirection] of TVector3i;
+      MasterSectorColours : array [TBzkFacesDirection] of TVector4i;
       InvertX, InvertY, InvertZ : Boolean;
       ColoursWithNormals: Boolean;
    end;
@@ -35,12 +35,14 @@ type
          PrivateMembers : TBZK2PrivateMembers;
          Valid : Boolean;
          BZKMap : Boolean;
+         Author : string;
+         Backdrop : string;
          // I/O
          procedure WriteToFile (var MyFile : System.Text);
          procedure WriteHeader (var MyFile : System.Text);
          procedure WriteFooter (var MyFile : System.Text);
          // Random
-         function CalculateColour(Value : TVector3i): TVector3i;
+         function CalculateColour(Value : TVector4i): TVector4i;
          function MultiplyVectorI(Value,Scale : TVector3i): TVector3i;
          procedure SetMeAConnection(SectorNum,x,y,z : integer; Direction : TBZKFacesDirection);
          procedure SetFaceColour(SectorNum,x,y,z : integer; Direction : TBZKFacesDirection);
@@ -74,6 +76,8 @@ type
          function GetMinBounds : TVector3i;
          function GetMaxBounds : TVector3i;
          function GetCenterPosition : TVector3i;
+         function GetAuthor : string;
+         function GetBackdrop : string;
          function IsValid : Boolean;
          function IsBZKMap : Boolean;
          // Sets
@@ -88,6 +92,8 @@ type
          procedure SetColoursWithNormals(Value : Boolean);
          procedure SetMinBounds( Value : TVector3i);
          procedure SetMaxBounds( Value : TVector3i);
+         procedure SetAuthor (Value : string);
+         procedure SetBackdrop (Value : string);
          procedure SetIsBZKMap(Value : Boolean);
          // Moves
          procedure MoveCenterToPosition(Value : TVector3i);
@@ -139,12 +145,12 @@ begin
    Settings.LocalLighting.Y := 1; // default, full green lighting
    Settings.LocalLighting.Z := 1; // default, full blue lighting
    Settings.UseTrueMasterSectorSize := true;
-   Settings.MasterSectorColours[bfdNorth] := SetVectorI(255,0,0);
-   Settings.MasterSectorColours[bfdEast] := SetVectorI(255,255,255);
-   Settings.MasterSectorColours[bfdSouth] := SetVectorI(0,255,0);
-   Settings.MasterSectorColours[bfdWest] := SetVectorI(0,0,255);
-   Settings.MasterSectorColours[bfdFloor] := SetVectorI(64,64,64);
-   Settings.MasterSectorColours[bfdCeiling] := SetVectorI(128,128,128);
+   Settings.MasterSectorColours[bfdNorth] := SetVector4I(255,0,0,255);
+   Settings.MasterSectorColours[bfdEast] := SetVector4I(255,255,255,255);
+   Settings.MasterSectorColours[bfdSouth] := SetVector4I(0,255,0,255);
+   Settings.MasterSectorColours[bfdWest] := SetVector4I(0,0,255,255);
+   Settings.MasterSectorColours[bfdFloor] := SetVector4I(64,64,64,255);
+   Settings.MasterSectorColours[bfdCeiling] := SetVector4I(128,128,128,255);
    Settings.InvertX := false;
    Settings.InvertY := false;
    Settings.InvertZ := false;
@@ -213,6 +219,18 @@ begin
    if Settings.UseBZKMapXSL then
       WriteLn(MyFile,'<?xml-stylesheet type="text/xsl" href="./bzkmap.xsl" ?>');
    WriteLn(MyFile,'<BZK2>');
+   if Length(Author) > 0 then
+   begin
+      WriteLn(MyFile,'<Author>');
+      WriteLn(MyFile,Author);
+      WriteLn(MyFile,'</Author>');
+   end;
+   if Length(Backdrop) > 0 then
+   begin
+      WriteLn(MyFile,'<Backdrop>');
+      WriteLn(MyFile,Backdrop);
+      WriteLn(MyFile,'</Backdrop>');
+   end;
    WriteLn(MyFile,'<Version>');
    WriteLn(MyFile,'0.5');
    WriteLn(MyFile,'</Version>');
@@ -245,6 +263,16 @@ end;
 function TBZK2File.GetFilename : string;
 begin
    Result := Filename;
+end;
+
+function TBZK2File.GetAuthor : string;
+begin
+   Result := Author;
+end;
+
+function TBZK2File.GetBackdrop : string;
+begin
+   Result := Backdrop;
 end;
 
 function TBZK2File.GetVoxelSection : PVoxelSection;
@@ -361,6 +389,16 @@ end;
 procedure TBZK2File.SetFilename (Value : string);
 begin
    Filename := Value;
+end;
+
+procedure TBZK2File.SetAuthor (Value : string);
+begin
+   Author := Value;
+end;
+
+procedure TBZK2File.SetBackdrop (Value : string);
+begin
+   Backdrop := Value;
 end;
 
 procedure TBZK2File.SetUseBZKMapXSL(Value : Boolean);
@@ -604,7 +642,7 @@ begin
 end;
 
 // Random
-function TBZK2File.CalculateColour(Value : TVector3i): TVector3i;
+function TBZK2File.CalculateColour(Value : TVector4i): TVector4i;
 begin
    Result.X := Round(Value.X * Settings.LocalLighting.X);
    Result.Y := Round(Value.Y * Settings.LocalLighting.Y);
@@ -794,7 +832,7 @@ procedure TBZK2File.SetFaceColour(SectorNum,x,y,z : integer; Direction : TBZKFac
 var
    V : TVoxelUnpacked;
    Normal : single;
-   Colour : TVector3i;
+   Colour : TVector4i;
 begin
    // Painting each face works in the following way. First, we check
    // the neighboor.
@@ -815,12 +853,13 @@ begin
          Colour.X := Round(GetRValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.X);
          Colour.Y := Round(GetGValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.Y);
          Colour.Z := Round(GetBValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.Z);
+         Colour.W := 255;
 
          Sectors[SectorNum].SetConnectionColours(Direction,Colour);
       end
       else  // Transparent
       begin
-         Sectors[SectorNum].SetConnectionColours(Direction,SetVectorI(0,0,0));
+         Sectors[SectorNum].SetConnectionColours(Direction,SetVector4I(0,0,0,0));
       end;
    end // Here we go with Master Sector colours...
    else
@@ -832,7 +871,7 @@ end;
 procedure TBZK2File.SetFaceColourWithoutNormals(SectorNum,x,y,z : integer; Direction : TBZKFacesDirection);
 var
    V : TVoxelUnpacked;
-   Colour : TVector3i;
+   Colour : TVector4i;
 begin
    // Painting each face works in the following way. First, we check
    // the neighboor.
@@ -844,12 +883,13 @@ begin
          Colour.X := Round(GetRValue(VXLPalette[V.Colour]) * Settings.LocalLighting.X);
          Colour.Y := Round(GetGValue(VXLPalette[V.Colour]) * Settings.LocalLighting.Y);
          Colour.Z := Round(GetBValue(VXLPalette[V.Colour]) * Settings.LocalLighting.Z);
+         Colour.W := 255;
 
          Sectors[SectorNum].SetConnectionColours(Direction,Colour);
       end
       else  // Transparent
       begin
-         Sectors[SectorNum].SetConnectionColours(Direction,SetVectorI(0,0,0));
+         Sectors[SectorNum].SetConnectionColours(Direction,SetVector4I(0,0,0,0));
       end;
    end // Here we go with Master Sector colours...
    else
