@@ -334,6 +334,7 @@ type
     CNCNZcom1: TMenuItem;
     CCFilefront1: TMenuItem;
     Animation1: TMenuItem;
+    SpeedButton14: TSpeedButton;
     procedure CCFilefront1Click(Sender: TObject);
     procedure CNCNZcom1Click(Sender: TObject);
     procedure ProjectSVN1Click(Sender: TObject);
@@ -509,6 +510,7 @@ type
     Procedure CheckVXLChanged;
     procedure SpeedButton7Click(Sender: TObject);
     procedure SpeedButton12Click(Sender: TObject);
+    procedure SpeedButton14Click(Sender: TObject);
     Procedure SetDarkenLighten(Value : integer);
     procedure N110Click(Sender: TObject);
     procedure N21Click(Sender: TObject);
@@ -985,6 +987,7 @@ begin
    SpeedButton11.Enabled := IsEditable;
    SpeedButton12.Enabled := IsEditable;
    SpeedButton13.Enabled := IsEditable;
+   SpeedButton14.Enabled := IsEditable;
 
    Brush_1.Enabled := IsEditable;
    Brush_2.Enabled := IsEditable;
@@ -1938,6 +1941,9 @@ begin
    if ApplyTempView(ActiveSection) then
       UpdateUndo_RedoState;
 
+   TempLines.Data_no := 0;
+   SetLength(TempLines.Data,0);
+
    if isLeftMouseDown then
    begin
       isLeftMouseDown := False;
@@ -2034,6 +2040,13 @@ procedure TFrmMain.CnvView0MouseMove(Sender: TObject; Shift: TShiftState;
 var
    V : TVoxelUnpacked;
    TempI : integer;
+   Viewport : TViewport;
+   SnapPos1 : TPoint;
+   SnapPos2 : TPoint;
+   GridPos1 : TPoint;
+   GridPos2 : TPoint;
+   GridOffset : TPoint;
+   MeasureAngle : Extended;
 begin
    if VoxelOpen and isEditable then //exit;
    begin
@@ -2044,8 +2057,19 @@ begin
       StatusBar1.Panels[2].Text := 'X: ' + inttostr(LastClick[0].Y) + ', Y: ' + inttostr(LastClick[0].Z) + ', Z: ' + inttostr(LastClick[0].X);
       StatusBar1.Refresh;
 
+      MousePos.X := X;
+      MousePos.Y := Y;
+
+      if TempLines.Data_no > 0 then
+      begin
+         TempLines.Data_no := 0;
+         SetLength(TempLines.Data,0);
+      end;
+
       if not isLeftMouseDown then
       begin
+         OldMousePos.X := X;
+         OldMousePos.Y := Y;
          TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
          with ActiveSection.Tailer do
             if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) or (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then
@@ -2179,6 +2203,41 @@ begin
          V.Colour := ActiveColour;
          V.Normal := ActiveNormal;
          VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
+         RepaintViews;
+         exit;
+      end;
+
+      if VXLTool = VXLTool_Measure then
+      begin
+         Viewport := ActiveSection.Viewport[0];
+
+         GridPos1.X := ((OldMousePos.X-Viewport.Left) div Viewport.Zoom);
+         GridPos1.Y := ((OldMousePos.Y-Viewport.Top) div Viewport.Zoom);
+         GridPos2.X := ((MousePos.X-Viewport.Left) div Viewport.Zoom);
+         GridPos2.Y := ((MousePos.Y-Viewport.Top) div Viewport.Zoom);
+         SnapPos1.X := (GridPos1.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
+         SnapPos1.Y := (GridPos1.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
+         SnapPos2.X := (GridPos2.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
+         SnapPos2.Y := (GridPos2.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
+         GridOffset.X := GridPos2.X-GridPos1.X;
+         GridOffset.Y := GridPos2.Y-GridPos1.Y;
+
+         MeasureAngle := ArcTan2(SnapPos2.Y-SnapPos1.Y,SnapPos2.X-SnapPos1.X);
+
+         if (GridOffset.X <> 0) or (GridOffset.Y <> 0) then
+         begin
+            AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),1,clBlack);
+            AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+            AddTempLine(Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+            AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+            AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
+            AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
+            AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
+            AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
+         end;
+
+         StatusBar1.Panels[4].Text := 'Tool: Measure - ('+inttostr(GridPos1.X)+','+inttostr(GridPos1.Y)+') -> ('+inttostr(GridPos2.X)+','+inttostr(GridPos2.Y)+')     Offset - ('+inttostr(GridOffset.X)+','+inttostr(GridOffset.Y)+')     Length - ('+FloatToStrF(Sqrt(GridOffset.X*GridOffset.X+GridOffset.Y*GridOffset.Y),ffFixed,100,3)+')';
+
          RepaintViews;
          exit;
       end;
@@ -2457,29 +2516,47 @@ begin
    SpeedButton10.Down := false;
    SpeedButton11.Down := false;
    SpeedButton12.Down := false;
+   SpeedButton13.Down := false;
+   SpeedButton14.Down := false;
 
-   if VXLTool_ = VXLTool_Brush then
-      SpeedButton3.Down := true
-   else if VXLTool_ = VXLTool_Line then
-      SpeedButton4.Down := true
-   else if VXLTool_ = VXLTool_Erase then
-      SpeedButton5.Down := true
-   else if VXLTool_ = VXLTool_FloodFill then
-      SpeedButton10.Down := true
-   else if VXLTool_ = VXLTool_FloodFillErase then
-      SpeedButton13.Down := true
-   else if VXLTool_ = VXLTool_Dropper then
-      SpeedButton11.Down := true
-   else if VXLTool_ = VXLTool_Rectangle then
-      SpeedButton6.Down := true
-   else if VXLTool_ = VXLTool_FilledRectangle then
-      SpeedButton8.Down := true
-   else if VXLTool_ = VXLTool_Darken then
-      SpeedButton7.Down := true
-   else if VXLTool_ = VXLTool_Lighten then
-      SpeedButton12.Down := true
-   else if VXLTool_ = VXLTool_SmoothNormal then
-      SpeedButton9.Down := true;
+   if VXLTool_ = VXLTool_Brush then begin
+      VXLToolName := 'Brush';
+      SpeedButton3.Down := true; end
+   else if VXLTool_ = VXLTool_Line then begin
+      VXLToolName := 'Line';
+      SpeedButton4.Down := true; end
+   else if VXLTool_ = VXLTool_Erase then begin
+      VXLToolName := 'Erase';
+      SpeedButton5.Down := true; end
+   else if VXLTool_ = VXLTool_FloodFill then begin
+      VXLToolName := 'Flood Fill';
+      SpeedButton10.Down := true; end
+   else if VXLTool_ = VXLTool_FloodFillErase then begin
+      VXLToolName := 'Flood Erase';
+      SpeedButton13.Down := true; end
+   else if VXLTool_ = VXLTool_Dropper then begin
+      VXLToolName := 'Dropper';
+      SpeedButton11.Down := true; end
+   else if VXLTool_ = VXLTool_Rectangle then begin
+      VXLToolName := 'Rectangle';
+      SpeedButton6.Down := true; end
+   else if VXLTool_ = VXLTool_FilledRectangle then begin
+      VXLToolName := 'Filled Rectange';
+      SpeedButton8.Down := true; end
+   else if VXLTool_ = VXLTool_Darken then begin
+      VXLToolName := 'Darken';
+      SpeedButton7.Down := true; end
+   else if VXLTool_ = VXLTool_Lighten then begin
+      VXLToolName := 'Lighten';
+      SpeedButton12.Down := true; end
+   else if VXLTool_ = VXLTool_SmoothNormal then begin
+      VXLToolName := 'Smooth Normals';
+      SpeedButton9.Down := true; end
+   else if VXLTool_ = VXLTool_Measure then begin
+      VXLToolName := 'Measure';
+      SpeedButton14.Down := true; end;
+
+   StatusBar1.Panels[4].Text := 'Tool: '+VXLToolName;
 
    VXLTool := VXLTool_;
 end;
@@ -3369,6 +3446,11 @@ end;
 procedure TFrmMain.SpeedButton13Click(Sender: TObject);
 begin
    SetVXLTool(VXLTool_FloodFillErase);
+end;
+
+procedure TFrmMain.SpeedButton14Click(Sender: TObject);
+begin
+   SetVXLTool(VXLTool_Measure);
 end;
 
 Procedure TFrmMain.SetDarkenLighten(Value : integer);

@@ -49,7 +49,8 @@ uses
   Actor in 'Actor.pas',
   Mesh in 'Mesh.pas',
   GLConstants in 'GLConstants.pas',
-  Model in 'Model.pas';
+  Model in 'Model.pas',
+  BmpToDIB in 'BmpToDIB.pas';
 
 {$R *.res}
 

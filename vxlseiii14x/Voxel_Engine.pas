@@ -39,6 +39,20 @@ type
       Data_no : integer;
    end;
 
+   TTempLine = record
+      x1 : integer;
+      y1 : integer;
+      x2 : integer;
+      y2 : integer;
+      colour : TColor;
+      width : integer;
+   end;
+
+   TTempLines = record
+      Data : Array of TTempLine;
+      Data_no : integer;
+   end;
+
    TPaletteList = record
       Data : array of String;
       Data_no : integer;
@@ -69,13 +83,17 @@ Var
    ActiveNormalsCount,ActiveColour,ActiveNormal : integer;
    VXLBrush : integer = 0;
    VXLTool : integer = 0;
+   VXLToolName : string = '';
    DarkenLighten : integer = 1;
    LastClick : array [0..2] of TVector3i;
    TempView : TTempView;
+   TempLines : TTempLines;
    mnuReopen : PMenuItem;
    PaletteList : TPaletteList;
    VXLChanged : Boolean = false;
    ColourSchemes : TColourSchemes;
+   OldMousePos : TPoint;
+   MousePos : TPoint;
    // 1.2b adition:
    UsedColours : array [0..255] of boolean;
    UsedNormals : array [0..244] of boolean;
@@ -99,6 +117,7 @@ Const
    VXLTool_Lighten = 8;
    VXLTool_SmoothNormal = 9;
    VXLTool_FloodFillErase = 10;
+   VXLTool_Measure = 11;
 
    ViewName: array[0..5] of string = (
       ' Back',
@@ -132,6 +151,7 @@ procedure ActivateView(Idx: Integer);
 procedure SyncViews;
 procedure RefreshViews;
 procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; var last,first : TVector3i; v: TVoxelUnpacked);
+procedure AddTempLine(x1,y1,x2,y2,width : integer; colour : TColor);
 procedure VXLRectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; Fill: Boolean; v : TVoxelUnpacked);
 Function ApplyNormalsToVXL(var VXL : TVoxelSection) : integer;
 Function ApplyCubedNormalsToVXL(var VXL : TVoxelSection) : integer;
@@ -636,6 +656,7 @@ var
    Viewport: TViewport;
    f : boolean;
    Bitmap : TBitmap;
+   lineIndex : integer;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: PaintView2');
@@ -796,6 +817,16 @@ begin
              Inc(r.Bottom,Viewport.Zoom);
          end;
      end;
+
+     // draw temporary display lines (eg. measure tool)
+     if (TempLines.Data_no > 0) and (WndIndex = 0) then
+        for lineIndex := 0 to TempLines.Data_no - 1 do
+        begin
+           Bitmap.Canvas.MoveTo(TempLines.Data[lineIndex].x1,TempLines.Data[lineIndex].y1);
+           Bitmap.Canvas.Pen.Width := TempLines.Data[lineIndex].width;
+           Bitmap.Canvas.Pen.Color := TempLines.Data[lineIndex].colour;
+           Bitmap.Canvas.LineTo(TempLines.Data[lineIndex].x2,TempLines.Data[lineIndex].y2);
+        end;
 
      // draw cursor, but not if drawing!
      if not isMouseLeftDown then begin
@@ -1417,6 +1448,21 @@ RemoveDoublesFromTempView;
 
 end;
 
+procedure AddTempLine(x1,y1,x2,y2,width : integer; colour : TColor);
+var
+   newLine : TTempLine;
+begin
+   newLine.x1 := x1;
+   newLine.y1 := y1;
+   newLine.x2 := x2;
+   newLine.y2 := y2;
+   newLine.width := width;
+   newLine.colour := colour;
+   TempLines.Data_no := TempLines.Data_no + 1;
+   SetLength(TempLines.Data,TempLines.Data_no);
+   TempLines.Data[TempLines.Data_no-1] := newLine;
+end;
+
 procedure VXLRectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; Fill: Boolean; v : TVoxelUnpacked);
 {type
   EOrientRect = (oriUnDef, oriX, oriY, oriZ);  }
@@ -1959,10 +2005,18 @@ var
    x,y,z : integer;
    v : tvoxelunpacked;
    image : TBitmap;
+   hDIB : THandle;
+   clipboardFormat : UINT;
+   clipboardData : HGLOBAL;
+   clipboardPtr : PChar;
+   currentPtr : PChar;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: VXLCopyToClipboard');
    {$endif}
+
+   clipboardFormat := RegisterClipboardFormat(ClipboardFormatName);
+
    image := TBitmap.Create;
    image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
    image.Canvas.Brush.Style := bsSolid;
@@ -1971,10 +2025,21 @@ begin
    begin
       image.Width := ActiveSection.Tailer.ZSize;
       image.Height := ActiveSection.Tailer.YSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.ZSize*ActiveSection.Tailer.YSize*3+8);
+      clipboardPtr := GlobalLock(clipboardData);
+
+      PUINT(clipboardPtr)^ := ActiveSection.Tailer.ZSize;
+      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.YSize;
+
       for z := 0 to ActiveSection.Tailer.ZSize-1 do
          for y := 0 to ActiveSection.Tailer.YSize-1 do
          begin
             ActiveSection.GetVoxel(ActiveSection.X,y,z,v);
+
+            currentPtr := clipboardPtr+(y*ActiveSection.Tailer.ZSize + z)*3;
+            (currentPtr+8)^ := Char(v.Colour);
+            (currentPtr+9)^ := Char(v.Normal);
+            (currentPtr+10)^ := Char(Ord(v.Used));
 
             if v.Used then
                If SpectrumMode = ModeColours then
@@ -1982,16 +2047,29 @@ begin
                else
                   image.Canvas.Pixels[z,y] := GetVXLPaletteColor(v.Normal);
          end;
+      GlobalUnlock(clipboardData);
+      clipboardPtr := NIL;
    end;
 
    if ActiveSection.View[0].GetOrient = oriY then
    begin
       image.Width := ActiveSection.Tailer.XSize;
       image.Height := ActiveSection.Tailer.ZSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.XSize*ActiveSection.Tailer.ZSize*3+8);
+      clipboardPtr := GlobalLock(clipboardData);
+
+      PUINT(clipboardPtr)^ := ActiveSection.Tailer.XSize;
+      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.ZSize;
+
       for x := 0 to ActiveSection.Tailer.XSize-1 do
          for z := 0 to ActiveSection.Tailer.ZSize-1 do
          begin
             ActiveSection.GetVoxel(x,ActiveSection.Y,z,v);
+
+            currentPtr := clipboardPtr+(z*ActiveSection.Tailer.XSize + x)*3;
+            (currentPtr+8)^ := Char(v.Colour);
+            (currentPtr+9)^ := Char(v.Normal);
+            (currentPtr+10)^ := Char(Ord(v.Used));
 
             if v.Used then
                If SpectrumMode = ModeColours then
@@ -1999,16 +2077,29 @@ begin
                else
                   image.Canvas.Pixels[x,z] := GetVXLPaletteColor(v.Normal);
          end;
+      GlobalUnlock(clipboardData);
+      clipboardPtr := NIL;
    end;
 
    if ActiveSection.View[0].GetOrient = oriZ then
    begin
       image.Width := ActiveSection.Tailer.XSize;
       image.Height := ActiveSection.Tailer.YSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.XSize*ActiveSection.Tailer.YSize*3+8);
+      clipboardPtr := GlobalLock(clipboardData);
+
+      PUINT(clipboardPtr)^ := ActiveSection.Tailer.XSize;
+      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.YSize;
+
       for x := 0 to ActiveSection.Tailer.XSize-1 do
          for y := 0 to ActiveSection.Tailer.YSize-1 do
          begin
             ActiveSection.GetVoxel(x,y,ActiveSection.z,v);
+
+            currentPtr := clipboardPtr+(y*ActiveSection.Tailer.XSize + x)*3;
+            (currentPtr+8)^ := Char(v.Colour);
+            (currentPtr+9)^ := Char(v.Normal);
+            (currentPtr+10)^ := Char(Ord(v.Used));
 
             if v.Used then
                If SpectrumMode = ModeColours then
@@ -2016,10 +2107,14 @@ begin
                else
                   image.Canvas.Pixels[x,y] := GetVXLPaletteColor(v.Normal);
          end;
+      GlobalUnlock(clipboardData);
+      clipboardPtr := NIL;
    end;
-
-   Clipboard.Clear;
+   Clipboard.Open();
+   Clipboard.Clear();
+   Clipboard.SetAsHandle(clipboardFormat,clipboardData);
    Clipboard.Assign(image);
+   Clipboard.Close();
 end;
 
 Procedure VXLCutToClipboard(Vxl : TVoxelSection);
@@ -2079,87 +2174,97 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: PasteFullVXL');
    {$endif}
-   // Prepare the voxel mapping image.
-   image := TBitmap.Create;
-   image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
-   image.Canvas.Brush.Style := bsSolid;
-   image.Assign(Clipboard);
 
-   // Check if it's oriented to axis x
-   if Vxl.View[0].GetOrient = oriX then
+   if Clipboard.HasFormat(RegisterClipboardFormat(ClipboardFormatName)) then
    begin
-      for z := 0 to Vxl.Tailer.ZSize-1 do
-      for y := 0 to Vxl.Tailer.YSize-1 do
+      ClearVXLLayer(Vxl);
+      PasteVXL(Vxl);
+   end
+   else
+   begin
+   
+      // Prepare the voxel mapping image.
+      image := TBitmap.Create;
+      image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+      image.Canvas.Brush.Style := bsSolid;
+      image.Assign(Clipboard);
+
+      // Check if it's oriented to axis x
+      if Vxl.View[0].GetOrient = oriX then
       begin
-         // Get current voxel block data
-         Vxl.GetVoxel(Vxl.X,y,z,v);
+         for z := 0 to Vxl.Tailer.ZSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
+         begin
+            // Get current voxel block data
+            Vxl.GetVoxel(Vxl.X,y,z,v);
 
-         // Check if voxel is used
-         if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+            // Check if voxel is used
+            if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
 
-         // Verify the colour/normal
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
+            // Verify the colour/normal
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
 
-         // Update voxel
-         Vxl.SetVoxel(Vxl.X,y,z,v);
+            // Update voxel
+            Vxl.SetVoxel(Vxl.X,y,z,v);
+         end;
       end;
-   end;
 
-   // Check if it's oriented to axis y
-   if Vxl.View[0].GetOrient = oriY then
-   begin
-      for x := 0 to Vxl.Tailer.XSize-1 do
-      for z := 0 to Vxl.Tailer.ZSize-1 do
+      // Check if it's oriented to axis y
+      if Vxl.View[0].GetOrient = oriY then
       begin
-         // Get current voxel block data
-         Vxl.GetVoxel(x,Vxl.y,z,v);
+         for x := 0 to Vxl.Tailer.XSize-1 do
+         for z := 0 to Vxl.Tailer.ZSize-1 do
+         begin
+            // Get current voxel block data
+            Vxl.GetVoxel(x,Vxl.y,z,v);
 
-         // Check if voxel is used
-         if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+            // Check if voxel is used
+            if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
 
-         // Verify the colour/normal
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
+            // Verify the colour/normal
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
 
-         // Update voxel
-         Vxl.SetVoxel(x,Vxl.y,z,v);
+            // Update voxel
+            Vxl.SetVoxel(x,Vxl.y,z,v);
+         end;
       end;
-   end;
 
-   // Check if it's oriented to axis z
-   if Vxl.View[0].GetOrient = oriZ then
-   begin
-      for x := 0 to Vxl.Tailer.XSize-1 do
-      for y := 0 to Vxl.Tailer.YSize-1 do
+      // Check if it's oriented to axis z
+      if Vxl.View[0].GetOrient = oriZ then
       begin
-         // Get current voxel block data
-         Vxl.GetVoxel(x,y,Vxl.z,v);
+         for x := 0 to Vxl.Tailer.XSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
+         begin
+            // Get current voxel block data
+            Vxl.GetVoxel(x,y,Vxl.z,v);
 
-         // Check if voxel is used
-         if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+            // Check if voxel is used
+            if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
 
-         // Verify the colour/normal
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
+            // Verify the colour/normal
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
 
-         // Update voxel
-         Vxl.SetVoxel(x,y,Vxl.z,v);
+            // Update voxel
+            Vxl.SetVoxel(x,y,Vxl.z,v);
+         end;
       end;
    end;
 end;
@@ -2169,6 +2274,15 @@ var
    x,y,z : integer;
    image : TBitmap;
    v : tvoxelunpacked;
+   hBmp : HBITMAP;
+   clipboardFormat : UINT;
+   clipboardData : HGLOBAL;
+   clipboardPtr : PChar;
+   currentPtr : PChar;
+   minWidth : integer;
+   minHeight : integer;
+   dataWidth : integer;
+   dataHeight : integer;
 begin
    // Security Check
    if not isEditable then exit;
@@ -2177,74 +2291,145 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: PasteVXL');
    {$endif}
 
-   image := TBitmap.Create;
-   image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
-   image.Canvas.Brush.Style := bsSolid;
-   image.Assign(Clipboard);
-
-   if Vxl.View[0].GetOrient = oriX then
+   clipboardFormat := RegisterClipboardFormat(ClipboardFormatName);
+   if Clipboard.HasFormat(clipboardFormat) then
    begin
-      for z := 0 to Vxl.Tailer.ZSize-1 do
-      for y := 0 to Vxl.Tailer.YSize-1 do
+      clipboardData := Clipboard.GetAsHandle(clipboardFormat);
+      clipboardPtr := GlobalLock(clipboardData);
+      dataWidth := PUINT(clipboardPtr)^;
+      dataHeight := PUINT(clipboardPtr+4)^;
+
+      if Vxl.View[0].GetOrient = oriX then
       begin
-         Vxl.GetVoxel(Vxl.X,y,z,v);
 
-         if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+         minWidth := min(Vxl.Tailer.ZSize,dataWidth);
+         minHeight := min(Vxl.Tailer.YSize,dataHeight);
 
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
+         for z := 0 to minWidth-1 do
+         for y := 0 to minHeight-1 do
+         begin
+            currentPtr := clipboardPtr+(y*dataWidth+z)*3;
+            v.Colour := Byte((currentPtr+8)^);
+            v.Normal := Byte((currentPtr+9)^);
+            v.Used := Boolean((currentPtr+10)^);
 
-         if v.Used = true then
-            Vxl.SetVoxel(Vxl.X,y,z,v);
+            if v.Used = true then
+               Vxl.SetVoxel(Vxl.X,y,z,v);
+         end;
       end;
-   end;
 
-   if Vxl.View[0].GetOrient = oriY then
-   begin
-      for x := 0 to Vxl.Tailer.XSize-1 do
-      for z := 0 to Vxl.Tailer.ZSize-1 do
+      if Vxl.View[0].GetOrient = oriY then
       begin
-         Vxl.GetVoxel(x,Vxl.y,z,v);
 
-         if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+         minWidth := min(Vxl.Tailer.XSize,dataWidth);
+         minHeight := min(Vxl.Tailer.ZSize,dataHeight);
 
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
+         for x := 0 to minWidth-1 do
+         for z := 0 to minHeight-1 do
+         begin
+            currentPtr := clipboardPtr+(z*dataWidth+x)*3;
+            v.Colour := Byte((currentPtr+8)^);
+            v.Normal := Byte((currentPtr+9)^);
+            v.Used := Boolean((currentPtr+10)^);
 
-         if v.Used = true then
-            Vxl.SetVoxel(x,Vxl.y,z,v);
+            if v.Used = true then
+               Vxl.SetVoxel(x,Vxl.y,z,v);
+         end;
       end;
-   end;
 
-   if Vxl.View[0].GetOrient = oriZ then
-   begin
-      for x := 0 to Vxl.Tailer.XSize-1 do
-      for y := 0 to Vxl.Tailer.YSize-1 do
+      if Vxl.View[0].GetOrient = oriZ then
       begin
-         Vxl.GetVoxel(x,y,Vxl.z,v);
 
-         if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
-            v.Used := true
-         else
-            v.Used := false;
+         minWidth := min(Vxl.Tailer.XSize,dataWidth);
+         minHeight := min(Vxl.Tailer.YSize,dataHeight);
 
-         If SpectrumMode = ModeColours then
-            v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
-         else
-            v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
+         for x := 0 to minWidth-1 do
+         for y := 0 to minHeight-1 do
+         begin
+            currentPtr := clipboardPtr+(y*dataWidth+x)*3;
+            v.Colour := Byte((currentPtr+8)^);
+            v.Normal := Byte((currentPtr+9)^);
+            v.Used := Boolean((currentPtr+10)^);
 
-         if v.Used = true then
-            Vxl.SetVoxel(x,y,Vxl.z,v);
+            if v.Used = true then
+               Vxl.SetVoxel(x,y,Vxl.z,v);
+         end;
+      end;
+
+      GlobalUnlock(clipboardData);
+   end
+   else
+   begin
+
+      image := TBitmap.Create;
+      image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+      image.Canvas.Brush.Style := bsSolid;
+      image.Assign(Clipboard);
+
+      if Vxl.View[0].GetOrient = oriX then
+      begin
+         for z := 0 to Vxl.Tailer.ZSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
+         begin
+            Vxl.GetVoxel(Vxl.X,y,z,v);
+
+            if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
+
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
+
+            if v.Used = true then
+               Vxl.SetVoxel(Vxl.X,y,z,v);
+         end;
+      end;
+
+      if Vxl.View[0].GetOrient = oriY then
+      begin
+         for x := 0 to Vxl.Tailer.XSize-1 do
+         for z := 0 to Vxl.Tailer.ZSize-1 do
+         begin
+            Vxl.GetVoxel(x,Vxl.y,z,v);
+
+            if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
+
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
+
+            if v.Used = true then
+               Vxl.SetVoxel(x,Vxl.y,z,v);
+         end;
+      end;
+
+      if Vxl.View[0].GetOrient = oriZ then
+      begin
+         for x := 0 to Vxl.Tailer.XSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
+         begin
+            Vxl.GetVoxel(x,y,Vxl.z,v);
+
+            if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
+               v.Used := true
+            else
+               v.Used := false;
+
+            If SpectrumMode = ModeColours then
+               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
+            else
+               v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
+
+            if v.Used = true then
+               Vxl.SetVoxel(x,y,Vxl.z,v);
+         end;
       end;
    end;
 
@@ -2558,7 +2743,7 @@ begin
    // 1.40 New Palette Engine.
    VXLPalette := TPalette.CreateFromFile(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
 
-   BGViewColor := RGB(140,170,235);
+   BGViewColor := RGB(140,170,239);
    VoxelFile := TVoxel.Create;
    VoxelFile.InsertSection(0,'Dummy',1,1,1);
    ActiveSection := VoxelFile.Section[0];
