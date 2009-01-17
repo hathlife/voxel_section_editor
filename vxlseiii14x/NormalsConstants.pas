@@ -2,7 +2,7 @@ unit NormalsConstants;
 
 interface
 
-uses Voxel_Engine;
+uses BasicDataTypes;
 
 Const
 RA2Normals_Table : array [0..243] of TVector3f =(

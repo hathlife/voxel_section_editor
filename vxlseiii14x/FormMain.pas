@@ -3,17 +3,17 @@ unit FormMain;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls, ToolWin,
-  ImgList, Math, palette, Spin, Buttons, ogl3dview_engine,dglOpenGL,FTGifAnimate,
-  undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit,mouse,Registry,
-  Form3dpreview,Debug, FormAutoNormals, XPMan, GlobalVars;
+  Windows, BasicDataTypes, Messages, SysUtils, Variants, Classes, Graphics, Controls,
+  Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls,
+  ToolWin, ImgList, Math, palette, Spin, Buttons, ogl3dview_engine, FTGifAnimate,
+  undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,
+  Form3dpreview,Debug, FormAutoNormals, XPMan, GlobalVars, dglOpenGL;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.03';
+   APPLICATION_VER = '1.39.04';
 
 type
   TFrmMain = class(TForm)

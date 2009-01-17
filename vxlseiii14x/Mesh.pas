@@ -2,7 +2,8 @@ unit Mesh;
 
 interface
 
-uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals, Palette;
+uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
+      BasicDataTypes, Palette;
 
 type
    TMesh = class

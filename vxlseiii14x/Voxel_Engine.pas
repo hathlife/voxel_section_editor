@@ -2,70 +2,10 @@ unit Voxel_Engine;
 
 interface
 
-uses Windows,Voxel,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,cls_config,
-      Constants,Menus,Clipbrd,mouse, forms, Dialogs;
+uses Windows,BasicDataTypes,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,
+   cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel;
 
 {$INCLUDE Global_Conditionals.inc}
-type
-   PPaintBox = ^TPaintBox;
-   PLabel = ^TLabel;
-   PMenuItem = ^TMenuItem;
-
-   TVector3f = record
-      X, Y, Z : single;
-   end;
-
-   TAVector3f = array of TVector3f;
-   PAVector3f = ^TAVector3f;
-
-   TVector2f = record
-      U, V : single;
-   end;
-
-   TVector3i = record
-      X, Y, Z : integer;
-   end;
-
-   TRectangle3f = record
-      Min, Max : TVector3f;
-   end;
-
-   TTempViewData = record
-      V : TVoxelUnpacked;
-      VC : TVector3i; // Cordinates of V
-      VU : Boolean; // Is V Used, if so we can do this to the VXL file when needed
-      X,Y : Integer;
-   end;
-
-   TTempView = record
-      Data : Array of TTempViewData;
-      Data_no : integer;
-   end;
-
-   TTempLine = record
-      x1 : integer;
-      y1 : integer;
-      x2 : integer;
-      y2 : integer;
-      colour : TColor;
-      width : integer;
-   end;
-
-   TTempLines = record
-      Data : Array of TTempLine;
-      Data_no : integer;
-   end;
-
-   TPaletteList = record
-      Data : array of String;
-      Data_no : integer;
-   end;
-
-   TColourSchemes = array of packed record
-        Name,Filename,By,Website : string;
-        Data : array [0..255] of byte;
-   end;
-
 Var
    VoxelFile : TVoxel;
    ActiveSection : TVoxelSection;

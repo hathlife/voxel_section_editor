@@ -2,7 +2,7 @@ unit RenderEnvironment;
 
 interface
 
-uses Windows, dglOpenGL, Voxel_Engine, Camera, SysUtils;
+uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils;
 
 type
    PRenderEnvironment = ^TRenderEnvironment;

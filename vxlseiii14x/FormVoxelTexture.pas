@@ -4,8 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls,voxel, ExtDlgs,math, ComCtrls, Voxel_Engine, Palette,
-  undo_engine;
+  Dialogs, ExtCtrls, StdCtrls,voxel, ExtDlgs,math, ComCtrls, BasicDataTypes,
+  Voxel_Engine, Palette, undo_engine;
 
 type
   TFrmVoxelTexture = class(TForm)

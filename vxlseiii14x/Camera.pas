@@ -2,7 +2,7 @@ unit Camera;
 
 interface
 
-uses Voxel_engine, math3d, math, dglOpenGL;
+uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL;
 
 type
    PCamera = ^TCamera;

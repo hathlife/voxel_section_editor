@@ -3,7 +3,7 @@ unit Voxel;
 interface
 
 uses
-   {LoadForm,} Forms, Classes, dglOpenGL;
+   Classes, dglOpenGL, Normals, BasicDataTypes;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -13,20 +13,6 @@ const
    MAXNORM_RED_ALERT2 = 244;
 
 type
-   EError = (OK, ReadFailed, WriteFailed, InvalidSpanDataSizeCalced, InvalidSpan,
-     BadSpan_SecondVoxelCount, Unhandled_Exception);
-
-   EDrawMode = (ModeDraw, ModeFloodFill, ModeRectFill, ModeMagnify, ModeLine, ModeColSelect, ModeBrush,  ModeRect, ModeSelect, ModePippet,
-     ModeErase, ModeBumpColour, ModeBumpDownColour,ModeFloodFillErase);
-   EClickMode = (ModeSingleClick, ModeDoubleClick);
-   ESpectrumMode = (ModeColours, ModeNormals);
-   EViewMode = (ModeFull, ModeEmphasiseDepth, ModeCrossSection);
-
-   EVoxelViewOrient = (oriX, oriY, oriZ);
-   EVoxelViewDir = (dirTowards, dirAway);
-   TVoxelType = (vtLand, vtAir);
-   TGLMatrixf4 = array[0..3, 0..3] of Single;
-
    TVoxelHeader = packed record
       FileType: packed array[1..16] of Char; // always "Voxel Animation"
       Unknown, // always 1
@@ -58,25 +44,6 @@ type
       Unknown: Byte; // always 2 (or 4?); possibly normals-encoding scheme selection
    end;
 
-   TVoxelUnpacked = record
-      Colour,
-      Normal,
-      Flags: Byte;
-      Used: Boolean;
-   end;
-
-   TVoxelPacked = LongInt;
-
-   TThumbnail = record
-      Width, Height: Integer;
-   end;
-
-   TViewport = record
-      Left, Top, Zoom: Integer;
-      hasBeenUsed: Boolean; // this flag lets the ui know if this
-                   // view has been used already (so zoom is a user setting)
-   end;
-
    TVoxelView = class; // forward dec
 
    TVoxelSection = class
@@ -90,6 +57,7 @@ type
       procedure UnpackVoxel(PackedVoxel: TVoxelPacked; var dest: TVoxelUnpacked);
    public
       Data: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
+      Normals : TNormals; // Normals palette.
       MaxNormal, // the highest normal value
       X, Y, Z: Integer; // cursor location
       // other
@@ -380,6 +348,7 @@ begin
    Tailer.YSize := YSize;
    Tailer.ZSize := ZSize;
    Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
+   Normals := TNormals.Create(2);
 
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
 

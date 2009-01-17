@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, Voxel_Engine, palette, voxel, mouse, undo_engine;
+  Dialogs, StdCtrls, ExtCtrls, Voxel_Engine, BasicDataTypes, palette, voxel,
+  mouse, undo_engine;
 
 Type
 TReplaceColourData = record

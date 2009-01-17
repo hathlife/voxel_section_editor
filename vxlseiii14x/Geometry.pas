@@ -44,6 +44,8 @@ unit Geometry;
 
 interface
 
+uses BasicDataTypes;
+
 type
   // data types needed for 3D graphics calculation,
   // included are 'C like' aliases for each type (to be
@@ -139,7 +141,7 @@ type
 
   PAffineFltVector = ^TAffineFltVector;
   TAffineFltVector = array[0..2] of Single;
-  TVector3f = TAffineFltVector;
+//  TVector3f = TAffineFltVector;
 
   PAffineDblVector = ^TAffineDblVector;
   TAffineDblVector = array[0..2] of Double;
@@ -284,7 +286,7 @@ function  VectorNorm(V: array of Single): Single;
 function  VectorNormalize(V: array of Single): Single;
 function  VectorPerpendicular(V, N: TAffineVector): TAffineVector;
 function  VectorReflect(V, N: TAffineVector): TAffineVector;
-procedure VectorRotate(var Vector: TVector4f; Axis: TVector3f; Angle: Single);
+procedure VectorRotate(var Vector: TVector4f; Axis: TAffineFltVector; Angle: Single);
 procedure VectorScale(V: array of Single; Factor: Single);
 function  VectorSubtract(V1, V2: TVector): TVector;
 
@@ -313,7 +315,7 @@ procedure QuaternionToPoints(Q: TQuaternion; var ArcFrom, ArcTo: TAffineVector);
 
 // mixed functions
 function  ConvertRotation(Angles: TAffineVector): TVector;
-function  CreateRotationMatrix(Axis: TVector3f; Angle: Single): TMatrix;
+function  CreateRotationMatrix(Axis: TAffineFltVector; Angle: Single): TMatrix;
 function  MatrixDecompose(M: TMatrix; var Tran: TTransformations): Boolean;
 function  VectorAffineTransform(V: TAffineVector; M: TAffineMatrix): TAffineVector;
 function  VectorTransform(V: TVector4f; M: TMatrix): TVector4f; overload;
@@ -747,7 +749,7 @@ end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-procedure VectorRotate(var Vector: TVector4f; Axis: TVector3f; Angle: Single);
+procedure VectorRotate(var Vector: TVector4f; Axis: TAffineFltVector; Angle: Single);
 
 // rotates Vector about Axis with Angle radiants
 
@@ -971,9 +973,9 @@ function  VectorTransform(V: TVector3f; M: TMatrix): TVector3f;
 var TV: TVector3f;
 
 begin
-  TV[X] := V[X] * M[X, X] + V[Y] * M[Y, X] + V[Z] * M[Z, X] + M[W, X];
-  TV[Y] := V[X] * M[X, Y] + V[Y] * M[Y, Y] + V[Z] * M[Z, Y] + M[W, Y];
-  TV[Z] := V[X] * M[X, Z] + V[Y] * M[Y, Z] + V[Z] * M[Z, Z] + M[W, Z];
+  TV.X := V.X * M[X, X] + V.Y * M[Y, X] + V.Z * M[Z, X] + M[W, X];
+  TV.Y := V.X * M[X, Y] + V.Y * M[Y, Y] + V.Z * M[Z, Y] + M[W, Y];
+  TV.Z := V.X * M[X, Z] + V.Y * M[Y, Z] + V.Z * M[Z, Z] + M[W, Z];
   Result := TV;
 end;
 
@@ -1343,7 +1345,7 @@ end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-function CreateRotationMatrix(Axis: TVector3f; Angle: Single): TMatrix; register;
+function CreateRotationMatrix(Axis: TAffineFltVector; Angle: Single): TMatrix; register;
 
 // Creates a rotation matrix along the given Axis by the given Angle in radians.
 
@@ -1432,7 +1434,7 @@ function ConvertRotation(Angles: TAffineVector): TVector; register;
 	2 Z Sin(t) = M[0][1] - M[1][0]
 }
 
-var Axis1, Axis2: TVector3f;
+var Axis1, Axis2: TAffineFltVector;
     M, M1, M2: TMatrix;
     cost, cost1,
     sint,

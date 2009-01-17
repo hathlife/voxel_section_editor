@@ -2,7 +2,7 @@ unit Actor;
 
 interface
 
-uses Voxel_engine, math3d, math, dglOpenGL, Model;
+uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model;
 
 type
    PActor = ^TActor;

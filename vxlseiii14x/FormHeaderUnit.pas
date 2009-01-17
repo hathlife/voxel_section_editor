@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Forms, StdCtrls, Controls, Classes, ExtCtrls, Voxel, Sysutils,
-  Buttons, Dialogs, Grids, Graphics,math, ComCtrls, Spin, Voxel_Engine;
+  Buttons, Dialogs, Grids, Graphics,math, ComCtrls, Spin, Voxel_Engine,
+  BasicDataTypes;
 
 {$INCLUDE Global_Conditionals.inc}
 

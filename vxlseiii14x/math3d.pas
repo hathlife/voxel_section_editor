@@ -2,7 +2,7 @@ unit math3d;
 
 interface
 
-uses Voxel_Engine;
+uses BasicDataTypes;
 
 const
   M_PI = 3.1415926535897932384626433832795;		// matches value in gcc v2 math.h

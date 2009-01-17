@@ -6,7 +6,7 @@ unit HVA;
 
 interface
 
-uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, Voxel_Engine, math3d;
+uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, BasicDataTypes, math3d;
 
 type
    THVA_Main_Header = record
