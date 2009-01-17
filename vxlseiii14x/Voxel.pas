@@ -425,7 +425,10 @@ begin
    end;
 end;
 
-constructor TVoxelSection.Create; begin end;
+constructor TVoxelSection.Create;
+begin
+   Normals := TNormals.Create(2);
+end;
 
 destructor TVoxelSection.Destroy;
 begin

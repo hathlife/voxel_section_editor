@@ -118,6 +118,7 @@ procedure VXLSmoothBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUn
 
 function SetVector(x, y, z : single) : TVector3f;
 function SetVectorI(x, y, z : integer) : TVector3i;
+function CopyVector(const _vector : TVector3f): TVector3f;
 
 Procedure SetVoxelFileDefults;
 Function IsVoxelValid : Boolean;
@@ -140,6 +141,13 @@ begin
    result.x := x;
    result.y := y;
    result.z := z;
+end;
+
+function CopyVector(const _vector : TVector3f): TVector3f;
+begin
+   result.x := _vector.x;
+   result.y := _vector.y;
+   result.z := _vector.z;
 end;
 
 Function HasNormalsBug : Boolean;

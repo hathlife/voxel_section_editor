@@ -285,22 +285,9 @@ begin
                else
                   _Voxel.GetVoxel(x-1,y,z,v);
                // Normals
-               if _Voxel.Tailer.Unknown = 4 then
-               begin
-                  if v.Normal > 243 then
-                     v.Normal := 243;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := RA2Normals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := RA2Normals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Z := RA2Normals[v.Normal].Z;
-               end
-               else if _Voxel.Tailer.Unknown = 2 then
-               begin
-                  if v.Normal > 35 then
-                     v.Normal := 35;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := TSNormals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := TSNormals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Z := TSNormals[v.Normal].Z;
-               end;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := _Voxel.Normals[v.Normal].X;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := _Voxel.Normals[v.Normal].Y;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
                Colours[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.Colour[v.Colour];
             end;
@@ -321,22 +308,9 @@ begin
                else
                   _Voxel.GetVoxel(x,y-1,z,v);
                // Normals
-               if _Voxel.Tailer.Unknown = 4 then
-               begin
-                  if v.Normal > 243 then
-                     v.Normal := 243;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := RA2Normals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := RA2Normals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Z := RA2Normals[v.Normal].Z;
-               end
-               else if _Voxel.Tailer.Unknown = 2 then
-               begin
-                  if v.Normal > 35 then
-                     v.Normal := 35;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := TSNormals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := TSNormals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Z := TSNormals[v.Normal].Z;
-               end;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := _Voxel.Normals[v.Normal].X;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := _Voxel.Normals[v.Normal].Y;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
                Colours[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.Colour[v.Colour];
             end;
@@ -357,22 +331,9 @@ begin
                else
                   _Voxel.GetVoxel(x,y,z-1,v);
                // Normals
-               if _Voxel.Tailer.Unknown = 4 then
-               begin
-                  if v.Normal > 243 then
-                     v.Normal := 243;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := RA2Normals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := RA2Normals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Z := RA2Normals[v.Normal].Z;
-               end
-               else if _Voxel.Tailer.Unknown = 2 then
-               begin
-                  if v.Normal > 35 then
-                     v.Normal := 35;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := TSNormals[v.Normal].X;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := TSNormals[v.Normal].Y;
-                  FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Z := TSNormals[v.Normal].Z;
-               end;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := _Voxel.Normals[v.Normal].X;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := _Voxel.Normals[v.Normal].Y;
+               FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
                Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.Colour[v.Colour];
             end;

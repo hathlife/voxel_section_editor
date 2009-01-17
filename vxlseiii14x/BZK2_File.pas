@@ -794,38 +794,17 @@ end;
 
 function TBZK2File.GetNormalX(V : TVoxelUnpacked) : single;
 begin
-   if VoxelSection^.Tailer.Unknown = 4 then
-   begin
-      Result := abs(RA2Normals[v.Normal].X);
-   end
-   else
-   begin
-      Result := abs(TSNormals[v.Normal].X);
-   end;
+   Result := abs(VoxelSection^.Normals[v.Normal].X);
 end;
 
 function TBZK2File.GetNormalY(V : TVoxelUnpacked) : single;
 begin
-   if VoxelSection^.Tailer.Unknown = 4 then
-   begin
-      Result := abs(RA2Normals[v.Normal].Y);
-   end
-   else
-   begin
-      Result := abs(TSNormals[v.Normal].Y);
-   end;
+   Result := abs(VoxelSection^.Normals[v.Normal].Y);
 end;
 
 function TBZK2File.GetNormalZ(V : TVoxelUnpacked) : single;
 begin
-   if VoxelSection^.Tailer.Unknown = 4 then
-   begin
-      Result := abs(RA2Normals[v.Normal].Z);
-   end
-   else
-   begin
-      Result := abs(TSNormals[v.Normal].Z);
-   end;
+   Result := abs(VoxelSection^.Normals[v.Normal].Z);
 end;
 
 procedure TBZK2File.SetFaceColour(SectorNum,x,y,z : integer; Direction : TBZKFacesDirection);

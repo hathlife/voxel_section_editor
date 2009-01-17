@@ -1,6 +1,7 @@
 unit Voxel_Tools;
 
 { REVISION HISTORY
+  2009/01/17 Removed all normals related functions. Now normals.pas has something better.
   2005/11/23 Fixed ApplyCubedNormals, by adding the Binary3DFloodFill stuff.
   2005/11/10 Added ApplyCubedNormals.
   2004/06/14 Added GetSmoothNormal, used for smoothing single voxel points.
@@ -68,11 +69,6 @@ procedure GetPreliminaryNormals(const BM: TBinaryMap; var FloatMap : TVector3fMa
 function GetNonZeroSign(const value : single) : shortint;
 function GetTrueSign(var value,signal : single; minVar, maxVar : integer) : shortint;
 
-// Normals functions
-Function Norm2IndexRA2(N : TVector3f) : Byte;
-Function Norm2IndexTS(N : TVector3f) : Byte;
-
-
 implementation
 
 {uses SysUtils;}
@@ -130,54 +126,6 @@ Result.X := V1.X-V2.X;
 Result.Y := V1.Y-V2.Y;
 Result.Z := V1.Z-V2.Z;
 end;             }
-
-Function Norm2IndexRA2(N : TVector3f) : Byte;
-var
-   I : integer;
-   thiserr,besterr : single;
-   Bestindex : byte;
-begin
-   Bestindex := 0;
-   besterr := VectorDistance(SetVector(0,0,0),SubtractVector(RA2Normals[0],N));
-   for i := 1 to 244 do
-   begin
-      thiserr := VectorDistance(SetVector(0,0,0),SubtractVector(RA2Normals[i],N));
-      if thiserr < besterr then
-      begin
-         besterr:=thiserr;
-         bestindex:=i;
-      end;
-   end;
-   Result := Bestindex;
-end;
-
-Function Norm2IndexTS(N : TVector3f) : Byte;
-var
-   I : integer;
-   thiserr,besterr : single;
-   Bestindex : byte;
-begin
-   Bestindex := 0;
-   besterr := VectorDistance(SetVector(0,0,0),SubtractVector(TSNormals[0],N));
-   for i := 1 to 35 do
-   begin
-      thiserr := VectorDistance(SetVector(0,0,0),SubtractVector(TSNormals[i],N));
-      if thiserr < besterr then
-      begin
-         besterr:=thiserr;
-         bestindex:=i;
-      end;
-   end;
-   Result := Bestindex;
-end;
-
-Function Norm2Index(N : TVector3f; Vxl : TVoxelSection) : Byte;
-begin
-   if Vxl.Tailer.Unknown = 2 then
-      Result := Norm2IndexTS(N)
-   else if Vxl.Tailer.Unknown = 4 then
-      Result := Norm2IndexRA2(N);
-end;
 
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 // Create Binary Map to aid calculating the cubed normals
@@ -554,11 +502,7 @@ begin
 
    // Normalization process.
    Normalize(BM[x,y,z]);
-
-   if Voxel.Tailer.Unknown = 4 then
-      V.Normal := Norm2IndexRA2(BM[x,y,z])
-   else
-      V.Normal := Norm2IndexTS(BM[x,y,z]);
+   V.Normal := Voxel.Normals.GetIDFromNormal(BM[x,y,z]);
 
    // Apply
    Voxel.SetVoxel(_x,_y,_z,V);
@@ -1687,10 +1631,7 @@ var maxx, maxy, maxz,
          inc(Result.confused)
       else
       begin
-         if Voxel.Tailer.Unknown = 4 then
-            v.Normal := Norm2IndexRA2(SetVector(Pos.X,Pos.Y,Pos.Z))
-         else
-            v.Normal := Norm2IndexTS(SetVector(Pos.X,Pos.Y,Pos.Z));
+         v.Normal := Voxel.Normals.GetIDFromNormal(Pos.X,Pos.Y,Pos.Z);
 
          inc(Result.applied);
 
@@ -1975,12 +1916,7 @@ end;
 
 Function GetNormal3f(Vxl : TVoxelSection; N : integer) : TVector3f;
 begin
-   Result := setvector(0,0,0);
-
-   if Vxl.Tailer.Unknown = 2 then
-      Result := TSNormals[n]
-   else if Vxl.Tailer.Unknown = 4 then
-      Result := RA2Normals[n];
+   Result := Vxl.Normals[n];
 end;
 
 function SmoothNormals(var Vxl : TVoxelSection) : TApplyNormalsResult;
@@ -2029,7 +1965,7 @@ var
          Normals.Z := Normals.Z + GetNormal3f(Vxl,v.Normal).z;
 
          Normalize(Normals);
-         Result := Norm2Index(Normals,Vxl);
+         Result := Vxl.Normals.GetIDFromNormal(Normals);
       end
       else
       begin
@@ -2274,7 +2210,7 @@ var
          Normals.Y := Normals.Y + GetNormal3f(Vxl,v.Normal).y;
          Normals.Z := Normals.Z + GetNormal3f(Vxl,v.Normal).z;
          Normalize(Normals);
-         Result := Norm2Index(Normals,Vxl);
+         Result := Vxl.Normals.GetIDFromNormal(Normals);
       end
       else
       begin

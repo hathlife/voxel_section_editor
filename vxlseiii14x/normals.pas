@@ -41,6 +41,7 @@ type
          // Gets
          function GetIDFromNormal(const _vector : TVector3f): longword; overload;
          function GetIDFromNormal(_x, _y, _z : single): longword; overload;
+         function GetLastID: integer;
 
          // Copies
          procedure Assign(const _Normals : TNormals);
@@ -109,19 +110,19 @@ begin
 end;
 
 // Gets
-function TNormals.ReadNormal(_id: Cardinal): TVector3f;
+function TNormals.ReadNormal(_id: longword): TVector3f;
 begin
    if FResolution = C_RES_INFINITE then
    begin
       if (_id >= Low(FPalette^)) and (_id <= High(FPalette^)) then
-         Result := (FPalette^)[_id]
+         Result := CopyVector((FPalette^)[_id])
       else
          Result := SetVector(0,0,0);
    end
    else
    begin
-      if (_id >= 0) and (_id < FResolution) then
-         Result := (FPalette^)[_id]
+      if (_id >= 0) and (_id < High(FPalette^)) then
+         Result := CopyVector((FPalette^)[_id])
       else
          Result := SetVector(0,0,0);
    end;
@@ -153,6 +154,13 @@ begin
    Result := GetIDFromNormal(SetVector(_X,_Y,_Z));
 end;
 
+function TNormals.GetLastID: integer;
+begin
+   if FPalette <> nil then
+      Result := High(FPalette^);
+   Result := -1;
+end;
+
 
 // Sets
 procedure TNormals.SetNormal(_id: longword; _normal: TVector3f);
@@ -173,17 +181,14 @@ begin
    if FResolution = 2 then
    begin
       FPalette := @TSNormals_Table;
-      FResolution := 36;
    end
    else if FResolution = 4 then
    begin
       FPalette := @RA2Normals_Table;
-      FResolution := 244;
    end
    else if FResolution = 6 then
    begin
       FPalette := @CubeNormals_Table;
-      FResolution := 26;
    end
    else
       Initialize;

@@ -1171,11 +1171,8 @@ begin
       end;
    end;
 
-   // Pega a normal mais próxima da paleta de normais (Norm2IndexXXX em Voxel_Tools)
-   if Voxel.Tailer.Unknown = 4 then
-      V.Normal := Norm2IndexRA2(VetorNormal)
-   else
-      V.Normal := Norm2IndexTS(VetorNormal);
+   // Pega a normal mais próxima da paleta de normais
+   V.Normal := Voxel.Normals.GetIDFromNormal(VetorNormal);
 
    // Aplica a nova normal
    Voxel.SetVoxel(_x,_y,_z,V);

@@ -321,6 +321,7 @@ end;
 procedure DoNormals(Normal: integer);
 var
    N: integer;
+   NormalVector : TVector3f;
 begin
    N := Normal;
    HighestNormal := Normal;
@@ -331,18 +332,8 @@ begin
       exit;
    end;
 
-   if ActiveSection.Tailer.Unknown = 4 then
-   begin
-      if N > 243 then
-         N := 243;
-      glNormal3f(RA2Normals[trunc(N)].X * 1.2, RA2Normals[trunc(N)].Y * 1.2, RA2Normals[trunc(N)].Z * 1.2);
-   end
-   else if ActiveSection.Tailer.Unknown = 2 then
-   begin
-      if N > 35 then
-         N := 35;
-      glNormal3f(TSNormals[trunc(N)].X * 1.2, TSNormals[trunc(N)].Y * 1.2, TSNormals[trunc(N)].Z * 1.2);
-   end;
+   NormalVector := ActiveSection.Normals[trunc(N)];
+   glNormal3f(NormalVector.X * 1.2, NormalVector.Y * 1.2, NormalVector.Z * 1.2);
 end;
 
 // 1.3: Now with Hyper Speed! Kirov at 59/60fps :D
@@ -804,6 +795,7 @@ end;
 procedure Update3dViewWithNormals(Vxl: TVoxelSection);
 var
    x,num:   byte;
+   Normal : TVector3f;
 begin
    if FrmMain.Display3dView1.Checked then
       exit;
@@ -823,45 +815,26 @@ begin
       num := 243;
 
    SetLength(VoxelBoxGroup.Section,1);
-   for x := 0 to num do
-      if ActiveSection.Tailer.Unknown = 4 then
-      begin
-         SetLength(VoxelBoxGroup.Section[0].Box, VoxelBox_No+1);
+   for x := 0 to ActiveSection.Normals.GetLastID() do
+   begin
+      Normal := ActiveSection.Normals[x];
+      SetLength(VoxelBoxGroup.Section[0].Box, VoxelBox_No+1);
 
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) + 1, trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5) - 1, trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) + 1);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5), trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5) - 1);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) - 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(RA2Normals[x].x * 30.5) + 1, trunc(RA2Normals[x].y * 30.5), trunc(RA2Normals[x].z * 30.5));
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(Normal.x * 30.5), trunc(Normal.y * 30.5) + 1, trunc(Normal.z * 30.5));
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(Normal.x * 30.5), trunc(Normal.y * 30.5) - 1, trunc(Normal.z * 30.5));
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(Normal.x * 30.5), trunc(Normal.y * 30.5), trunc(Normal.z * 30.5) + 1);
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(Normal.x * 30.5), trunc(Normal.y * 30.5), trunc(Normal.z * 30.5) - 1);
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(Normal.x * 30.5) - 1, trunc(Normal.y * 30.5), trunc(Normal.z * 30.5));
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(Normal.x * 30.5) + 1, trunc(Normal.y * 30.5), trunc(Normal.z * 30.5));
 
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.X := trunc(RA2Normals[x].x * 30.5);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Y := trunc(RA2Normals[x].y * 30.5);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Z := trunc(RA2Normals[x].z * 30.5);
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.X := trunc(Normal.x * 30.5);
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Y := trunc(Normal.y * 30.5);
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Z := trunc(Normal.z * 30.5);
 
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Color  := 15;
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Normal := 0;
-         Inc(VoxelBox_No);
-      end
-      else
-      begin
-         SetLength(VoxelBoxGroup.Section[0].Box, VoxelBox_No+1);
-
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) + 1, trunc(TSNormals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[2] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5) - 1, trunc(TSNormals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[3] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) + 1);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[4] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5), trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5) - 1);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[5] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) - 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[6] := CheckFace(Vxl, trunc(TSNormals[x].x * 30.5) + 1, trunc(TSNormals[x].y * 30.5), trunc(TSNormals[x].z * 30.5));
-
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.X := trunc(TSNormals[x].x * 30.5);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Y := trunc(TSNormals[x].y * 30.5);
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Position.Z := trunc(TSNormals[x].z * 30.5);
-
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Color  := 15;
-         VoxelBoxGroup.Section[0].Box[VoxelBox_No].Normal := 0;
-         Inc(VoxelBox_No);
-      end;
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Color  := 15;
+      VoxelBoxGroup.Section[0].Box[VoxelBox_No].Normal := 0;
+      Inc(VoxelBox_No);
+   end;
    RebuildLists := true;
    VoxelBoxGroup.NumBoxes := VoxelBox_No;
    // Wake 3d view, since everything is ready.
