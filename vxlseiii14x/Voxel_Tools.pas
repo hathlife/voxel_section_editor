@@ -534,11 +534,7 @@ begin
 
    // Normalization process.
    Normalize(res);
-
-   if Voxel.Tailer.Unknown = 4 then
-      V.Normal := Norm2IndexRA2(res)
-   else
-      V.Normal := Norm2IndexTS(res);
+   v.Normal := Voxel.Normals.GetIDFromNormal(res);
 
    // Apply
    Voxel.SetVoxel(_x,_y,_z,V);
@@ -1234,8 +1230,8 @@ const
 var
    x,y,z : integer;
    Size,MidPoint : integer;
-   Distance,Distance2D : single;
-   AngTheta, AngPhi : single;
+   Distance: single;//,Distance2D : single;
+ //  AngTheta, AngPhi : single;
 begin
    // 1.36 Setup distance array
    MidPoint := Max(Trunc(SmoothLevel),Trunc(Range));
@@ -1265,10 +1261,10 @@ begin
                if (Distance <= Range) then
                begin
                   // Here we find the angTheta.
-                  angTheta := arctan2(MidPoint - y,MidPoint - x);
+//                  angTheta := arctan2(MidPoint - y,MidPoint - x);
                   // Now, we find angPhi
-                  Distance2D := Hypot(x - MidPoint,y - MidPoint);
-                  angPhi := ANG90 - arctan2((MidPoint - z),Distance2D);
+//                  Distance2D := Hypot(x - MidPoint,y - MidPoint);
+//                  angPhi := ANG90 - arctan2((MidPoint - z),Distance2D);
                   if MidPoint <> x then
 //                     Dist[x,y,z].X := (sin(angPhi) * cos(AngTheta)) / Power(Distance,Power(abs(MidPoint-x),ContrastLevel))
 //                     Dist[x,y,z].X := (3 * abs(MidPoint-x)) / (sin(angPhi) * cos(AngTheta) * power(Distance,3))

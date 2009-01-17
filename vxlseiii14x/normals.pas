@@ -15,10 +15,19 @@ type
       private
          FResolution : integer;
          FPalette : PAVector3f;
+
+         // Constructors
+         procedure ResetPalette;
+         //Gets
          function ReadNormal(_id : longword): TVector3f;
+         // Sets
+         procedure SetPalette;
          procedure SetNormal(_id : longword; _normal : TVector3f);
+         // Adds
          procedure AddToPalette(_normal: TVector3f);
+         // Removes
          procedure RemoveFromPalette(_id : longword);
+         // Copies
          procedure CopyNormalsAtPalette(_source, _dest: longword);
       public
          // Constructors
@@ -27,6 +36,7 @@ type
          constructor Create(const _Type : integer); overload;
          constructor Create(const _Normals : TNormals); overload;
          destructor Destroy; override;
+         procedure Clear;
 
          // Gets
          function GetIDFromNormal(const _vector : TVector3f): longword; overload;
@@ -37,6 +47,9 @@ type
 
          // Adds
          function AddNormal(const _Normal : TVector3f): longword;
+
+         // Switch
+         procedure SwitchNormalsType(_Type : integer);
 
          // Properties
          property Normal[_id : longword] : TVector3f read ReadNormal write SetNormal; default;
@@ -61,23 +74,8 @@ end;
 
 constructor TNormals.Create(const _Type : integer);
 begin
-   if _Type = 2 then
-   begin
-      FPalette := @TSNormals_Table;
-      FResolution := 36;
-   end
-   else if _Type = 4 then
-   begin
-      FPalette := @RA2Normals_Table;
-      FResolution := 244;
-   end
-   else if _Type = 6 then
-   begin
-      FPalette := @CubeNormals_Table;
-      FResolution := 26;
-   end
-   else
-      Initialize;
+   FResolution := _Type;
+   SetPalette;
 end;
 
 constructor TNormals.Create(const _Normals : TNormals);
@@ -91,13 +89,23 @@ begin
    FPalette := nil;
 end;
 
-destructor TNormals.Destroy;
+procedure TNormals.ResetPalette;
 begin
-   if FPalette <> nil then
+   if (FPalette <> nil) and (FResolution = C_RES_INFINITE) then
    begin
       SetLength(FPalette^,0);
    end;
+end;
+
+destructor TNormals.Destroy;
+begin
+   ResetPalette;
    inherited Destroy;
+end;
+
+procedure TNormals.Clear;
+begin
+   ResetPalette;
 end;
 
 // Gets
@@ -116,20 +124,6 @@ begin
          Result := (FPalette^)[_id]
       else
          Result := SetVector(0,0,0);
-   end;
-end;
-
-// Sets
-procedure TNormals.SetNormal(_id: longword; _normal: TVector3f);
-begin
-   if FResolution = C_RES_INFINITE then
-   begin
-      if (_id >= 0) and (_id <= High(FPalette^)) then
-      begin
-         (FPalette^)[_id].X := _Normal.X;
-         (FPalette^)[_id].Y := _Normal.Y;
-         (FPalette^)[_id].Z := _Normal.Z;
-      end;
    end;
 end;
 
@@ -159,6 +153,41 @@ begin
    Result := GetIDFromNormal(SetVector(_X,_Y,_Z));
 end;
 
+
+// Sets
+procedure TNormals.SetNormal(_id: longword; _normal: TVector3f);
+begin
+   if FResolution = C_RES_INFINITE then
+   begin
+      if (_id >= 0) and (_id <= High(FPalette^)) then
+      begin
+         (FPalette^)[_id].X := _Normal.X;
+         (FPalette^)[_id].Y := _Normal.Y;
+         (FPalette^)[_id].Z := _Normal.Z;
+      end;
+   end;
+end;
+
+procedure TNormals.SetPalette;
+begin
+   if FResolution = 2 then
+   begin
+      FPalette := @TSNormals_Table;
+      FResolution := 36;
+   end
+   else if FResolution = 4 then
+   begin
+      FPalette := @RA2Normals_Table;
+      FResolution := 244;
+   end
+   else if FResolution = 6 then
+   begin
+      FPalette := @CubeNormals_Table;
+      FResolution := 26;
+   end
+   else
+      Initialize;
+end;
 
 // Copies
 procedure TNormals.Assign(const _Normals: TNormals);
@@ -272,6 +301,18 @@ begin
       end;
    end;
 end;
+
+// Switch
+procedure TNormals.SwitchNormalsType(_Type : integer);
+begin
+   if _Type <> FResolution then
+   begin
+      ResetPalette;
+      FResolution := _Type;
+      SetPalette;
+   end;
+end;
+
 
 // Temporary data for compatibility with the old code.
 begin

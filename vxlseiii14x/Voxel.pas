@@ -396,6 +396,7 @@ begin
    Tailer.YSize := _VoxelSection.Tailer.YSize;
    Tailer.ZSize := _VoxelSection.Tailer.ZSize;
    Tailer.Unknown := _VoxelSection.Tailer.Unknown;
+   Normals.SwitchNormalsType(Tailer.Unknown);
    SetDataSize(Tailer.XSize,Tailer.YSize,Tailer.ZSize);
    // Copy Data
    for x := Low(Data) to High(Data) do
@@ -428,6 +429,7 @@ constructor TVoxelSection.Create; begin end;
 
 destructor TVoxelSection.Destroy;
 begin
+   Normals.Free;
    SetDataSize(0,0,0);
    inherited Destroy;
 end;
@@ -486,6 +488,7 @@ begin
       Used := False;
    end;
    PackedVoxel := PackVoxel(Empty);
+   Normals.Clear;
 // and set each and every voxel
    for x := 0 to (Tailer.XSize - 1) do
       for y := 0 to (Tailer.YSize - 1) do
@@ -661,9 +664,15 @@ begin
       // Banshee's adition here:
       // -- Speed up operations and avoid future mistakes.
       if Tailer.Unknown = 2 then
+      begin
+         Normals.SwitchNormalsType(2);
          MaxNormal := 35
+      end
       else if Tailer.Unknown = 4 then
+      begin
+         Normals.SwitchNormalsType(4);
          MaxNormal := 243;
+      end;
       if Tailer.Det = 0 then
          Tailer.Det := 1;
       // -- End of Banshee's speed up operation.
