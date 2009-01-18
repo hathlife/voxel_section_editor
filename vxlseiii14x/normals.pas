@@ -157,8 +157,9 @@ end;
 function TNormals.GetLastID: integer;
 begin
    if FPalette <> nil then
-      Result := High(FPalette^);
-   Result := -1;
+      Result := High(FPalette^)
+   else
+      Result := -1;
 end;
 
 
@@ -180,15 +181,15 @@ procedure TNormals.SetPalette;
 begin
    if FResolution = 2 then
    begin
-      FPalette := @TSNormals_Table;
+      FPalette := Addr(TSNormals_Table);
    end
    else if FResolution = 4 then
    begin
-      FPalette := @RA2Normals_Table;
+      FPalette := Addr(RA2Normals_Table);
    end
    else if FResolution = 6 then
    begin
-      FPalette := @CubeNormals_Table;
+      FPalette := Addr(CubeNormals_Table);
    end
    else
       Initialize;
@@ -242,7 +243,6 @@ end;
 function TNormals.AddNormal(const _Normal : TVector3f): longword;
 var
    i : longword;
-   found : boolean;
 begin
    Result := $FFFFFFFF;
    if FResolution = C_RES_INFINITE then
@@ -250,22 +250,17 @@ begin
       if FPalette <> nil then
       begin
          i := Low(FPalette^);
-         found := false;
-         while (i <= High(FPalette^)) and (not found) do
+         while (i <= High(FPalette^)) do
          begin
             if (_Normal.X = (FPalette^)[i].X) and (_Normal.Y = (FPalette^)[i].Y) and (_Normal.Z = (FPalette^)[i].Z) then
             begin
-               found := true;
                Result := i;
                exit;
             end;
             inc(i);
          end;
-         if not found then
-         begin
-            AddToPalette(_Normal);
-            Result := High(FPalette^);
-         end;
+         AddToPalette(_Normal);
+         Result := High(FPalette^);
       end
       else
       begin
