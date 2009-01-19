@@ -7,6 +7,9 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
 
 type
    TMesh = class
+      private
+         // I/O
+         procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
       public
          // These are the formal atributes
          Name : string;
@@ -30,7 +33,7 @@ type
 
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
-         constructor CreateFromVoxel(_ID : longword; _Voxel : TVoxelSection; _Palette : TPalette);
+         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette);
    end;
 
 
@@ -77,7 +80,15 @@ begin
    IsVisible := true;
 end;
 
-constructor TMesh.CreateFromVoxel(_ID : longword; _Voxel : TVoxelSection; _Palette : TPalette);
+constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette);
+begin
+   ID := _ID;
+   LoadFromVoxel(_Voxel,_Palette);
+end;
+
+
+// I/O;
+procedure TMesh.LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
    NumVertices, NumFaces : longword;
    VertexMap : array of array of array of integer;
@@ -86,7 +97,6 @@ var
    V : TVoxelUnpacked;
    v1, v2 : boolean;
 begin
-   ID := _ID;
    VerticesPerFace := 4;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
