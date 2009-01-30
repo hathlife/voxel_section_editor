@@ -52,7 +52,8 @@ uses
   BmpToDIB in 'BmpToDIB.pas',
   NormalsConstants in 'NormalsConstants.pas',
   BasicDataTypes in 'BasicDataTypes.pas',
-  Model in 'Model.pas';
+  Model in 'Model.pas',
+  VoxelMap in 'VoxelMap.pas';
 
 {$R *.res}
 

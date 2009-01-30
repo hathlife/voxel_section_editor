@@ -10,6 +10,7 @@ type
       private
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
+         procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
       public
          // These are the formal atributes
          Name : string;
@@ -98,13 +99,9 @@ var
    v1, v2 : boolean;
 begin
    VerticesPerFace := 4;
+   FaceType := GL_QUADS;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
-   // Let's set the face type:
-   if VerticesPerFace = 4 then
-      FaceType := GL_QUADS
-   else
-      FaceType := GL_TRIANGLES;
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
 
@@ -359,6 +356,22 @@ begin
    IsVisible := true;
 end;
 
+
+procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
+var
+   NumVertices, NumFaces : longword;
+   VertexMap : array of array of array of integer;
+   FaceMap : array of array of array of array of integer;
+   x, y, z : longword;
+   V : TVoxelUnpacked;
+   v1, v2 : boolean;
+begin
+   VerticesPerFace := 3;
+   FaceType := GL_TRIANGLES;
+   ColoursType := C_COLOURS_PER_FACE;
+   NormalsType := C_NORMALS_PER_FACE;
+
+end;
 
 
 end.
