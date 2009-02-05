@@ -5021,7 +5021,62 @@ object FrmMain: TFrmMain
         Visible = False
         OnClick = test1Click
       end
-    end
+	  object Draw1: TMenuItem
+        Caption = 'Draw'
+        ShortCut = 81
+        OnClick = SpeedButton3Click
+      end
+      object Eyedropper1: TMenuItem
+        Caption = 'Eyedropper'
+        ShortCut = 83
+        OnClick = SpeedButton11Click
+      end
+      object Linetool1: TMenuItem
+        Caption = 'Line tool'
+        ShortCut = 65
+        OnClick = SpeedButton4Click
+      end
+      object Eraser1: TMenuItem
+        Caption = 'Eraser'
+        ShortCut = 69
+        OnClick = SpeedButton5Click
+      end
+      object FloodFill1: TMenuItem
+        Caption = 'Flood Fill'
+        ShortCut = 70
+        OnClick = SpeedButton10Click
+      end
+      object FloodErase1: TMenuItem
+        Caption = 'Flood Erase'
+        ShortCut = 82
+        OnClick = SpeedButton13Click
+      end
+      object FilledRectangle1: TMenuItem
+        Caption = 'Filled Rectangle'
+        ShortCut = 68
+        OnClick = SpeedButton8Click
+      end
+      object FramedRectangle1: TMenuItem
+        Caption = 'Framed Rectangle'
+        ShortCut = 87
+        OnClick = SpeedButton6Click
+      end
+      object Darkentool1: TMenuItem
+        Caption = 'Darken tool'
+        ShortCut = 90
+        OnClick = SpeedButton7Click
+      end
+      object Lightentool1: TMenuItem
+        Caption = 'Lighten tool'
+        ShortCut = 67
+        OnClick = SpeedButton12Click
+      end
+        object MeasuringTool1: TMenuItem
+        Caption = 'Measuring Tool'
+        ShortCut = 86
+        OnClick = SpeedButton14Click
+       end
+     end
     object Options1: TMenuItem
       Caption = 'Options'
       object DarkenLightenValue1: TMenuItem
@@ -5054,6 +5109,7 @@ object FrmMain: TFrmMain
       object Display3dView1: TMenuItem
         Caption = 'Disable 3d View'
         OnClick = Display3dView1Click
+        ShortCut = 88
       end
       object DisableDrawPreview1: TMenuItem
         Caption = 'Disable Draw Preview'

@@ -4464,7 +4464,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: FormKeyDown');
    {$endif}
-   if (Key = Ord('X')) or (Key = Ord('x')) then
+   if (Key = Ord('J')) or (Key = Ord('j')) then
    begin
       if ssShift in shift then
       begin
@@ -4478,7 +4478,7 @@ begin
       end;
       XCursorBarChange(nil);
    end
-   else if (Key = Ord('Y')) or (Key = Ord('y')) then
+   else if (Key = Ord('K')) or (Key = Ord('k')) then
    begin
       if ssShift in shift then
       begin
@@ -4492,7 +4492,7 @@ begin
       end;
       XCursorBarChange(nil);
    end;
-   if (Key = Ord('Z')) or (Key = Ord('z')) then
+   if (Key = Ord('L')) or (Key = Ord('l')) then
    begin
       if ssShift in shift then
       begin
