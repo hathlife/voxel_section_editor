@@ -121,7 +121,7 @@ begin
    end
    else
    begin
-      if (_id >= 0) and (_id < High(FPalette^)) then
+      if (_id >= 0) and (_id <= High(FPalette^)) then
          Result := CopyVector((FPalette^)[_id])
       else
          Result := SetVector(0,0,0);
