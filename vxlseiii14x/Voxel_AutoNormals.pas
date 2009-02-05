@@ -3,7 +3,7 @@ unit Voxel_AutoNormals;
 interface
 
 uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, Class3DPointList, SysUtils,
-      BasicDataTypes, Dialogs;
+      BasicDataTypes, Dialogs, VoxelMap;
 
 {$define LIMITES}
 //{$define RAY_LIMIT}
@@ -24,7 +24,6 @@ type
    TDistanceArray = array of array of array of TDistanceUnit; //single;
 }
 // Novas estruturas.
-   TVoxelMap = array of array of array of single;
    TFiltroDistanciaUnidade = record
       x,
       y,
@@ -42,8 +41,8 @@ const
    C_INFLUENCIA_DE_UM_EIXO = 1;    // não faz parte, mas está entre pixels de um eixo
    C_INFLUENCIA_DE_DOIS_EIXOS = 2;  // não faz parte, mas está entre pixels de dois eixos
    C_INFLUENCIA_DE_TRES_EIXOS = 3;  // não faz parte, mas está entre pixels de dois eixos
-   C_PARTE_DO_VOLUME = 4;          // parte interna do modelo.
-   C_SUPERFICIE = 5;               // superfície do modelo.
+   C_SUPERFICIE = 4;               // superfície do modelo.
+   C_PARTE_DO_VOLUME = 5;          // parte interna do modelo.
 
    // Constante de pesos, para se usar na hora de detectar a tendência da
    // massa
@@ -59,11 +58,6 @@ const
 function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 
 // Funções de mapeamento
-procedure InicializaMapaDoVoxel(const Voxel: TVoxelSection; var Mapa : TVoxelMap; Alcance: integer);
-procedure FloodFill3D(var Mapa: TVoxelMap);
-procedure MesclarMapasBinarios(const Fonte : TVoxelMap; var Destino : TVoxelMap);
-procedure MapearInfluencias(const Voxel : TVoxelSection; var Mapa : TVoxelMap; Alcance : integer);
-procedure MapearSuperficies(var Mapa : TVoxelMap);
 procedure ConverteInfluenciasEmPesos(var Mapa : TVoxelMap);
 
 // Funções de filtro
@@ -108,9 +102,8 @@ begin
    // Parte 1: Mapeando as superfícies, parte interna e influências do
    // modelo.
    // ----------------------------------------------------
-   InicializaMapaDoVoxel(Voxel,MapaDoVoxel,IntAlcance);
-   MapearInfluencias(Voxel,MapaDoVoxel,IntAlcance);
-   MapearSuperficies(MapaDoVoxel);
+   MapaDoVoxel := TVoxelMap.Create(Voxel,IntAlcance);
+   MapaDoVoxel.GenerateFullMap;
    ConverteInfluenciasEmPesos(MapaDoVoxel);
 
    // ----------------------------------------------------
@@ -127,7 +120,7 @@ begin
    // Parte 4: Libera memória.
    // ----------------------------------------------------
    Finalize(Filtro);
-   Finalize(MapaDoVoxel);
+   MapaDoVoxel.Free;
 end;
 
 ///////////////////////////////////////////////////////////////////////
@@ -137,675 +130,19 @@ end;
 ////////////////
 ///////
 
-procedure InicializaMapaDoVoxel(const Voxel: TVoxelSection; var Mapa : TVoxelMap; Alcance: integer);
-var
-   DuploAlcance : integer;
-   x,y,z : integer;
-   MapaPreenchido : TVoxelMap;
-   V : TVoxelUnpacked;
-begin
-   DuploAlcance := 2 * Alcance;
-   // Reserva memória para o mapa. Memória extra evita validação dos pontos
-   // à serem avaliados se são ou não parte do modelo.
-   SetLength(Mapa, Voxel.Tailer.XSize + DuploAlcance, Voxel.Tailer.YSize + DuploAlcance, Voxel.Tailer.ZSize + DuploAlcance);
-   // Mapa preenchido é temporário e vai ser utilizado pra determinar o
-   // volume do sólido
-   SetLength(MapaPreenchido, Voxel.Tailer.XSize + DuploAlcance, Voxel.Tailer.YSize + DuploAlcance, Voxel.Tailer.ZSize + DuploAlcance);
-
-   // Inicializa mapa
-   for x := Low(Mapa) to High(Mapa) do
-      for y := Low(Mapa) to High(Mapa[x]) do
-         for z := Low(Mapa) to High(Mapa[x,y]) do
-         begin
-            // Get voxel data.
-            if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-            begin
-               // Check if it's used.
-               if v.Used then
-               begin
-                  Mapa[x,y,z] := 1;
-                  MapaPreenchido[x,y,z] := 0;
-               end
-               else
-               begin
-                  Mapa[x,y,z] := 0;
-                  MapaPreenchido[x,y,z] := 1;
-               end
-            end
-            else
-            begin
-               Mapa[x,y,z] := 0;
-               MapaPreenchido[x,y,z] := 1;
-            end;
-         end;
-
-   // Vamos preencher tudo que está fora pra descobrir quem está dentro
-   FloodFill3D(MapaPreenchido);
-   // Joga o que está dentro nas bordas.
-   MesclarMapasBinarios(MapaPreenchido,Mapa);
-   Finalize(MapaPreenchido);
-end;
-
-// 3D Flood Fill para encontrar o volume interno do modelo
-procedure FloodFill3D(var Mapa: TVoxelMap);
-var
-   Lista : C3DPointList; // Veja Class3DPointList.pas;
-   x,y,z : integer;
-   maxx,maxy,maxz : integer;
-begin
-   // Pega o máximo valor pra cada eixo.
-   maxx := High(Mapa);
-   maxy := High(Mapa[0]);
-   maxz := High(Mapa[0,0]);
-
-   // Começa em (0,0,0);
-   Lista := C3DPointList.Create;
-   Lista.Add(0,0,0);
-   Mapa[0,0,0] := 0;
-   // Vai preencher enquanto houver elementos na lista.
-   while Lista.GetPosition(x,y,z) do
-   begin
-      // Confere e adiciona os vizinhos (6 faces)
-      if PontoValido(x-1,y,z,maxx,maxy,maxz) then
-         if Mapa[x-1,y,z] = 1 then
-         begin
-            Mapa[x-1,y,z] := 0;
-            Lista.Add(x-1,y,z);
-         end;
-      if PontoValido(x+1,y,z,maxx,maxy,maxz) then
-         if Mapa[x+1,y,z] = 1 then
-         begin
-            Mapa[x+1,y,z] := 0;
-            Lista.Add(x+1,y,z);
-         end;
-      if PontoValido(x,y-1,z,maxx,maxy,maxz) then
-         if Mapa[x,y-1,z] = 1 then
-         begin
-            Mapa[x,y-1,z] := 0;
-            Lista.Add(x,y-1,z);
-         end;
-      if PontoValido(x,y+1,z,maxx,maxy,maxz) then
-         if Mapa[x,y+1,z] = 1 then
-         begin
-            Mapa[x,y+1,z] := 0;
-            Lista.Add(x,y+1,z);
-         end;
-      if PontoValido(x,y,z-1,maxx,maxy,maxz) then
-         if Mapa[x,y,z-1] = 1 then
-         begin
-            Mapa[x,y,z-1] := 0;
-            Lista.Add(x,y,z-1);
-         end;
-      if PontoValido(x,y,z+1,maxx,maxy,maxz) then
-         if Mapa[x,y,z+1] = 1 then
-         begin
-            Mapa[x,y,z+1] := 0;
-            Lista.Add(x,y,z+1);
-         end;
-      Lista.GoToNextElement;
-   end;
-   Lista.Free;
-end;
-
-procedure MesclarMapasBinarios(const Fonte : TVoxelMap; var Destino : TVoxelMap);
-var
-   x,y,z : integer;
-begin
-   // Copia todo '1' da fonte no destino.
-   for x := 0 to High(Fonte) do
-      for y := 0 to High(Fonte[x]) do
-         for z := 0 to High(Fonte[x,y]) do
-         begin
-            if Fonte[x,y,z] = 1 then
-               Destino[x,y,z] := 1;
-         end;
-end;
-
-
-
-procedure MapearInfluencias(const Voxel : TVoxelSection; var Mapa : TVoxelMap; Alcance : integer);
-var
-   x,y,z : integer;
-   PontoInicial,PontoFinal : integer;
-   V : TVoxelUnpacked;
-begin
-   // Varre o modelo na direção Z
-   for x := Low(Mapa) to High(Mapa) do
-      for y := Low(Mapa) to High(Mapa[x]) do
-      begin
-         // Pega o Ponto Inicial
-         z := Low(Mapa[x,y]);
-         PontoInicial := -1;
-         while (z <= High(Mapa[x,y])) and (PontoInicial = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-            begin
-               if v.Used then
-               begin
-                  PontoInicial := z;
-               end;
-            end;
-            inc(z);
-         end;
-         // Pega o Ponto Final, se existir pizel usado o eixo
-         if PontoInicial <> -1 then
-         begin
-            z := High(Mapa[x,y]);
-            PontoFinal := -1;
-            while (z >= Low(Mapa[x,y])) and (PontoFinal = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-               begin
-                  if v.Used then
-                  begin
-                     PontoFinal := z;
-                  end;
-               end;
-               dec(z);
-            end;
-            // Agora preenchemos tudo entre o Ponto Inicial e o Ponto Final
-            z := PontoInicial;
-            while z <= PontoFinal do
-            begin
-               Mapa[x,y,z] := Mapa[x,y,z] + 1;
-               inc(z);
-            end;
-         end;
-      end;
-
-   // Varre o modelo na direção X
-   for y := Low(Mapa[0]) to High(Mapa[0]) do
-      for z := Low(Mapa[0,y]) to High(Mapa[0,y]) do
-      begin
-         // Pega o Ponto Inicial
-         x := Low(Mapa);
-         PontoInicial := -1;
-         while (x <= High(Mapa)) and (PontoInicial = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-            begin
-               if v.Used then
-               begin
-                  PontoInicial := x;
-               end;
-            end;
-            inc(x);
-         end;
-         // Pega o Ponto Final, se existir pizel usado o eixo
-         if PontoInicial <> -1 then
-         begin
-            x := High(Mapa);
-            PontoFinal := -1;
-            while (x >= Low(Mapa)) and (PontoFinal = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-               begin
-                  if v.Used then
-                  begin
-                     PontoFinal := x;
-                  end;
-               end;
-               dec(x);
-            end;
-            // Agora preenchemos tudo entre o Ponto Inicial e o Ponto Final
-            x := PontoInicial;
-            while x <= PontoFinal do
-            begin
-               Mapa[x,y,z] := Mapa[x,y,z] + 1;
-               inc(x);
-            end;
-         end;
-      end;
-
-   // Varre o modelo na direção Y
-   for x := Low(Mapa) to High(Mapa) do
-      for z := Low(Mapa[x,0]) to High(Mapa[x,0]) do
-      begin
-         // Pega o Ponto Inicial
-         y := Low(Mapa[x]);
-         PontoInicial := -1;
-         while (y <= High(Mapa[x])) and (PontoInicial = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-            begin
-               if v.Used then
-               begin
-                  PontoInicial := y;
-               end;
-            end;
-            inc(y);
-         end;
-         // Pega o Ponto Final, se existir pizel usado o eixo
-         if PontoInicial <> -1 then
-         begin
-            y := High(Mapa[x]);
-            PontoFinal := -1;
-            while (y >= Low(Mapa[x])) and (PontoFinal = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Alcance,y-Alcance,z-Alcance,v) then
-               begin
-                  if v.Used then
-                  begin
-                     PontoFinal := y;
-                  end;
-               end;
-               dec(y);
-            end;
-            // Agora preenchemos tudo entre o Ponto Inicial e o Ponto Final
-            y := PontoInicial;
-            while y <= PontoFinal do
-            begin
-               Mapa[x,y,z] := Mapa[x,y,z] + 1;
-               inc(y);
-            end;
-         end;
-      end;
-end;
-
-// Essa função requer que as influências já estejam mapeadas.
-procedure MapearSuperficies(var Mapa : TVoxelMap);
-var
-   x,y,z : integer;
-   MaxX,MaxY,MaxZ : integer;
-   DentroDoVolume : boolean;
-begin
-   MaxX := High(Mapa);
-   MaxY := High(Mapa[0]);
-   MaxZ := High(Mapa[0,0]);
-   // Varre o modelo na direção Z
-   for x := Low(Mapa) to High(Mapa) do
-      for y := Low(Mapa) to High(Mapa[x]) do
-      begin
-         z := Low(Mapa[x,y]);
-         // A varredura da linha sempre começa fora do volume
-         DentroDoVolume := false;
-         while z <= High(Mapa[x,y]) do
-         begin
-            if DentroDoVolume then
-            begin
-               // Se um ponto (X,Y,Z) não está no volume, então seu
-               // anterior é superfície
-               while (z <= High(Mapa[x,y])) and DentroDoVolume do
-               begin
-                  if Mapa[x,y,z] < C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x,y,z-1] := C_SUPERFICIE;
-                     // e o que vem antes dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (x = x-1,..,x+1; y = y-1,...,y+1 e x <> y)
-                     if PontoValido(x-1,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y-1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y-1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y+1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y+1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z-2] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z-2] := C_SUPERFICIE;
-                     end;
-                     // e sai do volume
-                     DentroDoVolume := false;
-                  end;
-                  inc(z);
-               end;
-            end
-            else // não está dentro do volume..
-            begin
-               // Se um ponto (X,Y,Z) está no volume, então ele é superfície
-               while (z <= High(Mapa[x,y])) and (not DentroDoVolume) do
-               begin
-                  if Mapa[x,y,z] >= C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x,y,z] := C_SUPERFICIE;
-                     // e o que vem depois dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (x = x-1,..,x+1; y = y-1,...,y+1 e x <> y)
-                     if PontoValido(x-1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y-1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y-1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y,z+1] := C_SUPERFICIE;
-                     end;
-                     // e entra no volume
-                     DentroDoVolume := true;
-                  end;
-                  inc(z);
-               end;
-            end;
-         end;
-      end;
-
-   // Varre o modelo na direção X
-   for y := Low(Mapa[0]) to High(Mapa[0]) do
-      for z := Low(Mapa[0,y]) to High(Mapa[0,y]) do
-      begin
-         x := Low(Mapa);
-         // A varredura da linha sempre começa fora do volume
-         DentroDoVolume := false;
-         while x <= High(Mapa) do
-         begin
-            if DentroDoVolume then
-            begin
-               // Se um ponto (X,Y,Z) não está no volume, então seu
-               // anterior é superfície
-               while (x <= High(Mapa)) and DentroDoVolume do
-               begin
-                  if Mapa[x,y,z] < C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x-1,y,z] := C_SUPERFICIE;
-                     // e o que vem antes dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (z = z-1,..,z+1; y = y-1,...,y+1 e z <> y)
-                     if PontoValido(x-2,y-1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y-1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y-1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y-1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y-1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y+1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y+1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-2,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-2,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x-2,y,z] := C_SUPERFICIE;
-                     end;
-                     // e sai do volume
-                     DentroDoVolume := false;
-                  end;
-                  inc(x);
-               end;
-            end
-            else // não está dentro do volume..
-            begin
-               // Se um ponto (X,Y,Z) está no volume, então ele é superfície
-               while (x <= High(Mapa)) and (not DentroDoVolume) do
-               begin
-                  if Mapa[x,y,z] >= C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x,y,z] := C_SUPERFICIE;
-                     // e o que vem depois dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (z = z-1,..,z+1; y = y-1,...,y+1 e z <> y)
-                     if PontoValido(x+1,y-1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x+1,y,z] := C_SUPERFICIE;
-                     end;
-                     // e entra no volume
-                     DentroDoVolume := true;
-                  end;
-                  inc(x);
-               end;
-            end;
-         end;
-      end;
-
-   // Varre o modelo na direção Y
-   for x := Low(Mapa) to High(Mapa) do
-      for z := Low(Mapa[x,0]) to High(Mapa[x,0]) do
-      begin
-         y := Low(Mapa[x]);
-         // A varredura da linha sempre começa fora do volume
-         DentroDoVolume := false;
-         while y <= High(Mapa[x]) do
-         begin
-            if DentroDoVolume then
-            begin
-               // Se um ponto (X,Y,Z) não está no volume, então seu
-               // anterior é superfície
-               while (y <= High(Mapa[x])) and DentroDoVolume do
-               begin
-                  if Mapa[x,y,z] < C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x,y-1,z] := C_SUPERFICIE;
-                     // e o que vem antes dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (x = x-1,..,x+1; z = z-1,...,z+1 e x <> z)
-                     if PontoValido(x-1,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y-2,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y-2,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-2,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y-2,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y-2,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-2,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-2,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y-2,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y-2,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y-2,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y-2,z] := C_SUPERFICIE;
-                     end;
-                     // e sai do volume
-                     DentroDoVolume := false;
-                  end;
-                  inc(y);
-               end;
-            end
-            else // não está dentro do volume..
-            begin
-               // Se um ponto (X,Y,Z) está no volume, então ele é superfície
-               while (y <= High(Mapa[x])) and (not DentroDoVolume) do
-               begin
-                  if Mapa[x,y,z] >= C_PARTE_DO_VOLUME then
-                  begin
-                     Mapa[x,y,z] := C_SUPERFICIE;
-                     // e o que vem depois dele pode ser parte da superf[icie
-                     // dependendo dos oito vizinhos (x = x-1,..,x+1; z = z-1,...,z+1 e x <> z)
-                     if PontoValido(x-1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y+1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y+1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z-1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y+1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x-1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x-1,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end
-                     else if PontoValido(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Mapa[x+1,y+1,z+1] < C_PARTE_DO_VOLUME then
-                           Mapa[x,y+1,z] := C_SUPERFICIE;
-                     end;
-                     // e entra no volume
-                     DentroDoVolume := true;
-                  end;
-                  inc(y);
-               end;
-            end;
-         end;
-      end;
-end;
 
 procedure ConverteInfluenciasEmPesos(var Mapa : TVoxelMap);
 var
-   x,y,z : integer;
-   Peso : array [0..5] of single;
+   Peso : array of single;
 begin
+   SetLength(Peso,6);
    Peso[C_FORA_DO_VOLUME] := PESO_FORA_DO_VOLUME;
    Peso[C_INFLUENCIA_DE_UM_EIXO] := PESO_INFLUENCIA_DE_UM_EIXO;
    Peso[C_INFLUENCIA_DE_DOIS_EIXOS] := PESO_INFLUENCIA_DE_DOIS_EIXOS;
    Peso[C_INFLUENCIA_DE_TRES_EIXOS] := PESO_INFLUENCIA_DE_TRES_EIXOS;
    Peso[C_PARTE_DO_VOLUME] := PESO_PARTE_DO_VOLUME;
    Peso[C_SUPERFICIE] := PESO_SUPERFICIE;
-
-   for x := Low(Mapa) to High(Mapa) do
-      for y := Low(Mapa[x]) to High(Mapa[x]) do
-         for z := Low(Mapa[x,y]) to High(Mapa[x,y]) do
-         begin
-            Mapa[x,y,z] := Peso[Round(Mapa[x,y,z])];
-         end;
+   Mapa.ConvertValues(Peso);
 end;
 
 ///////////////////////////////////////////////////////////////////////
@@ -1188,7 +525,7 @@ end;
 ///////
 procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : TBooleanMap);
 begin
-   if PontoValido(x,y,z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
+   if Mapa.IsPointOK(x,y,z) then
    begin
       if PontoValido(xFiltro,yFiltro,zFiltro,High(Filtro),High(Filtro[0]),High(Filtro[0,0])) then
       begin
@@ -1712,7 +1049,7 @@ var
 begin
    PontoI := SetVectorI(Trunc(Ponto.X),Trunc(Ponto.Y),Trunc(Ponto.Z));
    Result := 0;
-   if PontoValido(PontoI.X,PontoI.Y,PontoI.Z,High(Mapa),High(Mapa[0]),High(Mapa[0,0])) then
+   if Mapa.IsPointOK(PontoI.X,PontoI.Y,PontoI.Z) then
    begin
       if (Ultimo.X <> PontoI.X) or (Ultimo.Y <> PontoI.Y) or (Ultimo.Z <> PontoI.Z) then
       begin

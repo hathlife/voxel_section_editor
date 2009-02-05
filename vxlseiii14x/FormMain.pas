@@ -173,7 +173,7 @@ type
     Undo1: TMenuItem;
     Redo1: TMenuItem;
     N11: TMenuItem;
-    RemoveRedundentVoxels1: TMenuItem;
+    RemoveRedundantVoxels1: TMenuItem;
     CnvView0: TPaintBox;
     Sites1: TMenuItem;
     CnCSource1: TMenuItem;
@@ -469,7 +469,7 @@ type
     procedure updatenormals1Click(Sender: TObject);
     procedure Delete1Click(Sender: TObject);
     procedure normalsaphere1Click(Sender: TObject);
-    procedure RemoveRedundentVoxels1Click(Sender: TObject);
+    procedure RemoveRedundantVoxels1Click(Sender: TObject);
     procedure ClearEntireSection1Click(Sender: TObject);
     procedure CnCSource1Click(Sender: TObject);
     procedure PPMForUpdates1Click(Sender: TObject);
@@ -2765,7 +2765,7 @@ begin
 
    if ApplyNormalsToVXL(ActiveSection) > 0 then
       if MessageDlg('Some were Confused, This may mean there are redundant voxels.'+#13#13+'Run Remove Redundant Voxels?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
-         RemoveRedundentVoxels1Click(Sender);
+         RemoveRedundantVoxels1Click(Sender);
 
    Refreshall;
    VXLChanged := true;
@@ -2855,7 +2855,7 @@ begin
    Update3dViewWithNormals(ActiveSection);
 end;
 
-procedure TFrmMain.RemoveRedundentVoxels1Click(Sender: TObject);
+procedure TFrmMain.RemoveRedundantVoxels1Click(Sender: TObject);
 var no{, i}: integer;
    label Done;
 begin
@@ -2865,7 +2865,7 @@ begin
    DebugFile.Add('FrmMain: RemoveRedundantVoxels1Click');
    {$endif}
    // ensure the user wants to do this!
-   if MessageDlg('Remove Redundent Voxels v1.0' +#13#13+
+   if MessageDlg('Remove Redundant Voxels v2.0' +#13#13+
         'This process will remove voxels that are hidden from view.' +#13+
         'If you choose to do this, you should first save' + #13 +
         'your model under a different name as a backup.',
@@ -2878,10 +2878,10 @@ begin
    // ok, do it
    no := RemoveRedundantVoxelsFromVXL(ActiveSection);
    if no = 0 then
-      ShowMessage('Remove Redundent Voxels v1.0' +#13#13+ 'Removed: 0')
+      ShowMessage('Remove Redundant Voxels v2.0' +#13#13+ 'Removed: 0')
    else
    begin
-      ShowMessage('Remove Redundent Voxels v1.0' +#13#13+ 'Removed: ' + IntToStr(no));
+      ShowMessage('Remove Redundant Voxels v2.0' +#13#13+ 'Removed: ' + IntToStr(no));
       RefreshAll;
       VXLChanged := true;
    end;
@@ -2958,7 +2958,6 @@ begin
    else
       frm.Label4.Caption := APPLICATION_VER;
    frm.Image2.Visible := false;
-   frm.LblWill.Left := 117;
    frm.butOK.Visible:=True;
    frm.Loading.Caption:='';
    frm.ShowModal;

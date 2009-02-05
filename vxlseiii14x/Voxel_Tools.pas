@@ -17,7 +17,8 @@ unit Voxel_Tools;
 
 interface
 
-Uses BasicDataTypes,Voxel,normals,Voxel_Engine,math,math3d,Dialogs,Sysutils;
+Uses BasicDataTypes,Voxel,normals,Voxel_Engine,math,math3d,Dialogs,Sysutils,
+   VoxelMap;
 
 type
    TApplyNormalsResult = record
@@ -64,8 +65,7 @@ function GetSmoothNormal(var Vxl : TVoxelSection; X,Y,Z,Normal : integer) : inte
 function RemoveRedundantVoxelsOld(voxel: TVoxelSection): integer;
 
 // Random functions
-function IsPointOK (const x,y,z,maxx,maxy,maxz : integer) : boolean;
-procedure GetPreliminaryNormals(const BM: TBinaryMap; var FloatMap : TVector3fMap; const Dist: TDistanceArray; var V : TVoxelUnpacked; MidPoint,Range,_x,_y,_z : integer);
+procedure GetPreliminaryNormals(const Map: TVoxelMap; var FloatMap : TVector3fMap; const Dist: TDistanceArray; var V : TVoxelUnpacked; MidPoint,Range,_x,_y,_z : integer);
 function GetNonZeroSign(const value : single) : shortint;
 function GetTrueSign(var value,signal : single; minVar, maxVar : integer) : shortint;
 
@@ -128,194 +128,9 @@ Result.Z := V1.Z-V2.Z;
 end;             }
 
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// Create Binary Map to aid calculating the cubed normals
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-procedure CreateBinaryMap(var BinaryMap, FilledMap: TBinaryMap; var FloatMap: TVector3fMap; const Voxel : TVoxelSection; Range : Integer);
-var
-   x,y,z : integer;
-   V : TVoxelUnpacked;
-   DoubleRange : integer;
-begin
-   DoubleRange := 2 * Range;
-   // Set memory for binary map. Extra memory avoids bound checking
-   SetLength(BinaryMap,Voxel.Tailer.XSize+DoubleRange,Voxel.Tailer.YSize+DoubleRange,Voxel.Tailer.ZSize+DoubleRange);
-   SetLength(FilledMap,Voxel.Tailer.XSize+DoubleRange,Voxel.Tailer.YSize+DoubleRange,Voxel.Tailer.ZSize+DoubleRange);
-   SetLength(FloatMap,Voxel.Tailer.XSize+DoubleRange,Voxel.Tailer.YSize+DoubleRange,Voxel.Tailer.ZSize+DoubleRange);
-
-   // Fill Filled Map
-   for x := Low(FilledMap) to High(FilledMap) do
-      for y := Low(FilledMap[x]) to High(FilledMap[x]) do
-         for z := Low(FilledMap[x,y]) to High(FilledMap[x,y]) do
-         begin
-            BinaryMap[x,y,z] := 0;
-            FilledMap[x,y,z] := 1;
-         end;
-
-   // Fill Float Map
-   for x := Low(FloatMap) to High(FloatMap) do
-      for y := Low(FloatMap[x]) to High(FloatMap[x]) do
-         for z := Low(FloatMap[x,y]) to High(FloatMap[x,y]) do
-         begin
-            FloatMap[x,y,z].X := 0;
-            FloatMap[x,y,z].Y := 0;
-            FloatMap[x,y,z].Z := 0;
-          end;
-
-   // All used voxels will receive 1. Unused get 0.
-   for x := 0 to Voxel.Tailer.XSize-1 do
-      for y := 0 to Voxel.Tailer.YSize-1 do
-         for z := 0 to Voxel.Tailer.ZSize-1 do
-         begin
-            // Get voxel data.
-            voxel.GetVoxel(x,y,z,v);
-            // Check if it's used.
-            if v.Used then
-            begin
-               BinaryMap[x+Range,y+Range,z+Range] := 1;
-               FilledMap[x+Range,y+Range,z+Range] := 0;
-            end;
-         end;
-end;
-
-// Verify if the point is valid in a range.
-function IsPointOK (const x,y,z,maxx,maxy,maxz : integer) : boolean;
-begin
-   result := false;
-   if (x < 0) or (x > maxx) then exit;
-   if (y < 0) or (y > maxy) then exit;
-   if (z < 0) or (z > maxz) then exit;
-   result := true;
-end;
-
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// 3D Binary Flood Fill to restore internal voxels
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-procedure Binary3DFloodFill(var FM: TBinaryMap);
-type
-   T3DPosition = ^T3DPositionItem;
-   T3DPositionItem = record
-      x,y,z : integer;
-      Next : T3DPosition;
-   end;
-   // Some basic stuff for the queue above.
-   procedure AddPoint (var Start,Last : T3DPosition; x,y,z : integer);
-   var
-      NewPosition : T3DPosition;
-   begin
-      // This function adds a point to the queue.
-      New(NewPosition);
-      NewPosition^.x := x;
-      NewPosition^.y := y;
-      NewPosition^.z := z;
-      NewPosition^.Next := nil;
-      if Start <> nil then
-      begin
-         Last^.Next := NewPosition;
-      end
-      else
-      begin
-         Start := NewPosition;
-      end;
-      Last := NewPosition;
-   end;
-   // This Gets an Info from a Point and remove it from the queue
-   procedure GetPoint (var Start,Last : T3DPosition; var x,y,z : integer);
-   var
-      Temp : T3DPosition;
-   begin // Start will never be nil here. Flood must verify it
-      x := Start^.x;
-      y := Start^.y;
-      z := Start^.z;
-      Temp := Start;
-      if Last = Start then
-         Last := nil;
-      Start := Start^.Next;
-      Dispose(Temp);
-   end;
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// 3D Binary Flood Fill starts here
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-var
-   List,Last : T3DPosition;
-   x,y,z : integer;
-   maxx,maxy,maxz : integer;
-begin
-   // Get max values for each.
-   maxx := High(FM);
-   maxy := High(FM[0]);
-   maxz := High(FM[0,0]);
-
-   // Start on (0,0,0);
-   List := nil;
-   Last := nil;
-   AddPoint(List,Last,0,0,0);
-   FM[0,0,0] := 0;
-   // It flood and fill until the list is over.
-   while List <> nil do
-   begin
-      // Get the currently position
-      GetPoint(List,Last,x,y,z);
-      // Check and add neighboors (6 faces)
-      if IsPointOK(x-1,y,z,maxx,maxy,maxz) then
-         if FM[x-1,y,z] = 1 then
-         begin
-            FM[x-1,y,z] := 0;
-            AddPoint(List,Last,x-1,y,z);
-         end;
-      if IsPointOK(x+1,y,z,maxx,maxy,maxz) then
-         if FM[x+1,y,z] = 1 then
-         begin
-            FM[x+1,y,z] := 0;
-            AddPoint(List,Last,x+1,y,z);
-         end;
-      if IsPointOK(x,y-1,z,maxx,maxy,maxz) then
-         if FM[x,y-1,z] = 1 then
-         begin
-            FM[x,y-1,z] := 0;
-            AddPoint(List,Last,x,y-1,z);
-         end;
-      if IsPointOK(x,y+1,z,maxx,maxy,maxz) then
-         if FM[x,y+1,z] = 1 then
-         begin
-            FM[x,y+1,z] := 0;
-            AddPoint(List,Last,x,y+1,z);
-         end;
-      if IsPointOK(x,y,z-1,maxx,maxy,maxz) then
-         if FM[x,y,z-1] = 1 then
-         begin
-            FM[x,y,z-1] := 0;
-            AddPoint(List,Last,x,y,z-1);
-         end;
-      if IsPointOK(x,y,z+1,maxx,maxy,maxz) then
-         if FM[x,y,z+1] = 1 then
-         begin
-            FM[x,y,z+1] := 0;
-            AddPoint(List,Last,x,y,z+1);
-         end;
-   end;
-end;
-
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// Merge Filled Map on Binary Map
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-procedure MergeBinaryMaps(const Source : TBinaryMap; var Destiny : TBinaryMap);
-var
-   x,y,z : integer;
-begin
-   // Set '1' on destination for every '1' on source.
-   for x := 0 to High(Source) do
-      for y := 0 to High(Source[x]) do
-         for z := 0 to High(Source[x,y]) do
-         begin
-            if Source[x,y,z] = 1 then
-               Destiny[x,y,z] := 1;
-         end;
-end;
-
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 // Calculate new normals
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-procedure GetPreliminaryNormals(const BM: TBinaryMap; var FloatMap : TVector3fMap; const Dist: TDistanceArray; var V : TVoxelUnpacked; MidPoint,Range,_x,_y,_z : integer);
+procedure GetPreliminaryNormals(const Map: TVoxelMap; var FloatMap : TVector3fMap; const Dist: TDistanceArray; var V : TVoxelUnpacked; MidPoint,Range,_x,_y,_z : integer);
 var
    Res : TVector3f;
    Sum : TVector3f;
@@ -360,12 +175,12 @@ begin
             MyPoint.Y := yy - MinPoint.Y + MidPointMinusRange;
             MyPoint.Z := zz - MinPoint.Z + MidPointMinusRange;
             //Alpha := abs(x - xx) + abs(y - yy) + abs(z - zz);
-            Res.X := Res.X + (BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].X);
-            Res.Y := Res.Y + (BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Y);
-            Res.Z := Res.Z + (BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Z);
-            Sum.X := Sum.X + abs(BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].X);
-            Sum.Y := Sum.Y + abs(BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Y);
-            Sum.Z := Sum.Z + abs(BM[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Z);
+            Res.X := Res.X + (Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].X);
+            Res.Y := Res.Y + (Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Y);
+            Res.Z := Res.Z + (Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Z);
+            Sum.X := Sum.X + abs(Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].X);
+            Sum.Y := Sum.Y + abs(Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Y);
+            Sum.Z := Sum.Z + abs(Map[xx,yy,zz] * Dist[MyPoint.X,MyPoint.Y,MyPoint.Z].Z);
          end;
 
    if Sum.X <> 0 then
@@ -525,657 +340,12 @@ begin
              Map[x,y,z] := 0;
 end;
 
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-// Build the influence area for both Influence and Cubed normalizer.
-//*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
-procedure BuildInfluenceArea(const Voxel : TVoxelSection; var Map : TBinaryMap; Range : integer; Prize : single);
-var
-   x,y,z : integer;
-   StartPoint,FinalPoint : integer;
-   V : TVoxelUnpacked;
-begin
-   // Scan on z direction.
-   for x := Low(Map) to High(Map) do
-      for y := Low(Map) to High(Map[x]) do
-      begin
-         // Lower scan
-         z := Low(Map[x,y]);
-         StartPoint := -1;
-         while (z <= High(Map[x,y])) and (StartPoint = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-            begin
-               if v.Used then
-               begin
-                  StartPoint := z;
-               end;
-            end;
-            inc(z);
-         end;
-         // Higher scan (only happens if the lower one worked)
-         if StartPoint <> -1 then
-         begin
-            z := High(Map[x,y]);
-            FinalPoint := -1;
-            while (z >= Low(Map[x,y])) and (FinalPoint = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-               begin
-                  if v.Used then
-                  begin
-                     FinalPoint := z;
-                  end;
-               end;
-               dec(z);
-            end;
-            // Now, we do the painting.
-            z := StartPoint;
-            while z <= FinalPoint do
-            begin
-               Map[x,y,z] := Map[x,y,z] + Prize;
-               inc(z);
-            end;
-         end;
-      end;
-
-   // Scan on x direction.
-   for y := Low(Map[0]) to High(Map[0]) do
-      for z := Low(Map[0,y]) to High(Map[0,y]) do
-      begin
-         // Lower scan
-         x := Low(Map);
-         StartPoint := -1;
-         while (x <= High(Map)) and (StartPoint = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-            begin
-               if v.Used then
-               begin
-                  StartPoint := x;
-               end;
-            end;
-            inc(x);
-         end;
-         // Higher scan (only happens if the lower one worked)
-         if StartPoint <> -1 then
-         begin
-            x := High(Map);
-            FinalPoint := -1;
-            while (x >= Low(Map)) and (FinalPoint = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-               begin
-                  if v.Used then
-                  begin
-                     FinalPoint := x;
-                  end;
-               end;
-               dec(x);
-            end;
-            // Now, we do the painting.
-            x := StartPoint;
-            while x <= FinalPoint do
-            begin
-               Map[x,y,z] := Map[x,y,z] + Prize;
-               inc(x);
-            end;
-         end;
-      end;
-
-   // Scan on y direction.
-   for x := Low(Map) to High(Map) do
-      for z := Low(Map[x,0]) to High(Map[x,0]) do
-      begin
-         // Lower scan
-         y := Low(Map[x]);
-         StartPoint := -1;
-         while (y <= High(Map[x])) and (StartPoint = -1) do
-         begin
-            if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-            begin
-               if v.Used then
-               begin
-                  StartPoint := y;
-               end;
-            end;
-            inc(y);
-         end;
-         // Higher scan (only happens if the lower one worked)
-         if StartPoint <> -1 then
-         begin
-            y := High(Map[x]);
-            FinalPoint := -1;
-            while (y >= Low(Map[x])) and (FinalPoint = -1) do
-            begin
-               if Voxel.GetVoxelSafe(x-Range,y-Range,z-Range,v) then
-               begin
-                  if v.Used then
-                  begin
-                     FinalPoint := y;
-                  end;
-               end;
-               dec(y);
-            end;
-            // Now, we do the painting.
-            y := StartPoint;
-            while y <= FinalPoint do
-            begin
-               Map[x,y,z] := Map[x,y,z] + Prize;
-               inc(y);
-            end;
-         end;
-      end;
-end;
-
-procedure AddSurfacePlusOneInfoToInfluenceArea(var Map : TBinaryMap; WinValue : single);
-const
-   C_PART_OF_VOLUME = 3;
-var
-   x,y,z : integer;
-   IsInsideVolume : boolean;
-   MaxX,MaxY,MaxZ : integer;
-begin
-   MaxX := High(Map);
-   MaxY := High(Map[0]);
-   MaxZ := High(Map[0,0]);
-   // Scan on z direction.
-   for x := Low(Map) to High(Map) do
-      for y := Low(Map) to High(Map[x]) do
-      begin
-         // Lower scan
-         z := Low(Map[x,y]);
-         IsInsideVolume := false;
-         while z <= High(Map[x,y]) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (z <= High(Map[x,y])) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z-1] := WinValue;
-                     if (z - 2) >= Low(Map[x,y]) then
-                        if Map[x,y,z-2] >= C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     IsInsideVolume := false;
-                  end;
-                  inc(z);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (z <= High(Map[x,y])) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if (z + 1) <= High(Map[x,y]) then
-                        if Map[x,y,z+1] >= C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     IsInsideVolume := true;
-                  end;
-                  inc(z);
-               end;
-            end;
-         end;
-      end;
-
-   // Scan on x direction.
-   for y := Low(Map[0]) to High(Map[0]) do
-      for z := Low(Map[0,y]) to High(Map[0,y]) do
-      begin
-         // Lower scan
-         x := Low(Map);
-         IsInsideVolume := false;
-         while x <= High(Map) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (x <= High(Map)) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x-1,y,z] := WinValue;
-                     if (x - 2) >= Low(Map) then
-                        if Map[x-2,y,z] >= C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     IsInsideVolume := false;
-                  end;
-                  inc(x);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (x <= High(Map)) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if (x + 1) <= High(Map) then
-                        if Map[x+1,y,z] >= C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     IsInsideVolume := true;
-                  end;
-                  inc(x);
-               end;
-            end;
-         end;
-      end;
-
-   // Scan on y direction.
-   for x := Low(Map) to High(Map) do
-      for z := Low(Map[x,0]) to High(Map[x,0]) do
-      begin
-         // Lower scan
-         y := Low(Map[x]);
-         IsInsideVolume := false;
-         while y <= High(Map[x]) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (y <= High(Map[x])) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y-1,z] := WinValue;
-                     if (y - 2) >= Low(Map[x]) then
-                        if Map[x,y-2,z] >= C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     IsInsideVolume := false;
-                  end;
-                  inc(y);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (y <= High(Map[x])) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if (y + 1) <= High(Map[x]) then
-                        if Map[x,y+1,z] >= C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     IsInsideVolume := true;
-                  end;
-                  inc(y);
-               end;
-            end;
-         end;
-      end;
-end;
-
-procedure AddSurfaceInfoToInfluenceArea(var Map : TBinaryMap; WinValue : single);
-const
-   C_PART_OF_VOLUME = 3;
-var
-   x,y,z : integer;
-   IsInsideVolume : boolean;
-   MaxX,MaxY,MaxZ : integer;
-begin
-   MaxX := High(Map);
-   MaxY := High(Map[0]);
-   MaxZ := High(Map[0,0]);
-   // Scan on z direction.
-   for x := Low(Map) to High(Map) do
-      for y := Low(Map) to High(Map[x]) do
-      begin
-         // Lower scan
-         z := Low(Map[x,y]);
-         IsInsideVolume := false;
-         while z <= High(Map[x,y]) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (z <= High(Map[x,y])) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z-1] := WinValue;
-                    if IsPointOK(x-1,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y-1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y-1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y+1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y+1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z-2,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z-2] < C_PART_OF_VOLUME then
-                           Map[x,y,z-2] := WinValue;
-                     end;
-                     IsInsideVolume := false;
-                  end;
-                  inc(z);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (z <= High(Map[x,y])) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if IsPointOK(x-1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y-1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y-1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y,z+1] := WinValue;
-                     end;
-                     IsInsideVolume := true;
-                  end;
-                  inc(z);
-               end;
-            end;
-         end;
-      end;
-
-   // Scan on x direction.
-   for y := Low(Map[0]) to High(Map[0]) do
-      for z := Low(Map[0,y]) to High(Map[0,y]) do
-      begin
-         // Lower scan
-         x := Low(Map);
-         IsInsideVolume := false;
-         while x <= High(Map) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (x <= High(Map)) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x-1,y,z] := WinValue;
-                     if IsPointOK(x-2,y-1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y-1,z-1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y-1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y-1,z] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y-1,z+1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y,z-1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y,z+1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y+1,z-1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y+1,z] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x-2,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-2,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x-2,y,z] := WinValue;
-                     end;
-                     IsInsideVolume := false;
-                  end;
-                  inc(x);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (x <= High(Map)) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if IsPointOK(x+1,y-1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-1,z-1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-1,z] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-1,z+1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y,z-1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y,z+1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z-1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x+1,y,z] := WinValue;
-                     end;
-                     IsInsideVolume := true;
-                  end;
-                  inc(x);
-               end;
-            end;
-         end;
-      end;
-
-   // Scan on y direction.
-   for x := Low(Map) to High(Map) do
-      for z := Low(Map[x,0]) to High(Map[x,0]) do
-      begin
-         // Lower scan
-         y := Low(Map[x]);
-         IsInsideVolume := false;
-         while y <= High(Map[x]) do
-         begin
-            if IsInsideVolume then
-            begin
-               while (y <= High(Map[x])) and IsInsideVolume do
-               begin
-                  if Map[x,y,z] < C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y-1,z] := WinValue;
-                     if IsPointOK(x-1,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y-2,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y-2,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-2,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-2,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y-2,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y-2,z] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-2,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-2,z] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y-2,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y-2,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y-2,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y-2,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y-2,z] := WinValue;
-                     end;
-                     IsInsideVolume := false;
-                  end;
-                  inc(y);
-               end;
-            end
-            else // not inside the volume..
-            begin
-               while (y <= High(Map[x])) and (not IsInsideVolume) do
-               begin
-                  if Map[x,y,z] >= C_PART_OF_VOLUME then
-                  begin
-                     Map[x,y,z] := WinValue;
-                     if IsPointOK(x-1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y+1,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y+1,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z-1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z-1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y+1,z] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x-1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x-1,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end
-                     else if IsPointOK(x+1,y+1,z+1,MaxX,MaxY,MaxZ) then
-                     begin
-                        if Map[x+1,y+1,z+1] < C_PART_OF_VOLUME then
-                           Map[x,y+1,z] := WinValue;
-                     end;
-                     IsInsideVolume := true;
-                  end;
-                  inc(y);
-               end;
-            end;
-         end;
-      end;
-end;
-
 
 procedure SetupDistanceArray(var Dist : TDistanceArray; Range,SmoothLevel : single; ContrastLevel : integer);
-const
-   ANG90 =  1.5707963267948966192313216916398; //0.5 * pi;
-   ANG180 = 3.1415926535897932384626433832795;
-   ANG270 = 4.7123889803846898576939650749193;
 var
    x,y,z : integer;
    Size,MidPoint : integer;
    Distance: single;//,Distance2D : single;
- //  AngTheta, AngPhi : single;
 begin
    // 1.36 Setup distance array
    MidPoint := Max(Trunc(SmoothLevel),Trunc(Range));
@@ -1204,45 +374,20 @@ begin
                end;
                if (Distance <= Range) then
                begin
-                  // Here we find the angTheta.
-//                  angTheta := arctan2(MidPoint - y,MidPoint - x);
-                  // Now, we find angPhi
-//                  Distance2D := Hypot(x - MidPoint,y - MidPoint);
-//                  angPhi := ANG90 - arctan2((MidPoint - z),Distance2D);
                   if MidPoint <> x then
-//                     Dist[x,y,z].X := (sin(angPhi) * cos(AngTheta)) / Power(Distance,Power(abs(MidPoint-x),ContrastLevel))
-//                     Dist[x,y,z].X := (3 * abs(MidPoint-x)) / (sin(angPhi) * cos(AngTheta) * power(Distance,3))
-//                     Dist[x,y,z].X :=  (sin(angPhi) * cos(AngTheta) * abs(MidPoint-x)) / Distance
-//                       Dist[x,y,z].X :=  (sign(MidPoint - x) * abs(MidPoint - x)) / Power(Distance,2)
-                       Dist[x,y,z].X :=  (3 * (MidPoint - x)) / Power(Distance,3)
+                     Dist[x,y,z].X :=  (3 * (MidPoint - x)) / Power(Distance,3)
                   else
                      Dist[x,y,z].X := 0;
 
                   if MidPoint <> y then
-//                     Dist[x,y,z].Y := (sin(angPhi) * sin(AngTheta)) / Power(Distance,Power(abs(MidPoint-y),ContrastLevel))
-//                   Dist[x,y,z].Y := (3 * abs(MidPoint-y)) / (sin(angPhi) * sin(AngTheta) * power(Distance,3))
-//                     Dist[x,y,z].Y := (sin(angPhi) * sin(AngTheta) * abs(MidPoint-y)) / Distance
-//                     Dist[x,y,z].Y :=  (sign(MidPoint - y) * abs(MidPoint - y)) / Power(Distance,2)
                      Dist[x,y,z].Y :=  (3 * (MidPoint - y)) / Power(Distance,3)
                   else
                      Dist[x,y,z].Y := 0;
 
                   if MidPoint <> z then
-//                     Dist[x,y,z].Z := cos(angPhi) / Power(Distance,Power(abs(MidPoint-z),ContrastLevel))
-//                     Dist[x,y,z].Z := (3 * abs(MidPoint-z)) / (cos(angPhi) * power(Distance,3))
-//                     Dist[x,y,z].Z := (cos(angPhi) * abs(MidPoint-z)) / Distance
-//                     Dist[x,y,z].Z :=  (sign(MidPoint - z) * abs(MidPoint - z)) / Power(Distance,2)
                      Dist[x,y,z].Z :=  (3 * (MidPoint - z)) / Power(Distance,3)
                   else
                      Dist[x,y,z].Z := 0;
-//                ShowMessage('P(' + IntToStr(x) + ',' + IntToStr(y) + ',' + IntToStr(z) + '): (' + FloatToStr(Dist[x,y,z].X) + ',' + FloatToStr(Dist[x,y,z].Y) + ',' + FloatToStr(Dist[x,y,z].Z) + '); with Distance ' + FloatToStr(Dist[x,y,z].Distance) + ' and Theta ' + FloatToStr(angTheta) + ':: Cos(Theta) = ' + FloatToStr(cos(angTheta)) + ' and Sin(Theta) = ' + FloatToStr(sin(angTheta)) + ' :: and Phi ' + FloatToStr(angPhi) + ':: Cos(Phi) = ' + FloatToStr(cos(angPhi)) + ' and Sin(Phi) = ' + FloatToStr(sin(angPhi)) + '.');
-
-{
-                  // Temporary working code:
-                  Dist[x,y,z].X := sign(MidPoint - x) / Power(Distance,ContrastLevel);
-                  Dist[x,y,z].Y := sign(MidPoint - y) / Power(Distance,ContrastLevel);
-                  Dist[x,y,z].Z := sign(MidPoint - z) / Power(Distance,ContrastLevel);
-}
                end
                else
                begin
@@ -1263,7 +408,7 @@ begin
    end;
 end;
 
-procedure NormalizeModel(var Voxel : TVoxelSection; const BinaryMap : TBinaryMap; var FloatMap: TVector3fMap; const Dist : TDistanceArray; MidPoint,Range : integer);
+procedure NormalizeModel(var Voxel : TVoxelSection; const Map : TVoxelMap; var FloatMap: TVector3fMap; const Dist : TDistanceArray; MidPoint,Range : integer);
 var
    x,y,z : integer;
    V : TVoxelUnpacked;
@@ -1277,7 +422,7 @@ begin
             // each, since binary map has propositally a
             // border to avoid bound checking).
             Voxel.GetVoxel(x,y,z,v);
-            GetPreliminaryNormals(BinaryMap,FloatMap,Dist,V,MidPoint,Range,x,y,z);
+            GetPreliminaryNormals(Map,FloatMap,Dist,V,MidPoint,Range,x,y,z);
          end;
 end;
 
@@ -1310,59 +455,55 @@ begin
    end;
 end;
 
-procedure StretchMapContrast(var Map : TBinaryMap);
-var
-   x,y,z : integer;
-   Data : array [0..4] of single;
-begin
-   Data[0] := 0;
-   Data[1] := LIMZERO;
-   Data[2] := 0.0000001;
-   Data[3] := 0.0001;
-   Data[4] := 1;
-   for x := Low(Map) to High(Map) do
-      for y := Low(Map[x]) to High(Map[x]) do
-         for z := Low(Map[x,y]) to High(Map[x,y]) do
-         begin
-            Map[x,y,z] := Data[Round(Map[x,y,z])];
-         end;
-end;
-
-
 // 1.2 Adition: Cubed Normalizer
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 // Cubed Normals 2x Main Funcion Starts Here
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 function ApplyCubedNormals(Voxel : TVoxelSection; Range,SmoothLevel : single; ContrastLevel : integer; SmoothMe,InfluenceMe,AffectOnlyNonNormalized : Boolean) : TApplyNormalsResult;
 var
-   BinaryMap,FilledMap : TBinaryMap;
+   Map : TVoxelMap;
    FloatMap : TVector3fMap;
    x,y,z : integer;
    Dist : TDistanceArray;
    IntRange,IntSmooth,FullRange : integer;
+   Values : array of single;
 begin
    // 1.36 Setup distance array
    IntRange := Trunc(Range);
    IntSmooth := Trunc(SmoothLevel);
    FullRange := Max(IntSmooth,IntRange);
    SetupDistanceArray(Dist,Range,SmoothLevel,ContrastLevel);
+   SetLength(FloatMap,Voxel.Tailer.XSize+(2*FullRange),Voxel.Tailer.YSize+(2*FullRange),Voxel.Tailer.ZSize+(2*FullRange));
+   for x := Low(FloatMap) to High(FloatMap) do
+      for y := Low(FloatMap) to High(FloatMap[x]) do
+         for z := Low(FloatMap) to High(FloatMap[x,y]) do
+         begin
+            FloatMap[x,y,z].X := 0;
+            FloatMap[x,y,z].Y := 0;
+            FloatMap[x,y,z].Z := 0;
+         end;
    Result.applied := 0;
    // Create the binary map
-   CreateBinaryMap(BinaryMap,FilledMap,FloatMap,Voxel,FullRange);
-   // 1.2c: Solves inaucurate cubed normalizer
-   // This will fill the internal part for acurate results
-   Binary3DFloodFill(FilledMap);
-   MergeBinaryMaps(FilledMap,BinaryMap);
+   Map := TVoxelMap.Create(Voxel,FullRange);
+   Map.GenerateVolumeMap;
    // 1.32: Solves limit (x,y,z) -> (0,0,0) on cubed normalizer.
    if InfluenceMe then
-      BuildInfluenceArea(Voxel,BinaryMap,FullRange,LIMZERO);
+   begin
+      Map.GenerateInfluenceMap;
+      SetLength(Values,5);
+      Values[0] := 0;
+      Values[1] := LIMZERO;
+      Values[2] := 0.0000001;
+      Values[3] := 0.0001;
+      Values[4] := 1;
+      Map.ConvertValues(Values);
+   end;
    // Now, let's normalize every voxel.
-   NormalizeModel(Voxel,BinaryMap,FloatMap,Dist,FullRange,IntRange);
+   NormalizeModel(Voxel,Map,FloatMap,Dist,FullRange,IntRange);
    PolishModel(Voxel,FloatMap,Dist,FullRange,IntSmooth,SmoothMe,Result.Applied,AffectOnlyNonNormalized);
    // Now, let's free some memory.
    Finalize(Dist);
-   Finalize(BinaryMap);
-   Finalize(FilledMap);
+   Map.Free;
    Finalize(FloatMap);
 end;
 
@@ -1373,11 +514,12 @@ function ApplyInfluenceNormals(Voxel : TVoxelSection; Range,SmoothLevel : single
 // Influence Normalizer Main Funcion Starts Here
 //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/
 var
-   BinaryMap : TBinaryMap;
+   Map : TVoxelMap;
    FloatMap : TVector3fMap;
    x,y,z : integer;
    Dist : TDistanceArray;
    IntRange,IntSmooth,FullRange : integer;
+   Values : array of single;
 begin
    // 1.36 Setup distance array
    SetupDistanceArray(Dist,Range,SmoothLevel,ContrastLevel);
@@ -1397,20 +539,30 @@ begin
             FloatMap[x,y,z].Z := 0;
          end;
    // 1.34: Create Influence map.
-   ResetBinaryMap(Voxel,BinaryMap,FullRange);
-   BuildInfluenceArea(Voxel,BinaryMap,FullRange,TIP);
+   Map := TVoxelMap.Create(Voxel,FullRange);
    if ImproveContrast then
    begin
-      AddSurfacePlusOneInfoToInfluenceArea(BinaryMap,4);
-      StretchMapContrast(BinaryMap);
-   end;
+      Map.GenerateInfluenceMap;
+      Map.MapSurfaces(4);
+      SetLength(Values,6);
+      Values[0] := 0;
+      Values[1] := LIMZERO;
+      Values[2] := 0.0000001;
+      Values[3] := 0.0001;
+      Values[4] := 1;
+      Values[5] := 1;
+      Map.ConvertValues(Values);
+   end
+   else
+      Map.GenerateInfluenceMapOnly;
+
    // Now, let's normalize every voxel.
-   NormalizeModel(Voxel,BinaryMap,FloatMap,Dist,FullRange,IntRange);
+   NormalizeModel(Voxel,Map,FloatMap,Dist,FullRange,IntRange);
    PolishModel(Voxel,FloatMap,Dist,FullRange,IntSmooth,SmoothMe,Result.Applied,AffectOnlyNonNormalized);
 
    // Now, let's free some memory.
    Finalize(Dist);
-   Finalize(BinaryMap);
+   Map.Free;
    Finalize(FloatMap);
 end;
 
@@ -1654,266 +806,6 @@ begin
             CalcFacing;
 end;
 
-function RemoveRedundantVoxels(voxel: TVoxelSection): integer;
-var
-   maxx, maxy, maxz,
-   x, y, z: integer;
-   Red : Array of TVector3i;
-   Red_No : integer;
-   v: TVoxelUnpacked;
-   function Empty(x,y,z: integer): boolean;
-   var
-      v: TVoxelUnpacked;
-   begin
-      // check bounds
-      Result := True; // outside the voxel is all empty
-      if (x < 0) or (x > maxx) then Exit;
-      if (y < 0) or (y > maxy) then Exit;
-      if (z < 0) or (z > maxz) then Exit;
-      // ok, do the real check
-      voxel.GetVoxel(x,y,z,v);
-      if v.Used then
-         Result := False
-      else
-         Result := true;//BitSet(v.Flags,isOutside);
-   end;
-
-   function CheckTopBottom(var b1,b2 : boolean) : boolean;
-   var
-      ZZ : integer;
-      First,Second : boolean;
-      v : TVoxelunpacked;
-   begin
-      First := True;
-
-      if z < maxz then
-      begin
-         for ZZ := z+1 to Maxz do
-            if First then
-            begin
-               voxel.GetVoxel(x,y,ZZ,v);
-               if v.Used then
-                  First := false;
-            end;
-      end
-      else if z = maxz then
-         First := true;
-
-      Second := True;
-
-      if z > 0 then
-      begin
-         for ZZ := z-1 downto 0 do
-            if Second then
-            begin
-               voxel.GetVoxel(x,y,ZZ,v);
-               if v.Used then
-               Second := false;
-            end;
-      end
-      else if z = 0 then
-         Second := true;
-
-      If (First) and (not Second) then
-      begin
-         B2 := true;
-         B1 := false;
-         Result := true;
-      end
-      else If (not First) and (Second) then
-      begin
-         B2 := false;
-         B1 := true;
-         Result := true;
-      end
-      else
-         Result := false;
-   end;
-
-   function CheckRightLeft(var b1,b2 : boolean) : boolean;
-   var
-      YY : integer;
-      First,Second : boolean;
-      v : TVoxelunpacked;
-   begin
-      First := True;
-
-      if y < maxy then
-      begin
-         for YY := y+1 to Maxy do
-            if First then
-            begin
-               voxel.GetVoxel(x,yy,z,v);
-               if v.Used then
-                  First := false;
-            end;
-      end
-      else if y = maxy then
-         First := true;
-
-      Second := True;
-
-      if y > 0 then
-      begin
-         for YY := y-1 downto 0 do
-            if Second then
-            begin
-               voxel.GetVoxel(x,yy,z,v);
-               if v.Used then
-                  Second := false;
-            end;
-      end
-      else if y = 0 then
-         Second := true;
-
-      If (First) and (not Second) then
-      begin
-         B2 := true;
-         B1 := false;
-         Result := true;
-      end
-      else If (not First) and (Second) then
-      begin
-         B2 := false;
-         B1 := true;
-         Result := true;
-      end
-      else
-         Result := false;
-   end;
-
-   function CheckFrontBack(var b1,b2 : boolean) : boolean;
-   var
-      XX : integer;
-      First,Second : boolean;
-      v : TVoxelunpacked;
-   begin
-      First := True;
-
-      if x < maxx then
-      begin
-         for XX := x+1 to Maxx do
-            if First then
-            begin
-               voxel.GetVoxel(xx,y,z,v);
-               if v.Used then
-                  First := false;
-            end;
-      end
-      else if x = maxx then
-         First := true;
-
-      Second := True;
-
-      if x > 0 then
-      begin
-         for xx := x-1 downto 0 do
-            if Second then
-            begin
-               voxel.GetVoxel(xx,y,z,v);
-               if v.Used then
-                  Second := false;
-            end;
-      end
-      else if x = 0 then
-         Second := true;
-
-      If (First) and (not Second) then
-      begin
-         B2 := false;
-         B1 := true;
-         Result := true;
-      end
-      else If (not First) and (Second) then
-      begin
-         B2 := true;
-         B1 := false;
-         Result := true;
-      end
-      else
-         Result := False;
-   end;
-
-   Procedure CalcFacing;
-   var
-      v: TVoxelUnpacked;
-      B : array [0..5] of boolean;
-      I : integer;
-      Pos : TVector3i;
-   begin
-      // get the voxel in question
-      voxel.GetVoxel(x,y,z,v);
-      // skip empty ones
-      if not v.Used then Exit;
-
-      for i := 0 to 5 do
-         B[i] := false;
-
-      if Empty(x+1,y,z) then B[0] := true;
-      if Empty(x-1,y,z) then B[1] := true;
-      if Empty(x,y-1,z) then B[2] := true;
-      if Empty(x,y+1,z) then B[3] := true;
-      if Empty(x,y,z-1) then B[4] := true;
-      if Empty(x,y,z+1) then B[5] := true;
-
-      // cancel out double-sided facings
-      if B[0] and B[1] then if not CheckFrontBack(B[0],B[1]) then if x > trunc(maxx/2) then B[1] := false else B[0] := false;  //Dec(Flags,ChooseFrontOrBack(x,y,z));
-      if B[2] and B[3] then if not CheckRightLeft(B[2],B[3]) then if y < trunc(maxy/2) then B[3] := false else B[2] := false;
-      if B[4] and B[5] then if not CheckTopBottom(B[4],B[5]) then if z < trunc(maxz/2) then B[5] := false else B[4] := false;
-
-      Pos := SetVectorI(0,0,0);
-      if B[0] then
-         Pos.X := Pos.X + 1;
-      if B[1] then
-         Pos.X := Pos.X - 1;
-      if B[2] then
-         Pos.Y := Pos.Y - 1;
-      if B[3] then
-         Pos.Y := Pos.Y + 1;
-      if B[4] then
-         Pos.Z := Pos.Z - 1;
-      if B[5] then
-         Pos.Z := Pos.Z + 1;
-
-      if (Pos.x = 0) and (Pos.z = 0) and (Pos.y = 0) then
-      begin
-         inc(Result);
-
-         Red[Red_No].X := X;
-         Red[Red_No].Y := Y;
-         Red[Red_No].Z := Z;
-
-         inc(Red_No);
-         SetLength(Red,Red_No+1);
-      end;
-   end;
-
-begin
-   maxx := voxel.Tailer.XSize - 1;
-   maxy := voxel.Tailer.YSize - 1;
-   maxz := voxel.Tailer.ZSize - 1;
-
-   Result := 0;
-
-   SetLength(Red,0);
-   Red_No := 0;
-   SetLength(Red,Red_No+1);
-
-   // examine each used voxel, pass one for outside voxels
-   for x := 0 to maxx do
-      for y := 0 to maxy do
-         for z := 0 to maxz do
-            CalcFacing;
-
-   if Red_No > 0 then
-      for x := 0 to Red_No-1 do
-      begin
-         voxel.GetVoxel(Red[x].x,Red[x].y,Red[x].z,v);
-         v.Used := false;
-         voxel.SetVoxel(Red[x].x,Red[x].y,Red[x].z,v);
-      end;
-end;
-
 Function GetNormal3f(Vxl : TVoxelSection; N : integer) : TVector3f;
 begin
    Result := Vxl.Normals[n];
@@ -2111,7 +1003,6 @@ end;
 
 // a voxel is internal if all adjacent voxels (including diagonals) are inside
 function Internal(voxel: TVoxelSection; x,y,z: Integer): Boolean;
-var maxx, maxy, maxz: Integer;
    function IsExternal(x,y,z:Integer):Boolean;
    var
       v: TVoxelUnpacked;
@@ -2124,9 +1015,6 @@ var
    x1, y1, z1: Integer;
 begin
    Result := False; // assume not
-   maxx := voxel.Tailer.XSize - 1;
-   maxy := voxel.Tailer.YSize - 1;
-   maxz := voxel.Tailer.ZSize - 1;
    for x1 := Pred(x) to Succ(x) do
       for y1 := Pred(y) to Succ(y) do
          for z1 := Pred(z) to Succ(z) do
@@ -2164,6 +1052,26 @@ begin
                end;
             end;
 end;
+
+function RemoveRedundantVoxels(voxel: TVoxelSection): integer;
+var
+   Map : TVoxelMap;
+   Values : array of single;
+begin
+   Map := TVoxelMap.Create(Voxel,1);
+   Map.GenerateSurfaceMap;
+   SetLength(Values,6);
+   Values[0] := 0;
+   Values[1] := 0;
+   Values[2] := 0;
+   Values[3] := 0;
+   Values[4] := 1;
+   Values[5] := 0;
+   Map.ConvertValues(Values);
+   Result := Map.SynchronizeWithSection(1);
+   Map.Free;
+end;
+
 
 function GetSmoothNormal(var Vxl : TVoxelSection; X,Y,Z,Normal : integer) : integer;
 var

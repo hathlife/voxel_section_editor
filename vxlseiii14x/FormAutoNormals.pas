@@ -249,7 +249,7 @@ begin
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_6FACED + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused)),'6-Faced Auto Normal Results',0);
       if Res.confused > 0 then
          if MessageDlg('Some were Confused, This may mean there are redundant voxels.'+#13#13+'Run Remove Redundant Voxels?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
-            FrmMain.RemoveRedundentVoxels1Click(Sender);
+            FrmMain.RemoveRedundantVoxels1Click(Sender);
    end;
 
    VXLChanged := true;

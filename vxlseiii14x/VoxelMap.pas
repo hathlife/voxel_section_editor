@@ -25,7 +25,7 @@ type
    TVoxelMap = class
       private
          // Variables
-         FMap : array of array of array of integer;
+         FMap : array of array of array of single;
          FBias : integer;
          FSection : TVoxelSection;
          // Constructors and Destructors
@@ -33,15 +33,14 @@ type
          procedure FillMap(_Mode : integer = C_MODE_NONE; _Value : integer = C_INSIDE_VOLUME);
          procedure Initialize(_Mode : integer = C_MODE_NONE; _Value : integer = C_INSIDE_VOLUME);
          // Gets
-         function GetMap(_x,_y,_z: integer): integer;
-         function GetMapSafe(_x,_y,_z: integer): integer;
+         function GetMap(_x,_y,_z: integer): single;
+         function GetMapSafe(_x,_y,_z: integer): single;
          function GetBias : integer;
          // Sets
-         procedure SetMap(_x,_y,_z: integer; _value: integer);
-         procedure SetMapSafe(_x,_y,_z: integer; _value: integer);
+         procedure SetMap(_x,_y,_z: integer; _value: single);
+         procedure SetMapSafe(_x,_y,_z: integer; _value: single);
          procedure SetBias(_value: integer);
          // Misc
-         function IsPointOK (const x,y,z: integer) : boolean;
          procedure ResizeMap;
       public
          // Constructors and Destructors
@@ -50,22 +49,32 @@ type
          constructor Create(const _Map : TVoxelMap); overload;
          procedure Reset;
          destructor Destroy; override;
+         // Gets
+         function GetMaxX: integer;
+         function GetMaxY: integer;
+         function GetMaxZ: integer;
          // Generates
          procedure GenerateVolumeMap;
          procedure GenerateInfluenceMap;
          procedure GenerateSurfaceMap;
+         procedure GenerateInfluenceMapOnly;
+         procedure GenerateFullMap;
          // Copies
          procedure Assign(const _Map : TVoxelMap);
          // Misc
-         procedure FloodFill(const _Point : TVector3i; _value : integer);
-         procedure MergeMapData(const _Source : TVoxelMap; _Data : integer);
+         procedure FloodFill(const _Point : TVector3i; _value : single);
+         procedure MergeMapData(const _Source : TVoxelMap; _Data : single);
          procedure MapInfluences;
-         procedure MapSurfaces(_Value: integer);
+         procedure MapSurfaces(_Value: single);
+         procedure MapSurfacesOnly(_Value: single);
+         function SynchronizeWithSection(_Threshold : single): integer;
+         procedure ConvertValues(_Values : array of single);
          // Properties
-         property Map[_x,_y,_z: integer] : integer read GetMap write SetMap; default;
-         property MapSafe[_x,_y,_z: integer] : integer read GetMapSafe write SetMapSafe;
+         property Map[_x,_y,_z: integer] : single read GetMap write SetMap; default;
+         property MapSafe[_x,_y,_z: integer] : single read GetMapSafe write SetMapSafe;
          property Bias: integer read GetBias write SetBias;
          function GenerateFilledDataParam(_Filled, _Unfilled: integer): integer;
+         function IsPointOK (const x,y,z: integer) : boolean;
    end;
 
 implementation
@@ -112,8 +121,8 @@ var
 begin
    if _Mode = C_MODE_USED then
    begin
-      Filled := _Value and $FF;
-      Unfilled := Filled shr 8;
+      Unfilled := _Value and $FF;
+      Filled := _Value shr 8;
       for x := Low(FMap) to High(FMap) do
          for y := Low(FMap[0]) to High(FMap[0]) do
             for z := Low(FMap[0,0]) to High(FMap[0,0]) do
@@ -159,7 +168,7 @@ end;
 
 // Gets
 // Note: I want something quicker than checking if every damn point is ok.
-function TVoxelMap.GetMap(_x: Integer; _y: Integer; _z: Integer): integer;
+function TVoxelMap.GetMap(_x: Integer; _y: Integer; _z: Integer): single;
 begin
    try
       Result := FMap[_x,_y,_z];
@@ -168,7 +177,7 @@ begin
    end;
 end;
 
-function TVoxelMap.GetMapSafe(_x: Integer; _y: Integer; _z: Integer): integer;
+function TVoxelMap.GetMapSafe(_x: Integer; _y: Integer; _z: Integer): single;
 begin
    if IsPointOK(_x,_y,_z) then
    begin
@@ -186,9 +195,25 @@ begin
    Result := FBias;
 end;
 
+function TVoxelMap.GetMaxX: integer;
+begin
+   Result := High(FMap);
+end;
+
+function TVoxelMap.GetMaxY: integer;
+begin
+   Result := High(FMap[0]);
+end;
+
+function TVoxelMap.GetMaxZ: integer;
+begin
+   Result := High(FMap[0,0]);
+end;
+
+
 // Sets
 // Note: I want something quicker than checking if every damn point is ok.
-procedure TVoxelMap.SetMap(_x: Integer; _y: Integer; _z: Integer; _value: integer);
+procedure TVoxelMap.SetMap(_x: Integer; _y: Integer; _z: Integer; _value: single);
 begin
    try
       FMap[_x,_y,_z] := _value;
@@ -197,7 +222,7 @@ begin
    end;
 end;
 
-procedure TVoxelMap.SetMapSafe(_x: Integer; _y: Integer; _z: Integer; _value: integer);
+procedure TVoxelMap.SetMapSafe(_x: Integer; _y: Integer; _z: Integer; _value: single);
 begin
    if IsPointOK(_x,_y,_z) then
    begin
@@ -236,7 +261,6 @@ begin
    MergeMapData(FilledMap,1);
    FilledMap.Free;
    MapInfluences;
-   MapSurfaces(C_SURFACE);
 end;
 
 procedure TVoxelMap.GenerateSurfaceMap;
@@ -250,6 +274,27 @@ begin
    FilledMap.Free;
    MapSurfaces(1);
 end;
+
+procedure TVoxelMap.GenerateInfluenceMapOnly;
+begin
+   FillMap(C_MODE_All,0);
+   MapInfluences;
+end;
+
+
+procedure TVoxelMap.GenerateFullMap;
+var
+   FilledMap : TVoxelMap;
+begin
+   FillMap(C_MODE_USED,GenerateFilledDataParam(1,C_OUTSIDE_VOLUME));
+   FilledMap := TVoxelMap.Create(FSection,FBias,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,1));
+   FilledMap.FloodFill(SetVectorI(0,0,0),0);
+   MergeMapData(FilledMap,1);
+   FilledMap.Free;
+   MapInfluences;
+   MapSurfaces(C_SURFACE);
+end;
+
 
 // Copies
 procedure TVoxelMap.Assign(const _Map : TVoxelMap);
@@ -278,7 +323,7 @@ begin
    SetLength(FMap, FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias, FSection.Tailer.ZSize + Bias);
 end;
 
-procedure TVoxelMap.FloodFill(const _Point : TVector3i; _value : integer);
+procedure TVoxelMap.FloodFill(const _Point : TVector3i; _value : single);
 var
    List : C3DPointList; // Check Class3DPointList.pas;
    x,y,z : integer;
@@ -331,7 +376,7 @@ begin
    List.Free;
 end;
 
-procedure TVoxelMap.MergeMapData(const _Source : TVoxelMap; _Data : integer);
+procedure TVoxelMap.MergeMapData(const _Source : TVoxelMap; _Data : single);
 var
    x,y,z : integer;
 begin
@@ -487,12 +532,11 @@ begin
       end;
 end;
 
-procedure TVoxelMap.MapSurfaces(_Value: integer);
+procedure TVoxelMap.MapSurfaces(_Value: single);
 var
    Cube : TNormals;
    CurrentNormal : TVector3f;
    x, y, z, i, maxi : integer;
-   V : TVoxelUnpacked;
 begin
    Cube := TNormals.Create(6);
    maxi := Cube.GetLastID;
@@ -508,17 +552,9 @@ begin
                   while i <= maxi do
                   begin
                      CurrentNormal := Cube[i];
-                     if FSection.GetVoxelSafe(x - FBias + round(CurrentNormal.x),y - FBias + round(CurrentNormal.y),z - FBias + round(CurrentNormal.z),v) then
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Value) then
                      begin
-                        if v.Used then
-                        begin
-                           inc(i);
-                        end
-                        else
-                        begin
-                           // surface
-                           i := maxi * 2;
-                        end;
+                        inc(i);
                      end
                      else
                      begin
@@ -538,8 +574,88 @@ begin
                end;
             end;
    end;
+   Cube.Free;
 end;
 
+procedure TVoxelMap.MapSurfacesOnly(_Value: single);
+var
+   Cube : TNormals;
+   CurrentNormal : TVector3f;
+   x, y, z, i, maxi : integer;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[0]) to High(FMap[0]) do
+            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            begin
+               if FMap[x,y,z] = _Value then
+               begin
+                  i := 0;
+                  while i <= maxi do
+                  begin
+                     CurrentNormal := Cube[i];
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Value) then
+                     begin
+                        inc(i);
+                     end
+                     else
+                     begin
+                        // surface
+                        i := maxi * 2;
+                     end;
+                  end;
+                  if i = (maxi * 2) then
+                  begin
+                     FMap[x,y,z] := C_SURFACE;
+                  end;
+               end;
+            end;
+   end;
+   Cube.Free;
+end;
+
+
+function TVoxelMap.SynchronizeWithSection(_Threshold : single): integer;
+var
+   x, y, z : integer;
+   V : TVoxelUnpacked;
+begin
+   Result := 0;
+   for x := Low(FSection.Data) to High(FSection.Data) do
+      for y := Low(FSection.Data[0]) to High(FSection.Data[0]) do
+         for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
+         begin
+            FSection.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               v.Used := (FMap[x + FBias, y + FBias, z + FBias] >= _Threshold);
+               if not v.Used then
+                  inc(Result);
+               FSection.SetVoxel(x,y,z,v);
+            end;
+         end;
+end;
+
+procedure TVoxelMap.ConvertValues(_Values : array of single);
+var
+   x, y, z : integer;
+begin
+   if High(_Values) >= 0 then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[0]) to High(FMap[0]) do
+            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            begin
+               if (Map[x,y,z] > 0) and (Map[x,y,z] <= High(_Values)) then
+               begin
+                  Map[x,y,z] := _Values[Round(Map[x,y,z])];
+               end;
+            end;
+   end;
+end;
 
 
 // Check if the point is valid.

@@ -1558,8 +1558,9 @@ end;
 Function RemoveRedundantVoxelsFromVXL(var VXL : TVoxelSection) : integer;
 begin
    result := RemoveRedundantVoxels(VXL);
-   result := result + RemoveRedundantVoxelsOld(VXL);
-   VXLChanged := true;
+//   result := result + RemoveRedundantVoxelsOld(VXL);
+   if Result > 0 then
+      VXLChanged := true;
 end;
 
 procedure UpdateHistoryMenu;
