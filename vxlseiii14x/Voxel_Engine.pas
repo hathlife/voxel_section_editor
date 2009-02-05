@@ -373,20 +373,20 @@ begin
       if ActiveSection.Tailer.Unknown = 4 then
       begin
          NormalNum := 244;
-         NormalDiv := 3;
+         NormalDiv := 2.5;
       end
       else
       begin
          NormalNum := 35;
-         NormalDiv := 0.5;
+         NormalDiv := 0.20;
       end;
 
       N := Color;
       If N > NormalNum Then
          N := NormalNum;
-      T.X := 127 + (N - (NormalNum/2))/NormalDiv;
-      T.Y := 127 + (N - (NormalNum/2))/NormalDiv;
-      T.Z := 127 + (N - (NormalNum/2))/NormalDiv;
+      T.X := 255 + (N - (NormalNum/1))/NormalDiv;
+      T.Y := 0 + (N - (NormalNum/1))/NormalDiv;
+      T.Z := 255 + (N - (NormalNum/1))/NormalDiv;
 //      T.X := N;
 //      T.Y := N;
 //      T.Z := N;
