@@ -2785,23 +2785,6 @@ begin
    FrmAutoNormals.MyVoxel := ActiveSection;
    FrmAutoNormals.ShowModal;
    FrmAutoNormals.Release;
-   // Old code
-{
-   // ask the user to confirm
-   if MessageDlg('Autonormals v5.2' +#13#13+
-        'This process will modify the voxel''s normals.' +#13+
-        'If you choose to do this, you should first save' + #13 +
-        'your model under a different name as a backup.',
-        mtWarning,mbOKCancel,0) = mrCancel then
-                        Exit;
-   //ResetUndoRedo;
-   CreateVXLRestorePoint(ActiveSection,Undo);
-   UpdateUndo_RedoState;
-
-   ApplyCubedNormalsToVXL(ActiveSection);
-   Refreshall;
-   VXLChanged := true;
-}
 end;
 
 procedure TFrmMain.Delete1Click(Sender: TObject);

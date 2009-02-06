@@ -246,10 +246,23 @@ begin
    else
    begin
       Res := ApplyNormals(MyVoxel);
-      MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_6FACED + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused)),'6-Faced Auto Normal Results',0);
       if Res.confused > 0 then
-         if MessageDlg('Some were Confused, This may mean there are redundant voxels.'+#13#13+'Run Remove Redundant Voxels?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
-            FrmMain.RemoveRedundantVoxels1Click(Sender);
+      begin
+         MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_6FACED + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused) + #13 + #13 + 'Some were Confused, This may mean there are redundant voxels.'),'6-Faced Auto Normal Results',0);
+         if FrmMain.p_Frm3DPreview <> nil then
+         begin
+            FrmMain.p_Frm3DPreview^.Visible := false;
+         end;
+         FrmMain.RemoveRedundantVoxels1Click(Sender);
+         if FrmMain.p_Frm3DPreview <> nil then
+         begin
+            FrmMain.p_Frm3DPreview^.Visible := true;
+         end;
+      end
+      else
+      begin
+         MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_6FACED + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused)),'6-Faced Auto Normal Results',0);
+      end;
    end;
 
    VXLChanged := true;
