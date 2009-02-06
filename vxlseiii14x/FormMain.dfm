@@ -5082,25 +5082,30 @@ object FrmMain: TFrmMain
       Caption = 'Options'
       object DarkenLightenValue1: TMenuItem
         Caption = 'Darken/Lighten Value'
-        object N110: TMenuItem
+           object N110: TMenuItem
           Caption = '1'
           Checked = True
+          ShortCut = 49
           OnClick = N110Click
         end
         object N21: TMenuItem
           Caption = '2'
+          ShortCut = 50
           OnClick = N21Click
         end
         object N31: TMenuItem
           Caption = '3'
+          ShortCut = 51
           OnClick = N31Click
         end
         object N41: TMenuItem
           Caption = '4'
+          ShortCut = 52
           OnClick = N41Click
         end
         object N51: TMenuItem
           Caption = '5'
+          ShortCut = 53
           OnClick = N51Click
         end
       end
