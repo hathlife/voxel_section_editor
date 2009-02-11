@@ -5064,12 +5064,12 @@ object FrmMain: TFrmMain
       end
       object Darkentool1: TMenuItem
         Caption = 'Darken tool'
-        ShortCut = 90
+        ShortCut = 71
         OnClick = SpeedButton7Click
       end
       object Lightentool1: TMenuItem
         Caption = 'Lighten tool'
-        ShortCut = 67
+        ShortCut = 66
         OnClick = SpeedButton12Click
       end
       object MeasuringTool1: TMenuItem
@@ -5114,7 +5114,7 @@ object FrmMain: TFrmMain
       end
       object Display3dView1: TMenuItem
         Caption = 'Disable 3d View'
-        ShortCut = 88
+        ShortCut = 9
         OnClick = Display3dView1Click
       end
       object DisableDrawPreview1: TMenuItem
