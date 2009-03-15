@@ -13,6 +13,8 @@ const
    C_MODE_NONE = 0;
    C_MODE_ALL = 1;
    C_MODE_USED = 2;
+   C_MODE_COLOUR = 3;
+   C_MODE_NORMAL = 4;
 
    C_OUTSIDE_VOLUME = 0;
    C_ONE_AXIS_INFLUENCE = 1;
@@ -67,7 +69,8 @@ type
          procedure MapInfluences;
          procedure MapSurfaces(_Value: single);
          procedure MapSurfacesOnly(_Value: single);
-         function SynchronizeWithSection(_Threshold : single): integer;
+         function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
+         function SynchronizeWithSection(_Threshold : single): integer; overload;
          procedure ConvertValues(_Values : array of single);
          // Properties
          property Map[_x,_y,_z: integer] : single read GetMap write SetMap; default;
@@ -142,6 +145,38 @@ begin
                else
                begin
                   FMap[x,y,z] := Unfilled;
+               end;
+            end;
+   end
+   else if _Mode = C_MODE_COLOUR then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[0]) to High(FMap[0]) do
+            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            begin
+               if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
+               begin
+                  FMap[x,y,z] := v.Colour;
+               end
+               else
+               begin
+                  FMap[x,y,z] := 0;
+               end;
+            end;
+   end
+   else if _Mode = C_MODE_NORMAL then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[0]) to High(FMap[0]) do
+            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            begin
+               if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
+               begin
+                  FMap[x,y,z] := v.Normal;
+               end
+               else
+               begin
+                  FMap[x,y,z] := 0;
                end;
             end;
    end
@@ -617,26 +652,55 @@ begin
    Cube.Free;
 end;
 
-
-function TVoxelMap.SynchronizeWithSection(_Threshold : single): integer;
+function TVoxelMap.SynchronizeWithSection(_Mode : integer; _Threshold : single): integer;
 var
    x, y, z : integer;
    V : TVoxelUnpacked;
 begin
    Result := 0;
-   for x := Low(FSection.Data) to High(FSection.Data) do
-      for y := Low(FSection.Data[0]) to High(FSection.Data[0]) do
-         for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
-         begin
-            FSection.GetVoxel(x,y,z,v);
-            if v.Used then
+   if _MODE = C_MODE_USED then
+   begin
+      for x := Low(FSection.Data) to High(FSection.Data) do
+         for y := Low(FSection.Data[0]) to High(FSection.Data[0]) do
+            for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
             begin
-               v.Used := (FMap[x + FBias, y + FBias, z + FBias] >= _Threshold);
-               if not v.Used then
-                  inc(Result);
+               FSection.GetVoxel(x,y,z,v);
+               if v.Used then
+               begin
+                  v.Used := (FMap[x + FBias, y + FBias, z + FBias] >= _Threshold);
+                  if not v.Used then
+                     inc(Result);
+                  FSection.SetVoxel(x,y,z,v);
+               end;
+            end;
+   end
+   else if _MODE = C_MODE_COLOUR then
+   begin
+      for x := Low(FSection.Data) to High(FSection.Data) do
+         for y := Low(FSection.Data[0]) to High(FSection.Data[0]) do
+            for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
+            begin
+               FSection.GetVoxel(x,y,z,v);
+               v.Colour := Round(FMap[x + FBias,y + FBias, z + FBias]);
                FSection.SetVoxel(x,y,z,v);
             end;
-         end;
+   end
+   else if _MODE = C_MODE_NORMAL then
+   begin
+      for x := Low(FSection.Data) to High(FSection.Data) do
+         for y := Low(FSection.Data[0]) to High(FSection.Data[0]) do
+            for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
+            begin
+               FSection.GetVoxel(x,y,z,v);
+               v.Normal := Round(FMap[x + FBias,y + FBias, z + FBias]);
+               FSection.SetVoxel(x,y,z,v);
+            end;
+   end;
+end;
+
+function TVoxelMap.SynchronizeWithSection(_Threshold : single): integer;
+begin
+   Result := SynchronizeWithSection(C_MODE_USED,_Threshold);
 end;
 
 procedure TVoxelMap.ConvertValues(_Values : array of single);

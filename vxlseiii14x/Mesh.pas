@@ -3,7 +3,7 @@ unit Mesh;
 interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
-      BasicDataTypes, Palette;
+      BasicDataTypes, Palette, VoxelMap;
 
 type
    TMesh = class
@@ -360,6 +360,7 @@ end;
 procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
    NumVertices, NumFaces : longword;
+   VoxelMap : TVoxelMap;
    VertexMap : array of array of array of integer;
    FaceMap : array of array of array of array of integer;
    x, y, z : longword;
@@ -370,7 +371,8 @@ begin
    FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
-
+   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap.GenerateSurfaceMap;
 end;
 
 
