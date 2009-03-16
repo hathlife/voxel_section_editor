@@ -24,6 +24,11 @@ type
     XRot: TEdit;
     YRot: TEdit;
     Depth: TEdit;
+    Label4: TLabel;
+    Label5: TLabel;
+    TargetX: TEdit;
+    TargetY: TEdit;
+    Label6: TLabel;
     procedure Button4Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);

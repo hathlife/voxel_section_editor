@@ -35,9 +35,9 @@ object FrmCameraManager_New: TFrmCameraManager_New
   object Label3: TLabel
     Left = 24
     Top = 80
-    Width = 46
+    Width = 88
     Height = 13
-    Caption = 'Position'
+    Caption = 'Viewer Position'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -70,6 +70,39 @@ object FrmCameraManager_New: TFrmCameraManager_New
     Height = 22
     AutoSize = False
     Caption = 'Depth'
+    Layout = tlCenter
+  end
+  object Label4: TLabel
+    Left = 232
+    Top = 80
+    Width = 87
+    Height = 13
+    Caption = 'Target Position'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label5: TLabel
+    Left = 224
+    Top = 104
+    Width = 36
+    Height = 22
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Lateral:'
+    Layout = tlCenter
+  end
+  object Label6: TLabel
+    Left = 216
+    Top = 128
+    Width = 47
+    Height = 22
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Forward:'
     Layout = tlCenter
   end
   object Panel2: TPanel
@@ -159,5 +192,19 @@ object FrmCameraManager_New: TFrmCameraManager_New
     Width = 105
     Height = 22
     TabOrder = 4
+  end
+  object TargetX: TEdit
+    Left = 272
+    Top = 104
+    Width = 105
+    Height = 22
+    TabOrder = 5
+  end
+  object TargetY: TEdit
+    Left = 272
+    Top = 128
+    Width = 105
+    Height = 22
+    TabOrder = 6
   end
 end

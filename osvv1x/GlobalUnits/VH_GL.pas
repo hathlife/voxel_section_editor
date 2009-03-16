@@ -23,7 +23,7 @@ InitOpenGL; // Don't forget, or first gl-Call will result in an access violation
   // PixelFormat
   pfd.nSize:=sizeof(pfd);
   pfd.nVersion:=1;
-  pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER or 0;
+  pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;
   pfd.iPixelType:=PFD_TYPE_RGBA;      // PFD_TYPE_RGBA or PFD_TYPEINDEX
   pfd.cColorBits:=32;
   pfd.cStencilBits := 8;

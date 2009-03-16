@@ -29,7 +29,7 @@ Xcoord,Xcoord2,Ycoord,Ycoord2,Zcoord,MouseButton,
 SCREEN_WIDTH,SCREEN_HEIGHT,GroundTex_No,
 Default_View,Axis : Integer;
 
-BGColor,FontColor,RemapColour,UnitShift : TVector3f;
+BGColor,FontColor,RemapColour,UnitShift,TurretOffset,CameraCenter : TVector3f;
 
 VoxelOpen,VoxelOpenT,VoxelOpenB,
 HVAOpen,HVAOpenT,HVAOpenB,
@@ -282,6 +282,8 @@ begin
    DEPTH_OF_VIEW := 4000;
    Size := 0.1;
 
+   CameraCenter := SetVector(0, 0, 0);
+   TurretOffset := SetVector(0, 0, 0);
    SpectrumMode := ModeColours;
 
    Default_View := VH_Default_View;

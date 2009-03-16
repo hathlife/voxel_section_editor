@@ -19,8 +19,8 @@ uses
 
 Const
 APPLICATION_TITLE = 'Open Source Voxel Viewer';
-APPLICATION_VER = '1.81' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
-APPLICATION_VER_ID = '1.81';
+APPLICATION_VER = '1.82' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
+APPLICATION_VER_ID = '1.82';
 APPLICATION_BY = 'Stucuk && Banshee';
 
 type
@@ -186,6 +186,20 @@ type
     Bevel2: TBevel;
     Label34: TLabel;
     Label35: TLabel;
+    Label36: TLabel;
+    Label38: TLabel;
+    Label37: TLabel;
+    EdOffsetX: TEdit;
+    EdOffsetY: TEdit;
+    Label39: TLabel;
+    EdOffsetZ: TEdit;
+    Label40: TLabel;
+    UnitShiftZSpinEdit: TSpinEdit;
+    Label41: TLabel;
+    procedure UnitShiftZSpinEditChange(Sender: TObject);
+    procedure EdOffsetZChange(Sender: TObject);
+    procedure EdOffsetYChange(Sender: TObject);
+    procedure EdOffsetXChange(Sender: TObject);
     procedure MainViewResize(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure DrawFrames;
@@ -287,6 +301,8 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure UnitCountComboChange(Sender: TObject);
     procedure UnitSpaceEditChange(Sender: TObject);
+    procedure DeactivateView(Sender: TObject);
+    procedure ActivateView(Sender: TObject);
   private
     { Private declarations }
   public
@@ -411,7 +427,22 @@ begin
    DiffuseGreen.Value := Trunc(LightDif.Y*255);
    DiffuseBlue.Value  := Trunc(LightDif.Z*255);
 
+   Application.OnDeactivate := DeactivateView;
+   Application.OnActivate := ActivateView;
+   Application.OnMinimize := DeactivateView;
+   Application.OnRestore := ActivateView;
+
    LoadedProg := True;
+end;
+
+procedure TVVFrmMain.ActivateView(Sender : TObject);
+begin
+   Application.OnIdle := Idle;
+end;
+
+procedure TVVFrmMain.DeactivateView(Sender : TObject);
+begin
+   Application.OnIdle := nil;
 end;
 
 procedure TVVFrmMain.Idle(Sender: TObject; var Done: Boolean);
@@ -420,7 +451,7 @@ var
 begin
    Done := False;
    if not DrawVHWorld then exit;
-   
+
    if (ScreenShot.Take) or (ScreenShot.TakeAnimation) or (ScreenShot.Take360DAnimation) then
    FUpdateWorld := True;
 
@@ -491,6 +522,21 @@ begin
   VH_Draw();                         // Draw the scene
 end;
 
+procedure TVVFrmMain.EdOffsetXChange(Sender: TObject);
+begin
+   TurretOffset.X := StrToFloatDef(EdOffsetX.Text,0);
+end;
+
+procedure TVVFrmMain.EdOffsetYChange(Sender: TObject);
+begin
+   TurretOffset.Y := StrToFloatDef(EdOffsetY.Text,0);
+end;
+
+procedure TVVFrmMain.EdOffsetZChange(Sender: TObject);
+begin
+   TurretOffset.Z := StrToFloatDef(EdOffsetZ.Text,0);
+end;
+
 procedure TVVFrmMain.Exit1Click(Sender: TObject);
 begin
    Close;
@@ -531,6 +577,7 @@ begin
       SetupSections;
       SectionBox.ItemIndex := 0;
       SectionBoxChange(nil);
+      RemapColourBoxChange(nil);
 
       SetAnimFrom;
       AnimFrom.ItemIndex := 0;
@@ -1065,6 +1112,18 @@ begin
    FUpdateWorld := True;
 end;
 
+procedure TVVFrmMain.UnitShiftZSpinEditChange(Sender: TObject);
+begin
+   If VVSLoading then exit;
+
+   if (UnitShiftZSpinEdit.Text <> '') and (UnitShiftZSpinEdit.Text <> ' ') then
+      try
+         UnitShift.Z := UnitShiftZSpinEdit.Value;
+      except
+      end;
+   FUpdateWorld := True;
+end;
+
 procedure TVVFrmMain.XTexShiftChange(Sender: TObject);
 begin
    If VVSLoading then exit;
@@ -1393,14 +1452,18 @@ begin
    frm.XRot.Text := FloatToStr(XRot);
    frm.YRot.Text := FloatToStr(YRot);
    frm.Depth.Text := FloatToStr(Depth);
+   frm.TargetX.Text := FloatToStr(CameraCenter.X);
+   frm.TargetY.Text := FloatToStr(CameraCenter.Y);
    frm.ShowModal;
    frm.Close;
 
    if Frm.O then
    begin
-      XRot := StrToFloat(frm.XRot.Text);
-      YRot := StrToFloat(frm.YRot.Text);
-      Depth := StrToFloat(frm.Depth.Text);
+      XRot := StrToFloatDef(frm.XRot.Text,XRot);
+      YRot := StrToFloatDef(frm.YRot.Text,YRot);
+      Depth := StrToFloatDef(frm.Depth.Text,Depth);
+      CameraCenter.X := StrToFloatDef(frm.TargetX.Text,CameraCenter.X);
+      CameraCenter.Y := StrToFloatDef(frm.TargetY.Text,CameraCenter.Y);
    end;
 
    frm.Free;

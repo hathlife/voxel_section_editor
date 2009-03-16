@@ -8,7 +8,7 @@ Uses Windows,SysUtils,Math3d,OpenGl15,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,
 
 Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; VoxelBox: TVoxelBox);
 Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
-Procedure DrawVoxels(ShiftX,ShiftY,Rot : Extended);
+Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 Procedure DrawWorld;
 
 Procedure DrawGround(Tex : Integer; Position,Rotation,Color : TVector3f; Size : single);
@@ -162,7 +162,7 @@ begin
 
 end;
 
-Procedure DrawVoxels(ShiftX,ShiftY,Rot : Extended);
+Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 begin
    glPushMatrix;
    VoxelsUsed := 0;
@@ -170,13 +170,13 @@ begin
    HVAFile.HigherLevel := nil;
 
    glLoadIdentity;
-   glTranslatef(0,0, Depth);
+   glTranslatef(CameraCenter.X,CameraCenter.Y, Depth);
 
    glRotatef(XRot, 1, 0, 0);
    glRotatef(YRot, 0, 0, 1);
 
    //glTranslatef(UnitShift.X+(x*15)-(2*15), UnitShift.Y+(y*15)-(2*15),0);
-   glTranslatef(ShiftX,ShiftY,0);
+   glTranslatef(ShiftX,ShiftY,ShiftZ);
 
    glRotatef(Rot, 0, 0, 1);
 
@@ -188,6 +188,7 @@ begin
    begin
       // Temporary code:
       HVATurret.HigherLevel := @HVAFile;
+      glTranslatef(TurretOffset.X * Size,TurretOffset.Y * Size,TurretOffset.Z * Size);
       DrawVoxel(@VoxelTurret,VoxelTurret,VoxelBoxesT,VoxelBox_NoT,True,HVATurret,HVAFrameT);
    end;
    If DrawBarrel then
@@ -284,20 +285,20 @@ begin
 
    if (UnitCount = 4) or (UnitCount = 8) then
    begin
-    DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y,UnitRot);
-    DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y,UnitRot+180);
-    DrawVoxels(UnitShift.X,UnitShift.Y-UnitSpace,UnitRot+90);
-    DrawVoxels(UnitShift.X,UnitShift.Y+UnitSpace,UnitRot-90);
-    if UnitCount = 8 then
-    begin
-     DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y-UnitSpace,UnitRot+45);
-     DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y+UnitSpace,UnitRot+45+180);
-     DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y-UnitSpace,UnitRot-45-180);
-     DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y+UnitSpace,UnitRot-45);
-    end;
+      DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot);
+      DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot+180);
+      DrawVoxels(UnitShift.X,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+90);
+      DrawVoxels(UnitShift.X,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-90);
+      if UnitCount = 8 then
+      begin
+         DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+45);
+         DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot+45+180);
+         DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot-45-180);
+         DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-45);
+      end;
    end
    else
-   DrawVoxels(UnitShift.X,UnitShift.Y,UnitRot);
+      DrawVoxels(UnitShift.X,UnitShift.Y,UnitShift.Z,UnitRot);
 
 
    glEnable(GL_TEXTURE_2D);
@@ -328,33 +329,28 @@ begin
       end;
    end;
 
-  { if not CullFace then
-      glDisable(GL_CULL_FACE)
-   else
-      glEnable(GL_CULL_FACE); }
-
    if Ground_Tex_Draw then
-      DrawGround(GroundTex.Tex,SetVector(0,0,Depth),SetVector(XRot,0,YRot),SetVector(1,1,1),GSize);
+      DrawGround(GroundTex.Tex,SetVector(CameraCenter.X,CameraCenter.Y,Depth),SetVector(XRot,0,YRot),SetVector(1,1,1),GSize);
 
    if DrawSky then
       DrawSkyBox(SetVector(XRot,0,YRot),SetVector(-90,0,180));
 
    If DrawCenter then
-      DrawCenterLines(SetVector(0,0.0, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
+      DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
 
   // glDisable(GL_TEXTURE_2D);
 
    if FTexture = 0 then
- glGenTextures(1, @FTexture);
- glBindTexture(GL_TEXTURE_2D, FTexture);
+      glGenTextures(1, @FTexture);
+   glBindTexture(GL_TEXTURE_2D, FTexture);
 
- glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT), 0);
+   glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT), 0);
 
 
- glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
- glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
  end;
 
 

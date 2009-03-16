@@ -2,7 +2,7 @@ object VVFrmMain: TVVFrmMain
   Left = 193
   Top = 106
   Caption = 'APPLICATION TITLE'
-  ClientHeight = 554
+  ClientHeight = 573
   ClientWidth = 790
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -21,17 +21,19 @@ object VVFrmMain: TVVFrmMain
     Left = 0
     Top = 0
     Width = 790
-    Height = 535
+    Height = 554
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 535
     object Panel2: TPanel
       Left = 1
       Top = 1
       Width = 136
-      Height = 375
+      Height = 374
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 368
       object Label2: TLabel
         Left = 1
         Top = 161
@@ -447,7 +449,7 @@ object VVFrmMain: TVVFrmMain
       Left = 137
       Top = 1
       Width = 652
-      Height = 375
+      Height = 374
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
@@ -455,6 +457,7 @@ object VVFrmMain: TVVFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
+      ExplicitHeight = 368
       object TopBarImageHolder: TImage
         Left = 32
         Top = 16
@@ -3137,9 +3140,9 @@ object VVFrmMain: TVVFrmMain
     end
     object Panel7: TPanel
       Left = 1
-      Top = 376
+      Top = 375
       Width = 788
-      Height = 158
+      Height = 178
       Align = alBottom
       BevelOuter = bvNone
       TabOrder = 2
@@ -3147,24 +3150,23 @@ object VVFrmMain: TVVFrmMain
         Left = 0
         Top = 0
         Width = 788
-        Height = 158
+        Height = 178
         ActivePage = TabSheet4
         Align = alClient
         TabOrder = 0
+        ExplicitHeight = 158
         object TabSheet1: TTabSheet
           Caption = 'Ground && Sky'
-          ExplicitLeft = 0
-          ExplicitTop = 0
-          ExplicitWidth = 0
-          ExplicitHeight = 0
+          ExplicitHeight = 130
           object Panel8: TPanel
             Left = 0
             Top = 0
             Width = 780
-            Height = 130
+            Height = 150
             Align = alClient
             BevelOuter = bvNone
             TabOrder = 0
+            ExplicitHeight = 130
             object Label6: TLabel
               Left = 134
               Top = 80
@@ -3433,7 +3435,7 @@ object VVFrmMain: TVVFrmMain
               Top = 16
               Width = 179
               Height = 21
-              ItemHeight = 0
+              ItemHeight = 13
               TabOrder = 14
               OnChange = SkyTextureComboBoxChange
             end
@@ -3442,6 +3444,7 @@ object VVFrmMain: TVVFrmMain
         object TabSheet4: TTabSheet
           Caption = 'Unit'
           ImageIndex = 3
+          ExplicitHeight = 130
           object Label20: TLabel
             Left = 6
             Top = 32
@@ -3477,15 +3480,15 @@ object VVFrmMain: TVVFrmMain
             Layout = tlCenter
           end
           object Label29: TLabel
-            Left = 166
-            Top = 32
+            Left = 165
+            Top = 13
             Width = 71
             Height = 13
             Caption = 'Turret Rotation'
           end
           object Label30: TLabel
             Left = 6
-            Top = 80
+            Top = 103
             Width = 65
             Height = 22
             AutoSize = False
@@ -3494,11 +3497,63 @@ object VVFrmMain: TVVFrmMain
           end
           object Label31: TLabel
             Left = 6
-            Top = 104
+            Top = 127
             Width = 65
             Height = 22
             AutoSize = False
             Caption = 'Unit Space:'
+            Layout = tlCenter
+          end
+          object Label36: TLabel
+            Left = 165
+            Top = 33
+            Width = 62
+            Height = 22
+            AutoSize = False
+            Caption = 'Turret Offset:'
+            Layout = tlCenter
+          end
+          object Label38: TLabel
+            Left = 164
+            Top = 104
+            Width = 3
+            Height = 13
+            Layout = tlCenter
+          end
+          object Label37: TLabel
+            Left = 166
+            Top = 56
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'X'
+            Layout = tlCenter
+          end
+          object Label39: TLabel
+            Left = 246
+            Top = 56
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'Y'
+            Layout = tlCenter
+          end
+          object Label40: TLabel
+            Left = 326
+            Top = 56
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'Z'
+            Layout = tlCenter
+          end
+          object Label41: TLabel
+            Left = 5
+            Top = 80
+            Width = 65
+            Height = 22
+            AutoSize = False
+            Caption = 'Z Shift:'
             Layout = tlCenter
           end
           object UnitShiftXSpinEdit: TSpinEdit
@@ -3534,9 +3589,9 @@ object VVFrmMain: TVVFrmMain
           end
           object TurretRotationBar: TTrackBar
             Left = 165
-            Top = 48
+            Top = 24
             Width = 121
-            Height = 17
+            Height = 9
             Max = 180
             Min = -180
             TabOrder = 3
@@ -3546,7 +3601,7 @@ object VVFrmMain: TVVFrmMain
           end
           object UnitCountCombo: TComboBox
             Left = 69
-            Top = 80
+            Top = 103
             Width = 57
             Height = 21
             ItemHeight = 13
@@ -3561,7 +3616,7 @@ object VVFrmMain: TVVFrmMain
           end
           object UnitSpaceEdit: TSpinEdit
             Left = 69
-            Top = 104
+            Top = 127
             Width = 57
             Height = 22
             MaxValue = 0
@@ -3570,14 +3625,46 @@ object VVFrmMain: TVVFrmMain
             Value = 15
             OnChange = UnitSpaceEditChange
           end
+          object EdOffsetX: TEdit
+            Left = 179
+            Top = 56
+            Width = 48
+            Height = 21
+            TabOrder = 6
+            OnChange = EdOffsetXChange
+          end
+          object EdOffsetY: TEdit
+            Left = 259
+            Top = 56
+            Width = 48
+            Height = 21
+            TabOrder = 7
+            OnChange = EdOffsetYChange
+          end
+          object EdOffsetZ: TEdit
+            Left = 339
+            Top = 56
+            Width = 48
+            Height = 21
+            TabOrder = 8
+            OnChange = EdOffsetZChange
+          end
+          object UnitShiftZSpinEdit: TSpinEdit
+            Left = 68
+            Top = 80
+            Width = 57
+            Height = 22
+            MaxValue = 0
+            MinValue = 0
+            TabOrder = 9
+            Value = 0
+            OnChange = UnitShiftZSpinEditChange
+          end
         end
         object TabSheet5: TTabSheet
           Caption = 'Lighting'
           ImageIndex = 4
-          ExplicitLeft = 0
-          ExplicitTop = 0
-          ExplicitWidth = 0
-          ExplicitHeight = 0
+          ExplicitHeight = 130
           object Label19: TLabel
             Left = 8
             Top = 8
@@ -3798,10 +3885,7 @@ object VVFrmMain: TVVFrmMain
         object TabSheet2: TTabSheet
           Caption = 'Misc && OpenGL Window'
           ImageIndex = 1
-          ExplicitLeft = 0
-          ExplicitTop = 0
-          ExplicitWidth = 0
-          ExplicitHeight = 0
+          ExplicitHeight = 130
           object Label17: TLabel
             Left = 142
             Top = 64
@@ -3969,13 +4053,14 @@ object VVFrmMain: TVVFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 535
+    Top = 554
     Width = 790
     Height = 19
     Panels = <
       item
         Width = 100
       end>
+    ExplicitTop = 535
   end
   object MainMenu1: TMainMenu
     Images = RemapImageList
