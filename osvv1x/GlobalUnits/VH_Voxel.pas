@@ -4,9 +4,10 @@ interface
 
 Uses OpenGl15,SysUtils,Voxel,VH_Global,VH_Types,Math3d,HVA,palette,Windows;
 
+procedure ClearVoxelBoxes(var _VoxelBoxGroup: TVoxelBoxs; var _Num: integer);
 procedure UpdateVoxelList;
 procedure UpdateVoxelList2(const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; Var VoxelBox_No : Integer; Const HVAOpen : Boolean; HVA : THVA; Frames : Integer);
-Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var MB,MB2 : TVector3f);
+Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var _Scale,_Offset : TVector3f);
 Procedure GetOffsetAndSize(Const Vxl : TVoxel; i : Integer; Var Size,Offset : TVector3f);
 Function GetVXLColorWithSelection(Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
 
@@ -40,19 +41,33 @@ begin
       Result := false;
 end;
 
+procedure ClearVoxelBoxes(var _VoxelBoxGroup: TVoxelBoxs; var _Num: integer);
+var
+   sec : integer;
+begin
+   if _Num > 0 then
+   begin
+      for sec := Low(_VoxelBoxGroup.Sections) to High(_VoxelBoxGroup.Sections) do
+      begin
+         If _VoxelBoxGroup.Sections[sec].List > 0 then
+         begin
+            glDeleteLists(_VoxelBoxGroup.Sections[sec].List, 1);
+            _VoxelBoxGroup.Sections[sec].List := 0;
+         end;
+         SetLength(_VoxelBoxGroup.Sections[sec].Boxs,0);
+         _VoxelBoxGroup.Sections[sec].NumBoxs := 0;
+      end;
+      SetLength(_VoxelBoxGroup.Sections,0);
+   end;
+   _VoxelBoxGroup.NumSections := 0;
+   _Num := 0;
+end;
+
 procedure UpdateVoxelList;
 begin
-   VoxelBox_No := 0;
-   VoxelBoxes.NumSections := 0;
-   SetLength(VoxelBoxes.Sections,VoxelBoxes.NumSections);
-
-   VoxelBox_NoT := 0;
-   VoxelBoxesT.NumSections := 0;
-   SetLength(VoxelBoxesT.Sections,VoxelBoxesT.NumSections);
-
-   VoxelBox_NoB := 0;
-   VoxelBoxesB.NumSections := 0;
-   SetLength(VoxelBoxesB.Sections,VoxelBoxesB.NumSections);
+   ClearVoxelBoxes(VoxelBoxes,VoxelBox_No);
+   ClearVoxelBoxes(VoxelBoxesT,VoxelBox_NoT);
+   ClearVoxelBoxes(VoxelBoxesB,VoxelBox_NoB);
 
    LowestZ := 1000;
 
@@ -73,16 +88,8 @@ var
    num : integer;
    CD : TVector3f;
 begin
-   VoxelBox_No := 0;
-   if VoxelBoxes.NumSections > 0 then
-      for x := 0 to VoxelBoxes.NumSections-1 do
-         If VoxelBoxes.Sections[x].List > 0 then
-            glDeleteLists(VoxelBoxes.Sections[x].List, 1);
-
    VoxelBoxes.NumSections := VXL.Header.NumSections;
-   SetLength(VoxelBoxes.Sections,0);
    SetLength(VoxelBoxes.Sections,VXL.Header.NumSections);
-
    for i := 0 to VXL.Header.NumSections-1 do
    begin
       VoxelBoxes.Sections[i].NumBoxs := 0;
@@ -158,27 +165,27 @@ begin
    end;
 end;
 
-Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var MB,MB2 : TVector3f);
+Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var _Scale,_Offset : TVector3f);
 begin
    // As far as I could understand, this is the scale.
-   MB.x := (Vxl.Section[i].Tailer.MaxBounds[1]-Vxl.Section[i].Tailer.MinBounds[1])/Vxl.Section[i].Tailer.xSize;
-   MB.y := (Vxl.Section[i].Tailer.MaxBounds[2]-Vxl.Section[i].Tailer.MinBounds[2])/Vxl.Section[i].Tailer.ySize;
-   MB.z := (Vxl.Section[i].Tailer.MaxBounds[3]-Vxl.Section[i].Tailer.MinBounds[3])/Vxl.Section[i].Tailer.zSize;
+   _Scale.x := (Vxl.Section[i].Tailer.MaxBounds[1]-Vxl.Section[i].Tailer.MinBounds[1])/Vxl.Section[i].Tailer.xSize;
+   _Scale.y := (Vxl.Section[i].Tailer.MaxBounds[2]-Vxl.Section[i].Tailer.MinBounds[2])/Vxl.Section[i].Tailer.ySize;
+   _Scale.z := (Vxl.Section[i].Tailer.MaxBounds[3]-Vxl.Section[i].Tailer.MinBounds[3])/Vxl.Section[i].Tailer.zSize;
    // That's the offset.
-   MB2.x := Vxl.Section[i].Tailer.MinBounds[1]; //Vxl.Section[i].Tailer.MaxBounds[1] - ((Vxl.Section[i].Tailer.MaxBounds[1]-Vxl.Section[i].Tailer.MinBounds[1]));
-   MB2.y := Vxl.Section[i].Tailer.MinBounds[2]; //Vxl.Section[i].Tailer.MaxBounds[2] - ((Vxl.Section[i].Tailer.MaxBounds[2]-Vxl.Section[i].Tailer.MinBounds[2]));
-   MB2.z := Vxl.Section[i].Tailer.MinBounds[3]; //Vxl.Section[i].Tailer.MaxBounds[3] - ((Vxl.Section[i].Tailer.MaxBounds[3]-Vxl.Section[i].Tailer.MinBounds[3]));
+   _Offset.x := Vxl.Section[i].Tailer.MinBounds[1];
+   _Offset.y := Vxl.Section[i].Tailer.MinBounds[2];
+   _Offset.z := Vxl.Section[i].Tailer.MinBounds[3];
 end;
 
 Procedure GetOffsetAndSize(Const Vxl : TVoxel; i : Integer; Var Size,Offset : TVector3f);
 begin
-   Size.x := (Vxl.Section[i].Tailer.MaxBounds[1]-Vxl.Section[i].Tailer.MinBounds[1])/Vxl.Section[i].Tailer.xSize;
-   Size.y := (Vxl.Section[i].Tailer.MaxBounds[2]-Vxl.Section[i].Tailer.MinBounds[2])/Vxl.Section[i].Tailer.ySize;
-   Size.z := (Vxl.Section[i].Tailer.MaxBounds[3]-Vxl.Section[i].Tailer.MinBounds[3])/Vxl.Section[i].Tailer.zSize;
+   Size.x := (Vxl.Section[i].Tailer.MaxBounds[1] - Vxl.Section[i].Tailer.MinBounds[1])/Vxl.Section[i].Tailer.xSize;
+   Size.y := (Vxl.Section[i].Tailer.MaxBounds[2] - Vxl.Section[i].Tailer.MinBounds[2])/Vxl.Section[i].Tailer.ySize;
+   Size.z := (Vxl.Section[i].Tailer.MaxBounds[3] - Vxl.Section[i].Tailer.MinBounds[3])/Vxl.Section[i].Tailer.zSize;
 
-   Offset.x := Vxl.Section[i].Tailer.MaxBounds[1] + (-(Vxl.Section[i].Tailer.MaxBounds[1]-Vxl.Section[i].Tailer.MinBounds[1])/2);
-   Offset.y := Vxl.Section[i].Tailer.MaxBounds[2] + (-(Vxl.Section[i].Tailer.MaxBounds[2]-Vxl.Section[i].Tailer.MinBounds[2])/2);
-   Offset.z := Vxl.Section[i].Tailer.MaxBounds[3] + (-(Vxl.Section[i].Tailer.MaxBounds[3]-Vxl.Section[i].Tailer.MinBounds[3])/2);
+   Offset.x := (Vxl.Section[i].Tailer.MaxBounds[1] - Vxl.Section[i].Tailer.MinBounds[1])/2;
+   Offset.y := (Vxl.Section[i].Tailer.MaxBounds[2] - Vxl.Section[i].Tailer.MinBounds[2])/2;
+   Offset.z := (Vxl.Section[i].Tailer.MaxBounds[3] - Vxl.Section[i].Tailer.MinBounds[3])/2;
 
    ScaleVector3f(Offset,Size);
 end;
@@ -280,27 +287,30 @@ Var
 begin
    FName := ExtractFileDir(Filename) + '\' + copy(ExtractFilename(Filename),1,Length(ExtractFilename(Filename))-Length('.vxl')) + Ext;
 
-   If Not FileExists(FName) then exit;
-
-   Try
-      Voxel.Free;
-      Voxel := TVoxel.Create;
-      Voxel.LoadFromFile(FName);
-      VoxelOpen := True;
-   Except
-   End;
+   if VoxelOpen then
+      try
+         Voxel.Free;
+      finally
+         VoxelOpen := false;
+      end;
+   If FileExists(FName) then
+   begin
+      Try
+         Voxel := TVoxel.Create;
+         Voxel.LoadFromFile(FName);
+         VoxelOpen := True;
+      Except
+         VoxelOpen := False;
+      End;
+   end
+   else
+   begin
+      VoxelOpen := False;
+   end;
 end;
 
 Procedure LoadVoxel(Filename : String);
 begin
-   VoxelOpen := False;
-   VoxelOpenT := False;
-   VoxelOpenB := False;
-
-   HVAOpen := False;
-   HVAOpenT := False;
-   HVAOpenB := False;
-
    VXLChanged := False;
 
    HVAFrame := 0;

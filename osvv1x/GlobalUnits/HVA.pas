@@ -16,6 +16,8 @@ Procedure LoadHVA2(var HVAFile : THVA; var HVAOpen : Boolean; const Filename,Ext
 Procedure SaveHVA(Filename : string);
 Procedure SaveHVA2(var HVAFile : THVA; const Filename,Ext : string);
 
+procedure ClearHVA(var _HVA : THVA);
+
 Function ApplyMatrix2(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section,Frames : Integer) : TVector3f;
 Function ApplyMatrix3(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
 
@@ -60,6 +62,12 @@ begin
       LoadHVA2(HVATurret,HVAOpenT,Filename,'tur.hva');
       If not HVAOpenT then
          CreateHVA(VoxelTurret,HVATurret);
+   end
+   else
+   begin
+      if HVAOpenT then
+         ClearHVA(HVATurret);
+      HVAOpenT := false;
    end;
 
    If VoxelOpenB then
@@ -67,6 +75,12 @@ begin
       LoadHVA2(HVABarrel,HVAOpenB,Filename,'barl.hva');
       If not HVAOpenB then
          CreateHVA(VoxelBarrel,HVABarrel);
+   end
+   else
+   begin
+      if HVAOpenB then
+         ClearHVA(HVABarrel);
+      HVAOpenB := false;
    end;
 end;
 
@@ -76,6 +90,8 @@ var
    x : integer;
    TFilename : string;
 begin
+   if HVAOpen then
+      ClearHVA(HVAFile);
    TFilename := extractfiledir(Filename) + '\' + copy(Extractfilename(Filename),1,Length(Extractfilename(Filename))-Length('.hva')) + Ext;
    HVAOpen := false;
    if not FileExists(TFilename) then exit;
@@ -99,7 +115,7 @@ begin
    CloseFile(f);
    HVAOpen := True;
    If HVAFile.Header.N_Frames < 1 then
-   HVAOpen := False;
+      HVAOpen := False;
 end;
 
 Procedure SaveHVA(Filename : string);
@@ -112,6 +128,16 @@ begin
 
    if VoxelOpenB then
       SaveHVA2(HVABarrel,Filename,'barl.hva');
+end;
+
+procedure ClearHVA(var _HVA : THVA);
+begin
+   SetLength(_HVA.Data, 0);
+   SetLength(_HVA.TransformMatrixs, 0);
+   _HVA.Data_no := 0;
+   _HVA.HigherLevel := nil;
+   _HVA.Header.N_Frames := 0;
+   _HVA.Header.N_Sections := 0;
 end;
 
 Procedure SaveHVA2(var HVAFile : THVA; const Filename,Ext : string);

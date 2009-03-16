@@ -6,7 +6,7 @@ Uses Windows,SysUtils,Math3d,OpenGl15,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,
 
 {$define DEBUG_VOXEL_BOUNDS}
 
-Procedure DrawBox(Position,Color : TVector3f; Size : single; VoxelBox: TVoxelBox);
+Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; VoxelBox: TVoxelBox);
 Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
 Procedure DrawVoxels(ShiftX,ShiftY,Rot : Extended);
 Procedure DrawWorld;
@@ -56,16 +56,16 @@ begin
       glNormal3f(RA2Normals[trunc(N)].X{*1.2}, RA2Normals[trunc(N)].Y{*1.2}, RA2Normals[trunc(N)].Z{*1.2});
 end;
 
-Procedure DrawBox(Position,Color : TVector3f; Size : single; VoxelBox: TVoxelBox);
+Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; VoxelBox: TVoxelBox);
 var
    East,West,South,North,Ceil,Floor : single;
 begin
-   East := Position.X + Size;
-   West := Position.X - Size;
-   Ceil := Position.Y + Size;
-   Floor := Position.Y - Size;
-   South := Position.Z + Size;
-   North := Position.Z - Size;
+   East := Position.X + Size.X;
+   West := Position.X - Size.X;
+   Ceil := Position.Y + Size.Y;
+   Floor := Position.Y - Size.Y;
+   South := Position.Z + Size.Z;
+   North := Position.Z - Size.Z;
 
    glBegin(GL_QUADS);
 
@@ -126,24 +126,27 @@ end;
 Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
 var
    x,s : integer;
-   MB,MB2 : TVector3f;
+   Scale,FinalScale,Offset : TVector3f;
 begin
    if VoxelBox_No < 1 then exit;
 
    for s := 0 to VoxelBoxes.NumSections-1 do
       If ((CurrentSection = s) and (PVxl = CurrentSectionVoxel)) or (DrawAllOfVoxel) or (CurrentSection = -1) then
       begin
-         GETMinMaxBounds(Vxl,s,MB,MB2);
+         GETMinMaxBounds(Vxl,s,Scale,Offset);
          inc(VoxelsUsed,VoxelBoxes.Sections[s].NumBoxs);
+         FinalScale := ScaleVector(Scale,Size);
 
          If (VoxelBoxes.Sections[s].List < 1) or RebuildLists then
          begin
+            if (VoxelBoxes.Sections[s].List > 0) then
+               glDeleteLists(VoxelBoxes.Sections[s].List,1);
             VoxelBoxes.Sections[s].List := glGenLists(1);
             glNewList(VoxelBoxes.Sections[s].List, GL_COMPILE);
             glPushMatrix;
             for x := 0 to VoxelBoxes.Sections[s].NumBoxs-1 do
             begin
-               DrawBox(GetPosWithSize(ScaleVector3f(VoxelBoxes.Sections[s].Boxs[x].Position,MB),Size),GetVXLColorWithSelection(Vxl,VoxelBoxes.Sections[s].Boxs[x].Color,VoxelBoxes.Sections[s].Boxs[x].Normal,VoxelBoxes.Sections[s].Boxs[x].Section),Size,VoxelBoxes.Sections[s].Boxs[x]);
+               DrawBox(GetPosWithSize(ScaleVector3f(VoxelBoxes.Sections[s].Boxs[x].Position,Scale),Size),GetVXLColorWithSelection(Vxl,VoxelBoxes.Sections[s].Boxs[x].Color,VoxelBoxes.Sections[s].Boxs[x].Normal,VoxelBoxes.Sections[s].Boxs[x].Section),FinalScale,VoxelBoxes.Sections[s].Boxs[x]);
             end;
             glPopMatrix;
             glEndList;
@@ -151,8 +154,8 @@ begin
          end;
 
          glPushMatrix;
-            ApplyMatrix3(HVA,Vxl,ScaleVector(MB,Size),s,HVAFrame);
-            glTranslatef(MB2.X*Size*2, MB2.Y*Size*2, MB2.Z*Size*2);
+            ApplyMatrix3(HVA,Vxl,FinalScale,s,HVAFrame);
+            glTranslatef(Offset.X*Size*2, Offset.Y*Size*2, Offset.Z*Size*2);
             glCallList(VoxelBoxes.Sections[s].List);
          glPopMatrix;
       end;
@@ -452,6 +455,7 @@ begin
    glLoadIdentity();                                       // Reset The View
 
    glTranslatef(Position.X, Position.Y, Position.Z);
+   glNormal3f(0,0,0);
 
    glRotatef(Rotation.Y, 0, 1, 0);
    glRotatef(Rotation.X, 1, 0, 0);
@@ -511,7 +515,7 @@ begin
    SkyList := glGenLists(1);
    glNewList(SkyList, GL_COMPILE);
       // Back
-
+      glNormal3f(0,0,0);
       glBindTexture(GL_TEXTURE_2D, SkyTexList[SkyTex].Textures[3]);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -619,6 +623,7 @@ begin
    glLoadIdentity();                                       // Reset The View
 
    glTranslatef(Position.X, Position.Y, Position.Z);
+   glNormal3f(0,0,0);
 
    glRotatef(Rotation.Y, 0, 1, 0);
    glRotatef(Rotation.X, 1, 0, 0);

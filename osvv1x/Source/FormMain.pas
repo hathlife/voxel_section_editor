@@ -19,8 +19,8 @@ uses
 
 Const
 APPLICATION_TITLE = 'Open Source Voxel Viewer';
-APPLICATION_VER = '1.8' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
-APPLICATION_VER_ID = '1.8';
+APPLICATION_VER = '1.81' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
+APPLICATION_VER_ID = '1.81';
 APPLICATION_BY = 'Stucuk && Banshee';
 
 type

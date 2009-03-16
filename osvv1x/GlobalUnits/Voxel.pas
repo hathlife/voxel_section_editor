@@ -83,6 +83,7 @@ type
          procedure DefaultTransforms;
          function PackVoxel(Unpacked: TVoxelUnpacked): TVoxelPacked;
          procedure UnpackVoxel(PackedVoxel: TVoxelPacked; var dest: TVoxelUnpacked);
+         procedure ClearDataSize;
       public
          Data: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
          MaxNormal, // the highest normal value
@@ -96,6 +97,7 @@ type
          ThumbVisible: array[0..2] of Boolean; // does not rotate with viewport changes
          constructor Create(); overload;
          constructor Create(Name: string; Number, XSize,YSize,ZSize: Integer); overload;
+         destructor Destroy; override;
          procedure Resize(XSize,YSize,ZSize: Integer);
 
       //Plasmadroid v1.4+ drawing tools
@@ -148,6 +150,7 @@ type
          Header: TVoxelHeader;
          Section: array of TVoxelSection;
          constructor Create;
+         destructor Destroy; override;
          procedure LoadFromFile(Fname: string); // examine ErrorCode for success
          procedure SaveToFile(Fname: string); // examine ErrorCode for success
          function isOpen: Boolean;
@@ -242,10 +245,6 @@ procedure TVoxelSection.Resize(XSize,YSize,ZSize: Integer);
 begin
    // memory alloc
    SetDataSize(XSize,YSize,ZSize); // will preserve contents where possible I believe
-   // set tailer
-   Tailer.XSize := XSize;
-   Tailer.YSize := YSize;
-   Tailer.ZSize := ZSize;
    DefaultTransforms;
    // and (re)create views
    InitViews;
@@ -314,10 +313,6 @@ begin
    Header.Number := Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
-   // create tailer
-   Tailer.XSize := XSize;
-   Tailer.YSize := YSize;
-   Tailer.ZSize := ZSize;
    Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
 
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
@@ -328,6 +323,13 @@ begin
 end;
 
 constructor TVoxelSection.Create; begin end;
+
+destructor TVoxelSection.Destroy;
+begin
+   ClearDataSize;
+   inherited Destroy;
+end;
+
 
 function TVoxelSection.Name: string;
 begin
@@ -393,13 +395,50 @@ procedure TVoxelSection.SetDataSize(XSize,YSize,ZSize: Integer);
 var
    x, y: Integer;
 begin
+   // first, we clear up the previous stuff.
+   if Tailer.XSize > XSize then
+   begin
+      for x := XSize to (Tailer.XSize - 1) do
+      begin
+         for y := 0 to Tailer.YSize - 1 do
+            SetLength(Data[x,y],0);
+         SetLength(Data[x],0);
+      end;
+   end;
+   // Now we create.
    SetLength(Data,XSize);
    for x := 0 to (XSize - 1) do
    begin
+      // First we clear up the previous stuff.
+      if YSize < Tailer.YSize then
+      begin
+         for y := YSize to (Tailer.YSize - 1) do
+            SetLength(Data[x,y],0);
+      end;
+      // Now we create.
       SetLength(Data[x],YSize);
       for y := 0 to (YSize - 1) do
          SetLength(Data[x,y],ZSize);
    end;
+   Tailer.XSize := XSize;
+   Tailer.YSize := YSize;
+   Tailer.ZSize := ZSize;
+end;
+
+procedure TVoxelSection.ClearDataSize;
+var
+   x, y: Integer;
+begin
+   for x := High(Data) downto Low(Data) do
+   begin
+      for y := High(Data[x]) downto Low(Data[x]) do
+         SetLength(Data[x,y],0);
+      SetLength(Data[x],0);
+   end;
+   SetLength(Data,0);
+   Tailer.XSize := 0;
+   Tailer.YSize := 0;
+   Tailer.ZSize := 0;
 end;
 
 //This catches the crashes!
@@ -434,7 +473,7 @@ begin
    SetLength(SpanEnd,0);
    SetLength(SpanStart,0);
    if Err then
-      SetDataSize(0,0,0);
+      ClearDataSize;
 end;
 // <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 // <><><><><><><><><><><> LoadFromFile Starts Here <><><><><><><><><><>
@@ -507,7 +546,7 @@ begin
       SpanDataLen := SpanEnd[i];
    // find first span end
       i := 0;
-      while (SpanStart[i] = -1) and (i < SpanCount) do
+      while (SpanStart[i] = -1) and (i < (SpanCount-1)) do
          Inc(i);
       Dec(SpanDataLen,SpanStart[i]);
       Inc(SpanDataLen); // safety
@@ -707,6 +746,17 @@ begin
    ErrorCode := OK;
    Filename := '';
    Loaded := False;
+end;
+
+destructor TVoxel.Destroy;
+var
+   i : integer;
+begin
+   for i := High(Section) downto Low(Section) do
+   begin
+      Section[i].Free;
+   end;
+   inherited Destroy;
 end;
 
 procedure TVoxel.LoadFromFile(FName: string);

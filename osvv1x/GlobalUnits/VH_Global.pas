@@ -6,7 +6,7 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
 ENGINE_TITLE = 'Voxel HVA Engine';
-ENGINE_VER = '1.3';
+ENGINE_VER = '1.35';
 ENGINE_BY = 'Stucuk and Banshee';
 
 var
@@ -88,7 +88,7 @@ Const
 RemapColourMap : array [0..8] of TVector3b =
   (
   ( //DarkRed
-  R : 146;
+  R : 244;
   G : 3;
   B : 3;
   ),
