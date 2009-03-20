@@ -8,6 +8,8 @@ var
    TSNormals_Table : array of TVector3f;
    RA2Normals_Table : array of TVector3f;
    CubeNormals_Table : array of TVector3f;
+   FaceNormals_Table : array of TVector3f;
+   VertAndEdgeNormals_Table: array of TVector3f;
 
 implementation
 
@@ -15,6 +17,8 @@ begin
    SetLength(RA2Normals_Table,244);
    SetLength(TSNormals_Table,36);
    SetLength(CubeNormals_Table,26);
+   SetLength(FaceNormals_Table,6);
+   SetLength(VertAndEdgeNormals_Table,20);
 
 TSNormals_Table[0].X := 0.671213984489441;
 TSNormals_Table[0].Y := 0.198492005467415;
@@ -938,6 +942,87 @@ CubeNormals_Table[24].Z := -1;
 CubeNormals_Table[25].X := 1;
 CubeNormals_Table[25].Y := -1;
 CubeNormals_Table[25].Z := 1;
-   
+
+
+FaceNormals_Table[0].X := -1;
+FaceNormals_Table[0].Y := 0;
+FaceNormals_Table[0].Z := 0;
+FaceNormals_Table[1].X := 1;
+FaceNormals_Table[1].Y := 0;
+FaceNormals_Table[1].Z := 0;
+FaceNormals_Table[2].X := 0;
+FaceNormals_Table[2].Y := -1;
+FaceNormals_Table[2].Z := 0;
+FaceNormals_Table[3].X := 0;
+FaceNormals_Table[3].Y := 1;
+FaceNormals_Table[3].Z := 0;
+FaceNormals_Table[4].X := 0;
+FaceNormals_Table[4].Y := 0;
+FaceNormals_Table[4].Z := -1;
+FaceNormals_Table[5].X := 0;
+FaceNormals_Table[5].Y := 0;
+FaceNormals_Table[5].Z := 1;
+
+VertAndEdgeNormals_Table[0].X := -1;
+VertAndEdgeNormals_Table[0].Y := 0;
+VertAndEdgeNormals_Table[0].Z := 1;
+VertAndEdgeNormals_Table[1].X := -1;
+VertAndEdgeNormals_Table[1].Y := 0;
+VertAndEdgeNormals_Table[1].Z := -1;
+VertAndEdgeNormals_Table[2].X := -1;
+VertAndEdgeNormals_Table[2].Y := 1;
+VertAndEdgeNormals_Table[2].Z := 0;
+VertAndEdgeNormals_Table[3].X := -1;
+VertAndEdgeNormals_Table[3].Y := -1;
+VertAndEdgeNormals_Table[3].Z := 0;
+VertAndEdgeNormals_Table[4].X := -1;
+VertAndEdgeNormals_Table[4].Y := 1;
+VertAndEdgeNormals_Table[4].Z := -1;
+VertAndEdgeNormals_Table[5].X := -1;
+VertAndEdgeNormals_Table[5].Y := 1;
+VertAndEdgeNormals_Table[5].Z := 1;
+VertAndEdgeNormals_Table[6].X := -1;
+VertAndEdgeNormals_Table[6].Y := -1;
+VertAndEdgeNormals_Table[6].Z := -1;
+VertAndEdgeNormals_Table[7].X := -1;
+VertAndEdgeNormals_Table[7].Y := -1;
+VertAndEdgeNormals_Table[7].Z := 1;
+VertAndEdgeNormals_Table[8].X := 0;
+VertAndEdgeNormals_Table[8].Y := -1;
+VertAndEdgeNormals_Table[8].Z := 1;
+VertAndEdgeNormals_Table[9].X := 0;
+VertAndEdgeNormals_Table[9].Y := 1;
+VertAndEdgeNormals_Table[9].Z := 1;
+VertAndEdgeNormals_Table[10].X := 0;
+VertAndEdgeNormals_Table[10].Y := 1;
+VertAndEdgeNormals_Table[10].Z := -1;
+VertAndEdgeNormals_Table[11].X := 0;
+VertAndEdgeNormals_Table[11].Y := -1;
+VertAndEdgeNormals_Table[11].Z := -1;
+VertAndEdgeNormals_Table[12].X := 1;
+VertAndEdgeNormals_Table[12].Y := 0;
+VertAndEdgeNormals_Table[12].Z := 1;
+VertAndEdgeNormals_Table[13].X := 1;
+VertAndEdgeNormals_Table[13].Y := 0;
+VertAndEdgeNormals_Table[13].Z := -1;
+VertAndEdgeNormals_Table[14].X := 1;
+VertAndEdgeNormals_Table[14].Y := 1;
+VertAndEdgeNormals_Table[14].Z := 0;
+VertAndEdgeNormals_Table[15].X := 1;
+VertAndEdgeNormals_Table[15].Y := -1;
+VertAndEdgeNormals_Table[15].Z := 0;
+VertAndEdgeNormals_Table[16].X := 1;
+VertAndEdgeNormals_Table[16].Y := 1;
+VertAndEdgeNormals_Table[16].Z := -1;
+VertAndEdgeNormals_Table[17].X := 1;
+VertAndEdgeNormals_Table[17].Y := 1;
+VertAndEdgeNormals_Table[17].Z := 1;
+VertAndEdgeNormals_Table[18].X := 1;
+VertAndEdgeNormals_Table[18].Y := -1;
+VertAndEdgeNormals_Table[18].Z := -1;
+VertAndEdgeNormals_Table[19].X := 1;
+VertAndEdgeNormals_Table[19].Y := -1;
+VertAndEdgeNormals_Table[19].Z := 1;
+
 
 end.

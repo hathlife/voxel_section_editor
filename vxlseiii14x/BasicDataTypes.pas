@@ -96,7 +96,9 @@ type
    EVoxelViewDir = (dirTowards, dirAway);
    TVoxelType = (vtLand, vtAir);
    TGLMatrixf4 = array[0..3, 0..3] of Single;
-   
+
+   T3DIntGrid = array of array of array of integer;
+
 implementation
 
 end.

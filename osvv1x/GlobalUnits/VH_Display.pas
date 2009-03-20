@@ -123,6 +123,56 @@ begin
    glEnd();
 end;
 
+Procedure DrawBullet(Position,Color : TVector3f; Size : TVector3f);
+var
+   East,West,South,North,Ceil,Floor : single;
+begin
+   East := Position.X + Size.X;
+   West := Position.X - Size.X;
+   Ceil := Position.Y + Size.Y;
+   Floor := Position.Y - Size.Y;
+   South := Position.Z + Size.Z;
+   North := Position.Z - Size.Z;
+
+   glBegin(GL_QUADS);
+
+      glColor3f(Color.X,Color.Y,Color.Z);			// Set The Color
+
+
+      glNormal3f(0, 0, 1);
+      glVertex3f(East, Ceil, North);			// Top Right Of The Quad (Top)
+	   glVertex3f(West, Ceil, North);			// Top Left Of The Quad (Top)
+      glVertex3f(West, Ceil, South);			// Bottom Left Of The Quad (Top)
+     	glVertex3f(East, Ceil, South);			// Bottom Right Of The Quad (Top)
+      glNormal3f(0, 0, -1);
+	   glVertex3f(East, Floor, South);			// Top Right Of The Quad (Bottom)
+      glVertex3f(West, Floor, South);			// Top Left Of The Quad (Bottom)
+	   glVertex3f(West, Floor, North);			// Bottom Left Of The Quad (Bottom)
+	   glVertex3f(East, Floor, North);			// Bottom Right Of The Quad (Bottom)
+      glNormal3f(0, -1, 0);
+	   glVertex3f(East, Ceil, South);			// Top Right Of The Quad (Front)
+	   glVertex3f(West, Ceil, South);			// Top Left Of The Quad (Front)
+   	glVertex3f(West, Floor,South);			// Bottom Left Of The Quad (Front)
+	   glVertex3f(East, Floor,South);			// Bottom Right Of The Quad (Front)
+      glNormal3f(0, 1, 0);
+	   glVertex3f(East, Floor,North);			// Bottom Left Of The Quad (Back)
+	   glVertex3f(West, Floor,North);			// Bottom Right Of The Quad (Back)
+	   glVertex3f(West, Ceil, North);			// Top Right Of The Quad (Back)
+	   glVertex3f(East, Ceil, North);			// Top Left Of The Quad (Back)
+      glNormal3f(1, 0, 0);
+	   glVertex3f(West, Ceil, South);			// Top Right Of The Quad (Left)
+	   glVertex3f(West, Ceil, North);			// Top Left Of The Quad (Left)
+	   glVertex3f(West, Floor,North);			// Bottom Left Of The Quad (Left)
+	   glVertex3f(West, Floor,South);			// Bottom Right Of The Quad (Left)
+      glNormal3f(-1, 0, 0);
+   	glVertex3f( East, Ceil, North);			// Top Right Of The Quad (Right)
+	   glVertex3f( East, Ceil, South);			// Top Left Of The Quad (Right)
+	   glVertex3f( East, Floor,South);			// Bottom Left Of The Quad (Right)
+	   glVertex3f( East, Floor,North);			// Bottom Right Of The Quad (Right)
+   glEnd();
+end;
+
+
 Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
 var
    x,s : integer;
@@ -182,21 +232,24 @@ begin
 
    DrawVoxel(@VoxelFile,VoxelFile,VoxelBoxes,VoxelBox_No,True,HVAFile,HVAFrame);
 
+   glPushMatrix;
    glRotatef(VXLTurretRotation.X, 0, 0, 1);
 
-   If DrawTurret then
-   begin
-      // Temporary code:
-      HVATurret.HigherLevel := @HVAFile;
-      glTranslatef(TurretOffset.X * Size,TurretOffset.Y * Size,TurretOffset.Z * Size);
-      DrawVoxel(@VoxelTurret,VoxelTurret,VoxelBoxesT,VoxelBox_NoT,True,HVATurret,HVAFrameT);
-   end;
-   If DrawBarrel then
-   begin
-      // Temporary code:
-      HVABarrel.HigherLevel := @HVATurret;
-      DrawVoxel(@VoxelBarrel,VoxelBarrel,VoxelBoxesB,VoxelBox_NoB,True,HVABarrel,HVAFrameB);
-   end;
+      If DrawTurret then
+      begin
+         // Temporary code:
+         HVATurret.HigherLevel := @HVAFile;
+         glTranslatef(TurretOffset.X * Size,TurretOffset.Y * Size,TurretOffset.Z * Size);
+         DrawVoxel(@VoxelTurret,VoxelTurret,VoxelBoxesT,VoxelBox_NoT,True,HVATurret,HVAFrameT);
+      end;
+      If DrawBarrel then
+      begin
+         // Temporary code:
+         HVABarrel.HigherLevel := @HVATurret;
+         DrawVoxel(@VoxelBarrel,VoxelBarrel,VoxelBoxesB,VoxelBox_NoB,True,HVABarrel,HVAFrameB);
+      end;
+   glPopMatrix;
+   glTranslatef(PrimaryFireFLH.X,PrimaryFireFLH.Y,PrimaryFireFLH.Z);
 
    If RebuildLists then
       RebuildLists := False;

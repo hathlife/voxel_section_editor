@@ -10,18 +10,45 @@ interface
 uses BasicDataTypes, Class3DPointList, Voxel, Voxel_Engine, Normals;
 
 const
+   // Voxel Map Fill Mode
    C_MODE_NONE = 0;
    C_MODE_ALL = 1;
    C_MODE_USED = 2;
    C_MODE_COLOUR = 3;
    C_MODE_NORMAL = 4;
 
+   // Pixel position in the volume.
    C_OUTSIDE_VOLUME = 0;
    C_ONE_AXIS_INFLUENCE = 1;
    C_TWO_AXIS_INFLUENCE = 2;
    C_THREE_AXIS_INFLUENCE = 3;
+   C_SEMI_SURFACE = 3;
    C_SURFACE = 4;
    C_INSIDE_VOLUME = 5;
+
+   // Semi-surfaces configuration
+   C_SF_BOTTOM_FRONT_LEFT_POINT = 1;
+   C_SF_BOTTOM_FRONT_RIGHT_POINT = 2;
+   C_SF_BOTTOM_BACK_LEFT_POINT = 4;
+   C_SF_BOTTOM_BACK_RIGHT_POINT = 8;
+   C_SF_TOP_FRONT_LEFT_POINT = $10;
+   C_SF_TOP_FRONT_RIGHT_POINT = $20;
+   C_SF_TOP_BACK_LEFT_POINT = $40;
+   C_SF_TOP_BACK_RIGHT_POINT = $80;
+   C_SF_BOTTOM_FRONT_LINE = $103;
+   C_SF_BOTTOM_BACK_LINE = $20C;
+   C_SF_BOTTOM_LEFT_LINE = $405;
+   C_SF_BOTTOM_RIGHT_LINE = $80A;
+   C_SF_TOP_FRONT_LINE = $1030;
+   C_SF_TOP_BACK_LINE = $20C0;
+   C_SF_TOP_LEFT_LINE = $4050;
+   C_SF_TOP_RIGHT_LINE = $80A0;
+   C_SF_LEFT_FRONT_LINE = $10011;
+   C_SF_LEFT_BACK_LINE = $20044;
+   C_SF_RIGHT_FRONT_LINE = $40022;
+   C_SF_RIGHT_BACK_LINE = $80088;
+
+
 
 type
    TVoxelMap = class
@@ -69,6 +96,7 @@ type
          procedure MapInfluences;
          procedure MapSurfaces(_Value: single);
          procedure MapSurfacesOnly(_Value: single);
+         procedure MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
          procedure ConvertValues(_Values : array of single);
@@ -651,6 +679,61 @@ begin
    end;
    Cube.Free;
 end;
+
+procedure TVoxelMap.MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
+var
+   x, y, z : integer;
+   FaceNeighboors : TNormals;
+   CurrentNormal : TVector3f;
+   VertsAndEdgesNeighboors: TNormals;
+   i, MaxFace, MaxEdge: integer;
+   found : boolean;
+begin
+   FaceNeighboors := TNormals.Create(7);
+   VertsAndEdgesNeighboors := TNormals.Create(8);
+   MaxFace := FaceNeighboors.GetLastID;
+   MaxEdge := VertsAndEdgesNeighboors.GetLastID;
+   for x := Low(FMap) to High(FMap) do
+      for y := Low(FMap[0]) to High(FMap[0]) do
+         for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+         begin
+            // Let's check if the surface has face neighbors
+            if FMap[x,y,z] = C_SURFACE then
+            begin
+               found := false;
+               i := 0;
+               while (i <= MaxFace) do
+               begin
+                  CurrentNormal := FaceNeighboors[i];
+                  if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= C_SURFACE) then
+                  begin
+                     found := true;
+                     i := MaxFace;
+                  end;
+                  inc(i);
+               end;
+               // if not found, it will generate semi-surfaces around it.
+               if not found then
+               begin
+                  i := 0;
+                  while (i <= MaxEdge) do
+                  begin
+                     CurrentNormal := VertsAndEdgesNeighboors[i];
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= C_SURFACE) then
+                     begin
+
+                     end;
+                     inc(i);
+                  end;
+
+
+               end;
+            end;
+         end;
+   FaceNeighboors.Free;
+   VertsAndEdgesNeighboors.Free;
+end;
+
 
 function TVoxelMap.SynchronizeWithSection(_Mode : integer; _Threshold : single): integer;
 var

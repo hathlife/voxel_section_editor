@@ -191,6 +191,14 @@ begin
    begin
       FPalette := Addr(CubeNormals_Table);
    end
+   else if FResolution = 7 then
+   begin
+      FPalette := Addr(FaceNormals_Table);
+   end
+   else if FResolution = 8 then
+   begin
+      FPalette := Addr(VertAndEdgeNormals_Table);
+   end
    else
       Initialize;
 end;

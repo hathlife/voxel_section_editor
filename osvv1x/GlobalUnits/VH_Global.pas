@@ -6,7 +6,7 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
 ENGINE_TITLE = 'Voxel HVA Engine';
-ENGINE_VER = '1.35';
+ENGINE_VER = '1.36';
 ENGINE_BY = 'Stucuk and Banshee';
 
 var
@@ -29,7 +29,12 @@ Xcoord,Xcoord2,Ycoord,Ycoord2,Zcoord,MouseButton,
 SCREEN_WIDTH,SCREEN_HEIGHT,GroundTex_No,
 Default_View,Axis : Integer;
 
-BGColor,FontColor,RemapColour,UnitShift,TurretOffset,CameraCenter : TVector3f;
+BGColor,FontColor,RemapColour,UnitShift,
+TurretOffset,CameraCenter : TVector3f;
+
+// Bullet
+PrimaryFireFLH, BulletPosition, BulletSpeed : TVector3f;
+ShowBullet : boolean;
 
 VoxelOpen,VoxelOpenT,VoxelOpenB,
 HVAOpen,HVAOpenT,HVAOpenB,
