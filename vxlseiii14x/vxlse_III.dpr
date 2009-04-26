@@ -53,7 +53,8 @@ uses
   NormalsConstants in 'NormalsConstants.pas',
   BasicDataTypes in 'BasicDataTypes.pas',
   Model in 'Model.pas',
-  VoxelMap in 'VoxelMap.pas';
+  VoxelMap in 'VoxelMap.pas',
+  BasicFunctions in 'BasicFunctions.pas';
 
 {$R *.res}
 

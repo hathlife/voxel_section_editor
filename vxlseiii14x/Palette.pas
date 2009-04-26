@@ -6,7 +6,7 @@ unit Palette;
 
 interface
 
-uses Graphics, Windows, SysUtils, math;
+uses Graphics, Windows, SysUtils, math, BasicDataTypes;
 
 const
 	TRANSPARENT = 0;
@@ -24,6 +24,8 @@ type
       procedure SetColour(_id : longword; _colour : TColor);
       function ReadRGB(_id : longword): TRGB;
       procedure SetRGB(_id : longword; _colour : TRGB);
+      function ReadGL(_id : longword): TVector3f;
+      procedure SetGL(_id: longword; _colour: TVector3f);
    public
       // Constructors
       constructor Create;
@@ -49,6 +51,7 @@ type
       // Properties
       property Colour[_id : longword] : TColor read ReadColour write SetColour; default;
       property ColourRGB[_id: longword] : TRGB read ReadRGB write SetRGB;
+      property ColourGL[_id: longword] : TVector3f read ReadGL write SetGL;
    end;
    PPalette = ^TPalette;
 
@@ -241,6 +244,37 @@ begin
    end;
 end;
 
+function TPalette.ReadGL(_id : longword): TVector3f;
+begin
+   if NumBits = 24 then
+   begin
+      Result.X := Byte(_id and $FF) / 255;
+      Result.Y := Byte((_id shr 8) and $FF) / 255;
+      Result.Z := Byte(_id shr 16) / 255;
+   end
+   else if NumBits = 8 then
+   begin
+      if (_id >= 0) and (_id < 256) then
+      begin
+         Result.X := Byte(FPalette[_id] and $FF) / 255;
+         Result.Y := Byte((FPalette[_id] shr 8) and $FF) / 255;
+         Result.Z := Byte(FPalette[_id] shr 16) / 255;
+      end
+      else
+      begin
+         Result.X := Byte(FPalette[0] and $FF) / 255;
+         Result.Y := Byte((FPalette[0] shr 8) and $FF) / 255;
+         Result.Z := Byte(FPalette[0] shr 16) / 255;
+      end;
+   end
+   else
+   begin
+      Result.X := Byte(_id and $FF) / 255;
+      Result.Y := Byte((_id shr 8) and $FF) / 255;
+      Result.Z := Byte(_id shr 16) / 255;
+   end;
+end;
+
 function TPalette.GetColourFromPalette(_colour : TColor): longword;
 var
    colour : integer;
@@ -369,6 +403,18 @@ begin
       end;
    end;
 end;
+
+procedure TPalette.SetGL(_id: longword; _colour: TVector3f);
+begin
+   if NumBits <> 24 then
+   begin
+      if (_id >= 0) and (_id <= High(FPalette)) then
+      begin
+         FPalette[_id] := (Round(_colour.X * 255) or (Round(_colour.Y * 255) shl 8) or (Round(_colour.Z * 255) shl 16));
+      end;
+   end;
+end;
+
 
 // Copies
 procedure TPalette.Assign(const _Palette: TPalette);

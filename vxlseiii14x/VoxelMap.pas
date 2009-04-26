@@ -730,8 +730,9 @@ var
    CubeNeighboors : TNormals;
    FaceNeighboors : TNormals;
    CurrentNormal : TVector3f;
+   CubeNormal : TVector3f;
    VertsAndEdgesNeighboors: TNormals;
-   i, MaxFace, MaxEdge: integer;
+   i, c, maxC, MaxFace, MaxEdge: integer;
    found : boolean;
 begin
    CubeNeighboors := TNormals.Create(6);
@@ -767,6 +768,13 @@ begin
                      CurrentNormal := VertsAndEdgesNeighboors[i];
                      if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= C_SURFACE) then
                      begin
+                        c := SSMapPointerList[i];
+                        maxC := c + SSMapQuantList[i];
+                        while c < maxC do
+                        begin
+                           CubeNormal := CubeNeighboors[SSMapVertsList[c]];
+                           inc(c);
+                        end;
 
                      end;
                      inc(i);
@@ -776,6 +784,7 @@ begin
                end;
             end;
          end;
+   CubeNeighboors.Free;
    FaceNeighboors.Free;
    VertsAndEdgesNeighboors.Free;
 end;

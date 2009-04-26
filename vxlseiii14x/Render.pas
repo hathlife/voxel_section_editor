@@ -65,6 +65,11 @@ procedure TRender.Render;
     CurrentEnv : PRenderEnvironment;
 begin
    CurrentEnv := Environment;
+   while CurrentEnv <> nil do
+   begin
+      CurrentEnv^.Next;
+      CurrentEnv := CurrentEnv^.Next;
+   end;
 end;
 
 end.

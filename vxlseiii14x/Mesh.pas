@@ -6,11 +6,16 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, Palette, VoxelMap;
 
 type
+   TRenderProc = procedure of object;
    TMesh = class
       private
+         NormalsType : byte;
+         ColoursType : byte;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
+         // Sets
+         procedure SetRenderingProcedure;
       public
          // These are the formal atributes
          Name : string;
@@ -18,23 +23,46 @@ type
          Parent : integer;
          // Graphical atributes goes here
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
-         NormalsType : byte;
-         ColoursType : byte;
          VerticesPerFace : byte; // for optimization purposes only.
          Vertices : array of TVector3f;
          Normals : array of TVector3f;
-         Colours : array of TColor;
+         Colours : array of TVector3f;
          Faces : array of longword;
          TextCoords : array of TVector2f;
          FaceNormals : array of TVector3f;
          // Graphical and colision
          BoundingBox : TRectangle3f;
+         Scale : TVector3f;
          IsColisionEnabled : boolean;
          IsVisible : boolean;
+         Texture: integer;
+         // Rendering optimization
+         RenderingProcedure : TRenderProc;
+         List : Integer;
 
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
-         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette);
+         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+         destructor Destroy; override;
+         procedure Clear;
+
+         // Sets
+         procedure SetColoursType(_ColoursType: integer);
+         procedure SetNormalsType(_NormalsType: integer);
+         procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
+
+         // Rendering methods
+         procedure Render(var _Polycount: longword);
+         procedure RenderWithoutNormalsAndColours;
+         procedure RenderWithVertexNormalsAndNoColours;
+         procedure RenderWithFaceNormalsAndNoColours;
+         procedure RenderWithoutNormalsAndWithColoursPerVertex;
+         procedure RenderWithVertexNormalsAndColours;
+         procedure RenderWithFaceNormalsAndVertexColours;
+         procedure RenderWithoutNormalsAndWithFaceColours;
+         procedure RenderWithVertexNormalsAndFaceColours;
+         procedure RenderWithFaceNormalsAndColours;
+         procedure ForceRebuildMesh;
    end;
 
 
@@ -45,8 +73,7 @@ begin
    // Set basic variables:
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
-   ColoursType := _ColoursType;
-   NormalsType := _NormalsType;
+   SetColoursAndNormalsType(_ColoursType,_NormalsType);
    // Let's set the face type:
    if VerticesPerFace = 4 then
       FaceType := GL_QUADS
@@ -77,14 +104,39 @@ begin
    BoundingBox.Max.X := _BoundingBox.Max.X;
    BoundingBox.Max.Y := _BoundingBox.Max.Y;
    BoundingBox.Max.Z := _BoundingBox.Max.Z;
+   Scale := SetVector(1,1,1);
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
 end;
 
-constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette);
+constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
 begin
    ID := _ID;
-   LoadFromVoxel(_Voxel,_Palette);
+   if _HighQuality then
+   begin
+      ModelizeFromVoxel(_Voxel,_Palette);
+   end
+   else
+   begin
+      LoadFromVoxel(_Voxel,_Palette);
+   end;
+end;
+
+destructor TMesh.Destroy;
+begin
+   Clear;
+   inherited Destroy;
+end;
+
+procedure TMesh.Clear;
+begin
+   ForceRebuildMesh;
+   SetLength(Vertices,0);
+   SetLength(Faces,0);
+   SetLength(Colours,0);
+   SetLength(Normals,0);
+   SetLength(FaceNormals,0);
+   SetLength(TextCoords,0);
 end;
 
 
@@ -100,8 +152,7 @@ var
 begin
    VerticesPerFace := 4;
    FaceType := GL_QUADS;
-   ColoursType := C_COLOURS_PER_FACE;
-   NormalsType := C_NORMALS_PER_FACE;
+   SetColoursAndNormalsType(C_COLOURS_PER_FACE,C_NORMALS_PER_FACE);
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
 
@@ -296,7 +347,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.Colour[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.ColourGL[v.Colour];
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] <> -1 then
             begin
@@ -319,7 +370,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.Colour[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.ColourGL[v.Colour];
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] <> -1 then
             begin
@@ -342,7 +393,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.Colour[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL[v.Colour];
             end;
          end;
    // The rest
@@ -352,6 +403,9 @@ begin
    BoundingBox.Max.X := _Voxel.Tailer.MaxBounds[1];
    BoundingBox.Max.Y := _Voxel.Tailer.MaxBounds[2];
    BoundingBox.Max.Z := _Voxel.Tailer.MaxBounds[3];
+   Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
+   Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
+   Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
 end;
@@ -373,6 +427,316 @@ begin
    NormalsType := C_NORMALS_PER_FACE;
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
+   // The rest
+   BoundingBox.Min.X := _Voxel.Tailer.MinBounds[1];
+   BoundingBox.Min.Y := _Voxel.Tailer.MinBounds[2];
+   BoundingBox.Min.Z := _Voxel.Tailer.MinBounds[3];
+   BoundingBox.Max.X := _Voxel.Tailer.MaxBounds[1];
+   BoundingBox.Max.Y := _Voxel.Tailer.MaxBounds[2];
+   BoundingBox.Max.Z := _Voxel.Tailer.MaxBounds[3];
+   Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
+   Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
+   Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
+   IsColisionEnabled := false; // Temporarily, until colision is implemented.
+   IsVisible := true;
+end;
+
+// Sets
+procedure TMesh.SetRenderingProcedure;
+begin
+   case (NormalsType) of
+      C_NORMALS_DISABLED:
+      begin
+         case (ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := RenderWithoutNormalsAndColours;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := RenderWithoutNormalsAndWithColoursPerVertex;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := RenderWithoutNormalsAndWithFaceColours;
+            end;
+         end;
+      end;
+      C_NORMALS_PER_VERTEX:
+      begin
+         case (ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := RenderWithVertexNormalsAndNoColours;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := RenderWithVertexNormalsAndColours;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := RenderWithVertexNormalsAndFaceColours;
+            end;
+         end;
+      end;
+      C_NORMALS_PER_FACE:
+      begin
+         case (ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := RenderWithFaceNormalsAndNoColours;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := RenderWithFaceNormalsAndVertexColours;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := RenderWithFaceNormalsAndColours;
+            end;
+         end;
+      end;
+   end;
+   ForceRebuildMesh;
+end;
+
+procedure TMesh.SetColoursType(_ColoursType: integer);
+begin
+   ColoursType := _ColoursType and 3;
+   SetRenderingProcedure;
+end;
+
+procedure TMesh.SetNormalsType(_NormalsType: integer);
+begin
+   NormalsType := _NormalsType and 3;
+   SetRenderingProcedure;
+end;
+
+procedure TMesh.SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
+begin
+   ColoursType := _ColoursType and 3;
+   NormalsType := _NormalsType and 3;
+   SetRenderingProcedure;
+end;
+
+// Rendering methods.
+procedure TMesh.Render(var _PolyCount: longword);
+begin
+   if IsVisible then
+   begin
+      inc(_PolyCount,High(Faces)+1);
+      if List = C_LIST_NONE then
+      begin
+         List := glGenLists(1);
+         glNewList(List, GL_COMPILE);
+         glPushMatrix;
+            glLoadIdentity;
+            RenderingProcedure();
+         glPopMatrix;
+         glEndList;
+      end;
+      // Move accordingly to the bounding box position.
+      glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
+      glCallList(List);
+   end;
+end;
+
+procedure TMesh.RenderWithoutNormalsAndColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   glColor3f(0.5,0.5,0.5);
+   glNormal3f(0,0,0);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithVertexNormalsAndNoColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   glColor3f(0.5,0.5,0.5);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithFaceNormalsAndNoColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   glColor3f(0.5,0.5,0.5);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithoutNormalsAndWithColoursPerVertex;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   glNormal3f(0,0,0);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithVertexNormalsAndColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithFaceNormalsAndVertexColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithoutNormalsAndWithFaceColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   glNormal3f(0,0,0);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithVertexNormalsAndFaceColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.RenderWithFaceNormalsAndColours;
+var
+   i,f,v : longword;
+begin
+   f := 0;
+   for i := Low(Faces) to High(Faces) do
+   begin
+      glBegin(FaceType);
+         v := 0;
+         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+      glEnd();
+   end;
+end;
+
+procedure TMesh.ForceRebuildMesh;
+begin
+   if List > C_LIST_NONE then
+   begin
+      glDeleteLists(List,1);
+   end;
+   List := C_LIST_NONE;
 end;
 
 

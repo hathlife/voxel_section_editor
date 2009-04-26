@@ -2,7 +2,7 @@ unit RenderEnvironment;
 
 interface
 
-uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils;
+uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils, Model;
 
 type
    PRenderEnvironment = ^TRenderEnvironment;
@@ -12,7 +12,7 @@ type
          procedure CleanUpCameras;
       public
          Next : PRenderEnvironment;
-//         Models: PModel;
+         ModelList: PModel;
          CameraList : PCamera;
          CurrentCamera : PCamera;
          Handle : THandle;
@@ -36,7 +36,7 @@ type
          // Debug related.
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
          IsEnabled : boolean;
-         
+
          // Constructors;
          constructor Create(_Handle : THandle; _width, _height : longword);
          destructor Destroy; override;
@@ -46,6 +46,7 @@ type
          // Adds
          function AddCamera: PCamera;
          procedure RemoveCamera(var _Camera : PCamera);
+         procedure RemoveModel(var _Model : PModel);
 
          // Miscelaneuos Text Related
          procedure BuildFont;
@@ -86,8 +87,10 @@ begin
    // Setup camera.
    CameraList := nil;
    AddCamera;
+   // Start without models
+   ModelList := nil;
    // Setup time.
-   StartTime :=GetTickCount();
+   StartTime := GetTickCount();
    QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
    QueryPerformanceCounter(FoldTime);
    // Setup perspective and text settings.
@@ -130,9 +133,10 @@ procedure TRenderEnvironment.Render;
 var
    temp : int64;
    t2 : double;
+   CurrentModel : PModel;
 begin
    // Here's the don't waste time checkup.
-   if not IsEnabled then exit;   
+   if not IsEnabled then exit;
    if CurrentCamera = nil then exit;
    // if ModelList = nil then exit;
 
@@ -167,6 +171,14 @@ begin
    glPopMatrix;
    CurrentCamera^.MoveCamera;
 
+   // Render all models.
+   CurrentModel := ModelList;
+   while CurrentModel <> nil do
+   begin
+      CurrentModel^.Render(Polycount);
+      CurrentModel := CurrentModel^.Next;
+   end;
+
    // Final rendering part.
    glDisable(GL_TEXTURE_2D);
 
@@ -187,7 +199,7 @@ begin
    glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
 
    glRasterPos2i(1, 2);
-   glPrint(PChar('Voxels Used: ' + IntToStr(PolyCount)));
+   glPrint(PChar('Polygons Used: ' + IntToStr(PolyCount)));
 
    if (ShowDepth) then
    begin
@@ -288,6 +300,39 @@ begin
       // Now we dispose the camera.
       _Camera^.Free;
       _Camera := nil;
+   end;
+end;
+
+procedure TRenderEnvironment.RemoveModel(var _Model : PModel);
+var
+   PreviousModel : PModel;
+begin
+   if ModelList = nil then exit; // Can't delete from an empty list.
+   if _Model <> nil then
+   begin
+      // Check if it is the first camera.
+      if _Model = ModelList then
+      begin
+         ModelList := _Model^.Next;
+      end
+      else // It could be inside the list, but it's not the first.
+      begin
+         PreviousModel := ModelList;
+         while (PreviousModel^.Next <> nil) and (PreviousModel^.Next <> _Model) do
+         begin
+            PreviousModel := PreviousModel^.Next;
+         end;
+         if PreviousModel^.Next = _Model then
+         begin
+            PreviousModel^.Next := _Model^.Next;
+         end
+         else // nil -- not from this list.
+            exit;
+      end;
+      // If it has past this stage, the camera is valid and was part of the list.
+      // Now we dispose the camera.
+      _Model^.Free;
+      _Model := nil;
    end;
 end;
 

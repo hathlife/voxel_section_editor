@@ -7,7 +7,6 @@ const
    C_NORMALS_DISABLED = 0;
    C_NORMALS_PER_VERTEX = 1;
    C_NORMALS_PER_FACE = 2;
-   C_NORMALS_ON_BOTH = 3;
    // For Mesh.ColoursType
    C_COLOURS_DISABLED = 0;
    C_COLOURS_PER_VERTEX = 1;
@@ -18,6 +17,8 @@ const
    C_VOXEL_FACE_DEPTH = 1;
    C_VOXEL_FACE_HEIGHT = 2;
 
+   // Lists
+   C_LIST_NONE = 0;
 
 implementation
 
