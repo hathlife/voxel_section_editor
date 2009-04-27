@@ -12,9 +12,11 @@ type
          NormalsType : byte;
          ColoursType : byte;
          TransparencyLevel : single;
+         Opened : boolean;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
+         procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Sets
          procedure SetRenderingProcedure;
          // Misc
@@ -23,7 +25,7 @@ type
          // These are the formal atributes
          Name : string;
          ID : longword;
-         Parent : integer;
+         Parent : integer; // not implemented yet.
          // Graphical atributes goes here
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
          VerticesPerFace : byte; // for optimization purposes only.
@@ -53,6 +55,9 @@ type
          procedure SetColoursType(_ColoursType: integer);
          procedure SetNormalsType(_NormalsType: integer);
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
+
+         // Gets
+         function IsOpened: boolean;
 
          // Rendering methods
          procedure Render(var _Polycount: longword);
@@ -114,10 +119,12 @@ begin
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    TransparencyLevel := 0;
+   Opened := false;
 end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
 begin
+   Opened := false;
    ID := _ID;
    TransparencyLevel := 0;
    if _HighQuality then
@@ -404,18 +411,7 @@ begin
                Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL4[v.Colour];
             end;
          end;
-   // The rest
-   BoundingBox.Min.X := _Voxel.Tailer.MinBounds[1];
-   BoundingBox.Min.Y := _Voxel.Tailer.MinBounds[2];
-   BoundingBox.Min.Z := _Voxel.Tailer.MinBounds[3];
-   BoundingBox.Max.X := _Voxel.Tailer.MaxBounds[1];
-   BoundingBox.Max.Y := _Voxel.Tailer.MaxBounds[2];
-   BoundingBox.Max.Z := _Voxel.Tailer.MaxBounds[3];
-   Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
-   Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
-   Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
-   IsColisionEnabled := false; // Temporarily, until colision is implemented.
-   IsVisible := true;
+   CommonVoxelLoadingActions(_Voxel);
 end;
 
 
@@ -435,6 +431,11 @@ begin
    NormalsType := C_NORMALS_PER_FACE;
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
+   CommonVoxelLoadingActions(_Voxel);
+end;
+
+procedure TMesh.CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
+begin
    // The rest
    BoundingBox.Min.X := _Voxel.Tailer.MinBounds[1];
    BoundingBox.Min.Y := _Voxel.Tailer.MinBounds[2];
@@ -447,7 +448,9 @@ begin
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
+   Opened := true;
 end;
+
 
 // Sets
 procedure TMesh.SetRenderingProcedure;
@@ -527,10 +530,17 @@ begin
    SetRenderingProcedure;
 end;
 
+// Gets
+function TMesh.IsOpened: boolean;
+begin
+   Result := Opened;
+end;
+
+
 // Rendering methods.
 procedure TMesh.Render(var _PolyCount: longword);
 begin
-   if IsVisible then
+   if IsVisible and Opened then
    begin
       inc(_PolyCount,High(Faces)+1);
       if List = C_LIST_NONE then

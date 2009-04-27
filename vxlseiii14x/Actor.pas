@@ -19,12 +19,14 @@ type
       RotationSpeed : TVector3f;
       Position : TVector3f;
       Rotation : TVector3f;
+      // User interface
+      IsSelected : boolean;
       // Constructors
       constructor Create;
       procedure Reset;
 
       // Execution
-      procedure Render;
+      procedure Render(var _PolyCount: longword);
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
@@ -35,6 +37,7 @@ implementation
 constructor TActor.Create;
 begin
    Next := nil;
+   IsSelected := false;
    Reset;
 end;
 
@@ -52,7 +55,7 @@ begin
    RotationAcceleration := SetVector(0,0,0);
 end;
 
-procedure TActor.Render;
+procedure TActor.Render(var _PolyCount: longword);
 var
    MyModel : PModel;
 begin
@@ -63,7 +66,7 @@ begin
       MyModel := Model;
       while MyModel <> nil do
       begin
-         // MyModel^.Render;
+         MyModel^.Render(_PolyCount);
          MyModel := MyModel^.Next;
       end;
    glPopMatrix;

@@ -2,7 +2,7 @@ unit RenderEnvironment;
 
 interface
 
-uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils, Model;
+uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils, Model, Actor;
 
 type
    PRenderEnvironment = ^TRenderEnvironment;
@@ -12,8 +12,9 @@ type
          procedure CleanUpCameras;
       public
          Next : PRenderEnvironment;
-         ModelList: PModel;
+         ActorList: PActor;
          CameraList : PCamera;
+         CurrentActor : PActor;
          CurrentCamera : PCamera;
          Handle : THandle;
          DC : HDC;
@@ -46,7 +47,7 @@ type
          // Adds
          function AddCamera: PCamera;
          procedure RemoveCamera(var _Camera : PCamera);
-         procedure RemoveModel(var _Model : PModel);
+         procedure RemoveActor(var _Actor : PActor);
 
          // Miscelaneuos Text Related
          procedure BuildFont;
@@ -88,7 +89,7 @@ begin
    CameraList := nil;
    AddCamera;
    // Start without models
-   ModelList := nil;
+   ActorList := nil;
    // Setup time.
    StartTime := GetTickCount();
    QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
@@ -133,7 +134,7 @@ procedure TRenderEnvironment.Render;
 var
    temp : int64;
    t2 : double;
-   CurrentModel : PModel;
+   Actor : PModel;
 begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
@@ -172,11 +173,11 @@ begin
    CurrentCamera^.MoveCamera;
 
    // Render all models.
-   CurrentModel := ModelList;
-   while CurrentModel <> nil do
+   Actor := ActorList;
+   while Actor <> nil do
    begin
-      CurrentModel^.Render(Polycount);
-      CurrentModel := CurrentModel^.Next;
+      Actor^.Render(Polycount);
+      Actor := Actor^.Next;
    end;
 
    // Final rendering part.
@@ -303,36 +304,36 @@ begin
    end;
 end;
 
-procedure TRenderEnvironment.RemoveModel(var _Model : PModel);
+procedure TRenderEnvironment.RemoveActor(var _Actor : PActor);
 var
-   PreviousModel : PModel;
+   PreviousActor : PActor;
 begin
-   if ModelList = nil then exit; // Can't delete from an empty list.
-   if _Model <> nil then
+   if ActorList = nil then exit; // Can't delete from an empty list.
+   if _Actor <> nil then
    begin
-      // Check if it is the first camera.
-      if _Model = ModelList then
+      // Check if it is the first actor.
+      if _Actor = ActorList then
       begin
-         ModelList := _Model^.Next;
+         ActorList := _Actor^.Next;
       end
       else // It could be inside the list, but it's not the first.
       begin
-         PreviousModel := ModelList;
-         while (PreviousModel^.Next <> nil) and (PreviousModel^.Next <> _Model) do
+         PreviousActor := ActorList;
+         while (PreviousActor^.Next <> nil) and (PreviousActor^.Next <> _Actor) do
          begin
-            PreviousModel := PreviousModel^.Next;
+            PreviousActor := PreviousActor^.Next;
          end;
-         if PreviousModel^.Next = _Model then
+         if PreviousActor^.Next = _Actor then
          begin
-            PreviousModel^.Next := _Model^.Next;
+            PreviousActor^.Next := _Actor^.Next;
          end
          else // nil -- not from this list.
             exit;
       end;
       // If it has past this stage, the camera is valid and was part of the list.
-      // Now we dispose the camera.
-      _Model^.Free;
-      _Model := nil;
+      // Now we dispose the actor.
+      _Actor^.Free;
+      _Actor := nil;
    end;
 end;
 
