@@ -11,7 +11,7 @@ type
       // List
       Next : PActor;
       // Atributes
-      Model : PModel;
+      Models : PModel;
       // physics cinematics.
       PositionAcceleration : TVector3f;
       RotationAcceleration : TVector3f;
@@ -30,6 +30,9 @@ type
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
+
+      // Removes
+      procedure RemoveModel(var _Model : PModel);
    end;
 
 implementation
@@ -63,7 +66,7 @@ begin
    glPushMatrix;
       MoveActor;
       RotateActor;
-      MyModel := Model;
+      MyModel := Models;
       while MyModel <> nil do
       begin
          MyModel^.Render(_PolyCount);
@@ -123,5 +126,40 @@ begin
    Rotation.Y := CleanAngle(Rotation.Y + RotationSpeed.Y);
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
 end;
+
+// Removes
+procedure TActor.RemoveModel(var _Model : PModel);
+var
+   PreviousModel : PModel;
+begin
+   if Models = nil then exit; // Can't delete from an empty list.
+   if _Model <> nil then
+   begin
+      // Check if it is the first camera.
+      if _Model = Models then
+      begin
+         Models := _Model^.Next;
+      end
+      else // It could be inside the list, but it's not the first.
+      begin
+         PreviousModel := Models;
+         while (PreviousModel^.Next <> nil) and (PreviousModel^.Next <> _Model) do
+         begin
+            PreviousModel := PreviousModel^.Next;
+         end;
+         if PreviousModel^.Next = _Model then
+         begin
+            PreviousModel^.Next := _Model^.Next;
+         end
+         else // nil -- not from this list.
+            exit;
+      end;
+      // If it has past this stage, the camera is valid and was part of the list.
+      // Now we dispose the camera.
+      _Model^.Free;
+      _Model := nil;
+   end;
+end;
+
 
 end.

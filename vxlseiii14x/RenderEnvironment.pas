@@ -134,7 +134,7 @@ procedure TRenderEnvironment.Render;
 var
    temp : int64;
    t2 : double;
-   Actor : PModel;
+   Actor : PActor;
 begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
