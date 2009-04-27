@@ -65,7 +65,7 @@ type
          procedure RenderWithoutNormalsAndWithFaceColours;
          procedure RenderWithVertexNormalsAndFaceColours;
          procedure RenderWithFaceNormalsAndColours;
-         procedure ForceRebuildMesh;
+         procedure ForceRefresh;
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
@@ -138,7 +138,7 @@ end;
 
 procedure TMesh.Clear;
 begin
-   ForceRebuildMesh;
+   ForceRefresh;
    SetLength(Vertices,0);
    SetLength(Faces,0);
    SetLength(Colours,0);
@@ -505,7 +505,7 @@ begin
          end;
       end;
    end;
-   ForceRebuildMesh;
+   ForceRefresh;
 end;
 
 procedure TMesh.SetColoursType(_ColoursType: integer);
@@ -738,7 +738,8 @@ begin
    end;
 end;
 
-procedure TMesh.ForceRebuildMesh;
+// Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
+procedure TMesh.ForceRefresh;
 begin
    if List > C_LIST_NONE then
    begin

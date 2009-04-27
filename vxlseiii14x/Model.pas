@@ -7,6 +7,8 @@ uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL;
 type
    PModel = ^TModel;
    TModel = class
+   private
+      Opened : boolean;
    public
       Next : PModel;
       Palette : PPalette;
@@ -21,11 +23,22 @@ type
       constructor Create(const _Filename: string); overload;
       constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; _HighQuality : boolean); overload;
       destructor Destroy; override;
+      procedure CommonCreationProcedures;
       procedure Initialize(_HighQuality: boolean = false);
       procedure Clear;
       procedure Reset;
+      // Gets
+      function GetNumMeshes: longword;
+      function IsOpened : boolean;
       // Rendering methods
       procedure Render(var _PolyCount: longword);
+      // Refresh OpenGL List
+      procedure RefreshModel;
+      procedure RefreshMesh(_MeshID: integer);
+      // Transparency methods
+      procedure ForceTransparency(_level: single);
+      procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
+      procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
    end;
 
 implementation
@@ -34,8 +47,7 @@ constructor TModel.Create(const _Filename: string);
 begin
    Filename := CopyString(_Filename);
    Voxel := nil;
-   Next := nil;
-   Reset;
+   CommonCreationProcedures;
 end;
 
 constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; _HighQuality : boolean);
@@ -43,14 +55,20 @@ begin
    Filename := '';
    Voxel := _Voxel;
    Palette := _Palette;
-   Next := nil;
-   Reset;
+   CommonCreationProcedures;
 end;
 
 destructor TModel.Destroy;
 begin
    Clear;
    inherited Destroy;
+end;
+
+procedure TModel.CommonCreationProcedures;
+begin
+   Next := nil;
+   Opened := false;
+   Reset;
 end;
 
 procedure TModel.Reset;
@@ -93,15 +111,28 @@ begin
       begin
          Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
       end;
+      Opened := true;
    end;
 end;
+
+// Gets
+function TModel.GetNumMeshes: longword;
+begin
+   Result := High(Mesh) + 1;
+end;
+
+function TModel.IsOpened : boolean;
+begin
+   Result := Opened;
+end;
+
 
 // Rendering methods
 procedure TModel.Render(var _Polycount: longword);
 var
    i : integer;
 begin
-   if IsVisible and (HVA <> nil) then
+   if IsVisible and Opened and (HVA <> nil) then
    begin
       for i := Low(Mesh) to High(Mesh) do
       begin
@@ -112,5 +143,51 @@ begin
       end;
    end;
 end;
+
+// Refresh OpenGL List
+procedure TModel.RefreshModel;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ForceRefresh;
+   end;
+end;
+
+procedure TModel.RefreshMesh(_MeshID: integer);
+begin
+   Mesh[_MeshID].ForceRefresh;
+end;
+
+// Transparency methods
+procedure TModel.ForceTransparency(_level: single);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ForceTransparencyLevel(_Level);
+   end;
+end;
+
+procedure TModel.ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
+begin
+   Mesh[_MeshID].ForceTransparencyLevel(_Level);
+end;
+
+procedure TModel.ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      if i <> _MeshID then
+         Mesh[i].ForceTransparencyLevel(_Level)
+      else
+         Mesh[i].ForceTransparencyLevel(0);
+   end;
+end;
+
 
 end.
