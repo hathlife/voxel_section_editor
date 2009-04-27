@@ -26,6 +26,8 @@ type
       procedure SetRGB(_id : longword; _colour : TRGB);
       function ReadGL(_id : longword): TVector3f;
       procedure SetGL(_id: longword; _colour: TVector3f);
+      function ReadGL4(_id : longword): TVector4f;
+      procedure SetGL4(_id: longword; _colour: TVector4f);
    public
       // Constructors
       constructor Create;
@@ -52,6 +54,7 @@ type
       property Colour[_id : longword] : TColor read ReadColour write SetColour; default;
       property ColourRGB[_id: longword] : TRGB read ReadRGB write SetRGB;
       property ColourGL[_id: longword] : TVector3f read ReadGL write SetGL;
+      property ColourGL4[_id: longword] : TVector4f read ReadGL4 write SetGL4;
    end;
    PPalette = ^TPalette;
 
@@ -250,7 +253,7 @@ begin
    begin
       Result.X := Byte(_id and $FF) / 255;
       Result.Y := Byte((_id shr 8) and $FF) / 255;
-      Result.Z := Byte(_id shr 16) / 255;
+      Result.Z := Byte((_id shr 16) and $FF) / 255;
    end
    else if NumBits = 8 then
    begin
@@ -258,22 +261,58 @@ begin
       begin
          Result.X := Byte(FPalette[_id] and $FF) / 255;
          Result.Y := Byte((FPalette[_id] shr 8) and $FF) / 255;
-         Result.Z := Byte(FPalette[_id] shr 16) / 255;
+         Result.Z := Byte((FPalette[_id] shr 16) and $FF) / 255;
       end
       else
       begin
          Result.X := Byte(FPalette[0] and $FF) / 255;
          Result.Y := Byte((FPalette[0] shr 8) and $FF) / 255;
-         Result.Z := Byte(FPalette[0] shr 16) / 255;
+         Result.Z := Byte((FPalette[0] shr 16) and $FF) / 255;
       end;
    end
    else
    begin
       Result.X := Byte(_id and $FF) / 255;
       Result.Y := Byte((_id shr 8) and $FF) / 255;
-      Result.Z := Byte(_id shr 16) / 255;
+      Result.Z := Byte((_id shr 16) and $FF) / 255;
    end;
 end;
+
+function TPalette.ReadGL4(_id : longword): TVector4f;
+begin
+   if NumBits = 24 then
+   begin
+      Result.X := Byte(_id and $FF) / 255;
+      Result.Y := Byte((_id shr 8) and $FF) / 255;
+      Result.Z := Byte((_id shr 16) and $FF) / 255;
+      Result.W := Byte(_id shr 24) / 255;
+   end
+   else if NumBits = 8 then
+   begin
+      if (_id >= 0) and (_id < 256) then
+      begin
+         Result.X := Byte(FPalette[_id] and $FF) / 255;
+         Result.Y := Byte((FPalette[_id] shr 8) and $FF) / 255;
+         Result.Z := Byte((FPalette[_id] shr 16) and $FF) / 255;
+         Result.W := Byte(FPalette[_id] shr 24) / 255;
+      end
+      else
+      begin
+         Result.X := Byte(FPalette[0] and $FF) / 255;
+         Result.Y := Byte((FPalette[0] shr 8) and $FF) / 255;
+         Result.Z := Byte((FPalette[0] shr 16) and $FF) / 255;
+         Result.W := Byte(FPalette[0] shr 24) / 255;
+      end;
+   end
+   else
+   begin
+      Result.X := Byte(_id and $FF) / 255;
+      Result.Y := Byte((_id shr 8) and $FF) / 255;
+      Result.Z := Byte((_id shr 16) and $FF) / 255;
+      Result.W := Byte(_id shr 24) / 255;
+   end;
+end;
+
 
 function TPalette.GetColourFromPalette(_colour : TColor): longword;
 var
@@ -411,6 +450,17 @@ begin
       if (_id >= 0) and (_id <= High(FPalette)) then
       begin
          FPalette[_id] := (Round(_colour.X * 255) or (Round(_colour.Y * 255) shl 8) or (Round(_colour.Z * 255) shl 16));
+      end;
+   end;
+end;
+
+procedure TPalette.SetGL4(_id: longword; _colour: TVector4f);
+begin
+   if NumBits <> 24 then
+   begin
+      if (_id >= 0) and (_id <= High(FPalette)) then
+      begin
+         FPalette[_id] := (Round(_colour.X * 255) or (Round(_colour.Y * 255) shl 8) or (Round(_colour.Z * 255) shl 16) or (Round(_colour.W * 255) shl 24));
       end;
    end;
 end;

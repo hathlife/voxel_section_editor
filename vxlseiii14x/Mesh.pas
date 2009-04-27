@@ -11,11 +11,14 @@ type
       private
          NormalsType : byte;
          ColoursType : byte;
+         TransparencyLevel : single;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          // Sets
          procedure SetRenderingProcedure;
+         // Misc
+         procedure OverrideTransparency;
       public
          // These are the formal atributes
          Name : string;
@@ -26,7 +29,7 @@ type
          VerticesPerFace : byte; // for optimization purposes only.
          Vertices : array of TVector3f;
          Normals : array of TVector3f;
-         Colours : array of TVector3f;
+         Colours : array of TVector4f;
          Faces : array of longword;
          TextCoords : array of TVector2f;
          FaceNormals : array of TVector3f;
@@ -63,6 +66,9 @@ type
          procedure RenderWithVertexNormalsAndFaceColours;
          procedure RenderWithFaceNormalsAndColours;
          procedure ForceRebuildMesh;
+
+         // Miscelaneous
+         procedure ForceTransparencyLevel(_TransparencyLevel : single);
    end;
 
 
@@ -107,11 +113,13 @@ begin
    Scale := SetVector(1,1,1);
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
+   TransparencyLevel := 0;
 end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
 begin
    ID := _ID;
+   TransparencyLevel := 0;
    if _HighQuality then
    begin
       ModelizeFromVoxel(_Voxel,_Palette);
@@ -347,7 +355,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.ColourGL[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.ColourGL4[v.Colour];
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] <> -1 then
             begin
@@ -370,7 +378,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.ColourGL[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.ColourGL4[v.Colour];
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] <> -1 then
             begin
@@ -393,7 +401,7 @@ begin
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := _Voxel.Normals[v.Normal].Y;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Z := _Voxel.Normals[v.Normal].Z;
                // Colour
-               Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL[v.Colour];
+               Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL4[v.Colour];
             end;
          end;
    // The rest
@@ -546,7 +554,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor3f(0.5,0.5,0.5);
+   glColor4f(0.5,0.5,0.5,0);
    glNormal3f(0,0,0);
    for i := Low(Faces) to High(Faces) do
    begin
@@ -567,7 +575,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor3f(0.5,0.5,0.5);
+   glColor4f(0.5,0.5,0.5,0);
    for i := Low(Faces) to High(Faces) do
    begin
       glBegin(FaceType);
@@ -588,7 +596,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor3f(0.5,0.5,0.5);
+   glColor4f(0.5,0.5,0.5,0);
    for i := Low(Faces) to High(Faces) do
    begin
       glBegin(FaceType);
@@ -616,7 +624,7 @@ begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
-            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
             inc(f);
@@ -636,7 +644,7 @@ begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
-            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
             glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
@@ -658,7 +666,7 @@ begin
          glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
          while (v < VerticesPerFace) do
          begin
-            glColor3f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z);
+            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
             inc(f);
@@ -677,7 +685,7 @@ begin
    begin
       glBegin(FaceType);
          v := 0;
-         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          while (v < VerticesPerFace) do
          begin
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
@@ -697,7 +705,7 @@ begin
    begin
       glBegin(FaceType);
          v := 0;
-         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          while (v < VerticesPerFace) do
          begin
             glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
@@ -718,7 +726,7 @@ begin
    begin
       glBegin(FaceType);
          v := 0;
-         glColor3f(Colours[i].X,Colours[i].Y,Colours[i].Z);
+         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
          while (v < VerticesPerFace) do
          begin
@@ -739,5 +747,22 @@ begin
    List := C_LIST_NONE;
 end;
 
+
+// Miscelaneous
+procedure TMesh.OverrideTransparency;
+var
+   c : integer;
+begin
+   for c := Low(Colours) to High(Colours) do
+   begin
+      Colours[c].W := TransparencyLevel;
+   end;
+end;
+
+procedure TMesh.ForceTransparencyLevel(_TransparencyLevel : single);
+begin
+   TransparencyLevel := _TransparencyLevel;
+   OverrideTransparency;
+end;
 
 end.

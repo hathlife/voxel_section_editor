@@ -9,6 +9,13 @@ type
    PLabel = ^TLabel;
    PMenuItem = ^TMenuItem;
 
+   TVector4f = record
+      X, Y, Z, W : single;
+   end;
+
+   TAVector4f = array of TVector4f;
+   PAVector4f = ^TAVector4f;
+
    TVector3f = record
       X, Y, Z : single;
    end;
