@@ -13,15 +13,21 @@ type
          // Adds
          function Search(const _Filename: string): integer; overload;
          function Search(const _Voxel: PVoxel): integer; overload;
-         function SearchReadOnly(const _Filename: string): integer;
+         function SearchReadOnly(const _Filename: string): integer; overload;
+         function SearchReadOnly(const _Voxel: PVoxel): integer; overload;
+         function SearchEditable(const _Voxel: PVoxel): integer;
       public
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
+         // I/O
+         function Load(var _Voxel: PVoxel; const _Filename: string): PVoxel;
+         function Save(var _Voxel: PVoxel; const _Filename: string): boolean;
          // Adds
          function Add(const _filename: string): PVoxel; overload;
          function Add(const _Voxel: PVoxel): PVoxel; overload;
-         function AddReadOnly(const _filename: string): PVoxel;
+         function AddReadOnly(const _filename: string): PVoxel; overload;
+         function AddReadOnly(const _Voxel: PVoxel): PVoxel; overload;
          function Clone(const _filename: string): PVoxel; overload;
          function Clone(const _Voxel: PVoxel): PVoxel; overload;
          // Deletes
@@ -53,6 +59,60 @@ begin
       Items[i].Free;
    end;
 end;
+
+// I/O
+function TVoxelBank.Load(var _Voxel: PVoxel; const _Filename: string): PVoxel;
+var
+   i : integer;
+   Voxel : PVoxel;
+begin
+   i := Search(_Voxel);
+   if i <> -1 then
+   begin
+      Items[i].DecCounter;
+      if Items[i].GetCount = 0 then
+      begin
+         Items[i].Free;
+         Items[i] := TVoxelBankItem.Create(_Filename);
+         Items[i].SetEditable(true);
+         Result := Items[i].GetVoxel;
+      end
+      else
+      begin
+         SetLength(Items,High(Items)+2);
+         Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+         Items[High(Items)].SetEditable(true);
+         Result := Items[High(Items)].GetVoxel;
+      end;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      Items[High(Items)].SetEditable(true);
+      Result := Items[High(Items)].GetVoxel;
+   end;
+end;
+
+function TVoxelBank.Save(var _Voxel: PVoxel; const _Filename: string): boolean;
+var
+   i : integer;
+   Voxel : PVoxel;
+begin
+   i := SearchEditable(_Voxel);
+   if i <> -1 then
+   begin
+      Voxel := Items[i].GetVoxel;
+      Voxel^.SaveToFile(_Filename);
+      Items[i].SetFilename(_Filename);
+      Result := true;
+   end
+   else
+   begin
+      Result := false;
+   end;
+end;
+
 
 // Adds
 function TVoxelBank.Search(const _filename: string): integer;
@@ -105,6 +165,46 @@ begin
       end;
    end;
 end;
+
+function TVoxelBank.SearchReadOnly(const _Voxel: PVoxel): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if not Items[i].GetEditable then
+      begin
+         if _Voxel = Items[i].GetVoxel then
+         begin
+            Result := i;
+            exit;
+         end;
+      end;
+   end;
+end;
+
+function TVoxelBank.SearchEditable(const _Voxel: PVoxel): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if Items[i].GetEditable then
+      begin
+         if _Voxel = Items[i].GetVoxel then
+         begin
+            Result := i;
+            exit;
+         end;
+      end;
+   end;
+end;
+
+
 
 function TVoxelBank.Add(const _filename: string): PVoxel;
 var
@@ -159,6 +259,25 @@ begin
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
+
+function TVoxelBank.AddReadOnly(const _Voxel: PVoxel): PVoxel;
+var
+   i : integer;
+begin
+   i := SearchReadOnly(_Voxel);
+   if i <> -1 then
+   begin
+      Items[i].IncCounter;
+      Result := Items[i].GetVoxel;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+      Result := Items[High(Items)].GetVoxel;
+   end;
+end;
+
 
 function TVoxelBank.Clone(const _filename: string): PVoxel;
 begin

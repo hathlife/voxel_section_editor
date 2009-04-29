@@ -19,6 +19,7 @@ type
          destructor Destroy; override;
          // Sets
          procedure SetEditable(_value: boolean);
+         procedure SetFilename(_value: string);
          // Gets
          function GetEditable: boolean;
          function GetFilename: string;
@@ -68,6 +69,12 @@ procedure TVoxelBankItem.SetEditable(_value: boolean);
 begin
    Editable := _value;
 end;
+
+procedure TVoxelBankItem.SetFilename(_value: string);
+begin
+   Filename := CopyString(_Value);
+end;
+
 
 // Gets
 function TVoxelBankItem.GetEditable: boolean;
