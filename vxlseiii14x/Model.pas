@@ -2,7 +2,7 @@ unit Model;
 
 interface
 
-uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL;
+uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD;
 
 type
    PModel = ^TModel;
@@ -15,10 +15,13 @@ type
       IsVisible : boolean;
       // Skeleton:
       HVA : PHVA;
-      Mesh : array of TMesh;
+      LOD : array of TLOD;
+      CurrentLOD : integer;
       // Source
       Filename : string;
       Voxel : PVoxel;
+      // GUI
+      IsSelected : boolean;
       // constructors and destructors
       constructor Create(const _Filename: string); overload;
       constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; _HighQuality : boolean); overload;
@@ -28,7 +31,7 @@ type
       procedure Clear;
       procedure Reset;
       // Gets
-      function GetNumMeshes: longword;
+      function GetNumLODs: longword;
       function IsOpened : boolean;
       // Rendering methods
       procedure Render(var _PolyCount: longword);
@@ -39,6 +42,8 @@ type
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
+      // GUI
+      procedure SetSelection(_value: boolean);
    end;
 
 implementation
@@ -66,6 +71,7 @@ end;
 
 procedure TModel.CommonCreationProcedures;
 begin
+   CurrentLOD := 0;
    Next := nil;
    Opened := false;
    Reset;
@@ -81,13 +87,13 @@ procedure TModel.Clear;
 var
    i : integer;
 begin
-   i := High(Mesh);
+   i := High(LOD);
    while i >= 0 do
    begin
-      Mesh[i].Free;
+      LOD[i].Free;
       dec(i);
    end;
-   SetLength(Mesh,0);
+   SetLength(LOD,0);
    HVA := nil;
    Palette := nil;
 end;
@@ -106,19 +112,22 @@ begin
    else
    begin
       // We may use an existing voxel.
-      SetLength(Mesh,Voxel^.Header.NumSections);
+      SetLength(LOD,1);
+      LOD[0] := TLOD.Create;
+      SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
       for i := 0 to (Voxel^.Header.NumSections-1) do
       begin
-         Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
+         LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
       end;
+      CurrentLOD := 0;
       Opened := true;
    end;
 end;
 
 // Gets
-function TModel.GetNumMeshes: longword;
+function TModel.GetNumLODs: longword;
 begin
-   Result := High(Mesh) + 1;
+   Result := High(LOD) + 1;
 end;
 
 function TModel.IsOpened : boolean;
@@ -134,12 +143,9 @@ var
 begin
    if IsVisible and Opened and (HVA <> nil) then
    begin
-      for i := Low(Mesh) to High(Mesh) do
+      if CurrentLOD <= High(LOD) then
       begin
-         glPushMatrix();
-            HVA^.ApplyMatrix(Mesh[i].Scale,i);
-            Mesh[i].Render(_PolyCount);
-         glPopMatrix();
+         LOD[i].Render(_PolyCount,HVA);
       end;
    end;
 end;
@@ -149,45 +155,40 @@ procedure TModel.RefreshModel;
 var
    i : integer;
 begin
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].ForceRefresh;
-   end;
+   LOD[CurrentLOD].RefreshLOD;
 end;
 
 procedure TModel.RefreshMesh(_MeshID: integer);
 begin
-   Mesh[_MeshID].ForceRefresh;
+   LOD[CurrentLOD].RefreshMesh(_MeshID);
 end;
 
 // Transparency methods
 procedure TModel.ForceTransparency(_level: single);
-var
-   i : integer;
 begin
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].ForceTransparencyLevel(_Level);
-   end;
+   LOD[CurrentLOD].ForceTransparency(_Level);
 end;
 
 procedure TModel.ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
 begin
-   Mesh[_MeshID].ForceTransparencyLevel(_Level);
+   LOD[CurrentLOD].ForceTransparencyOnMesh(_Level,_MeshID);
 end;
 
 procedure TModel.ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
+begin
+   LOD[CurrentLOD].ForceTransparencyExceptOnAMesh(_Level,_MeshID);
+end;
+
+// GUI
+procedure TModel.SetSelection(_value: boolean);
 var
    i : integer;
 begin
-   for i := Low(Mesh) to High(Mesh) do
+   IsSelected := _value;
+   for i := Low(LOD) to High(LOD) do
    begin
-      if i <> _MeshID then
-         Mesh[i].ForceTransparencyLevel(_Level)
-      else
-         Mesh[i].ForceTransparencyLevel(0);
+      LOD[i].SetSelection(_value);
    end;
 end;
-
 
 end.

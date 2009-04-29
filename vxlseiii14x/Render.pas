@@ -52,6 +52,7 @@ begin
          CurrentEnvironment := CurrentEnvironment^.Next;
       CurrentEnvironment^.Next := NewEnvironment;
    end;
+   Result := NewEnvironment;
 end;
 
 

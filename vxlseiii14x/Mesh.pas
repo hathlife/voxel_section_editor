@@ -3,7 +3,7 @@ unit Mesh;
 interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
-      BasicDataTypes, Palette, VoxelMap;
+      BasicDataTypes, BasicFunctions, Palette, VoxelMap;
 
 type
    TRenderProc = procedure of object;
@@ -44,9 +44,11 @@ type
          // Rendering optimization
          RenderingProcedure : TRenderProc;
          List : Integer;
-
+         // GUI
+         IsSelected : boolean;
          // Constructors And Destructors
-         constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
+         constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
+         constructor Create(const _Mesh : TMesh); overload;
          constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
          destructor Destroy; override;
          procedure Clear;
@@ -71,6 +73,9 @@ type
          procedure RenderWithVertexNormalsAndFaceColours;
          procedure RenderWithFaceNormalsAndColours;
          procedure ForceRefresh;
+
+         // Copies
+         procedure Assign(const _Mesh : TMesh);
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
@@ -120,6 +125,12 @@ begin
    IsVisible := true;
    TransparencyLevel := 0;
    Opened := false;
+   IsSelected := false;
+end;
+
+constructor TMesh.Create(const _Mesh : TMesh);
+begin
+   Assign(_Mesh);
 end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
@@ -449,6 +460,7 @@ begin
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    Opened := true;
+   IsSelected := false;
 end;
 
 
@@ -758,6 +770,74 @@ begin
    List := C_LIST_NONE;
 end;
 
+// Copies
+procedure TMesh.Assign(const _Mesh : TMesh);
+var
+   i : integer;
+begin
+   NormalsType := _Mesh.NormalsType;
+   ColoursType := _Mesh.ColoursType;
+   TransparencyLevel := _Mesh.TransparencyLevel;
+   Opened := _Mesh.Opened;
+   Name := CopyString(_Mesh.Name);
+   ID := _Mesh.ID;
+   Parent := _Mesh.Parent;
+   FaceType := _Mesh.FaceType;
+   VerticesPerFace := _Mesh.VerticesPerFace;
+   Scale.X := _Mesh.Scale.X;
+   Scale.Y := _Mesh.Scale.Y;
+   Scale.Z := _Mesh.Scale.Z;
+   IsColisionEnabled := _Mesh.IsColisionEnabled;
+   IsVisible := _Mesh.IsVisible;
+   IsSelected := _Mesh.IsSelected;
+   Texture := _Mesh.Texture;
+   BoundingBox.Min.X := _Mesh.BoundingBox.Min.X;
+   BoundingBox.Min.Y := _Mesh.BoundingBox.Min.Y;
+   BoundingBox.Min.Z := _Mesh.BoundingBox.Min.Z;
+   BoundingBox.Max.X := _Mesh.BoundingBox.Max.X;
+   BoundingBox.Max.Y := _Mesh.BoundingBox.Max.Y;
+   BoundingBox.Max.Z := _Mesh.BoundingBox.Max.Z;
+   SetLength(Vertices,High(_Mesh.Vertices) + 1);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      Vertices[i].X := _Mesh.Vertices[i].X;
+      Vertices[i].Y := _Mesh.Vertices[i].Y;
+      Vertices[i].Z := _Mesh.Vertices[i].Z;
+   end;
+   SetLength(Faces,High(_Mesh.Faces)+1);
+   for i := Low(Faces) to High(Faces) do
+   begin
+      Faces[i] := _Mesh.Faces[i];
+   end;
+   SetLength(Normals,High(_Mesh.Normals)+1);
+   for i := Low(Normals) to High(Normals) do
+   begin
+      Normals[i].X := _Mesh.Normals[i].X;
+      Normals[i].Y := _Mesh.Normals[i].Y;
+      Normals[i].Z := _Mesh.Normals[i].Z;
+   end;
+   SetLength(FaceNormals,High(_Mesh.FaceNormals)+1);
+   for i := Low(FaceNormals) to High(FaceNormals) do
+   begin
+      FaceNormals[i].X := _Mesh.FaceNormals[i].X;
+      FaceNormals[i].Y := _Mesh.FaceNormals[i].Y;
+      FaceNormals[i].Z := _Mesh.FaceNormals[i].Z;
+   end;
+   SetLength(Colours,High(_Mesh.Colours)+1);
+   for i := Low(Colours) to High(Colours) do
+   begin
+      Colours[i].X := _Mesh.Colours[i].X;
+      Colours[i].Y := _Mesh.Colours[i].Y;
+      Colours[i].Z := _Mesh.Colours[i].Z;
+      Colours[i].W := _Mesh.Colours[i].W;
+   end;
+   SetLength(TextCoords,High(_Mesh.TextCoords)+1);
+   for i := Low(TextCoords) to High(TextCoords) do
+   begin
+      TextCoords[i].U := _Mesh.TextCoords[i].U;
+      TextCoords[i].V := _Mesh.TextCoords[i].V;
+   end;
+end;
 
 // Miscelaneous
 procedure TMesh.OverrideTransparency;

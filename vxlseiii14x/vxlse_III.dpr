@@ -54,7 +54,10 @@ uses
   BasicDataTypes in 'BasicDataTypes.pas',
   Model in 'Model.pas',
   VoxelMap in 'VoxelMap.pas',
-  BasicFunctions in 'BasicFunctions.pas';
+  BasicFunctions in 'BasicFunctions.pas',
+  VoxelBank in 'VoxelBank.pas',
+  VoxelBankItem in 'VoxelBankItem.pas',
+  LOD in 'LOD.pas';
 
 {$R *.res}
 

@@ -3,7 +3,7 @@ unit Voxel;
 interface
 
 uses
-   Classes, dglOpenGL, Normals, BasicDataTypes;
+   Classes, dglOpenGL, Normals, BasicDataTypes, BasicFunctions;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -69,6 +69,7 @@ type
       ThumbVisible: array[0..2] of Boolean; // does not rotate with viewport changes
       constructor Create(); overload;
       constructor Create(Name: string; Number, XSize,YSize,ZSize: Integer); overload;
+      constructor Create(const _VoxelSection : TVoxelSection); overload;
       destructor Destroy; override;
       procedure Resize(XSize,YSize,ZSize: Integer);
 	//Plasmadroid v1.4+ drawing tools
@@ -122,7 +123,8 @@ type
       Filename: string;
       Header: TVoxelHeader;
       Section: array of TVoxelSection;
-      constructor Create;
+      constructor Create; overload;
+      constructor Create(const _Voxel: TVoxel); overload; 
       destructor Destroy; override;
       procedure LoadFromFile(Fname: string); // examine ErrorCode for success
       procedure SaveToFile(Fname: string); // examine ErrorCode for success
@@ -130,6 +132,7 @@ type
       procedure setSpectrum(newspectrum: ESpectrumMode);
       procedure InsertSection(SectionIndex: Integer; Name: String; XSize,YSize,ZSize: Integer);
       procedure RemoveSection(SectionIndex: Integer);
+      procedure Assign(const _Voxel: TVoxel);
    end;
    PVoxel = ^TVoxel;
 
@@ -428,6 +431,12 @@ end;
 constructor TVoxelSection.Create;
 begin
    Normals := TNormals.Create(2);
+end;
+
+constructor TVoxelSection.Create(const _VoxelSection : TVoxelSection);
+begin
+   Normals := TNormals.Create(2);
+   Assign(_VoxelSection);
 end;
 
 destructor TVoxelSection.Destroy;
@@ -855,6 +864,11 @@ begin
    Loaded := False;
 end;
 
+constructor TVoxel.Create(const _Voxel: TVoxel);
+begin
+   Assign(_Voxel);
+end;
+
 destructor TVoxel.Destroy;
 var
    x : integer;
@@ -1051,6 +1065,31 @@ begin
 end;
 
 function TVoxel.isOpen: Boolean; begin Result := Loaded; end;
+
+procedure TVoxel.Assign(const _Voxel: TVoxel);
+var
+   i : integer;
+begin
+   Loaded := _Voxel.Loaded;
+   ErrorCode := _Voxel.ErrorCode;
+   ErrorMsg := CopyString(_Voxel.ErrorMsg);
+   Filename := _Voxel.Filename;
+   for i := 1 to 16 do
+      Header.FileType[i] := _Voxel.Header.FileType[i];
+   Header.Unknown := _Voxel.Header.Unknown;
+   Header.NumSections := _Voxel.Header.NumSections;
+   Header.NumSections2 := _Voxel.Header.NumSections2;
+   Header.BodySize := _Voxel.Header.BodySize;
+   Header.StartPaletteRemap := _Voxel.Header.StartPaletteRemap;
+   Header.EndPaletteRemap := _Voxel.Header.EndPaletteRemap;
+   for i := 1 to 768 do
+      Header.PaletteData[i] := _Voxel.Header.PaletteData[i];
+   SetLength(Section,Header.NumSections);
+   for i := Low(Section) to High(Section) do
+   begin
+      Section[i] := TVoxelSection.Create(_Voxel.Section[i]);
+   end;
+end;
 
 (*** TVoxelView members *********************************************)
 
