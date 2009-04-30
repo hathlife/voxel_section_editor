@@ -2,13 +2,16 @@ unit Model;
 
 interface
 
-uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD;
+uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
+   SysUtils;
 
 type
    PModel = ^TModel;
    TModel = class
    private
       Opened : boolean;
+      // I/O
+      procedure OpenVoxel(_HighQuality: boolean = false);
    public
       Next : PModel;
       Palette : PPalette;
@@ -25,6 +28,7 @@ type
       // constructors and destructors
       constructor Create(const _Filename: string); overload;
       constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; _HighQuality : boolean); overload;
+      constructor Create(const _Model: TModel); overload;
       destructor Destroy; override;
       procedure CommonCreationProcedures;
       procedure Initialize(_HighQuality: boolean = false);
@@ -44,9 +48,13 @@ type
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
       // GUI
       procedure SetSelection(_value: boolean);
+      // Copies
+      procedure Assign(const _Model: TModel);
    end;
 
 implementation
+
+uses GlobalVars;
 
 constructor TModel.Create(const _Filename: string);
 begin
@@ -61,6 +69,12 @@ begin
    Voxel := _Voxel;
    Palette := _Palette;
    CommonCreationProcedures;
+end;
+
+constructor TModel.Create(const _Model: TModel);
+begin
+   Next := nil;
+   Assign(_Model);
 end;
 
 destructor TModel.Destroy;
@@ -100,29 +114,42 @@ end;
 
 procedure TModel.Initialize(_HighQuality: boolean = false);
 var
-   i : integer;
+   ext : string;
 begin
    // Check if we have a random file or a voxel.
    if Voxel = nil then
    begin
       // We have a file to open.
-
-
-   end
-   else
-   begin
-      // We may use an existing voxel.
-      SetLength(LOD,1);
-      LOD[0] := TLOD.Create;
-      SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
-      for i := 0 to (Voxel^.Header.NumSections-1) do
+      ext := ExtractFileExt(Filename);
+      if (CompareStr(ext,'.vxl') = 0) then
       begin
-         LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
+         Voxel := VoxelBank.Add(Filename);
+         OpenVoxel(_HighQuality);
       end;
-      CurrentLOD := 0;
-      Opened := true;
+   end
+   else  // we open the current voxel
+   begin
+      OpenVoxel(_HighQuality);
    end;
 end;
+
+// I/O
+procedure TModel.OpenVoxel(_HighQuality: boolean = false);
+var
+   i : integer;
+begin
+   // We may use an existing voxel.
+   SetLength(LOD,1);
+   LOD[0] := TLOD.Create;
+   SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
+   for i := 0 to (Voxel^.Header.NumSections-1) do
+   begin
+      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
+   end;
+   CurrentLOD := 0;
+   Opened := true;
+end;
+
 
 // Gets
 function TModel.GetNumLODs: longword;
@@ -190,5 +217,25 @@ begin
       LOD[i].SetSelection(_value);
    end;
 end;
+
+// Copies
+procedure TModel.Assign(const _Model: TModel);
+var
+   i : integer;
+begin
+   Palette := _Model.Palette;
+   IsVisible := _Model.IsVisible;
+   HVA := _Model.HVA;
+   SetLength(LOD,_Model.GetNumLODs);
+   for i := Low(LOD) to High(LOD) do
+   begin
+      LOD[i] := TLOD.Create(_Model.LOD[i]);
+   end;
+   CurrentLOD := _Model.CurrentLOD;
+   Filename := CopyString(_Model.Filename);
+   Voxel := _Model.Voxel;
+   IsSelected := _Model.IsSelected;
+end;
+
 
 end.

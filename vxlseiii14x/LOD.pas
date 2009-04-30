@@ -15,7 +15,8 @@ type
       Name : string;
       Mesh : array of TMesh;
       // Constructors and Destructors
-      constructor Create;
+      constructor Create; overload;
+      constructor Create(const _LOD: TLOD); overload;
       destructor Destroy; override;
       procedure Clear;
       // Gets
@@ -31,6 +32,8 @@ type
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
       // GUI
       procedure SetSelection(_value: boolean);
+      // Copies
+      procedure Assign(const _LOD: TLOD);
    end;
 
 implementation
@@ -40,6 +43,11 @@ constructor TLOD.Create;
 begin
    Name := 'Standard Level Of Detail';
    SetLength(Mesh,0);
+end;
+
+constructor TLOD.Create(const _LOD: TLOD);
+begin
+   Assign(_LOD);
 end;
 
 destructor TLOD.Destroy;
@@ -136,6 +144,19 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].IsSelected := _value;
+   end;
+end;
+
+// Copies
+procedure TLOD.Assign(const _LOD: TLOD);
+var
+   i : integer;
+begin
+   Name := CopyString(_LOD.Name);
+   SetLength(Mesh,_LOD.GetNumMeshes);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i] := TMesh.Create(_LOD.Mesh[i]);
    end;
 end;
 

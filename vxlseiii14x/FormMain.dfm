@@ -5082,7 +5082,7 @@ object FrmMain: TFrmMain
       Caption = 'Options'
       object DarkenLightenValue1: TMenuItem
         Caption = 'Darken/Lighten Value'
-           object N110: TMenuItem
+        object N110: TMenuItem
           Caption = '1'
           Checked = True
           ShortCut = 49
