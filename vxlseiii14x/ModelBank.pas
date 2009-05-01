@@ -1,0 +1,318 @@
+unit ModelBank;
+
+interface
+
+uses Model, ModelBankItem, SysUtils;
+
+type
+   TModelBank = class
+      private
+         Items : array of TModelBankItem;
+         // Constructors and Destructors
+         procedure Clear;
+         // Adds
+         function Search(const _Filename: string): integer; overload;
+         function Search(const _Model: PModel): integer; overload;
+         function SearchReadOnly(const _Filename: string): integer; overload;
+         function SearchReadOnly(const _Model: PModel): integer; overload;
+         function SearchEditable(const _Model: PModel): integer;
+      public
+         // Constructors and Destructors
+         constructor Create;
+         destructor Destroy; override;
+         // I/O
+         function Load(var _Model: PModel; const _Filename: string): PModel;
+         function Save(var _Model: PModel; const _Filename: string): boolean;
+         // Adds
+         function Add(const _filename: string): PModel; overload;
+         function Add(const _Model: PModel): PModel; overload;
+         function AddReadOnly(const _filename: string): PModel; overload;
+         function AddReadOnly(const _Model: PModel): PModel; overload;
+         function Clone(const _filename: string): PModel; overload;
+         function Clone(const _Model: PModel): PModel; overload;
+         // Deletes
+         procedure Delete(const _Model : PModel);
+   end;
+
+
+implementation
+
+// Constructors and Destructors
+constructor TModelBank.Create;
+begin
+   SetLength(Items,0);
+end;
+
+destructor TModelBank.Destroy;
+begin
+   Clear;
+   inherited Destroy;
+end;
+
+// Only activated when the program is over.
+procedure TModelBank.Clear;
+var
+   i : integer;
+begin
+   for i := Low(Items) to High(Items) do
+   begin
+      Items[i].Free;
+   end;
+end;
+
+// I/O
+function TModelBank.Load(var _Model: PModel; const _Filename: string): PModel;
+var
+   i : integer;
+   Model : PModel;
+begin
+   i := Search(_Model);
+   if i <> -1 then
+   begin
+      Items[i].DecCounter;
+      if Items[i].GetCount = 0 then
+      begin
+         Items[i].Free;
+         Items[i] := TModelBankItem.Create(_Filename);
+         Items[i].SetEditable(true);
+         Result := Items[i].GetModel;
+      end
+      else
+      begin
+         SetLength(Items,High(Items)+2);
+         Items[High(Items)] := TModelBankItem.Create(_Filename);
+         Items[High(Items)].SetEditable(true);
+         Result := Items[High(Items)].GetModel;
+      end;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TModelBankItem.Create(_Filename);
+      Items[High(Items)].SetEditable(true);
+      Result := Items[High(Items)].GetModel;
+   end;
+end;
+
+function TModelBank.Save(var _Model: PModel; const _Filename: string): boolean;
+var
+   i : integer;
+   Model : PModel;
+begin
+   i := SearchEditable(_Model);
+   if i <> -1 then
+   begin
+      Model := Items[i].GetModel;
+//      Model^.SaveToFile(_Filename);
+      Items[i].SetFilename(_Filename);
+      Result := true;
+   end
+   else
+   begin
+      Result := false;
+   end;
+end;
+
+
+// Adds
+function TModelBank.Search(const _filename: string): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if CompareStr(_Filename,Items[i].GetFilename) = 0 then
+      begin
+         Result := i;
+         exit;
+      end;
+   end;
+end;
+
+function TModelBank.Search(const _Model: PModel): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if _Model = Items[i].GetModel then
+      begin
+         Result := i;
+         exit;
+      end;
+   end;
+end;
+
+function TModelBank.SearchReadOnly(const _filename: string): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if not Items[i].GetEditable then
+      begin
+         if CompareStr(_Filename,Items[i].GetFilename) = 0 then
+         begin
+            Result := i;
+            exit;
+         end;
+      end;
+   end;
+end;
+
+function TModelBank.SearchReadOnly(const _Model: PModel): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if not Items[i].GetEditable then
+      begin
+         if _Model = Items[i].GetModel then
+         begin
+            Result := i;
+            exit;
+         end;
+      end;
+   end;
+end;
+
+function TModelBank.SearchEditable(const _Model: PModel): integer;
+var
+   i : integer;
+begin
+   Result := -1;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if Items[i].GetEditable then
+      begin
+         if _Model = Items[i].GetModel then
+         begin
+            Result := i;
+            exit;
+         end;
+      end;
+   end;
+end;
+
+
+
+function TModelBank.Add(const _filename: string): PModel;
+var
+   i : integer;
+begin
+   i := Search(_Filename);
+   if i <> -1 then
+   begin
+      Items[i].IncCounter;
+      Result := Items[i].GetModel;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TModelBankItem.Create(_Filename);
+      Result := Items[High(Items)].GetModel;
+   end;
+end;
+
+function TModelBank.Add(const _Model: PModel): PModel;
+var
+   i : integer;
+begin
+   i := Search(_Model);
+   if i <> -1 then
+   begin
+      Items[i].IncCounter;
+      Result := Items[i].GetModel;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TModelBankItem.Create(_Model);
+      Result := Items[High(Items)].GetModel;
+   end;
+end;
+
+function TModelBank.AddReadOnly(const _filename: string): PModel;
+var
+   i : integer;
+begin
+   i := SearchReadOnly(_Filename);
+   if i <> -1 then
+   begin
+      Items[i].IncCounter;
+      Result := Items[i].GetModel;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TModelBankItem.Create(_Filename);
+      Result := Items[High(Items)].GetModel;
+   end;
+end;
+
+function TModelBank.AddReadOnly(const _Model: PModel): PModel;
+var
+   i : integer;
+begin
+   i := SearchReadOnly(_Model);
+   if i <> -1 then
+   begin
+      Items[i].IncCounter;
+      Result := Items[i].GetModel;
+   end
+   else
+   begin
+      SetLength(Items,High(Items)+2);
+      Items[High(Items)] := TModelBankItem.Create(_Model);
+      Result := Items[High(Items)].GetModel;
+   end;
+end;
+
+
+function TModelBank.Clone(const _filename: string): PModel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TModelBankItem.Create(_Filename);
+   Result := Items[High(Items)].GetModel;
+end;
+
+function TModelBank.Clone(const _Model: PModel): PModel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TModelBankItem.Create(_Model);
+   Result := Items[High(Items)].GetModel;
+end;
+
+
+// Deletes
+procedure TModelBank.Delete(const _Model : PModel);
+var
+   i : integer;
+begin
+   i := Search(_Model);
+   if i <> -1 then
+   begin
+      Items[i].DecCounter;
+      if Items[i].GetCount = 0 then
+      begin
+         Items[i].Free;
+         while i < High(Items) do
+            Items[i] := Items[i+1];
+         SetLength(Items,High(Items));
+      end;
+   end;
+end;
+
+
+end.
+

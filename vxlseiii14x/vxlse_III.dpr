@@ -57,7 +57,11 @@ uses
   BasicFunctions in 'BasicFunctions.pas',
   VoxelBank in 'VoxelBank.pas',
   VoxelBankItem in 'VoxelBankItem.pas',
-  LOD in 'LOD.pas';
+  LOD in 'LOD.pas',
+  ModelBankItem in 'ModelBankItem.pas',
+  ModelBank in 'ModelBank.pas',
+  HVABankItem in 'HVABankItem.pas',
+  HVABank in 'HVABank.pas';
 
 {$R *.res}
 

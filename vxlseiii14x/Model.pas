@@ -80,6 +80,7 @@ end;
 destructor TModel.Destroy;
 begin
    Clear;
+   VoxelBank.Delete(Voxel);    // even if it is nil, no problem.
    inherited Destroy;
 end;
 

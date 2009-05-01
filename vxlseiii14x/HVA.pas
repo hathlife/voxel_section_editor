@@ -6,7 +6,8 @@ unit HVA;
 
 interface
 
-uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, BasicDataTypes, math3d;
+uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, BasicDataTypes, math3d,
+   BasicFunctions;
 
 type
    THVA_Main_Header = record
@@ -42,6 +43,7 @@ type
          // Constructors/Destructors
          Constructor Create(); overload;
          constructor Create(const _Filename : string; _pVoxel : PVoxel); overload;
+         constructor Create(const _HVA: THVA); overload;
          Destructor Destroy; override;
          // I/O stuff
          procedure Clear;
@@ -69,6 +71,8 @@ type
          // Miscelaneous
          Procedure ApplyMatrix(_VoxelScale : TVector3f; _Section : Integer);
          Procedure MovePosition(_Frame,_Section : Integer; _X,_Y,_Z : single);
+         // Assign
+         procedure Assign(const _HVA: THVA);
    end;
 
    THVAVOXEL = (HVhva,HVvoxel);
@@ -87,6 +91,11 @@ end;
 Constructor THVA.Create (const _Filename : string; _pVoxel : PVoxel);
 begin
    LoadFile(_Filename,_pVoxel);
+end;
+
+constructor THVA.Create(const _HVA: THVA);
+begin
+   Assign(_HVA);
 end;
 
 Destructor THVA.Destroy;
@@ -537,5 +546,33 @@ begin
       for i := 0 to Header.N_Sections-1 do
          SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x-1,i);
 end;
+
+// Assign
+procedure THVA.Assign(const _HVA: THVA);
+var
+   i,j,k: integer;
+begin
+   Frame := _HVA.Frame;
+   Section := _HVA.Section;
+   for i := 1 to 16 do
+      Header.FilePath[i] := _HVA.Header.FilePath[i];
+   Header.N_Frames := _HVA.Header.N_Frames;
+   Header.N_Sections := _HVA.Header.N_Sections;
+   SetLength(Data,High(_HVA.Data)+1);
+   for i := Low(Data) to High(Data) do
+   begin
+      for j := 1 to 16 do
+         Data[i].SectionName[j] := _HVA.Data[i].SectionName[j];
+   end;
+   p_Voxel := _HVA.p_Voxel;
+   SetLength(TransformMatrices,High(_HVA.TransformMatrices)+1);
+   for i := Low(TransformMatrices) to High(TransformMatrices) do
+   begin
+      for j := 1 to 3 do
+         for k := 1 to 4 do
+            TransformMatrices[i][j][k] := _HVA.TransformMatrices[i][j][k];
+   end;
+end;
+
 
 end.
