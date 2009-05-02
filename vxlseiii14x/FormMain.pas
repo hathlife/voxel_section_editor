@@ -7,7 +7,8 @@ uses
   Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls,
   ToolWin, ImgList, Math, palette, Spin, Buttons, ogl3dview_engine, FTGifAnimate,
   undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,
-  Form3dpreview,Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL;
+  Form3dpreview,Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
+  HVABank, ModelBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -675,6 +676,8 @@ begin
    Height := 768;
 
    GlobalVars.VoxelBank := TVoxelBank.Create;
+   GlobalVars.HVABank := THVABank.Create;
+   GlobalVars.ModelBank := TModelBank.Create;
    HVAFile := THVA.Create;
 
    for i := 0 to 2 do
@@ -3414,6 +3417,8 @@ begin
    end;
    VXLPalette.Free;
    GlobalVars.VoxelBank.Free;
+   GlobalVars.HVABank.Free;
+   GlobalVars.ModelBank.Free;
    HVAFile.Free;
 end;
 

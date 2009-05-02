@@ -7,11 +7,13 @@ uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model;
 type
    PActor = ^TActor;
    TActor = class
+   private
+      procedure QuickSwitchModels(_m1, _m2: integer);
    public
       // List
       Next : PActor;
       // Atributes
-      Models : PModel;
+      Models : array of PModel;
       // physics cinematics.
       PositionAcceleration : TVector3f;
       RotationAcceleration : TVector3f;
@@ -23,25 +25,53 @@ type
       IsSelected : boolean;
       // Constructors
       constructor Create;
+      destructor Destroy; override;
+      procedure Clear;
       procedure Reset;
-
-      // Execution
+       // Execution
       procedure Render(var _PolyCount: longword);
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
-
+       // Adds
+      procedure Add(const _filename: string);
+      procedure AddReadOnly(const _filename: string);
       // Removes
-      procedure RemoveModel(var _Model : PModel);
+      procedure Remove(var _Model : PModel);
+      // switches
+      procedure SwitchModels(_m1, _m2: integer);
    end;
 
 implementation
+
+uses GlobalVars;
 
 constructor TActor.Create;
 begin
    Next := nil;
    IsSelected := false;
+   SetLength(Models,0);
    Reset;
+end;
+
+destructor TActor.Destroy;
+begin
+   Clear;
+   inherited Destroy;
+end;
+
+procedure TActor.Clear;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         ModelBank.Delete(Models[i]);
+      end;
+   end;
+   SetLength(Models,0);
 end;
 
 procedure TActor.Reset;
@@ -60,17 +90,18 @@ end;
 
 procedure TActor.Render(var _PolyCount: longword);
 var
-   MyModel : PModel;
+   i : integer;
 begin
    ProcessNextFrame;
    glPushMatrix;
       MoveActor;
       RotateActor;
-      MyModel := Models;
-      while MyModel <> nil do
+      for i := Low(Models) to High(Models) do
       begin
-         MyModel^.Render(_PolyCount);
-         MyModel := MyModel^.Next;
+         if Models[i] <> nil then
+         begin
+            Models[i]^.Render(_PolyCount);
+         end;
       end;
    glPopMatrix;
 
@@ -127,39 +158,61 @@ begin
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
 end;
 
+// Adds
+procedure TActor.Add(const _filename: string);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Add(_filename);
+end;
+
+procedure TActor.AddReadOnly(const _filename: string);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.AddReadOnly(_filename);
+end;
+
+
 // Removes
-procedure TActor.RemoveModel(var _Model : PModel);
+procedure TActor.Remove(var _Model : PModel);
 var
    PreviousModel : PModel;
+   i : integer;
 begin
-   if Models = nil then exit; // Can't delete from an empty list.
-   if _Model <> nil then
+   i := Low(Models);
+   while i <= High(Models) do
    begin
-      // Check if it is the first camera.
-      if _Model = Models then
+      if Models[i] = _Model then
       begin
-         Models := _Model^.Next;
-      end
-      else // It could be inside the list, but it's not the first.
-      begin
-         PreviousModel := Models;
-         while (PreviousModel^.Next <> nil) and (PreviousModel^.Next <> _Model) do
+         ModelBank.Delete(_Model);
+         while i < High(Models) do
          begin
-            PreviousModel := PreviousModel^.Next;
+            QuickSwitchModels(i,i+1);
+            inc(i);
          end;
-         if PreviousModel^.Next = _Model then
-         begin
-            PreviousModel^.Next := _Model^.Next;
-         end
-         else // nil -- not from this list.
-            exit;
+         SetLength(Models,High(Models));
+         exit;
       end;
-      // If it has past this stage, the camera is valid and was part of the list.
-      // Now we dispose the camera.
-      _Model^.Free;
-      _Model := nil;
+      inc(i);
    end;
 end;
+
+// Switches
+procedure TActor.SwitchModels(_m1, _m2: integer);
+begin
+   if (_m1 <= High(Models)) and (_m1 > Low(Models)) then
+      if (_m2 <= High(Models)) and (_m2 > Low(Models)) then
+         QuickSwitchModels(_m1, _m2);
+end;
+
+procedure TActor.QuickSwitchModels(_m1, _m2: integer);
+var
+   temp : PModel;
+begin
+   Temp := Models[_m1];
+   Models[_m1] := Models[_m2];
+   Models[_m2] := temp;
+end;
+
 
 
 end.

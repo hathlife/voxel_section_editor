@@ -13,7 +13,6 @@ type
       // I/O
       procedure OpenVoxel(_HighQuality: boolean = false);
    public
-      Next : PModel;
       Palette : PPalette;
       IsVisible : boolean;
       // Skeleton:
@@ -73,7 +72,6 @@ end;
 
 constructor TModel.Create(const _Model: TModel);
 begin
-   Next := nil;
    Assign(_Model);
 end;
 
@@ -87,7 +85,6 @@ end;
 procedure TModel.CommonCreationProcedures;
 begin
    CurrentLOD := 0;
-   Next := nil;
    Opened := false;
    Reset;
 end;
@@ -116,6 +113,7 @@ end;
 procedure TModel.Initialize(_HighQuality: boolean = false);
 var
    ext : string;
+   HVAFilename : string;
 begin
    // Check if we have a random file or a voxel.
    if Voxel = nil then
@@ -125,6 +123,9 @@ begin
       if (CompareStr(ext,'.vxl') = 0) then
       begin
          Voxel := VoxelBank.Add(Filename);
+         HVAFilename := copy(Filename,1,Length(Filename)-3);
+         HVAFilename := HVAFilename + 'hva';
+         HVA := HVABank.Add(HVAFilename,Voxel);
          OpenVoxel(_HighQuality);
       end;
    end
