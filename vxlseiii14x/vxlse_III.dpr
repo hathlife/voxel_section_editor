@@ -61,7 +61,8 @@ uses
   ModelBankItem in 'ModelBankItem.pas',
   ModelBank in 'ModelBank.pas',
   HVABankItem in 'HVABankItem.pas',
-  HVABank in 'HVABank.pas';
+  HVABank in 'HVABank.pas',
+  VoxelDocumentItem in 'VoxelDocumentItem.pas';
 
 {$R *.res}
 

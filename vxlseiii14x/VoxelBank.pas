@@ -22,6 +22,7 @@ type
          destructor Destroy; override;
          // I/O
          function Load(var _Voxel: PVoxel; const _Filename: string): PVoxel;
+         function LoadNew: PVoxel;
          function Save(var _Voxel: PVoxel; const _Filename: string): boolean;
          // Adds
          function Add(const _filename: string): PVoxel; overload;
@@ -30,6 +31,7 @@ type
          function AddReadOnly(const _Voxel: PVoxel): PVoxel; overload;
          function Clone(const _filename: string): PVoxel; overload;
          function Clone(const _Voxel: PVoxel): PVoxel; overload;
+         function CloneEditable(const _Voxel: PVoxel): PVoxel; overload;
          // Deletes
          procedure Delete(const _Voxel : PVoxel);
    end;
@@ -93,6 +95,15 @@ begin
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
+
+function TVoxelBank.LoadNew: PVoxel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TVoxelBankItem.Create;
+   Items[High(Items)].SetEditable(true);
+   Result := Items[High(Items)].GetVoxel;
+end;
+
 
 function TVoxelBank.Save(var _Voxel: PVoxel; const _Filename: string): boolean;
 var
@@ -278,7 +289,6 @@ begin
    end;
 end;
 
-
 function TVoxelBank.Clone(const _filename: string): PVoxel;
 begin
    SetLength(Items,High(Items)+2);
@@ -290,6 +300,14 @@ function TVoxelBank.Clone(const _Voxel: PVoxel): PVoxel;
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   Result := Items[High(Items)].GetVoxel;
+end;
+
+function TVoxelBank.CloneEditable(const _Voxel: PVoxel): PVoxel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   Items[High(Items)].SetEditable(true);
    Result := Items[High(Items)].GetVoxel;
 end;
 

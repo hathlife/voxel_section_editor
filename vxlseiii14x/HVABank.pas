@@ -21,7 +21,8 @@ type
          constructor Create;
          destructor Destroy; override;
          // I/O
-         function Load(var _HVA: PHVA; const _Filename: string; _Voxel: PVoxel): PHVA;
+         function Load(var _HVA: PHVA; const _Filename: string; const _Voxel: PVoxel): PHVA;
+         function LoadNew(const _Voxel: PVoxel): PHVA;
          function Save(var _HVA: PHVA; const _Filename: string): boolean;
          // Adds
          function Add(const _filename: string; _Voxel: PVoxel): PHVA; overload;
@@ -30,6 +31,7 @@ type
          function AddReadOnly(const _HVA: PHVA): PHVA; overload;
          function Clone(const _filename: string; _Voxel: PVoxel): PHVA; overload;
          function Clone(const _HVA: PHVA): PHVA; overload;
+         function CloneEditable(const _HVA: PHVA): PHVA; overload;
          // Deletes
          procedure Delete(const _HVA : PHVA);
    end;
@@ -61,7 +63,7 @@ begin
 end;
 
 // I/O
-function THVABank.Load(var _HVA: PHVA; const _Filename: string; _Voxel: PVoxel): PHVA;
+function THVABank.Load(var _HVA: PHVA; const _Filename: string; const _Voxel: PVoxel): PHVA;
 var
    i : integer;
 begin
@@ -92,6 +94,16 @@ begin
       Result := Items[High(Items)].GetHVA;
    end;
 end;
+
+function THVABank.LoadNew(const _Voxel : PVoxel): PHVA;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := THVABankItem.Create;
+   Items[High(Items)].SetEditable(true);
+   Result := Items[High(Items)].GetHVA;
+   Result^.p_Voxel := _Voxel;
+end;
+
 
 function THVABank.Save(var _HVA: PHVA; const _Filename: string): boolean;
 var
@@ -292,6 +304,13 @@ begin
    Result := Items[High(Items)].GetHVA;
 end;
 
+function THVABank.CloneEditable(const _HVA: PHVA): PHVA;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := THVABankItem.Create(_HVA);
+   Items[High(Items)].SetEditable(true);
+   Result := Items[High(Items)].GetHVA;
+end;
 
 // Deletes
 procedure THVABank.Delete(const _HVA : PHVA);
