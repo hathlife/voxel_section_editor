@@ -26,7 +26,7 @@ type
       IsSelected : boolean;
       // constructors and destructors
       constructor Create(const _Filename: string); overload;
-      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; _HighQuality : boolean); overload;
+      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _HighQuality : boolean); overload;
       constructor Create(const _Model: TModel); overload;
       destructor Destroy; override;
       procedure CommonCreationProcedures;
@@ -62,10 +62,11 @@ begin
    CommonCreationProcedures;
 end;
 
-constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; _HighQuality : boolean);
+constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; const _HVA: PHVA; _HighQuality : boolean);
 begin
    Filename := '';
-   Voxel := _Voxel;
+   Voxel := VoxelBank.Add(_Voxel);
+   HVA := HVABank.Add(_HVA);
    Palette := _Palette;
    CommonCreationProcedures;
 end;
@@ -79,6 +80,7 @@ destructor TModel.Destroy;
 begin
    Clear;
    VoxelBank.Delete(Voxel);    // even if it is nil, no problem.
+   HVABank.Delete(HVA);
    inherited Destroy;
 end;
 

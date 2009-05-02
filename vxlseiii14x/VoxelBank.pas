@@ -66,7 +66,7 @@ var
    i : integer;
    Voxel : PVoxel;
 begin
-   i := Search(_Voxel);
+   i := SearchEditable(_Voxel);
    if i <> -1 then
    begin
       Items[i].DecCounter;
@@ -99,7 +99,7 @@ var
    i : integer;
    Voxel : PVoxel;
 begin
-   i := SearchEditable(_Voxel);
+   i := Search(_Voxel);
    if i <> -1 then
    begin
       Voxel := Items[i].GetVoxel;

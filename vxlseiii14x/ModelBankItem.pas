@@ -2,7 +2,7 @@ unit ModelBankItem;
 
 interface
 
-uses Model, BasicFunctions;
+uses Model, BasicFunctions, Voxel, HVA, Palette;
 
 type
    TModelBankItem = class
@@ -15,6 +15,7 @@ type
          // Constructor and Destructor
          constructor Create; overload;
          constructor Create(const _Filename: string); overload;
+         constructor Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
          constructor Create(const _Model: PModel); overload;
          destructor Destroy; override;
          // Sets
@@ -52,6 +53,13 @@ end;
 constructor TModelBankItem.Create(const _Model: PModel);
 begin
    Model := TModel.Create(_Model^);
+   Counter := 1;
+   Filename := CopyString(Model.Filename);
+end;
+
+constructor TModelBankItem.Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false);
+begin
+   Model := TModel.Create(_Voxel,_Palette,_HVA,_HighQuality);
    Counter := 1;
    Filename := CopyString(Model.Filename);
 end;

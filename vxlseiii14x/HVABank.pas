@@ -65,7 +65,7 @@ function THVABank.Load(var _HVA: PHVA; const _Filename: string; _Voxel: PVoxel):
 var
    i : integer;
 begin
-   i := Search(_HVA);
+   i := SearchEditable(_HVA);
    if i <> -1 then
    begin
       Items[i].DecCounter;
@@ -98,7 +98,7 @@ var
    i : integer;
    HVA : PHVA;
 begin
-   i := SearchEditable(_HVA);
+   i := Search(_HVA);
    if i <> -1 then
    begin
       HVA := Items[i].GetHVA;
