@@ -42,7 +42,6 @@ type
    end;
 
 var
-   HighestNormal : integer;
    oglloaded : boolean = false;
    RebuildLists : boolean = false;
    XRotB,YRotB, SSM, SSO : boolean;
@@ -324,7 +323,6 @@ var
    NormalVector : TVector3f;
 begin
    N := Normal;
-   HighestNormal := Normal;
 
    if N < 0 then
    begin
@@ -585,9 +583,6 @@ begin
          begin
             glRasterPos2i(1, FrmMain.OGL3DPreview.Height - 19);
             glPrint(PChar('DEBUG -  XRot:' + floattostr(XRot) + ' YRot:' + floattostr(YRot)));
-
-            glRasterPos2i(1, FrmMain.OGL3DPreview.Height - 38);
-            glPrint(PChar('Highest Normal:' + floattostr(HighestNormal)));
          end;
       end;
 
@@ -841,6 +836,4 @@ begin
    FrmMain.Display3dView1.Checked := false;
 end;
 
-begin
-   HighestNormal := -1;
 end.

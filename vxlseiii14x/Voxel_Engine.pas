@@ -2693,7 +2693,7 @@ end;
 
 begin
    // 1.40 New Palette Engine.
-   VXLPalette := TPalette.CreateFromFile(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
+   VXLPalette := TPalette.Create(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
 
    BGViewColor := RGB(140,170,239);
    VoxelFile := TVoxel.Create;

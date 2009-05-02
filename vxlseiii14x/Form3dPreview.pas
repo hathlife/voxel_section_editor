@@ -559,9 +559,6 @@ begin
          begin
             glRasterPos2i(1, Panel2.Height - 19);
             glPrint(PChar('DEBUG -  XRot:' + floattostr(XRot) + ' YRot:' + floattostr(YRot)));
-
-            glRasterPos2i(1, Panel2.Height - 38);
-            glPrint(PChar('Highest Normal:' + floattostr(HighestNormal)));
          end;
       end;
 

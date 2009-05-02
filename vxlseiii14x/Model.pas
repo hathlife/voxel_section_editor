@@ -59,6 +59,9 @@ constructor TModel.Create(const _Filename: string);
 begin
    Filename := CopyString(_Filename);
    Voxel := nil;
+   // Create a new 32 bits palette.
+   New(Palette);
+   Palette^ := TPalette.Create;
    CommonCreationProcedures;
 end;
 
@@ -67,7 +70,8 @@ begin
    Filename := '';
    Voxel := VoxelBank.Add(_Voxel);
    HVA := HVABank.Add(_HVA);
-   Palette := _Palette;
+   New(Palette);
+   Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
 end;
 
@@ -81,6 +85,7 @@ begin
    Clear;
    VoxelBank.Delete(Voxel);    // even if it is nil, no problem.
    HVABank.Delete(HVA);
+   Palette^.Free;
    inherited Destroy;
 end;
 
@@ -227,7 +232,8 @@ procedure TModel.Assign(const _Model: TModel);
 var
    i : integer;
 begin
-   Palette := _Model.Palette;
+   New(Palette);
+   Palette^ := TPalette.Create(_Model.Palette^);
    IsVisible := _Model.IsVisible;
    HVA := _Model.HVA;
    SetLength(LOD,_Model.GetNumLODs);

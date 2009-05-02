@@ -104,7 +104,6 @@ begin
          end;
       end;
    glPopMatrix;
-
 end;
 
 procedure TActor.RotateActor;
@@ -175,7 +174,6 @@ end;
 // Removes
 procedure TActor.Remove(var _Model : PModel);
 var
-   PreviousModel : PModel;
    i : integer;
 begin
    i := Low(Models);

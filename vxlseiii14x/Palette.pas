@@ -10,10 +10,10 @@ uses Graphics, Windows, SysUtils, math, BasicDataTypes;
 
 const
 	TRANSPARENT = 0;
-
+   C_MAX_BITS = 32; // works for both 24 and 32 bits.
 type
    TRGB = record
-      r,g,b : byte;
+      r,g,b,a : byte;
    end;
 
    TPalette = class
@@ -30,10 +30,10 @@ type
       procedure SetGL4(_id: longword; _colour: TVector4f);
    public
       // Constructors
-      constructor Create;
+      constructor Create; overload;
       procedure Initialize;
-      constructor CreateFromFile(_Filename : string);
-      constructor CreateFromPalette(const _Palette : TPalette);
+      constructor Create(const _Filename : string); overload;
+      constructor Create(const _Palette : TPalette); overload;
       destructor Destroy; override;
 
       // Input and Output
@@ -68,7 +68,7 @@ begin
    Initialize;
 end;
 
-constructor TPalette.CreateFromFile(_Filename: string);
+constructor TPalette.Create(const _Filename: string);
 begin
    if not LoadPalette(_Filename) then
    begin
@@ -76,14 +76,14 @@ begin
    end;
 end;
 
-constructor TPalette.CreateFromPalette(const _Palette : TPalette);
+constructor TPalette.Create(const _Palette : TPalette);
 begin
    Assign(_Palette);
 end;
 
 procedure TPalette.Initialize;
 begin
-   NumBits := 24;
+   NumBits := C_MAX_BITS;
    SetLength(FPalette,0);
 end;
 
@@ -185,7 +185,7 @@ begin
       for x := 0 to 255 do
          FPalette[x] := RGB(255-x,255-x,255-x);
    end
-   else if _NumBits <> 24 then
+   else if _NumBits <> C_MAX_BITS then
    begin
       Size := Power(2,_NumBits);
       SetLength(FPalette,Round(Size));
@@ -201,7 +201,7 @@ end;
 // Gets
 function TPalette.ReadColour(_id: Cardinal): TColor;
 begin
-   if NumBits = 24 then
+   if NumBits = C_MAX_BITS then
    begin
       Result := _id;
    end
@@ -218,11 +218,12 @@ end;
 
 function TPalette.ReadRGB(_id : longword): TRGB;
 begin
-   if NumBits = 24 then
+   if NumBits = C_MAX_BITS then
    begin
       Result.r := Byte(_id);
       Result.g := Byte(_id shr 8);
       Result.b := Byte(_id shr 16);
+      Result.a := Byte(_id shr 24);
    end
    else if NumBits = 8 then
    begin
@@ -231,12 +232,14 @@ begin
          Result.r := Byte(FPalette[_id]);
          Result.g := Byte(FPalette[_id] shr 8);
          Result.b := Byte(FPalette[_id] shr 16);
+         Result.a := Byte(FPalette[_id] shr 24);
       end
       else
       begin
          Result.r := Byte(FPalette[0]);
          Result.g := Byte(FPalette[0] shr 8);
          Result.b := Byte(FPalette[0] shr 16);
+         Result.a := Byte(FPalette[0] shr 24);
       end;
    end
    else
@@ -244,12 +247,13 @@ begin
       Result.r := Byte(_id);
       Result.g := Byte(_id shr 8);
       Result.b := Byte(_id shr 16);
+      Result.a := Byte(_id shr 24);
    end;
 end;
 
 function TPalette.ReadGL(_id : longword): TVector3f;
 begin
-   if NumBits = 24 then
+   if NumBits = C_MAX_BITS then
    begin
       Result.X := Byte(_id and $FF) / 255;
       Result.Y := Byte((_id shr 8) and $FF) / 255;
@@ -280,7 +284,7 @@ end;
 
 function TPalette.ReadGL4(_id : longword): TVector4f;
 begin
-   if NumBits = 24 then
+   if NumBits = C_MAX_BITS then
    begin
       Result.X := Byte(_id and $FF) / 255;
       Result.Y := Byte((_id shr 8) and $FF) / 255;
@@ -325,7 +329,7 @@ var
    diffs,min_diffs : real;
    top : byte;
 begin
-   if NumBits = 24 then
+   if NumBits = C_MAX_BITS then
    begin
       Result := _colour;
    end
@@ -423,7 +427,7 @@ end;
 // Sets
 procedure TPalette.SetColour(_id: longword; _colour: TColor);
 begin
-   if NumBits <> 24 then
+   if NumBits <> C_MAX_BITS then
    begin
       if (_id >= 0) and (_id <= High(FPalette)) then
       begin
@@ -434,18 +438,18 @@ end;
 
 procedure TPalette.SetRGB(_id: longword; _colour: TRGB);
 begin
-   if NumBits <> 24 then
+   if NumBits <> C_MAX_BITS then
    begin
       if (_id >= 0) and (_id <= High(FPalette)) then
       begin
-         FPalette[_id] := (_colour.r or (_colour.g shl 8) or (_colour.b shl 16));
+         FPalette[_id] := (_colour.r or (_colour.g shl 8) or (_colour.b shl 16) or (_colour.a shl 24));
       end;
    end;
 end;
 
 procedure TPalette.SetGL(_id: longword; _colour: TVector3f);
 begin
-   if NumBits <> 24 then
+   if NumBits <> C_MAX_BITS then
    begin
       if (_id >= 0) and (_id <= High(FPalette)) then
       begin
@@ -456,7 +460,7 @@ end;
 
 procedure TPalette.SetGL4(_id: longword; _colour: TVector4f);
 begin
-   if NumBits <> 24 then
+   if NumBits <> C_MAX_BITS then
    begin
       if (_id >= 0) and (_id <= High(FPalette)) then
       begin
@@ -496,7 +500,7 @@ begin
    // Let's catch the errors.
 
    // 24bits has no palette.
-   if NumBits <> 24 then
+   if NumBits <> 8 then
       exit;
 
    // For optimization purposes, we make sure _EndNum is the highest value.
