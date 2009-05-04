@@ -29,9 +29,11 @@ type
          function Add(const _filename: string): PModel; overload;
          function Add(const _Model: PModel): PModel; overload;
          function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
+         function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
          function AddReadOnly(const _filename: string): PModel; overload;
          function AddReadOnly(const _Model: PModel): PModel; overload;
          function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
+         function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
          function Clone(const _filename: string): PModel; overload;
          function Clone(const _Model: PModel): PModel; overload;
          function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
@@ -308,6 +310,12 @@ begin
    end;
 end;
 
+function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_HighQuality);
+   Result := Items[High(Items)].GetModel;
+end;
 
 function TModelBank.AddReadOnly(const _filename: string): PModel;
 var
@@ -362,6 +370,14 @@ begin
       Result := Items[High(Items)].GetModel;
    end;
 end;
+
+function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+begin
+   SetLength(Items,High(Items)+2);
+   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_HighQuality);
+   Result := Items[High(Items)].GetModel;
+end;
+
 
 function TModelBank.Clone(const _filename: string): PModel;
 begin

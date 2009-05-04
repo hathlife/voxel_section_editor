@@ -12,6 +12,7 @@ type
       Opened : boolean;
       // I/O
       procedure OpenVoxel(_HighQuality: boolean = false);
+      procedure OpenVoxelSection(const _VoxelSection: PVoxelSection; _HighQuality: boolean = false);
    public
       Palette : PPalette;
       IsVisible : boolean;
@@ -26,6 +27,7 @@ type
       IsSelected : boolean;
       // constructors and destructors
       constructor Create(const _Filename: string); overload;
+      constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _HighQuality : boolean); overload;
       constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _HighQuality : boolean); overload;
       constructor Create(const _Model: TModel); overload;
       destructor Destroy; override;
@@ -75,6 +77,16 @@ begin
    CommonCreationProcedures;
 end;
 
+constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _HighQuality : boolean);
+begin
+   Filename := '';
+   Voxel := nil;
+   New(Palette);
+   Palette^ := TPalette.Create(_Palette^);
+   Clear;
+   OpenVoxelSection(_VoxelSection,_HighQuality);
+end;
+
 constructor TModel.Create(const _Model: TModel);
 begin
    Assign(_Model);
@@ -114,7 +126,6 @@ begin
    end;
    SetLength(LOD,0);
    HVA := nil;
-   Palette := nil;
 end;
 
 procedure TModel.Initialize(_HighQuality: boolean = false);
@@ -155,6 +166,19 @@ begin
    begin
       LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
    end;
+   CurrentLOD := 0;
+   Opened := true;
+end;
+
+procedure TModel.OpenVoxelSection(const _VoxelSection : PVoxelSection; _HighQuality: boolean = false);
+var
+   i : integer;
+begin
+   // We may use an existing voxel.
+   SetLength(LOD,1);
+   LOD[0] := TLOD.Create;
+   SetLength(LOD[0].Mesh,1);
+   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,_HighQuality);
    CurrentLOD := 0;
    Opened := true;
 end;
