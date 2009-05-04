@@ -46,6 +46,8 @@ type
       function AddVoxel(const _Filename: string): boolean;
       // Copies
       procedure Assign(const _VoxelDocument: TVoxelDocument);
+      // Swicthes
+      function SwitchTurret(const _Filename: string): boolean;
    end;
 
 implementation
@@ -112,12 +114,10 @@ procedure TVoxelDocument.LoadNew;
 begin
    ClearVoxel;
    SetLength(Voxels,1);
-   New(Voxels[0]);
-   Voxels[0] := VoxelBank.LoadNew;
    SetLength(HVAs,1);
-   New(HVAs[0]);
-   HVAs[0] := HVABank.LoadNew(Voxels[0]);
    SetLength(VoxelType,1);
+   Voxels[0] := VoxelBank.LoadNew;
+   HVAs[0] := HVABank.LoadNew(Voxels[0]);
    VoxelType[0] := C_VXLTP_BODY;
 end;
 
@@ -133,16 +133,18 @@ var
 begin
    ClearVoxel;
    // Add Body.
-   AddVoxel(_Filename);
-   // Turret.
-   Filename := CopyString(_Filename);
-   if AddVoxel(GetTurretName(Filename)) then
-      VoxelType[High(VoxelType)] := C_VXLTP_TURRET;
-   // Barrel.
-   Filename := CopyString(_Filename);
-   if AddVoxel(GetBarrelName(Filename)) then
-      VoxelType[High(VoxelType)] := C_VXLTP_BARREL;
-   Result := true;
+   Result := AddVoxel(_Filename);
+   if Result then
+   begin
+      // Turret.
+      Filename := CopyString(_Filename);
+      if AddVoxel(GetTurretName(Filename)) then
+         VoxelType[High(VoxelType)] := C_VXLTP_TURRET;
+      // Barrel.
+      Filename := CopyString(_Filename);
+      if AddVoxel(GetBarrelName(Filename)) then
+         VoxelType[High(VoxelType)] := C_VXLTP_BARREL;
+   end;
 end;
 
 
@@ -297,12 +299,20 @@ begin
       SetLength(HVAs,High(HVAs)+2);
       SetLength(VoxelType,High(VoxelType)+2);
       i := High(Voxels);
-      New(Voxels[i]);
       Voxels[i] := VoxelBank.Load(Voxels[i],Filename);
-      New(HVAs[i]);
-      HVAs[i] := HVABank.Load(HVAs[i],GetHVAName(Filename),Voxels[i]);
-      VoxelType[i] := C_VXLTP_BODY; // Default value.
-      Result := true;
+      // Did it open the voxel?
+      if Voxels[i] <> nil then
+      begin
+         HVAs[i] := HVABank.Load(HVAs[i],GetHVAName(Filename),Voxels[i]);
+         VoxelType[i] := C_VXLTP_BODY; // Default value.
+         Result := true;
+      end
+      else // if Voxel couldn't be opened, abort operation
+      begin
+         SetLength(Voxels,High(Voxels));
+         SetLength(HVAs,High(HVAs));
+         SetLength(VoxelType,High(VoxelType));
+      end;
    end;
 end;
 
@@ -353,5 +363,31 @@ begin
       _VoxelName := _VoxelName + 'bar.vxl';
    end;
 end;
+
+// Swicthes
+function TVoxelDocument.SwitchTurret(const _Filename: string): boolean;
+var
+   i : integer;
+   Filename: string;
+begin
+   Result := false;
+   if FileExists(_Filename) then
+   begin
+      i := 0;
+      while i <= High(Voxels) do
+      begin
+         if VoxelType[i] = C_VXLTP_TURRET then
+         begin
+            Voxels[i] := VoxelBank.Load(Voxels[i],_Filename);
+            Filename := CopyString(_Filename);
+            HVAs[i] := HVABank.Load(HVAs[i],GetHVAName(Filename),Voxels[i]);
+            Result := true;
+            exit;
+         end;
+         inc(i);
+      end;
+   end;
+end;
+
 
 end.

@@ -74,15 +74,27 @@ begin
       Items[i].DecCounter;
       if Items[i].GetCount = 0 then
       begin
-         Items[i].Free;
-         Items[i] := TVoxelBankItem.Create(_Filename);
+         try
+            Items[i].Free;
+            Items[i] := TVoxelBankItem.Create(_Filename);
+            Result := Items[i].GetVoxel;
+         except
+            Result := nil;
+            exit;
+         end;
          Items[i].SetEditable(true);
-         Result := Items[i].GetVoxel;
       end
       else
       begin
          SetLength(Items,High(Items)+2);
-         Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+         try
+            Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+         except
+            Items[High(Items)].Free;
+            SetLength(Items,High(Items));
+            Result := nil;
+            exit;
+         end;
          Items[High(Items)].SetEditable(true);
          Result := Items[High(Items)].GetVoxel;
       end;
@@ -90,7 +102,14 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      try
+         Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      except
+         Items[High(Items)].Free;
+         SetLength(Items,High(Items));
+         Result := nil;
+         exit;
+      end;
       Items[High(Items)].SetEditable(true);
       Result := Items[High(Items)].GetVoxel;
    end;
@@ -230,7 +249,14 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      try
+         Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      except
+         Items[High(Items)].Free;
+         SetLength(Items,High(Items));
+         Result := nil;
+         exit;
+      end;
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
@@ -248,7 +274,14 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+      try
+         Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+      except
+         Items[High(Items)].Free;
+         SetLength(Items,High(Items));
+         Result := nil;
+         exit;
+      end;
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
@@ -266,7 +299,14 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      try
+         Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+      except
+         Items[High(Items)].Free;
+         SetLength(Items,High(Items));
+         Result := nil;
+         exit;
+      end;
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
@@ -284,7 +324,14 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+      try
+         Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+      except
+         Items[High(Items)].Free;
+         SetLength(Items,High(Items));
+         Result := nil;
+         exit;
+      end;
       Result := Items[High(Items)].GetVoxel;
    end;
 end;
@@ -292,21 +339,42 @@ end;
 function TVoxelBank.Clone(const _filename: string): PVoxel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+   try
+      Items[High(Items)] := TVoxelBankItem.Create(_Filename);
+   except
+      Items[High(Items)].Free;
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
    Result := Items[High(Items)].GetVoxel;
 end;
 
 function TVoxelBank.Clone(const _Voxel: PVoxel): PVoxel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   try
+      Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   except
+      Items[High(Items)].Free;
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
    Result := Items[High(Items)].GetVoxel;
 end;
 
 function TVoxelBank.CloneEditable(const _Voxel: PVoxel): PVoxel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   try
+      Items[High(Items)] := TVoxelBankItem.Create(_Voxel);
+   except
+      Items[High(Items)].Free;
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
    Items[High(Items)].SetEditable(true);
    Result := Items[High(Items)].GetVoxel;
 end;
