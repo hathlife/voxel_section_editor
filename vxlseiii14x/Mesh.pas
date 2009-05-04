@@ -53,7 +53,8 @@ type
          constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
          destructor Destroy; override;
          procedure Clear;
-
+         // I/O
+         procedure RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
          // Sets
          procedure SetColoursType(_ColoursType: integer);
          procedure SetNormalsType(_NormalsType: integer);
@@ -138,7 +139,7 @@ end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
 begin
-   Opened := false;
+   Clear;
    ID := _ID;
    TransparencyLevel := 0;
    if _HighQuality then
@@ -149,6 +150,11 @@ begin
    begin
       LoadFromVoxel(_Voxel,_Palette);
    end;
+   IsColisionEnabled := false; // Temporarily, until colision is implemented.
+   IsVisible := true;
+   IsSelected := false;
+   Next := -1;
+   Son := -1;
 end;
 
 destructor TMesh.Destroy;
@@ -159,6 +165,7 @@ end;
 
 procedure TMesh.Clear;
 begin
+   Opened := false;
    ForceRefresh;
    SetLength(Vertices,0);
    SetLength(Faces,0);
@@ -170,6 +177,20 @@ end;
 
 
 // I/O;
+procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+begin
+   Clear;
+   if _HighQuality then
+   begin
+      ModelizeFromVoxel(_Voxel,_Palette);
+   end
+   else
+   begin
+      LoadFromVoxel(_Voxel,_Palette);
+   end;
+end;
+
+
 procedure TMesh.LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
    NumVertices, NumFaces : longword;
@@ -460,12 +481,7 @@ begin
    Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
    Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
-   IsColisionEnabled := false; // Temporarily, until colision is implemented.
-   IsVisible := true;
    Opened := true;
-   IsSelected := false;
-   Next := -1;
-   Son := -1;
 end;
 
 

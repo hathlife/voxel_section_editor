@@ -11,8 +11,8 @@ type
    private
       Opened : boolean;
       // I/O
-      procedure OpenVoxel(_HighQuality: boolean = false);
-      procedure OpenVoxelSection(const _VoxelSection: PVoxelSection; _HighQuality: boolean = false);
+      procedure OpenVoxel;
+      procedure OpenVoxelSection(const _VoxelSection: PVoxelSection);
    public
       Palette : PPalette;
       IsVisible : boolean;
@@ -24,6 +24,7 @@ type
       Filename : string;
       Voxel : PVoxel;
       VoxelSection : PVoxelSection;
+      HighQuality: boolean;
       // GUI
       IsSelected : boolean;
       // constructors and destructors
@@ -37,6 +38,10 @@ type
       procedure ClearLODs;
       procedure Clear;
       procedure Reset;
+      // I/O
+      procedure RebuildModel;
+      procedure RebuildLOD(i: integer);
+      procedure RebuildCurrentLOD;
       // Gets
       function GetNumLODs: longword;
       function IsOpened : boolean;
@@ -64,6 +69,7 @@ begin
    Filename := CopyString(_Filename);
    Voxel := nil;
    VoxelSection := nil;
+   HighQuality := true;
    // Create a new 32 bits palette.
    New(Palette);
    Palette^ := TPalette.Create;
@@ -76,6 +82,7 @@ begin
    Voxel := VoxelBank.Add(_Voxel);
    HVA := HVABank.Add(_HVA);
    VoxelSection := nil;
+   HighQuality := _HighQuality;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
@@ -86,6 +93,7 @@ begin
    Filename := '';
    Voxel := nil;
    VoxelSection := _VoxelSection;
+   HighQuality := _HighQuality;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
@@ -154,22 +162,22 @@ begin
             HVAFilename := copy(Filename,1,Length(Filename)-3);
             HVAFilename := HVAFilename + 'hva';
             HVA := HVABank.Add(HVAFilename,Voxel);
-            OpenVoxel(_HighQuality);
+            OpenVoxel;
          end;
       end
       else
       begin
-         OpenVoxelSection(VoxelSection,_HighQuality);
+         OpenVoxelSection(VoxelSection);
       end;
    end
    else  // we open the current voxel
    begin
-      OpenVoxel(_HighQuality);
+      OpenVoxel;
    end;
 end;
 
 // I/O
-procedure TModel.OpenVoxel(_HighQuality: boolean = false);
+procedure TModel.OpenVoxel;
 var
    i : integer;
 begin
@@ -179,7 +187,7 @@ begin
    SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
    for i := 0 to (Voxel^.Header.NumSections-1) do
    begin
-      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
+      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,HighQuality);
       LOD[0].Mesh[i].Next := i+1;
    end;
    LOD[0].Mesh[High(LOD[0].Mesh)].Next := -1;
@@ -187,7 +195,7 @@ begin
    Opened := true;
 end;
 
-procedure TModel.OpenVoxelSection(const _VoxelSection : PVoxelSection; _HighQuality: boolean = false);
+procedure TModel.OpenVoxelSection(const _VoxelSection : PVoxelSection);
 var
    i : integer;
 begin
@@ -195,12 +203,47 @@ begin
    SetLength(LOD,1);
    LOD[0] := TLOD.Create;
    SetLength(LOD[0].Mesh,1);
-   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,_HighQuality);
+   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,HighQuality);
    CurrentLOD := 0;
    HVA := HVABank.LoadNew(nil);
    Opened := true;
 end;
 
+procedure TModel.RebuildModel;
+var
+   i : integer;
+begin
+   for i := Low(LOD) to High(LOD) do
+   begin
+      RebuildLOD(i);
+   end;
+end;
+
+procedure TModel.RebuildLOD(i: integer);
+var
+   j : integer;
+begin
+   if Voxel <> nil then
+   begin
+      for j := Low(LOD[i].Mesh) to High(LOD[i].Mesh) do
+      begin
+         LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[i],Palette^,HighQuality);
+      end;
+   end
+   else if VoxelSection <> nil then
+   begin
+      LOD[i].Mesh[j].RebuildVoxel(VoxelSection^,Palette^,HighQuality);
+   end
+   else
+   begin
+      // At the moment, we won't do anything.
+   end;
+end;
+
+procedure TModel.RebuildCurrentLOD;
+begin
+   RebuildLOD(CurrentLOD);
+end;
 
 // Gets
 function TModel.GetNumLODs: longword;
