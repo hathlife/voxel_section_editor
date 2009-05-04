@@ -2,7 +2,8 @@ unit Actor;
 
 interface
 
-uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model;
+uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
+   Palette;
 
 type
    PActor = ^TActor;
@@ -34,8 +35,12 @@ type
       procedure MoveActor;
       procedure ProcessNextFrame;
        // Adds
-      procedure Add(const _filename: string);
-      procedure AddReadOnly(const _filename: string);
+      procedure Add(const _filename: string); overload;
+      procedure Add(const _Model: PModel); overload;
+      procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
+      procedure AddReadOnly(const _filename: string); overload;
+      procedure AddReadOnly(const _Model: PModel); overload;
+      procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
       // Removes
       procedure Remove(var _Model : PModel);
       // switches
@@ -164,12 +169,35 @@ begin
    Models[High(Models)] := ModelBank.Add(_filename);
 end;
 
+procedure TActor.Add(const _Model: PModel);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Add(_Model);
+end;
+
+procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_HighQuality);
+end;
+
 procedure TActor.AddReadOnly(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_filename);
 end;
 
+procedure TActor.AddReadOnly(const _Model: PModel);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.AddReadOnly(_Model);
+end;
+
+procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_HighQuality);
+end;
 
 // Removes
 procedure TActor.Remove(var _Model : PModel);
