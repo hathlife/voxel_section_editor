@@ -23,6 +23,7 @@ type
       // Source
       Filename : string;
       Voxel : PVoxel;
+      VoxelSection : PVoxelSection;
       // GUI
       IsSelected : boolean;
       // constructors and destructors
@@ -33,6 +34,7 @@ type
       destructor Destroy; override;
       procedure CommonCreationProcedures;
       procedure Initialize(_HighQuality: boolean = false);
+      procedure ClearLODs;
       procedure Clear;
       procedure Reset;
       // Gets
@@ -61,6 +63,7 @@ constructor TModel.Create(const _Filename: string);
 begin
    Filename := CopyString(_Filename);
    Voxel := nil;
+   VoxelSection := nil;
    // Create a new 32 bits palette.
    New(Palette);
    Palette^ := TPalette.Create;
@@ -72,6 +75,7 @@ begin
    Filename := '';
    Voxel := VoxelBank.Add(_Voxel);
    HVA := HVABank.Add(_HVA);
+   VoxelSection := nil;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
@@ -81,10 +85,10 @@ constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : P
 begin
    Filename := '';
    Voxel := nil;
+   VoxelSection := _VoxelSection;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
-   Clear;
-   OpenVoxelSection(_VoxelSection,_HighQuality);
+   CommonCreationProcedures;
 end;
 
 constructor TModel.Create(const _Model: TModel);
@@ -95,9 +99,6 @@ end;
 destructor TModel.Destroy;
 begin
    Clear;
-   VoxelBank.Delete(Voxel);    // even if it is nil, no problem.
-   HVABank.Delete(HVA);
-   Palette^.Free;
    inherited Destroy;
 end;
 
@@ -110,11 +111,11 @@ end;
 
 procedure TModel.Reset;
 begin
-   Clear;
+   ClearLODs;
    Initialize;
 end;
 
-procedure TModel.Clear;
+procedure TModel.ClearLODs;
 var
    i : integer;
 begin
@@ -125,7 +126,14 @@ begin
       dec(i);
    end;
    SetLength(LOD,0);
-   HVA := nil;
+end;
+
+procedure TModel.Clear;
+begin
+   ClearLODs;
+   VoxelBank.Delete(Voxel);    // even if it is nil, no problem.
+   HVABank.Delete(HVA);
+   Palette^.Free;
 end;
 
 procedure TModel.Initialize(_HighQuality: boolean = false);
@@ -136,15 +144,22 @@ begin
    // Check if we have a random file or a voxel.
    if Voxel = nil then
    begin
-      // We have a file to open.
-      ext := ExtractFileExt(Filename);
-      if (CompareStr(ext,'.vxl') = 0) then
+      if VoxelSection = nil then
       begin
-         Voxel := VoxelBank.Add(Filename);
-         HVAFilename := copy(Filename,1,Length(Filename)-3);
-         HVAFilename := HVAFilename + 'hva';
-         HVA := HVABank.Add(HVAFilename,Voxel);
-         OpenVoxel(_HighQuality);
+         // We have a file to open.
+         ext := ExtractFileExt(Filename);
+         if (CompareStr(ext,'.vxl') = 0) then
+         begin
+            Voxel := VoxelBank.Add(Filename);
+            HVAFilename := copy(Filename,1,Length(Filename)-3);
+            HVAFilename := HVAFilename + 'hva';
+            HVA := HVABank.Add(HVAFilename,Voxel);
+            OpenVoxel(_HighQuality);
+         end;
+      end
+      else
+      begin
+         OpenVoxelSection(VoxelSection,_HighQuality);
       end;
    end
    else  // we open the current voxel
@@ -180,6 +195,7 @@ begin
    SetLength(LOD[0].Mesh,1);
    LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,_HighQuality);
    CurrentLOD := 0;
+   HVA := HVABank.LoadNew(nil);
    Opened := true;
 end;
 
