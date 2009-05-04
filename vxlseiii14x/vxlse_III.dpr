@@ -62,7 +62,7 @@ uses
   ModelBank in 'ModelBank.pas',
   HVABankItem in 'HVABankItem.pas',
   HVABank in 'HVABank.pas',
-  VoxelDocumentItem in 'VoxelDocumentItem.pas';
+  VoxelDocument in 'VoxelDocument.pas';
 
 {$R *.res}
 
