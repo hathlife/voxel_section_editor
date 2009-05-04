@@ -25,7 +25,8 @@ type
          // These are the formal atributes
          Name : string;
          ID : longword;
-         Parent : integer; // not implemented yet.
+         Next : integer;
+         Son : integer; // not implemented yet.
          // Graphical atributes goes here
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
          VerticesPerFace : byte; // for optimization purposes only.
@@ -126,6 +127,8 @@ begin
    TransparencyLevel := 0;
    Opened := false;
    IsSelected := false;
+   Next := -1;
+   Son := -1;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
@@ -461,6 +464,8 @@ begin
    IsVisible := true;
    Opened := true;
    IsSelected := false;
+   Next := -1;
+   Son := -1;
 end;
 
 
@@ -781,7 +786,7 @@ begin
    Opened := _Mesh.Opened;
    Name := CopyString(_Mesh.Name);
    ID := _Mesh.ID;
-   Parent := _Mesh.Parent;
+   Son := _Mesh.Son;
    FaceType := _Mesh.FaceType;
    VerticesPerFace := _Mesh.VerticesPerFace;
    Scale.X := _Mesh.Scale.X;
@@ -837,6 +842,7 @@ begin
       TextCoords[i].U := _Mesh.TextCoords[i].U;
       TextCoords[i].V := _Mesh.TextCoords[i].V;
    end;
+   Next := _Mesh.Next;
 end;
 
 // Miscelaneous

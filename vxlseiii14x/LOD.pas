@@ -11,9 +11,12 @@ uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL;
 type
    TLOD = class
    private
+      // Rendering Methods
+      procedure RenderMesh(i :integer; var _PolyCount: longword; const _HVA: PHVA);
    public
       Name : string;
       Mesh : array of TMesh;
+      InitialMesh : integer;
       // Constructors and Destructors
       constructor Create; overload;
       constructor Create(const _LOD: TLOD); overload;
@@ -43,6 +46,7 @@ constructor TLOD.Create;
 begin
    Name := 'Standard Level Of Detail';
    SetLength(Mesh,0);
+   InitialMesh := 0;
 end;
 
 constructor TLOD.Create(const _LOD: TLOD);
@@ -80,14 +84,23 @@ procedure TLOD.Render(var _PolyCount: longword; const _HVA: PHVA);
 var
    i : integer;
 begin
-   for i := Low(Mesh) to High(Mesh) do
+   i := InitialMesh;
+   RenderMesh(i,_PolyCount,_HVA);
+end;
+
+procedure TLOD.RenderMesh(i :integer; var _PolyCount: longword; const _HVA: PHVA);
+begin
+   if i <> -1 then
    begin
       glPushMatrix();
          _HVA^.ApplyMatrix(Mesh[i].Scale,i);
+         RenderMesh(Mesh[i].Son,_PolyCount,_HVA);
          Mesh[i].Render(_PolyCount);
       glPopMatrix();
+      RenderMesh(Mesh[i].Next,_PolyCount,_HVA);
    end;
 end;
+
 
 // Refresh OpenGL List
 procedure TLOD.RefreshLOD;

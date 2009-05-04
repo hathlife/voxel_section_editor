@@ -180,7 +180,9 @@ begin
    for i := 0 to (Voxel^.Header.NumSections-1) do
    begin
       LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,_HighQuality);
+      LOD[0].Mesh[i].Next := i+1;
    end;
+   LOD[0].Mesh[High(LOD[0].Mesh)].Next := -1;
    CurrentLOD := 0;
    Opened := true;
 end;
