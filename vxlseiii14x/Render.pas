@@ -17,6 +17,7 @@ type
          procedure Render;
          // Adds and Removes.
          function AddEnvironment(_Handle : THandle; _width, _height : longword): PRenderEnvironment;
+         procedure RemoveEnvironment(var _Environment: PRenderEnvironment);
    end;
 
 implementation
@@ -55,10 +56,52 @@ begin
    Result := NewEnvironment;
 end;
 
+// Removes
+procedure TRender.RemoveEnvironment(var _Environment : PRenderEnvironment);
+var
+   PreviousEnvironment : PRenderEnvironment;
+begin
+   if Environment = nil then exit; // Can't delete from an empty list.
+   if _Environment <> nil then
+   begin
+      // Check if it is the first element.
+      if _Environment = Environment then
+      begin
+         Environment := _Environment^.Next;
+      end
+      else // It could be inside the list, but it's not the first.
+      begin
+         PreviousEnvironment := Environment;
+         while (PreviousEnvironment^.Next <> nil) and (PreviousEnvironment^.Next <> _Environment) do
+         begin
+            PreviousEnvironment := PreviousEnvironment^.Next;
+         end;
+         if PreviousEnvironment^.Next = _Environment then
+         begin
+            PreviousEnvironment^.Next := _Environment^.Next;
+         end
+         else // nil -- not from this list.
+            exit;
+      end;
+      // If it has past this stage, the element is valid and was part of the list.
+      // Now we dispose the camera.
+      _Environment^.Free;
+      _Environment := nil;
+   end;
+end;
+
 
 procedure TRender.ClearAllEnvironments;
+var
+   MyEnvironment,NextEnvironment : PRenderEnvironment;
 begin
-   // Bla bla bla
+   MyEnvironment := Environment;
+   while MyEnvironment <> nil do
+   begin
+      NextEnvironment := MyEnvironment^.Next;
+      RemoveEnvironment(MyEnvironment);
+      MyEnvironment := NextEnvironment;
+   end;
 end;
 
 procedure TRender.Render;

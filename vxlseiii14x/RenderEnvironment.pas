@@ -10,6 +10,7 @@ type
       private
          // Constructors and destructors.
          procedure CleanUpCameras;
+         procedure CleanUpActors;
       public
          Next : PRenderEnvironment;
          ActorList: PActor;
@@ -110,6 +111,7 @@ destructor TRenderEnvironment.Destroy;
 begin
    IsEnabled := false;
    KillFont;
+   CleanUpActors;
    CleanUpCameras;
    DeactivateRenderingContext;
    wglDeleteContext(rc);
@@ -127,6 +129,19 @@ begin
       NextCamera := MyCamera^.Next;
       RemoveCamera(MyCamera);
       MyCamera := NextCamera;
+   end;
+end;
+
+procedure TRenderEnvironment.CleanUpActors;
+var
+   MyActor,NextActor : PActor;
+begin
+   MyActor := ActorList;
+   while MyActor <> nil do
+   begin
+      NextActor := MyActor^.Next;
+      RemoveActor(MyActor);
+      MyActor := NextActor;
    end;
 end;
 
