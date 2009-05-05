@@ -188,6 +188,7 @@ begin
    begin
       LoadFromVoxel(_Voxel,_Palette);
    end;
+   OverrideTransparency;
 end;
 
 
