@@ -46,6 +46,7 @@ type
          procedure Resize(_width, _height: longword);
          // Adds
          function AddCamera: PCamera;
+         function AddActor: PActor;
          procedure RemoveCamera(var _Camera : PCamera);
          procedure RemoveActor(var _Actor : PActor);
 
@@ -264,7 +265,30 @@ begin
       PreviousCamera^.Next := NewCamera;
    end;
    CurrentCamera := NewCamera;
+   Result := NewCamera;
 end;
+
+function TRenderEnvironment.AddActor: PActor;
+var
+   NewActor,PreviousActor : PActor;
+begin
+   new(NewActor);
+   NewActor^ := TActor.Create;
+   if ActorList = nil then
+   begin
+      ActorList := NewActor;
+   end
+   else
+   begin
+      PreviousActor := ActorList;
+      while PreviousActor^.Next <> nil do
+         PreviousActor := PreviousActor^.Next;
+      PreviousActor^.Next := NewActor;
+   end;
+   CurrentActor := NewActor;
+   Result := NewActor;
+end;
+
 
 
 // Removes

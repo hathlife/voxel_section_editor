@@ -34,6 +34,8 @@ type
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
+      procedure RebuildActor;
+      procedure RebuildCurrentMeshes;
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
@@ -163,6 +165,33 @@ begin
    Rotation.Y := CleanAngle(Rotation.Y + RotationSpeed.Y);
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
 end;
+
+procedure TActor.RebuildActor;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.RebuildModel;
+      end;
+   end;
+end;
+
+procedure TActor.RebuildCurrentMeshes;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.RebuildCurrentLOD;
+      end;
+   end;
+end;
+
 
 // Adds
 procedure TActor.Add(const _filename: string);
