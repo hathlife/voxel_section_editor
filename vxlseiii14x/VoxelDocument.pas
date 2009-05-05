@@ -49,6 +49,7 @@ type
       // Swicthes
       function SwitchTurret(const _Filename: string): boolean;
    end;
+   PVoxelDocument = ^TVoxelDocument;
 
 implementation
 
