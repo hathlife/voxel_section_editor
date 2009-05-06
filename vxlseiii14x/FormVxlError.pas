@@ -46,7 +46,7 @@ uses FormMain;
 
 procedure TFrmVxlError.Button1Click(Sender: TObject);
 begin
-   SetVoxelFileDefults;
+   SetVoxelFileDefaults;
    VXLChanged := true;
    Button1.Enabled := False;
 end;

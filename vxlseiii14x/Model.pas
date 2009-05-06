@@ -3,7 +3,7 @@ unit Model;
 interface
 
 uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
-   SysUtils;
+   SysUtils, Graphics;
 
 type
    PModel = ^TModel;
@@ -54,6 +54,8 @@ type
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
+      // Remappable
+      procedure ChangeRemappable (_Colour : TColor);
       // GUI
       procedure SetSelection(_value: boolean);
       // Copies
@@ -298,6 +300,16 @@ end;
 procedure TModel.ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
 begin
    LOD[CurrentLOD].ForceTransparencyExceptOnAMesh(_Level,_MeshID);
+end;
+
+// Remappable
+procedure TModel.ChangeRemappable(_Colour: TColor);
+begin
+   if Palette <> nil then
+   begin
+      Palette^.ChangeRemappable(_Colour);
+      RebuildModel;
+   end;
 end;
 
 // GUI

@@ -45,7 +45,7 @@ Var
 Const
    TestBuild = false;
    TestBuildVersion = '5';
-   DefultZoom = 7;
+   DefaultZoom = 7;
    VIEWBGCOLOR = -1;
 
    VXLTool_Brush = 0;
@@ -119,7 +119,7 @@ function SetVector(x, y, z : single) : TVector3f;
 function SetVectorI(x, y, z : integer) : TVector3i;
 function CopyVector(const _vector : TVector3f): TVector3f;
 
-Procedure SetVoxelFileDefults;
+Procedure SetVoxelFileDefaults;
 Function IsVoxelValid : Boolean;
 Function HasNormalsBug : Boolean;
 Procedure SetNormals(Normal : Integer);
@@ -220,7 +220,7 @@ begin
       end;
 end;
 
-Procedure SetVoxelFileDefults;
+Procedure SetVoxelFileDefaults;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: SetVoxelFileDefaults');
@@ -238,7 +238,7 @@ begin
    try
       Document.LoadNew;
 
-      SetVoxelFileDefults;
+      SetVoxelFileDefaults;
       Document.ActiveVoxel^.Header.NumSections := 0;
       Document.ActiveVoxel^.Header.NumSections2 := 0;
 
@@ -288,9 +288,9 @@ begin
    FrmMain.Document.ActiveSection^.View[1].Refresh;
    FrmMain.Document.ActiveSection^.View[2].Refresh;
 
-   FrmMain.Document.ActiveSection^.Viewport[0].Zoom := DefultZoom;
-   FrmMain.Document.ActiveSection^.Viewport[1].Zoom := DefultZoom;
-   FrmMain.Document.ActiveSection^.Viewport[2].Zoom := DefultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[0].Zoom := DefaultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[1].Zoom := DefaultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[2].Zoom := DefaultZoom;
 
    ZoomToFit(1);
    ZoomToFit(2);
@@ -1133,7 +1133,7 @@ begin
       swapThumb := Thumb[0];
       Thumb[0] := Thumb[Idx];
       Thumb[Idx] := swapThumb;
-      Viewport[0].Zoom := DefultZoom;
+      Viewport[0].Zoom := DefaultZoom;
    end;
    SyncViews;
    CentreView(0);

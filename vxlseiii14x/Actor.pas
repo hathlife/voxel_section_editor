@@ -3,7 +3,7 @@ unit Actor;
 interface
 
 uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette;
+   Palette, Graphics;
 
 type
    PActor = ^TActor;
@@ -49,6 +49,8 @@ type
       procedure Remove(var _Model : PModel);
       // switches
       procedure SwitchModels(_m1, _m2: integer);
+      // remappable
+      procedure ChangeRemappable (_Colour : TColor);
    end;
 
 implementation
@@ -282,6 +284,19 @@ begin
    Models[_m2] := temp;
 end;
 
+// Remappable
+procedure TActor.ChangeRemappable(_Colour: TColor);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i].ChangeRemappable(_Colour);
+      end;
+   end;
+end;
 
 
 end.
