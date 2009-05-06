@@ -330,7 +330,7 @@ begin
       exit;
    end;
 
-   NormalVector := ActiveSection.Normals[trunc(N)];
+   NormalVector := FrmMain.Document.ActiveSection^.Normals[trunc(N)];
    glNormal3f(NormalVector.X * 1.2, NormalVector.Y * 1.2, NormalVector.Z * 1.2);
 end;
 
@@ -469,7 +469,7 @@ begin
       Result := T; //CleanV3fCol(T);
    end
    else
-      Result := TColorToTVector3f(VXLPalette[Color]);
+      Result := TColorToTVector3f(FrmMain.Document.Palette^[Color]);
 end;
 
 function GetVXLColor(Color, Normal: integer): TVector3f;
@@ -521,7 +521,7 @@ begin
    begin
       // Here we make the OpenGL list to speed up the render.
       glLoadIdentity();                                       // Reset The View
-      GetScaleWithMinBounds(VoxelFile.Section[VoxelBoxGroup.Section[0].ID],Scale,MinBounds);
+      GetScaleWithMinBounds(FrmMain.Document.ActiveVoxel^.Section[VoxelBoxGroup.Section[0].ID],Scale,MinBounds);
 
       if (VoxelBoxGroup.Section[0].List < 1) or RebuildLists then
       begin
@@ -804,15 +804,15 @@ begin
    VoxelBox_No := 0;
    ClearVoxelBoxes(VoxelBoxGroup);
 
-   if ActiveSection.Tailer.Unknown = 2 then
+   if Vxl.Tailer.Unknown = 2 then
       num := 35
    else
       num := 243;
 
    SetLength(VoxelBoxGroup.Section,1);
-   for x := 0 to ActiveSection.Normals.GetLastID() do
+   for x := 0 to Vxl.Normals.GetLastID() do
    begin
-      Normal := ActiveSection.Normals[x];
+      Normal := Vxl.Normals[x];
       SetLength(VoxelBoxGroup.Section[0].Box, VoxelBox_No+1);
 
       VoxelBoxGroup.Section[0].Box[VoxelBox_No].Faces[1] := CheckFace(Vxl, trunc(Normal.x * 30.5), trunc(Normal.y * 30.5) + 1, trunc(Normal.z * 30.5));

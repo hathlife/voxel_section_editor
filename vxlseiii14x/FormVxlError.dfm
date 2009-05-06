@@ -96,10 +96,13 @@ object FrmVxlError: TFrmVxlError
     Width = 473
     Height = 193
     ActivePage = TabSheet2
-    TabIndex = 1
     TabOrder = 2
     object TabSheet1: TTabSheet
       Caption = 'Header Information'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label1: TLabel
         Left = 8
         Top = 8
@@ -122,7 +125,8 @@ object FrmVxlError: TFrmVxlError
         Lines.Strings = (
           
             'The voxels header contains information like what it is, the size' +
-            ' of the body part of the file, etc. '
+            ' of the body part of the file, '
+          'etc. '
           
             'One or more of these do not appear to be correct. Fixing this ca' +
             'n not harm your voxel.'
@@ -145,6 +149,10 @@ object FrmVxlError: TFrmVxlError
     object TabSheet2: TTabSheet
       Caption = 'Normals'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label2: TLabel
         Left = 8
         Top = 8

@@ -133,7 +133,7 @@ type
     Depth  : glFloat;
     Xcoord, Ycoord, Zcoord : Integer;
     MouseButton : Integer;
-    procedure DrawMe;
+    procedure DrawMe(const VoxelFile: TVoxel);
     procedure ClearRemapClicks;
     procedure BuildFont;
     procedure KillFont;
@@ -154,7 +154,7 @@ type
     RebuildLists : boolean;
     AnimationState : boolean;
     IsReady : boolean;
-    procedure Update3dView(Vxl : TVoxelSection);
+    procedure Update3dView(const VoxelFile: TVoxel; Vxl : TVoxelSection);
     Procedure SetRotationAdders;
     procedure glPrint(text : pchar);
     Function GetVXLColor(Color,Normal : integer) : TVector3f;
@@ -464,7 +464,7 @@ end;
 {------------------------------------------------------------------}
 {  Function to draw the actual scene                               }
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.DrawMe();
+procedure TFrm3DPReview.DrawMe(const VoxelFile: TVoxel);
 var
    x,Section : integer;
    Scale,MinBounds : TVector3f;
@@ -517,7 +517,7 @@ begin
             glEndList;
          end;
          glPushMatrix;
-            HVAFile.ApplyMatrix(Scale,VoxelBoxGroup3D.Section[Section].ID);
+            FrmMain.Document.ActiveHVA^.ApplyMatrix(Scale,VoxelBoxGroup3D.Section[Section].ID);
             glCallList(VoxelBoxGroup3D.Section[Section].List);
          glPopMatrix;
       end;
@@ -693,11 +693,11 @@ begin
    QueryPerformanceCounter(FoldTime);
 
    SpFrame.Value := 1;
-   SpFrame.MaxValue := HVAFile.Header.N_Frames;
-   HVAFile.Frame := 0;
+   SpFrame.MaxValue := FrmMain.Document.ActiveHVA^.Header.N_Frames;
+   FrmMain.Document.ActiveHVA^.Frame := 0;
 
    RebuildLists := false;
-   Update3dView(ActiveSection);
+   Update3dView(FrmMain.Document.ActiveVoxel^,FrmMain.Document.ActiveSection^);
    IsReady := true;
 end;
 
@@ -722,7 +722,7 @@ begin
    FPS := 1/FPS;
 
    wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
-   DrawMe();                         // Draw the scene
+   DrawMe(FrmMain.Document.ActiveVoxel^);                         // Draw the scene
    SwapBuffers(DC);                  // Display the scene
 end;
 
@@ -820,7 +820,7 @@ begin
    Result := R;
 end;
 
-procedure TFrm3DPReview.Update3dView(Vxl : TVoxelSection);
+procedure TFrm3DPReview.Update3dView(const VoxelFile : TVoxel; Vxl : TVoxelSection);
 var x,y,z: Byte;
     v: TVoxelUnpacked;
     Section : integer;
@@ -1004,19 +1004,19 @@ end;
 procedure TFrm3DPReview.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
-   HVAFile.Frame := 0;
+   FrmMain.Document.ActiveHVA^.Frame := 0;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
 
 procedure TFrm3DPReview.AnimationTimerTimer(Sender: TObject);
 begin
-   if HVAFile.Header.N_Frames = 1 then
+   if FrmMain.Document.ActiveHVA^.Header.N_Frames = 1 then
    begin
       SpStopClick(Sender);
    end;
-   HVAFile.Frame := (HVAFile.Frame + 1) mod SpFrame.MaxValue;
-   SpFrame.Value := HVAFile.Frame + 1;
+   FrmMain.Document.ActiveHVA^.Frame := (FrmMain.Document.ActiveHVA^.Frame + 1) mod SpFrame.MaxValue;
+   SpFrame.Value := FrmMain.Document.ActiveHVA^.Frame + 1;
 end;
 
 procedure TFrm3DPReview.SpFrameChange(Sender: TObject);
@@ -1027,7 +1027,7 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-      HVAFile.Frame := SpFrame.Value-1;
+      FrmMain.Document.ActiveHVA^.Frame := SpFrame.Value-1;
    end;
 end;
 

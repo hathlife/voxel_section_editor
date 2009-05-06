@@ -121,7 +121,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, FormMain;
 
 // Constructors and Destructors
 constructor TBZK2File.Create( p_VoxelSection : PVoxelSection);
@@ -829,9 +829,9 @@ begin
             bfdCeiling: Normal := GetNormalZ(v);
          end;
          // We get the colour
-         Colour.X := Round(GetRValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.X);
-         Colour.Y := Round(GetGValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.Y);
-         Colour.Z := Round(GetBValue(VXLPalette[V.Colour]) * Normal * Settings.LocalLighting.Z);
+         Colour.X := Round(GetRValue(FrmMain.Document.Palette^[V.Colour]) * Normal * Settings.LocalLighting.X);
+         Colour.Y := Round(GetGValue(FrmMain.Document.Palette^[V.Colour]) * Normal * Settings.LocalLighting.Y);
+         Colour.Z := Round(GetBValue(FrmMain.Document.Palette^[V.Colour]) * Normal * Settings.LocalLighting.Z);
          Colour.W := 255;
 
          Sectors[SectorNum].SetConnectionColours(Direction,Colour);
@@ -859,9 +859,9 @@ begin
       if v.Used then
       begin // Wall
          // We get the colour
-         Colour.X := Round(GetRValue(VXLPalette[V.Colour]) * Settings.LocalLighting.X);
-         Colour.Y := Round(GetGValue(VXLPalette[V.Colour]) * Settings.LocalLighting.Y);
-         Colour.Z := Round(GetBValue(VXLPalette[V.Colour]) * Settings.LocalLighting.Z);
+         Colour.X := Round(GetRValue(FrmMain.Document.Palette^[V.Colour]) * Settings.LocalLighting.X);
+         Colour.Y := Round(GetGValue(FrmMain.Document.Palette^[V.Colour]) * Settings.LocalLighting.Y);
+         Colour.Z := Round(GetBValue(FrmMain.Document.Palette^[V.Colour]) * Settings.LocalLighting.Z);
          Colour.W := 255;
 
          Sectors[SectorNum].SetConnectionColours(Direction,Colour);

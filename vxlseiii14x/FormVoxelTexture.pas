@@ -58,195 +58,187 @@ uses FormMain, GlobalVars;
 
 procedure TFrmVoxelTexture.Button1Click(Sender: TObject);
 var
-x,y,z,zmax,xmax,ymax,lastheight : integer;
-v : tvoxelunpacked;
+   x,y,z,zmax,xmax,ymax,lastheight : integer;
+   v : tvoxelunpacked;
 begin
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
-Image1.Picture.Bitmap.Width := 0;
-Image1.Picture.Bitmap.Height := 0;
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+   Image1.Picture.Bitmap.Width := 0;
+   Image1.Picture.Bitmap.Height := 0;
 
-Image1.Picture.Bitmap.Width := ActiveSection.Tailer.XSize;
-Image1.Picture.Bitmap.Height := ActiveSection.Tailer.YSize;
-zmax := ActiveSection.Tailer.ZSize-1;
+   Image1.Picture.Bitmap.Width := FrmMain.Document.ActiveSection^.Tailer.XSize;
+   Image1.Picture.Bitmap.Height := FrmMain.Document.ActiveSection^.Tailer.YSize;
+   zmax := FrmMain.Document.ActiveSection^.Tailer.ZSize-1;
 
-for x := 0 to ActiveSection.Tailer.XSize-1 do
-for y := 0 to ActiveSection.Tailer.YSize-1 do
-begin
-z := 0;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
-if v.Used then
-begin
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+      begin
+         z := 0;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[x,y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            z := z + 1;
+         until (z > zmax) or (v.Used = true);
+      end;
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[x,y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-z := z + 1;
-until (z > zmax) or (v.Used = true);
-end;
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+   lastheight := Image1.Picture.Bitmap.Height+1;
+   Image1.Picture.Bitmap.Height := lastheight + FrmMain.Document.ActiveSection^.Tailer.YSize;
+   zmax := FrmMain.Document.ActiveSection^.Tailer.ZSize-1;
 
-lastheight := Image1.Picture.Bitmap.Height+1;
-Image1.Picture.Bitmap.Height := lastheight + ActiveSection.Tailer.YSize;
-zmax := ActiveSection.Tailer.ZSize-1;
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+      begin
+         z := zmax;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            z := z - 1;
+         until (z < 0) or (v.Used = true);
+      end;
 
-for x := 0 to ActiveSection.Tailer.XSize-1 do
-for y := 0 to ActiveSection.Tailer.YSize-1 do
-begin
-z := zmax;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
 
-if v.Used then
-begin
+   lastheight := Image1.Picture.Bitmap.Height+1;
+   Image1.Picture.Bitmap.Height := lastheight + FrmMain.Document.ActiveSection^.Tailer.ZSize;
+   ymax := FrmMain.Document.ActiveSection^.Tailer.YSize-1;
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-z := z - 1;
-until (z < 0) or (v.Used = true);
-end;
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      begin
+         y := 0;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            y := y + 1;
+         until (y > ymax) or (v.Used = true);
+      end;
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
 
-lastheight := Image1.Picture.Bitmap.Height+1;
-Image1.Picture.Bitmap.Height := lastheight + ActiveSection.Tailer.ZSize;
-ymax := ActiveSection.Tailer.YSize-1;
+   lastheight := Image1.Picture.Bitmap.Height+1;
+   Image1.Picture.Bitmap.Height := lastheight + FrmMain.Document.ActiveSection^.Tailer.ZSize;
+   ymax := FrmMain.Document.ActiveSection^.Tailer.YSize-1;
 
-for x := 0 to ActiveSection.Tailer.XSize-1 do
-for z := 0 to ActiveSection.Tailer.ZSize-1 do
-begin
-y := 0;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
-if v.Used then
-begin
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-y := y + 1;
-until (y > ymax) or (v.Used = true);
-end;
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      begin
+         y := ymax;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            y := y - 1;
+         until (y < 0) or (v.Used = true);
+      end;
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
 
-lastheight := Image1.Picture.Bitmap.Height+1;
-Image1.Picture.Bitmap.Height := lastheight + ActiveSection.Tailer.ZSize;
-ymax := ActiveSection.Tailer.YSize-1;
+   lastheight := Image1.Picture.Bitmap.Height+1;
+   Image1.Picture.Bitmap.Height := lastheight + FrmMain.Document.ActiveSection^.Tailer.YSize;
+   xmax := FrmMain.Document.ActiveSection^.Tailer.XSize-1;
 
-for x := 0 to ActiveSection.Tailer.XSize-1 do
-for z := 0 to ActiveSection.Tailer.ZSize-1 do
-begin
-y := ymax;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
-if v.Used then
-begin
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-y := y - 1;
-until (y < 0) or (v.Used = true);
-end;
+   for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+      begin
+         x := 0;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            x := x + 1;
+         until (x > xmax) or (v.Used = true);
+      end;
 
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+   Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
 
-lastheight := Image1.Picture.Bitmap.Height+1;
-Image1.Picture.Bitmap.Height := lastheight + ActiveSection.Tailer.YSize;
-xmax := ActiveSection.Tailer.XSize-1;
+   lastheight := Image1.Picture.Bitmap.Height+1;
+   Image1.Picture.Bitmap.Height := lastheight + FrmMain.Document.ActiveSection^.Tailer.YSize;
+   xmax := FrmMain.Document.ActiveSection^.Tailer.XSize-1;
 
-for z := 0 to ActiveSection.Tailer.ZSize-1 do
-for y := 0 to ActiveSection.Tailer.YSize-1 do
-begin
-x := 0;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
-if v.Used then
-begin
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-x := x + 1;
-until (x > xmax) or (v.Used = true);
-end;
-
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
-
-lastheight := Image1.Picture.Bitmap.Height+1;
-Image1.Picture.Bitmap.Height := lastheight + ActiveSection.Tailer.YSize;
-xmax := ActiveSection.Tailer.XSize-1;
-
-for z := 0 to ActiveSection.Tailer.ZSize-1 do
-for y := 0 to ActiveSection.Tailer.YSize-1 do
-begin
-x := xmax;
-repeat
-ActiveSection.GetVoxel(x,y,z,v);
-if v.Used then
-begin
-Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
-Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
-end;
-x := x - 1;
-until (x < 0) or (v.Used = true);
-end;
-
-Image1.refresh;
+   for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+      begin
+         x := xmax;
+         repeat
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               Image1.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(v.colour);
+               Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y] := Image1.Picture.Bitmap.Canvas.Brush.Color;
+            end;
+            x := x - 1;
+         until (x < 0) or (v.Used = true);
+      end;
+   Image1.refresh;
 end;
 
 procedure TFrmVoxelTexture.FormShow(Sender: TObject);
 begin
-Image1.Picture.Bitmap.FreeImage;
-Button1Click(sender);
+   Image1.Picture.Bitmap.FreeImage;
+   Button1Click(sender);
 end;
 
 procedure TFrmVoxelTexture.Button2Click(Sender: TObject);
 begin
-if OpenPictureDialog1.Execute then
-Image1.Picture.LoadFromFile(OpenPictureDialog1.filename);
+   if OpenPictureDialog1.Execute then
+      Image1.Picture.LoadFromFile(OpenPictureDialog1.filename);
 end;
 
 procedure TFrmVoxelTexture.Button3Click(Sender: TObject);
 begin
-if SavePictureDialog1.Execute then
-image1.Picture.SaveToFile(SavePictureDialog1.FileName);
+   if SavePictureDialog1.Execute then
+      image1.Picture.SaveToFile(SavePictureDialog1.FileName);
 end;
 
 procedure TFrmVoxelTexture.Button4Click(Sender: TObject);
-var x,y,c,cmax,size : integer;
+var
+   x,y,c,cmax,size : integer;
 begin
-if SavePictureDialog1.Execute then
-begin
+   if SavePictureDialog1.Execute then
+   begin
+      if SpectrumMode = ModeColours then
+         cmax := 256
+      else
+         cmax := ActiveNormalsCount;
+      size := 5;
+      Image2.Picture.Bitmap.width := 0;
+      Image2.Picture.Bitmap.height := 0;
+      Image2.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
+      Image2.Picture.Bitmap.width := 8*size;
+      Image2.Picture.Bitmap.height := 32*size;
+      c := 0;
+      for x := 0 to 7 do
+         for y := 0 to 31 do
+         begin
+            if c < cmax then
+            begin
+               Image2.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(c);
+               Image2.Picture.Bitmap.Canvas.FillRect(rect(x*size,y*size,x*size+size,y*size+size));
+            end;
+            c := c +1;
+         end;
 
-if SpectrumMode = ModeColours then
-cmax := 256
-else
-cmax := ActiveNormalsCount;
-
-size := 5;
-
-Image2.Picture.Bitmap.width := 0;
-Image2.Picture.Bitmap.height := 0;
-
-Image2.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(-1);
-
-Image2.Picture.Bitmap.width := 8*size;
-Image2.Picture.Bitmap.height := 32*size;
-c := 0;
-for x := 0 to 7 do
-for y := 0 to 31 do
-begin
-if c < cmax then
-begin
-Image2.Picture.Bitmap.Canvas.Brush.Color := GetVXLPaletteColor(c);
-Image2.Picture.Bitmap.Canvas.FillRect(rect(x*size,y*size,x*size+size,y*size+size));
-end;
-c := c +1;
-end;
-
-Image2.Picture.SaveToFile(SavePictureDialog1.FileName);
-end;
+      Image2.Picture.SaveToFile(SavePictureDialog1.FileName);
+   end;
 end;
 
 procedure TFrmVoxelTexture.Button6Click(Sender: TObject);
@@ -269,48 +261,48 @@ begin
       lastheight := 0;
 
       ProgressBar1.Position := 0;
-      ProgressBar1.Max := ActiveSection.Tailer.XSize *2;
+      ProgressBar1.Max := FrmMain.Document.ActiveSection^.Tailer.XSize *2;
 
-      for x := 0 to ActiveSection.Tailer.XSize-1 do
+      for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
       begin
          ProgressBar1.Position := x;
-         for y := 0 to ActiveSection.Tailer.YSize-1 do
-            for z := 0 to ((ActiveSection.Tailer.ZSize-1) div 2) do
+         for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+            for z := 0 to ((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2) do
             begin
-               ActiveSection.GetVoxel(x,y,((ActiveSection.Tailer.ZSize-1) div 2)-z,v);
+               FrmMain.Document.ActiveSection^.GetVoxel(x,y,((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2)-z,v);
                if v.Used then
                begin
-                  col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
+                  col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
                   if col <> GetVXLPaletteColor(-1) then
                      if SpectrumMode = ModeColours then
                         v.Colour := col
                      else
                         v.Normal := col;
-                  ActiveSection.SetVoxel(x,y,((ActiveSection.Tailer.ZSize-1) div 2)-z,v);
+                  FrmMain.Document.ActiveSection^.SetVoxel(x,y,((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2)-z,v);
                end;
             end;
       end;
 
       Label1.Caption := 'Applying Top View To Layers';
       Label1.Refresh;
-      lastheight := ActiveSection.Tailer.YSize+1;
+      lastheight := FrmMain.Document.ActiveSection^.Tailer.YSize+1;
 
-      for x := 0 to ActiveSection.Tailer.XSize-1 do
+      for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
       begin
-         ProgressBar1.Position := ActiveSection.Tailer.XSize+x;
-         for y := 0 to ActiveSection.Tailer.YSize-1 do
-            for z := 0 to ((ActiveSection.Tailer.ZSize-1) div 2) do
+         ProgressBar1.Position := FrmMain.Document.ActiveSection^.Tailer.XSize+x;
+         for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
+            for z := 0 to ((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2) do
             begin
-               ActiveSection.GetVoxel(x,y,((ActiveSection.Tailer.ZSize-1) div 2)+z,v);
+               FrmMain.Document.ActiveSection^.GetVoxel(x,y,((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2)+z,v);
                if v.Used then
                begin
-                  col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
+                  col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
                   if col <> GetVXLPaletteColor(-1) then
                      if SpectrumMode = ModeColours then
                         v.Colour := col
                      else
                         v.Normal := col;
-                  ActiveSection.SetVoxel(x,y,((ActiveSection.Tailer.ZSize-1) div 2)+z,v);
+                  FrmMain.Document.ActiveSection^.SetVoxel(x,y,((FrmMain.Document.ActiveSection^.Tailer.ZSize-1) div 2)+z,v);
                end;
             end;
       end;
@@ -320,109 +312,109 @@ begin
    Label1.Caption := 'Applying Texture To Left And Right Sides';
    Label1.Refresh;
 
-   ProgressBar1.Max := ((ActiveSection.Tailer.XSize-1)*4)+ ((ActiveSection.Tailer.ZSize-1)*2);
-   lastheight := ActiveSection.Tailer.YSize+1;
-   zmax := ActiveSection.Tailer.ZSize-1;
+   ProgressBar1.Max := ((FrmMain.Document.ActiveSection^.Tailer.XSize-1)*4)+ ((FrmMain.Document.ActiveSection^.Tailer.ZSize-1)*2);
+   lastheight := FrmMain.Document.ActiveSection^.Tailer.YSize+1;
+   zmax := FrmMain.Document.ActiveSection^.Tailer.ZSize-1;
 
-   lastheight := lastheight +ActiveSection.Tailer.YSize+1; // Why?
-   ymax := ActiveSection.Tailer.YSize-1;
+   lastheight := lastheight + FrmMain.Document.ActiveSection^.Tailer.YSize+1; // Why?
+   ymax := FrmMain.Document.ActiveSection^.Tailer.YSize-1;
    pp := 0;
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for z := 0 to ActiveSection.Tailer.ZSize-1 do
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
       begin
          y := 0;
          ProgressBar1.Position := x +pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             y := y + 1;
          until (y > ymax) or (v.Used = true);
       end;
 
-   lastheight := lastheight +ActiveSection.Tailer.ZSize+1;
-   ymax := ActiveSection.Tailer.YSize-1;
+   lastheight := lastheight +FrmMain.Document.ActiveSection^.Tailer.ZSize+1;
+   ymax := FrmMain.Document.ActiveSection^.Tailer.YSize-1;
    pp := ProgressBar1.Position;
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for z := 0 to ActiveSection.Tailer.ZSize-1 do
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
       begin
          y := ymax;
          ProgressBar1.Position := x + pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+z]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             y := y - 1;
          until (y < 0) or (v.Used = true);
       end;
 
-   lastheight := lastheight +ActiveSection.Tailer.ZSize+1;
-   xmax := ActiveSection.Tailer.XSize-1;
+   lastheight := lastheight +FrmMain.Document.ActiveSection^.Tailer.ZSize+1;
+   xmax := FrmMain.Document.ActiveSection^.Tailer.XSize-1;
    pp := ProgressBar1.Position;
 
    Label1.Caption := 'Applying Texture To Front And Back Sides';
    Label1.Refresh;
 
-   for z := 0 to ActiveSection.Tailer.ZSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
+   for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
       begin
          x := 0;
          ProgressBar1.Position := z + pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             x := x + 1;
          until (x > xmax) or (v.Used = true);
       end;
 
-   lastheight := lastheight +ActiveSection.Tailer.YSize+1;
-   xmax := ActiveSection.Tailer.XSize-1;
+   lastheight := lastheight +FrmMain.Document.ActiveSection^.Tailer.YSize+1;
+   xmax := FrmMain.Document.ActiveSection^.Tailer.XSize-1;
    pp := ProgressBar1.Position;
 
-   for z := 0 to ActiveSection.Tailer.ZSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
+   for z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
       begin
          x := xmax;
          ProgressBar1.Position := z + pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[z,lastheight+y]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
 
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             x := x - 1;
          until (x < 0) or (v.Used = true);
@@ -434,48 +426,48 @@ begin
    Label1.Caption := 'Applying Texture To Top And Bottom Sides';
    Label1.Refresh;
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
       begin
          z := 0;
          ProgressBar1.Position := x + pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,y]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,y]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
 
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             z := z + 1;
          until (z > zmax) or (v.Used = true);
       end;
 
-   lastheight := ActiveSection.Tailer.YSize+1;
-   zmax := ActiveSection.Tailer.ZSize-1;
+   lastheight := FrmMain.Document.ActiveSection^.Tailer.YSize+1;
+   zmax := FrmMain.Document.ActiveSection^.Tailer.ZSize-1;
    pp := ProgressBar1.Position;
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
+   for x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize-1 do
       begin
          z := zmax;
          ProgressBar1.Position := x + pp;
          repeat
-            ActiveSection.GetVoxel(x,y,z,v);
+            FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               col := VXLPalette.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
+               col := FrmMain.Document.Palette^.GetColourFromPalette(Image1.Picture.Bitmap.Canvas.Pixels[x,lastheight+y]);
                if col <> GetVXLPaletteColor(-1) then
                   if SpectrumMode = ModeColours then
                      v.Colour := col
                   else
                      v.Normal := col;
-               ActiveSection.SetVoxel(x,y,z,v);
+               FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
             end;
             z := z - 1;
          until (z < 0) or (v.Used = true);
@@ -490,23 +482,22 @@ end;
 
 procedure TFrmVoxelTexture.Button8Click(Sender: TObject);
 begin
-CreateVXLRestorePoint(ActiveSection,Undo);
-Button6Click(sender);
-
-FrmMain.UpdateUndo_RedoState;
-//FrmMain.RefreshAll;
-VXLChanged := true;
-Close;
+   CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+   Button6Click(sender);
+   FrmMain.UpdateUndo_RedoState;
+   //FrmMain.RefreshAll;
+   VXLChanged := true;
+   Close;
 end;
 
 procedure TFrmVoxelTexture.Button9Click(Sender: TObject);
 begin
-Close;
+   Close;
 end;
 
 procedure TFrmVoxelTexture.FormCreate(Sender: TObject);
 begin
-Panel2.DoubleBuffered := true;
+   Panel2.DoubleBuffered := true;
 end;
 
 end.

@@ -8,13 +8,13 @@ uses
   ToolWin, ImgList, Math, palette, Spin, Buttons, ogl3dview_engine, FTGifAnimate,
   undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,
   Form3dpreview,Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
-  HVABank, ModelBank;
+  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.04';
+   APPLICATION_VER = '1.39.05';
 
 type
   TFrmMain = class(TForm)
@@ -563,12 +563,15 @@ type
   private
     { Private declarations }
     procedure Idle(Sender: TObject; var Done: Boolean);
+    procedure BuildUsedColoursArray;
+    function CharToStr: string;
   public
     { Public declarations }
     {IsEditable,}IsVXLLoading : boolean;
      ShiftPressed : boolean;
      AltPressed : boolean;
      p_Frm3DPreview : PFrm3DPReview;
+     Document : TVoxelDocument;
      {$ifdef DEBUG_FILE}
      DebugFile : TDebugFile;
      {$endif}
@@ -615,8 +618,6 @@ then begin
 end;
 
 procedure TFrmMain.Open1Click(Sender: TObject);
-var
-   HVAName : string;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Open1Click');
@@ -626,7 +627,7 @@ begin
    CheckVXLChanged;
 
    if OpenVXLDialog.Execute then
-      SetIsEditable(LoadVoxel(OpenVXLDialog.FileName));
+      SetIsEditable(LoadVoxel(Document,OpenVXLDialog.FileName));
 
    if IsEditable then
    begin
@@ -635,8 +636,6 @@ begin
          p_Frm3DPreview^.SpFrame.MaxValue := 1;
          p_Frm3DPreview^.SpStopClick(nil);
       end;
-      HVAName := copy(OpenVXLDialog.Filename,1,Length(OpenVXLDialog.FileName) - 3) + 'hva';
-      HVAFile.LoadFile(HVAName,@VoxelFile);
       DoAfterLoadingThings;
    end;
    IsVXLLoading := false;
@@ -644,7 +643,7 @@ end;
 
 procedure TFrmMain.CnvView0Paint(Sender: TObject);
 begin
-   PaintView2(0,true,CnvView[0],ActiveSection.View[0]);
+   PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
 end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
@@ -675,10 +674,11 @@ begin
    BuildReopenMenu;
    Height := 768;
 
+   GlobalVars.Documents := TVoxelDocumentBank.Create;
    GlobalVars.VoxelBank := TVoxelBank.Create;
    GlobalVars.HVABank := THVABank.Create;
    GlobalVars.ModelBank := TModelBank.Create;
-   HVAFile := THVA.Create;
+   Document := (Documents.AddNew)^;
 
    for i := 0 to 2 do
    begin
@@ -853,7 +853,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: CnvView1Paint');
    {$endif}
-   PaintView2(1,false,CnvView[1],ActiveSection.View[1]);
+   PaintView2(1,false,CnvView[1],Document.ActiveSection^.View[1]);
 end;
 
 procedure TFrmMain.CnvView2Paint(Sender: TObject);
@@ -861,7 +861,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: CnvView2Paint');
    {$endif}
-   PaintView2(2,false,CnvView[2],ActiveSection.View[2]);
+   PaintView2(2,false,CnvView[2],Document.ActiveSection^.View[2]);
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);
@@ -1023,10 +1023,10 @@ begin
    {$endif}
    RefreshViews;
    RepaintViews;
-   Update3dView(ActiveSection);
+   Update3dView(Document.ActiveSection^);
    if p_Frm3DPreview <> nil then
    begin
-      p_Frm3DPreview^.Update3dView(ActiveSection);
+      p_Frm3DPreview^.Update3dView(Document.ActiveVoxel^,Document.ActiveSection^);
    end;
 end;
 
@@ -1039,8 +1039,8 @@ begin
    {$endif}
    SectionCombo.Clear;
 
-   for i := 0 to (VoxelFile.Header.NumSections - 1) do
-      SectionCombo.Items.Add(VoxelFile.Section[i].Name);
+   for i := 0 to (Document.ActiveVoxel^.Header.NumSections - 1) do
+      SectionCombo.Items.Add(Document.ActiveVoxel^.Section[i].Name);
    SectionCombo.ItemIndex := CurrentSection;
 end;
 
@@ -1127,9 +1127,9 @@ begin
    SpectrumMode := SP;
    SetSpectrumMode;
 
-   ActiveSection.View[0].Refresh;
-   ActiveSection.View[1].Refresh;
-   ActiveSection.View[2].Refresh;
+   Document.ActiveSection^.View[0].Refresh;
+   Document.ActiveSection^.View[1].Refresh;
+   Document.ActiveSection^.View[2].Refresh;
 
    PaintPalette(cnvPalette,True);
 
@@ -1226,15 +1226,15 @@ begin
 
    Width := cnvView[0].Width;
    Height := cnvView[0].Height;
-   with ActiveSection.Viewport[0] do
+   with Document.ActiveSection^.Viewport[0] do
    begin
-      x := ActiveSection.View[0].Width * Zoom;
+      x := Document.ActiveSection^.View[0].Width * Zoom;
       if ScrollBar1.enabled then
          if x > Width then
             Left := 0 - ((x - Width) div 2) -(ScrollBar1.Position - (ScrollBar1.Max div 2))
          else
             Left := ((Width - x) div 2) -(ScrollBar1.Position - (ScrollBar1.Max div 2));
-      y := ActiveSection.View[0].Height * Zoom;
+      y := Document.ActiveSection^.View[0].Height * Zoom;
 
       if ScrollBar2.enabled then
          if y > Height then
@@ -1242,7 +1242,7 @@ begin
          else
             Top := (Height - y) div 2 -(ScrollBar2.Position - (ScrollBar2.Max div 2));
    end;
-   PaintView2(0,true,CnvView[0],ActiveSection.View[0]);
+   PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
 end;
 
 procedure TFrmMain.setupscrollbars;
@@ -1255,12 +1255,12 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SetupScrollBars');
    {$endif}
-   If (ActiveSection.View[0].Width * ActiveSection.Viewport[0].zoom) > cnvView[0].Width then
+   If (Document.ActiveSection^.View[0].Width * Document.ActiveSection^.Viewport[0].zoom) > cnvView[0].Width then
    begin
       scrollbar_editable := false;
       // showmessage(inttostr(ActiveSection.View[0].Width * ActiveSection.Viewport[0].zoom - cnvView[0].Width));
       ScrollBar2.Position := 0;
-      ScrollBar1.max := ActiveSection.View[0].Width * ActiveSection.Viewport[0].zoom - cnvView[0].Width;
+      ScrollBar1.max := Document.ActiveSection^.View[0].Width * Document.ActiveSection^.Viewport[0].zoom - cnvView[0].Width;
       ScrollBar1.Position := ScrollBar1.max div 2;
       ScrollBar1.Enabled := true;
       scrollbar_editable := true;
@@ -1268,12 +1268,12 @@ begin
    else
       ScrollBar1.Enabled := false;
 
-   If (ActiveSection.View[0].Height * ActiveSection.Viewport[0].zoom) > cnvView[0].Height then
+   If (Document.ActiveSection^.View[0].Height * Document.ActiveSection^.Viewport[0].zoom) > cnvView[0].Height then
    begin
       scrollbar_editable := false;
       //showmessage(inttostr(ActiveSection.View[0].Height * ActiveSection.Viewport[0].zoom - cnvView[0].Height));
       ScrollBar2.Position := 0;
-      ScrollBar2.max := ActiveSection.View[0].Height * ActiveSection.Viewport[0].zoom - cnvView[0].Height;
+      ScrollBar2.max := Document.ActiveSection^.View[0].Height * Document.ActiveSection^.Viewport[0].zoom - cnvView[0].Height;
       ScrollBar2.Position := ScrollBar2.max div 2;
       ScrollBar2.Enabled := true;
       scrollbar_editable := true;
@@ -1349,11 +1349,9 @@ begin
       If FileExists(VoxelName) then
       Begin
          IsVXLLoading := true;
-         SetIsEditable(LoadVoxel(VoxelName));
+         SetIsEditable(LoadVoxel(Document,VoxelName));
          if IsEditable then
          begin
-            HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
-            HVAFile.LoadFile(HVAName,@VoxelFile);
             DoAfterLoadingThings;
          end;
          IsVXLLoading := false;
@@ -1387,7 +1385,7 @@ end;
 // 1.2b: Build the Show Used Colours/Normals array
 // Ripped from VXLSE II 2.2 SE OpenGL (never released version)
 // Original function apparently made by Stucuk
-procedure BuildUsedColoursArray;
+procedure TFrmMain.BuildUsedColoursArray;
 var
    x,y,z : integer;
    v : TVoxelUnpacked;
@@ -1402,11 +1400,11 @@ begin
       UsedColours[x] := false;
 
 
-   for x := 0 to ActiveSection.Tailer.XSize -1 do
-   for y := 0 to ActiveSection.Tailer.YSize -1 do
-   for z := 0 to ActiveSection.Tailer.ZSize -1 do
+   for x := 0 to Document.ActiveSection^.Tailer.XSize -1 do
+   for y := 0 to Document.ActiveSection^.Tailer.YSize -1 do
+   for z := 0 to Document.ActiveSection^.Tailer.ZSize -1 do
    begin
-      ActiveSection.GetVoxel(x,y,z,v);
+      Document.ActiveSection^.GetVoxel(x,y,z,v);
       if v.Used then
       begin
          UsedColours[v.Colour] := true;
@@ -1430,6 +1428,11 @@ end;
 
 procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
+   VoxelOpen := false;
+   GlobalVars.Documents.Free;
+   GlobalVars.VoxelBank.Free;
+   GlobalVars.HVABank.Free;
+   GlobalVars.ModelBank.Free;
    DeactivateRenderingContext;
    wglDeleteContext(rc);
    ReleaseDC(OGL3DPreview.Handle, DC);
@@ -1893,56 +1896,56 @@ begin
    if VXLTool = VXLTool_FloodFill then
    begin
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+      Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
       if (SpectrumMode = ModeColours) or (v.Used=False) then
          v.Colour := ActiveColour;
       if (SpectrumMode = ModeNormals) or (v.Used=False) then
          v.Normal := ActiveNormal;
 
       v.Used := True;
-      VXLFloodFillTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,ActiveSection.View[0].GetOrient);
+      VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
    end;
 
    if VXLTool = VXLTool_FloodFillErase then
    begin
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+      Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
       if (SpectrumMode = ModeColours) or (v.Used=False) then
          v.Colour := 0;
       if (SpectrumMode = ModeNormals) or (v.Used=False) then
          v.Normal := 0;
 
       v.Used := False;
-      VXLFloodFillTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,ActiveSection.View[0].GetOrient);
+      VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
    end;
 
    if VXLTool = VXLTool_Darken then
    begin
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+      Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
       if (SpectrumMode = ModeColours) or (v.Used=False) then
          v.Colour := ActiveColour;
       if (SpectrumMode = ModeNormals) or (v.Used=False) then
          v.Normal := ActiveNormal;
 
       v.Used := True;
-      VXLBrushToolDarkenLighten(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,ActiveSection.View[0].GetOrient,True);
+      VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,True);
    end;
 
    if VXLTool = VXLTool_Lighten then
    begin
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+      Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
       if (SpectrumMode = ModeColours) or (v.Used=False) then
          v.Colour := ActiveColour;
       if (SpectrumMode = ModeNormals) or (v.Used=False) then
          v.Normal := ActiveNormal;
 
       v.Used := True;
-      VXLBrushToolDarkenLighten(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,ActiveSection.View[0].GetOrient,false);
+      VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,false);
    end;
 
-   if ApplyTempView(ActiveSection) then
+   if ApplyTempView(Document.ActiveSection^) then
       UpdateUndo_RedoState;
 
    TempLines.Data_no := 0;
@@ -1991,15 +1994,15 @@ begin
    YCursorBar.Position := 0;
    ZCursorBar.Position := 0;
 
-   XCursorBar.Max := ActiveSection.Tailer.XSize-1;
-   YCursorBar.Max := ActiveSection.Tailer.YSize-1;
-   ZCursorBar.Max := ActiveSection.Tailer.ZSize-1;
+   XCursorBar.Max := Document.ActiveSection^.Tailer.XSize-1;
+   YCursorBar.Max := Document.ActiveSection^.Tailer.YSize-1;
+   ZCursorBar.Max := Document.ActiveSection^.Tailer.ZSize-1;
 
-   XCursorBar.Position := ActiveSection.X;
-   YCursorBar.Position := ActiveSection.Y;
-   ZCursorBar.Position := ActiveSection.Z;
+   XCursorBar.Position := Document.ActiveSection^.X;
+   YCursorBar.Position := Document.ActiveSection^.Y;
+   ZCursorBar.Position := Document.ActiveSection^.Z;
 
-   UpdatePositionStatus(ActiveSection.X,ActiveSection.Y,ActiveSection.Z);
+   UpdatePositionStatus(Document.ActiveSection^.X,Document.ActiveSection^.Y,Document.ActiveSection^.Z);
    StatusBar1.Refresh;
 
    isCursorReset := false;
@@ -2012,11 +2015,11 @@ begin
    {$endif}
    isCursorReset := true;
 
-   XCursorBar.Position := ActiveSection.X;
-   YCursorBar.Position := ActiveSection.Y;
-   ZCursorBar.Position := ActiveSection.Z;
+   XCursorBar.Position := Document.ActiveSection^.X;
+   YCursorBar.Position := Document.ActiveSection^.Y;
+   ZCursorBar.Position := Document.ActiveSection^.Z;
 
-   UpdatePositionStatus(ActiveSection.X,ActiveSection.Y,ActiveSection.Z);
+   UpdatePositionStatus(Document.ActiveSection^.X,Document.ActiveSection^.Y,Document.ActiveSection^.Z);
    StatusBar1.Refresh;
 
    isCursorReset := false;
@@ -2027,14 +2030,14 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SetupStatusBar');
    {$endif}
-   if ActiveSection.Tailer.Unknown = 2 then
+   if Document.ActiveSection^.Tailer.Unknown = 2 then
       StatusBar1.Panels[0].Text := 'Type: Tiberian Sun'
-   else if ActiveSection.Tailer.Unknown = 4 then
+   else if Document.ActiveSection^.Tailer.Unknown = 4 then
       StatusBar1.Panels[0].Text := 'Type: RedAlert 2'
    else
-      StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(ActiveSection.Tailer.Unknown);
+      StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(Document.ActiveSection^.Tailer.Unknown);
 
-   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(ActiveSection.Tailer.YSize) + ', Y Size: ' + inttostr(ActiveSection.Tailer.ZSize) + ', Z Size: ' + inttostr(ActiveSection.Tailer.XSize);
+   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(Document.ActiveSection^.Tailer.YSize) + ', Y Size: ' + inttostr(Document.ActiveSection^.Tailer.ZSize) + ', Z Size: ' + inttostr(Document.ActiveSection^.Tailer.XSize);
    StatusBar1.Panels[2].Text := '';
    StatusBar1.Refresh;
 end;
@@ -2075,7 +2078,7 @@ begin
          OldMousePos.X := X;
          OldMousePos.Y := Y;
          TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
-         with ActiveSection.Tailer do
+         with Document.ActiveSection^.Tailer do
             if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) or (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then
             begin
                if TempView.Data_no > 0 then
@@ -2103,14 +2106,14 @@ begin
             if VXLTool = VXLTool_Brush then
                if VXLBrush <> 4 then
                begin
-                  ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+                  Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
                   if (SpectrumMode = ModeColours) or (v.Used=False) then
                      v.Colour := ActiveColour;
                   if (SpectrumMode = ModeNormals) or (v.Used=False) then
                      v.Normal := ActiveNormal;
 
                   v.Used := True;
-                  VXLBrushTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+                  VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
                   // ActiveSection.BrushTool(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
                   CnvView[0].Repaint;
                   exit;
@@ -2119,8 +2122,8 @@ begin
             if VXLTool = VXLTool_SmoothNormal then
                if VXLBrush <> 4 then
                begin
-                  ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-                  VXLSmoothBrushTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+                  Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+                  VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
                   CnvView[0].Repaint;
                   exit;
                end;
@@ -2150,22 +2153,22 @@ begin
 
       if VXLTool = VXLTool_Brush then
       begin
-         ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
          if (SpectrumMode = ModeColours) or (v.Used=False) then
             v.Colour := ActiveColour;
          if (SpectrumMode = ModeNormals) or (v.Used=False) then
             v.Normal := ActiveNormal;
 
          v.Used := True;
-         VXLBrushTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+         VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
          RepaintViews;
          exit;
       end;
 
       if VXLTool = VXLTool_SmoothNormal then
       begin
-         ActiveSection.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-         VXLSmoothBrushTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+         VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
          RepaintViews;
          exit;
       end;
@@ -2175,7 +2178,7 @@ begin
          v.Used := false;
          v.Colour := 0;
          v.Normal := 0;
-         VXLBrushTool(ActiveSection,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+         VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
 
          RepaintViews;
          exit;
@@ -2186,7 +2189,7 @@ begin
          V.Used := true;
          V.Colour := ActiveColour;
          V.Normal := ActiveNormal;
-         drawstraightline(ActiveSection,TempView,LastClick[0],LastClick[1],V);
+         drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
          RepaintViews;
          exit;
       end;
@@ -2213,7 +2216,7 @@ begin
 
       if VXLTool = VXLTool_Measure then
       begin
-         Viewport := ActiveSection.Viewport[0];
+         Viewport := Document.ActiveSection^.Viewport[0];
 
          GridPos1.X := ((OldMousePos.X-Viewport.Left) div Viewport.Zoom);
          GridPos1.Y := ((OldMousePos.Y-Viewport.Top) div Viewport.Zoom);
@@ -2282,11 +2285,11 @@ begin
    comp := mnuDirectionPopup.PopupComponent;
    mnuEdit.Visible := (comp <> lblView0); // can't edit as already editing it!
    if comp = lblView0 then
-      View := ActiveSection.View[0]
+      View := Document.ActiveSection^.View[0]
    else if comp = lblView1 then
-      View := ActiveSection.View[1]
+      View := Document.ActiveSection^.View[1]
    else
-      View := ActiveSection.View[2];
+      View := Document.ActiveSection^.View[2];
    idx := (View.getViewNameIdx div 2) * 2;
    with mnuDirTowards do
    begin
@@ -2317,7 +2320,7 @@ procedure TFrmMain.mnuDirTowardsClick(Sender: TObject);
    procedure SetDir(WndIndex: Integer);
 //   var idx: Integer;
    begin
-      with ActiveSection.View[WndIndex] do
+      with Document.ActiveSection^.View[WndIndex] do
       begin
          setDir(dirTowards);
 //         idx := getViewNameIdx;
@@ -2351,7 +2354,7 @@ end;
 procedure TFrmMain.mnuDirAwayClick(Sender: TObject);
    procedure SetDir(WndIndex: Integer);
    begin
-      with ActiveSection.View[WndIndex] do
+      with Document.ActiveSection^.View[WndIndex] do
       begin
          setDir(dirAway);
          SyncViews;
@@ -2391,7 +2394,7 @@ begin
       RedAlert2Palette1Click(nil)
    else if fileexists(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette) then
    begin
-      VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette);
+      Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette);
       cnvPalette.Repaint;
    end;
 end;
@@ -2403,7 +2406,7 @@ begin
    DebugFile.Add('FrmMain: SelectCorrectPalette');
    {$endif}
 
-   if VoxelFile.Section[0].Tailer.Unknown = 2 then
+   if Document.ActiveVoxel^.Section[0].Tailer.Unknown = 2 then
       SelectCorrectPalette2(Config.TS)
    else
    SelectCorrectPalette2(Config.RA2);
@@ -2463,7 +2466,7 @@ begin
    PaintPalette(cnvPalette,True);
    if p_Frm3DPreview <> nil then
    begin
-      p_Frm3DPreview^.SpFrame.MaxValue := HVAFile.Header.N_Frames;
+      p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
    end;
    if not Display3dView1.Checked then
@@ -2571,7 +2574,7 @@ begin
    TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
    if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) then Exit;
 
-   with ActiveSection.Tailer do
+   with Document.ActiveSection^.Tailer do
       if (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then Exit;
 
    {$ifdef DEBUG_FILE}
@@ -2638,7 +2641,7 @@ begin
       if FileExists(VXLFilename) then
       begin
          // ShowBusyMessage('Saving...');
-         VoxelFile.SaveToFile(VXLFilename);
+         Document.SaveDocument(VXLFilename);
          VXLChanged := false;
          changecaption(true,VXLFilename);
          // HideBusyMessage;
@@ -2662,7 +2665,7 @@ begin
    {$endif}
    if SaveVXLDialog.Execute then
    begin
-      VoxelFile.SaveToFile(SaveVXLDialog.Filename);
+      Document.SaveDocument(SaveVXLDialog.FileName);
       VXLFilename := SaveVXLDialog.Filename;
       VXLChanged := false;
       changecaption(true,VXLFilename);
@@ -2683,7 +2686,7 @@ begin
    FrmHeader:=TFrmHeader.Create(Self);
    with FrmHeader do
    begin
-      SetValues(@VoxelFile);
+      SetValues(Document.ActiveVoxel);
       PageControl1.ActivePage := PageControl1.Pages[1];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
@@ -2703,7 +2706,7 @@ begin
    FrmHeader:=TFrmHeader.Create(Self);
    with FrmHeader do
    begin
-      SetValues(@VoxelFile);
+      SetValues(Document.ActiveVoxel);
       PageControl1.ActivePage := PageControl1.Pages[0];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
@@ -2764,10 +2767,10 @@ begin
         mtWarning,mbOKCancel,0) = mrCancel then
                         Exit;
    //ResetUndoRedo;
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   if ApplyNormalsToVXL(ActiveSection) > 0 then
+   if ApplyNormalsToVXL(Document.ActiveSection^) > 0 then
       if MessageDlg('Some were Confused, This may mean there are redundant voxels.'+#13#13+'Run Remove Redundant Voxels?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
          RemoveRedundantVoxels1Click(Sender);
 
@@ -2786,7 +2789,7 @@ begin
    {$endif}
    // One AutoNormals to rule them all!
    FrmAutoNormals := TFrmAutoNormals.Create(self);
-   FrmAutoNormals.MyVoxel := ActiveSection;
+   FrmAutoNormals.MyVoxel := Document.ActiveSection^;
    FrmAutoNormals.ShowModal;
    FrmAutoNormals.Release;
 end;
@@ -2797,7 +2800,7 @@ var
 begin
    if not isEditable then exit;
 
-   if VoxelFile.Header.NumSections<2 then
+   if Document.ActiveVoxel^.Header.NumSections<2 then
    begin
       MessageDlg('Can''t delete if there''s only 1 section!',mtWarning,[mbOK],0);
       Exit;
@@ -2819,13 +2822,13 @@ begin
    UpdateUndo_RedoState;
    SetisEditable(False);
 
-   SectionIndex:=ActiveSection.Header.Number;
-   VoxelFile.RemoveSection(SectionIndex);
+   SectionIndex:=Document.ActiveSection^.Header.Number;
+   Document.ActiveVoxel^.RemoveSection(SectionIndex);
 
    SectionCombo.Items.Clear;
-   for i:=0 to VoxelFile.Header.NumSections-1 do
+   for i:=0 to Document.ActiveVoxel^.Header.NumSections-1 do
    begin
-      SectionCombo.Items.Add(VoxelFile.Section[i].Name);
+      SectionCombo.Items.Add(Document.ActiveVoxel^.Section[i].Name);
    end;
    SectionCombo.ItemIndex:=0;
    SectionComboChange(Self);
@@ -2839,7 +2842,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: NormalSphere1Click');
    {$endif}
-   Update3dViewWithNormals(ActiveSection);
+   Update3dViewWithNormals(Document.ActiveSection^);
 end;
 
 procedure TFrmMain.RemoveRedundantVoxels1Click(Sender: TObject);
@@ -2859,11 +2862,11 @@ begin
         mtWarning,mbOKCancel,0) = mrCancel then exit;
    // stop undo's
 //     ResetUndoRedo;
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
    // ok, do it
-   no := RemoveRedundantVoxelsFromVXL(ActiveSection);
+   no := RemoveRedundantVoxelsFromVXL(Document.ActiveSection^);
    if no = 0 then
       ShowMessage('Remove Redundant Voxels v2.0' +#13#13+ 'Removed: 0')
    else
@@ -2887,9 +2890,9 @@ begin
         'your model under a different name as a backup.',
         mtWarning,mbOKCancel,0) = mrCancel then exit;
 
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
-   ActiveSection.Clear;
+   Document.ActiveSection^.Clear;
    VXLChanged := true;
    RefreshAll;
 end;
@@ -2955,10 +2958,10 @@ end;
 procedure TFrmMain.FlipXswitchFrontBack1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   ActiveSection.FlipMatrix([-1,1,1],[1,0,0]);
+   Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -2966,10 +2969,10 @@ end;
 procedure TFrmMain.FlipYswitchRightLeft1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
+   Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -2977,10 +2980,10 @@ end;
 procedure TFrmMain.FlipZswitchTopBottom1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   ActiveSection.FlipMatrix([1,1,-1],[0,0,1]);
+   Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -2999,40 +3002,40 @@ begin
       end;
   end;
 
-  CreateVXLRestorePoint(ActiveSection,Undo);
+  CreateVXLRestorePoint(Document.ActiveSection^,Undo);
   UpdateUndo_RedoState;
 
   //Based on the current view...
-  case ActiveSection.View[0].GetViewNameIdx of
+  case Document.ActiveSection^.View[0].GetViewNameIdx of
     0:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,1,-1],[0,0,1]);
-      ActiveSection.Mirror(oriZ);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
+      Document.ActiveSection^.Mirror(oriZ);
     end;
     1:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,1,-1],[0,0,1]);
-      ActiveSection.Mirror(oriZ);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
+      Document.ActiveSection^.Mirror(oriZ);
     end;
     2:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,1,-1],[0,0,1]);
-      ActiveSection.Mirror(oriZ);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
+      Document.ActiveSection^.Mirror(oriZ);
     end;
     3:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,1,-1],[0,0,1]);
-      ActiveSection.Mirror(oriZ);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
+      Document.ActiveSection^.Mirror(oriZ);
     end;
     4:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
-      ActiveSection.Mirror(oriY);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+      Document.ActiveSection^.Mirror(oriY);
     end;
     5:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
-      ActiveSection.Mirror(oriY);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+      Document.ActiveSection^.Mirror(oriY);
     end;
   end;
 
@@ -3053,41 +3056,41 @@ begin
     end;
   end;
 
-  CreateVXLRestorePoint(ActiveSection,Undo);
+  CreateVXLRestorePoint(Document.ActiveSection^,Undo);
   UpdateUndo_RedoState;
 
   //Based on the current view...
-  case ActiveSection.View[0].GetViewNameIdx of
+  case Document.ActiveSection^.View[0].GetViewNameIdx of
     0:
     begin
-      if FlipFirst then ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
-      ActiveSection.Mirror(oriY);
+      if FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+      Document.ActiveSection^.Mirror(oriY);
     end;
     1:
     begin
       //reverse here :) (reversed view, that's why!)
-      if not FlipFirst then ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
-      ActiveSection.Mirror(oriY);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+      Document.ActiveSection^.Mirror(oriY);
     end;
     2:
     begin
-      if FlipFirst then ActiveSection.FlipMatrix([-1,1,1],[1,0,0]);
-      ActiveSection.Mirror(oriX);
+      if FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+      Document.ActiveSection^.Mirror(oriX);
     end;
     3:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([-1,1,1],[1,0,0]);
-      ActiveSection.Mirror(oriX);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+      Document.ActiveSection^.Mirror(oriX);
     end;
     4:
     begin
-      if FlipFirst then ActiveSection.FlipMatrix([-1,1,1],[1,0,0]);
-      ActiveSection.Mirror(oriX);
+      if FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+      Document.ActiveSection^.Mirror(oriX);
     end;
     5:
     begin
-      if not FlipFirst then ActiveSection.FlipMatrix([-1,1,1],[1,0,0]);
-      ActiveSection.Mirror(oriX);
+      if not FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+      Document.ActiveSection^.Mirror(oriX);
     end;
   end;
   RefreshAll;
@@ -3096,21 +3099,21 @@ end;
 
 procedure TFrmMain.MirrorBackToFront1Click(Sender: TObject);
 begin
-CreateVXLRestorePoint(ActiveSection,Undo);
+CreateVXLRestorePoint(Document.ActiveSection^,Undo);
 UpdateUndo_RedoState;
 
 FlipXswitchFrontBack1Click(Sender);
-ActiveSection.Mirror(oriX);
+Document.ActiveSection^.Mirror(oriX);
 RefreshAll;
 VXLChanged := true;
 end;
 
 procedure TFrmMain.MirrorFrontToBack1Click(Sender: TObject);
 begin
-CreateVXLRestorePoint(ActiveSection,Undo);
+CreateVXLRestorePoint(Document.ActiveSection^,Undo);
 UpdateUndo_RedoState;
 
-ActiveSection.Mirror(oriX);
+Document.ActiveSection^.Mirror(oriX);
 RefreshAll;
 VXLChanged := true;
 end;
@@ -3124,7 +3127,7 @@ begin
   if (Sender.ClassNameIs('TMenuItem')) then begin
     if (CompareStr((Sender as TMenuItem).Name,'Nudge1Left1')=0) or (CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0) then begin
     //left and right
-      case ActiveSection.View[0].GetViewNameIdx of
+      case Document.ActiveSection^.View[0].GetViewNameIdx of
         0: NR[1]:=-1;
         1: NR[1]:=1;
         2: NR[0]:=-1;
@@ -3139,7 +3142,7 @@ begin
       end;
     end else begin
       //up and down
-      case ActiveSection.View[0].GetViewNameIdx of
+      case Document.ActiveSection^.View[0].GetViewNameIdx of
         0: NR[2]:=-1;
         1: NR[2]:=-1;
         2: NR[2]:=-1;
@@ -3155,10 +3158,10 @@ begin
     end;
   end;
 
-  CreateVXLRestorePoint(ActiveSection,Undo);
+  CreateVXLRestorePoint(Document.ActiveSection^,Undo);
   UpdateUndo_RedoState;
 
-  ActiveSection.FlipMatrix([1,1,1],NR,False);
+  Document.ActiveSection^.FlipMatrix([1,1,1],NR,False);
 
   RefreshAll;
   VXLChanged := true;
@@ -3187,20 +3190,20 @@ begin
 
       SetisEditable(False);
 
-      SectionIndex:=ActiveSection.Header.Number;
+      SectionIndex:=Document.ActiveSection^.Header.Number;
       if not before then //after
          Inc(SectionIndex);
 
 
-      VoxelFile.InsertSection(SectionIndex,Name,X,Y,Z);
+      Document.ActiveVoxel^.InsertSection(SectionIndex,Name,X,Y,Z);
 
       SectionCombo.Items.Clear;
-      for i:=0 to VoxelFile.Header.NumSections-1 do
+      for i:=0 to Document.ActiveVoxel^.Header.NumSections-1 do
       begin
-         SectionCombo.Items.Add(VoxelFile.Section[i].Name);
+         SectionCombo.Items.Add(Document.ActiveVoxel^.Section[i].Name);
       end;
 
-      VoxelFile.Section[SectionIndex].Tailer.Unknown := VoxelFile.Section[0].Tailer.Unknown;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Document.ActiveVoxel^.Section[0].Tailer.Unknown;
 
       //MajorRepaint;
       SectionCombo.ItemIndex:=SectionIndex;
@@ -3226,41 +3229,41 @@ begin
              mtConfirmation,[mbYes,mbNo],0) = mrNo then
       exit;
 
-   SectionIndex:=ActiveSection.Header.Number;
+   SectionIndex:=Document.ActiveSection^.Header.Number;
    Inc(SectionIndex);
 
    ResetUndoRedo;
    UpdateUndo_RedoState;
 
-   VoxelFile.InsertSection(SectionIndex,'Copy Of '+VoxelFile.Section[SectionIndex-1].Name,VoxelFile.Section[SectionIndex-1].Tailer.XSize,VoxelFile.Section[SectionIndex-1].Tailer.YSize,VoxelFile.Section[SectionIndex-1].Tailer.ZSize);
+   Document.ActiveVoxel^.InsertSection(SectionIndex,'Copy Of '+Document.ActiveVoxel^.Section[SectionIndex-1].Name,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.XSize,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.YSize,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.ZSize);
 
-   for x := 0 to (VoxelFile.Section[SectionIndex-1].Tailer.XSize - 1) do
-      for y := 0 to (VoxelFile.Section[SectionIndex-1].Tailer.YSize - 1) do
-         for z := 0 to (VoxelFile.Section[SectionIndex-1].Tailer.ZSize - 1) do
-            VoxelFile.Section[SectionIndex].Data[x,y,z] := VoxelFile.Section[SectionIndex-1].Data[x,y,z];
+   for x := 0 to (Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.XSize - 1) do
+      for y := 0 to (Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.YSize - 1) do
+         for z := 0 to (Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.ZSize - 1) do
+            Document.ActiveVoxel^.Section[SectionIndex].Data[x,y,z] := Document.ActiveVoxel^.Section[SectionIndex-1].Data[x,y,z];
 
-   with VoxelFile.Section[SectionIndex-1].Tailer do
+   with Document.ActiveVoxel^.Section[SectionIndex-1].Tailer do
    begin
-      VoxelFile.Section[SectionIndex].Tailer.Det := Det;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.Det := Det;
       for x := 1 to 3 do
       begin
-         VoxelFile.Section[SectionIndex].Tailer.MaxBounds[x] := MaxBounds[x];
-         VoxelFile.Section[SectionIndex].Tailer.MinBounds[x] := MinBounds[x];
+         Document.ActiveVoxel^.Section[SectionIndex].Tailer.MaxBounds[x] := MaxBounds[x];
+         Document.ActiveVoxel^.Section[SectionIndex].Tailer.MinBounds[x] := MinBounds[x];
       end;
-      VoxelFile.Section[SectionIndex].Tailer.SpanDataOfs := SpanDataOfs;
-      VoxelFile.Section[SectionIndex].Tailer.SpanEndOfs := SpanEndOfs;
-      VoxelFile.Section[SectionIndex].Tailer.SpanStartOfs := SpanStartOfs;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.SpanDataOfs := SpanDataOfs;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.SpanEndOfs := SpanEndOfs;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.SpanStartOfs := SpanStartOfs;
       for x := 1 to 3 do
          for y := 1 to 4 do
-            VoxelFile.Section[SectionIndex].Tailer.Transform[x,y] := Transform[x,y];
+            Document.ActiveVoxel^.Section[SectionIndex].Tailer.Transform[x,y] := Transform[x,y];
 
-      VoxelFile.Section[SectionIndex].Tailer.Unknown := Unknown;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Unknown;
    end;
 
    SectionCombo.Items.Clear;
-   for i:=0 to VoxelFile.Header.NumSections-1 do
+   for i:=0 to Document.ActiveVoxel^.Header.NumSections-1 do
    begin
-      SectionCombo.Items.Add(VoxelFile.Section[i].Name);
+      SectionCombo.Items.Add(Document.ActiveVoxel^.Section[i].Name);
    end;
 
    //MajorRepaint;
@@ -3293,7 +3296,7 @@ begin
       IsVXLLoading := true;
       Application.OnIdle := nil;
       VoxelName := Config.GetHistory(p^.Tag);
-      SetIsEditable(LoadVoxel(VoxelName));
+      SetIsEditable(LoadVoxel(Document,VoxelName));
       if IsEditable then
       begin
          if p_Frm3DPreview <> nil then
@@ -3301,8 +3304,6 @@ begin
             p_Frm3DPreview^.SpFrame.MaxValue := 1;
             p_Frm3DPreview^.SpStopClick(nil);
          end;
-         HVAName := copy(VoxelName,1,Length(VoxelName) - 3) + 'hva';
-         HVAFile.LoadFile(HVAName,@VoxelFile);
          DoAfterLoadingThings;
       end;
       IsVXLLoading := false;
@@ -3333,13 +3334,13 @@ end;
 
 procedure TFrmMain.iberianSunPalette1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
+   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
    cnvPalette.Repaint;
 end;
 
 procedure TFrmMain.RedAlert2Palette1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
+   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
    cnvPalette.Repaint;
 end;
 
@@ -3379,7 +3380,7 @@ end;
 
 procedure TFrmMain.blank1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(PaletteList.Data[TMenuItem(Sender).tag]);
+   Document.Palette^.LoadPalette(PaletteList.Data[TMenuItem(Sender).tag]);
    cnvPalette.Repaint;
 end;
 
@@ -3415,11 +3416,6 @@ begin
       end;
       p_Frm3DPreview := nil;
    end;
-   VXLPalette.Free;
-   GlobalVars.VoxelBank.Free;
-   GlobalVars.HVABank.Free;
-   GlobalVars.ModelBank.Free;
-   HVAFile.Free;
 end;
 
 procedure TFrmMain.SpeedButton7Click(Sender: TObject);
@@ -3507,19 +3503,19 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: ToolButton1Click');
    {$endif}
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
-         for z := 0 to ActiveSection.Tailer.ZSize-1 do
+   for x := 0 to Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to Document.ActiveSection^.Tailer.YSize-1 do
+         for z := 0 to Document.ActiveSection^.Tailer.ZSize-1 do
          begin
-            ActiveSection.GetVoxel(x,y,z,v);
+            Document.ActiveSection^.GetVoxel(x,y,z,v);
             if SpectrumMode = ModeColours then
                v.Colour := ActiveColour
             else
                v.Normal := ActiveNormal;
-            ActiveSection.SetVoxel(x,y,z,v);
+            Document.ActiveSection^.SetVoxel(x,y,z,v);
          end;
    RefreshAll;
    VXLChanged := true;
@@ -3538,7 +3534,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: ClearLayer1Click');
    {$endif}
-   ClearVXLLayer(ActiveSection);
+   ClearVXLLayer(Document.ActiveSection^);
 
    UpdateUndo_RedoState;
    RefreshAll;
@@ -3549,14 +3545,14 @@ procedure TFrmMain.Copy1Click(Sender: TObject);
 begin
    if not isEditable then exit;
 
-   VXLCopyToClipboard(ActiveSection);
+   VXLCopyToClipboard(Document.ActiveSection^);
 end;
 
 procedure TFrmMain.Cut1Click(Sender: TObject);
 begin
    if not isEditable then exit;
 
-   VXLCutToClipboard(ActiveSection);
+   VXLCutToClipboard(Document.ActiveSection^);
    UpdateUndo_RedoState;
    RefreshAll;
    VXLChanged := true;
@@ -3575,10 +3571,10 @@ procedure TFrmMain.PasteFull1Click(Sender: TObject);
 begin
    if not isEditable then exit;
 
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   PasteFullVXL(ActiveSection);
+   PasteFullVXL(Document.ActiveSection^);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3587,13 +3583,13 @@ procedure TFrmMain.Paste1Click(Sender: TObject);
 begin
    if not isEditable then exit;
 
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
    // --- 1.2: Removed
    // PasteFullVXL(ActiveSection);
    // --- Replaced with
-   PasteVXL(ActiveSection);
+   PasteVXL(Document.ActiveSection^);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3906,11 +3902,11 @@ begin
    for x := 0 to 255 do
       ColourSchemes[Tmenuitem(Sender).Tag].Data[x] := strtoint(searchcscheme(s,inttostr(x)+'='));
 
-   for x := 0 to ActiveSection.Tailer.XSize-1 do
-      for y := 0 to ActiveSection.Tailer.YSize-1 do
-         for z := 0 to ActiveSection.Tailer.ZSize-1 do
+   for x := 0 to Document.ActiveSection^.Tailer.XSize-1 do
+      for y := 0 to Document.ActiveSection^.Tailer.YSize-1 do
+         for z := 0 to Document.ActiveSection^.Tailer.ZSize-1 do
          begin
-            ActiveSection.GetVoxel(x,y,z,v);
+            Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
                V.Colour := ColourSchemes[Tmenuitem(Sender).Tag].Data[V.Colour];
@@ -3924,7 +3920,7 @@ begin
             end;
          end;
 
-   ApplyTempView(ActiveSection);
+   ApplyTempView(Document.ActiveSection^);
    UpdateUndo_RedoState;
    RefreshAll;
 end;
@@ -3999,7 +3995,7 @@ begin
    else
       VoxelType := vtAir;
 
-   SetIsEditable(NewVoxel(Game,FrmNew.x,FrmNew.y,FrmNew.z));
+   SetIsEditable(NewVoxel(Document,Game,FrmNew.x,FrmNew.y,FrmNew.z));
 
    if IsEditable then
       DoAfterLoadingThings;
@@ -4072,9 +4068,9 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SmoothNormals1Click');
    {$endif}
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
-   SmoothVXLNormals(ActiveSection);
+   SmoothVXLNormals(Document.ActiveSection^);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -4233,7 +4229,7 @@ end;
 
 procedure TFrmMain.test1Click(Sender: TObject);
 begin
-   Update3dViewVOXEL(VoxelFile);
+   Update3dViewVOXEL(Document.ActiveVoxel^);
 end;
 
 procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
@@ -4269,13 +4265,13 @@ begin
          frm.Free;
       end;
 
-      SectionIndex:=ActiveSection.Header.Number;
+      SectionIndex:=Document.ActiveSection^.Header.Number;
       Inc(SectionIndex);
       ResetUndoRedo;
       UpdateUndo_RedoState;
 
-      VoxelFile.InsertSection(SectionIndex,tempvxl.Section[tempsectionindex].Name,tempvxl.Section[tempsectionindex].Tailer.XSize,tempvxl.Section[tempsectionindex].Tailer.YSize,tempvxl.Section[tempsectionindex].Tailer.ZSize);
-      VoxelFile.Section[SectionIndex].Assign(tempvxl.Section[tempsectionindex]);
+      Document.ActiveVoxel^.InsertSection(SectionIndex,tempvxl.Section[tempsectionindex].Name,tempvxl.Section[tempsectionindex].Tailer.XSize,tempvxl.Section[tempsectionindex].Tailer.YSize,tempvxl.Section[tempsectionindex].Tailer.ZSize);
+      Document.ActiveVoxel^.Section[SectionIndex].Assign(tempvxl.Section[tempsectionindex]);
 
       tempvxl.Free;
       SetupSections;
@@ -4305,9 +4301,9 @@ begin
       Image1.Picture := TopBarImageHolder.Picture;
       grpVoxelType.Visible := false;
 
-      x := ActiveSection.Tailer.XSize;
-      y := ActiveSection.Tailer.YSize;
-      z := ActiveSection.Tailer.ZSize;
+      x := Document.ActiveSection^.Tailer.XSize;
+      y := Document.ActiveSection^.Tailer.YSize;
+      z := Document.ActiveSection^.Tailer.ZSize;
       ShowModal;
       if changed then
       begin
@@ -4316,7 +4312,7 @@ begin
          UpdateUndo_RedoState;
 
          SetIsEditable(false);
-         ActiveSection.Resize(x,y,z);
+         Document.ActiveSection^.Resize(x,y,z);
          SetIsEditable(true);
          SectionComboChange(Sender);
          VXLChanged := true;
@@ -4367,9 +4363,9 @@ begin
    frm:=TFrmFullResize.Create(Self);
    with frm do
    begin
-      x := ActiveSection.Tailer.XSize;
-      y := ActiveSection.Tailer.YSize;
-      z := ActiveSection.Tailer.ZSize;
+      x := Document.ActiveSection^.Tailer.XSize;
+      y := Document.ActiveSection^.Tailer.YSize;
+      z := Document.ActiveSection^.Tailer.ZSize;
       Image1.Picture := TopBarImageHolder.Picture;
       ShowModal;
       if Changed then
@@ -4377,7 +4373,7 @@ begin
          ResetUndoRedo;
          UpdateUndo_RedoState;
          SetIsEditable(false);
-         ActiveSection.ResizeBlowUp(Scale);
+         Document.ActiveSection^.ResizeBlowUp(Scale);
          SetIsEditable(true);
          SectionComboChange(Sender);
          VXLChanged := true;
@@ -4419,12 +4415,12 @@ begin
   frm.Free;
 end;
 
-Function CharToStr : String;
+Function TFrmMain.CharToStr : String;
 var
 x : integer;
 begin
    for x := 1 to 16 do
-      Result := VoxelFile.Header.FileType[x];
+      Result := Document.ActiveVoxel^.Header.FileType[x];
 end;
 
 Function CleanString(S : string) : String;
@@ -4439,7 +4435,7 @@ end;
 
 procedure TFrmMain.N1x1Click(Sender: TObject);
 begin
-   ActiveSection.Viewport[0].Zoom := Strtoint(CleanString(TMenuItem(Sender).caption));
+   Document.ActiveSection^.Viewport[0].Zoom := Strtoint(CleanString(TMenuItem(Sender).caption));
    CentreViews;
    setupscrollbars;
    CnvView0.Refresh;
@@ -4528,10 +4524,10 @@ begin
         mtWarning,mbOKCancel,0) = mrCancel then
                         Exit;
    //ResetUndoRedo;
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   ApplyInfluenceNormalsToVXL(ActiveSection);
+   ApplyInfluenceNormalsToVXL(Document.ActiveSection^);
    Refreshall;
    VXLChanged := true;
 end;

@@ -35,10 +35,10 @@ uses FormMain;
 
 procedure TFrmTestHVA.FormShow(Sender: TObject);
 begin
-  HVAFile.Frame := 0;
-  HVAFile.Section := FrmMain.SectionCombo.ItemIndex;
-  Label1.Caption := 'Section: ' + FrmMain.SectionCombo.Items.Strings[HVAFile.Section];
-  SpinEdit1.Value := HVAFile.Frame;
+  FrmMain.Document.ActiveHVA^.Frame := 0;
+  FrmMain.Document.ActiveHVA^.Section := FrmMain.SectionCombo.ItemIndex;
+  Label1.Caption := 'Section: ' + FrmMain.SectionCombo.Items.Strings[FrmMain.Document.ActiveHVA^.Section];
+  SpinEdit1.Value := FrmMain.Document.ActiveHVA^.Frame;
 //  HVATEST := true;
 //  PopulateMatrix;
 end;
@@ -46,14 +46,14 @@ end;
 procedure TFrmTestHVA.SpinEdit1Change(Sender: TObject);
 begin
    try
-      if SpinEdit1.Value > HVAFile.Header.N_Frames-1 then
+      if SpinEdit1.Value > FrmMain.Document.ActiveHVA^.Header.N_Frames-1 then
          SpinEdit1.Value := 0;
       if SpinEdit1.Value < 0 then
-         SpinEdit1.Value := HVAFile.Header.N_Frames-1;
+         SpinEdit1.Value := FrmMain.Document.ActiveHVA^.Header.N_Frames-1;
    except
       exit;
    end;
-   HVAFile.Frame := SpinEdit1.Value;
+   FrmMain.Document.ActiveHVA^.Frame := SpinEdit1.Value;
 end;
 
 procedure TFrmTestHVA.Button1Click(Sender: TObject);
@@ -63,10 +63,10 @@ end;
 
 procedure TFrmTestHVA.Timer1Timer(Sender: TObject);
 begin
-   if HVAFile.Section <> FrmMain.SectionCombo.ItemIndex then
+   if FrmMain.Document.ActiveHVA^.Section <> FrmMain.SectionCombo.ItemIndex then
    begin
-      HVAFile.Section := FrmMain.SectionCombo.ItemIndex;
-      Label1.Caption := 'Section: ' + FrmMain.SectionCombo.Items.Strings[HVAFile.Section];
+      FrmMain.Document.ActiveHVA^.Section := FrmMain.SectionCombo.ItemIndex;
+      Label1.Caption := 'Section: ' + FrmMain.SectionCombo.Items.Strings[FrmMain.Document.ActiveHVA^.Section];
    end;
    SpinEdit1.Value := SpinEdit1.Value +1;
    SpinEdit1Change(Sender);

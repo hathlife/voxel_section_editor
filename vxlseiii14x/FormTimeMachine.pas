@@ -7,12 +7,13 @@ uses
   Dialogs,Voxel_Engine, BasicDataTypes, Menus, ExtCtrls, StdCtrls, Voxel,
   ComCtrls, ToolWin,ImgList, Math, palette, Spin, Buttons, ogl3dview_engine,
   dglOpenGL,FTGifAnimate, undo_engine,ShellAPI,Constants,cls_Config,pause,
-  FormNewVxlUnit,mouse,Registry, Form3dpreview,Debug, FormAutoNormals;
+  FormNewVxlUnit,mouse,Registry, Form3dpreview,Debug, FormAutoNormals,
+  VoxelDocument, VoxelDocumentBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
-   APPLICATION_TITLE = 'Will VXL Editor';
+   APPLICATION_TITLE = 'Will''s VXL Editor';
    APPLICATION_VER = 'Beta 5';
 
 type
@@ -411,6 +412,7 @@ type
      ShiftPressed : boolean;
      AltPressed : boolean;
      p_Frm3DPreview : PFrm3DPReview;
+     Document : TVoxelDocument;
      {$ifdef DEBUG_FILE}
      DebugFile : TDebugFile;
      {$endif}
@@ -504,14 +506,13 @@ begin
    BuildReopenMenu;
    Height := 768;
 
-   HVAFile := THVA.Create;
-
    for i := 0 to 2 do
    begin
       cnvView[i].ControlStyle := cnvView[i].ControlStyle + [csOpaque];
       lblView[i].ControlStyle := lblView[i].ControlStyle + [csOpaque];
    end;
 
+   Document := (Documents.AddNew)^;
    SetIsEditable(False);
    //FrmTimeMain.DoubleBuffered := true;
    //MainPaintPanel.DoubleBuffered := true;
@@ -2137,7 +2138,7 @@ begin
       RedAlert2Palette1Click(nil)
    else if fileexists(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette) then
    begin
-      VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette);
+      Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\USER\' + Palette);
       cnvPalette.Repaint;
    end;
 end;
@@ -3046,13 +3047,13 @@ end;
 
 procedure TFrmTimeMain.iberianSunPalette1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
+   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
    cnvPalette.Repaint;
 end;
 
 procedure TFrmTimeMain.RedAlert2Palette1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
+   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
    cnvPalette.Repaint;
 end;
 
@@ -3092,7 +3093,7 @@ end;
 
 procedure TFrmTimeMain.blank1Click(Sender: TObject);
 begin
-   VXLPalette.LoadPalette(PaletteList.Data[TMenuItem(Sender).tag]);
+   Document.Palette^.LoadPalette(PaletteList.Data[TMenuItem(Sender).tag]);
    cnvPalette.Repaint;
 end;
 
@@ -3128,8 +3129,7 @@ begin
       end;
       p_Frm3DPreview := nil;
    end;
-   VXLPalette.Free;
-   HVAFile.Free;
+   Document.Free;
 end;
 
 procedure TFrmTimeMain.SpeedButton7Click(Sender: TObject);

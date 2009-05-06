@@ -173,7 +173,7 @@ var
    Range,Smooth : single;
    Contrast : integer;
 begin
-   CreateVXLRestorePoint(ActiveSection,Undo);
+   CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
    FrmMain.UpdateUndo_RedoState;
 
    If RbTangent.Checked then

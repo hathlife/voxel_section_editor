@@ -3,12 +3,11 @@ unit Voxel_Engine;
 interface
 
 uses Windows,BasicDataTypes,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,
-   cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel;
+   cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel, VoxelDocument;
 
 {$INCLUDE Global_Conditionals.inc}
 Var
-   VoxelFile : TVoxel;
-   ActiveSection : TVoxelSection;
+//   VoxelFile : TVoxel;
    CurrentSection : cardinal;
    SpectrumMode : ESpectrumMode;
    ViewMode: EViewMode;
@@ -70,8 +69,8 @@ Const
       ' Top',
       ' Bottom');
 
-Function LoadVoxel(Filename : String) : boolean;
-Function NewVoxel(Game,x,y,z : integer) : boolean;
+Function LoadVoxel(var Document: TVoxelDocument; Filename : String) : boolean;
+Function NewVoxel(var Document: TVoxelDocument; Game,x,y,z : integer) : boolean;
 Procedure ChangeSection;
 Procedure SetupViews;
 Procedure SetSpectrumMode;
@@ -158,9 +157,9 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: HasNormalsBug');
    {$endif}
    Result := False;
-   N := VoxelFile.Section[0].Tailer.Unknown;
-   for x := 0 to VoxelFile.Header.NumSections -1 do
-      if VoxelFile.Section[x].Tailer.Unknown <> N then
+   N := FrmMain.Document.ActiveVoxel^.Section[0].Tailer.Unknown;
+   for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
+      if FrmMain.Document.ActiveVoxel^.Section[x].Tailer.Unknown <> N then
          Result := True;
 end;
 
@@ -169,24 +168,20 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: IsVoxelValid');
    {$endif}
-   if AsciizToStr(VoxelFile.Header.FileType,16) <> 'Voxel Animation' then
+   if AsciizToStr(FrmMain.Document.ActiveVoxel^.Header.FileType,16) <> 'Voxel Animation' then
       Result := False
-   else if VoxelFile.Header.Unknown <> 1 then
+   else if FrmMain.Document.ActiveVoxel^.Header.Unknown <> 1 then
       Result := False
    else
       Result := True;
 end;
 
-Function LoadVoxel(Filename : String) : boolean;
+Function LoadVoxel(var Document: TVoxelDocument; Filename : String) : boolean;
 begin
    Result := false;
    try
-      VoxelFile.Free;
-      VoxelFile := TVoxel.Create;
-      VoxelFile.LoadFromFile(Filename);
+      Document.Load(Filename);
       CurrentSection := 0;
-
-      ActiveSection := VoxelFile.Section[CurrentSection];
    except
       VoxelOpen := false;
       exit;
@@ -217,11 +212,11 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: SetHeaderFileType');
    {$endif}
    for i:=1 to 16 do
-      VoxelFile.Header.FileType[i]:=#0;
+      FrmMain.Document.ActiveVoxel^.Header.FileType[i]:=#0;
       for i := 1 to Length(Name) do
       begin
          if i > MAX_LEN then break;
-         VoxelFile.Header.FileType[i] := Name[i];
+         FrmMain.Document.ActiveVoxel^.Header.FileType[i] := Name[i];
       end;
 end;
 
@@ -231,27 +226,26 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: SetVoxelFileDefaults');
    {$endif}
    SetHeaderFileType('Voxel Animation');
-   VoxelFile.Header.Unknown := 1;
-   VoxelFile.Header.StartPaletteRemap := 16;
-   VoxelFile.Header.EndPaletteRemap := 31;
-   VoxelFile.Header.BodySize := 0;
+   FrmMain.Document.ActiveVoxel^.Header.Unknown := 1;
+   FrmMain.Document.ActiveVoxel^.Header.StartPaletteRemap := 16;
+   FrmMain.Document.ActiveVoxel^.Header.EndPaletteRemap := 31;
+   FrmMain.Document.ActiveVoxel^.Header.BodySize := 0;
 end;
 
-Function NewVoxel(Game,x,y,z : integer) : boolean;
+Function NewVoxel(var Document: TVoxelDocument; Game,x,y,z : integer) : boolean;
 begin
    Result := false;
    try
-      VoxelFile.Free;
-      VoxelFile := TVoxel.Create;
+      Document.LoadNew;
 
       SetVoxelFileDefults;
-      VoxelFile.Header.NumSections := 0;
-      VoxelFile.Header.NumSections2 := 0;
+      Document.ActiveVoxel^.Header.NumSections := 0;
+      Document.ActiveVoxel^.Header.NumSections2 := 0;
 
       CurrentSection := 0;
-      VoxelFile.InsertSection(0,'Body',x,y,z);
-      ActiveSection := VoxelFile.Section[CurrentSection];
-      ActiveSection.Tailer.Unknown := Game;
+      Document.ActiveVoxel^.InsertSection(0,'Body',x,y,z);
+      Document.ActiveSection^.Tailer.Unknown := Game;
+      Document.ActiveSection := @(Document.ActiveVoxel^.Section[0]);
    except
       VoxelOpen := false;
       exit;
@@ -262,7 +256,7 @@ begin
    {$endif}
    VXLFilename := '';
    VoxelOpen := true;
-   VoxelFile.Loaded := true;
+   Document.ActiveVoxel^.Loaded := true;
    Result := true;
 
    if FrmMain.p_Frm3DPreview <> nil then
@@ -281,7 +275,7 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: ChangeSection');
    {$endif}
-   ActiveSection := VoxelFile.Section[CurrentSection];
+   FrmMain.Document.ActiveSection := @(FrmMain.Document.ActiveVoxel^.Section[CurrentSection]);
    SetupViews;
 end;
 
@@ -290,13 +284,13 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: SetupViews');
    {$endif}
-   ActiveSection.View[0].Refresh;
-   ActiveSection.View[1].Refresh;
-   ActiveSection.View[2].Refresh;
+   FrmMain.Document.ActiveSection^.View[0].Refresh;
+   FrmMain.Document.ActiveSection^.View[1].Refresh;
+   FrmMain.Document.ActiveSection^.View[2].Refresh;
 
-   ActiveSection.Viewport[0].Zoom := DefultZoom;
-   ActiveSection.Viewport[1].Zoom := DefultZoom;
-   ActiveSection.Viewport[2].Zoom := DefultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[0].Zoom := DefultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[1].Zoom := DefultZoom;
+   FrmMain.Document.ActiveSection^.Viewport[2].Zoom := DefultZoom;
 
    ZoomToFit(1);
    ZoomToFit(2);
@@ -310,7 +304,7 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: SetSpectrumMode');
    {$endif}
-   VoxelFile.setSpectrum(SpectrumMode);
+   FrmMain.Document.ActiveVoxel^.setSpectrum(SpectrumMode);
 end;
 
 Procedure SetNormalsCount;
@@ -320,7 +314,7 @@ begin
    {$endif}
    ActiveNormalsCount := MAXNORM_TIBERIAN_SUN;
 
-   if ActiveSection.Tailer.Unknown = 4 then
+   if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
       ActiveNormalsCount := MAXNORM_RED_ALERT2;
 end;
 
@@ -367,10 +361,10 @@ begin
    end;
 
    if SpectrumMode = ModeColours then
-      Result := VXLPalette[color]
+      Result := FrmMain.Document.Palette^[color]
    else
    begin
-      if ActiveSection.Tailer.Unknown = 4 then
+      if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
       begin
          NormalNum := 244;
          NormalDiv := 2.5;
@@ -419,7 +413,7 @@ begin
       Exit; // don't do anything else then
    end;
    if View = nil then Exit;
-   Viewport := ActiveSection.Viewport[WndIndex];
+   Viewport := FrmMain.Document.ActiveSection^.Viewport[WndIndex];
    // fill margins around shape
    Cnv.Canvas.Brush.Style := bsSolid;
    Cnv.Canvas.Brush.Color := BGViewColor;
@@ -627,7 +621,7 @@ begin
       Exit; // don't do anything else then
    end;
    if View = nil then Exit;
-   Viewport := ActiveSection.Viewport[WndIndex];
+   Viewport := FrmMain.Document.ActiveSection^.Viewport[WndIndex];
    // fill margins around shape
    Bitmap := TBitmap.Create;
    Bitmap.Canvas.Brush.Style := bsSolid;
@@ -957,14 +951,14 @@ begin
    {$endif}
    Width := CnvView[WndIndex].Width;
    Height := CnvView[WndIndex].Height;
-   with ActiveSection.Viewport[WndIndex] do
+   with FrmMain.Document.ActiveSection^.Viewport[WndIndex] do
    begin
-      x := ActiveSection.View[WndIndex].Width * Zoom;
+      x := FrmMain.Document.ActiveSection^.View[WndIndex].Width * Zoom;
       if x > Width then
          Left := 0 - ((x - Width) div 2)
       else
          Left := (Width - x) div 2;
-      y := ActiveSection.View[WndIndex].Height * Zoom;
+      y := FrmMain.Document.ActiveSection^.View[WndIndex].Height * Zoom;
       if y > Height then
          Top := 0 - ((y - Height) div 2)
       else
@@ -992,11 +986,11 @@ begin
    {$endif}
    Width := CnvView[WndIndex].Width;
    Height := CnvView[WndIndex].Height;
-   with ActiveSection.Viewport[WndIndex] do
+   with FrmMain.Document.ActiveSection^.Viewport[WndIndex] do
    begin
       Left := 0;
       Top := 0;
-      Zoom := Trunc(Min(Width / ActiveSection.View[WndIndex].Width,Height / ActiveSection.View[WndIndex].Height));
+      Zoom := Trunc(Min(Width / FrmMain.Document.ActiveSection^.View[WndIndex].Width,Height / FrmMain.Document.ActiveSection^.View[WndIndex].Height));
       if Zoom <= 0 then
          Zoom := 1;
    end;
@@ -1023,7 +1017,7 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: TranslateClick');
    {$endif}
    //following code needs to be fixed/replaced
-   with ActiveSection do
+   with FrmMain.Document.ActiveSection^ do
    begin
       //new conversion routines?
       p:=(sx - Viewport[WndIndex].Left) div Viewport[WndIndex].Zoom;
@@ -1058,7 +1052,7 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: TranslateClick2');
    {$endif}
    //following code needs to be fixed/replaced
-   with ActiveSection do
+   with FrmMain.Document.ActiveSection^ do
    begin
       //new conversion routines?
       p:=(sx - Viewport[WndIndex].Left) div Viewport[WndIndex].Zoom;
@@ -1090,7 +1084,7 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: Move Cursor');
    {$endif}
-   with ActiveSection do
+   with FrmMain.Document.ActiveSection^ do
    begin
       SetX(lx);
       SetY(ly);
@@ -1114,7 +1108,7 @@ begin
    Result := -1;
 
    TranslateClick(WndIndex,x,y,Pos.x,Pos.y,Pos.z);
-   ActiveSection.GetVoxel(Pos.x,Pos.y,Pos.z,v);
+   FrmMain.Document.ActiveSection^.GetVoxel(Pos.x,Pos.y,Pos.z,v);
 
    if v.Used then
       if SpectrumMode = ModeColours then
@@ -1131,7 +1125,7 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: ActivateView');
    {$endif}
-   with ActiveSection do
+   with FrmMain.Document.ActiveSection^ do
    begin
       swapView := View[0];
       View[0] := View[Idx];
@@ -1153,9 +1147,9 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: SyncViews');
    {$endif}
-   lblView[0].Caption := '  Editing View: ' + ViewName[ActiveSection.View[0].GetViewNameIdx];
-   lblView[1].Caption := '  View: ' + ViewName[ActiveSection.View[1].GetViewNameIdx];
-   lblView[2].Caption := '  View: ' + ViewName[ActiveSection.View[2].GetViewNameIdx];
+   lblView[0].Caption := '  Editing View: ' + ViewName[FrmMain.Document.ActiveSection^.View[0].GetViewNameIdx];
+   lblView[1].Caption := '  View: ' + ViewName[FrmMain.Document.ActiveSection^.View[1].GetViewNameIdx];
+   lblView[2].Caption := '  View: ' + ViewName[FrmMain.Document.ActiveSection^.View[2].GetViewNameIdx];
 end;
 
 procedure RefreshViews;
@@ -1163,7 +1157,7 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: RefreshViews');
    {$endif}
-   with ActiveSection do
+   with FrmMain.Document.ActiveSection^ do
    begin
       View[0].Refresh;
       View[1].Refresh;
@@ -1184,219 +1178,185 @@ end;
 
 procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; var last,first : TVector3i; v: TVoxelUnpacked);
 var
-x,y,ss : integer;
-gradient,c : single;
-o : byte;
+   x,y,ss : integer;
+   gradient,c : single;
+   o : byte;
 begin
-// Straight Line Equation : Y=MX+C
-  o := 0;
+   // Straight Line Equation : Y=MX+C
+   o := 0;
 
-  if (a.View[0].getOrient = oriX) then
-  begin
-  ss := last.x;
-  last.X := last.Z;
-  first.X := first.Z;
-  o := 1;
-  end
-  else
-  if (a.View[0].getOrient = oriY) then
-  begin
-  ss := last.y;
-  last.Y := last.Z;
-  first.Y := first.Z;
-  o := 2;
-  end
-  else
-  if (a.View[0].getOrient = oriZ) then
-  ss := last.z
-  else
-  begin
-  messagebox(0,'Error: Can`t Draw 3D Line','Math Error',0);
-  exit;
-  end;
+   if (a.View[0].getOrient = oriX) then
+   begin
+      ss := last.x;
+      last.X := last.Z;
+      first.X := first.Z;
+      o := 1;
+   end
+   else if (a.View[0].getOrient = oriY) then
+   begin
+      ss := last.y;
+      last.Y := last.Z;
+      first.Y := first.Z;
+      o := 2;
+   end
+   else if (a.View[0].getOrient = oriZ) then
+      ss := last.z
+   else
+   begin
+      messagebox(0,'Error: Can`t Draw 3D Line','Math Error',0);
+      exit;
+   end;
+   gradient := getgradient(last,first);
+   c := last.Y-(last.X * gradient);
+   tempview.Data_no := 0;
+   setlength(tempview.Data,0);
 
-gradient := getgradient(last,first);
-
-c := last.Y-(last.X * gradient);
-
-tempview.Data_no := 0;
-setlength(tempview.Data,0);
-
-if (first.X = last.X) then
-for y := min(first.Y,last.y) to max(first.Y,last.y) do
-begin
-tempview.Data_no := tempview.Data_no +1;
-setlength(tempview.Data,tempview.Data_no+1);
-
-if o = 1 then
-begin
-tempview.Data[tempview.Data_no].X := y;
-tempview.Data[tempview.Data_no].Y := first.X;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=ss;
-tempview.Data[tempview.Data_no].VC.Y :=y;
-tempview.Data[tempview.Data_no].VC.Z :=first.X;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-if o = 2 then
-begin
-tempview.Data[tempview.Data_no].X := first.X;
-tempview.Data[tempview.Data_no].Y := y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=first.X;
-tempview.Data[tempview.Data_no].VC.Y :=ss;
-tempview.Data[tempview.Data_no].VC.Z :=y;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-begin
-tempview.Data[tempview.Data_no].X := first.X;
-tempview.Data[tempview.Data_no].Y := y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=first.X;
-tempview.Data[tempview.Data_no].VC.Y :=y;
-tempview.Data[tempview.Data_no].VC.Z :=ss;
-tempview.Data[tempview.Data_no].V := V;
-end;
-end
-else
-if (first.Y = last.Y) then
-for x := min(first.x,last.x) to max(first.x,last.x) do
-begin
-tempview.Data_no := tempview.Data_no +1;
-setlength(tempview.Data,tempview.Data_no+1);
-
-if o = 1 then
-begin
-tempview.Data[tempview.Data_no].X := first.Y;
-tempview.Data[tempview.Data_no].Y := x;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=ss;
-tempview.Data[tempview.Data_no].VC.Y :=first.y;
-tempview.Data[tempview.Data_no].VC.Z :=x;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-if o = 2 then
-begin
-tempview.Data[tempview.Data_no].X := x;
-tempview.Data[tempview.Data_no].Y := first.Y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=x;
-tempview.Data[tempview.Data_no].VC.Y :=ss;
-tempview.Data[tempview.Data_no].VC.Z :=first.y;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-begin
-tempview.Data[tempview.Data_no].X := x;
-tempview.Data[tempview.Data_no].Y := first.Y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=x;
-tempview.Data[tempview.Data_no].VC.Y :=first.y;
-tempview.Data[tempview.Data_no].VC.Z :=ss;
-tempview.Data[tempview.Data_no].V := V;
-end;
-end
-else
-begin
-
-for x := min(first.X,last.X) to max(first.X,last.X) do
-begin
-tempview.Data_no := tempview.Data_no +1;
-setlength(tempview.Data,tempview.Data_no+1);
-
-if o = 1 then
-begin
-tempview.Data[tempview.Data_no].X := round((gradient*x)+c);
-tempview.Data[tempview.Data_no].Y := x;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=ss;
-tempview.Data[tempview.Data_no].VC.Y :=round((gradient*x)+c);
-tempview.Data[tempview.Data_no].VC.Z :=x;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-if o = 2 then
-begin
-tempview.Data[tempview.Data_no].X := x;
-tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=x;
-tempview.Data[tempview.Data_no].VC.Y :=ss;
-tempview.Data[tempview.Data_no].VC.Z :=round((gradient*x)+c);
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-begin
-tempview.Data[tempview.Data_no].X := x;
-tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=x;
-tempview.Data[tempview.Data_no].VC.Y :=round((gradient*x)+c);
-tempview.Data[tempview.Data_no].VC.Z :=ss;
-tempview.Data[tempview.Data_no].V := V;
-end;
-
-end;
-
-for y := min(first.Y,last.Y) to max(first.Y,last.Y) do
-begin
-
-tempview.Data_no := tempview.Data_no +1;
-setlength(tempview.Data,tempview.Data_no+1);
-
-if o = 1 then
-begin
-tempview.Data[tempview.Data_no].X := y;
-tempview.Data[tempview.Data_no].Y := round((y-c)/ gradient);
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=ss;
-tempview.Data[tempview.Data_no].VC.Y :=y;
-tempview.Data[tempview.Data_no].VC.Z :=round((y-c)/ gradient);
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-if o = 2 then
-begin
-tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
-tempview.Data[tempview.Data_no].Y := y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=round((y-c)/ gradient);
-tempview.Data[tempview.Data_no].VC.Y :=ss;
-tempview.Data[tempview.Data_no].VC.Z :=y;
-tempview.Data[tempview.Data_no].V := V;
-end
-else
-begin
-tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
-tempview.Data[tempview.Data_no].Y := y;
-
-tempview.Data[tempview.Data_no].VU := true;
-tempview.Data[tempview.Data_no].VC.X :=round((y-c)/ gradient);
-tempview.Data[tempview.Data_no].VC.Y :=y;
-tempview.Data[tempview.Data_no].VC.Z :=ss;
-tempview.Data[tempview.Data_no].V := V;
-end;
-
-end;
-
-end;
-
-RemoveDoublesFromTempView;
-
+   if (first.X = last.X) then
+      for y := min(first.Y,last.y) to max(first.Y,last.y) do
+      begin
+         tempview.Data_no := tempview.Data_no +1;
+         setlength(tempview.Data,tempview.Data_no+1);
+         if o = 1 then
+         begin
+            tempview.Data[tempview.Data_no].X := y;
+            tempview.Data[tempview.Data_no].Y := first.X;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=ss;
+            tempview.Data[tempview.Data_no].VC.Y :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=first.X;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else if o = 2 then
+         begin
+            tempview.Data[tempview.Data_no].X := first.X;
+            tempview.Data[tempview.Data_no].Y := y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=first.X;
+            tempview.Data[tempview.Data_no].VC.Y :=ss;
+            tempview.Data[tempview.Data_no].VC.Z :=y;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else
+         begin
+            tempview.Data[tempview.Data_no].X := first.X;
+            tempview.Data[tempview.Data_no].Y := y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=first.X;
+            tempview.Data[tempview.Data_no].VC.Y :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=ss;
+            tempview.Data[tempview.Data_no].V := V;
+         end;
+      end
+   else if (first.Y = last.Y) then
+      for x := min(first.x,last.x) to max(first.x,last.x) do
+      begin
+         tempview.Data_no := tempview.Data_no +1;
+         setlength(tempview.Data,tempview.Data_no+1);
+         if o = 1 then
+         begin
+            tempview.Data[tempview.Data_no].X := first.Y;
+            tempview.Data[tempview.Data_no].Y := x;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=ss;
+            tempview.Data[tempview.Data_no].VC.Y :=first.y;
+            tempview.Data[tempview.Data_no].VC.Z :=x;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else if o = 2 then
+         begin
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := first.Y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.Y :=ss;
+            tempview.Data[tempview.Data_no].VC.Z :=first.y;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else
+         begin
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := first.Y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.Y :=first.y;
+            tempview.Data[tempview.Data_no].VC.Z :=ss;
+            tempview.Data[tempview.Data_no].V := V;
+         end;
+      end
+   else
+   begin
+      for x := min(first.X,last.X) to max(first.X,last.X) do
+      begin
+         tempview.Data_no := tempview.Data_no +1;
+         setlength(tempview.Data,tempview.Data_no+1);
+         if o = 1 then
+         begin
+            tempview.Data[tempview.Data_no].X := round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].Y := x;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=ss;
+            tempview.Data[tempview.Data_no].VC.Y :=round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].VC.Z :=x;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else if o = 2 then
+         begin
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.Y :=ss;
+            tempview.Data[tempview.Data_no].VC.Z :=round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else
+         begin
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.Y :=round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].VC.Z :=ss;
+            tempview.Data[tempview.Data_no].V := V;
+         end;
+      end;
+      for y := min(first.Y,last.Y) to max(first.Y,last.Y) do
+      begin
+         tempview.Data_no := tempview.Data_no +1;
+         setlength(tempview.Data,tempview.Data_no+1);
+         if o = 1 then
+         begin
+            tempview.Data[tempview.Data_no].X := y;
+            tempview.Data[tempview.Data_no].Y := round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=ss;
+            tempview.Data[tempview.Data_no].VC.Y :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else if o = 2 then
+         begin
+            tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].Y := y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].VC.Y :=ss;
+            tempview.Data[tempview.Data_no].VC.Z :=y;
+            tempview.Data[tempview.Data_no].V := V;
+         end
+         else
+         begin
+            tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].Y := y;
+            tempview.Data[tempview.Data_no].VU := true;
+            tempview.Data[tempview.Data_no].VC.X :=round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].VC.Y :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=ss;
+            tempview.Data[tempview.Data_no].V := V;
+         end;
+      end;
+   end;
+   RemoveDoublesFromTempView;
 end;
 
 procedure AddTempLine(x1,y1,x2,y2,width : integer; colour : TColor);
@@ -1418,110 +1378,127 @@ procedure VXLRectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; Fill: Boolean; 
 {type
   EOrientRect = (oriUnDef, oriX, oriY, oriZ);  }
 var
-  i,j,k: Integer;
-  O: EVoxelViewOrient;
-  Inside,Exact: Integer;
+   i,j,k: Integer;
+   O: EVoxelViewOrient;
+   Inside,Exact: Integer;
 begin
-  O:=ActiveSection.View[0].getOrient;
+   O:=FrmMain.Document.ActiveSection^.View[0].getOrient;
 
-  tempview.Data_no := 0;
-  setlength(tempview.Data,0);
+   tempview.Data_no := 0;
+   setlength(tempview.Data,0);
 
-  {  //this isn't efficient...
-  for i:=0 to Tailer.XSize do begin
-    for j:=0 to Tailer.YSize do begin
-      for k:=0 to Tailer.ZSize do begin}
-  //this is better
-  for i:=Min(Xpos,Xpos2) to Max(Xpos,Xpos2) do begin
-    for j:=Min(Ypos,Ypos2) to Max(Ypos,Ypos2) do begin
-      for k:=Min(Zpos,Zpos2) to Max(Zpos,Zpos2) do begin
-        Inside:=0; Exact:=0;
-        case O of
-          oriX: begin
-            if (i=Xpos) then begin //we're in the right slice
-              if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then Inc(Inside);
-              if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then Inc(Inside);
-              if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then Inc(Exact);
-              if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then Inc(Exact);
+   for i:=Min(Xpos,Xpos2) to Max(Xpos,Xpos2) do
+   begin
+      for j:=Min(Ypos,Ypos2) to Max(Ypos,Ypos2) do
+      begin
+         for k:=Min(Zpos,Zpos2) to Max(Zpos,Zpos2) do
+         begin
+            Inside:=0; Exact:=0;
+            case O of
+               oriX:
+               begin
+                  if (i=Xpos) then
+                  begin //we're in the right slice
+                     if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then
+                        Inc(Inside);
+                     if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then
+                        Inc(Inside);
+                     if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then
+                        Inc(Exact);
+                     if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then
+                        Inc(Exact);
+                  end;
+               end;
+               oriY:
+               begin
+                  if (j=Ypos) then
+                  begin //we're in the right slice
+                     if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then
+                        Inc(Inside);
+                     if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then
+                        Inc(Inside);
+                     if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then
+                        Inc(Exact);
+                     if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then
+                        Inc(Exact);
+                  end;
+               end;
+               oriZ:
+               begin
+                  if (k=Zpos) then
+                  begin //we're in the right slice
+                     if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then
+                        Inc(Inside);
+                     if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then
+                        Inc(Inside);
+                     if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then
+                        Inc(Exact);
+                     if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then
+                        Inc(Exact);
+                  end;
+               end;
             end;
-          end;
-          oriY: begin
-            if (j=Ypos) then begin //we're in the right slice
-              if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then Inc(Inside);
-              if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then Inc(Inside);
-              if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then Inc(Exact);
-              if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then Inc(Exact);
+            if Fill then
+            begin
+               if Inside+Exact=2 then
+               begin
+                  tempview.Data_no := tempview.Data_no +1;
+                  setlength(tempview.Data,tempview.Data_no +1);
+                  if O = oriX then
+                  begin
+                     tempview.Data[tempview.Data_no].X := j;
+                     tempview.Data[tempview.Data_no].Y := k;
+                  end
+                  else if O = oriY then
+                  begin
+                     tempview.Data[tempview.Data_no].X := i;
+                     tempview.Data[tempview.Data_no].Y := k;
+                  end
+                  else if O = oriZ then
+                  begin
+                     tempview.Data[tempview.Data_no].X := i;
+                     tempview.Data[tempview.Data_no].Y := j;
+                  end;
+                  tempview.Data[tempview.Data_no].VU := true;
+                  tempview.Data[tempview.Data_no].VC.X := i;
+                  tempview.Data[tempview.Data_no].VC.Y := j;
+                  tempview.Data[tempview.Data_no].VC.Z := k;
+                  tempview.Data[tempview.Data_no].V := v;
+                  // SetVoxel(i,j,k,v);
+               end;
+            end
+            else
+            begin
+               if (Exact>=1) and (Inside+Exact=2) then
+               begin
+                  tempview.Data_no := tempview.Data_no +1;
+                  setlength(tempview.Data,tempview.Data_no +1);
+                  if O = oriX then
+                  begin
+                     tempview.Data[tempview.Data_no].X := j;
+                     tempview.Data[tempview.Data_no].Y := k;
+                  end
+                  else if O = oriY then
+                  begin
+                     tempview.Data[tempview.Data_no].X := i;
+                     tempview.Data[tempview.Data_no].Y := k;
+                  end
+                  else if O = oriZ then
+                  begin
+                     tempview.Data[tempview.Data_no].X := i;
+                     tempview.Data[tempview.Data_no].Y := j;
+                  end;
+                  tempview.Data[tempview.Data_no].VU := true;
+                  tempview.Data[tempview.Data_no].VC.X := i;
+                  tempview.Data[tempview.Data_no].VC.Y := j;
+                  tempview.Data[tempview.Data_no].VC.Z := k;
+                  tempview.Data[tempview.Data_no].V := v;
+                  //SetVoxel(i,j,k,v);
+               end;
             end;
-          end;
-          oriZ: begin
-            if (k=Zpos) then begin //we're in the right slice
-              if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then Inc(Inside);
-              if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then Inc(Inside);
-              if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then Inc(Exact);
-              if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then Inc(Exact);
-            end;
-          end;
-        end;
-        if Fill then begin
-          if Inside+Exact=2 then begin
-           tempview.Data_no := tempview.Data_no +1;
-           setlength(tempview.Data,tempview.Data_no +1);
-           if O = oriX then
-           begin
-           tempview.Data[tempview.Data_no].X := j;
-           tempview.Data[tempview.Data_no].Y := k;
-           end
-           else
-           if O = oriY then
-           begin
-           tempview.Data[tempview.Data_no].X := i;
-           tempview.Data[tempview.Data_no].Y := k;
-           end
-           else
-           if O = oriZ then
-           begin
-           tempview.Data[tempview.Data_no].X := i;
-           tempview.Data[tempview.Data_no].Y := j;
-           end;
-           tempview.Data[tempview.Data_no].VU := true;
-           tempview.Data[tempview.Data_no].VC.X := i;
-           tempview.Data[tempview.Data_no].VC.Y := j;
-           tempview.Data[tempview.Data_no].VC.Z := k;
-           tempview.Data[tempview.Data_no].V := v;
-           // SetVoxel(i,j,k,v);
-          end;
-        end else begin
-          if (Exact>=1) and (Inside+Exact=2) then begin
-          tempview.Data_no := tempview.Data_no +1;
-           setlength(tempview.Data,tempview.Data_no +1);
-           if O = oriX then
-           begin
-           tempview.Data[tempview.Data_no].X := j;
-           tempview.Data[tempview.Data_no].Y := k;
-           end
-           else
-           if O = oriY then
-           begin
-           tempview.Data[tempview.Data_no].X := i;
-           tempview.Data[tempview.Data_no].Y := k;
-           end
-           else
-           if O = oriZ then
-           begin
-           tempview.Data[tempview.Data_no].X := i;
-           tempview.Data[tempview.Data_no].Y := j;
-           end;
-           tempview.Data[tempview.Data_no].VU := true;
-           tempview.Data[tempview.Data_no].VC.X := i;
-           tempview.Data[tempview.Data_no].VC.Y := j;
-           tempview.Data[tempview.Data_no].VC.Z := k;
-           tempview.Data[tempview.Data_no].V := v;
-            //SetVoxel(i,j,k,v);
-          end;
-        end;
+         end;
       end;
-    end;
-  end;
+   end;
 end;
 
 Function ApplyNormalsToVXL(var VXL : TVoxelSection) : integer;
@@ -1536,7 +1513,7 @@ end;
 
 Function ApplyCubedNormalsToVXL(var VXL : TVoxelSection) : integer;
 var
-Res : TApplyNormalsResult;
+   Res : TApplyNormalsResult;
 begin
     Res := ApplyCubedNormals(VXL,1.74,1,1,true,true,false);
     VXLChanged := true;
@@ -1973,22 +1950,22 @@ begin
    image.Canvas.Brush.Color := GetVXLPaletteColor(-1);
    image.Canvas.Brush.Style := bsSolid;
 
-   if ActiveSection.View[0].GetOrient = oriX then
+   if Vxl.View[0].GetOrient = oriX then
    begin
-      image.Width := ActiveSection.Tailer.ZSize;
-      image.Height := ActiveSection.Tailer.YSize;
-      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.ZSize*ActiveSection.Tailer.YSize*3+8);
+      image.Width := Vxl.Tailer.ZSize;
+      image.Height := Vxl.Tailer.YSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,Vxl.Tailer.ZSize*Vxl.Tailer.YSize*3+8);
       clipboardPtr := GlobalLock(clipboardData);
 
-      PUINT(clipboardPtr)^ := ActiveSection.Tailer.ZSize;
-      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.YSize;
+      PUINT(clipboardPtr)^ := Vxl.Tailer.ZSize;
+      PUINT(clipboardPtr+4)^ := Vxl.Tailer.YSize;
 
-      for z := 0 to ActiveSection.Tailer.ZSize-1 do
-         for y := 0 to ActiveSection.Tailer.YSize-1 do
+      for z := 0 to Vxl.Tailer.ZSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
          begin
-            ActiveSection.GetVoxel(ActiveSection.X,y,z,v);
+            Vxl.GetVoxel(Vxl.X,y,z,v);
 
-            currentPtr := clipboardPtr+(y*ActiveSection.Tailer.ZSize + z)*3;
+            currentPtr := clipboardPtr+(y*Vxl.Tailer.ZSize + z)*3;
             (currentPtr+8)^ := Char(v.Colour);
             (currentPtr+9)^ := Char(v.Normal);
             (currentPtr+10)^ := Char(Ord(v.Used));
@@ -2003,22 +1980,22 @@ begin
       clipboardPtr := NIL;
    end;
 
-   if ActiveSection.View[0].GetOrient = oriY then
+   if Vxl.View[0].GetOrient = oriY then
    begin
-      image.Width := ActiveSection.Tailer.XSize;
-      image.Height := ActiveSection.Tailer.ZSize;
-      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.XSize*ActiveSection.Tailer.ZSize*3+8);
+      image.Width := Vxl.Tailer.XSize;
+      image.Height := Vxl.Tailer.ZSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,Vxl.Tailer.XSize*Vxl.Tailer.ZSize*3+8);
       clipboardPtr := GlobalLock(clipboardData);
 
-      PUINT(clipboardPtr)^ := ActiveSection.Tailer.XSize;
-      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.ZSize;
+      PUINT(clipboardPtr)^ := Vxl.Tailer.XSize;
+      PUINT(clipboardPtr+4)^ := Vxl.Tailer.ZSize;
 
-      for x := 0 to ActiveSection.Tailer.XSize-1 do
-         for z := 0 to ActiveSection.Tailer.ZSize-1 do
+      for x := 0 to Vxl.Tailer.XSize-1 do
+         for z := 0 to Vxl.Tailer.ZSize-1 do
          begin
-            ActiveSection.GetVoxel(x,ActiveSection.Y,z,v);
+            Vxl.GetVoxel(x,Vxl.Y,z,v);
 
-            currentPtr := clipboardPtr+(z*ActiveSection.Tailer.XSize + x)*3;
+            currentPtr := clipboardPtr+(z*Vxl.Tailer.XSize + x)*3;
             (currentPtr+8)^ := Char(v.Colour);
             (currentPtr+9)^ := Char(v.Normal);
             (currentPtr+10)^ := Char(Ord(v.Used));
@@ -2033,22 +2010,22 @@ begin
       clipboardPtr := NIL;
    end;
 
-   if ActiveSection.View[0].GetOrient = oriZ then
+   if Vxl.View[0].GetOrient = oriZ then
    begin
-      image.Width := ActiveSection.Tailer.XSize;
-      image.Height := ActiveSection.Tailer.YSize;
-      clipboardData := GlobalAlloc(GMEM_MOVEABLE,ActiveSection.Tailer.XSize*ActiveSection.Tailer.YSize*3+8);
+      image.Width := Vxl.Tailer.XSize;
+      image.Height := Vxl.Tailer.YSize;
+      clipboardData := GlobalAlloc(GMEM_MOVEABLE,Vxl.Tailer.XSize*Vxl.Tailer.YSize*3+8);
       clipboardPtr := GlobalLock(clipboardData);
 
-      PUINT(clipboardPtr)^ := ActiveSection.Tailer.XSize;
-      PUINT(clipboardPtr+4)^ := ActiveSection.Tailer.YSize;
+      PUINT(clipboardPtr)^ := Vxl.Tailer.XSize;
+      PUINT(clipboardPtr+4)^ := Vxl.Tailer.YSize;
 
-      for x := 0 to ActiveSection.Tailer.XSize-1 do
-         for y := 0 to ActiveSection.Tailer.YSize-1 do
+      for x := 0 to Vxl.Tailer.XSize-1 do
+         for y := 0 to Vxl.Tailer.YSize-1 do
          begin
-            ActiveSection.GetVoxel(x,y,ActiveSection.z,v);
+            Vxl.GetVoxel(x,y,Vxl.z,v);
 
-            currentPtr := clipboardPtr+(y*ActiveSection.Tailer.XSize + x)*3;
+            currentPtr := clipboardPtr+(y*Vxl.Tailer.XSize + x)*3;
             (currentPtr+8)^ := Char(v.Colour);
             (currentPtr+9)^ := Char(v.Normal);
             (currentPtr+10)^ := Char(Ord(v.Used));
@@ -2158,7 +2135,7 @@ begin
 
             // Verify the colour/normal
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[z,y])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
 
@@ -2184,7 +2161,7 @@ begin
 
             // Verify the colour/normal
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,z])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
 
@@ -2210,7 +2187,7 @@ begin
 
             // Verify the colour/normal
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,y])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
 
@@ -2331,7 +2308,7 @@ begin
                v.Used := false;
 
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[z,y])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[z,y])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
 
@@ -2353,7 +2330,7 @@ begin
                v.Used := false;
 
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,z])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,z])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
 
@@ -2375,7 +2352,7 @@ begin
                v.Used := false;
 
             If SpectrumMode = ModeColours then
-               v.Colour := VXLPalette.GetColourFromPalette(Image.Canvas.Pixels[x,y])
+               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,y])
             else
                v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
 
@@ -2658,7 +2635,7 @@ begin
             end;
 
             with tempview.Data[tempview.Data_no].VC do
-               ActiveSection.GetVoxel(X,Y,Z,VV);
+               Vxl.GetVoxel(X,Y,Z,VV);
 
             if VV.Used then
                tempview.Data[tempview.Data_no].VU := true;
@@ -2682,24 +2659,26 @@ end;
 
 Procedure SetNormals(Normal : Integer);
 var
-x : integer;
+   x : integer;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: SetNormals');
    {$endif}
-   for x := 0 to VoxelFile.Header.NumSections -1 do
-      VoxelFile.Section[x].Tailer.Unknown := Normal;
+   for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
+      FrmMain.Document.ActiveVoxel^.Section[x].Tailer.Unknown := Normal;
 end;
 
 begin
+{
    // 1.40 New Palette Engine.
    VXLPalette := TPalette.Create(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
-
+}
    BGViewColor := RGB(140,170,239);
+{
    VoxelFile := TVoxel.Create;
    VoxelFile.InsertSection(0,'Dummy',1,1,1);
    ActiveSection := VoxelFile.Section[0];
-
+}
    SpectrumMode := ModeColours;
    ViewMode := ModeEmphasiseDepth;
 

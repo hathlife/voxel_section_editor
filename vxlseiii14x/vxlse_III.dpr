@@ -36,7 +36,6 @@ uses
   BZK2_Camera in 'BZK2_Camera.pas',
   BZK2_File in 'BZK2_File.pas',
   FormPalettePackAbout in 'FormPalettePackAbout.pas' {FrmPalettePackAbout},
-  FormTimeMachine in 'FormTimeMachine.pas' {FrmTimeMain},
   Voxel_AutoNormals in 'Voxel_AutoNormals.pas',
   Spin in 'Spin.pas',
   FormMain in 'FormMain.pas' {FrmMain},

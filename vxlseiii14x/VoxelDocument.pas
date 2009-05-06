@@ -21,6 +21,9 @@ type
       HVAs : array of PHVA;
       VoxelType : array of byte;
       Palette : PPalette;
+      ActiveVoxel: PVoxel;
+      ActiveHVA: PHVA;
+      ActiveSection : PVoxelSection;
       // Constructors and Destructors
       constructor Create; overload;
       constructor Create(const _Filename: string); overload;
@@ -108,6 +111,9 @@ begin
    SetLength(Voxels,0);
    SetLength(HVAs,0);
    SetLength(VoxelType,0);
+   ActiveVoxel := nil;
+   ActiveHVA := nil;
+   ActiveSection := nil;
 end;
 
 // I/O
@@ -120,6 +126,9 @@ begin
    Voxels[0] := VoxelBank.LoadNew;
    HVAs[0] := HVABank.LoadNew(Voxels[0]);
    VoxelType[0] := C_VXLTP_BODY;
+   ActiveVoxel := Voxels[0];
+   ActiveHVA := HVAs[0];
+   ActiveSection := nil;
 end;
 
 function TVoxelDocument.Load(const _Filename: string): boolean;
@@ -145,6 +154,15 @@ begin
       Filename := CopyString(_Filename);
       if AddVoxel(GetBarrelName(Filename)) then
          VoxelType[High(VoxelType)] := C_VXLTP_BARREL;
+      ActiveVoxel := Voxels[0];
+      ActiveHVA := HVAs[0];
+      ActiveSection := @(ActiveVoxel^.Section[0]);
+   end
+   else
+   begin
+      ActiveVoxel := nil;
+      ActiveHVA := nil;
+      ActiveSection := nil;
    end;
 end;
 
@@ -293,6 +311,9 @@ var
    Filename: string;
 begin
    Result := false;
+   ActiveVoxel := nil;
+   ActiveHVA := nil;
+   ActiveSection := nil;
    Filename := CopyString(_Filename);
    if FileExists(Filename) then
    begin
@@ -306,6 +327,9 @@ begin
       begin
          HVAs[i] := HVABank.Load(HVAs[i],GetHVAName(Filename),Voxels[i]);
          VoxelType[i] := C_VXLTP_BODY; // Default value.
+         ActiveVoxel := Voxels[i];
+         ActiveHVA := HVAs[i];
+         ActiveSection := @(ActiveVoxel^.Section[0]);
          Result := true;
       end
       else // if Voxel couldn't be opened, abort operation
@@ -332,6 +356,9 @@ begin
       HVAs[i] := HVABank.CloneEditable(_VoxelDocument.HVAs[i]);
       VoxelType[i] := _VoxelDocument.VoxelType[i];
    end;
+   ActiveVoxel := GetBodyVoxel;
+   ActiveHVA := GetBodyHVA;
+   ActiveSection := @(ActiveVoxel^.Section[0]);
    New(Palette);
    Palette^ := TPalette.Create(_VoxelDocument.Palette^);
 end;
@@ -341,10 +368,10 @@ function TVoxelDocument.GetHVAName(var _VoxelName: string): string;
 begin
    if Length(_VoxelName) > 4 then
    begin
-      _VoxelName[Length(_VoxelName) - 2] := 'h';
-      _VoxelName[Length(_VoxelName) - 1] := 'v';
-      _VoxelName[Length(_VoxelName)] := 'a';
+      _VoxelName := copy(_VoxelName,1,Length(_VoxelName)-3);
+      _VoxelName := _VoxelName + 'hva';
    end;
+   Result := _VoxelName;
 end;
 
 function TVoxelDocument.GetTurretName(var _VoxelName: string): string;
@@ -354,6 +381,7 @@ begin
       _VoxelName := copy(_VoxelName,1,Length(_VoxelName)-4);
       _VoxelName := _VoxelName + 'tur.vxl';
    end;
+   Result := _VoxelName;
 end;
 
 function TVoxelDocument.GetBarrelName(var _VoxelName: string): string;
@@ -363,6 +391,7 @@ begin
       _VoxelName := copy(_VoxelName,1,Length(_VoxelName)-4);
       _VoxelName := _VoxelName + 'bar.vxl';
    end;
+   Result := _VoxelName;
 end;
 
 // Swicthes
@@ -370,6 +399,7 @@ function TVoxelDocument.SwitchTurret(const _Filename: string): boolean;
 var
    i : integer;
    Filename: string;
+   MyVoxel : PVoxel;
 begin
    Result := false;
    if FileExists(_Filename) then
@@ -379,9 +409,16 @@ begin
       begin
          if VoxelType[i] = C_VXLTP_TURRET then
          begin
+            MyVoxel := Voxels[i];
             Voxels[i] := VoxelBank.Load(Voxels[i],_Filename);
             Filename := CopyString(_Filename);
             HVAs[i] := HVABank.Load(HVAs[i],GetHVAName(Filename),Voxels[i]);
+            if ActiveVoxel = MyVoxel then
+            begin
+               ActiveVoxel := Voxels[i];
+               ActiveHVA := HVAs[i];
+               ActiveSection := @(ActiveVoxel^.Section[0]);
+            end;
             Result := true;
             exit;
          end;

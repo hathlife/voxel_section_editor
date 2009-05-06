@@ -111,7 +111,7 @@ begin
       if PanelReplace.BevelOuter = bvRaised then
       begin
          Replace := idx;
-         PanelReplace.Color := VXLPalette[idx];
+         PanelReplace.Color := FrmMain.Document.Palette^[idx];
          LabelReplace.Caption := inttostr(idx);
          PanelWith.BevelOuter := bvRaised;
          PanelReplace.BevelOuter := bvLowered;
@@ -119,7 +119,7 @@ begin
       else
       begin
          ReplaceW := idx;
-         PanelWith.Color := VXLPalette[idx];
+         PanelWith.Color := FrmMain.Document.Palette^[idx];
          LabelWith.Caption := inttostr(idx);
          PanelReplace.BevelOuter := bvRaised;
          PanelWith.BevelOuter := bvLowered;
@@ -282,7 +282,7 @@ var
 begin
    if data_no < 1 then Close; // nothing to do, so close.
 
-   CreateVXLRestorePoint(ActiveSection,Undo); // Save Undo
+   CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo); // Save Undo
 
    For x := 0 to 255 do
       ColourArray[x] := x;
@@ -290,18 +290,18 @@ begin
    For x := 0 to data_no-1 do
       ColourArray[ReplaceColourData[x].Col1] := ReplaceColourData[x].Col2;
 
-   For x := 0 to ActiveSection.Tailer.XSize -1 do
-   For y := 0 to ActiveSection.Tailer.YSize -1 do
-   For z := 0 to ActiveSection.Tailer.ZSize -1 do
+   For x := 0 to FrmMain.Document.ActiveSection^.Tailer.XSize -1 do
+   For y := 0 to FrmMain.Document.ActiveSection^.Tailer.YSize -1 do
+   For z := 0 to FrmMain.Document.ActiveSection^.Tailer.ZSize -1 do
    begin
-      ActiveSection.GetVoxel(x,y,z,v);
+      FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
 
       if SpectrumMode = ModeColours then
          V.Colour := ColourArray[V.Colour]
       else
          V.Normal := ColourArray[V.Normal];
 
-      ActiveSection.SetVoxel(x,y,z,v);
+      FrmMain.Document.ActiveSection^.SetVoxel(x,y,z,v);
    end;
 
    FrmMain.RefreshAll;

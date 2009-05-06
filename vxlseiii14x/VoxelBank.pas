@@ -150,6 +150,8 @@ var
    i : integer;
 begin
    Result := -1;
+   if Length(_Filename) = 0 then
+      exit;
    i := Low(Items);
    while i <= High(Items) do
    begin
@@ -166,6 +168,8 @@ var
    i : integer;
 begin
    Result := -1;
+   if _Voxel = nil then
+      exit;
    i := Low(Items);
    while i <= High(Items) do
    begin
@@ -182,6 +186,8 @@ var
    i : integer;
 begin
    Result := -1;
+   if Length(_Filename) = 0 then
+      exit;
    i := Low(Items);
    while i <= High(Items) do
    begin
@@ -201,6 +207,8 @@ var
    i : integer;
 begin
    Result := -1;
+   if _Voxel = nil then
+      exit;
    i := Low(Items);
    while i <= High(Items) do
    begin
@@ -220,6 +228,8 @@ var
    i : integer;
 begin
    Result := -1;
+   if _Voxel = nil then
+      exit;
    i := Low(Items);
    while i <= High(Items) do
    begin
