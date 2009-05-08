@@ -6,7 +6,7 @@ unit LOD;
 
 interface
 
-uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL;
+uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants;
 
 type
    TLOD = class
@@ -26,6 +26,8 @@ type
       function GetNumMeshes: longword;
       // Rendering Methods
       procedure Render(var _PolyCount: longword; const _HVA: PHVA);
+      procedure SetNormalsModeRendering;
+      procedure SetColourModeRendering;
       // Refresh OpenGL List
       procedure RefreshLOD;
       procedure RefreshMesh(_MeshID: integer);
@@ -100,6 +102,30 @@ begin
       RenderMesh(Mesh[i].Next,_PolyCount,_HVA);
    end;
 end;
+
+procedure TLOD.SetNormalsModeRendering;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].SetColoursType(C_COLOURS_DISABLED);
+   end;
+end;
+
+procedure TLOD.SetColourModeRendering;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      if High(Mesh[i].Colours) = High(Mesh[i].Vertices) then
+         Mesh[i].SetColoursType(C_COLOURS_PER_VERTEX)
+      else
+         Mesh[i].SetColoursType(C_COLOURS_PER_FACE);
+   end;
+end;
+
 
 
 // Refresh OpenGL List

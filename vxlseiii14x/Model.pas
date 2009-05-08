@@ -47,6 +47,8 @@ type
       function IsOpened : boolean;
       // Rendering methods
       procedure Render(var _PolyCount: longword);
+      procedure SetNormalsModeRendering;
+      procedure SetColourModeRendering;
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
@@ -272,6 +274,27 @@ begin
       end;
    end;
 end;
+
+procedure TModel.SetNormalsModeRendering;
+var
+   i : integer;
+begin
+   for i := Low(LOD) to High(LOD) do
+   begin
+      LOD[i].SetNormalsModeRendering;
+   end;
+end;
+
+procedure TModel.SetColourModeRendering;
+var
+   i : integer;
+begin
+   for i := Low(LOD) to High(LOD) do
+   begin
+      LOD[i].SetColourModeRendering;
+   end;
+end;
+
 
 // Refresh OpenGL List
 procedure TModel.RefreshModel;

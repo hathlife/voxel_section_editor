@@ -11,6 +11,7 @@ function CopyString(const _String : string): string;
 function GetBool(_Value : integer): boolean;
 function GetStringID(_ID : integer): string;
 
+function GetPow2Size(Size : Cardinal) : Cardinal;
 
 implementation
 
@@ -77,6 +78,19 @@ begin
       else
          Result := '000' + IntToStr(_ID);
    end;
+end;
+
+function GetPow2Size(Size : Cardinal) : Cardinal;
+var
+   Step : Byte;
+begin
+   Step   := 0;
+   Repeat
+      Result := Trunc(Power(2,Step));
+      inc(Step);
+   Until (Result >= Size) or (Result >= 4096);
+   if Result > 4096 then
+      Result := 4096;
 end;
 
 end.

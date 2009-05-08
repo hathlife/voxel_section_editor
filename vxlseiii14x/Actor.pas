@@ -9,6 +9,8 @@ type
    PActor = ^TActor;
    TActor = class
    private
+      // For the renderer
+      RequestUpdateWorld: boolean;
       procedure QuickSwitchModels(_m1, _m2: integer);
    public
       // List
@@ -36,6 +38,19 @@ type
       procedure ProcessNextFrame;
       procedure RebuildActor;
       procedure RebuildCurrentMeshes;
+      // Gets
+      function GetRequestUpdateWorld: boolean;
+      // Sets
+      procedure SetPosition(_x, _y, _z: single); overload;
+      procedure SetPosition(_Vector: TVector3f); overload;
+      procedure SetRotation(_x, _y, _z: single); overload;
+      procedure SetRotation(_Vector: TVector3f); overload;
+      procedure SetPositionSpeed(_x, _y, _z: single); overload;
+      procedure SetPositionSpeed(_Vector: TVector3f); overload;
+      procedure SetRotationSpeed(_x, _y, _z: single); overload;
+      procedure SetRotationSpeed(_Vector: TVector3f); overload;
+      procedure SetNormalsModeRendering;
+      procedure SetColourModeRendering;
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
@@ -62,6 +77,7 @@ begin
    Next := nil;
    IsSelected := false;
    SetLength(Models,0);
+   RequestUpdateWorld := false;
    Reset;
 end;
 
@@ -83,6 +99,7 @@ begin
       end;
    end;
    SetLength(Models,0);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.Reset;
@@ -166,6 +183,13 @@ begin
    Rotation.X := CleanAngle(Rotation.X + RotationSpeed.X);
    Rotation.Y := CleanAngle(Rotation.Y + RotationSpeed.Y);
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
+
+   // update request world update.
+   if (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0)  then
+      RequestUpdateWorld := true;
+   if (RotationSpeed.X = 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
+      RequestUpdateWorld := true;
+
 end;
 
 procedure TActor.RebuildActor;
@@ -179,6 +203,7 @@ begin
          Models[i]^.RebuildModel;
       end;
    end;
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.RebuildCurrentMeshes;
@@ -192,6 +217,113 @@ begin
          Models[i]^.RebuildCurrentLOD;
       end;
    end;
+   RequestUpdateWorld := true;
+end;
+
+// Gets
+function TActor.GetRequestUpdateWorld: boolean;
+begin
+   Result := RequestUpdateWorld;
+   RequestUpdateWorld := false;
+end;
+
+// Sets
+procedure TActor.SetPosition(_x, _y, _z: single);
+begin
+   Position.X := _x;
+   Position.Y := _y;
+   Position.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetPosition(_Vector: TVector3f);
+begin
+   Position.X := _Vector.X;
+   Position.Y := _Vector.Y;
+   Position.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotation(_x, _y, _z: single);
+begin
+   Rotation.X := _x;
+   Rotation.Y := _y;
+   Rotation.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotation(_Vector: TVector3f);
+begin
+   Rotation.X := _Vector.X;
+   Rotation.Y := _Vector.Y;
+   Rotation.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetPositionSpeed(_x, _y, _z: single);
+begin
+   PositionSpeed.X := _x;
+   PositionSpeed.Y := _y;
+   PositionSpeed.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetPositionSpeed(_Vector: TVector3f);
+begin
+   PositionSpeed.X := _Vector.X;
+   PositionSpeed.Y := _Vector.Y;
+   PositionSpeed.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationSpeed(_x, _y, _z: single);
+begin
+   RotationSpeed.X := _x;
+   RotationSpeed.Y := _y;
+   RotationSpeed.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationSpeed(_Vector: TVector3f);
+begin
+   RotationSpeed.X := _Vector.X;
+   RotationSpeed.Y := _Vector.Y;
+   RotationSpeed.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetNormalsModeRendering;
+var
+   i : integer;
+begin
+   if High(Models) >= 0 then
+   begin
+      for i := Low(Models) to High(Models) do
+      begin
+         if Models[i] <> nil then
+         begin
+            Models[i]^.SetNormalsModeRendering;
+         end;
+      end;
+      RequestUpdateWorld := true;
+   end;
+end;
+
+procedure TActor.SetColourModeRendering;
+var
+   i : integer;
+begin
+   if High(Models) >= 0 then
+   begin
+      for i := Low(Models) to High(Models) do
+      begin
+         if Models[i] <> nil then
+         begin
+            Models[i]^.SetColourModeRendering;
+         end;
+      end;
+      RequestUpdateWorld := true;
+   end;
 end;
 
 
@@ -200,48 +332,56 @@ procedure TActor.Add(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_filename);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.Add(const _Model: PModel);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_Model);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_HighQuality);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_HighQuality);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.AddReadOnly(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_filename);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.AddReadOnly(const _Model: PModel);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_Model);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_HighQuality);
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,_HighQuality);
+   RequestUpdateWorld := true;
 end;
 
 // Removes
@@ -265,6 +405,7 @@ begin
       end;
       inc(i);
    end;
+   RequestUpdateWorld := true;
 end;
 
 // Switches
@@ -296,6 +437,7 @@ begin
          Models[i].ChangeRemappable(_Colour);
       end;
    end;
+   RequestUpdateWorld := true;
 end;
 
 

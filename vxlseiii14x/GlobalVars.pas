@@ -2,15 +2,14 @@ unit GlobalVars;
 
 interface
 
-uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank;
+uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank, Render;
 
 var
-//   VXLPalette : TPalette;
-//   HVAFile : THVA;
    VoxelBank : TVoxelBank;
    HVABank : THVABank;
    ModelBank : TModelBank;
    Documents : TVoxelDocumentBank;
+   Render : TRender;
 
 implementation
 

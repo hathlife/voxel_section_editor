@@ -7,6 +7,9 @@ uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL;
 type
    PCamera = ^TCamera;
    TCamera = class
+   private
+      // For the renderer
+      RequestUpdateWorld: boolean;
    public
       // List
       Next : PCamera;
@@ -25,6 +28,19 @@ type
       procedure RotateCamera;
       procedure MoveCamera;
       procedure ProcessNextFrame;
+
+      // Gets
+      function GetRequestUpdateWorld: boolean;
+
+      // Sets
+      procedure SetPosition(_x, _y, _z: single); overload;
+      procedure SetPosition(_Vector: TVector3f); overload;
+      procedure SetRotation(_x, _y, _z: single); overload;
+      procedure SetRotation(_Vector: TVector3f); overload;
+      procedure SetPositionSpeed(_x, _y, _z: single); overload;
+      procedure SetPositionSpeed(_Vector: TVector3f); overload;
+      procedure SetRotationSpeed(_x, _y, _z: single); overload;
+      procedure SetRotationSpeed(_Vector: TVector3f); overload;
    end;
 
 implementation
@@ -98,6 +114,85 @@ begin
    Rotation.X := CleanAngle(Rotation.X + RotationSpeed.X);
    Rotation.Y := CleanAngle(Rotation.Y + RotationSpeed.Y);
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
+
+   // update request world update.
+   if (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0)  then
+      RequestUpdateWorld := true;
+   if (RotationSpeed.X = 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
+      RequestUpdateWorld := true;
 end;
+
+function TCamera.GetRequestUpdateWorld: boolean;
+begin
+   Result := RequestUpdateWorld;
+   RequestUpdateWorld := false;
+end;
+
+// Sets
+procedure TCamera.SetPosition(_x, _y, _z: single);
+begin
+   Position.X := _x;
+   Position.Y := _y;
+   Position.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetPosition(_Vector: TVector3f);
+begin
+   Position.X := _Vector.X;
+   Position.Y := _Vector.Y;
+   Position.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotation(_x, _y, _z: single);
+begin
+   Rotation.X := _x;
+   Rotation.Y := _y;
+   Rotation.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotation(_Vector: TVector3f);
+begin
+   Rotation.X := _Vector.X;
+   Rotation.Y := _Vector.Y;
+   Rotation.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetPositionSpeed(_x, _y, _z: single);
+begin
+   PositionSpeed.X := _x;
+   PositionSpeed.Y := _y;
+   PositionSpeed.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetPositionSpeed(_Vector: TVector3f);
+begin
+   PositionSpeed.X := _Vector.X;
+   PositionSpeed.Y := _Vector.Y;
+   PositionSpeed.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotationSpeed(_x, _y, _z: single);
+begin
+   RotationSpeed.X := _x;
+   RotationSpeed.Y := _y;
+   RotationSpeed.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotationSpeed(_Vector: TVector3f);
+begin
+   RotationSpeed.X := _Vector.X;
+   RotationSpeed.Y := _Vector.Y;
+   RotationSpeed.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+
 
 end.

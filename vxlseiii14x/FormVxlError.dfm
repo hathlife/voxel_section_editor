@@ -79,7 +79,7 @@ object FrmVxlError: TFrmVxlError
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    object Button7: TButton
+    object BtClose: TButton
       Left = 408
       Top = 11
       Width = 75
@@ -87,7 +87,7 @@ object FrmVxlError: TFrmVxlError
       Cancel = True
       Caption = 'Close'
       TabOrder = 0
-      OnClick = Button7Click
+      OnClick = BtCloseClick
     end
   end
   object PageControl1: TPageControl
@@ -95,14 +95,10 @@ object FrmVxlError: TFrmVxlError
     Top = 72
     Width = 473
     Height = 193
-    ActivePage = TabSheet2
+    ActivePage = TabSheet1
     TabOrder = 2
     object TabSheet1: TTabSheet
       Caption = 'Header Information'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label1: TLabel
         Left = 8
         Top = 8
@@ -136,23 +132,19 @@ object FrmVxlError: TFrmVxlError
         ScrollBars = ssBoth
         TabOrder = 0
       end
-      object Button1: TButton
+      object BtFixErrorHeader: TButton
         Left = 8
         Top = 128
         Width = 75
         Height = 25
         Caption = 'Fix Error'
         TabOrder = 1
-        OnClick = Button1Click
+        OnClick = BtFixErrorHeaderClick
       end
     end
     object TabSheet2: TTabSheet
       Caption = 'Normals'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label2: TLabel
         Left = 8
         Top = 8
@@ -185,14 +177,14 @@ object FrmVxlError: TFrmVxlError
         ScrollBars = ssBoth
         TabOrder = 0
       end
-      object Button2: TButton
+      object BtFixErrorNormals: TButton
         Left = 8
         Top = 128
         Width = 75
         Height = 25
         Caption = 'Fix Error'
         TabOrder = 1
-        OnClick = Button2Click
+        OnClick = BtFixErrorNormalsClick
       end
     end
   end

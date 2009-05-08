@@ -8,13 +8,14 @@ uses
   ToolWin, ImgList, Math, palette, Spin, Buttons, ogl3dview_engine, FTGifAnimate,
   undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,
   Form3dpreview,Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
-  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank;
+  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment,
+  Actor, Camera;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.05';
+   APPLICATION_VER = '1.39.06';
 
 type
   TFrmMain = class(TForm)
@@ -572,8 +573,11 @@ type
      AltPressed : boolean;
      p_Frm3DPreview : PFrm3DPReview;
      Document : TVoxelDocument;
+     Env : TRenderEnvironment;
+     Actor : PActor;
+     Camera : TCamera;
      {$ifdef DEBUG_FILE}
-     DebugFile : TDebugFile;
+     DebugFile: TDebugFile;
      {$endif}
   end;
 
@@ -631,6 +635,7 @@ begin
 
    if IsEditable then
    begin
+
       if p_Frm3DPreview <> nil then
       begin
          p_Frm3DPreview^.SpFrame.MaxValue := 1;
@@ -674,6 +679,7 @@ begin
    BuildReopenMenu;
    Height := 768;
 
+   GlobalVars.Render := TRender.Create;
    GlobalVars.Documents := TVoxelDocumentBank.Create;
    GlobalVars.VoxelBank := TVoxelBank.Create;
    GlobalVars.HVABank := THVABank.Create;
@@ -711,17 +717,21 @@ begin
    // 1.2 Enable Idle only on certain situations.
    Application.OnIdle := nil;
 
+   // 1.4x New Render starts here.
+   Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
+   Actor := nil;
+
    // OpenGL initialisieren
-   InitOpenGL;
-   dc:=GetDC(FrmMain.OGL3DPreview.Handle);
+//   InitOpenGL;
+//   dc:=GetDC(FrmMain.OGL3DPreview.Handle);
 
-   BGColor   := CleanVCCol(GetVXLPaletteColor(-1));
-   FontColor := SetVector(1,1,1);
-   Size      := 0.2;
+//   BGColor   := CleanVCCol(GetVXLPaletteColor(-1));
+//   FontColor := SetVector(1,1,1);
+//   Size      := 0.2;
 
-   RemapColour.X := RemapColourMap[0].R /255;
-   RemapColour.Y := RemapColourMap[0].G /255;
-   RemapColour.Z := RemapColourMap[0].B /255;
+//   RemapColour.X := RemapColourMap[0].R /255;
+//   RemapColour.Y := RemapColourMap[0].G /255;
+//   RemapColour.Z := RemapColourMap[0].B /255;
 {
    // PixelFormat
    pfd.nSize:=sizeof(pfd);
@@ -734,40 +744,40 @@ begin
    SetPixelFormat(dc, pf, @pfd);
 }
  //  rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
-   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,8,0,0,0);
+//   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,8,0,0,0);
 //   wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
 
-   ActivateRenderingContext(DC, RC);
+//   ActivateRenderingContext(DC, RC);
 
-   glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
-   glClearColor(BGColor.X, BGColor.Y, BGColor.Z, 1.0);
-   glShadeModel(GL_SMOOTH);                 // Enables Smooth Color Shading
-   glClearDepth(1.0);                       // Depth Buffer Setup
-   glEnable(GL_DEPTH_TEST);                 // Enable Depth Buffer
-   glDepthFunc(GL_LESS);		           // The Type Of Depth Test To Do
+//   glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
+//   glClearColor(BGColor.X, BGColor.Y, BGColor.Z, 1.0);
+//   glShadeModel(GL_SMOOTH);                 // Enables Smooth Color Shading
+//   glClearDepth(1.0);                       // Depth Buffer Setup
+//   glEnable(GL_DEPTH_TEST);                 // Enable Depth Buffer
+//   glDepthFunc(GL_LESS);		           // The Type Of Depth Test To Do
 
-   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);   //Realy Nice perspective calculations
+//   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);   //Realy Nice perspective calculations
 
-   BuildFont;
+//   BuildFont;
 
-   glEnable(GL_CULL_FACE);
-   glCullFace(GL_BACK);
+//   glEnable(GL_CULL_FACE);
+//   glCullFace(GL_BACK);
 
-   xRot :=-90;
-   yRot :=-85;
-   Depth :=-30;
-   DemoStart :=GetTickCount();
+//   xRot :=-90;
+//  yRot :=-85;
+//   Depth :=-30;
+//   DemoStart :=GetTickCount();
 
-   QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
-   QueryPerformanceCounter(FoldTime);
+//   QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
+//   QueryPerformanceCounter(FoldTime);
 
-   glViewport(0, 0, OGL3DPreview.Width, OGL3DPreview.Height);    // Set the viewport for the OpenGL window
-   glMatrixMode(GL_PROJECTION);        // Change Matrix Mode to Projection
-   glLoadIdentity();                   // Reset View
-   gluPerspective(45.0, OGL3DPreview.Width/OGL3DPreview.Height, 1.0, 500.0);  // Do the perspective calculations. Last value = max clipping depth
+//   glViewport(0, 0, OGL3DPreview.Width, OGL3DPreview.Height);    // Set the viewport for the OpenGL window
+//   glMatrixMode(GL_PROJECTION);        // Change Matrix Mode to Projection
+//   glLoadIdentity();                   // Reset View
+//   gluPerspective(45.0, OGL3DPreview.Width/OGL3DPreview.Height, 1.0, 500.0);  // Do the perspective calculations. Last value = max clipping depth
 
-   glMatrixMode(GL_MODELVIEW);         // Return to the modelview matrix  }
-   oglloaded := true;
+//   glMatrixMode(GL_MODELVIEW);         // Return to the modelview matrix  }
+//   oglloaded := true;
 
 
    p_Frm3DPreview := nil;
@@ -797,6 +807,9 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Idle');
    {$endif}
+   if IsEditable then
+      GlobalVars.Render.Render;
+{
    Done := FALSE;
    if (not iseditable) or (not oglloaded) then
    begin
@@ -823,12 +836,10 @@ begin
    Form3D := p_Frm3DPreview;
    if Form3D <> nil then
    begin
-      {$ifdef DEBUG_FILE}
-      DebugFile.Add('Preview3D: Idle');
-      {$endif}
       Form3D^.Idle(sender,done);
       // Once the window is rendered, the FormMain OGL returns as default.
    end;
+}
 end;
 
 procedure TFrmMain.FormResize(Sender: TObject);
@@ -1023,7 +1034,9 @@ begin
    {$endif}
    RefreshViews;
    RepaintViews;
-   Update3dView(Document.ActiveSection^);
+   if Actor <> nil then
+      Actor^.RebuildActor;
+   //Update3dView(Document.ActiveSection^);
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.Update3dView(Document.ActiveVoxel^,Document.ActiveSection^);
@@ -1133,7 +1146,9 @@ begin
 
    PaintPalette(cnvPalette,True);
 
-   RebuildLists := true;
+   //RebuildLists := true;
+   if Actor <> nil then
+      Actor^.RebuildActor;
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.RebuildLists := true;
@@ -1429,6 +1444,7 @@ end;
 procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
    VoxelOpen := false;
+   GlobalVars.Render.Free;
    GlobalVars.Documents.Free;
    GlobalVars.VoxelBank.Free;
    GlobalVars.HVABank.Free;
@@ -2464,6 +2480,10 @@ begin
    UpdateUndo_RedoState;
    SelectCorrectPalette;
    PaintPalette(cnvPalette,True);
+   if Actor <> nil then
+      Env.RemoveActor(Actor);
+   Actor := Env.AddActor;
+   Actor^.Add(Document.ActiveSection,Document.Palette,false); 
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;

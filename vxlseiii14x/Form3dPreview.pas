@@ -9,11 +9,10 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
-  Ogl3dview_engine,HVA,JPEG,PNGImage, math3d;
+  Ogl3dview_engine,HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor,
+  Camera;
 
 type
-   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
-
   PFrm3DPReview = ^TFrm3DPReview;
   TFrm3DPReview = class(TForm)
     Panel2: TPanel;
@@ -135,8 +134,6 @@ type
     MouseButton : Integer;
     procedure DrawMe(const VoxelFile: TVoxel);
     procedure ClearRemapClicks;
-    procedure BuildFont;
-    procedure KillFont;
     procedure MakeMeAScreenshotName(var Filename: string; Ext : string);
   public
     { Public declarations }
@@ -154,9 +151,11 @@ type
     RebuildLists : boolean;
     AnimationState : boolean;
     IsReady : boolean;
+    Env : TRenderEnvironment;
+    Actor : TActor;
+    Camera : TCamera;
     procedure Update3dView(const VoxelFile: TVoxel; Vxl : TVoxelSection);
     Procedure SetRotationAdders;
-    procedure glPrint(text : pchar);
     Function GetVXLColor(Color,Normal : integer) : TVector3f;
     procedure ScreenShot(Filename : string);
     function ScreenShot_BitmapResult : TBitmap;
@@ -232,35 +231,6 @@ implementation
 uses FormMain, GlobalVars;
 
 {$R *.DFM}
-
-procedure TFrm3DPReview.BuildFont;			                // Build Our Bitmap Font
-var
-   font: HFONT;                	                // Windows Font ID
-//   gmf : array [0..255] of GLYPHMETRICSFLOAT;		// Address Buffer For Font Storage
-begin
-   base := glGenLists(256);       	                // Storage For 96 Characters
-   SelectObject(DC, font);		       	        // Selects The Font We Want
-
-   font := CreateFont(9, 0,0,0, FW_NORMAL, 0, 0, 0, OEM_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY	, FF_DONTCARE + DEFAULT_PITCH, 'Terminal');
-   SelectObject(DC, font);
-   wglUseFontBitmaps(DC, 0, 127, base);
-end;
-
-procedure TFrm3DPReview.KillFont;     		                // Delete The Font
-begin
-   glDeleteLists(base, 256); 		                // Delete All 96 Characters
-end;
-
-procedure TFrm3DPReview.glPrint(text : pchar);	                // Custom GL "Print" Routine
-begin
-   if (text = '') then   			        // If There's No Text
-      Exit;					        // Do Nothing
-
-   glPushAttrib(GL_LIST_BIT);				// Pushes The Display List Bits
-   glListBase(base);					// Sets The Base Character
-   glCallLists(length(text), GL_UNSIGNED_BYTE, text);	// Draws The Display List Text
-   glPopAttrib();								// Pops The Display List Bits
-end;
 
 function SetVector(x, y, z : single) : TVector3f;
 begin
@@ -547,18 +517,18 @@ begin
          glColor3f(FontColor.X, FontColor.Y, FontColor.Z);
 
          glRasterPos2i(1, 2);
-         glPrint(PChar('Voxels Used: ' + IntToStr(VoxelBox_No)));
+//         glPrint(PChar('Voxels Used: ' + IntToStr(VoxelBox_No)));
 
          glRasterPos2i(1, 13);
-         glPrint(PChar('Depth: ' + IntToStr(trunc(Depth))));
+//         glPrint(PChar('Depth: ' + IntToStr(trunc(Depth))));
 
          glRasterPos2i(1, Panel2.Height - 9);
-         glPrint(PChar('FPS: ' + IntToStr(trunc(FPS))));
+//         glPrint(PChar('FPS: ' + IntToStr(trunc(FPS))));
 
          if FrmMain.DebugMode1.Checked then
          begin
             glRasterPos2i(1, Panel2.Height - 19);
-            glPrint(PChar('DEBUG -  XRot:' + floattostr(XRot) + ' YRot:' + floattostr(YRot)));
+//            glPrint(PChar('DEBUG -  XRot:' + floattostr(XRot) + ' YRot:' + floattostr(YRot)));
          end;
       end;
 

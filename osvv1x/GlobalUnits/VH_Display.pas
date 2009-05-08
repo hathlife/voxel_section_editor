@@ -308,23 +308,15 @@ Procedure DrawWorld;
 begin
    if FUpdateWorld then
    begin
-    FUpdateWorld := False;
+	  FUpdateWorld := False;
 
-   if ColoursOnly then
-   begin
-      glDisable(GL_LIGHT0);
-      glDisable(GL_LIGHTING);
-      glDisable(GL_COLOR_MATERIAL);
-   end
-   else
-   begin
-      {If Not LightGround then
+	  if ColoursOnly then
       begin
          glDisable(GL_LIGHT0);
          glDisable(GL_LIGHTING);
          glDisable(GL_COLOR_MATERIAL);
       end
-      else }
+      else
       begin
          glEnable(GL_LIGHT0);
          glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);				// Set The Ambient Lighting For Light0
@@ -332,39 +324,29 @@ begin
          glEnable(GL_LIGHTING);
          glEnable(GL_COLOR_MATERIAL);
          glNormal3f(0,0,0);
-      end;
-   end;
+	  end;
 
-
-   if (UnitCount = 4) or (UnitCount = 8) then
-   begin
-      DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot);
-      DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot+180);
-      DrawVoxels(UnitShift.X,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+90);
-      DrawVoxels(UnitShift.X,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-90);
-      if UnitCount = 8 then
+      if (UnitCount = 4) or (UnitCount = 8) then
       begin
-         DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+45);
-         DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot+45+180);
-         DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot-45-180);
-         DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-45);
-      end;
-   end
-   else
-      DrawVoxels(UnitShift.X,UnitShift.Y,UnitShift.Z,UnitRot);
+         DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot);
+         DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y,UnitShift.Z,UnitRot+180);
+         DrawVoxels(UnitShift.X,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+90);
+         DrawVoxels(UnitShift.X,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-90);
+         if UnitCount = 8 then
+         begin
+            DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot+45);
+            DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot+45+180);
+            DrawVoxels(UnitShift.X+UnitSpace,UnitShift.Y-UnitSpace,UnitShift.Z,UnitRot-45-180);
+            DrawVoxels(UnitShift.X-UnitSpace,UnitShift.Y+UnitSpace,UnitShift.Z,UnitRot-45);
+         end;
+      end
+      else
+         DrawVoxels(UnitShift.X,UnitShift.Y,UnitShift.Z,UnitRot);
 
 
-   glEnable(GL_TEXTURE_2D);
-   glColor3f(1,1,1);
+      glEnable(GL_TEXTURE_2D);
+      glColor3f(1,1,1);
 
-   {if ColoursOnly then
-   begin
-      glDisable(GL_LIGHT0);
-      glDisable(GL_LIGHTING);
-      glDisable(GL_COLOR_MATERIAL);
-   end
-   else }
-   begin
       If Not LightGround then
       begin
          glDisable(GL_LIGHT0);
@@ -380,91 +362,78 @@ begin
          glEnable(GL_COLOR_MATERIAL);
          glNormal3f(0,0,0);
       end;
+
+      if Ground_Tex_Draw then
+         DrawGround(GroundTex.Tex,SetVector(CameraCenter.X,CameraCenter.Y,Depth),SetVector(XRot,0,YRot),SetVector(1,1,1),GSize);
+
+      if DrawSky then
+         DrawSkyBox(SetVector(XRot,0,YRot),SetVector(-90,0,180));
+
+      If DrawCenter then
+         DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
+
+      if FTexture = 0 then
+         glGenTextures(1, @FTexture);
+      glBindTexture(GL_TEXTURE_2D, FTexture);
+
+      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT), 0);
+
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
    end;
-
-   if Ground_Tex_Draw then
-      DrawGround(GroundTex.Tex,SetVector(CameraCenter.X,CameraCenter.Y,Depth),SetVector(XRot,0,YRot),SetVector(1,1,1),GSize);
-
-   if DrawSky then
-      DrawSkyBox(SetVector(XRot,0,YRot),SetVector(-90,0,180));
-
-   If DrawCenter then
-      DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
-
-  // glDisable(GL_TEXTURE_2D);
-
-   if FTexture = 0 then
-      glGenTextures(1, @FTexture);
-   glBindTexture(GL_TEXTURE_2D, FTexture);
-
-   glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT), 0);
-
-
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
- end;
-
-
- glDisable(GL_LIGHT0);
- glDisable(GL_LIGHTING);
- glDisable(GL_COLOR_MATERIAL);
- glDisable(GL_CULL_FACE);
-
- glDisable(GL_DEPTH_TEST);
-      glMatrixMode(GL_PROJECTION);
-      glPushMatrix;
+ 
+   glDisable(GL_LIGHT0);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_COLOR_MATERIAL);
+   glDisable(GL_CULL_FACE);
+   glDisable(GL_DEPTH_TEST);
+   glMatrixMode(GL_PROJECTION);
+   glPushMatrix;
       glLoadIdentity;
       glOrtho(0,SCREEN_WIDTH,0,SCREEN_HEIGHT,-1,1);
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix;
-      glLoadIdentity;
-         // glColor3f(1,0,0);
-    glEnable(GL_TEXTURE_2D);
-    glColor3f(1,1,1);
- DrawTexture(FTexture,0,0,SCREEN_WIDTH,SCREEN_HEIGHT,GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT));
+         glLoadIdentity;
+         glEnable(GL_TEXTURE_2D);
+         glColor3f(1,1,1);
+         DrawTexture(FTexture,0,0,SCREEN_WIDTH,SCREEN_HEIGHT,GetPow2Size(SCREEN_WIDTH),GetPow2Size(SCREEN_HEIGHT));
 
+         glDisable(GL_TEXTURE_2D);
 
+         If (Not ScreenShot.Take) and (Not ScreenShot.TakeAnimation) and (Not ScreenShot.CaptureAnimation) and (Not ScreenShot.Take360DAnimation) then
+        Begin
+           glColor3f(FontColor.X,FontColor.Y,FontColor.Z);
 
- glDisable(GL_TEXTURE_2D);
+		   if ShowVoxelCount then
+		   begin
+              glRasterPos2i(1,2);
+              glPrint(pchar('Voxels Used: ' + inttostr(VoxelsUsed)));
+		   end;
 
- If (Not ScreenShot.Take) and (Not ScreenShot.TakeAnimation) and (Not ScreenShot.CaptureAnimation) and (Not ScreenShot.Take360DAnimation) then
-   Begin
-      glColor3f(FontColor.X,FontColor.Y,FontColor.Z);
+		   glRasterPos2i(1,SCREEN_HEIGHT-9);
+           glPrint(pchar('FPS: ' + inttostr(gTimer.GetAverageFPS)));
 
+           if DebugMode then
+           begin
+              glRasterPos2i(1,13);
+              glPrint(pchar('Depth: ' + inttostr(trunc(Depth))));
 
+              glRasterPos2i(1,SCREEN_HEIGHT-29);
+              glPrint(pchar('XRot:' + floattostr(XRot)));
 
-      if ShowVoxelCount then
-      begin
-         glRasterPos2i(1,2);
-         glPrint(pchar('Voxels Used: ' + inttostr(VoxelsUsed)));
-      end;
+              glRasterPos2i(1,SCREEN_HEIGHT-39);
+              glPrint(pchar('YRot:' + floattostr(YRot)));
+           end;
+        end;
 
-      glRasterPos2i(1,SCREEN_HEIGHT-9);
-      glPrint(pchar('FPS: ' + inttostr(gTimer.GetAverageFPS)));
-
-      if DebugMode then
-      begin
-         glRasterPos2i(1,13);
-         glPrint(pchar('Depth: ' + inttostr(trunc(Depth))));
-
-         glRasterPos2i(1,SCREEN_HEIGHT-29);
-         glPrint(pchar('XRot:' + floattostr(XRot)));
-
-         glRasterPos2i(1,SCREEN_HEIGHT-39);
-         glPrint(pchar('YRot:' + floattostr(YRot)));
-      end;
-
-   end;
-
-  glMatrixMode(GL_PROJECTION);
-      glPopMatrix;
-      glMatrixMode(GL_MODELVIEW);
-      glPopMatrix;
-
-      glEnable(GL_DEPTH_TEST);
-
+        glMatrixMode(GL_PROJECTION);
+     glPopMatrix;
+     glMatrixMode(GL_MODELVIEW);
+  glPopMatrix;
+  glEnable(GL_DEPTH_TEST);
 end;
 
 procedure BuildFont;			                // Build Our Bitmap Font

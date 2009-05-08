@@ -15,19 +15,19 @@ type
     Label6: TLabel;
     Bevel4: TBevel;
     Panel4: TPanel;
-    Button7: TButton;
+    BtClose: TButton;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     Label1: TLabel;
     InfoBox1: TRichEdit;
-    Button1: TButton;
+    BtFixErrorHeader: TButton;
     TabSheet2: TTabSheet;
     Label2: TLabel;
     RichEdit1: TRichEdit;
-    Button2: TButton;
-    procedure Button1Click(Sender: TObject);
-    procedure Button7Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    BtFixErrorNormals: TButton;
+    procedure BtFixErrorHeaderClick(Sender: TObject);
+    procedure BtCloseClick(Sender: TObject);
+    procedure BtFixErrorNormalsClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -44,19 +44,19 @@ uses FormMain;
 
 {$R *.dfm}
 
-procedure TFrmVxlError.Button1Click(Sender: TObject);
+procedure TFrmVxlError.BtFixErrorHeaderClick(Sender: TObject);
 begin
    SetVoxelFileDefaults;
    VXLChanged := true;
-   Button1.Enabled := False;
+   BtFixErrorHeader.Enabled := False;
 end;
 
-procedure TFrmVxlError.Button7Click(Sender: TObject);
+procedure TFrmVxlError.BtCloseClick(Sender: TObject);
 begin
    Close;
 end;
 
-procedure TFrmVxlError.Button2Click(Sender: TObject);
+procedure TFrmVxlError.BtFixErrorNormalsClick(Sender: TObject);
 var
    N : integer;
 begin
@@ -66,7 +66,7 @@ begin
    MessageBox(0,Pchar('Normals Set To: ' + inttostr(N)),'Information',0);
 
    VXLChanged := true;
-   Button2.Enabled := False;
+   BtFixErrorNormals.Enabled := False;
 end;
 
 procedure TFrmVxlError.FormCreate(Sender: TObject);

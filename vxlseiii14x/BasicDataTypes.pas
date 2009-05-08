@@ -106,6 +106,8 @@ type
 
    T3DIntGrid = array of array of array of integer;
 
+   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
+   
 implementation
 
 end.

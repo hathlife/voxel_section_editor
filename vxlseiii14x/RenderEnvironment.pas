@@ -2,15 +2,25 @@ unit RenderEnvironment;
 
 interface
 
-uses Windows, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils, Model, Actor;
+uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
+   Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate;
 
 type
    PRenderEnvironment = ^TRenderEnvironment;
    TRenderEnvironment = class
       private
+         // Rendering
+         FUpdateWorld : boolean;
          // Constructors and destructors.
          procedure CleanUpCameras;
          procedure CleanUpActors;
+         // Screenshot
+         procedure MakeMeAScreenshotName(var Filename: string; Ext : string);
+         procedure ScreenshotJPG(const _Filename: string; _Compression: integer);
+         procedure ScreenShotPNG(const _Filename : string);
+         procedure ScreenShotTGA(const _Filename : string);
+         procedure ScreenShotBMP(const _Filename : string);
+         procedure ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
       public
          Next : PRenderEnvironment;
          ActorList: PActor;
@@ -38,13 +48,25 @@ type
          // Debug related.
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
          IsEnabled : boolean;
-
+         // Screenshot & Animation related.
+         ScreenTexture : cardinal;
+         ScreenType : TScreenshotType;
+         ScreenshotCompression: integer;
+         ScreenFilename: string;
+         AnimFrameCounter: integer;
+         AnimFrameMax : integer;
+         AnimFrameTime: integer; // in centiseconds.
          // Constructors;
          constructor Create(_Handle : THandle; _width, _height : longword);
          destructor Destroy; override;
+
          // Renders and Related
          procedure Render;
+         procedure DrawCacheTexture(Texture : Cardinal; X,Y : Single; Width,Height,AWidth,AHeight : Cardinal; XOff : Cardinal = 0; YOff : Cardinal = 0; XOffWidth : Cardinal = Cardinal(-1); YOffHeight : Cardinal = Cardinal(-1));
          procedure Resize(_width, _height: longword);
+         procedure RenderNormals;
+         procedure RenderColours;
+
          // Adds
          function AddCamera: PCamera;
          function AddActor: PActor;
@@ -55,6 +77,15 @@ type
          procedure BuildFont;
          procedure KillFont;
          procedure glPrint(_text : pchar);
+
+         // Screenshot related
+         function GetScreenShot : TBitmap;
+         procedure TakeScreenshot(const _Filename: string; _type: TScreenshotType; _Compression: integer = 0);
+         procedure TakeAnimation(const _Filename: string; _NumFrames, _FrameDelay: integer; _type: TScreenshotType);
+         procedure Take360Animation(const _Filename: string; _NumFrames, _FrameDelay: integer; _type: TScreenshotType);
+         procedure StartAnimation;
+         procedure AddFrame;
+         procedure FinishAnimation;
    end;
 
 implementation
@@ -105,6 +136,12 @@ begin
    ShowRotations := false;
    // The render is ready to work.
    IsEnabled := true;
+   FUpdateWorld := true;
+   // Prepare screenshot variables.
+   ScreenTexture := 0;
+   AnimFrameCounter := 0;
+   AnimFrameMax := 0;
+   AnimFrameTime := 3; //about 30fps.
 end;
 
 destructor TRenderEnvironment.Destroy;
@@ -130,6 +167,7 @@ begin
       RemoveCamera(MyCamera);
       MyCamera := NextCamera;
    end;
+   FUpdateWorld := true;
 end;
 
 procedure TRenderEnvironment.CleanUpActors;
@@ -143,6 +181,7 @@ begin
       RemoveActor(MyActor);
       MyActor := NextActor;
    end;
+   FUpdateWorld := true;
 end;
 
 // Renders
@@ -176,75 +215,160 @@ begin
 
    // Process Camera
    CurrentCamera^.ProcessNextFrame;
-
-   // Enable Lighting.
-   glEnable(GL_LIGHT0);
-   glEnable(GL_LIGHTING);
-   glEnable(GL_COLOR_MATERIAL);
-
-   glPushMatrix;
-      CurrentCamera^.RotateCamera;
-
-   glPopMatrix;
-   CurrentCamera^.MoveCamera;
-
-   // Render all models.
+   FUpdateWorld := FUpdateWorld or CurrentCamera^.GetRequestUpdateWorld;
+   // Process Actors
    Actor := ActorList;
    while Actor <> nil do
    begin
-      Actor^.Render(Polycount);
+      Actor^.ProcessNextFrame;
       Actor := Actor^.Next;
+      FUpdateWorld := FUpdateWorld or Actor^.GetRequestUpdateWorld;
    end;
 
-   // Final rendering part.
-   glDisable(GL_TEXTURE_2D);
+   if FUpdateWorld then
+   begin
+      // Enable Lighting.
+      glEnable(GL_LIGHT0);
+      glEnable(GL_LIGHTING);
+      glEnable(GL_COLOR_MATERIAL);
+      glEnable(GL_TEXTURE_2D);
 
+      glPushMatrix;
+         CurrentCamera^.RotateCamera;
+
+      glPopMatrix;
+         CurrentCamera^.MoveCamera;
+
+      // Render all models.
+      Actor := ActorList;
+      while Actor <> nil do
+      begin
+         Actor^.Render(Polycount);
+         Actor := Actor^.Next;
+      end;
+
+      // Here we cache the existing scene in a texture.
+      if ScreenTexture <> 0 then
+         glDeleteTextures(1,@ScreenTexture);
+      glGenTextures(1, @ScreenTexture);
+      glBindTexture(GL_TEXTURE_2D, ScreenTexture);
+
+      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(Width),GetPow2Size(Height), 0);
+
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+      glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+      // End of texture caching.
+      glDisable(GL_TEXTURE_2D);
+   end;
+   // Final rendering part.
    glLoadIdentity;
    glDisable(GL_DEPTH_TEST);
    glMatrixMode(GL_PROJECTION);
    glPushMatrix;
-   glLoadIdentity;
-   glOrtho(0, Width, 0, Height, -1, 1);
-   glMatrixMode(GL_MODELVIEW);
-   glPushMatrix;
-   glLoadIdentity;
+      glLoadIdentity;
+      glOrtho(0, Width, 0, Height, -1, 1);
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix;
+         glLoadIdentity;
+         // Draw texture caching.
+         glEnable(GL_TEXTURE_2D);
+         glColor3f(1,1,1);
+         DrawCacheTexture(ScreenTexture,0,0,Width,Height,GetPow2Size(Width),GetPow2Size(Height));
+         glDisable(GL_TEXTURE_2D);
+         // End of draw texture caching.
+         glDisable(GL_LIGHT0);
+         glDisable(GL_LIGHTING);
+         glDisable(GL_COLOR_MATERIAL);
 
-   glDisable(GL_LIGHT0);
-   glDisable(GL_LIGHTING);
-   glDisable(GL_COLOR_MATERIAL);
+         glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
+         // Are we screenshoting?
+         if AnimFrameMax = 0 then
+         begin
+            // No, we are not screenshoting, so show normal stats.
+            glRasterPos2i(1, 2);
+            glPrint(PChar('Polygons Used: ' + IntToStr(PolyCount)));
 
-   glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
+            if (ShowDepth) then
+            begin
+               glRasterPos2i(1, 13);
+               glPrint(PChar('Depth: ' + IntToStr(trunc(CurrentCamera^.Position.Z))));
+            end;
 
-   glRasterPos2i(1, 2);
-   glPrint(PChar('Polygons Used: ' + IntToStr(PolyCount)));
+            if (ShowSpeed) then
+            begin
+               glRasterPos2i(1, Height - 9);
+               glPrint(PChar('FPS: ' + IntToStr(trunc(FPS))));
+            end;
 
-   if (ShowDepth) then
-   begin
-      glRasterPos2i(1, 13);
-      glPrint(PChar('Depth: ' + IntToStr(trunc(CurrentCamera^.Position.Z))));
-   end;
+            if ShowRotations then
+            begin
+               // Note: The Y from the program is still Z from the render.
+               glRasterPos2i(1, Height - 19);
+               glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Z)));
+            end;
+         end
+         else // We are screenshoting!
+         begin
+            // Let's check if the animation is over or not.
+            inc(AnimFrameCounter);
+            if AnimFrameCounter < AnimFrameMax then
+            begin
+               // We are still animating. Simply add the frame.
+               AddFrame;
+            end
+            else
+            begin
+               // Animation is over. Let's conclude the movie.
+               FinishAnimation;
 
-   if (ShowSpeed) then
-   begin
-      glRasterPos2i(1, Height - 9);
-      glPrint(PChar('FPS: ' + IntToStr(trunc(FPS))));
-   end;
-
-   if ShowRotations then
-   begin
-      // Note: The Y from the program is still Z from the render.
-      glRasterPos2i(1, Height - 19);
-      glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Z)));
-   end;
-
-   glMatrixMode(GL_PROJECTION);
-   glPopMatrix;
-   glMatrixMode(GL_MODELVIEW);
+               // Reset animation variables.
+               AnimFrameCounter := 0;
+               AnimFrameMax := 0;
+            end;
+         end;
+         glMatrixMode(GL_PROJECTION);
+      glPopMatrix;
+      glMatrixMode(GL_MODELVIEW);
    glPopMatrix;
    glEnable(GL_DEPTH_TEST);
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
+end;
+
+// Borrowed from OS: Voxel Viewer 1.80+, coded by Stucuk.
+procedure TRenderEnvironment.DrawCacheTexture(Texture : Cardinal; X,Y : Single; Width,Height,AWidth,AHeight : Cardinal; XOff : Cardinal = 0; YOff : Cardinal = 0; XOffWidth : Cardinal = Cardinal(-1); YOffHeight : Cardinal = Cardinal(-1));
+var
+   TexCoordX,
+   TexCoordY,
+   TexCoordOffX,
+   TexCoordOffY : Single;
+begin
+   if XOffWidth = Cardinal(-1) then
+      XOffWidth    := Width;
+   if YOffHeight = Cardinal(-1) then
+      YOffHeight   := Height;
+   TexCoordX    := XOffWidth/AWidth;
+   TexCoordY    := YOffHeight/AHeight;
+   TexCoordOffX := XOff/AWidth;
+   TexCoordOffY := YOff/AHeight;
+   glBindTexture(GL_TEXTURE_2D, Texture);
+   glBegin(GL_QUADS);
+      //1
+      glTexCoord2f(TexCoordOffX, TexCoordOffY);
+      glVertex2f(X, Y);
+      //2
+      glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY);
+      glVertex2f(X+Width, Y);
+      //3
+      glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY+TexCoordY);
+      glVertex2f(X+Width, Y+Height);
+      //4
+      glTexCoord2f(TexCoordOffX, TexCoordOffY+TexCoordY);
+      glVertex2f(X, Y+Height);
+   glEnd;
 end;
 
 procedure TRenderEnvironment.Resize(_width, _height: longword);
@@ -258,7 +382,35 @@ begin
    glLoadIdentity();                   // Reset View
    gluPerspective(45.0, Width/Height, 1.0, 500.0);  // Do the perspective calculations. Last value = max clipping depth
    glMatrixMode(GL_MODELVIEW);         // Return to the modelview matrix
+   FUpdateWorld := true;
 end;
+
+procedure TRenderEnvironment.RenderNormals;
+var
+   Actor : PActor;
+begin
+   Actor := ActorList;
+   while Actor <> nil do
+   begin
+      Actor^.SetNormalsModeRendering;
+      Actor := Actor^.Next;
+   end;
+   FUpdateWorld := true;
+end;
+
+procedure TRenderEnvironment.RenderColours;
+var
+   Actor : PActor;
+begin
+   Actor := ActorList;
+   while Actor <> nil do
+   begin
+      Actor^.SetColourModeRendering;
+      Actor := Actor^.Next;
+   end;
+   FUpdateWorld := true;
+end;
+
 
 
 // Adds
@@ -281,6 +433,7 @@ begin
    end;
    CurrentCamera := NewCamera;
    Result := NewCamera;
+   FUpdateWorld := true;
 end;
 
 function TRenderEnvironment.AddActor: PActor;
@@ -302,6 +455,7 @@ begin
    end;
    CurrentActor := NewActor;
    Result := NewActor;
+   FUpdateWorld := true;
 end;
 
 
@@ -340,6 +494,7 @@ begin
       // Now we dispose the camera.
       _Camera^.Free;
       _Camera := nil;
+      FUpdateWorld := true;
    end;
 end;
 
@@ -373,6 +528,7 @@ begin
       // Now we dispose the actor.
       _Actor^.Free;
       _Actor := nil;
+      FUpdateWorld := true;
    end;
 end;
 
@@ -403,6 +559,299 @@ begin
   glCallLists(length(_Text), GL_UNSIGNED_BYTE, _Text);	// Draws The Display List Text
   glPopAttrib();								// Pops The Display List Bits
 end;
+
+// Screenshot related
+procedure TRenderEnvironment.MakeMeAScreenshotName(var Filename: string; Ext : string);
+var
+   i: integer;
+   t, FN, FN2 : string;
+   SSDir : string;
+begin
+   // create the screenshots directory if it doesn't exist
+   SSDir := extractfiledir(Paramstr(0))+'\ScreenShots\';
+   FN2 := extractfilename(Filename);
+   FN2 := copy(FN2,1,length(FN2)-length(Extractfileext(FN2)));
+
+ // sys_mkdir
+   {$I-}
+   CreateDir(SSDir);
+//  MkDir(SSDir);
+   {$I+}
+   FN := SSDir+FN2;
+
+   for i := 0 to 999 do
+   begin
+      t := inttostr(i);
+      if length(t) < 3 then
+         t := '00'+t
+      else if length(t) < 2 then
+         t := '0'+t;
+      if not fileexists(FN+'_'+t+Ext) then
+      begin
+         Filename := FN+'_'+t+Ext;
+         break;
+      end;
+   end;
+end;
+
+// Borrowed and adapted from Stucuk's code from OS: Voxel Viewer 1.80+ without AllWhite.
+function TRenderEnvironment.GetScreenShot : TBitmap;
+var
+   RGBBits  : PRGBQuad;
+   Pixel    : PRGBQuad;
+   BMP     : TBitmap;
+   x,y      : Integer;
+   Pow2Width, Pow2Height, maxx, maxy : cardinal;
+begin
+   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D,ScreenTexture);
+   Pow2Width := GetPow2Size(Width);
+   Pow2Height:= GetPow2Size(Height);
+
+   GetMem(RGBBits, Pow2Width * Pow2Height * 4);
+   glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE, RGBBits);
+
+   glDisable(GL_TEXTURE_2D);
+
+   BMP := TBitmap.Create;
+   BMP.PixelFormat := pf32Bit;
+   BMP.Width       := Pow2Width;
+   BMP.Height      := Pow2Height;
+
+   Pixel := RGBBits;
+   maxy := Pow2Height-1;
+   maxx := Pow2Width-1;
+
+   for y := 0 to maxy do
+      for x := 0 to maxx do
+      begin
+         Bmp.Canvas.Pixels[x,maxy-y] := RGB(Pixel.rgbBlue,Pixel.rgbGreen,Pixel.rgbRed);
+         inc(Pixel);
+      end;
+
+   FreeMem(RGBBits);
+
+   Result := TBitmap.Create;
+   Result.Width := Width;
+   Result.Height := Height;
+
+   Result.Canvas.Draw(0,-(Pow2Height-Height),BMP);
+   BMP.Free;
+end;
+
+procedure TRenderEnvironment.ScreenShotJPG(const _Filename : string; _Compression : integer);
+var
+   Filename : string;
+   JPEGImage: TJPEGImage;
+   Bitmap : TBitmap;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.jpg');
+
+   if Filename = '' then
+      exit;
+
+   Bitmap := GetScreenShot;
+   JPEGImage := TJPEGImage.Create;
+   JPEGImage.Assign(Bitmap);
+   JPEGImage.CompressionQuality := _Compression;
+   JPEGImage.SaveToFile(Filename);
+   Bitmap.Free;
+   JPEGImage.Free;
+end;
+
+procedure TRenderEnvironment.ScreenShotPNG(const _Filename : string);
+var
+  Filename : string;
+  PNGImage: TPNGObject;
+  Bitmap : TBitmap;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.png');
+
+   if Filename = '' then
+      exit;
+
+  Bitmap := GetScreenShot;
+  PNGImage := TPNGObject.Create;
+  PNGImage.Assign(Bitmap);
+  PNGImage.SaveToFile(Filename);
+  Bitmap.Free;
+  PNGImage.Free;
+end;
+
+procedure TRenderEnvironment.ScreenShotTGA(const _Filename : string);
+var
+   Filename : string;
+   buffer: array of byte;
+   i, c, temp: integer;
+   f: file;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.tga');
+
+   if Filename = '' then
+      exit;
+
+   try
+      SetLength(buffer, (Width * Height * 4) + 18);
+      begin
+         for i := 0 to 17 do
+            buffer[i] := 0;
+         buffer[2] := 2; //uncompressed type
+         buffer[12] := Width and $ff;
+         buffer[13] := Width shr 8;
+         buffer[14] := Height and $ff;
+         buffer[15] := Height shr 8;
+         buffer[16] := 24; //pixel size
+
+         glReadPixels(0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, Pointer(Cardinal(buffer) + 18));
+
+         AssignFile(f, Filename);
+         Rewrite(f, 1);
+
+         for i := 0 to 17 do
+            BlockWrite(f, buffer[i], sizeof(byte) , temp);
+
+         c := 18;
+         for i := 0 to (Width * Height)-1 do
+         begin
+            BlockWrite(f, buffer[c+2], sizeof(byte) , temp);
+            BlockWrite(f, buffer[c+1], sizeof(byte) , temp);
+            BlockWrite(f, buffer[c], sizeof(byte) , temp);
+            inc(c,4);
+         end;
+         closefile(f);
+      end;
+   finally
+      finalize(buffer);
+   end;
+end;
+
+procedure TRenderEnvironment.ScreenShotBMP(const _Filename : string);
+var
+   Filename : string;
+   Bitmap : TBitmap;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.bmp');
+
+   if Filename = '' then
+      exit;
+
+  Bitmap := GetScreenShot;
+  Bitmap.SaveToFile(Filename);
+  Bitmap.Free;
+end;
+
+procedure TRenderEnvironment.ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
+var
+   Filename : string;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.gif');
+
+   if Filename = '' then
+      exit;
+
+   _GIFImage.SaveToFile(Filename);
+   _GIFImage.Free;
+end;
+
+procedure TRenderEnvironment.TakeScreenshot(const _Filename: string; _type: TScreenshotType; _Compression: integer = 0);
+begin
+   ScreenFilename:= CopyString(_Filename);
+   ScreenshotCompression := 100-_Compression;
+   AnimFrameMax := 1;
+   AnimFrameTime := 10;
+   StartAnimation;
+end;
+
+procedure TRenderEnvironment.TakeAnimation(const _Filename: string; _NumFrames, _FrameDelay: integer; _type: TScreenshotType);
+begin
+   ScreenFilename:= CopyString(_Filename);
+   AnimFrameMax := _NumFrames;
+   AnimFrameTime := _FrameDelay;
+   StartAnimation;
+end;
+
+procedure TRenderEnvironment.Take360Animation(const _Filename: string; _NumFrames, _FrameDelay: integer; _type: TScreenshotType);
+begin
+   ScreenFilename:= CopyString(_Filename);
+   AnimFrameMax := _NumFrames;
+   AnimFrameTime := _FrameDelay;
+   CurrentCamera^.SetRotationSpeed((_NumFrames / 360.0),0,0);
+   StartAnimation;
+end;
+
+procedure TRenderEnvironment.StartAnimation;
+begin
+   AnimFrameCounter := 0;
+   if ScreenType = stGif then
+   begin
+      GifAnimateBegin;
+   end;
+end;
+
+procedure TRenderEnvironment.AddFrame;
+begin
+   case ScreenType of
+      stBmp:
+      begin
+         ScreenShotBMP(ScreenFilename);
+      end;
+      stTga:
+      begin
+         ScreenShotTGA(ScreenFilename);
+      end;
+      stJpg:
+      begin
+         ScreenShotJPG(ScreenFilename,ScreenshotCompression);
+      end;
+      stGif:
+      begin
+         GifAnimateAddImage(GetScreenShot, False, AnimFrameTime);
+      end;
+      stPng:
+      begin
+         ScreenShotPNG(ScreenFilename);
+      end;
+   end;
+end;
+
+procedure TRenderEnvironment.FinishAnimation;
+begin
+   case ScreenType of
+      stBmp:
+      begin
+         ScreenShotBMP(ScreenFilename);
+      end;
+      stTga:
+      begin
+         ScreenShotTGA(ScreenFilename);
+      end;
+      stJpg:
+      begin
+         ScreenShotJPG(ScreenFilename,ScreenshotCompression);
+      end;
+      stGif:
+      begin
+         ScreenShotGIF(GifAnimateEndGif, ScreenFilename);
+      end;
+      stPng:
+      begin
+         ScreenShotPNG(ScreenFilename);
+      end;
+   end;
+   AnimFrameMax := 0;
+   ScreenType := stNone;
+end;
+
 
 
 
