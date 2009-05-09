@@ -178,6 +178,7 @@ begin
    begin
       OpenVoxel;
    end;
+   IsVisible := true;
 end;
 
 // I/O
@@ -236,7 +237,7 @@ begin
    end
    else if VoxelSection <> nil then
    begin
-      LOD[i].Mesh[j].RebuildVoxel(VoxelSection^,Palette^,HighQuality);
+      LOD[i].Mesh[0].RebuildVoxel(VoxelSection^,Palette^,HighQuality);
    end
    else
    begin
@@ -263,14 +264,12 @@ end;
 
 // Rendering methods
 procedure TModel.Render(var _Polycount: longword);
-var
-   i : integer;
 begin
    if IsVisible and Opened and (HVA <> nil) then
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         LOD[i].Render(_PolyCount,HVA);
+         LOD[CurrentLOD].Render(_PolyCount,HVA);
       end;
    end;
 end;

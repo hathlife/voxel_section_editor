@@ -3,7 +3,7 @@ unit Mesh;
 interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
-      BasicDataTypes, BasicFunctions, Palette, VoxelMap;
+      BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils;
 
 type
    TRenderProc = procedure of object;
@@ -140,6 +140,7 @@ end;
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
 begin
    Clear;
+   ColoursType := C_COLOURS_PER_FACE;
    ID := _ID;
    TransparencyLevel := 0;
    if _HighQuality then
@@ -203,7 +204,7 @@ var
 begin
    VerticesPerFace := 4;
    FaceType := GL_QUADS;
-   SetColoursAndNormalsType(C_COLOURS_PER_FACE,C_NORMALS_PER_FACE);
+   SetNormalsType(C_NORMALS_PER_FACE);
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
 
@@ -325,7 +326,7 @@ begin
                if (VertexMap[x,y,z] <> -1) and (VertexMap[x+1,y,z] <> -1) and (VertexMap[x,y,z+1] <> -1) and (VertexMap[x+1,y,z+1] <> -1) then
                begin
                   // 2. Is there any chance of the user look at this face?
-                  // To know it, we need to check if the pixels (x and x-1) that
+                  // To know it, we need to check if the pixels (y and y-1) that
                   // this face splits are actually used.
                   v1 := false;
                   if _Voxel.GetVoxelSafe(x,y,z,v) then
@@ -360,7 +361,7 @@ begin
                   if (v1 xor v2) then
                   begin
                      // Then, we add the Face
-                     FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] := NumFaces;
+                     FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] := NumFaces;
                      inc(NumFaces);
                   end;
                end;
@@ -379,20 +380,27 @@ begin
          begin
             if FaceMap[x,y,z,C_VOXEL_FACE_SIDE] <> -1 then
             begin
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y+1,z+1];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
                // Now that we have the vertices, we can grab voxel data (v).
                if _Voxel.GetVoxelSafe(x,y,z,v) then
                begin
                   if not v.Used then
                   begin
-                     _Voxel.GetVoxel(x-1,y,z,v);
+                     _Voxel.GetVoxelSafe(x-1,y,z,v);
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y+1,z+1];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
+                  end
+                  else
+                  begin
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y+1,z+1];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y,z+1];
                   end;
                end
                else
-                  _Voxel.GetVoxel(x-1,y,z,v);
+                  _Voxel.GetVoxelSafe(x-1,y,z,v);
                // Normals
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := _Voxel.Normals[v.Normal].X;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].Y := _Voxel.Normals[v.Normal].Y;
@@ -402,20 +410,27 @@ begin
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] <> -1 then
             begin
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace)] := VertexMap[x+1,y,z+1];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 1] := VertexMap[x+1,y,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 2] := VertexMap[x,y,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
                // Now that we have the vertices, we can grab voxel data (v).
                if _Voxel.GetVoxelSafe(x,y,z,v) then
                begin
                   if not v.Used then
                   begin
-                     _Voxel.GetVoxel(x,y-1,z,v);
+                     _Voxel.GetVoxelSafe(x,y-1,z,v);
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 3] := VertexMap[x+1,y,z+1];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 2] := VertexMap[x+1,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 1] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace)] := VertexMap[x,y,z+1];
+                  end
+                  else
+                  begin
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace)] := VertexMap[x+1,y,z+1];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 1] := VertexMap[x+1,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 2] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
                   end;
                end
                else
-                  _Voxel.GetVoxel(x,y-1,z,v);
+                  _Voxel.GetVoxelSafe(x,y-1,z,v);
                // Normals
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := _Voxel.Normals[v.Normal].X;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].Y := _Voxel.Normals[v.Normal].Y;
@@ -425,20 +440,27 @@ begin
             end;
             if FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] <> -1 then
             begin
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace)] := VertexMap[x+1,y+1,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 2] := VertexMap[x,y,z];
-               Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 3] := VertexMap[x+1,y,z];
                // Now that we have the vertices, we can grab voxel data (v).
                if _Voxel.GetVoxelSafe(x,y,z,v) then
                begin
                   if not v.Used then
                   begin
-                     _Voxel.GetVoxel(x,y,z-1,v);
+                     _Voxel.GetVoxelSafe(x,y,z-1,v);
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 3] := VertexMap[x+1,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 2] := VertexMap[x,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 1] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace)] := VertexMap[x+1,y,z];
+                  end
+                  else
+                  begin
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace)] := VertexMap[x+1,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 2] := VertexMap[x,y,z];
+                     Faces[(FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] * VerticesPerFace) + 3] := VertexMap[x+1,y,z];
                   end;
                end
                else
-                  _Voxel.GetVoxel(x,y,z-1,v);
+                  _Voxel.GetVoxelSafe(x,y,z-1,v);
                // Normals
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := _Voxel.Normals[v.Normal].X;
                FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].Y := _Voxel.Normals[v.Normal].Y;
@@ -467,6 +489,7 @@ begin
    NormalsType := C_NORMALS_PER_FACE;
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
+   // Voxel modelizing code goes here --->
    CommonVoxelLoadingActions(_Voxel);
 end;
 
@@ -581,10 +604,7 @@ begin
       begin
          List := glGenLists(1);
          glNewList(List, GL_COMPILE);
-         glPushMatrix;
-            glLoadIdentity;
-            RenderingProcedure();
-         glPopMatrix;
+         RenderingProcedure();
          glEndList;
       end;
       // Move accordingly to the bounding box position.
@@ -595,12 +615,13 @@ end;
 
 procedure TMesh.RenderWithoutNormalsAndColours;
 var
-   i,f,v : longword;
+   i,f,v,maxFaces : longword;
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
    glNormal3f(0,0,0);
-   for i := Low(Faces) to High(Faces) do
+   maxFaces := (High(Faces)+1) div VerticesPerFace;
+   while i < MaxFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -611,16 +632,18 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndNoColours;
 var
-   i,f,v : longword;
+   i,f,v,maxFaces : longword;
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
-   for i := Low(Faces) to High(Faces) do
+   maxFaces := (High(Faces)+1) div VerticesPerFace;
+   while i < MaxFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -632,6 +655,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
@@ -641,7 +665,7 @@ var
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
-   for i := Low(Faces) to High(Faces) do
+   for i := Low(FaceNormals) to High(FaceNormals) do
    begin
       glBegin(FaceType);
          v := 0;
@@ -658,11 +682,12 @@ end;
 
 procedure TMesh.RenderWithoutNormalsAndWithColoursPerVertex;
 var
-   i,f,v : longword;
+   i,f,v,maxFaces : longword;
 begin
    f := 0;
    glNormal3f(0,0,0);
-   for i := Low(Faces) to High(Faces) do
+   maxFaces := (High(Faces)+1) div VerticesPerFace;
+   while i < maxFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -674,15 +699,17 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndColours;
 var
-   i,f,v : longword;
+   i,f,v,maxFaces : longword;
 begin
    f := 0;
-   for i := Low(Faces) to High(Faces) do
+   maxFaces := (High(Faces)+1) div VerticesPerFace;
+   while i < maxFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -695,6 +722,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
@@ -703,7 +731,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(Faces) to High(Faces) do
+   for i := Low(FaceNormals) to High(FaceNormals) do
    begin
       glBegin(FaceType);
          v := 0;
@@ -725,7 +753,7 @@ var
 begin
    f := 0;
    glNormal3f(0,0,0);
-   for i := Low(Faces) to High(Faces) do
+   for i := Low(Colours) to High(Colours) do
    begin
       glBegin(FaceType);
          v := 0;
@@ -745,7 +773,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(Faces) to High(Faces) do
+   for i := Low(Colours) to High(Colours) do
    begin
       glBegin(FaceType);
          v := 0;
@@ -766,7 +794,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(Faces) to High(Faces) do
+   for i := Low(FaceNormals) to High(FaceNormals) do
    begin
       glBegin(FaceType);
          v := 0;

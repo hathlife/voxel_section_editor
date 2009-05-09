@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.06';
+   APPLICATION_VER = '1.39.10';
 
 type
   TFrmMain = class(TForm)
@@ -635,7 +635,6 @@ begin
 
    if IsEditable then
    begin
-
       if p_Frm3DPreview <> nil then
       begin
          p_Frm3DPreview^.SpFrame.MaxValue := 1;
@@ -719,7 +718,8 @@ begin
 
    // 1.4x New Render starts here.
    Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
-   Actor := nil;
+   Actor := Env.AddActor;
+   Camera := Env.CurrentCamera^;
 
    // OpenGL initialisieren
 //   InitOpenGL;
@@ -1036,10 +1036,9 @@ begin
    RepaintViews;
    if Actor <> nil then
       Actor^.RebuildActor;
-   //Update3dView(Document.ActiveSection^);
    if p_Frm3DPreview <> nil then
    begin
-      p_Frm3DPreview^.Update3dView(Document.ActiveVoxel^,Document.ActiveSection^);
+      p_Frm3DPreview^.Actor.RebuildActor;
    end;
 end;
 
@@ -1067,7 +1066,9 @@ begin
 
    CurrentSection := SectionCombo.ItemIndex;
    ChangeSection;
-
+   if High(Actor^.Models) >= 0 then
+      Actor^.Clear;
+   Actor^.Add(Document.ActiveSection,Document.Palette,false);
    ResetUndoRedo;
    UpdateUndo_RedoState;
 
@@ -1133,9 +1134,23 @@ begin
    Colours1.checked := false;
 
    if SP = ModeNormals then
-      Normals1.checked := true
+   begin
+      Normals1.checked := true;
+      Env.RenderNormals;
+      if p_Frm3DPreview <> nil then
+      begin
+         p_Frm3DPreview^.Env.RenderNormals;
+      end;
+   end
    else
+   begin
       Colours1.checked := true;
+      Env.RenderColours;
+      if p_Frm3DPreview <> nil then
+      begin
+         p_Frm3DPreview^.Env.RenderColours;
+      end;
+   end;
 
    SpectrumMode := SP;
    SetSpectrumMode;
@@ -1145,14 +1160,6 @@ begin
    Document.ActiveSection^.View[2].Refresh;
 
    PaintPalette(cnvPalette,True);
-
-   //RebuildLists := true;
-   if Actor <> nil then
-      Actor^.RebuildActor;
-   if p_Frm3DPreview <> nil then
-   begin
-      p_Frm3DPreview^.RebuildLists := true;
-   end;
 
    if not IsVXLLoading then
       RepaintViews;
@@ -1465,14 +1472,13 @@ begin
    {$endif}
    if MouseButton = 1 then
    begin
-      xRot := xRot + (Y - Ycoord)/2;  // moving up and down = rot around X-axis
-      yRot := yRot + (X - Xcoord)/2;
+      Camera.SetRotation(Camera.Rotation.X + (Y - Ycoord)/2,Camera.Rotation.Y,Camera.Rotation.Z + (X - Xcoord)/2);
       Xcoord := X;
       Ycoord := Y;
    end;
    if MouseButton = 2 then
    begin
-      Depth :=Depth - (Y-ZCoord)/3;
+      Camera.SetPosition(Camera.Position.X,Camera.Position.Y,Camera.Position.Z - (Y-ZCoord)/3);
       Zcoord := Y;
    end;
 end;
@@ -1534,33 +1540,34 @@ begin
    end;
 
    if btn3DRotateX2.Down then
-      XRot2 := -V
+      Camera.SetRotationSpeed(-V,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z)
    else if btn3DRotateX.Down then
-      XRot2 := V;
+      Camera.SetRotationSpeed(V,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 
    if btn3DRotateY2.Down then
-      YRot2 := -V
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,-V)
    else if btn3DRotateY.Down then
-      YRot2 := V;
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,V);
 end;
 
 procedure TFrmMain.SpeedButton2Click(Sender: TObject);
 begin
-   Depth := -30;
+   Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-30);
 end;
 
 procedure TFrmMain.btn3DRotateXClick(Sender: TObject);
 begin
    if btn3DRotateX.Down then
-begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: Btn3DRotateXClick');
-   {$endif}
-   SetRotationAdders;
-   XRotB := True;
-end
-else
-   XRotB := false;
+   begin
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: Btn3DRotateXClick');
+      {$endif}
+      SetRotationAdders;
+   end
+   else
+   begin
+      Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
+   end;
 end;
 
 procedure TFrmMain.btn3DRotateX2Click(Sender: TObject);
@@ -1571,10 +1578,9 @@ begin
    if btn3DRotateX2.Down then
    begin
       SetRotationAdders;
-      XRotB := True;
    end
    else
-      XRotB := false;
+      Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrmMain.btn3DRotateY2Click(Sender: TObject);
@@ -1585,10 +1591,9 @@ begin
    if btn3DRotateY2.Down then
    begin
       SetRotationAdders;
-      YRotB := True;
    end
    else
-      YRotB := false;
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
 procedure TFrmMain.btn3DRotateYClick(Sender: TObject);
@@ -1599,10 +1604,9 @@ begin
    if btn3DRotateY.Down then
    begin
       SetRotationAdders;
-      YRotB := True;
    end
    else
-      YRotB := false;
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
 procedure TFrmMain.spin3DjmpChange(Sender: TObject);
@@ -1615,16 +1619,16 @@ end;
 
 procedure TFrmMain.BackgroundColour1Click(Sender: TObject);
 begin
-   ColorDialog.Color := TVector3fToTColor(BGColor);
+   ColorDialog.Color := TVector3fToTColor(Env.BackgroundColour);
    if ColorDialog.Execute then
-      BGColor := TColorToTVector3f(ColorDialog.Color);
+      Env.BackgroundColour := TColorToTVector3f(ColorDialog.Color);
 end;
 
 procedure TFrmMain.extColour1Click(Sender: TObject);
 begin
-   ColorDialog.Color := TVector3fToTColor(FontColor);
+   ColorDialog.Color := TVector3fToTColor(Env.FontColour);
    if ColorDialog.Execute then
-      FontColor := TColorToTVector3f(ColorDialog.Color);
+      Env.FontColour := TColorToTVector3f(ColorDialog.Color);
 end;
 
 procedure TFrmMain.ClearRemapClicks;
@@ -1647,7 +1651,7 @@ begin
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
 end;
 
 procedure TFrmMain.Blue1Click(Sender: TObject);
@@ -1657,7 +1661,7 @@ begin
    RemapColour.X := RemapColourMap[1].R /255;
    RemapColour.Y := RemapColourMap[1].G /255;
    RemapColour.Z := RemapColourMap[1].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
 end;
 
 procedure TFrmMain.Green1Click(Sender: TObject);
@@ -1667,7 +1671,7 @@ begin
    RemapColour.X := RemapColourMap[2].R /255;
    RemapColour.Y := RemapColourMap[2].G /255;
    RemapColour.Z := RemapColourMap[2].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
 end;
 
 procedure TFrmMain.White1Click(Sender: TObject);
@@ -1677,7 +1681,7 @@ begin
    RemapColour.X := RemapColourMap[3].R /255;
    RemapColour.Y := RemapColourMap[3].G /255;
    RemapColour.Z := RemapColourMap[3].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
 end;
 
 procedure TFrmMain.Orange1Click(Sender: TObject);
@@ -1687,7 +1691,7 @@ begin
    RemapColour.X := RemapColourMap[4].R /255;
    RemapColour.Y := RemapColourMap[4].G /255;
    RemapColour.Z := RemapColourMap[4].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
 end;
 
 procedure TFrmMain.Magenta1Click(Sender: TObject);
@@ -1697,7 +1701,7 @@ begin
    RemapColour.X := RemapColourMap[5].R /255;
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
 end;
 
 procedure TFrmMain.Purple1Click(Sender: TObject);
@@ -1707,7 +1711,7 @@ begin
    RemapColour.X := RemapColourMap[6].R /255;
    RemapColour.Y := RemapColourMap[6].G /255;
    RemapColour.Z := RemapColourMap[6].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
 end;
 
 procedure TFrmMain.Gold1Click(Sender: TObject);
@@ -1717,7 +1721,7 @@ begin
    RemapColour.X := RemapColourMap[7].R /255;
    RemapColour.Y := RemapColourMap[7].G /255;
    RemapColour.Z := RemapColourMap[7].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
 end;
 
 procedure TFrmMain.DarkSky1Click(Sender: TObject);
@@ -1727,77 +1731,57 @@ begin
    RemapColour.X := RemapColourMap[8].R /255;
    RemapColour.Y := RemapColourMap[8].G /255;
    RemapColour.Z := RemapColourMap[8].B /255;
-   RebuildLists := true;
+   Actor^.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
 end;
 
 procedure TFrmMain.Front1Click(Sender: TObject);
 begin
-   XRot := -90;
-   YRot := -90;
-//Depth := -30;
+   Camera.SetRotation(-90,0,-90);
 end;
 
 procedure TFrmMain.Back1Click(Sender: TObject);
 begin
-   XRot := -90;
-   YRot := 90;
-//Depth := -30;
+   Camera.SetRotation(-90,0,90);
 end;
 
 procedure TFrmMain.LEft1Click(Sender: TObject);
 begin
-   XRot := -90;
-   YRot := -180;
-//Depth := -30;
+   Camera.SetRotation(-90,0,-180);
 end;
 
 procedure TFrmMain.Right1Click(Sender: TObject);
 begin
-   XRot := -90;
-   YRot := 0;
-//Depth := -30;
+   Camera.SetRotation(-90,0,0);
 end;
 
 procedure TFrmMain.Bottom1Click(Sender: TObject);
 begin
-   XRot := 180;
-   YRot := 180;
-//Depth := -30;
+   Camera.SetRotation(180,0,180);
 end;
 
 procedure TFrmMain.op1Click(Sender: TObject);
 begin
-   XRot := 0;
-   YRot := 180;
-//Depth := -30;
+   Camera.SetRotation(0,0,180);
 end;
 
 procedure TFrmMain.Cameo1Click(Sender: TObject);
 begin
-   XRot := 287;//-72.5;
-   YRot := 225;//237;
-//Depth := -30;
+   Camera.SetRotation(287,0,225);
 end;
 
 procedure TFrmMain.Cameo21Click(Sender: TObject);
 begin
-   XRot := 287;//-72.5;
-   YRot := 315;//302;
-//Depth := -30;
+   Camera.SetRotation(287,0,315);
 end;
 
 procedure TFrmMain.Cameo31Click(Sender: TObject);
 begin
-   XRot := 287;//-72.5;
-   YRot := 255;//302;
-//Depth := -30;
+   Camera.SetRotation(287,0,255);
 end;
 
 procedure TFrmMain.Cameo41Click(Sender: TObject);
 begin
-   XRot := 287;//-72.5;
-   YRot := 285;//302;
-//Depth := -30;
+   Camera.SetRotation(287,0,285);
 end;
 
 procedure TFrmMain.CnvView2MouseUp(Sender: TObject; Button: TMouseButton;
@@ -2480,12 +2464,20 @@ begin
    UpdateUndo_RedoState;
    SelectCorrectPalette;
    PaintPalette(cnvPalette,True);
-   if Actor <> nil then
-      Env.RemoveActor(Actor);
-   Actor := Env.AddActor;
-   Actor^.Add(Document.ActiveSection,Document.Palette,false); 
+   if High(Actor^.Models) >= 0 then
+   begin
+      Actor^.Clear;
+   end;
+   Actor^.Add(Document.ActiveSection,Document.Palette,false);
    if p_Frm3DPreview <> nil then
    begin
+      if High(p_Frm3DPreview^.Actor.Models) >= 0 then
+      begin
+         p_Frm3DPreview^.Actor.Clear;
+      end;
+      p_Frm3DPreview^.Actor.Add(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,false);
+      p_Frm3DPreview^.CurrentSectionOnly1Click(nil);
+
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
    end;

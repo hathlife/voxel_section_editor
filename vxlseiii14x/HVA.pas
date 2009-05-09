@@ -306,7 +306,10 @@ begin
       Exit;
    end;
 
-   Scale := p_Voxel^.Section[_Section].Tailer.Det;
+   if p_Voxel <> nil then
+      Scale := p_Voxel^.Section[_Section].Tailer.Det
+   else
+      Scale := 1/12;
 
    if Header.N_Sections > 0 then
    begin

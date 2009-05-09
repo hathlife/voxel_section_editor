@@ -12,11 +12,11 @@ type
    TLOD = class
    private
       // Rendering Methods
-      procedure RenderMesh(i :integer; var _PolyCount: longword; const _HVA: PHVA);
+      procedure RenderMesh(_i :integer; var _PolyCount: longword; const _HVA: PHVA);
    public
+      InitialMesh : integer;
       Name : string;
       Mesh : array of TMesh;
-      InitialMesh : integer;
       // Constructors and Destructors
       constructor Create; overload;
       constructor Create(const _LOD: TLOD); overload;
@@ -83,23 +83,20 @@ end;
 
 // Rendering Methods
 procedure TLOD.Render(var _PolyCount: longword; const _HVA: PHVA);
-var
-   i : integer;
 begin
-   i := InitialMesh;
-   RenderMesh(i,_PolyCount,_HVA);
+   RenderMesh(InitialMesh,_PolyCount,_HVA);
 end;
 
-procedure TLOD.RenderMesh(i :integer; var _PolyCount: longword; const _HVA: PHVA);
+procedure TLOD.RenderMesh(_i :integer; var _PolyCount: longword; const _HVA: PHVA);
 begin
-   if i <> -1 then
+   if _i <> -1 then
    begin
       glPushMatrix();
-         _HVA^.ApplyMatrix(Mesh[i].Scale,i);
-         RenderMesh(Mesh[i].Son,_PolyCount,_HVA);
-         Mesh[i].Render(_PolyCount);
+         _HVA^.ApplyMatrix(Mesh[_i].Scale,_i);
+         RenderMesh(Mesh[_i].Son,_PolyCount,_HVA);
+         Mesh[_i].Render(_PolyCount);
       glPopMatrix();
-      RenderMesh(Mesh[i].Next,_PolyCount,_HVA);
+      RenderMesh(Mesh[_i].Next,_PolyCount,_HVA);
    end;
 end;
 

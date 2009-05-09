@@ -17,7 +17,7 @@ type
          // Screenshot
          procedure MakeMeAScreenshotName(var Filename: string; Ext : string);
          procedure ScreenshotJPG(const _Filename: string; _Compression: integer);
-         procedure ScreenShotPNG(const _Filename : string);
+         procedure ScreenShotPNG(const _Filename : string; _Compression: integer);
          procedure ScreenShotTGA(const _Filename : string);
          procedure ScreenShotBMP(const _Filename : string);
          procedure ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
@@ -56,6 +56,10 @@ type
          AnimFrameCounter: integer;
          AnimFrameMax : integer;
          AnimFrameTime: integer; // in centiseconds.
+         NonScreenCamera : PCamera;
+         // Ambient Lighting
+         LightAmb : TVector3f;
+         LightDif: TVector3f;
          // Constructors;
          constructor Create(_Handle : THandle; _width, _height : longword);
          destructor Destroy; override;
@@ -134,6 +138,10 @@ begin
    ShowSpeed := true;
    ShowPolyCount := true;
    ShowRotations := false;
+   // Lighting settings
+   LightAmb := SetVector(1,1,1);
+   LightDif := SetVector(1,1,1);
+
    // The render is ready to work.
    IsEnabled := true;
    FUpdateWorld := true;
@@ -221,25 +229,25 @@ begin
    while Actor <> nil do
    begin
       Actor^.ProcessNextFrame;
-      Actor := Actor^.Next;
       FUpdateWorld := FUpdateWorld or Actor^.GetRequestUpdateWorld;
+      Actor := Actor^.Next;
    end;
 
+   // Enable Lighting.
+   glEnable(GL_TEXTURE_2D);
+   glEnable(GL_LIGHT0);
+   glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_COLOR_MATERIAL);
    if FUpdateWorld then
    begin
-      // Enable Lighting.
-      glEnable(GL_LIGHT0);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_COLOR_MATERIAL);
-      glEnable(GL_TEXTURE_2D);
-
-      glPushMatrix;
-         CurrentCamera^.RotateCamera;
-
-      glPopMatrix;
-         CurrentCamera^.MoveCamera;
+      FUpdateWorld := false;
+      CurrentCamera^.MoveCamera;
+      CurrentCamera^.RotateCamera;
 
       // Render all models.
+      PolyCount := 0;
       Actor := ActorList;
       while Actor <> nil do
       begin
@@ -247,23 +255,24 @@ begin
          Actor := Actor^.Next;
       end;
 
+      glDisable(GL_LIGHT0);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_COLOR_MATERIAL);
+      glColor3f(1,1,1);
       // Here we cache the existing scene in a texture.
       if ScreenTexture <> 0 then
          glDeleteTextures(1,@ScreenTexture);
       glGenTextures(1, @ScreenTexture);
       glBindTexture(GL_TEXTURE_2D, ScreenTexture);
-
-      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, GetPow2Size(Width),GetPow2Size(Height), 0);
-
+      glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, GetPow2Size(Width),GetPow2Size(Height), 0);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
       glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
       // End of texture caching.
-      glDisable(GL_TEXTURE_2D);
    end;
-   // Final rendering part.
    glLoadIdentity;
+   // Final rendering part.
+   glDisable(GL_CULL_FACE);
    glDisable(GL_DEPTH_TEST);
    glMatrixMode(GL_PROJECTION);
    glPushMatrix;
@@ -273,19 +282,15 @@ begin
       glPushMatrix;
          glLoadIdentity;
          // Draw texture caching.
-         glEnable(GL_TEXTURE_2D);
          glColor3f(1,1,1);
+         glNormal3f(0,0,0);
          DrawCacheTexture(ScreenTexture,0,0,Width,Height,GetPow2Size(Width),GetPow2Size(Height));
          glDisable(GL_TEXTURE_2D);
          // End of draw texture caching.
-         glDisable(GL_LIGHT0);
-         glDisable(GL_LIGHTING);
-         glDisable(GL_COLOR_MATERIAL);
-
-         glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
          // Are we screenshoting?
          if AnimFrameMax = 0 then
          begin
+            glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
             // No, we are not screenshoting, so show normal stats.
             glRasterPos2i(1, 2);
             glPrint(PChar('Polygons Used: ' + IntToStr(PolyCount)));
@@ -333,6 +338,7 @@ begin
       glMatrixMode(GL_MODELVIEW);
    glPopMatrix;
    glEnable(GL_DEPTH_TEST);
+   GlEnable(GL_CULL_FACE);
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
@@ -661,7 +667,7 @@ begin
    JPEGImage.Free;
 end;
 
-procedure TRenderEnvironment.ScreenShotPNG(const _Filename : string);
+procedure TRenderEnvironment.ScreenShotPNG(const _Filename : string; _Compression: integer);
 var
   Filename : string;
   PNGImage: TPNGObject;
@@ -677,6 +683,7 @@ begin
   Bitmap := GetScreenShot;
   PNGImage := TPNGObject.Create;
   PNGImage.Assign(Bitmap);
+  PNGImage.CompressionLevel := _Compression;
   PNGImage.SaveToFile(Filename);
   Bitmap.Free;
   PNGImage.Free;
@@ -769,6 +776,7 @@ begin
    ScreenshotCompression := 100-_Compression;
    AnimFrameMax := 1;
    AnimFrameTime := 10;
+   NonScreenCamera := CurrentCamera;
    StartAnimation;
 end;
 
@@ -777,6 +785,7 @@ begin
    ScreenFilename:= CopyString(_Filename);
    AnimFrameMax := _NumFrames;
    AnimFrameTime := _FrameDelay;
+   NonScreenCamera := CurrentCamera;
    StartAnimation;
 end;
 
@@ -785,7 +794,14 @@ begin
    ScreenFilename:= CopyString(_Filename);
    AnimFrameMax := _NumFrames;
    AnimFrameTime := _FrameDelay;
+   NonScreenCamera := CurrentCamera;
+   CurrentCamera := AddCamera;
+   CurrentCamera^.SetPosition(NonScreenCamera^.Position);
+   CurrentCamera^.SetPositionSpeed(0,0,0);
+   CurrentCamera^.SetPositionAcceleration(0,0,0);
+   CurrentCamera^.SetRotation(NonScreenCamera^.Rotation);
    CurrentCamera^.SetRotationSpeed((_NumFrames / 360.0),0,0);
+   CurrentCamera^.SetRotationAcceleration(0,0,0);
    StartAnimation;
 end;
 
@@ -819,7 +835,7 @@ begin
       end;
       stPng:
       begin
-         ScreenShotPNG(ScreenFilename);
+         ScreenShotPNG(ScreenFilename,ScreenshotCompression);
       end;
    end;
 end;
@@ -845,11 +861,16 @@ begin
       end;
       stPng:
       begin
-         ScreenShotPNG(ScreenFilename);
+         ScreenShotPNG(ScreenFilename,ScreenshotCompression);
       end;
    end;
    AnimFrameMax := 0;
    ScreenType := stNone;
+   if CurrentCamera <> NonScreenCamera then
+   begin
+      RemoveCamera(CurrentCamera);
+      CurrentCamera := NonScreenCamera;
+   end;
 end;
 
 

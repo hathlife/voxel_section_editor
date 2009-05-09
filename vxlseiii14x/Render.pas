@@ -111,7 +111,7 @@ begin
    CurrentEnv := Environment;
    while CurrentEnv <> nil do
    begin
-      CurrentEnv^.Next;
+      CurrentEnv^.Render;
       CurrentEnv := CurrentEnv^.Next;
    end;
 end;

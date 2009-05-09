@@ -160,6 +160,7 @@ begin
          Result := i;
          exit;
       end;
+      inc(i);
    end;
 end;
 
@@ -178,6 +179,7 @@ begin
          Result := i;
          exit;
       end;
+      inc(i);
    end;
 end;
 
@@ -199,6 +201,7 @@ begin
             exit;
          end;
       end;
+      inc(i);
    end;
 end;
 
@@ -220,6 +223,7 @@ begin
             exit;
          end;
       end;
+      inc(i);
    end;
 end;
 
@@ -241,6 +245,7 @@ begin
             exit;
          end;
       end;
+      inc(i);
    end;
 end;
 

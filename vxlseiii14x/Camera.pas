@@ -41,6 +41,10 @@ type
       procedure SetPositionSpeed(_Vector: TVector3f); overload;
       procedure SetRotationSpeed(_x, _y, _z: single); overload;
       procedure SetRotationSpeed(_Vector: TVector3f); overload;
+      procedure SetPositionAcceleration(_x, _y, _z: single); overload;
+      procedure SetPositionAcceleration(_Vector: TVector3f); overload;
+      procedure SetRotationAcceleration(_x, _y, _z: single); overload;
+      procedure SetRotationAcceleration(_Vector: TVector3f); overload;
    end;
 
 implementation
@@ -63,6 +67,7 @@ begin
    RotationSpeed := SetVector(0,0,0);
    PositionAcceleration := SetVector(0,0,0);
    RotationAcceleration := SetVector(0,0,0);
+   RequestUpdateWorld := true;
 end;
 
 procedure TCamera.RotateCamera;
@@ -118,7 +123,7 @@ begin
    // update request world update.
    if (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0)  then
       RequestUpdateWorld := true;
-   if (RotationSpeed.X = 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
+   if (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
       RequestUpdateWorld := true;
 end;
 
@@ -190,6 +195,38 @@ begin
    RotationSpeed.X := _Vector.X;
    RotationSpeed.Y := _Vector.Y;
    RotationSpeed.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetPositionAcceleration(_x, _y, _z: single);
+begin
+   PositionAcceleration.X := _x;
+   PositionAcceleration.Y := _y;
+   PositionAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetPositionAcceleration(_Vector: TVector3f);
+begin
+   PositionAcceleration.X := _Vector.X;
+   PositionAcceleration.Y := _Vector.Y;
+   PositionAcceleration.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotationAcceleration(_x, _y, _z: single);
+begin
+   RotationAcceleration.X := _x;
+   RotationAcceleration.Y := _y;
+   RotationAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TCamera.SetRotationAcceleration(_Vector: TVector3f);
+begin
+   RotationAcceleration.X := _Vector.X;
+   RotationAcceleration.Y := _Vector.Y;
+   RotationAcceleration.Z := _Vector.Z;
    RequestUpdateWorld := true;
 end;
 

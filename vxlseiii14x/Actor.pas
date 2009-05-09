@@ -3,7 +3,7 @@ unit Actor;
 interface
 
 uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette, Graphics;
+   Palette, Graphics, Windows;
 
 type
    PActor = ^TActor;
@@ -49,6 +49,10 @@ type
       procedure SetPositionSpeed(_Vector: TVector3f); overload;
       procedure SetRotationSpeed(_x, _y, _z: single); overload;
       procedure SetRotationSpeed(_Vector: TVector3f); overload;
+      procedure SetPositionAcceleration(_x, _y, _z: single); overload;
+      procedure SetPositionAcceleration(_Vector: TVector3f); overload;
+      procedure SetRotationAcceleration(_x, _y, _z: single); overload;
+      procedure SetRotationAcceleration(_Vector: TVector3f); overload;
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
        // Adds
@@ -65,7 +69,12 @@ type
       // switches
       procedure SwitchModels(_m1, _m2: integer);
       // remappable
-      procedure ChangeRemappable (_Colour : TColor);
+      procedure ChangeRemappable (_Colour : TColor); overload;
+      procedure ChangeRemappable (_r,_g,_b : byte); overload;
+      // Transparency methods
+      procedure ForceTransparency(_level: single);
+      procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
+      procedure ForceTransparencyExceptOnAMesh(_Level: single; _ModelID,_MeshID: integer);
    end;
 
 implementation
@@ -120,7 +129,6 @@ procedure TActor.Render(var _PolyCount: longword);
 var
    i : integer;
 begin
-   ProcessNextFrame;
    glPushMatrix;
       MoveActor;
       RotateActor;
@@ -187,7 +195,7 @@ begin
    // update request world update.
    if (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0)  then
       RequestUpdateWorld := true;
-   if (RotationSpeed.X = 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
+   if (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
       RequestUpdateWorld := true;
 
 end;
@@ -384,6 +392,39 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.SetPositionAcceleration(_x, _y, _z: single);
+begin
+   PositionAcceleration.X := _x;
+   PositionAcceleration.Y := _y;
+   PositionAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetPositionAcceleration(_Vector: TVector3f);
+begin
+   PositionAcceleration.X := _Vector.X;
+   PositionAcceleration.Y := _Vector.Y;
+   PositionAcceleration.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationAcceleration(_x, _y, _z: single);
+begin
+   RotationAcceleration.X := _x;
+   RotationAcceleration.Y := _y;
+   RotationAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationAcceleration(_Vector: TVector3f);
+begin
+   RotationAcceleration.X := _Vector.X;
+   RotationAcceleration.Y := _Vector.Y;
+   RotationAcceleration.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+
 // Removes
 procedure TActor.Remove(var _Model : PModel);
 var
@@ -401,11 +442,11 @@ begin
             inc(i);
          end;
          SetLength(Models,High(Models));
+         RequestUpdateWorld := true;
          exit;
       end;
       inc(i);
    end;
-   RequestUpdateWorld := true;
 end;
 
 // Switches
@@ -440,5 +481,39 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.ChangeRemappable (_r,_g,_b : byte);
+begin
+   ChangeRemappable(RGB(_r,_g,_b));
+end;
+
+// Transparency methods
+procedure TActor.ForceTransparency(_level: single);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ForceTransparency(_level);
+      end;
+   end;
+end;
+
+procedure TActor.ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
+begin
+   if Models[_ModelID] <> nil then
+   begin
+      Models[_ModelID]^.ForceTransparencyOnMesh(_Level,_MeshID);
+   end;
+end;
+
+procedure TActor.ForceTransparencyExceptOnAMesh(_Level: single; _ModelID,_MeshID: integer);
+begin
+   if Models[_ModelID] <> nil then
+   begin
+      Models[_ModelID]^.ForceTransparencyExceptOnAMesh(_Level,_MeshID);
+   end;
+end;
 
 end.
