@@ -1494,6 +1494,7 @@ end;
 procedure TFrmMain.DebugMode1Click(Sender: TObject);
 begin
    DebugMode1.Checked := not DebugMode1.Checked;
+   Env.ShowRotations := DebugMode1.Checked;
 end;
 
 Procedure TFrmMain.SetRotationAdders;

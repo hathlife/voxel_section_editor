@@ -57,9 +57,9 @@ end;
 
 procedure TCamera.Reset;
 begin
-   Rotation.X := -90;
+   Rotation.X := 0;
    Rotation.Y := 0;
-   Rotation.Z := -85;
+   Rotation.Z := 0;
    Position.X := 0;
    Position.Y := 0;
    Position.Z := -30;
@@ -152,17 +152,17 @@ end;
 
 procedure TCamera.SetRotation(_x, _y, _z: single);
 begin
-   Rotation.X := _x;
-   Rotation.Y := _y;
-   Rotation.Z := _z;
+   Rotation.X := CleanAngle(_x);
+   Rotation.Y := CleanAngle(_y);
+   Rotation.Z := CleanAngle(_z);
    RequestUpdateWorld := true;
 end;
 
 procedure TCamera.SetRotation(_Vector: TVector3f);
 begin
-   Rotation.X := _Vector.X;
-   Rotation.Y := _Vector.Y;
-   Rotation.Z := _Vector.Z;
+   Rotation.X := CleanAngle(_Vector.X);
+   Rotation.Y := CleanAngle(_Vector.Y);
+   Rotation.Z := CleanAngle(_Vector.Z);
    RequestUpdateWorld := true;
 end;
 
