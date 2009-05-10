@@ -66,7 +66,6 @@ end;
 function TVoxelBank.Load(var _Voxel: PVoxel; const _Filename: string): PVoxel;
 var
    i : integer;
-   Voxel : PVoxel;
 begin
    i := SearchEditable(_Voxel);
    if i <> -1 then

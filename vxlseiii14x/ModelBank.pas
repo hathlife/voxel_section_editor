@@ -71,7 +71,6 @@ end;
 function TModelBank.Load(var _Model: PModel; const _Filename: string): PModel;
 var
    i : integer;
-   Model : PModel;
 begin
    i := SearchEditable(_Model);
    if i <> -1 then

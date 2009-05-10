@@ -278,6 +278,7 @@ begin
    Env.BackgroundColour := SetVector(140/255,170/255,235/255);
    Env.FontColour := SetVector(1,1,1);
    Env.Size := 0.1;
+   Camera := Env.CurrentCamera^;
 
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
