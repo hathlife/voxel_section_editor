@@ -3,7 +3,7 @@ unit Actor;
 interface
 
 uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette, Graphics, Windows;
+   Palette, Graphics, Windows, GLConstants;
 
 type
    PActor = ^TActor;
@@ -12,6 +12,7 @@ type
       // For the renderer
       RequestUpdateWorld: boolean;
       procedure QuickSwitchModels(_m1, _m2: integer);
+      procedure CommonAddActions;
    public
       // List
       Next : PActor;
@@ -26,6 +27,7 @@ type
       Rotation : TVector3f;
       // User interface
       IsSelected : boolean;
+      ColoursType : byte;
       // Constructors
       constructor Create;
       destructor Destroy; override;
@@ -87,6 +89,7 @@ begin
    IsSelected := false;
    SetLength(Models,0);
    RequestUpdateWorld := false;
+   ColoursType := 1;
    Reset;
 end;
 
@@ -113,9 +116,9 @@ end;
 
 procedure TActor.Reset;
 begin
-   Rotation.X := -90;
+   Rotation.X := 0;
    Rotation.Y := 0;
-   Rotation.Z := -85;
+   Rotation.Z := 0;
    Position.X := 0;
    Position.Y := 0;
    Position.Z := -30;
@@ -304,6 +307,7 @@ procedure TActor.SetNormalsModeRendering;
 var
    i : integer;
 begin
+   ColoursType := C_COLOURS_DISABLED;
    if High(Models) >= 0 then
    begin
       for i := Low(Models) to High(Models) do
@@ -321,6 +325,7 @@ procedure TActor.SetColourModeRendering;
 var
    i : integer;
 begin
+   ColoursType := 1;
    if High(Models) >= 0 then
    begin
       for i := Low(Models) to High(Models) do
@@ -340,55 +345,68 @@ procedure TActor.Add(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_filename);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.Add(const _Model: PModel);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_Model);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_HighQuality);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_HighQuality);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_filename);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _Model: PModel);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_Model);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_HighQuality);
-   RequestUpdateWorld := true;
+   CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
 begin
    SetLength(Models,High(Models)+2);
    Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,_HighQuality);
+   CommonAddActions;
+end;
+
+procedure TActor.CommonAddActions;
+begin
+   if ColoursType =  C_COLOURS_DISABLED then
+   begin
+      SetNormalsModeRendering;
+   end
+   else
+   begin
+      SetColourModeRendering;
+   end;
    RequestUpdateWorld := true;
 end;
 

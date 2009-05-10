@@ -10,6 +10,8 @@ type
    private
       // For the renderer
       RequestUpdateWorld: boolean;
+      // Misc
+      function CleanAngle(Angle: single): single;
    public
       // List
       Next : PCamera;
@@ -57,9 +59,9 @@ end;
 
 procedure TCamera.Reset;
 begin
-   Rotation.X := 0;
+   Rotation.X := 270;
    Rotation.Y := 0;
-   Rotation.Z := 0;
+   Rotation.Z := 275;
    Position.X := 0;
    Position.Y := 0;
    Position.Z := -30;
@@ -228,6 +230,16 @@ begin
    RotationAcceleration.Y := _Vector.Y;
    RotationAcceleration.Z := _Vector.Z;
    RequestUpdateWorld := true;
+end;
+
+// Misc
+function TCamera.CleanAngle(Angle: single): single;
+begin
+   Result := Angle;
+   if Result < 0 then
+      Result := Result + 360;
+   if Result > 360 then
+      Result := Result - 360;
 end;
 
 

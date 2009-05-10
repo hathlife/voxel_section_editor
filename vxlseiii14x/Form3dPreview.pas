@@ -386,12 +386,16 @@ begin
    if btn3DRotateX2.Down then
       Camera.SetRotationSpeed(-V,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z)
    else if btn3DRotateX.Down then
-      Camera.SetRotationSpeed(V,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
+      Camera.SetRotationSpeed(V,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z)
+   else
+      Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 
    if btn3DRotateY2.Down then
       Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,-V)
    else if btn3DRotateY.Down then
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,V);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,V)
+   else
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
 procedure TFrm3DPReview.btn3DRotateX2Click(Sender: TObject);

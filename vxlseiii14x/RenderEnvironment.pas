@@ -313,7 +313,7 @@ begin
             begin
                // Note: The Y from the program is still Z from the render.
                glRasterPos2i(1, Height - 19);
-               glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Z)));
+               glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Y) + ' ZRot:' + floattostr(CurrentCamera^.Rotation.Z)));
             end;
          end
          else // We are screenshoting!
