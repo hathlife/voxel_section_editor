@@ -582,9 +582,9 @@ begin
    if NumBits <> 8 then
       exit;
    base := 64;
-   rmult := (GetRValue(_Colour) * 255) / 128;
-   gmult := (GetGValue(_Colour) * 255) / 128;
-   bmult := (GetBValue(_Colour) * 255) / 128;
+   rmult := GetRValue(_Colour) / 128;
+   gmult := GetGValue(_Colour) / 128;
+   bmult := GetBValue(_Colour) / 128;
    // Generate Remmapable colours
    if rmult <> 0 then
      rsub := 1
