@@ -119,9 +119,7 @@ begin
    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);   //Realy Nice perspective calculations
    // Build font
    BuildFont;
-   // enable cull face
-   glEnable(GL_CULL_FACE);
-   glCullFace(GL_BACK);
+   // Enable lighting
    glEnable(GL_LIGHT0);
    glEnable(GL_LIGHTING);
    glEnable(GL_COLOR_MATERIAL);
