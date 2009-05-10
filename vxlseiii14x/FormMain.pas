@@ -720,65 +720,6 @@ begin
    // 1.2 Enable Idle only on certain situations.
    Application.OnIdle := nil;
 
-   // OpenGL initialisieren
-//   InitOpenGL;
-//   dc:=GetDC(FrmMain.OGL3DPreview.Handle);
-
-//   BGColor   := CleanVCCol(GetVXLPaletteColor(-1));
-//   FontColor := SetVector(1,1,1);
-//   Size      := 0.2;
-
-//   RemapColour.X := RemapColourMap[0].R /255;
-//   RemapColour.Y := RemapColourMap[0].G /255;
-//   RemapColour.Z := RemapColourMap[0].B /255;
-{
-   // PixelFormat
-   pfd.nSize:=sizeof(pfd);
-   pfd.nVersion:=1;
-   pfd.dwFlags:=PFD_DRAW_TO_WINDOW or PFD_SUPPORT_OPENGL or PFD_DOUBLEBUFFER;
-   pfd.iPixelType:=PFD_TYPE_RGBA;      // PFD_TYPE_RGBA or PFD_TYPEINDEX
-   pfd.cColorBits:=32;
-
-   pf :=ChoosePixelFormat(dc, @pfd);   // Returns format that most closely matches above pixel format
-   SetPixelFormat(dc, pf, @pfd);
-}
- //  rc :=wglCreateContext(dc);    // Rendering Context = window-glCreateContext
-//   RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,8,0,0,0);
-//   wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
-
-//   ActivateRenderingContext(DC, RC);
-
-//   glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
-//   glClearColor(BGColor.X, BGColor.Y, BGColor.Z, 1.0);
-//   glShadeModel(GL_SMOOTH);                 // Enables Smooth Color Shading
-//   glClearDepth(1.0);                       // Depth Buffer Setup
-//   glEnable(GL_DEPTH_TEST);                 // Enable Depth Buffer
-//   glDepthFunc(GL_LESS);		           // The Type Of Depth Test To Do
-
-//   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);   //Realy Nice perspective calculations
-
-//   BuildFont;
-
-//   glEnable(GL_CULL_FACE);
-//   glCullFace(GL_BACK);
-
-//   xRot :=-90;
-//  yRot :=-85;
-//   Depth :=-30;
-//   DemoStart :=GetTickCount();
-
-//   QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
-//   QueryPerformanceCounter(FoldTime);
-
-//   glViewport(0, 0, OGL3DPreview.Width, OGL3DPreview.Height);    // Set the viewport for the OpenGL window
-//   glMatrixMode(GL_PROJECTION);        // Change Matrix Mode to Projection
-//   glLoadIdentity();                   // Reset View
-//   gluPerspective(45.0, OGL3DPreview.Width/OGL3DPreview.Height, 1.0, 500.0);  // Do the perspective calculations. Last value = max clipping depth
-
-//   glMatrixMode(GL_MODELVIEW);         // Return to the modelview matrix  }
-//   oglloaded := true;
-
-
    p_Frm3DPreview := nil;
 
    Application.OnDeactivate := OnDeactivate;
@@ -806,8 +747,12 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Idle');
    {$endif}
+   Done := false;
    if IsEditable then
+   begin
       GlobalVars.Render.Render;
+      Done := true;
+   end;
 end;
 
 procedure TFrmMain.FormResize(Sender: TObject);

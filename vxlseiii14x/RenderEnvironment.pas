@@ -70,6 +70,7 @@ type
          procedure Resize(_width, _height: longword);
          procedure RenderNormals;
          procedure RenderColours;
+         procedure ForceRefresh;
 
          // Adds
          function AddCamera: PCamera;
@@ -415,6 +416,11 @@ begin
       Actor^.SetColourModeRendering;
       Actor := Actor^.Next;
    end;
+   FUpdateWorld := true;
+end;
+
+procedure TRenderEnvironment.ForceRefresh;
+begin
    FUpdateWorld := true;
 end;
 

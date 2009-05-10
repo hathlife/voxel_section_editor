@@ -464,6 +464,7 @@ procedure TFrm3DPReview.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
    FrmMain.Document.ActiveHVA^.Frame := 0;
+   Env.ForceRefresh;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
@@ -475,6 +476,7 @@ begin
       SpStopClick(Sender);
    end;
    FrmMain.Document.ActiveHVA^.Frame := (FrmMain.Document.ActiveHVA^.Frame + 1) mod SpFrame.MaxValue;
+   Env.ForceRefresh;
    SpFrame.Value := FrmMain.Document.ActiveHVA^.Frame + 1;
 end;
 
@@ -487,6 +489,7 @@ begin
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
       FrmMain.Document.ActiveHVA^.Frame := SpFrame.Value-1;
+      Env.ForceRefresh;
    end;
 end;
 

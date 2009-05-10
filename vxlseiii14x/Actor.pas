@@ -196,11 +196,7 @@ begin
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
 
    // update request world update.
-   if (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0)  then
-      RequestUpdateWorld := true;
-   if (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0)  then
-      RequestUpdateWorld := true;
-
+   RequestUpdateWorld := RequestUpdateWorld or (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0) or (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0);
 end;
 
 procedure TActor.RebuildActor;
