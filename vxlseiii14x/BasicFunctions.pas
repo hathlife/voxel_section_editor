@@ -2,7 +2,7 @@ unit BasicFunctions;
 
 interface
 
-uses SysUtils, Classes, Math;
+uses BasicDataTypes,SysUtils, Classes, Math;
 
 function WriteStringToStream(const _String: string; var _Stream : TStream): boolean;
 function ReadStringFromStream(var _Stream: TStream): string;
@@ -12,6 +12,8 @@ function GetBool(_Value : integer): boolean;
 function GetStringID(_ID : integer): string;
 
 function GetPow2Size(Size : Cardinal) : Cardinal;
+
+function SetVector4f(x, y, z, w : single) : TVector4f;
 
 implementation
 
@@ -92,5 +94,14 @@ begin
    if Result > 4096 then
       Result := 4096;
 end;
+
+function SetVector4f(x, y, z, w : single) : TVector4f;
+begin
+   result.x := x;
+   result.y := y;
+   result.z := z;
+   result.W := w;
+end;
+
 
 end.

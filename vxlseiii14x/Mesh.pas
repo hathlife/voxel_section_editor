@@ -30,6 +30,7 @@ type
          // Graphical atributes goes here
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
          VerticesPerFace : byte; // for optimization purposes only.
+         NumFaces : longword;
          Vertices : array of TVector3f;
          Normals : array of TVector3f;
          Colours : array of TVector4f;
@@ -91,6 +92,7 @@ begin
    // Set basic variables:
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
+   NumFaces := _NumFaces;
    SetColoursAndNormalsType(_ColoursType,_NormalsType);
    // Let's set the face type:
    if VerticesPerFace = 4 then
@@ -106,13 +108,13 @@ begin
    else
       SetLength(Normals,0);
    if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
-      SetLength(FaceNormals,_NumFaces)
+      SetLength(FaceNormals,NumFaces)
    else
       SetLength(FaceNormals,0);
    if (ColoursType = C_COLOURS_PER_VERTEX) then
       SetLength(Colours,_NumVertices)
    else if (ColoursType = C_COLOURS_PER_FACE) then
-      SetLength(Colours,_NumFaces)
+      SetLength(Colours,NumFaces)
    else
       SetLength(Colours,0);
    // The rest
@@ -195,7 +197,7 @@ end;
 
 procedure TMesh.LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
-   NumVertices, NumFaces : longword;
+   NumVertices : longword;
    VertexMap : array of array of array of integer;
    FaceMap : array of array of array of array of integer;
    x, y, z : longword;
@@ -475,7 +477,7 @@ end;
 
 procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
-   NumVertices, NumFaces : longword;
+   NumVertices: longword;
    VoxelMap : TVoxelMap;
    VertexMap : array of array of array of integer;
    FaceMap : array of array of array of array of integer;
@@ -599,7 +601,7 @@ procedure TMesh.Render(var _PolyCount: longword);
 begin
    if IsVisible and Opened then
    begin
-      inc(_PolyCount,High(Faces)+1);
+      inc(_PolyCount,NumFaces);
       if List = C_LIST_NONE then
       begin
          List := glGenLists(1);
@@ -615,13 +617,13 @@ end;
 
 procedure TMesh.RenderWithoutNormalsAndColours;
 var
-   i,f,v,maxFaces : longword;
+   i,f,v : longword;
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
    glNormal3f(0,0,0);
-   maxFaces := (High(Faces)+1) div VerticesPerFace;
-   while i < MaxFaces do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -638,12 +640,12 @@ end;
 
 procedure TMesh.RenderWithVertexNormalsAndNoColours;
 var
-   i,f,v,maxFaces : longword;
+   i,f,v : longword;
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
-   maxFaces := (High(Faces)+1) div VerticesPerFace;
-   while i < MaxFaces do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -665,7 +667,8 @@ var
 begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
-   for i := Low(FaceNormals) to High(FaceNormals) do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -677,17 +680,18 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
 procedure TMesh.RenderWithoutNormalsAndWithColoursPerVertex;
 var
-   i,f,v,maxFaces : longword;
+   i,f,v : longword;
 begin
    f := 0;
    glNormal3f(0,0,0);
-   maxFaces := (High(Faces)+1) div VerticesPerFace;
-   while i < maxFaces do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -705,11 +709,11 @@ end;
 
 procedure TMesh.RenderWithVertexNormalsAndColours;
 var
-   i,f,v,maxFaces : longword;
+   i,f,v : longword;
 begin
    f := 0;
-   maxFaces := (High(Faces)+1) div VerticesPerFace;
-   while i < maxFaces do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -731,7 +735,8 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(FaceNormals) to High(FaceNormals) do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -744,6 +749,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
@@ -753,7 +759,8 @@ var
 begin
    f := 0;
    glNormal3f(0,0,0);
-   for i := Low(Colours) to High(Colours) do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -765,6 +772,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
@@ -773,7 +781,8 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(Colours) to High(Colours) do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -786,6 +795,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 
@@ -794,7 +804,8 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   for i := Low(FaceNormals) to High(FaceNormals) do
+   i := 0;
+   while i < NumFaces do
    begin
       glBegin(FaceType);
          v := 0;
@@ -807,6 +818,7 @@ begin
             inc(f);
          end;
       glEnd();
+      inc(i);
    end;
 end;
 

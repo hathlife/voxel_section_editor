@@ -58,8 +58,8 @@ type
          AnimFrameTime: integer; // in centiseconds.
          NonScreenCamera : PCamera;
          // Ambient Lighting
-         LightAmb : TVector3f;
-         LightDif: TVector3f;
+         LightAmb : TVector4f;
+         LightDif: TVector4f;
          // Constructors;
          constructor Create(_Handle : THandle; _width, _height : longword);
          destructor Destroy; override;
@@ -122,6 +122,9 @@ begin
    // enable cull face
    glEnable(GL_CULL_FACE);
    glCullFace(GL_BACK);
+   glEnable(GL_LIGHT0);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_COLOR_MATERIAL);
    // Setup camera.
    CameraList := nil;
    AddCamera;
@@ -131,6 +134,15 @@ begin
    StartTime := GetTickCount();
    QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
    QueryPerformanceCounter(FoldTime);
+   // Lighting settings
+   LightAmb := SetVector4f(134/255, 134/255, 134/255, 1.0);
+   LightDif := SetVector4f(172/255, 172/255, 172/255, 1.0);
+   wglSwapIntervalEXT(0);
+   // Prepare screenshot variables.
+   ScreenTexture := 0;
+   AnimFrameCounter := 0;
+   AnimFrameMax := 0;
+   AnimFrameTime := 3; //about 30fps.
    // Setup perspective and text settings.
    Resize(_width,_height);
    PolyCount := 0;
@@ -138,18 +150,8 @@ begin
    ShowSpeed := true;
    ShowPolyCount := true;
    ShowRotations := false;
-   // Lighting settings
-   LightAmb := SetVector(1,1,1);
-   LightDif := SetVector(1,1,1);
-
    // The render is ready to work.
    IsEnabled := true;
-   FUpdateWorld := true;
-   // Prepare screenshot variables.
-   ScreenTexture := 0;
-   AnimFrameCounter := 0;
-   AnimFrameMax := 0;
-   AnimFrameTime := 3; //about 30fps.
 end;
 
 destructor TRenderEnvironment.Destroy;
@@ -234,12 +236,12 @@ begin
    end;
 
    // Enable Lighting.
-   glEnable(GL_TEXTURE_2D);
    glEnable(GL_LIGHT0);
    glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);
    glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);
    glEnable(GL_LIGHTING);
    glEnable(GL_COLOR_MATERIAL);
+
    if FUpdateWorld then
    begin
       FUpdateWorld := false;
@@ -255,11 +257,10 @@ begin
          Actor := Actor^.Next;
       end;
 
-      glDisable(GL_LIGHT0);
-      glDisable(GL_LIGHTING);
-      glDisable(GL_COLOR_MATERIAL);
       glColor3f(1,1,1);
+      glNormal3f(0,0,0);
       // Here we cache the existing scene in a texture.
+      glEnable(GL_TEXTURE_2D);
       if ScreenTexture <> 0 then
          glDeleteTextures(1,@ScreenTexture);
       glGenTextures(1, @ScreenTexture);
@@ -268,11 +269,14 @@ begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+      glDisable(GL_TEXTURE_2D);
       // End of texture caching.
    end;
    glLoadIdentity;
    // Final rendering part.
-   glDisable(GL_CULL_FACE);
+   glDisable(GL_LIGHT0);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_COLOR_MATERIAL);
    glDisable(GL_DEPTH_TEST);
    glMatrixMode(GL_PROJECTION);
    glPushMatrix;
@@ -282,8 +286,8 @@ begin
       glPushMatrix;
          glLoadIdentity;
          // Draw texture caching.
+         glEnable(GL_TEXTURE_2D);
          glColor3f(1,1,1);
-         glNormal3f(0,0,0);
          DrawCacheTexture(ScreenTexture,0,0,Width,Height,GetPow2Size(Width),GetPow2Size(Height));
          glDisable(GL_TEXTURE_2D);
          // End of draw texture caching.
@@ -338,7 +342,6 @@ begin
       glMatrixMode(GL_MODELVIEW);
    glPopMatrix;
    glEnable(GL_DEPTH_TEST);
-   GlEnable(GL_CULL_FACE);
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
@@ -386,7 +389,7 @@ begin
    glViewport(0, 0, Width, Height);    // Set the viewport for the OpenGL window
    glMatrixMode(GL_PROJECTION);        // Change Matrix Mode to Projection
    glLoadIdentity();                   // Reset View
-   gluPerspective(45.0, Width/Height, 1.0, 500.0);  // Do the perspective calculations. Last value = max clipping depth
+   gluPerspective(45.0, Width/Height, 1.0, 4000.0);  // Do the perspective calculations. Last value = max clipping depth
    glMatrixMode(GL_MODELVIEW);         // Return to the modelview matrix
    FUpdateWorld := true;
 end;

@@ -123,15 +123,17 @@ begin
    Header.N_Frames := 0;
    if (p_Voxel <> nil) then
    begin
-      Header.N_Sections := p_Voxel^.Header.NumSections
+      Header.N_Sections := p_Voxel^.Header.NumSections;
    end
    else
-      Header.N_Sections := 0;
+   begin
+      Header.N_Sections := 1;
+   end;
+   Setlength(Data,Header.N_Sections);
 
    for x := 1 to 16 do
       Header.FilePath[x] := #0;
 
-   Setlength(Data,Header.N_Sections);
 
    if (p_Voxel <> nil) then
    begin
