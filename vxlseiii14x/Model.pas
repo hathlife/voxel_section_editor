@@ -232,7 +232,7 @@ begin
    begin
       for j := Low(LOD[i].Mesh) to High(LOD[i].Mesh) do
       begin
-         LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[i],Palette^,HighQuality);
+         LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[j],Palette^,HighQuality);
       end;
    end
    else if VoxelSection <> nil then

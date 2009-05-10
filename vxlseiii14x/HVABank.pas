@@ -340,7 +340,10 @@ begin
       begin
          Items[i].Free;
          while i < High(Items) do
+         begin
             Items[i] := Items[i+1];
+            inc(i);
+         end;
          SetLength(Items,High(Items));
       end;
    end;

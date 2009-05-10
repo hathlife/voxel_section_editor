@@ -691,6 +691,10 @@ begin
       lblView[i].ControlStyle := lblView[i].ControlStyle + [csOpaque];
    end;
 
+   // 1.4x New Render starts here.
+   Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
+   Actor := Env.AddActor;
+   Camera := Env.CurrentCamera^;
    SetIsEditable(False);
    //FrmMain.DoubleBuffered := true;
    //MainPaintPanel.DoubleBuffered := true;
@@ -715,11 +719,6 @@ begin
 
    // 1.2 Enable Idle only on certain situations.
    Application.OnIdle := nil;
-
-   // 1.4x New Render starts here.
-   Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
-   Actor := Env.AddActor;
-   Camera := Env.CurrentCamera^;
 
    // OpenGL initialisieren
 //   InitOpenGL;
@@ -809,37 +808,6 @@ begin
    {$endif}
    if IsEditable then
       GlobalVars.Render.Render;
-{
-   Done := FALSE;
-   if (not iseditable) or (not oglloaded) then
-   begin
-      Done := true;
-      exit;
-   end;
-   if not Display3dView1.checked then
-   begin
-      LastTime :=ElapsedTime;
-      ElapsedTime := GetTickCount() - DemoStart;     // Calculate Elapsed Time
-      ElapsedTime :=(LastTime + ElapsedTime) DIV 2; // Average it out for smoother movement
-
-      QueryPerformanceCounter(tmp);
-      t2 := tmp-FoldTime;
-      FPS := FFrequency/t2;
-      FoldTime := TMP;
-
-      wglMakeCurrent(dc,rc);        // Make the DC (Form1) the rendering Context
-      glDraw();                         // Draw the scene
-      SwapBuffers(DC);                  // Display the scene
-   end;
-   // For those wondering why do I need a variable... to avoid problems
-   // when closing the form.
-   Form3D := p_Frm3DPreview;
-   if Form3D <> nil then
-   begin
-      Form3D^.Idle(sender,done);
-      // Once the window is rendered, the FormMain OGL returns as default.
-   end;
-}
 end;
 
 procedure TFrmMain.FormResize(Sender: TObject);
@@ -884,6 +852,8 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SetIsEditable');
    {$endif}
+
+   Env.IsEnabled := IsEditable;
 
    for i := 0 to 2 do
    begin
