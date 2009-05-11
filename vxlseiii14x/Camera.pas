@@ -64,7 +64,7 @@ begin
    Rotation.Z := 275;
    Position.X := 0;
    Position.Y := 0;
-   Position.Z := -30;
+   Position.Z := -150;
    PositionSpeed := SetVector(0,0,0);
    RotationSpeed := SetVector(0,0,0);
    PositionAcceleration := SetVector(0,0,0);
