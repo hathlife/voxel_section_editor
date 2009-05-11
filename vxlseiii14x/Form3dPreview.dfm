@@ -473,4 +473,11 @@ object Frm3DPReview: TFrm3DPReview
     Left = 176
     Top = 72
   end
+  object Anim360Timer: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = Anim360TimerTimer
+    Left = 208
+    Top = 72
+  end
 end

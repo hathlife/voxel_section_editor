@@ -72,6 +72,8 @@ type
     Label1: TLabel;
     SpFrame: TSpinEdit;
     AnimationTimer: TTimer;
+    Anim360Timer: TTimer;
+    procedure Anim360TimerTimer(Sender: TObject);
     procedure AnimationTimerTimer(Sender: TObject);
     procedure SpPlayClick(Sender: TObject);
     procedure SpStopClick(Sender: TObject);
@@ -129,6 +131,8 @@ type
     RemapColour : TVector3f;
     Xcoord, Ycoord, Zcoord : Integer;
     MouseButton : Integer;
+    // These are for Take 360 Animation
+    btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
     procedure ClearRemapClicks;
   public
     { Public declarations }
@@ -560,6 +564,10 @@ procedure TFrm3DPReview.ake360DegScreenshots1Click(Sender: TObject);
 begin
    Env.Take360Animation(VXLFilename,90,10,stGif);
 
+   btn3DRotateY_d := btn3DRotateY.Down;
+   btn3DRotateY2_d := btn3DRotateY2.Down;
+   btn3DRotateX_d := btn3DRotateX.Down;
+   btn3DRotateX2_d := btn3DRotateX2.Down;
    btn3DRotateY.Down := false;
    btn3DRotateY2.Down := false;
    btn3DRotateX.Down := false;
@@ -571,7 +579,28 @@ begin
    spin3Djmp.Enabled := false;
    SpeedButton1.Enabled := false;
    SpeedButton2.Enabled := false;
+   Anim360Timer.Enabled := true;
 end;
+
+procedure TFrm3DPReview.Anim360TimerTimer(Sender: TObject);
+begin
+   if not Env.IsScreenshoting then
+   begin
+      btn3DRotateY.Down := btn3DRotateY_d;
+      btn3DRotateY2.Down := btn3DRotateY2_d;
+      btn3DRotateX.Down := btn3DRotateX_d;
+      btn3DRotateX2.Down := btn3DRotateX2_d;
+      btn3DRotateY.Enabled := true;
+      btn3DRotateY2.Enabled := true;
+      btn3DRotateX.Enabled := true;
+      btn3DRotateX2.Enabled := true;
+      spin3Djmp.Enabled := true;
+      SpeedButton1.Enabled := true;
+      SpeedButton2.Enabled := true;
+      Anim360Timer.Enabled := false;
+   end;
+end;
+
 
 procedure TFrm3DPReview.akeScreenshot1Click(Sender: TObject);
 begin

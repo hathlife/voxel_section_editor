@@ -91,6 +91,7 @@ type
          procedure StartAnimation;
          procedure AddFrame;
          procedure FinishAnimation;
+         function IsScreenshoting: boolean;
    end;
 
 implementation
@@ -874,6 +875,10 @@ begin
    end;
 end;
 
+function TRenderEnvironment.IsScreenshoting: boolean;
+begin
+   Result := AnimFrameMax <> 0;
+end;
 
 
 
