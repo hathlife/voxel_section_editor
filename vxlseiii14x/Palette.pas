@@ -575,37 +575,21 @@ end;
 
 // Importing and adapting change remappable from OS SHP Builder.
 procedure TPalette.ChangeRemappable (_Colour : TColor);
+const
+   RedMultiples : array[16..31] of byte = ($FC, $EC, $DC, $D0, $C0, $B0, $A4, $94, $84, $78, $68, $58, $4C, $3C, $2C, $20);
 var
-   base,x,rsub,gsub,bsub:byte;
    rmult,gmult,bmult: single;
+   x : byte;
 begin
    if NumBits <> 8 then
       exit;
-   base := 64;
-   rmult := GetRValue(_Colour) / 128;
-   gmult := GetGValue(_Colour) / 128;
-   bmult := GetBValue(_Colour) / 128;
+   rmult := GetRValue(_Colour) / 255;
+   gmult := GetGValue(_Colour) / 255;
+   bmult := GetBValue(_Colour) / 255;
    // Generate Remmapable colours
-   if rmult <> 0 then
-     rsub := 1
-   else
-     rsub := 0;
-   if gmult <> 0 then
-     gsub := 1
-   else
-     gsub := 0;
-   if bmult <> 0 then
-     bsub := 1
-   else
-     bsub := 0;
-
    for x := 16 to 31 do
    begin
-      FPalette[x]:= RGB(Round(((base*2)*rmult)-rsub),Round(((base*2)*gmult)-gsub),Round(((base*2)*bmult)-bsub));
-      if (((x+1) div 3) <> 0) then
-         base := base - 4
-      else
-         base := base - 3;
+      FPalette[x]:= RGB(Round(rmult * RedMultiples[x]),Round(gmult * RedMultiples[x]),Round(bmult * RedMultiples[x]));
    end;
 end;
 
