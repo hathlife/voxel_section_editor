@@ -82,6 +82,8 @@ type
          procedure BuildFont;
          procedure KillFont;
          procedure glPrint(_text : pchar);
+         procedure SetBackgroundColour(const _Colour: TVector3f);
+         procedure SetFontColour(const _Colour: TVector3f);
 
          // Screenshot related
          function GetScreenShot : TBitmap;
@@ -568,6 +570,26 @@ begin
   glCallLists(length(_Text), GL_UNSIGNED_BYTE, _Text);	// Draws The Display List Text
   glPopAttrib();								// Pops The Display List Bits
 end;
+
+procedure TRenderEnvironment.SetBackgroundColour(const _Colour: TVector3f);
+begin
+   BackgroundColour.X := _Colour.X;
+   BackgroundColour.Y := _Colour.Y;
+   BackgroundColour.Z := _Colour.Z;
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
+end;
+
+procedure TRenderEnvironment.SetFontColour(const _Colour: TVector3f);
+begin
+   FontColour.X := _Colour.X;
+   FontColour.Y := _Colour.Y;
+   FontColour.Z := _Colour.Z;
+end;
+
 
 // Screenshot related
 procedure TRenderEnvironment.MakeMeAScreenshotName(var Filename: string; Ext : string);

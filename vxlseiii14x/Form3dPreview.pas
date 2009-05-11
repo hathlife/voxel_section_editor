@@ -10,8 +10,8 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
-  Ogl3dview_engine,HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor,
-  Camera;
+  HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
+  BasicFunctions;
 
 type
   PFrm3DPReview = ^TFrm3DPReview;
@@ -147,127 +147,11 @@ type
     Procedure Reset3DView;
   end;
 
-type TVector3b = record
-  R,G,B : Byte;
-end;
-
-const
-
-  RemapColourMap : array [0..8] of TVector3b =
-  (
-  ( //DarkRed
-  R : 146;
-  G : 3;
-  B : 3;
-  ),
-  ( //DarkBlue
-  R : 9;
-  G : 32;
-  B : 140;
-  ),
-  ( //DarkGreen
-  R : 13;
-  G : 136;
-  B : 16;
-  ),
-  ( //White
-  R : 160;
-  G : 160;
-  B : 160;
-  ),
-  ( //Orange
-  R : 146;
-  G : 92;
-  B : 3;
-  ),
-  ( //Magenta
-  R : 104;
-  G : 43;
-  B : 73;
-  ),
-  ( //Purple
-  R : 137;
-  G : 12;
-  B : 134;
-  ),
-  ( //Gold
-  R : 149;
-  G : 119;
-  B : 0;
-  ),
-  ( //DarkSky
-  R : 13;
-  G : 102;
-  B : 136;
-  )
-  );
-
 implementation
 
 uses FormMain, GlobalVars;
 
 {$R *.DFM}
-
-{
-      if ScreenieType <> stNone then
-      begin
-         case (ScreenieType) of
-            stBmp:
-            begin
-               ScreenShotBMP(VXLFilename);
-               height := oldh;
-               width := oldw;
-               ScreenieType := stNone;
-            end;
-            stTga:
-            begin
-               ScreenShot(VXLFilename);
-               height := oldh;
-               width := oldw;
-               ScreenieType := stNone;
-            end;
-            stJpg:
-            begin
-               ScreenshotJPG(VXLFilename,1);
-               height := oldh;
-               width := oldw;
-               ScreenieType := stNone;
-            end;
-            stPng:
-            begin
-               ScreenshotPNG(VXLFilename);
-               height := oldh;
-               width := oldw;
-               ScreenieType := stNone;
-            end;
-            stGif:
-            begin
-               GifAnimateAddImage(ScreenShot_BitmapResult, False, 10);
-               if (YRot = 360) then
-               begin
-                  ScreenieType := stNone;
-                  FrmMain.btn3DRotateY.Down := False;
-                  ScreenShotGIF(GifAnimateEndGif, VXLFilename);
-
-                  btn3DRotateY.Enabled  := True;
-                  btn3DRotateY2.Enabled := True;
-                  btn3DRotateX.Enabled  := True;
-                  btn3DRotateX2.Enabled := True;
-                  spin3Djmp.Enabled     := True;
-                  SpeedButton1.Enabled  := True;
-                  SpeedButton2.Enabled  := True;
-
-                  YRot := 225;
-                  XRotB := False;
-                  YRotB := False;
-
-                  height := oldh;
-                  width := oldw;
-               end;
-            end;
-         end;
-      end;
-
 
 {------------------------------------------------------------------}
 procedure TFrm3DPReview.FormCreate(Sender: TObject);
@@ -372,9 +256,9 @@ end;
 
 procedure TFrm3DPReview.BackgroundColour1Click(Sender: TObject);
 begin
-   ColorDialog1.Color := TVector3fToTColor(BGColor);
+   ColorDialog1.Color := TVector3fToTColor(Env.BackgroundColour);
    if ColorDialog1.Execute then
-      BGColor := TColorToTVector3f(ColorDialog1.Color);
+      Env.SetBackgroundColour(TColorToTVector3f(ColorDialog1.Color));
 end;
 
 Procedure TFrm3DPReview.SetRotationAdders;
@@ -499,9 +383,9 @@ end;
 
 procedure TFrm3DPReview.FontColor1Click(Sender: TObject);
 begin
-   ColorDialog1.Color := TVector3fToTColor(FontColor);
+   ColorDialog1.Color := TVector3fToTColor(Env.FontColour);
    if ColorDialog1.Execute then
-      FontColor := TColorToTVector3f(ColorDialog1.Color);
+      Env.SetFontColour(TColorToTVector3f(ColorDialog1.Color));
 end;
 
 procedure TFrm3DPReview.Front1Click(Sender: TObject);

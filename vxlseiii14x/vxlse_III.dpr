@@ -5,7 +5,6 @@ program vxlse_III;
 uses
   Forms,
   Voxel_Engine in 'Voxel_Engine.pas',
-  ogl3dview_engine in 'ogl3dview_engine.pas',
   normals in 'normals.pas',
   FormHeaderUnit in 'FormHeaderUnit.pas' {FrmHeader},
   undo_engine in 'undo_engine.pas',

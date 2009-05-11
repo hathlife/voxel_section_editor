@@ -2,7 +2,7 @@ unit BasicFunctions;
 
 interface
 
-uses BasicDataTypes,SysUtils, Classes, Math;
+uses BasicDataTypes,SysUtils, Classes, Math, Windows, Graphics;
 
 function WriteStringToStream(const _String: string; var _Stream : TStream): boolean;
 function ReadStringFromStream(var _Stream: TStream): string;
@@ -14,6 +14,8 @@ function GetStringID(_ID : integer): string;
 function GetPow2Size(Size : Cardinal) : Cardinal;
 
 function SetVector4f(x, y, z, w : single) : TVector4f;
+Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
+Function TColorToTVector3f(Color : TColor) : TVector3f;
 
 implementation
 
@@ -101,6 +103,18 @@ begin
    result.y := y;
    result.z := z;
    result.W := w;
+end;
+
+Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
+begin
+   Result := RGB(trunc(Vector3f.X*255),trunc(Vector3f.Y*255),trunc(Vector3f.Z*255));
+end;
+
+Function TColorToTVector3f(Color : TColor) : TVector3f;
+begin
+   Result.X := GetRValue(Color) / 255;
+   Result.Y := GetGValue(Color) / 255;
+   Result.Z := GetBValue(Color) / 255;
 end;
 
 

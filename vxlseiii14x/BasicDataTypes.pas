@@ -31,6 +31,10 @@ type
       X, Y, Z : integer;
    end;
 
+   TVector3b = record
+      R,G,B : Byte;
+   end;
+   
    TRectangle3f = record
       Min, Max : TVector3f;
    end;

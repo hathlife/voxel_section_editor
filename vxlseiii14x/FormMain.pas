@@ -5,11 +5,11 @@ interface
 uses
   Windows, BasicDataTypes, Messages, SysUtils, Variants, Classes, Graphics, Controls,
   Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls,
-  ToolWin, ImgList, Math, palette, Spin, Buttons, ogl3dview_engine, FTGifAnimate,
-  undo_engine,ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,
-  Form3dpreview,Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
-  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment,
-  Actor, Camera;
+  ToolWin, ImgList, Math, palette, Spin, Buttons, FTGifAnimate, undo_engine,
+  ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
+  Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
+  ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
+  Camera, BasicFunctions, GlConstants;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -563,6 +563,9 @@ type
     procedure UpdatePositionStatus(x,y,z : integer);
   private
     { Private declarations }
+    RemapColour : TVector3f;
+    Xcoord, Ycoord, Zcoord : Integer;
+    MouseButton : Integer;
     procedure Idle(Sender: TObject; var Done: Boolean);
     procedure BuildUsedColoursArray;
     function CharToStr: string;
@@ -1369,8 +1372,6 @@ begin
    GlobalVars.HVABank.Free;
    GlobalVars.ModelBank.Free;
    DeactivateRenderingContext;
-   wglDeleteContext(rc);
-   ReleaseDC(OGL3DPreview.Handle, DC);
    UpdateHistoryMenu;
    Config.SaveSettings;
 end;
@@ -1538,14 +1539,14 @@ procedure TFrmMain.BackgroundColour1Click(Sender: TObject);
 begin
    ColorDialog.Color := TVector3fToTColor(Env.BackgroundColour);
    if ColorDialog.Execute then
-      Env.BackgroundColour := TColorToTVector3f(ColorDialog.Color);
+      Env.SetBackgroundColour(TColorToTVector3f(ColorDialog.Color));
 end;
 
 procedure TFrmMain.extColour1Click(Sender: TObject);
 begin
    ColorDialog.Color := TVector3fToTColor(Env.FontColour);
    if ColorDialog.Execute then
-      Env.FontColour := TColorToTVector3f(ColorDialog.Color);
+      Env.SetFontColour(TColorToTVector3f(ColorDialog.Color));
 end;
 
 procedure TFrmMain.ClearRemapClicks;
@@ -2771,7 +2772,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: NormalSphere1Click');
    {$endif}
-   Update3dViewWithNormals(Document.ActiveSection^);
+   //Update3dViewWithNormals(Document.ActiveSection^);
 end;
 
 procedure TFrmMain.RemoveRedundantVoxels1Click(Sender: TObject);
@@ -4158,7 +4159,7 @@ end;
 
 procedure TFrmMain.test1Click(Sender: TObject);
 begin
-   Update3dViewVOXEL(Document.ActiveVoxel^);
+//   Update3dViewVOXEL(Document.ActiveVoxel^);
 end;
 
 procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
