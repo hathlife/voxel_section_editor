@@ -86,7 +86,6 @@ begin
       // If it has past this stage, the element is valid and was part of the list.
       // Now we dispose the camera.
       _Environment^.Free;
-      _Environment := nil;
    end;
 end;
 

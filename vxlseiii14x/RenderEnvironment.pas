@@ -423,8 +423,6 @@ begin
    FUpdateWorld := true;
 end;
 
-
-
 // Adds
 function TRenderEnvironment.AddCamera: PCamera;
 var
@@ -500,12 +498,11 @@ begin
             exit;
       end;
       // If it has past this stage, the camera is valid and was part of the list.
+      // Now we dispose the camera.
+      _Camera^.Free;
       // Now let's unlink other variables.
       if CurrentCamera = _Camera then
          CurrentCamera := CameraList;
-      // Now we dispose the camera.
-      _Camera^.Free;
-      _Camera := nil;
       FUpdateWorld := true;
    end;
 end;
@@ -539,7 +536,6 @@ begin
       // If it has past this stage, the camera is valid and was part of the list.
       // Now we dispose the actor.
       _Actor^.Free;
-      _Actor := nil;
       FUpdateWorld := true;
    end;
 end;
