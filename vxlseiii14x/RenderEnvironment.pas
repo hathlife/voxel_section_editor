@@ -203,7 +203,6 @@ begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
    if CurrentCamera = nil then exit;
-   // if ModelList = nil then exit;
 
    // Calculate time and FPS
    LastTime :=ElapsedTime;

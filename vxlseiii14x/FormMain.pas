@@ -722,8 +722,10 @@ begin
 
    p_Frm3DPreview := nil;
 
-   Application.OnDeactivate := OnDeactivate;
-   Application.OnActivate := OnActivate;
+   Application.OnDeactivate := FormDeactivate;
+   Application.OnActivate := FormActivate;
+   Application.OnMinimize := FormDeactivate;
+   Application.OnRestore := FormActivate;
 
    // Setting up nudge shortcuts.
    Nudge1Left1.ShortCut := ShortCut(VK_LEFT,[ssShift,ssCtrl]);
@@ -739,20 +741,15 @@ end;
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
 procedure TFrmMain.Idle(Sender: TObject; var Done: Boolean);
-var
-   tmp : int64;
-   t2 : double;
-   Form3D : PFrm3DPreview;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Idle');
    {$endif}
-   Done := false;
    if IsEditable then
    begin
       GlobalVars.Render.Render;
-      Done := true;
    end;
+   Done := false;
 end;
 
 procedure TFrmMain.FormResize(Sender: TObject);
