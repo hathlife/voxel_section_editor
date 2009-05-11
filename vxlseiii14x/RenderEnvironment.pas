@@ -584,11 +584,7 @@ begin
    FN2 := extractfilename(Filename);
    FN2 := copy(FN2,1,length(FN2)-length(Extractfileext(FN2)));
 
- // sys_mkdir
-   {$I-}
-   CreateDir(SSDir);
-//  MkDir(SSDir);
-   {$I+}
+   ForceDirectories(SSDir);
    FN := SSDir+FN2;
 
    for i := 0 to 999 do
@@ -783,6 +779,7 @@ begin
    AnimFrameMax := 1;
    AnimFrameTime := 10;
    NonScreenCamera := CurrentCamera;
+   ScreenType := _type;
    StartAnimation;
 end;
 
@@ -792,6 +789,7 @@ begin
    AnimFrameMax := _NumFrames;
    AnimFrameTime := _FrameDelay;
    NonScreenCamera := CurrentCamera;
+   ScreenType := _type;
    StartAnimation;
 end;
 
@@ -806,8 +804,9 @@ begin
    CurrentCamera^.SetPositionSpeed(0,0,0);
    CurrentCamera^.SetPositionAcceleration(0,0,0);
    CurrentCamera^.SetRotation(NonScreenCamera^.Rotation);
-   CurrentCamera^.SetRotationSpeed((_NumFrames / 360.0),0,0);
+   CurrentCamera^.SetRotationSpeed(0,0,(360.0 / _NumFrames));
    CurrentCamera^.SetRotationAcceleration(0,0,0);
+   ScreenType := _type;
    StartAnimation;
 end;
 
