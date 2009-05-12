@@ -4754,6 +4754,7 @@ object FrmMain: TFrmMain
         end
         object MirrorFrontToBack2: TMenuItem
           Caption = 'Mirror Front To Back'
+          OnClick = MirrorFrontToBack1Click
         end
         object MirrorBackToFront1: TMenuItem
           Caption = 'Mirror Back To Front'
