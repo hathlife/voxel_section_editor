@@ -2623,6 +2623,7 @@ begin
       PageControl1.ActivePage := PageControl1.Pages[1];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
+      RefreshAll;
       Free;
    end;
 end;

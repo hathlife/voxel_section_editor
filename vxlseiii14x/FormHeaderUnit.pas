@@ -260,6 +260,7 @@ begin
          p^.Section[i].Tailer.MaxBounds[2] := StrToFloat(scaleYmax.Text);
          p^.Section[i].Tailer.MaxBounds[3] := StrToFloat(scaleZmax.Text);
          p^.Section[i].Tailer.Det := StrToFloat(scale.Text);
+         FrmMain.RefreshAll;
       except
          on EConvertError do
          begin
