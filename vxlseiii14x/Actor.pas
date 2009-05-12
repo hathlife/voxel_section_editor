@@ -70,9 +70,10 @@ type
       procedure Remove(var _Model : PModel);
       // switches
       procedure SwitchModels(_m1, _m2: integer);
-      // remappable
+      // Palette related
       procedure ChangeRemappable (_Colour : TColor); overload;
       procedure ChangeRemappable (_r,_g,_b : byte); overload;
+      procedure ChangePalette (const _Filename: string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -480,7 +481,7 @@ begin
    Models[_m2] := temp;
 end;
 
-// Remappable
+// Palette Related
 procedure TActor.ChangeRemappable(_Colour: TColor);
 var
    i : integer;
@@ -498,6 +499,20 @@ end;
 procedure TActor.ChangeRemappable (_r,_g,_b : byte);
 begin
    ChangeRemappable(RGB(_r,_g,_b));
+end;
+
+procedure TActor.ChangePalette (const _Filename: string);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i].ChangePalette(_Filename);
+      end;
+   end;
+   RequestUpdateWorld := true;
 end;
 
 // Transparency methods

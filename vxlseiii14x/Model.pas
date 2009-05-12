@@ -56,8 +56,9 @@ type
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _MeshID: integer);
-      // Remappable
+      // Palette Related
       procedure ChangeRemappable (_Colour : TColor);
+      procedure ChangePalette(const _Filename: string);
       // GUI
       procedure SetSelection(_value: boolean);
       // Copies
@@ -324,12 +325,21 @@ begin
    LOD[CurrentLOD].ForceTransparencyExceptOnAMesh(_Level,_MeshID);
 end;
 
-// Remappable
+// Palette Related
 procedure TModel.ChangeRemappable(_Colour: TColor);
 begin
    if Palette <> nil then
    begin
       Palette^.ChangeRemappable(_Colour);
+      RebuildModel;
+   end;
+end;
+
+procedure TModel.ChangePalette(const _Filename: string);
+begin
+   if Palette <> nil then
+   begin
+      Palette^.LoadPalette(_Filename);
       RebuildModel;
    end;
 end;

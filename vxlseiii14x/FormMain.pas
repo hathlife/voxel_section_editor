@@ -337,6 +337,8 @@ type
     CCFilefront1: TMenuItem;
     Animation1: TMenuItem;
     SpeedButton14: TSpeedButton;
+    TSPalettes: TMenuItem;
+    RA2Palettes: TMenuItem;
     procedure CCFilefront1Click(Sender: TObject);
     procedure CNCNZcom1Click(Sender: TObject);
     procedure ProjectSVN1Click(Sender: TObject);
@@ -569,6 +571,7 @@ type
     procedure Idle(Sender: TObject; var Done: Boolean);
     procedure BuildUsedColoursArray;
     function CharToStr: string;
+    procedure ApplyPalette(const _Filename: string);
   public
     { Public declarations }
     {IsEditable,}IsVXLLoading : boolean;
@@ -592,7 +595,7 @@ implementation
 {$R *.dfm}
 
 uses FormHeaderUnit,LoadForm,FormNewSectionSizeUnit,FormPalettePackAbout,HVA,FormReplaceColour,FormVoxelTexture,
-  FormHVA,FormBoundsManager, FormImportSection,FormFullResize,FormPreferences,FormVxlError;
+  FormBoundsManager, FormImportSection,FormFullResize,FormPreferences,FormVxlError;
 
 procedure RunAProgram (const theProgram, itsParameters, defaultDirectory : string);
 var rslt     : integer;
@@ -3264,21 +3267,37 @@ end;
 
 procedure TFrmMain.iberianSunPalette1Click(Sender: TObject);
 begin
-   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
-   cnvPalette.Repaint;
+   ApplyPalette(ExtractFileDir(ParamStr(0)) + '\palettes\TS\unittem.pal');
 end;
 
 procedure TFrmMain.RedAlert2Palette1Click(Sender: TObject);
 begin
-   Document.Palette^.LoadPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
+   ApplyPalette(ExtractFileDir(ParamStr(0)) + '\palettes\RA2\unittem.pal');
+end;
+
+procedure TFrmMain.ApplyPalette(const _Filename: string);
+begin
+   Document.Palette^.LoadPalette(_Filename);
+   if Actor <> nil then
+      Actor^.ChangePalette(_Filename);
+   if p_Frm3DPreview <> nil then
+   begin
+      p_Frm3DPreview^.Actor.ChangePalette(_Filename);
+   end;
    cnvPalette.Repaint;
 end;
 
+
 Procedure TFrmMain.LoadPalettes;
+const
+   C_MAX_PAL_DIRS = 2;
+   PaletteDirs: array[0..C_MAX_PAL_DIRS] of string = ('palettes\TS\', 'palettes\RA2\', 'palettes\USER\');
 var
    f: TSearchRec;
    path: String;
    item: TMenuItem;
+   i,c : integer;
+   PaletteMenuItems: array[0..C_MAX_PAL_DIRS] of TMenuItem;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: LoadPalettes');
@@ -3286,32 +3305,40 @@ begin
    // prepare
    PaletteList.Data_no := 0;
    SetLength(PaletteList.Data,PaletteList.Data_no);
-   Custom1.Visible := false;
+   i := 0;
+   PaletteMenuItems[0] := TSPalettes;
+   PaletteMenuItems[1] := RA2Palettes;
+   PaletteMenuItems[2] := Custom1;
+   while i <= C_MAX_PAL_DIRS do
+   begin
+      PaletteMenuItems[i].Visible := false;
+      path := Concat(ExtractFilePath(ParamStr(0)) + PaletteDirs[i],'*.pal');
+      c := 0;
+      // find files
+      if FindFirst(path,faAnyFile,f) = 0 then
+      repeat
+         SetLength(PaletteList.Data,PaletteList.Data_no+1);
 
-   path := Concat(ExtractFilePath(ParamStr(0)) + '\palettes\USER\','*.pal');
-   // find files
-   if FindFirst(path,faAnyFile,f) = 0 then
-   repeat
-      SetLength(PaletteList.Data,PaletteList.Data_no+1);
+         item := TMenuItem.Create(Owner);
+         item.Caption := copy(f.Name,1,length(f.Name)-length(extractfileext(f.Name)));
+         PaletteList.Data[PaletteList.Data_no] := ExtractFilePath(ParamStr(0)) + PaletteDirs[i] + f.Name;
+         item.Tag := PaletteList.Data_no; // so we know which it is
+         item.OnClick := blank1Click;
 
-      item := TMenuItem.Create(Owner);
-      item.Caption := copy(f.Name,1,length(f.Name)-length(extractfileext(f.Name)));
-      PaletteList.Data[PaletteList.Data_no] := ExtractFilePath(ParamStr(0)) + '\palettes\USER\' + f.Name;
-      item.Tag := PaletteList.Data_no; // so we know which it is
-      item.OnClick := blank1Click;
-
-      Custom1.Insert(PaletteList.Data_no,item);
-      Custom1.Visible := true;
-      N18.Visible := true;
-      inc(PaletteList.Data_no);
-   until FindNext(f) <> 0;
+         PaletteMenuItems[i].Insert(c,item);
+         PaletteMenuItems[i].Visible := true;
+         N18.Visible := true;
+         inc(PaletteList.Data_no);
+         inc(c);
+      until FindNext(f) <> 0;
+      inc(i);
+   end;
    FindClose(f);
 end;
 
 procedure TFrmMain.blank1Click(Sender: TObject);
 begin
-   Document.Palette^.LoadPalette(PaletteList.Data[TMenuItem(Sender).tag]);
-   cnvPalette.Repaint;
+   ApplyPalette(PaletteList.Data[TMenuItem(Sender).tag]);
 end;
 
 Procedure TFrmMain.CheckVXLChanged;
