@@ -1340,6 +1340,8 @@ object FrmMain: TFrmMain
         OnMouseDown = OGL3DPreviewMouseDown
         OnMouseMove = OGL3DPreviewMouseMove
         OnMouseUp = OGL3DPreviewMouseUp
+        ExplicitLeft = 5
+        ExplicitTop = 477
       end
       object Panel7: TPanel
         Left = 1

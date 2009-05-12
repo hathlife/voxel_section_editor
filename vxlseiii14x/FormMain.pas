@@ -2397,7 +2397,7 @@ begin
          p_Frm3DPreview^.Actor.Clear;
       end;
       p_Frm3DPreview^.Actor.Add(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,false);
-      p_Frm3DPreview^.CurrentSectionOnly1Click(nil);
+      p_Frm3DPreview^.SetActorModelTransparency;
 
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
@@ -2846,8 +2846,10 @@ end;
 
 procedure TFrmMain.Display3dView1Click(Sender: TObject);
 begin
+
    Display3dView1.Checked := not Display3dView1.Checked;
    Disable3dView1.Checked := Display3dView1.Checked;
+   Env.SetIsEnabled(not Display3dView1.Checked);
 
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Display3DView1Click');
@@ -2855,17 +2857,19 @@ begin
    if Display3dView1.Checked then
    begin
       if p_Frm3DPreview = nil then
-         Application.OnIdle := nil
+      begin
+         Application.OnIdle := nil;
+      end
       else
       begin
-         if @Application.OnIdle = nil then
-            Application.OnIdle := Idle;
+         Application.OnIdle := Idle;
       end;
-      OGL3DPreview.Refresh;
    end
    else
-      if @Application.OnIdle = nil then
-         Application.OnIdle := Idle;
+   begin
+      Application.OnIdle := Idle;
+   end;
+   OGL3DPreview.Refresh;
 end;
 
 procedure TFrmMain.About1Click(Sender: TObject);
@@ -2979,126 +2983,141 @@ end;
 
 procedure TFrmMain.MirrorLeftToRight1Click(Sender: TObject);
 var
-  FlipFirst: Boolean;
+   FlipFirst: Boolean;
 begin
-  FlipFirst:=False;
-  if (Sender.ClassNameIs('TMenuItem')) then begin
-    if CompareStr((Sender as TMenuItem).Name,'MirrorLeftToRight1')=0 then begin
-      //flip first!
-      FlipFirst:=True;
-//      ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
-    end;
-  end;
+   FlipFirst:=False;
+   if (Sender.ClassNameIs('TMenuItem')) then
+   begin
+      if CompareStr((Sender as TMenuItem).Name,'MirrorLeftToRight1')=0 then
+      begin
+         //flip first!
+         FlipFirst:=True;
+//       ActiveSection.FlipMatrix([1,-1,1],[0,1,0]);
+      end;
+   end;
 
-  CreateVXLRestorePoint(Document.ActiveSection^,Undo);
-  UpdateUndo_RedoState;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
 
-  //Based on the current view...
-  case Document.ActiveSection^.View[0].GetViewNameIdx of
-    0:
-    begin
-      if FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
-      Document.ActiveSection^.Mirror(oriY);
-    end;
-    1:
-    begin
-      //reverse here :) (reversed view, that's why!)
-      if not FlipFirst then Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
-      Document.ActiveSection^.Mirror(oriY);
-    end;
-    2:
-    begin
-      if FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
-      Document.ActiveSection^.Mirror(oriX);
-    end;
-    3:
-    begin
-      if not FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
-      Document.ActiveSection^.Mirror(oriX);
-    end;
-    4:
-    begin
-      if FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
-      Document.ActiveSection^.Mirror(oriX);
-    end;
-    5:
-    begin
-      if not FlipFirst then Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
-      Document.ActiveSection^.Mirror(oriX);
-    end;
-  end;
-  RefreshAll;
-  VXLChanged := true;
+   //Based on the current view...
+   case Document.ActiveSection^.View[0].GetViewNameIdx of
+      0:
+      begin
+         if FlipFirst then
+            Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+         Document.ActiveSection^.Mirror(oriY);
+      end;
+      1:
+      begin
+         //reverse here :) (reversed view, that's why!)
+         if not FlipFirst then
+            Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+         Document.ActiveSection^.Mirror(oriY);
+      end;
+      2:
+      begin
+         if FlipFirst then
+            Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+         Document.ActiveSection^.Mirror(oriX);
+      end;
+      3:
+      begin
+         if not FlipFirst then
+            Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+         Document.ActiveSection^.Mirror(oriX);
+      end;
+      4:
+      begin
+         if FlipFirst then
+            Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+         Document.ActiveSection^.Mirror(oriX);
+      end;
+      5:
+      begin
+         if not FlipFirst then
+            Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+         Document.ActiveSection^.Mirror(oriX);
+      end;
+   end;
+   RefreshAll;
+   VXLChanged := true;
 end;
 
 procedure TFrmMain.MirrorBackToFront1Click(Sender: TObject);
 begin
-CreateVXLRestorePoint(Document.ActiveSection^,Undo);
-UpdateUndo_RedoState;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
 
-FlipXswitchFrontBack1Click(Sender);
-Document.ActiveSection^.Mirror(oriX);
-RefreshAll;
-VXLChanged := true;
+   FlipXswitchFrontBack1Click(Sender);
+   Document.ActiveSection^.Mirror(oriX);
+   RefreshAll;
+   VXLChanged := true;
 end;
 
 procedure TFrmMain.MirrorFrontToBack1Click(Sender: TObject);
 begin
-CreateVXLRestorePoint(Document.ActiveSection^,Undo);
-UpdateUndo_RedoState;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
 
-Document.ActiveSection^.Mirror(oriX);
-RefreshAll;
-VXLChanged := true;
+   Document.ActiveSection^.Mirror(oriX);
+   RefreshAll;
+   VXLChanged := true;
 end;
 
 procedure TFrmMain.Nudge1Left1Click(Sender: TObject);
 var
-  i: Integer;
-  NR: Array[0..2] of Single;
+   i: Integer;
+   NR: Array[0..2] of Single;
 begin
-  NR[0]:=0; NR[1]:=0; NR[2]:=0;
-  if (Sender.ClassNameIs('TMenuItem')) then begin
-    if (CompareStr((Sender as TMenuItem).Name,'Nudge1Left1')=0) or (CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0) then begin
-    //left and right
-      case Document.ActiveSection^.View[0].GetViewNameIdx of
-        0: NR[1]:=-1;
-        1: NR[1]:=1;
-        2: NR[0]:=-1;
-        3: NR[0]:=1;
-        4: NR[0]:=-1;
-        5: NR[0]:=1;
+   NR[0]:=0; NR[1]:=0; NR[2]:=0;
+   if (Sender.ClassNameIs('TMenuItem')) then
+   begin
+      if (CompareStr((Sender as TMenuItem).Name,'Nudge1Left1')=0) or (CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0) then
+      begin
+         //left and right
+         case Document.ActiveSection^.View[0].GetViewNameIdx of
+            0: NR[1]:=-1;
+            1: NR[1]:=1;
+            2: NR[0]:=-1;
+            3: NR[0]:=1;
+            4: NR[0]:=-1;
+            5: NR[0]:=1;
+         end;
+         if CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0 then
+         begin
+            for i:=0 to 2 do
+            begin
+               NR[i]:=-NR[i];
+            end;
+         end;
+      end
+      else
+      begin
+         //up and down
+         case Document.ActiveSection^.View[0].GetViewNameIdx of
+            0: NR[2]:=-1;
+            1: NR[2]:=-1;
+            2: NR[2]:=-1;
+            3: NR[2]:=-1;
+            4: NR[1]:=-1;
+            5: NR[1]:=-1;
+         end;
+         if CompareStr((Sender as TMenuItem).Name,'Nudge1up1')=0 then
+         begin
+            for i:=0 to 2 do
+            begin
+               NR[i]:=-NR[i];
+            end;
+         end;
       end;
-      if CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0 then begin
-        for i:=0 to 2 do begin
-          NR[i]:=-NR[i];
-        end;
-      end;
-    end else begin
-      //up and down
-      case Document.ActiveSection^.View[0].GetViewNameIdx of
-        0: NR[2]:=-1;
-        1: NR[2]:=-1;
-        2: NR[2]:=-1;
-        3: NR[2]:=-1;
-        4: NR[1]:=-1;
-        5: NR[1]:=-1;
-      end;
-      if CompareStr((Sender as TMenuItem).Name,'Nudge1up1')=0 then begin
-        for i:=0 to 2 do begin
-          NR[i]:=-NR[i];
-        end;
-      end;
-    end;
-  end;
+   end;
 
-  CreateVXLRestorePoint(Document.ActiveSection^,Undo);
-  UpdateUndo_RedoState;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
 
-  Document.ActiveSection^.FlipMatrix([1,1,1],NR,False);
-
-  RefreshAll;
-  VXLChanged := true;
+   Document.ActiveSection^.FlipMatrix([1,1,1],NR,False);
+   RefreshAll;
+   VXLChanged := true;
 end;
 
 procedure TFrmMain.Section2Click(Sender: TObject);
@@ -4503,7 +4522,16 @@ begin
          Application.OnIdle := Idle;
    end
    else
-      Application.OnIdle := nil;
+   begin
+      if p_Frm3DPreview = nil then
+      begin
+         Application.OnIdle := nil;
+      end
+      else
+      begin
+         Application.OnIdle := Idle;
+      end;
+   end;
 end;
 
 procedure TFrmMain.FormDeactivate(Sender: TObject);

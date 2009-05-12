@@ -71,6 +71,7 @@ type
          procedure RenderNormals;
          procedure RenderColours;
          procedure ForceRefresh;
+         procedure SetIsEnabled(_value: boolean);
 
          // Adds
          function AddCamera: PCamera;
@@ -425,6 +426,13 @@ procedure TRenderEnvironment.ForceRefresh;
 begin
    FUpdateWorld := true;
 end;
+
+procedure TRenderEnvironment.SetIsEnabled(_value: boolean);
+begin
+   IsEnabled := _value;
+   FUpdateWorld := true;
+end;
+
 
 // Adds
 function TRenderEnvironment.AddCamera: PCamera;
