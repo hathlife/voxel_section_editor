@@ -132,6 +132,7 @@ end;
 
 function C3DPointList.GetX: integer;
 begin
+   Result := 0;
    if Active <> nil then
    begin
       Result := Active^.x;
@@ -140,6 +141,7 @@ end;
 
 function C3DPointList.GetY: integer;
 begin
+   Result := 0;
    if Active <> nil then
    begin
       Result := Active^.y;
@@ -148,6 +150,7 @@ end;
 
 function C3DPointList.GetZ: integer;
 begin
+   Result := 0;
    if Active <> nil then
    begin
       Result := Active^.z;

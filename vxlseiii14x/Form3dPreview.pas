@@ -155,9 +155,6 @@ uses FormMain, GlobalVars;
 
 {------------------------------------------------------------------}
 procedure TFrm3DPReview.FormCreate(Sender: TObject);
-var
-   pfd : TPIXELFORMATDESCRIPTOR;
-   pf  : Integer;
 begin
    IsReady := false;
    // OpenGL initialization
@@ -610,7 +607,7 @@ end;
 
 procedure TFrm3DPReview.SpeedButton2Click(Sender: TObject);
 begin
-   Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-30);
+   Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-150);
 end;
 
 Procedure TFrm3DPReview.Reset3DView;

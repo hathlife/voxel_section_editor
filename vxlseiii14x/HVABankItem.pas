@@ -52,8 +52,6 @@ begin
 end;
 
 constructor THVABankItem.Create(const _HVA: PHVA);
-var
-   i : integer;
 begin
    HVA := THVA.Create(_HVA^);
    Counter := 1;

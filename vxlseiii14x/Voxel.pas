@@ -411,9 +411,9 @@ begin
    // Copy anything else.
    spectrum := _VoxelSection.spectrum;
    MaxNormal := _VoxelSection.MaxNormal;
-   X := _VoxelSection.X;
-   Y := _VoxelSection.Y;
-   Z := _VoxelSection.Z;
+   Self.X := _VoxelSection.X;
+   Self.Y := _VoxelSection.Y;
+   Self.Z := _VoxelSection.Z;
    for i := 0 to 2 do
    begin
       View[i].Assign(_VoxelSection.View[i]);

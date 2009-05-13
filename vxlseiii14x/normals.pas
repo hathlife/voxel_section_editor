@@ -114,14 +114,14 @@ function TNormals.ReadNormal(_id: longword): TVector3f;
 begin
    if FResolution = C_RES_INFINITE then
    begin
-      if (_id >= Low(FPalette^)) and (_id <= High(FPalette^)) then
+      if (_id <= High(FPalette^)) then
          Result := CopyVector((FPalette^)[_id])
       else
          Result := SetVector(0,0,0);
    end
    else
    begin
-      if (_id >= 0) and (_id <= High(FPalette^)) then
+      if (_id <= High(FPalette^)) then
          Result := CopyVector((FPalette^)[_id])
       else
          Result := SetVector(0,0,0);
@@ -168,7 +168,7 @@ procedure TNormals.SetNormal(_id: longword; _normal: TVector3f);
 begin
    if FResolution = C_RES_INFINITE then
    begin
-      if (_id >= 0) and (_id <= High(FPalette^)) then
+      if (_id <= High(FPalette^)) then
       begin
          (FPalette^)[_id].X := _Normal.X;
          (FPalette^)[_id].Y := _Normal.Y;
@@ -250,7 +250,7 @@ end;
 
 function TNormals.AddNormal(const _Normal : TVector3f): longword;
 var
-   i : longword;
+   i : integer;
 begin
    Result := $FFFFFFFF;
    if FResolution = C_RES_INFINITE then

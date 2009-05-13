@@ -171,7 +171,6 @@ implementation
       // clean up and return NULL
 
          GlobalFree(hDIB);
-         hDIB := 0;
          SelectPalette(hDC, hPal, TRUE);
          RealizePalette(hDC);
          ReleaseDC(0, hDC);
@@ -190,7 +189,6 @@ implementation
       // clean up and return NULL
 
          GlobalUnlock(hDIB);
-         hDIB := 0;
          SelectPalette(hDC, hPal, TRUE);
          RealizePalette(hDC);
          ReleaseDC(0, hDC);

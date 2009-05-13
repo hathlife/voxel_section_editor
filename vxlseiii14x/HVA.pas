@@ -194,7 +194,7 @@ end;
 function THVA.LoadFromFile(const _Filename: String): boolean;
 var
    f : file;
-   read,x,y : integer;
+   x: integer;
 begin
    Result := false;
    if not FileExists(_Filename) then exit;
@@ -222,8 +222,6 @@ begin
 end;
 
 procedure THVA.AddBlankFrame;
-var
-   x : integer;
 begin
    inc(Header.N_Frames);
 
@@ -405,7 +403,6 @@ end;
 
 Function THVA.GetAngle_RAD(_Section,_Frames : Integer) : TVector3f;
 var
-   cy,x,y,z : single;
    M : TMatrix;
    T : TTransformations;
 begin
@@ -460,7 +457,6 @@ end;
 
 Function THVA.SetAngle(_Section,_Frames : Integer; _x,_y,_z : single) : TVector3f;
 var
-   Angles,CosAngles,SinAngles : TVector3f;
    M : TMatrix;
 begin
    M := GetMatrix(_Section,_Frames);
@@ -515,8 +511,6 @@ begin
 end;
 
 Procedure THVA.CopyFrame(FrameNumber : integer);
-var
-   y,z,i : integer;
 begin
    InsertFrame(FrameNumber);
 

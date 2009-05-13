@@ -202,8 +202,6 @@ begin
 end;
 
 procedure TModel.OpenVoxelSection(const _VoxelSection : PVoxelSection);
-var
-   i : integer;
 begin
    // We may use an existing voxel.
    SetLength(LOD,1);
@@ -298,8 +296,6 @@ end;
 
 // Refresh OpenGL List
 procedure TModel.RefreshModel;
-var
-   i : integer;
 begin
    LOD[CurrentLOD].RefreshLOD;
 end;

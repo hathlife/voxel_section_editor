@@ -1934,7 +1934,6 @@ var
    x,y,z : integer;
    v : tvoxelunpacked;
    image : TBitmap;
-   hDIB : THandle;
    clipboardFormat : UINT;
    clipboardData : HGLOBAL;
    clipboardPtr : PChar;
@@ -1977,7 +1976,6 @@ begin
                   image.Canvas.Pixels[z,y] := GetVXLPaletteColor(v.Normal);
          end;
       GlobalUnlock(clipboardData);
-      clipboardPtr := NIL;
    end;
 
    if Vxl.View[0].GetOrient = oriY then
@@ -2007,7 +2005,6 @@ begin
                   image.Canvas.Pixels[x,z] := GetVXLPaletteColor(v.Normal);
          end;
       GlobalUnlock(clipboardData);
-      clipboardPtr := NIL;
    end;
 
    if Vxl.View[0].GetOrient = oriZ then
@@ -2037,7 +2034,6 @@ begin
                   image.Canvas.Pixels[x,y] := GetVXLPaletteColor(v.Normal);
          end;
       GlobalUnlock(clipboardData);
-      clipboardPtr := NIL;
    end;
    Clipboard.Open();
    Clipboard.Clear();

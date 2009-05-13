@@ -659,8 +659,6 @@ end;
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
    i : integer;
-   pfd : TPIXELFORMATDESCRIPTOR;
-   pf  : Integer;
 begin
    // 1.32: Debug adition
    {$ifdef DEBUG_FILE}
@@ -1241,7 +1239,7 @@ var
    l: Integer;
    Reg: TRegistry;
    LatestVersion: string;
-   VoxelName,HVAName: string;
+   VoxelName: string;
 begin
    frm:=TLoadFrm.Create(Self);
    if testbuild then
@@ -1474,7 +1472,7 @@ end;
 
 procedure TFrmMain.SpeedButton2Click(Sender: TObject);
 begin
-   Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-30);
+   Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-150);
 end;
 
 procedure TFrmMain.btn3DRotateXClick(Sender: TObject);
@@ -3229,7 +3227,7 @@ end;
 procedure TFrmMain.mnuHistoryClick(Sender: TObject);
 var
    p: ^TMenuItem;
-   s,VoxelName,HVAName : string;
+   s,VoxelName : string;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: MenuHistoryClick');
@@ -3662,7 +3660,6 @@ var
    path:  string;
    Filename: string;
    item, item2: TMenuItem;
-   {c,}x: integer;
    s:     TStringList;
    Split: string;
    GameType: string;
@@ -4213,7 +4210,7 @@ end;
 procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
 var
    tempvxl : TVoxel;
-   i, SectionIndex,tempsectionindex,u1,u2,{u3,}num: Integer;
+   i, SectionIndex,tempsectionindex: Integer;
    frm: Tfrmimportsection;
 begin
    if not isEditable then exit;
