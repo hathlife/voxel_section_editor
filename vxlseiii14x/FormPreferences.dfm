@@ -39,19 +39,23 @@ object FrmPreferences: TFrmPreferences
     Top = 88
     Width = 297
     Height = 265
-    Caption = 'File Assosiation'
+    Caption = 'File Association'
     TabOrder = 0
     object PageControl1: TPageControl
       Left = 8
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = TabSheet1
+      ActivePage = TabSheet3
       Style = tsFlatButtons
       TabOrder = 0
       object TabSheet1: TTabSheet
         Caption = 'File_assosiation_tab'
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object AssociateCheck: TCheckBox
           Left = 0
           Top = 8
@@ -101,6 +105,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -136,7 +144,6 @@ object FrmPreferences: TFrmPreferences
           ItemHeight = 16
           TabOrder = 1
           Images = FrmMain.ImageList1
-          DropDownCount = 8
         end
         object ComboBox1: TComboBoxEx
           Left = 32
@@ -148,7 +155,36 @@ object FrmPreferences: TFrmPreferences
           ItemHeight = 16
           TabOrder = 2
           Images = FrmMain.ImageList1
-          DropDownCount = 8
+        end
+      end
+      object TabSheet3: TTabSheet
+        Caption = 'TabSheet3'
+        ImageIndex = 2
+        TabVisible = False
+        object Label3: TLabel
+          Left = 199
+          Top = 3
+          Width = 65
+          Height = 13
+          Caption = 'frames p/ sec'
+        end
+        object CbFPSCap: TCheckBox
+          Left = 3
+          Top = 3
+          Width = 142
+          Height = 17
+          Caption = 'Limit 3D Viewers FPS to'
+          TabOrder = 0
+        end
+        object SpFPSCap: TSpinEdit
+          Left = 141
+          Top = 1
+          Width = 52
+          Height = 22
+          MaxValue = 0
+          MinValue = 0
+          TabOrder = 1
+          Value = 0
         end
       end
     end
@@ -165,10 +201,11 @@ object FrmPreferences: TFrmPreferences
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
     Items.NodeData = {
-      01020000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      01030000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
       0011460069006C00650020004100730073006F00630069006100740069006F00
       6E007300270000000000000000000000FFFFFFFFFFFFFFFF0000000000000000
-      07500061006C006500740074006500}
+      07500061006C0065007400740065002D0000000000000000000000FFFFFFFFFF
+      FFFFFF00000000000000000A3300440020004F007000740069006F006E007300}
   end
   object Panel1: TPanel
     Left = 0

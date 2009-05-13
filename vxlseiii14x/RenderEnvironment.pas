@@ -37,9 +37,9 @@ type
          Width : longword;
          Height: longword;
          // Time
-         StartTime, ElapsedTime, LastTime : DWord;
          FFrequency : int64;
          FoldTime : int64;
+         DesiredTimeRate : int64;
          // Colours
          BackgroundColour,FontColour : TVector3f;
          // Counters
@@ -135,9 +135,9 @@ begin
    // Start without models
    ActorList := nil;
    // Setup time.
-   StartTime := GetTickCount();
    QueryPerformanceFrequency(FFrequency); // get high-resolution Frequency
    QueryPerformanceCounter(FoldTime);
+   DesiredTimeRate := 0;
    // Lighting settings
    LightAmb := SetVector4f(134/255, 134/255, 134/255, 1.0);
    LightDif := SetVector4f(172/255, 172/255, 172/255, 1.0);
@@ -210,12 +210,17 @@ begin
    if CurrentCamera = nil then exit;
 
    // Calculate time and FPS
-   LastTime :=ElapsedTime;
-   ElapsedTime := GetTickCount() - StartTime;     // Calculate Elapsed Time
-   ElapsedTime :=(LastTime + ElapsedTime) DIV 2; // Average it out for smoother movement
-
    QueryPerformanceCounter(temp);
    t2 := temp - FoldTime;
+   if DesiredTimeRate > 0 then
+   begin
+      if t2 < DesiredTimeRate then
+      begin
+         sleep(Round(1000 * (DesiredTimeRate - t2) / FFrequency));
+         QueryPerformanceCounter(temp);
+         t2 := temp - FoldTime;
+      end;
+   end;
    FoldTime := temp;
    FPS := FFrequency/t2;
    wglMakeCurrent(dc,rc);        // Make the DC the rendering Context

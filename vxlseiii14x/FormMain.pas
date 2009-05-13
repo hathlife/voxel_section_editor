@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.10';
+   APPLICATION_VER = '1.39.20';
 
 type
   TFrmMain = class(TForm)
@@ -701,6 +701,7 @@ begin
    Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
    Actor := Env.AddActor;
    Camera := Env.CurrentCamera^;
+   GlobalVars.Render.SetFPS(Config.FPSCap);
    SetIsEditable(False);
    //FrmMain.DoubleBuffered := true;
    //MainPaintPanel.DoubleBuffered := true;

@@ -6,6 +6,10 @@ uses Windows, dglOpenGL, RenderEnvironment;
 
 type
    TRender = class
+      private
+         FPSCap : longword;
+         // Misc
+         procedure ForceFPS;
       public
          Environment: PRenderEnvironment;
 
@@ -15,6 +19,8 @@ type
          procedure ClearAllEnvironments;
          // Render
          procedure Render;
+         // Sets
+         procedure SetFPS(_FPS: longword);
          // Adds and Removes.
          function AddEnvironment(_Handle : THandle; _width, _height : longword): PRenderEnvironment;
          procedure RemoveEnvironment(var _Environment: PRenderEnvironment);
@@ -33,6 +39,13 @@ destructor TRender.Destroy;
 begin
    ClearAllEnvironments;
    inherited Destroy;
+end;
+
+// Sets
+procedure TRender.SetFPS(_FPS: longword);
+begin
+   FPSCap := _FPS;
+   ForceFPS;
 end;
 
 // Adds
@@ -105,12 +118,29 @@ end;
 
 procedure TRender.Render;
  var
-    CurrentEnv : PRenderEnvironment;
+   CurrentEnv : PRenderEnvironment;
 begin
    CurrentEnv := Environment;
    while CurrentEnv <> nil do
    begin
       CurrentEnv^.Render;
+      CurrentEnv := CurrentEnv^.Next;
+   end;
+end;
+
+// Misc
+procedure TRender.ForceFPS;
+var
+   Frequency: int64;
+   DesiredTimeRate : int64;
+   CurrentEnv : PRenderEnvironment;
+begin
+   QueryPerformanceFrequency(Frequency); // get high-resolution Frequency
+   DesiredTimeRate := Round(Frequency / FPSCap);
+   CurrentEnv := Environment;
+   while CurrentEnv <> nil do
+   begin
+      CurrentEnv^.DesiredTimeRate := DesiredTimeRate;
       CurrentEnv := CurrentEnv^.Next;
    end;
 end;

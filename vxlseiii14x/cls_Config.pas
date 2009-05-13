@@ -23,6 +23,7 @@ type
          Icon: Integer;
          Assoc,Palette: Boolean;
          TS,RA2 : string;
+         FPSCap : longword;
          constructor Create();
          destructor Destroy(); override;
          procedure AddFileToHistory(FileName: String);
@@ -98,6 +99,11 @@ begin
     else
       RA2:='RA2';
 
+    if Reg.ValueExists('FPSCap') then
+      FPSCap := Reg.ReadInteger('FPSCap')
+    else
+      FPSCap := 70;
+
   finally
     Reg.CloseKey;
     Reg.Free;
@@ -135,6 +141,7 @@ begin
   Reg.WriteBool('Palette',Palette);
   Reg.WriteString('TS',TS);
   Reg.WriteString('RA2',RA2);
+  Reg.WriteInteger('FPSCap',FPSCap);
 
   Reg.CloseKey;
   Reg.Free;

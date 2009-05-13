@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ImgList, StdCtrls, ComCtrls, ExtCtrls, Registry, Voxel_Engine;
+  Dialogs, ImgList, StdCtrls, ComCtrls, ExtCtrls, Registry, Voxel_Engine, Spin;
 
 type
   TFrmPreferences = class(TForm)
@@ -32,6 +32,10 @@ type
     Panel2: TPanel;
     Button4: TButton;
     Button1: TButton;
+    TabSheet3: TTabSheet;
+    CbFPSCap: TCheckBox;
+    SpFPSCap: TSpinEdit;
+    Label3: TLabel;
     procedure BtnApplyClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure IconIDChange(Sender: TObject);
@@ -59,7 +63,7 @@ var
 
 implementation
 
-uses FormMain;
+uses FormMain, GlobalVars;
 
 {$R *.dfm}
 
@@ -116,6 +120,12 @@ begin
       Config.RA2 := 'RA2'
    else
       Config.RA2 := ComboBox2.Items.Strings[ComboBox2.ItemIndex];
+
+   if cbFPSCap.Checked then
+      Config.FPSCap := StrToIntDef(SpFPSCap.Text,70)
+   else
+      Config.FPSCap := 0;
+   GlobalVars.Render.SetFPS(Config.FPSCap);
 
    if Reg.OpenKey('\VXLSe\DefaultIcon\',true) then
    begin
@@ -238,6 +248,8 @@ begin
          PageControl1.ActivePageIndex := 0;
       if pref_list.Selected.Text = 'Palette' then
          PageControl1.ActivePageIndex := 1;
+      if pref_list.Selected.Text = '3D Options' then
+         PageControl1.ActivePageIndex := 2;
       GroupBox1.Caption := pref_list.Selected.Text;
    end;
 end;
@@ -314,6 +326,10 @@ begin
          ComboBox2.Items.Add(ExtractFileName(PaletteList.Data[x]));
          ComboBox2.ItemsEX.Items[ComboBox2.Items.Count-1].ImageIndex := 24;
       end;
+
+   // 3D Options
+   CbFPSCap.Checked := Config.FPSCap <> 0;
+   SpFPSCap.Value := Config.FPSCap;
 end;
 
 end.
