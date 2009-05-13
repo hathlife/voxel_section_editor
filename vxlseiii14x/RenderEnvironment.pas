@@ -33,7 +33,6 @@ type
          // Font related
          FontListBase : GLuint;
          // Common Multipliers
-         Size : single;
          Width : longword;
          Height: longword;
          // Time
@@ -109,7 +108,6 @@ begin
    // Environment colours.
    BackGroundColour   := SetVector(0.549,0.666,0.921); // RGB(140,170,235)
    FontColour := SetVector(1,1,1);
-   Size      := 0.1;
    // Setup rendering context.
    Handle := _Handle;
    DC := GetDC(Handle);
@@ -322,7 +320,6 @@ begin
 
             if ShowRotations then
             begin
-               // Note: The Y from the program is still Z from the render.
                glRasterPos2i(1, Height - 19);
                glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Y) + ' ZRot:' + floattostr(CurrentCamera^.Rotation.Z)));
             end;
@@ -554,6 +551,9 @@ begin
       // If it has past this stage, the camera is valid and was part of the list.
       // Now we dispose the actor.
       _Actor^.Free;
+      // Now let's unlink other variables.
+      if CurrentActor = _Actor then
+         CurrentActor := ActorList;
       FUpdateWorld := true;
    end;
 end;
