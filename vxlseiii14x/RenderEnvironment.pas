@@ -264,7 +264,7 @@ begin
          Actor := Actor^.Next;
       end;
 
-      glColor3f(1,1,1);
+      glColor4f(1,1,1,0);
       glNormal3f(0,0,0);
       // Here we cache the existing scene in a texture.
       glEnable(GL_TEXTURE_2D);
@@ -294,14 +294,14 @@ begin
          glLoadIdentity;
          // Draw texture caching.
          glEnable(GL_TEXTURE_2D);
-         glColor3f(1,1,1);
+         glColor4f(1,1,1,0);
          DrawCacheTexture(ScreenTexture,0,0,Width,Height,GetPow2Size(Width),GetPow2Size(Height));
          glDisable(GL_TEXTURE_2D);
          // End of draw texture caching.
          // Are we screenshoting?
          if AnimFrameMax = 0 then
          begin
-            glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
+            glColor4f(FontColour.X, FontColour.Y, FontColour.Z,0);
             // No, we are not screenshoting, so show normal stats.
             glRasterPos2i(1, 2);
             glPrint(PChar('Faces: ' + IntToStr(PolyCount) + ' - Voxels: ' + IntToStr(VoxelCount)));

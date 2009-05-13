@@ -629,7 +629,17 @@ begin
       begin
          List := glGenLists(1);
          glNewList(List, GL_COMPILE);
-         RenderingProcedure();
+         if TransparencyLevel <> 0 then
+         begin
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+            RenderingProcedure();
+            glDisable(GL_BLEND);
+         end
+         else
+         begin
+            RenderingProcedure();
+         end;
          glEndList;
       end;
       // Move accordingly to the bounding box position.
@@ -646,9 +656,9 @@ begin
    glColor4f(0.5,0.5,0.5,0);
    glNormal3f(0,0,0);
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
@@ -656,9 +666,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndNoColours;
@@ -668,9 +678,9 @@ begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
@@ -679,9 +689,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithFaceNormalsAndNoColours;
@@ -691,9 +701,9 @@ begin
    f := 0;
    glColor4f(0.5,0.5,0.5,0);
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
          while (v < VerticesPerFace) do
@@ -702,9 +712,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithoutNormalsAndWithColoursPerVertex;
@@ -714,9 +724,9 @@ begin
    f := 0;
    glNormal3f(0,0,0);
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
@@ -725,9 +735,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndColours;
@@ -736,9 +746,9 @@ var
 begin
    f := 0;
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          while (v < VerticesPerFace) do
          begin
@@ -748,9 +758,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithFaceNormalsAndVertexColours;
@@ -759,9 +769,9 @@ var
 begin
    f := 0;
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
          while (v < VerticesPerFace) do
@@ -771,9 +781,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithoutNormalsAndWithFaceColours;
@@ -783,9 +793,9 @@ begin
    f := 0;
    glNormal3f(0,0,0);
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          while (v < VerticesPerFace) do
@@ -794,9 +804,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndFaceColours;
@@ -805,9 +815,9 @@ var
 begin
    f := 0;
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          while (v < VerticesPerFace) do
@@ -817,9 +827,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 procedure TMesh.RenderWithFaceNormalsAndColours;
@@ -828,9 +838,9 @@ var
 begin
    f := 0;
    i := 0;
-   while i < NumFaces do
-   begin
-      glBegin(FaceType);
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
          v := 0;
          glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
          glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
@@ -840,9 +850,9 @@ begin
             inc(v);
             inc(f);
          end;
-      glEnd();
-      inc(i);
-   end;
+         inc(i);
+      end;
+   glEnd();
 end;
 
 // Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
@@ -940,6 +950,7 @@ procedure TMesh.ForceTransparencyLevel(_TransparencyLevel : single);
 begin
    TransparencyLevel := _TransparencyLevel;
    OverrideTransparency;
+   ForceRefresh;
 end;
 
 end.

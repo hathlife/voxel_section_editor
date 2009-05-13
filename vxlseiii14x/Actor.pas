@@ -527,6 +527,7 @@ begin
          Models[i]^.ForceTransparency(_level);
       end;
    end;
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -535,6 +536,7 @@ begin
    begin
       Models[_ModelID]^.ForceTransparencyOnMesh(_Level,_MeshID);
    end;
+   RequestUpdateWorld := true;
 end;
 
 procedure TActor.ForceTransparencyExceptOnAMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -543,6 +545,7 @@ begin
    begin
       Models[_ModelID]^.ForceTransparencyExceptOnAMesh(_Level,_MeshID);
    end;
+   RequestUpdateWorld := true;
 end;
 
 end.

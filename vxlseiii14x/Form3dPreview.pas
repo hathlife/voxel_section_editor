@@ -645,7 +645,7 @@ begin
    end
    else
    begin
-      Actor.ForceTransparencyExceptOnAMesh(80,0,FrmMain.Document.ActiveSection^.Header.Number);
+      Actor.ForceTransparencyExceptOnAMesh(0.65,0,FrmMain.Document.ActiveSection^.Header.Number);
    end;
 end;
 
