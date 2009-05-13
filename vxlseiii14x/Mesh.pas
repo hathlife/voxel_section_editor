@@ -632,7 +632,7 @@ begin
          if TransparencyLevel <> 0 then
          begin
             glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+            glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
             RenderingProcedure();
             glDisable(GL_BLEND);
          end
