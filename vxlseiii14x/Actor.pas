@@ -28,6 +28,7 @@ type
       // User interface
       IsSelected : boolean;
       ColoursType : byte;
+      FactionColour: TColor;
       // Constructors
       constructor Create;
       destructor Destroy; override;
@@ -91,6 +92,7 @@ begin
    SetLength(Models,0);
    RequestUpdateWorld := false;
    ColoursType := 1;
+   FactionColour := $000000FF;
    Reset;
 end;
 
@@ -209,6 +211,7 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.RebuildModel;
+         Models[i]^.ChangeRemappable(FactionColour);
       end;
    end;
    RequestUpdateWorld := true;
@@ -486,11 +489,12 @@ procedure TActor.ChangeRemappable(_Colour: TColor);
 var
    i : integer;
 begin
+   FactionColour := _Colour;
    for i := Low(Models) to High(Models) do
    begin
       if Models[i] <> nil then
       begin
-         Models[i].ChangeRemappable(_Colour);
+         Models[i].ChangeRemappable(FactionColour);
       end;
    end;
    RequestUpdateWorld := true;
@@ -509,7 +513,8 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i].ChangePalette(_Filename);
+         Models[i]^.ChangePalette(_Filename);
+         Models[i]^.ChangeRemappable(FactionColour);
       end;
    end;
    RequestUpdateWorld := true;

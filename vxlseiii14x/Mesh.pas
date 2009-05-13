@@ -222,6 +222,7 @@ begin
             VertexMap[x,y,z] := -1;
    // Now we give the vertices an ID and count them.
    NumVertices := 0;
+   NumVoxels := 0;
    for x := Low(_Voxel.Data) to High(_Voxel.Data) do
       for y := Low(_Voxel.Data[x]) to High(_Voxel.Data[x]) do
          for z := Low(_Voxel.Data[x,y]) to High(_Voxel.Data[x,y]) do
