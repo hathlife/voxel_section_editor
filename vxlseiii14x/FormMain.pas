@@ -986,6 +986,10 @@ begin
    if High(Actor^.Models) >= 0 then
       Actor^.Clear;
    Actor^.Add(Document.ActiveSection,Document.Palette,false);
+   if p_Frm3DPreview <> nil then
+   begin
+      p_Frm3DPreview^.SetActorModelTransparency;
+   end;
    ResetUndoRedo;
    UpdateUndo_RedoState;
 
