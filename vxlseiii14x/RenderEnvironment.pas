@@ -44,6 +44,7 @@ type
          BackgroundColour,FontColour : TVector3f;
          // Counters
          PolyCount: longword;
+         VoxelCount : longword;
          FPS : single;
          // Debug related.
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
@@ -252,10 +253,11 @@ begin
 
       // Render all models.
       PolyCount := 0;
+      VoxelCount := 0;
       Actor := ActorList;
       while Actor <> nil do
       begin
-         Actor^.Render(Polycount);
+         Actor^.Render(Polycount,VoxelCount);
          Actor := Actor^.Next;
       end;
 
@@ -299,7 +301,7 @@ begin
             glColor3f(FontColour.X, FontColour.Y, FontColour.Z);
             // No, we are not screenshoting, so show normal stats.
             glRasterPos2i(1, 2);
-            glPrint(PChar('Polygons Used: ' + IntToStr(PolyCount)));
+            glPrint(PChar('Faces: ' + IntToStr(PolyCount) + ' - Voxels: ' + IntToStr(VoxelCount)));
 
             if (ShowDepth) then
             begin

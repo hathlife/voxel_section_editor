@@ -34,7 +34,7 @@ type
       procedure Clear;
       procedure Reset;
        // Execution
-      procedure Render(var _PolyCount: longword);
+      procedure Render(var _PolyCount,_VoxelCount: longword);
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
@@ -129,7 +129,7 @@ begin
    RotationAcceleration := SetVector(0,0,0);
 end;
 
-procedure TActor.Render(var _PolyCount: longword);
+procedure TActor.Render(var _PolyCount,_VoxelCount: longword);
 var
    i : integer;
 begin
@@ -140,7 +140,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.Render(_PolyCount);
+            Models[i]^.Render(_PolyCount,_VoxelCount);
          end;
       end;
    glPopMatrix;

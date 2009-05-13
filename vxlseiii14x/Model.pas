@@ -46,7 +46,7 @@ type
       function GetNumLODs: longword;
       function IsOpened : boolean;
       // Rendering methods
-      procedure Render(var _PolyCount: longword);
+      procedure Render(var _PolyCount,_VoxelCount: longword);
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
       // Refresh OpenGL List
@@ -264,13 +264,13 @@ end;
 
 
 // Rendering methods
-procedure TModel.Render(var _Polycount: longword);
+procedure TModel.Render(var _Polycount,_VoxelCount: longword);
 begin
    if IsVisible and Opened and (HVA <> nil) then
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         LOD[CurrentLOD].Render(_PolyCount,HVA);
+         LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA);
       end;
    end;
 end;

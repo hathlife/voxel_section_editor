@@ -31,6 +31,7 @@ type
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
          VerticesPerFace : byte; // for optimization purposes only.
          NumFaces : longword;
+         NumVoxels : longword; // for statistic purposes.
          Vertices : array of TVector3f;
          Normals : array of TVector3f;
          Colours : array of TVector4f;
@@ -65,7 +66,7 @@ type
          function IsOpened: boolean;
 
          // Rendering methods
-         procedure Render(var _Polycount: longword);
+         procedure Render(var _Polycount, _VoxelCount: longword);
          procedure RenderWithoutNormalsAndColours;
          procedure RenderWithVertexNormalsAndNoColours;
          procedure RenderWithFaceNormalsAndNoColours;
@@ -93,6 +94,7 @@ begin
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
    NumFaces := _NumFaces;
+   NumVoxels := 0;
    SetColoursAndNormalsType(_ColoursType,_NormalsType);
    // Let's set the face type:
    if VerticesPerFace = 4 then
@@ -145,6 +147,7 @@ begin
    ColoursType := C_COLOURS_PER_FACE;
    ID := _ID;
    TransparencyLevel := 0;
+   NumVoxels := 0;
    if _HighQuality then
    begin
       ModelizeFromVoxel(_Voxel,_Palette);
@@ -226,6 +229,7 @@ begin
             _Voxel.GetVoxel(x,y,z,v);
             if v.Used then
             begin
+               inc(NumVoxels);
                if VertexMap[x,y,z] = -1 then
                begin
                   VertexMap[x,y,z] := NumVertices;
@@ -615,11 +619,12 @@ end;
 
 
 // Rendering methods.
-procedure TMesh.Render(var _PolyCount: longword);
+procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
 begin
    if IsVisible and Opened then
    begin
       inc(_PolyCount,NumFaces);
+      inc(_VoxelCount,NumVoxels);
       if List = C_LIST_NONE then
       begin
          List := glGenLists(1);
