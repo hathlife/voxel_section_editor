@@ -116,10 +116,7 @@ var
 begin
    for i := Low(Mesh) to High(Mesh) do
    begin
-      if High(Mesh[i].Colours) = High(Mesh[i].Vertices) then
-         Mesh[i].SetColoursType(C_COLOURS_PER_VERTEX)
-      else
-         Mesh[i].SetColoursType(C_COLOURS_PER_FACE);
+      Mesh[i].ForceColoursRendering;
    end;
 end;
 

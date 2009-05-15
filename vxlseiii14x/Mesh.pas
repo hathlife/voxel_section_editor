@@ -12,6 +12,7 @@ type
       private
          NormalsType : byte;
          ColoursType : byte;
+         ColourGenStructure : byte;
          TransparencyLevel : single;
          Opened : boolean;
          // I/O
@@ -62,6 +63,7 @@ type
          procedure SetColoursType(_ColoursType: integer);
          procedure SetNormalsType(_NormalsType: integer);
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
+         procedure ForceColoursRendering;
 
          // Gets
          function IsOpened: boolean;
@@ -97,6 +99,7 @@ begin
    NumFaces := _NumFaces;
    NumVoxels := 0;
    SetColoursAndNormalsType(_ColoursType,_NormalsType);
+   ColourGenStructure := _ColoursType;
    // Let's set the face type:
    if VerticesPerFace = 4 then
       FaceType := GL_QUADS
@@ -146,6 +149,7 @@ constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; 
 begin
    Clear;
    ColoursType := C_COLOURS_PER_FACE;
+   ColourGenStructure := C_COLOURS_PER_FACE;
    ID := _ID;
    TransparencyLevel := 0;
    NumVoxels := 0;
@@ -611,6 +615,12 @@ end;
 procedure TMesh.SetColoursType(_ColoursType: integer);
 begin
    ColoursType := _ColoursType and 3;
+   SetRenderingProcedure;
+end;
+
+procedure TMesh.ForceColoursRendering;
+begin
+   ColoursType := ColourGenStructure;
    SetRenderingProcedure;
 end;
 

@@ -208,7 +208,6 @@ end;
 procedure TVoxelSection.DefaultTransforms;
 var
    i, j: integer;
-   x,y,z : single;
 begin
    Tailer.Det := 0.83333;
 
@@ -218,10 +217,6 @@ begin
             Tailer.Transform[i,j] := 1
          else
             Tailer.Transform[i,j] := 0;
-
-   X := Tailer.MaxBounds[1] - (Tailer.MaxBounds[1]-Tailer.MinBounds[1]/2);
-   Y := Tailer.MaxBounds[2] - (Tailer.MaxBounds[2]-Tailer.MinBounds[2]/2);
-   Z := Tailer.MaxBounds[3] - (Tailer.MaxBounds[3]-Tailer.MinBounds[3]/2);
 
    Tailer.MaxBounds[1] := (Tailer.XSize / 2);
    Tailer.MaxBounds[2] := (Tailer.YSize / 2);
@@ -238,14 +233,6 @@ begin
       Tailer.MaxBounds[3] := Tailer.ZSize;
       Tailer.MinBounds[3] := 0;
    end;
-
-   Tailer.MaxBounds[1] := Tailer.MaxBounds[1] + X;
-   Tailer.MaxBounds[2] := Tailer.MaxBounds[2] + Y;
-   Tailer.MaxBounds[3] := Tailer.MaxBounds[3] + Z;
-
-   Tailer.MinBounds[1] := Tailer.MinBounds[1] + X;
-   Tailer.MinBounds[2] := Tailer.MinBounds[2] + Y;
-   Tailer.MinBounds[3] := Tailer.MinBounds[3] + Z;
 end;
 
 procedure TVoxelSection.Resize(XSize,YSize,ZSize: Integer);

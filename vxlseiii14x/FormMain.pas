@@ -3129,6 +3129,7 @@ procedure TFrmMain.Section2Click(Sender: TObject);
 var
   i, SectionIndex: Integer;
   FrmNewSectionSize: TFrmNewSectionSize;
+  OldVoxelType : TVoxelType;
 begin
    if not isEditable then exit;
 
@@ -3152,7 +3153,8 @@ begin
       if not before then //after
          Inc(SectionIndex);
 
-
+      OldVoxelType := VoxelType;
+      VoxelType := vtAir;
       Document.ActiveVoxel^.InsertSection(SectionIndex,Name,X,Y,Z);
 
       SectionCombo.Items.Clear;
@@ -3164,6 +3166,7 @@ begin
       Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Document.ActiveVoxel^.Section[0].Tailer.Unknown;
       Document.ActiveHVA^.InsertSection(SectionIndex);
 
+      VoxelType := OldVoxelType;
       //MajorRepaint;
       SectionCombo.ItemIndex:=SectionIndex;
       SectionComboChange(Self);
