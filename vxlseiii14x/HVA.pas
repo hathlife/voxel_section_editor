@@ -37,6 +37,7 @@ type
          procedure ClearTM(_Number : integer);
          Function CorrectAngle(_Angle : Single) : Single;
          procedure CopyTM(Source, Dest : integer);
+         procedure CopyFrameTM(Source, Dest : integer);
       public
          Frame : longword;
          Section : longword;
@@ -54,6 +55,12 @@ type
          Procedure InsertFrame(FrameNumber : integer);
          Procedure CopyFrame(FrameNumber : integer);
          Procedure DeleteFrame(FrameNumber : Integer);
+         // Section Operations
+         procedure AddBlankSection;
+         Procedure InsertSection(_SectionNumber : integer);
+         Procedure CopySection(_Source,_Dest : integer); overload;
+         Procedure CopySection(_Source,_Dest : integer; const HVA: THVA); overload;
+         Procedure DeleteSection(_SectionNumber : Integer);
          // Gets
          Function GetMatrix(_Section,_Frames : Integer) : TMatrix; overload;
          Procedure GetMatrix(var _Res : TTransformMatrix; _Section,_Frames : Integer); overload;
@@ -221,13 +228,80 @@ begin
    Result := True;
 end;
 
+// Frame Operations
 procedure THVA.AddBlankFrame;
 begin
    inc(Header.N_Frames);
+   SetLength(TransformMatrices,Header.N_Frames*Header.N_Sections);
+   ClearFrame(Header.N_Frames-1);
+end;
 
+Procedure THVA.InsertFrame(FrameNumber : integer);
+var
+   x,i : integer;
+   TransformMatricesTemp : array of TTransformMatrix;
+begin
+   // Prepare a temporary Transformation Matrix Copy.
+   SetLength(TransformMatricesTemp,Header.N_Frames*Header.N_Sections);
+
+   // Copy the transformation matrixes from the HVA to the temp
+   for x := 0 to Header.N_Frames-1 do
+      for i := 0 to Header.N_Sections-1 do
+         GetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],i,x);
+
+   // Increase the ammount of frames from the HVA.
+   AddBlankFrame;
+
+   // Copy all info from the frames till the current frame.
+   if FrameNumber > 0 then
+      for x := 0 to FrameNumber do
+         for i := 0 to Header.N_Sections-1 do
+            SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x,i);
+
+   // Create new frames for the selected frame.
+   ClearFrame(FrameNumber);
+
+   // Copy the final part.
+   if FrameNumber+1 < Header.N_Frames-1 then
+      for x := FrameNumber+2 to Header.N_Frames-1 do
+         for i := 0 to Header.N_Sections-1 do
+            SetMatrix(TransformMatricesTemp[(x-1)*Header.N_Sections+i],x,i);
+end;
+
+Procedure THVA.CopyFrame(FrameNumber : integer);
+begin
+   InsertFrame(FrameNumber);
+
+   CopyFrameTM(FrameNumber,FrameNumber+1);
+end;
+
+Procedure THVA.DeleteFrame(FrameNumber : Integer);
+var
+   x,i : integer;
+   TransformMatricesTemp : array of TTransformMatrix;
+begin
+   // Prepare a temporary Transformation Matrix Copy.
+   SetLength(TransformMatricesTemp,Header.N_Frames*Header.N_Sections);
+
+   // Copy the transformation matrixes from the HVA to the temp
+   for x := 0 to Header.N_Frames-1 do
+      for i := 0 to Header.N_Sections-1 do
+         GetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],i,x);
+
+   // Copy all info from the frames till the current frame.
+   if FrameNumber > 0 then
+      for x := 0 to FrameNumber do
+         for i := 0 to Header.N_Sections-1 do
+            SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x,i);
+
+   // Decrease the ammount of frames from the HVA.
+   Dec(Header.N_Frames);
    SetLength(TransformMatrices,Header.N_Frames*Header.N_Sections);
 
-   ClearFrame(Header.N_Frames-1);
+   // Copy the final part.
+   for x := FrameNumber+1 to Header.N_Frames-1 do
+      for i := 0 to Header.N_Sections-1 do
+         SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x-1,i);
 end;
 
 // The number received here must be the frame as the user see.
@@ -239,6 +313,117 @@ begin
    for x := 0 to Header.N_Sections-1 do
       ClearTM(_Number*Header.N_Sections+x);
 end;
+
+
+// Section Operations
+procedure THVA.AddBlankSection;
+begin
+   InsertSection(Header.N_Sections);
+end;
+
+procedure THVA.InsertSection(_SectionNumber : integer);
+var
+   i,f,s,oldNumSections : integer;
+begin
+   oldNumSections := Header.N_Sections;
+   inc(Header.N_Sections);
+   SetLength(TransformMatrices,Header.N_Frames*Header.N_Sections);
+   i := High(TransformMatrices);
+   f := Header.N_Frames - 1;
+   while f >= 0 do
+   begin
+      s := Header.N_Sections - 1;
+      // copy frames that are after the added one.
+      while s > _SectionNumber do
+      begin
+         CopyTM((f * oldNumSections) + s,i);
+         dec(s);
+         dec(i);
+      end;
+      // make a blank current one for the inserted section.
+      ClearTM(i);
+      dec(i);
+      dec(s);
+      // copy frames that are before the added one.
+      while s >= 0 do
+      begin
+         CopyTM((f * oldNumSections) + s,i);
+         dec(s);
+         dec(i);
+      end;
+      dec(f);
+   end;
+end;
+
+procedure THVA.CopySection(_Source,_Dest : integer);
+var
+   f : integer;
+begin
+   for f := 0 to Header.N_frames - 1 do
+   begin
+      CopyTM((f * Header.N_Sections) + _Source,(f * Header.N_Sections) +  _Dest);
+   end;
+end;
+
+Procedure THVA.CopySection(_Source,_Dest : integer; const HVA: THVA);
+var
+   f,y,z : integer;
+begin
+   for f := 0 to Header.N_frames - 1 do
+   begin
+      for y := 1 to 3 do
+         for z := 1 to 4 do
+            TransformMatrices[(f * Header.N_Sections) + _Dest,y,z] := HVA.TransformMatrices[(f * Header.N_Sections) +  _Source,y,z];
+   end;
+end;
+
+procedure THVA.DeleteSection(_SectionNumber : Integer);
+var
+   TempTMs : array of TTransformMatrix;
+   i,f,s,y,z,OldNumSections : integer;
+begin
+   // The method below might be a bit stupid, but does its job.
+   // Let's backup the existing TransformationMatrices.
+   SetLength(TempTMs,High(TransformMatrices)+1);
+   for i := Low(TempTMs) to High(TempTMs) do
+   begin
+      for y := 1 to 3 do
+         for z := 1 to 4 do
+            TempTMs[i,y,z] := TransformMatrices[i,y,z];
+   end;
+   // Now we mess up with the TransformMatrices.
+   OldNumSections := Header.N_Sections;
+   dec(Header.N_Sections);
+   SetLength(TransformMatrices,Header.N_Frames*Header.N_Sections);
+   f := 0;
+   i := 0;
+   while f < Header.N_Frames do
+   begin
+      s := 0;
+      // copy all previous sections.
+      while s < _SectionNumber do
+      begin
+         for y := 1 to 3 do
+            for z := 1 to 4 do
+               TransformMatrices[i,y,z] := TempTMs[(f*OldNumSections)+s,y,z];
+         inc(s);
+         inc(i);
+      end;
+      // ignore current section
+      inc(s);
+      // copy all sections after it.
+      while s < OldNumSections do
+      begin
+         for y := 1 to 3 do
+            for z := 1 to 4 do
+               TransformMatrices[i,y,z] := TempTMs[(f*OldNumSections)+s,y,z];
+         inc(s);
+         inc(i);
+      end;
+      inc(f);
+   end;
+end;
+
 
 procedure THVA.ClearTM(_Number : Integer);
 var
@@ -468,39 +653,7 @@ begin
    SetMatrix(M,_Frames,_Section);
 end;
 
-Procedure THVA.InsertFrame(FrameNumber : integer);
-var
-   x,i : integer;
-   TransformMatricesTemp : array of TTransformMatrix;
-begin
-   // Prepare a temporary Transformation Matrix Copy.
-   SetLength(TransformMatricesTemp,Header.N_Frames*Header.N_Sections);
-
-   // Copy the transformation matrixes from the HVA to the temp
-   for x := 0 to Header.N_Frames-1 do
-      for i := 0 to Header.N_Sections-1 do
-         GetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],i,x);
-
-   // Increase the ammount of frames from the HVA.
-   AddBlankFrame;
-
-   // Copy all info from the frames till the current frame.
-   if FrameNumber > 0 then
-      for x := 0 to FrameNumber do
-         for i := 0 to Header.N_Sections-1 do
-            SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x,i);
-
-   // Create new frames for the selected frame.
-   ClearFrame(FrameNumber);
-
-   // Copy the final part.
-   if FrameNumber+1 < Header.N_Frames-1 then
-      for x := FrameNumber+2 to Header.N_Frames-1 do
-         for i := 0 to Header.N_Sections-1 do
-            SetMatrix(TransformMatricesTemp[(x-1)*Header.N_Sections+i],x,i);
-end;
-
-procedure THVA.CopyTM(Source, Dest : integer);
+procedure THVA.CopyFrameTM(Source, Dest : integer);
 var
    y,z,i : integer;
 begin
@@ -510,41 +663,15 @@ begin
             TransformMatrices[(Dest)*Header.N_Sections+i][y][z] := TransformMatrices[(Source)*Header.N_Sections+i][y][z];
 end;
 
-Procedure THVA.CopyFrame(FrameNumber : integer);
-begin
-   InsertFrame(FrameNumber);
-
-   CopyTM(FrameNumber,FrameNumber+1);
-end;
-
-Procedure THVA.DeleteFrame(FrameNumber : Integer);
+procedure THVA.CopyTM(Source, Dest : integer);
 var
-   x,i : integer;
-   TransformMatricesTemp : array of TTransformMatrix;
+   y,z : integer;
 begin
-   // Prepare a temporary Transformation Matrix Copy.
-   SetLength(TransformMatricesTemp,Header.N_Frames*Header.N_Sections);
-
-   // Copy the transformation matrixes from the HVA to the temp
-   for x := 0 to Header.N_Frames-1 do
-      for i := 0 to Header.N_Sections-1 do
-         GetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],i,x);
-
-   // Copy all info from the frames till the current frame.
-   if FrameNumber > 0 then
-      for x := 0 to FrameNumber do
-         for i := 0 to Header.N_Sections-1 do
-            SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x,i);
-
-   // Decrease the ammount of frames from the HVA.
-   Dec(Header.N_Frames);
-   SetLength(TransformMatrices,Header.N_Frames*Header.N_Sections);
-
-   // Copy the final part.
-   for x := FrameNumber+1 to Header.N_Frames-1 do
-      for i := 0 to Header.N_Sections-1 do
-         SetMatrix(TransformMatricesTemp[x*Header.N_Sections+i],x-1,i);
+   for y := 1 to 3 do
+      for z := 1 to 4 do
+         TransformMatrices[Dest,y,z] := TransformMatrices[Source,y,z];
 end;
+
 
 // Assign
 procedure THVA.Assign(const _HVA: THVA);

@@ -983,6 +983,7 @@ begin
 
    CurrentSection := SectionCombo.ItemIndex;
    ChangeSection;
+   CursorReset;
    if High(Actor^.Models) >= 0 then
       Actor^.Clear;
    Actor^.Add(Document.ActiveSection,Document.Palette,false);
@@ -2761,6 +2762,7 @@ begin
 
    SectionIndex:=Document.ActiveSection^.Header.Number;
    Document.ActiveVoxel^.RemoveSection(SectionIndex);
+   Document.ActiveHVA^.DeleteSection(SectionIndex);
 
    SectionCombo.Items.Clear;
    for i:=0 to Document.ActiveVoxel^.Header.NumSections-1 do
@@ -3160,6 +3162,7 @@ begin
       end;
 
       Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Document.ActiveVoxel^.Section[0].Tailer.Unknown;
+      Document.ActiveHVA^.InsertSection(SectionIndex);
 
       //MajorRepaint;
       SectionCombo.ItemIndex:=SectionIndex;
@@ -3192,6 +3195,8 @@ begin
    UpdateUndo_RedoState;
 
    Document.ActiveVoxel^.InsertSection(SectionIndex,'Copy Of '+Document.ActiveVoxel^.Section[SectionIndex-1].Name,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.XSize,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.YSize,Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.ZSize);
+   Document.ActiveHVA^.InsertSection(SectionIndex);
+   Document.ActiveHVA^.CopySection(SectionIndex-1,SectionIndex);
 
    for x := 0 to (Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.XSize - 1) do
       for y := 0 to (Document.ActiveVoxel^.Section[SectionIndex-1].Tailer.YSize - 1) do
@@ -4213,7 +4218,7 @@ end;
 
 procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
 var
-   tempvxl : TVoxel;
+   TempDocument : TVoxelDocument;
    i, SectionIndex,tempsectionindex: Integer;
    frm: Tfrmimportsection;
 begin
@@ -4222,39 +4227,43 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: ImportFromModel1Click');
    {$endif}
-   tempvxl := TVoxel.Create;
-
    if OpenVXLDialog.execute then
    begin
-      tempvxl.LoadFromFile(OpenVXLDialog.Filename);
+      TempDocument := TVoxelDocument.Create(OpenVXLDialog.FileName);
+      if TempDocument.ActiveVoxel = nil then
+      begin
+         TempDocument.Free;
+         exit;
+      end;
       tempsectionindex := 0;
-      if tempvxl.Header.NumSections > 1 then
+      if TempDocument.ActiveVoxel^.Header.NumSections > 1 then
       begin
          frm:=Tfrmimportsection.Create(Self);
          frm.Visible:=False;
 
          frm.ComboBox1.Items.Clear;
-         for i:=0 to tempvxl.Header.NumSections-1 do
+         for i:=0 to TempDocument.ActiveVoxel^.Header.NumSections-1 do
          begin
-            frm.ComboBox1.Items.Add(tempvxl.Section[i].Name);
+            frm.ComboBox1.Items.Add(TempDocument.ActiveVoxel^.Section[i].Name);
          end;
          frm.ComboBox1.ItemIndex:=0;
          frm.ShowModal;
          tempsectionindex := frm.ComboBox1.ItemIndex;
          frm.Free;
+
+         SectionIndex:=Document.ActiveSection^.Header.Number;
+         Inc(SectionIndex);
+         ResetUndoRedo;
+         UpdateUndo_RedoState;
+
+         Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
+         Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
+         Document.ActiveHVA^.InsertSection(SectionIndex);
+         Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
+
+         SetupSections;
+         VXLChanged := true;
       end;
-
-      SectionIndex:=Document.ActiveSection^.Header.Number;
-      Inc(SectionIndex);
-      ResetUndoRedo;
-      UpdateUndo_RedoState;
-
-      Document.ActiveVoxel^.InsertSection(SectionIndex,tempvxl.Section[tempsectionindex].Name,tempvxl.Section[tempsectionindex].Tailer.XSize,tempvxl.Section[tempsectionindex].Tailer.YSize,tempvxl.Section[tempsectionindex].Tailer.ZSize);
-      Document.ActiveVoxel^.Section[SectionIndex].Assign(tempvxl.Section[tempsectionindex]);
-
-      tempvxl.Free;
-      SetupSections;
-      VXLChanged := true;
    end;
 end;
 
