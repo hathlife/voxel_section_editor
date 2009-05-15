@@ -107,6 +107,7 @@ type
          function GenerateFilledDataParam(_Filled, _Unfilled: integer): integer;
          function IsPointOK (const x,y,z: integer) : boolean;
    end;
+   PVoxelMap = ^TVoxelMap;
 
 implementation
 
@@ -740,6 +741,11 @@ begin
    VertsAndEdgesNeighboors := TNormals.Create(8);
    MaxFace := FaceNeighboors.GetLastID;
    MaxEdge := VertsAndEdgesNeighboors.GetLastID;
+   SetLength(_SemiSurfaces,High(FMap)+1,High(FMap[0])+1,High(FMap[0,0])+1);
+   for x := Low(FMap) to High(FMap) do
+      for y := Low(FMap[0]) to High(FMap[0]) do
+         for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            _SemiSurfaces[x,y,z] := 0;
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[0]) to High(FMap[0]) do
          for z := Low(FMap[0,0]) to High(FMap[0,0]) do
@@ -763,9 +769,11 @@ begin
                if not found then
                begin
                   i := 0;
+                  // check all non-face neighboors (8 vertices and 12 edges)
                   while (i <= MaxEdge) do
                   begin
                      CurrentNormal := VertsAndEdgesNeighboors[i];
+                     // if neighboor has content, we'll estabilish a connection in the _SemiSurfaces.
                      if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= C_SURFACE) then
                      begin
                         c := SSMapPointerList[i];
@@ -773,14 +781,16 @@ begin
                         while c < maxC do
                         begin
                            CubeNormal := CubeNeighboors[SSMapVertsList[c]];
+                           if FMap[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] < C_SURFACE then
+                           begin
+                              _SemiSurfaces[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] := SSMapResultsList[c];
+                              FMap[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] := C_SEMI_SURFACE;
+                           end;
                            inc(c);
                         end;
-
                      end;
                      inc(i);
                   end;
-
-
                end;
             end;
          end;

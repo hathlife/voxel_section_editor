@@ -244,8 +244,8 @@ begin
 
       CurrentSection := 0;
       Document.ActiveVoxel^.InsertSection(0,'Body',x,y,z);
-      Document.ActiveSection^.Tailer.Unknown := Game;
       Document.ActiveSection := @(Document.ActiveVoxel^.Section[0]);
+      Document.ActiveSection^.Tailer.Unknown := Game;
    except
       VoxelOpen := false;
       exit;

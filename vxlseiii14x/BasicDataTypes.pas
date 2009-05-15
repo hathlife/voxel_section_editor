@@ -109,6 +109,7 @@ type
    TGLMatrixf4 = array[0..3, 0..3] of Single;
 
    T3DIntGrid = array of array of array of integer;
+   P3DIntGrid = ^T3DIntGrid;
 
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
    

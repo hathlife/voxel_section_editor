@@ -3,7 +3,8 @@ unit Mesh;
 interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
-      BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils;
+      BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
+      VoxelModelizer;
 
 type
    TRenderProc = procedure of object;
@@ -500,22 +501,36 @@ end;
 
 procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
-   NumVertices: longword;
    VoxelMap : TVoxelMap;
-   VertexMap : array of array of array of integer;
-   FaceMap : array of array of array of array of integer;
-   x, y, z : longword;
-   V : TVoxelUnpacked;
-   v1, v2 : boolean;
+   SemiSurfacesMap : T3DIntGrid;
+   VoxelModelizer : TVoxelModelizer;
+   x, y : integer;
 begin
    VerticesPerFace := 3;
    FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
+   // Voxel classification stage
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
-   // Voxel modelizing code goes here --->
+   VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
+   // Mesh generation process
+   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap);
+   // <--- Voxel modelizing code goes here --->
+   // Do the rest.
    CommonVoxelLoadingActions(_Voxel);
+   // Clear memory
+   VoxelModelizer.Free;
+   VoxelMap.Free;
+   for x := High(SemiSurfacesMap) downto Low(SemiSurfacesMap) do
+   begin
+      for y := High(SemiSurfacesMap[x]) downto Low(SemiSurfacesMap[x]) do
+      begin
+         SetLength(SemiSurfacesMap[x,y],0);
+      end;
+      SetLength(SemiSurfacesMap[x],0);
+   end;
+   SetLength(SemiSurfacesMap,0);
 end;
 
 procedure TMesh.CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
