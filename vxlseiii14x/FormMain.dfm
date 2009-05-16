@@ -4506,7 +4506,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 823
   end
   object MainMenu1: TMainMenu
     Images = ImageList1

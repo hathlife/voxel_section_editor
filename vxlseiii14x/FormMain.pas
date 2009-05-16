@@ -4253,20 +4253,24 @@ begin
          frm.ShowModal;
          tempsectionindex := frm.ComboBox1.ItemIndex;
          frm.Free;
-
-         SectionIndex:=Document.ActiveSection^.Header.Number;
-         Inc(SectionIndex);
-         ResetUndoRedo;
-         UpdateUndo_RedoState;
-
-         Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
-         Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
-         Document.ActiveHVA^.InsertSection(SectionIndex);
-         Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
-
-         SetupSections;
-         VXLChanged := true;
       end;
+      SetIsEditable(false);
+      SectionIndex:=Document.ActiveSection^.Header.Number;
+      Inc(SectionIndex);
+      Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
+      Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
+      Document.ActiveHVA^.InsertSection(SectionIndex);
+      Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
+      //MajorRepaint;
+      SectionCombo.ItemIndex:=SectionIndex;
+      SectionComboChange(Self);
+
+      ResetUndoRedo;
+      UpdateUndo_RedoState;
+      SetIsEditable(true);
+
+      SetupSections;
+      VXLChanged := true;
    end;
 end;
 
