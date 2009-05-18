@@ -332,9 +332,9 @@ begin
    f := Header.N_Frames - 1;
    while f >= 0 do
    begin
-      s := Header.N_Sections - 1;
+      s := oldNumSections - 1;
       // copy frames that are after the added one.
-      while s > _SectionNumber do
+      while s >= _SectionNumber do
       begin
          CopyTM((f * oldNumSections) + s,i);
          dec(s);

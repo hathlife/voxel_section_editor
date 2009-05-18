@@ -72,6 +72,7 @@ type
       constructor Create(const _VoxelSection : TVoxelSection); overload;
       destructor Destroy; override;
       procedure Resize(XSize,YSize,ZSize: Integer);
+      procedure ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
 	//Plasmadroid v1.4+ drawing tools
       //View-fix, combined with RectangleFill (for shorter code, less bugs :)
       procedure Rectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; v: TVoxelUnpacked; Fill: Boolean);
@@ -326,31 +327,18 @@ end;
 
 constructor TVoxelSection.Create(Name: string; Number, XSize,YSize,ZSize: Integer);
 begin
-   // allocate the memory
-   SetDataSize(XSize,YSize,ZSize);
    // create header
    SetHeaderName(Name);
    Header.Number := Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
-   // create tailer
-   Tailer.XSize := XSize;
-   Tailer.YSize := YSize;
-   Tailer.ZSize := ZSize;
    Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
    Normals := TNormals.Create(2);
 
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
 
-   Tailer.MaxBounds[1] := 0;
-   Tailer.MaxBounds[2] := 0;
-   Tailer.MaxBounds[3] := 0;
-
-   Tailer.MinBounds[1] := 0;
-   Tailer.MinBounds[2] := 0;
-   Tailer.MinBounds[3] := 0;
-
-   DefaultTransforms;
+   // allocate the memory
+   Resize(XSize,YSize,ZSize);
    // clear it
    Clear;
 end;
@@ -403,6 +391,8 @@ begin
    Self.Z := _VoxelSection.Z;
    for i := 0 to 2 do
    begin
+      View[i].Free;
+      View[i] := TVoxelView.Create(self,_VoxelSection.View[i].Orient, _VoxelSection.View[i].getDir);
       View[i].Assign(_VoxelSection.View[i]);
       View[i].Voxel := self;
       Viewport[i].Left := _VoxelSection.Viewport[i].Left;
@@ -425,6 +415,25 @@ begin
    Normals := TNormals.Create(2);
    Assign(_VoxelSection);
 end;
+
+procedure TVoxelSection.ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
+begin
+   // create header
+   SetHeaderName(Name);
+   Header.Number := Number;
+   Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
+   Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
+   Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
+   Normals := TNormals.Create(2);
+
+   Tailer.Det:=1/12; //oops, forgot to set Det part correctly
+
+   // allocate the memory
+   Resize(XSize,YSize,ZSize);
+   // clear it
+   Clear;
+end;
+
 
 destructor TVoxelSection.Destroy;
 begin
@@ -1629,13 +1638,14 @@ var
 begin
    //SectionIndex contains the index of the *new* section to create...
    SetLength(Section,Header.NumSections+1);
+   Section[High(Section)] := TVoxelSection.Create;
    for i:=Header.NumSections-1 downto SectionIndex do
    begin
-      Section[i+1]:=Section[i];
+      Section[i+1].Assign(Section[i]);
       Section[i+1].Header.Number:=i+1;
    end;
-   Section[SectionIndex]:=TVoxelSection.Create(Name,SectionIndex,XSize,YSize,ZSize);
-   Section[SectionIndex].InitViews;
+   Section[SectionIndex].Clear;
+   Section[SectionIndex].ReCreate(Name,SectionIndex,XSize,YSize,ZSize);
    Inc(Header.NumSections);
    Inc(Header.NumSections2);
 end;

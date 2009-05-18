@@ -225,10 +225,20 @@ end;
 
 procedure TModel.RebuildLOD(i: integer);
 var
-   j : integer;
+   j,start : integer;
 begin
    if Voxel <> nil then
    begin
+      if Voxel^.Header.NumSections > LOD[i].GetNumMeshes then
+      begin
+         start := LOD[i].GetNumMeshes;
+         SetLength(LOD[i].Mesh,Voxel^.Header.NumSections);
+         for j := start to Voxel^.Header.NumSections - 1 do
+         begin
+            LOD[i].Mesh[j] := TMesh.CreateFromVoxel(j,Voxel^.Section[j],Palette^,HighQuality);
+            LOD[i].Mesh[j].Next := j+1;
+         end;
+      end;
       for j := Low(LOD[i].Mesh) to High(LOD[i].Mesh) do
       begin
          LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[j],Palette^,HighQuality);

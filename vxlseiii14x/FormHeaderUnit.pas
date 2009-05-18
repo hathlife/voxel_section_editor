@@ -5,7 +5,7 @@ interface
 uses
   Windows, Forms, StdCtrls, Controls, Classes, ExtCtrls, Voxel, Sysutils,
   Buttons, Dialogs, Grids, Graphics,math, ComCtrls, Spin, Voxel_Engine,
-  BasicDataTypes;
+  BasicDataTypes, HVA;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -69,6 +69,8 @@ type
     GrpVoxelType: TGroupBox;
     rbLand: TRadioButton;
     rbAir: TRadioButton;
+    SpFrame: TSpinEdit;
+    procedure SpFrameChange(Sender: TObject);
     procedure cmbSectionChange(Sender: TObject);
     procedure butCloseClick(Sender: TObject);
     procedure txtChange(Sender: TObject);
@@ -80,9 +82,10 @@ type
   private
     { Private declarations }
     p: PVoxel;
+    HVA : PHVA;
   public
     { Public declarations }
-    procedure SetValues(Vox: PVoxel);
+    procedure SetValues(Vox: PVoxel; _HVA: PHVA);
   end;
 
 var
@@ -94,11 +97,12 @@ uses FormMain;
 
 {$R *.DFM}
 
-procedure TFrmHeader.SetValues(Vox: PVoxel);
+procedure TFrmHeader.SetValues(Vox: PVoxel; _HVA: PHVA);
 var
    i: Integer;
 begin
    p:=Vox;
+   HVA := _HVA;
    label2.caption:='File Type: '+p^.Header.FileType;
    label3.caption:='Unknown: '+IntToStr(p^.Header.Unknown);
    label4.caption:='Num Sections: '+IntToStr(p^.Header.NumSections) + ' - ' +IntToStr(p^.Header.NumSections2);
@@ -117,6 +121,9 @@ begin
    begin
       cmbSection.Items.Add(p^.Section[i].Name);
    end;
+   SpFrame.MinValue := 1;
+   SpFrame.MaxValue := HVA^.Header.N_Frames;
+   SpFrame.Value := 1;
    cmbSection.ItemIndex:=0;
    cmbSectionChange(Self);
 end;
@@ -185,31 +192,8 @@ begin
    With p^.Section[i].Tailer do
    begin
       label1.Caption:='Dimentions: '+Format('%dx%dx%d', [XSize,YSize,ZSize]);
-//    txtTrailer.Lines.Add(Format('Normals mode: %d', [Unknown]));
-//    txtTrailer.Lines.Add(Format('Size:    %dx%dx%d', [XSize,YSize,ZSize]));
-//this is file information, doens't interest user.
-      {txtTrailer.Lines.Add(Format('SpanStart: %d, End: %d, Data: %d', [SpanStartOfs, SpanEndOfs, SpanDataOfs]));
-      txtTrailer.Lines.Add(Format('Scale:   %g', [Det]));
-      txtTrailer.Lines.Add('');
-      txtTrailer.Lines.Add('Transformation matrix:');
-      for j:=1 to 3 do begin
-         txtTrailer.Lines.Add(Format('%g %g %g %g', [Transform[j,1],Transform[j,2],Transform[j,3],Transform[j,4]]));
-      end;     }
-      for j:=1 to 3 do
-      begin
-         for k:=1 to 4 do
-         begin
-            grdTrans.Cells[k-1,j-1]:=FloatToStr(Transform[j,k]);
-         end;
-      end;
-  //  txtTrailer.Lines.Add('');
-      { for j:=1 to 3 do begin
-         txtTrailer.Lines.Add(Format('Scale '+Chr(87+j)+' min: %g', [MinBounds[j]]));
-      end;
-      for j:=1 to 3 do begin
-         txtTrailer.Lines.Add(Format('Scale '+Chr(87+j)+' max: %g', [MaxBounds[j]]));
-      end;}
    end;
+   SpFrameChange(Sender);
 end;
 
 procedure TFrmHeader.butCloseClick(Sender: TObject);
@@ -273,19 +257,22 @@ end;
 procedure TFrmHeader.grdTransSetEditText(Sender: TObject; ACol,
   ARow: Integer; const Value: String);
 var
-   i,j,k: Integer;
+   i,j,k,Frame: Integer;
+   M : TTransformMatrix;
 begin
    i:=cmbSection.ItemIndex;
-   if i>=0 then
+   Frame := StrToIntDef(SpFrame.Text,0);
+   if (i>=0) and (Frame > 0) then
    begin
       try
          for j:=1 to 3 do
          begin
             for k:=1 to 4 do
             begin
-               p^.Section[i].Tailer.Transform[j,k]:=StrToFloat(grdTrans.Cells[k-1,j-1]);
+               M[j,k]:=StrToFloat(grdTrans.Cells[k-1,j-1]);
             end;
          end;
+         HVA^.SetMatrix(M,Frame,i);
       except
          on EConvertError do
          begin
@@ -313,6 +300,28 @@ begin
          scaleZmax.text := floattostr(Tailer.ZSize);
          scaleZmin.text := floattostr(0);
       end;
+   end;
+end;
+
+procedure TFrmHeader.SpFrameChange(Sender: TObject);
+var
+   MyValue,i,j: integer;
+begin
+   MyValue := StrToIntDef(SpFrame.Text,0);
+   if (MyValue >= SpFrame.MinValue) and (MyValue <= SpFrame.MaxValue) then
+   begin
+      for i:=1 to 3 do
+      begin
+         for j:=1 to 4 do
+         begin
+            grdTrans.Cells[j-1,i-1]:=FloatToStr(HVA^.GetTMValue(i,j,cmbSection.ItemIndex,MyValue));
+         end;
+      end;
+   end
+   else
+   begin
+      SpFrame.Value := SpFrame.MinValue;
+      SpFrameChange(Sender);
    end;
 end;
 

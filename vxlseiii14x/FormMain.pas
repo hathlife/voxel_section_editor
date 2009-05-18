@@ -2623,7 +2623,7 @@ begin
    FrmHeader:=TFrmHeader.Create(Self);
    with FrmHeader do
    begin
-      SetValues(Document.ActiveVoxel);
+      SetValues(Document.ActiveVoxel,Document.ActiveHVA);
       PageControl1.ActivePage := PageControl1.Pages[1];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
@@ -2644,7 +2644,7 @@ begin
    FrmHeader:=TFrmHeader.Create(Self);
    with FrmHeader do
    begin
-      SetValues(Document.ActiveVoxel);
+      SetValues(Document.ActiveVoxel,Document.ActiveHVA);
       PageControl1.ActivePage := PageControl1.Pages[0];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
@@ -4259,6 +4259,7 @@ begin
       Inc(SectionIndex);
       Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
       Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
+      Document.ActiveVoxel^.Section[SectionIndex].Header.Number := SectionIndex;
       Document.ActiveHVA^.InsertSection(SectionIndex);
       Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
       //MajorRepaint;
