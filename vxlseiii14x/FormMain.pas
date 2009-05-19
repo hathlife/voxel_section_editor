@@ -951,7 +951,7 @@ begin
    {$endif}
    RefreshViews;
    RepaintViews;
-   if Actor <> nil then
+   if (Actor <> nil) and (not Display3dView1.Checked) then
       Actor^.RebuildActor;
    if p_Frm3DPreview <> nil then
    begin

@@ -394,6 +394,7 @@ var
    r: TRect;
    PalIdx : integer;
    Viewport: TViewport;
+   Bitmap : TBitmap;
    f : boolean;
 begin
    {$ifdef DEBUG_FILE}
@@ -414,9 +415,12 @@ begin
    end;
    if View = nil then Exit;
    Viewport := FrmMain.Document.ActiveSection^.Viewport[WndIndex];
+   Bitmap := TBitmap.Create;
+   Bitmap.Width := Cnv.Width;
+   Bitmap.Height := Cnv.Height;
    // fill margins around shape
-   Cnv.Canvas.Brush.Style := bsSolid;
-   Cnv.Canvas.Brush.Color := BGViewColor;
+   Bitmap.Canvas.Brush.Style := bsSolid;
+   Bitmap.Canvas.Brush.Color := BGViewColor;
    // left side?
    if (Viewport.Left > 0) then
    begin
@@ -427,8 +431,7 @@ begin
          Top := 0;
          Bottom := Cnv.Height;
       end;
-      with Cnv.Canvas do
-         FillRect(r);
+      Bitmap.Canvas.FillRect(r);
    end;
    // right side?
    if (Viewport.Left + (Viewport.Zoom * View.Width)) < Cnv.Width then
@@ -440,8 +443,7 @@ begin
          Top := 0;
          Bottom := Cnv.Height;
       end;
-      with Cnv.Canvas do
-         FillRect(r);
+      Bitmap.Canvas.FillRect(r);
    end;
    // top
    if (Viewport.Top > 0) then
@@ -453,8 +455,7 @@ begin
          Top := 0;
          Bottom := Viewport.Top;
       end;
-      with Cnv.Canvas do
-         FillRect(r);
+      Bitmap.Canvas.FillRect(r);
    end;
    // bottom
    if (Viewport.Top + (Viewport.Zoom * View.Height)) < Cnv.Height then
@@ -466,12 +467,11 @@ begin
          Left := 0;
          Right := Cnv.Width;
       end;
-      with Cnv.Canvas do
-         FillRect(r);
+      Bitmap.Canvas.FillRect(r);
    end;
-   Cnv.Canvas.Brush.Style := bsSolid;
+   Bitmap.Canvas.Brush.Style := bsSolid;
    // paint view
-   Cnv.Canvas.Pen.Color := clRed; //VXLPalette[Transparent];
+   Bitmap.Canvas.Pen.Color := clRed; //VXLPalette[Transparent];
    for x := 0 to (View.Width - 1) do
    begin
       r.Left := (x * Viewport.Zoom) + Viewport.Left;
@@ -498,37 +498,7 @@ begin
 
             f := false;
 
-            if WndIndex = 0 then
-            if tempview.Data_no > 0 then
-            begin
-               for xx := 1 to tempview.Data_no do
-               begin
-                  if (View.getViewNameIdx = 1) or (View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
-                     txx := View.Width - 1-tempview.data[xx].X
-                  else
-                     txx := tempview.data[xx].X;
-
-                  if (txx = x) and (View.Height - 1-tempview.data[xx].Y = y) then
-                  begin
-                     if tempview.data[xx].VU then
-                     begin
-                        if tempview.data[xx].V.Used then
-                           PalIdx := tempview.data[xx].V.Normal;
-                     end
-                     else
-                     begin
-                        if SpectrumMode = ModeColours then
-                           PalIdx := ActiveColour
-                        else
-                           PalIdx := ActiveNormal;
-                     end;
-
-                     f := true;
-                  end;
-               end;
-            end;
-
-            with Cnv.Canvas do
+            with Bitmap.Canvas do
             begin
                Brush.Color := GetVXLPaletteColor(PalIdx);
                if ((ViewMode = ModeEmphasiseDepth) and (wndindex=0) and (View.Canvas[x,y].Depth = View.Foreground)) or (f = true) then
@@ -556,41 +526,97 @@ begin
       end;
    end;
 
+   if WndIndex = 0 then
+      if tempview.Data_no > 0 then
+      begin
+         for xx := 1 to tempview.Data_no do
+         begin
+            if (View.getViewNameIdx = 1) or (View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
+               x := View.Width - 1-tempview.data[xx].X
+            else
+               x := tempview.data[xx].X;
+            y := View.Height - 1-tempview.data[xx].Y;
+            if tempview.data[xx].VU then
+            begin
+               if tempview.data[xx].V.Used then
+                  PalIdx := tempview.data[xx].V.Normal;
+            end
+            else
+            begin
+               if SpectrumMode = ModeColours then
+                  PalIdx := ActiveColour
+               else
+                  PalIdx := ActiveNormal;
+            end;
+            r.Left := (x * Viewport.Zoom) + Viewport.Left;
+            r.Right := r.Left + Viewport.Zoom;
+            r.Top := (y * Viewport.Zoom) + Viewport.Top;
+            r.Bottom := r.Top + Viewport.Zoom;
+            with Bitmap.Canvas do
+            begin
+               Brush.Color := GetVXLPaletteColor(PalIdx);
+               if Viewport.Zoom = 1 then
+                  Pixels[r.Left,r.Top] := Pen.Color
+               else
+                  Rectangle(r.Left,r.Top,r.Right,r.Bottom)
+{$IFDEF DEBUG_NORMALS}
+               if (SpectrumMode = ModeNormals) then
+                  if (PalIdx > -1) then
+                     if Viewport.Zoom > 10 then
+                     begin
+                        Font.Color := GetVXLPalette[PalIdx] shr 2;
+                        TextOut(r.Left,r.Top,IntToStr(View.Canvas[x,y].Colour));
+                     end;
+{$ENDIF}
+            end;
+         end;
+      end;
+
+
    // draw cursor, but not if drawing!
    if not isMouseLeftDown then
    begin
       View.getPhysicalCursorCoords(x,y);
 
       //set brush color, or else it will get the color of the bottom-right voxel
-      Cnv.Canvas.Brush.Color:= BGViewColor;
+      Bitmap.Canvas.Brush.Color:= BGViewColor;
 
       // vert
       r.Top := Max(Viewport.Top,0);
       r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height);
       r.Left := (x * Viewport.Zoom) + Viewport.Left + (Viewport.Zoom div 2) - 1;
       r.Right := r.Left + 2;
-      Cnv.Canvas.DrawFocusRect(r);
+      Bitmap.Canvas.DrawFocusRect(r);
 
       // horiz
       r.Left := Max(Viewport.Left,0);
       r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width);
       r.Top := (y * Viewport.Zoom) + Viewport.Top + (Viewport.Zoom div 2) - 1;
       r.Bottom := r.Top + 2;
-      Cnv.Canvas.DrawFocusRect(r);
+      Bitmap.Canvas.DrawFocusRect(r);
    end
    else
    begin
       View.getPhysicalCursorCoords(x,y);
 
       //set brush color, or else it will get the color of the bottom-right voxel
-      Cnv.Canvas.Brush.Color:= clbtnface;
+      Bitmap.Canvas.Brush.Color:= clbtnface;
       // vert
       r.Top := Max(Viewport.Top,0)-1;
       r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height)+1;
       r.Left := Max(Viewport.Left,0)-1;
       r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width)+1;
-      Cnv.Canvas.FrameRect(r);
+      Bitmap.Canvas.FrameRect(r);
    end;
+   with r do
+   begin // top
+      Left := 0;
+      Right := Cnv.Width;
+      Top := 0;
+      Bottom := Cnv.Height;
+   end;
+   Cnv.Canvas.CopyRect(r,Bitmap.Canvas,r);
+   Bitmap.Free;
 end;
 
 procedure PaintView2(WndIndex: Integer; isMouseLeftDown : boolean; var Cnv: PPaintBox; var View: TVoxelView);
@@ -685,139 +711,144 @@ begin
    Bitmap.Canvas.Pen.Color := clRed; //VXLPalette[Transparent];
    for x := 0 to (View.Width - 1) do
    begin
-         r.Left := (x * Viewport.Zoom) + Viewport.Left;
-         r.Right := r.Left + Viewport.Zoom;
-         if r.Right < 0 then Continue; // not visible checks
-         if r.Left > Cnv.Width then Continue; // not visible checks
-         r.Top := Viewport.Top;
-         r.Bottom := r.Top + Viewport.Zoom;
-         for y := 0 to (View.Height - 1) do begin
-             if (r.Bottom >= 0) and (r.Top <= Cnv.Height) then begin // not visible checks
-                if (ViewMode = ModeCrossSection) and (wndindex=0) then begin
-                   if View.Canvas[x,y].Depth = View.Foreground then
-                      PalIdx := View.Canvas[x,y].Colour
-                   else
-                       PalIdx := VIEWBGCOLOR;
-                end else if View.Canvas[x,y].Colour = VTRANSPARENT then // ModeFull or ModeEmpDepth
-                    PalIdx := VIEWBGCOLOR
-                else
-                    PalIdx := View.Canvas[x,y].Colour;
+      r.Left := (x * Viewport.Zoom) + Viewport.Left;
+      r.Right := r.Left + Viewport.Zoom;
+      if r.Right < 0 then
+         Continue; // not visible checks
+      if r.Left > Cnv.Width then
+         Continue; // not visible checks
+      r.Top := Viewport.Top;
+      r.Bottom := r.Top + Viewport.Zoom;
+      for y := 0 to (View.Height - 1) do
+      begin
+         if (r.Bottom >= 0) and (r.Top <= Cnv.Height) then
+         begin // not visible checks
+            if (ViewMode = ModeCrossSection) and (wndindex=0) then
+            begin
+               if View.Canvas[x,y].Depth = View.Foreground then
+                  PalIdx := View.Canvas[x,y].Colour
+               else
+                  PalIdx := VIEWBGCOLOR;
+            end
+            else if View.Canvas[x,y].Colour = VTRANSPARENT then // ModeFull or ModeEmpDepth
+               PalIdx := VIEWBGCOLOR
+            else
+               PalIdx := View.Canvas[x,y].Colour;
 
-                f := false;
-
-                {if WndIndex = 0 then
-                if tempview.Data_no > 0 then
-                begin
-                if View.getViewNameIdx = 3 then
-                txx := tempview.Data[xx].X
-                else
-                txx := tempview.Data[xx].X;
-                end;}
-
-                if WndIndex = 0 then
-                if tempview.Data_no > 0 then
-                begin
-                for xx := 1 to tempview.Data_no do
-                begin
-
-                if (View.getViewNameIdx = 1) or(View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
-                txx := View.Width - 1-tempview.data[xx].X
-                else
-                txx := tempview.data[xx].X;
-
-                if (txx = x) and (View.Height - 1-tempview.data[xx].Y = y) then
-                if tempview.data[xx].VU then
-                begin
-                if SpectrumMode = ModeColours then
-                PalIdx := tempview.data[xx].V.Colour
-                else
-                PalIdx := tempview.data[xx].V.Normal;
-                f := true;
-                end;
-
-                end;
-                end;
-
-                with Bitmap.Canvas do begin
-                     Brush.Color := GetVXLPaletteColor(PalIdx);
-                     if ((ViewMode = ModeEmphasiseDepth) and (wndindex=0) and
-                        (View.Canvas[x,y].Depth = View.Foreground)) or (f = true) then begin
-                        if Viewport.Zoom = 1 then
-                           Pixels[r.Left,r.Top] := Pen.Color
-                        else
-                            Rectangle(r.Left,r.Top,r.Right,r.Bottom)
-                     end else
-                         FillRect(r);
+            with Bitmap.Canvas do
+            begin
+               Brush.Color := GetVXLPaletteColor(PalIdx);
+               if ((ViewMode = ModeEmphasiseDepth) and (wndindex=0) and (View.Canvas[x,y].Depth = View.Foreground)) then
+               begin
+                  if Viewport.Zoom = 1 then
+                     Pixels[r.Left,r.Top] := Pen.Color
+                  else
+                     Rectangle(r.Left,r.Top,r.Right,r.Bottom)
+               end
+               else
+                  FillRect(r);
 {$IFDEF DEBUG_NORMALS}
-                     if (SpectrumMode = ModeNormals) then
-                        if (PalIdx > -1) then
-                           if Viewport.Zoom > 10 then begin
-                              Font.Color := VXLPalette[PalIdx] shr 2;
-                              TextOut(r.Left,r.Top,IntToStr(View.Canvas[x,y].Colour));
-                           end;
-{$ENDIF}
-                end;
-             end;
-             Inc(r.Top,Viewport.Zoom);
-             Inc(r.Bottom,Viewport.Zoom);
+               if (SpectrumMode = ModeNormals) then
+                  if (PalIdx > -1) then
+                     if Viewport.Zoom > 10 then
+                     begin
+                        Font.Color := VXLPalette[PalIdx] shr 2;
+                        TextOut(r.Left,r.Top,IntToStr(View.Canvas[x,y].Colour));
+                     end;
+{$ENDIF}    end;
          end;
-     end;
+         Inc(r.Top,Viewport.Zoom);
+         Inc(r.Bottom,Viewport.Zoom);
+      end;
+   end;
 
-     // draw temporary display lines (eg. measure tool)
-     if (TempLines.Data_no > 0) and (WndIndex = 0) then
-        for lineIndex := 0 to TempLines.Data_no - 1 do
-        begin
-           Bitmap.Canvas.MoveTo(TempLines.Data[lineIndex].x1,TempLines.Data[lineIndex].y1);
-           Bitmap.Canvas.Pen.Width := TempLines.Data[lineIndex].width;
-           Bitmap.Canvas.Pen.Color := TempLines.Data[lineIndex].colour;
-           Bitmap.Canvas.LineTo(TempLines.Data[lineIndex].x2,TempLines.Data[lineIndex].y2);
-        end;
+   if WndIndex = 0 then
+      if tempview.Data_no > 0 then
+      begin
+         for xx := 1 to tempview.Data_no do
+         begin
+            if (View.getViewNameIdx = 1) or(View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
+               x := View.Width - 1-tempview.data[xx].X
+            else
+               x := tempview.data[xx].X;
+            y :=  View.Height - 1-tempview.data[xx].Y;
+            if tempview.data[xx].VU then
+            begin
+               if SpectrumMode = ModeColours then
+                  PalIdx := tempview.data[xx].V.Colour
+               else
+                  PalIdx := tempview.data[xx].V.Normal;
 
-     // draw cursor, but not if drawing!
-     if not isMouseLeftDown then begin
-       View.getPhysicalCursorCoords(x,y);
+               r.Left := (x * Viewport.Zoom) + Viewport.Left;
+               r.Right := r.Left + Viewport.Zoom;
+               r.Top := (y * Viewport.Zoom) + Viewport.Top;
+               r.Bottom := r.Top + Viewport.Zoom;
+               with Bitmap.Canvas do
+               begin
+                  Brush.Color := GetVXLPaletteColor(PalIdx);
+                  Pen.Color := Brush.Color;
+                  if Viewport.Zoom = 1 then
+                     Pixels[r.Left,r.Top] := Pen.Color
+                  else
+                     Rectangle(r.Left,r.Top,r.Right,r.Bottom);
+{$IFDEF DEBUG_NORMALS}
+                  if (SpectrumMode = ModeNormals) then
+                     if (PalIdx > -1) then
+                        if Viewport.Zoom > 10 then
+                        begin
+                           Font.Color := GetVXLPalette[PalIdx] shr 2;
+                           TextOut(r.Left,r.Top,IntToStr(View.Canvas[x,y].Colour));
+                        end;
+{$ENDIF}       end;
+            end;
+         end;
+      end;
 
-       //set brush color, or else it will get the color of the bottom-right voxel
-       Bitmap.Canvas.Brush.Color:= BGViewColor;
+   // draw temporary display lines (eg. measure tool)
+   if (TempLines.Data_no > 0) and (WndIndex = 0) then
+      for lineIndex := 0 to TempLines.Data_no - 1 do
+      begin
+         Bitmap.Canvas.MoveTo(TempLines.Data[lineIndex].x1,TempLines.Data[lineIndex].y1);
+         Bitmap.Canvas.Pen.Width := TempLines.Data[lineIndex].width;
+         Bitmap.Canvas.Pen.Color := TempLines.Data[lineIndex].colour;
+         Bitmap.Canvas.LineTo(TempLines.Data[lineIndex].x2,TempLines.Data[lineIndex].y2);
+      end;
 
-       // vert
-       r.Top := Max(Viewport.Top,0);
-       r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height);
-       r.Left := (x * Viewport.Zoom) + Viewport.Left + (Viewport.Zoom div 2) - 1;
-       r.Right := r.Left + 2;
-       Bitmap.Canvas.DrawFocusRect(r);
+   // draw cursor, but not if drawing!
+   if not isMouseLeftDown then
+   begin
+      View.getPhysicalCursorCoords(x,y);
+      //set brush color, or else it will get the color of the bottom-right voxel
+      Bitmap.Canvas.Brush.Color:= BGViewColor;
+      // vert
+      r.Top := Max(Viewport.Top,0);
+      r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height);
+      r.Left := (x * Viewport.Zoom) + Viewport.Left + (Viewport.Zoom div 2) - 1;
+      r.Right := r.Left + 2;
+      Bitmap.Canvas.DrawFocusRect(r);
+      // horiz
+      r.Left := Max(Viewport.Left,0);
+      r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width);
+      r.Top := (y * Viewport.Zoom) + Viewport.Top + (Viewport.Zoom div 2) - 1;
+      r.Bottom := r.Top + 2;
+      Bitmap.Canvas.DrawFocusRect(r);
+   end
+   else
+   begin
+      View.getPhysicalCursorCoords(x,y);
+      //set brush color, or else it will get the color of the bottom-right voxel
+      Bitmap.Canvas.Brush.Color:= clbtnface;
+      // vert
+      r.Top := Max(Viewport.Top,0)-1;
+      r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height)+1;
+      r.Left := Max(Viewport.Left,0)-1;
+      r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width)+1;
+      Bitmap.Canvas.DrawFocusRect(r);
+   end;
 
-       // horiz
-       r.Left := Max(Viewport.Left,0);
-       r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width);
-       r.Top := (y * Viewport.Zoom) + Viewport.Top + (Viewport.Zoom div 2) - 1;
-       r.Bottom := r.Top + 2;
-       Bitmap.Canvas.DrawFocusRect(r);
-     end
-     else
-     begin
-       View.getPhysicalCursorCoords(x,y);
-
-       //set brush color, or else it will get the color of the bottom-right voxel
-       Bitmap.Canvas.Brush.Color:= clbtnface;
-       // vert
-       r.Top := Max(Viewport.Top,0)-1;
-       r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height)+1;
-       r.Left := Max(Viewport.Left,0)-1;
-       r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width)+1;
-       Bitmap.Canvas.DrawFocusRect(r);
-
-      { // horiz
-       r.Left := Max(Viewport.Left,0);
-       r.Right := Min(Viewport.Left + (View.Width * Viewport.Zoom), Cnv.Width);
-       r.Top := Viewport.Top;
-       r.Bottom := r.Top + 2;
-       Cnv.Canvas.DrawFocusRect(r);    }
-     end;
-
-     Cnv.Canvas.Draw(0,0,Bitmap); // Draw to Canvas, should stop flickerings
-     //Cnv.Canvas.TextOut(0,0,'hmm');
-     Bitmap.Free;
+   Cnv.Canvas.Draw(0,0,Bitmap); // Draw to Canvas, should stop flickerings
+   //Cnv.Canvas.TextOut(0,0,'hmm');
+   Bitmap.Free;
 end;
 
 function colourtogray(colour : cardinal): cardinal;
