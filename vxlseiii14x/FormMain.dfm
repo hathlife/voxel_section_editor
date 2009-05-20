@@ -33,7 +33,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 823
     object LeftPanel: TPanel
       Left = 1
       Top = 26
@@ -41,7 +40,6 @@ object FrmMain: TFrmMain
       Height = 815
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 796
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1248,7 +1246,6 @@ object FrmMain: TFrmMain
       Height = 815
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 796
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1548,7 +1545,6 @@ object FrmMain: TFrmMain
       Height = 815
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 796
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4274,7 +4270,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 765
       end
       object Panel5: TPanel
         Left = 1
@@ -4284,7 +4279,6 @@ object FrmMain: TFrmMain
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 779
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0

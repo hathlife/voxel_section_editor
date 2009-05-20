@@ -125,7 +125,7 @@ type
       Header: TVoxelHeader;
       Section: array of TVoxelSection;
       constructor Create; overload;
-      constructor Create(const _Voxel: TVoxel); overload; 
+      constructor Create(const _Voxel: TVoxel); overload;
       destructor Destroy; override;
       procedure LoadFromFile(Fname: string); // examine ErrorCode for success
       procedure SaveToFile(Fname: string); // examine ErrorCode for success
@@ -155,6 +155,7 @@ type
       Width, Height: Integer;
       Canvas: {packed} array of {packed} array of TVoxelViewCell;
       Voxel: TVoxelSection; // owner
+      RefreshMe: array [0..2] of boolean;
       constructor Create(Owner: TVoxelSection; o: EVoxelViewOrient; d: EVoxelViewDir);
       destructor Destroy; override;
       function getViewNameIdx: Integer;
@@ -1137,6 +1138,9 @@ begin
    Voxel := Owner;
    Orient := o;
    Dir := d;
+   RefreshMe[0] := false;
+   RefreshMe[1] := false;
+   RefreshMe[2] := false;
    CreateCanvas;
    CalcSwapXYZ;
    Refresh;
@@ -1199,171 +1203,311 @@ procedure TVoxelView.Refresh;
       x, y, z, // coords in model
       i, j: Integer; // screen coords
       v: TVoxelUnpacked;
+      iFactor, iOp, jFactor, jOp: integer;
    begin
       Foreground := Voxel.X;
-      for y := 0 to (Width - 1) do
-         for z := 0 to (Height - 1) do
-         begin
-            x := Foreground;
-            Voxel.GetVoxel(x,y,z,v);
-            // find voxel on the x axis
-            while not v.Used do
+      if SwapY then
+      begin
+         iFactor := Width - 1;
+         iOp := -1;
+      end
+      else
+      begin
+         iFactor := 0;
+         iOp := 1;
+      end;
+      if SwapZ then
+      begin
+         jFactor := Height - 1;
+         jOp := -1;
+      end
+      else
+      begin
+         jFactor := 0;
+         jOp := 1;
+      end;
+      // increment on the x axis
+      if Dir = dirTowards then
+      begin
+         for y := 0 to (Width - 1) do
+            for z := 0 to (Height - 1) do
             begin
-               // increment on the x axis
-               if Dir = dirTowards then
+               x := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
                begin
                   Inc(x);
                   if x >= Voxel.Tailer.XSize then // range check
                      Break; // Ok, no voxels ever to show
-               end
-               else
-               begin // Dir = dirAway
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
+               end;
+               // and set the voxel appropriately
+               i := iFactor + (iOp * y);
+               j := jFactor + (jOp * z);
+               with Canvas[i,j] do
+               begin
+                  Depth := x;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
+                  else
+                     Colour := VTRANSPARENT; // 256
+               end;
+            end;
+      end
+      else
+      begin // Dir = dirAway
+         for y := 0 to (Width - 1) do
+            for z := 0 to (Height - 1) do
+            begin
+               x := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
+               begin
                   Dec(x);
                   if x < 0 then // range check
                      Break; // Ok, no voxels ever to show
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
                end;
-               // get next
-               Voxel.GetVoxel(x,y,z,v);
-            end;
-            // and set the voxel appropriately
-            if SwapY then
-               i := Width - 1 - y
-            else
-               i := y;
-            if SwapZ then
-               j := Height - 1 - z
-            else
-               j := z;
-            with Canvas[i,j] do
-            begin
-               Depth := x;
-               if v.Used then
+               // and set the voxel appropriately
+               i := iFactor + (iOp * y);
+               j := jFactor + (jOp * z);
+               with Canvas[i,j] do
                begin
-                  if voxel.spectrum = ModeNormals then
-                     Colour := v.Normal
+                  Depth := x;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
                   else
-                     Colour := v.Colour;
-               end
-               else
-                  Colour := VTRANSPARENT; // 256
+                     Colour := VTRANSPARENT; // 256
+               end;
             end;
-         end;
+      end;
    end;
    procedure DrawY;
    var
       x, y, z, // coords in model
       i, j: Integer; // screen coords
       v: TVoxelUnpacked;
+      iFactor, iOp, jFactor, jOp: integer;
    begin
       Foreground := Voxel.Y;
-      for x := 0 to (Width - 1) do
-         for z := 0 to (Height - 1) do
-         begin
-            y := Foreground;
-            Voxel.GetVoxel(x,y,z,v);
-            // find voxel on the x axis
-            while not v.Used do
+      if SwapX then
+      begin
+         iFactor := Width - 1;
+         iOp := -1;
+      end
+      else
+      begin
+         iFactor := 0;
+         iOp := 1;
+      end;
+      if SwapZ then
+      begin
+         jFactor := Height - 1;
+         jOp := -1;
+      end
+      else
+      begin
+         jFactor := 0;
+         jOp := 1;
+      end;
+      if Dir = dirTowards then
+      begin
+         for x := 0 to (Width - 1) do
+            for z := 0 to (Height - 1) do
             begin
-               // increment on the x axis
-               if Dir = dirTowards then
+               y := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
                begin
                   Inc(y);
                   if y >= Voxel.Tailer.YSize then // range check
                      Break; // Ok, no voxels ever to show
-               end
-               else
-               begin // Dir = dirAway
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
+               end;
+               // and set the voxel appropriately
+               i := iFactor + (iOp * x);
+               j := jFactor + (jOp * z);
+               with Canvas[i,j] do
+               begin
+                  Depth := y;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
+                  else
+                     Colour := VTRANSPARENT; // 256
+               end;
+            end;
+      end
+      else
+      begin // Dir = dirAway
+         for x := 0 to (Width - 1) do
+            for z := 0 to (Height - 1) do
+            begin
+               y := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
+               begin
                   Dec(y);
                   if y < 0 then // range check
                      Break; // Ok, no voxels ever to show
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
                end;
-               // get next
-               Voxel.GetVoxel(x,y,z,v);
-             end;
-             // and set the voxel appropriately
-             if SwapX then
-               i := Width - 1 - x
-             else
-               i := x;
-             if SwapZ then
-               j := Height - 1 - z
-             else
-               j := z;
-             with Canvas[i,j] do
-             begin
-                Depth := y;
-                if v.Used then
-                begin
-                   if voxel.spectrum = ModeNormals then
-                      Colour := v.Normal
-                   else
-                      Colour := v.Colour;
-                end
-                else
-                   Colour := VTRANSPARENT; // 256
-             end;
-         end;
+               // and set the voxel appropriately
+               i := iFactor + (iOp * x);
+               j := jFactor + (jOp * z);
+               with Canvas[i,j] do
+               begin
+                  Depth := y;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
+                  else
+                     Colour := VTRANSPARENT; // 256
+               end;
+            end;
+      end;
    end;
    procedure DrawZ;
    var
       x, y, z, // coords in model
       i, j: Integer; // screen coords
       v: TVoxelUnpacked;
+      iFactor, iOp, jFactor, jOp: integer;
    begin
       Foreground := Voxel.Z;
-      for x := 0 to (Width - 1) do
-         for y := 0 to (Height - 1) do
-         begin
-            z := Foreground;
-            Voxel.GetVoxel(x,y,z,v);
-            // find voxel on the x axis
-            while not v.Used do
+      if SwapX then
+      begin
+         iFactor := Width - 1;
+         iOp := -1;
+      end
+      else
+      begin
+         iFactor := 0;
+         iOp := 1;
+      end;
+      if SwapY then
+      begin
+         jFactor := Height - 1;
+         jOp := -1;
+      end
+      else
+      begin
+         jFactor := 0;
+         jOp := 1;
+      end;
+
+      if Dir = dirTowards then
+      begin
+         for x := 0 to (Width - 1) do
+            for y := 0 to (Height - 1) do
             begin
-               // increment on the x axis
-               if Dir = dirTowards then
+               z := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
                begin
                   Inc(z);
                   if z >= Voxel.Tailer.ZSize then // range check
                      Break; // Ok, no voxels ever to show
-               end
-               else
-               begin // Dir = dirAway
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
+               end;
+               // and set the voxel appropriately
+               i := iFactor + (iOp * x);
+               j := jFactor + (jOp * y);
+               with Canvas[i,j] do
+               begin
+                  Depth := z;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
+                  else
+                     Colour := VTRANSPARENT; // 256
+               end;
+            end;
+      end
+      else
+      begin // Dir = dirAway
+         for x := 0 to (Width - 1) do
+            for y := 0 to (Height - 1) do
+            begin
+               z := Foreground;
+               Voxel.GetVoxel(x,y,z,v);
+               // find voxel on the x axis
+               while not v.Used do
+               begin
                   Dec(z);
                   if z < 0 then // range check
                      Break; // Ok, no voxels ever to show
+                  // get next
+                  Voxel.GetVoxel(x,y,z,v);
                end;
-               // get next
-               Voxel.GetVoxel(x,y,z,v);
-            end;
-            // and set the voxel appropriately
-            if SwapX then
-               i := Width - 1 - x
-            else
-               i := x;
-            if SwapY then
-               j := Height - 1 - y
-            else
-               j := y;
-            with Canvas[i,j] do
-            begin
-               Depth := z;
-               if v.Used then
+               // and set the voxel appropriately
+               i := iFactor + (iOp * x);
+               j := jFactor + (jOp * y);
+               with Canvas[i,j] do
                begin
-                  if voxel.spectrum = ModeNormals then
-                     Colour := v.Normal
+                  Depth := z;
+                  if v.Used then
+                  begin
+                     if voxel.spectrum = ModeNormals then
+                        Colour := v.Normal
+                     else
+                        Colour := v.Colour;
+                  end
                   else
-                     Colour := v.Colour;
-               end
-               else
-                  Colour := VTRANSPARENT; // 256
+                     Colour := VTRANSPARENT; // 256
+               end;
             end;
          end;
    end;
 begin
    case Orient of
-      oriX: DrawX;
-      oriY: DrawY;
-      oriZ: DrawZ;
+      oriX:
+      begin
+         DrawX;
+         RefreshMe[0] := true;
+      end;
+      oriY:
+      begin
+         DrawY;
+         RefreshMe[1] := true;
+      end;
+      oriZ:
+      begin
+         DrawZ;
+         RefreshMe[2] := true;
+      end;
    end;
 end;
 

@@ -36,6 +36,7 @@ Var
    ColourSchemes : TColourSchemes;
    OldMousePos : TPoint;
    MousePos : TPoint;
+   BitmapViews: array[0..2] of TBitmap;
    // 1.2b adition:
    UsedColours : array [0..255] of boolean;
    UsedNormals : array [0..244] of boolean;
@@ -418,6 +419,11 @@ begin
    Bitmap := TBitmap.Create;
    Bitmap.Width := Cnv.Width;
    Bitmap.Height := Cnv.Height;
+//   if View.RefreshMe[WndIndex] then
+//   begin
+
+//   end;
+     
    // fill margins around shape
    Bitmap.Canvas.Brush.Style := bsSolid;
    Bitmap.Canvas.Brush.Color := BGViewColor;
