@@ -155,7 +155,6 @@ type
       Width, Height: Integer;
       Canvas: {packed} array of {packed} array of TVoxelViewCell;
       Voxel: TVoxelSection; // owner
-      RefreshMe: array [0..2] of boolean;
       constructor Create(Owner: TVoxelSection; o: EVoxelViewOrient; d: EVoxelViewDir);
       destructor Destroy; override;
       function getViewNameIdx: Integer;
@@ -1138,9 +1137,6 @@ begin
    Voxel := Owner;
    Orient := o;
    Dir := d;
-   RefreshMe[0] := false;
-   RefreshMe[1] := false;
-   RefreshMe[2] := false;
    CreateCanvas;
    CalcSwapXYZ;
    Refresh;
@@ -1493,21 +1489,9 @@ procedure TVoxelView.Refresh;
    end;
 begin
    case Orient of
-      oriX:
-      begin
-         DrawX;
-         RefreshMe[0] := true;
-      end;
-      oriY:
-      begin
-         DrawY;
-         RefreshMe[1] := true;
-      end;
-      oriZ:
-      begin
-         DrawZ;
-         RefreshMe[2] := true;
-      end;
+      oriX: DrawX;
+      oriY: DrawY;
+      oriZ: DrawZ;
    end;
 end;
 

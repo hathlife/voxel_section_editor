@@ -272,7 +272,7 @@ begin
                M[j,k]:=StrToFloat(grdTrans.Cells[k-1,j-1]);
             end;
          end;
-         HVA^.SetMatrix(M,Frame,i);
+         HVA^.SetMatrix(M,Frame-1,i);
       except
          on EConvertError do
          begin
@@ -310,6 +310,7 @@ begin
    MyValue := StrToIntDef(SpFrame.Text,0);
    if (MyValue >= SpFrame.MinValue) and (MyValue <= SpFrame.MaxValue) then
    begin
+      MyValue := MyValue - 1;
       for i:=1 to 3 do
       begin
          for j:=1 to 4 do
