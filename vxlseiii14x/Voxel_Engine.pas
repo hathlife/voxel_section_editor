@@ -497,12 +497,10 @@ begin
             else
                PalIdx := View.Canvas[x,y].Colour;
 
-            f := false;
-
             with Bitmap.Canvas do
             begin
                Brush.Color := GetVXLPaletteColor(PalIdx);
-               if ((ViewMode = ModeEmphasiseDepth) and (wndindex=0) and (View.Canvas[x,y].Depth = View.Foreground)) or (f = true) then
+               if ((ViewMode = ModeEmphasiseDepth) and (wndindex=0) and (View.Canvas[x,y].Depth = View.Foreground)) then
                begin
                   if Viewport.Zoom = 1 then
                      Pixels[r.Left,r.Top] := Pen.Color
@@ -787,7 +785,6 @@ begin
                with Bitmap.Canvas do
                begin
                   Brush.Color := GetVXLPaletteColor(PalIdx);
-                  Pen.Color := Brush.Color;
                   if Viewport.Zoom = 1 then
                      Pixels[r.Left,r.Top] := Pen.Color
                   else
