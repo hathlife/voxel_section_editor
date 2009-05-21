@@ -56,7 +56,6 @@ type
     SpeedButton1: TSpeedButton;
     Label17: TLabel;
     BtnApply: TButton;
-    Button2: TButton;
     Label24: TLabel;
     Bevel2: TBevel;
     Panel1: TPanel;
@@ -65,7 +64,7 @@ type
     Label26: TLabel;
     Bevel3: TBevel;
     Panel2: TPanel;
-    Button3: TButton;
+    BtClose: TButton;
     GrpVoxelType: TGroupBox;
     rbLand: TRadioButton;
     rbAir: TRadioButton;
@@ -78,7 +77,7 @@ type
       const Value: String);
     procedure SpeedButton1Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
+    procedure BtCloseClick(Sender: TObject);
   private
     { Private declarations }
     p: PVoxel;
@@ -341,7 +340,7 @@ begin
       rbAir.Checked := true;
 end;
 
-procedure TFrmHeader.Button3Click(Sender: TObject);
+procedure TFrmHeader.BtCloseClick(Sender: TObject);
 begin
    Close;
 end;

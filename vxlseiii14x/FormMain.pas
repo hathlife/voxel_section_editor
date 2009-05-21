@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.23';
+   APPLICATION_VER = '1.39.24';
 
 type
   TFrmMain = class(TForm)
@@ -185,11 +185,11 @@ type
     General1: TMenuItem;
     ResourceSites1: TMenuItem;
     ools3: TMenuItem;
-    CGen1: TMenuItem;
+    Sleipnir1: TMenuItem;
     Dezire1: TMenuItem;
     PlanetCNC1: TMenuItem;
-    PixelOps1: TMenuItem;
-    ESource1: TMenuItem;
+    Marshallx1: TMenuItem;
+    Raminator1: TMenuItem;
     MadHQGraphicsDump1: TMenuItem;
     YRArgentina1: TMenuItem;
     ibEd1: TMenuItem;
@@ -222,7 +222,7 @@ type
     Nudge1Right1: TMenuItem;
     Nudge1up1: TMenuItem;
     Nudge1Down1: TMenuItem;
-    RedUtils1: TMenuItem;
+    DCoder1: TMenuItem;
     Palette1: TMenuItem;
     iberianSunPalette1: TMenuItem;
     RedAlert2Palette1: TMenuItem;
@@ -294,10 +294,10 @@ type
     VoxelTexture1: TMenuItem;
     N12: TMenuItem;
     test1: TMenuItem;
-    AcidVat1: TMenuItem;
-    RA2GraphicsHeaven1: TMenuItem;
+    GamesModding1: TMenuItem;
+    MigEater1: TMenuItem;
     CnCGuild1: TMenuItem;
-    iberiumSunCom1: TMenuItem;
+    TiberiumWeb1: TMenuItem;
     Scripts1: TMenuItem;
     SpinButton3: TSpinButton;
     SpinButton1: TSpinButton;
@@ -325,8 +325,8 @@ type
     Others1: TMenuItem;
     blank18: TMenuItem;
     MirrorFrontToBack2: TMenuItem;
-    RockTheBattlefield1: TMenuItem;
-    RenegadeProjects1: TMenuItem;
+    RockPatch2: TMenuItem;
+    ModEnc1: TMenuItem;
     RevoraCCForums1: TMenuItem;
     Display3DWindow1: TMenuItem;
     PPMModdingForums1: TMenuItem;
@@ -350,8 +350,8 @@ type
     procedure Display3DWindow1Click(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure RevoraCCForums1Click(Sender: TObject);
-    procedure RenegadeProjects1Click(Sender: TObject);
-    procedure RockTheBattlefield1Click(Sender: TObject);
+    procedure ModEnc1Click(Sender: TObject);
+    procedure RockPatch2Click(Sender: TObject);
     procedure Open1Click(Sender: TObject);
     procedure CnvView0Paint(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -477,11 +477,11 @@ type
     procedure ClearEntireSection1Click(Sender: TObject);
     procedure CnCSource1Click(Sender: TObject);
     procedure PPMForUpdates1Click(Sender: TObject);
-    procedure CGen1Click(Sender: TObject);
+    procedure Sleipnir1Click(Sender: TObject);
     procedure Dezire1Click(Sender: TObject);
     procedure PlanetCNC1Click(Sender: TObject);
-    procedure PixelOps1Click(Sender: TObject);
-    procedure ESource1Click(Sender: TObject);
+    procedure Marshallx1Click(Sender: TObject);
+    procedure Raminator1Click(Sender: TObject);
     procedure SavageWarTS1Click(Sender: TObject);
     procedure MadHQGraphicsDump1Click(Sender: TObject);
     procedure YRArgentina1Click(Sender: TObject);
@@ -501,7 +501,7 @@ type
     procedure Nudge1Left1Click(Sender: TObject);
     procedure Section2Click(Sender: TObject);
     procedure Copyofthissection1Click(Sender: TObject);
-    procedure RedUtils1Click(Sender: TObject);
+    procedure DCoder1Click(Sender: TObject);
     procedure RA2FAQ1Click(Sender: TObject);
     procedure BuildReopenMenu;
     procedure mnuHistoryClick(Sender: TObject);
@@ -540,10 +540,10 @@ type
     procedure SmoothNormals1Click(Sender: TObject);
     procedure VoxelTexture1Click(Sender: TObject);
     procedure test1Click(Sender: TObject);
-    procedure AcidVat1Click(Sender: TObject);
-    procedure RA2GraphicsHeaven1Click(Sender: TObject);
+    procedure GamesModding1Click(Sender: TObject);
+    procedure MigEater1Click(Sender: TObject);
     procedure CnCGuild1Click(Sender: TObject);
-    procedure iberiumSunCom1Click(Sender: TObject);
+    procedure TiberiumWeb1Click(Sender: TObject);
     procedure Importfrommodel1Click(Sender: TObject);
     procedure Resize1Click(Sender: TObject);
     procedure SpinButton3UpClick(Sender: TObject);
@@ -4093,9 +4093,9 @@ begin
    OpenHyperLink('http://www.ppmsite.com/index.php?go=vxlseinfo');
 end;
 
-procedure TFrmMain.CGen1Click(Sender: TObject);
+procedure TFrmMain.Sleipnir1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://cannis.net/');
+   OpenHyperLink('http://www.sleipnirstuff.com/forum/viewforum.php?f=10');
 end;
 
 procedure TFrmMain.Dezire1Click(Sender: TObject);
@@ -4113,12 +4113,12 @@ begin
    OpenHyperLink('http://www.planetcnc.com/');
 end;
 
-procedure TFrmMain.PixelOps1Click(Sender: TObject);
+procedure TFrmMain.Marshallx1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://cannis.net/pixelops/');
+   OpenHyperLink('http://marshall.strategy-x.com/');
 end;
 
-procedure TFrmMain.ESource1Click(Sender: TObject);
+procedure TFrmMain.Raminator1Click(Sender: TObject);
 begin
    OpenHyperLink('http://cnc.raminator.de/');
 end;
@@ -4148,12 +4148,12 @@ begin
    OpenHyperLink('http://xhp.xwis.net/');
 end;
 
-procedure TFrmMain.RedUtils1Click(Sender: TObject);
+procedure TFrmMain.DCoder1Click(Sender: TObject);
 begin
    OpenHyperLink('http://dc.strategy-x.com/');
 end;
 
-procedure TFrmMain.RockTheBattlefield1Click(Sender: TObject);
+procedure TFrmMain.RockPatch2Click(Sender: TObject);
 begin
    OpenHyperLink('http://rp2.strategy-x.com/');
 end;
@@ -4163,9 +4163,9 @@ begin
    OpenHyperLink('http://ra2faq.savagewar.co.uk/');
 end;
 
-procedure TFrmMain.RenegadeProjects1Click(Sender: TObject);
+procedure TFrmMain.ModEnc1Click(Sender: TObject);
 begin
-   OpenHyperLink('http://www.renegadeprojects.com/');
+   OpenHyperLink('http://www.modenc.renegadeprojects.com/Main_Page');
 end;
 
 procedure TFrmMain.RevoraCCForums1Click(Sender: TObject);
@@ -4173,12 +4173,12 @@ begin
    OpenHyperLink('http://forums.revora.net/index.php?showforum=1676');
 end;
 
-procedure TFrmMain.AcidVat1Click(Sender: TObject);
+procedure TFrmMain.GamesModding1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.gamesmodding.com/');
 end;
 
-procedure TFrmMain.RA2GraphicsHeaven1Click(Sender: TObject);
+procedure TFrmMain.MigEater1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.migeater.net/');
 end;
@@ -4198,7 +4198,7 @@ begin
    OpenHyperLink('http://www.cncnz.com/');
 end;
 
-procedure TFrmMain.iberiumSunCom1Click(Sender: TObject);
+procedure TFrmMain.TiberiumWeb1Click(Sender: TObject);
 begin
    OpenHyperLink('http://www.tiberiumweb.com/');
 end;
