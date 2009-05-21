@@ -310,12 +310,11 @@ begin
    MyValue := StrToIntDef(SpFrame.Text,0);
    if (MyValue >= SpFrame.MinValue) and (MyValue <= SpFrame.MaxValue) then
    begin
-      MyValue := MyValue - 1;
       for i:=1 to 3 do
       begin
          for j:=1 to 4 do
          begin
-            grdTrans.Cells[j-1,i-1]:=FloatToStr(HVA^.GetTMValue(i,j,cmbSection.ItemIndex,MyValue));
+            grdTrans.Cells[j-1,i-1]:=FloatToStr(HVA^.GetTMValue(i,j,cmbSection.ItemIndex,MyValue-1));
          end;
       end;
    end

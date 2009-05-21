@@ -1782,14 +1782,15 @@ procedure TVoxel.RemoveSection(SectionIndex: Integer);
 var
    i: Integer;
 begin
-   Section[SectionIndex].Free;
    for i:= SectionIndex to Header.NumSections - 2 do
    begin
-      Section[i]:=Section[i+1];
+      Section[i].Assign(Section[i+1]);
       Section[i].Header.Number:=i;
    end;
+   Section[High(Section)].Free;
    Dec(Header.NumSections);
    Dec(Header.NumSections2);
+   SetLength(Section,Header.NumSections);
 end;
 
 //this function uses basic matrix/vector operations (nice hybrid Koen) to
