@@ -208,7 +208,7 @@ var
    NumVertices : longword;
    VertexMap : array of array of array of integer;
    FaceMap : array of array of array of array of integer;
-   x, y, z : longword;
+   x, y, z, i : longword;
    V : TVoxelUnpacked;
    v1, v2 : boolean;
 begin
@@ -281,6 +281,17 @@ begin
    // vertex map is done.
    // let's fill the vertices array
    SetLength(Vertices,NumVertices);
+   if NumVertices = 0 then
+   begin
+      NumFaces := 0;
+      SetLength(Faces,0);
+      SetLength(Normals,0);
+      SetLength(FaceNormals,0);
+      SetLength(TextCoords,0);
+      SetLength(Colours,0);
+      CommonVoxelLoadingActions(_Voxel);
+      exit;
+   end;
    for x := Low(VertexMap) to High(VertexMap) do
       for y := Low(VertexMap[x]) to High(VertexMap[x]) do
          for z := Low(VertexMap[x,y]) to High(VertexMap[x,y]) do
@@ -305,80 +316,66 @@ begin
          end;
    // Now we give the faces an ID and count them.
    NumFaces := 0;
-   for x := Low(FaceMap) to High(FaceMap) do
-      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
-         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
-         begin
-            // Checking for the side face.
-            // 1. Do the vertices exists?
-            if (y < High(VertexMap[0])) and (z < High(VertexMap[0,0]))  then
-               if (VertexMap[x,y,z] <> -1) and (VertexMap[x,y+1,z] <> -1) and (VertexMap[x,y,z+1] <> -1) and (VertexMap[x,y+1,z+1] <> -1) then
-               begin
-                  // 2. Is there any chance of the user look at this face?
-                  // To know it, we need to check if the pixels (x and x-1) that
-                  // this face splits are actually used.
-                  v1 := false;
-                  if _Voxel.GetVoxelSafe(x,y,z,v) then
-                     v1 := v.Used;
-                  v2 := false;
-                  if _Voxel.GetVoxelSafe(x-1,y,z,v) then
-                     v2 := v.Used;
-                  // We'll only make a face if exactly one of them is used.
-                  if (v1 xor v2) then
-                  begin
-                     // Then, we add the Face
-                     FaceMap[x,y,z,C_VOXEL_FACE_SIDE] := NumFaces;
-                     inc(NumFaces);
-                  end;
-               end;
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      x := Round(Vertices[i].X);
+      y := Round(Vertices[i].Y);
+      z := Round(Vertices[i].Z);
 
-            // Checking for the depth face.
-            // 1. Do the vertices exists?
-            if (x < High(VertexMap)) and (z < High(VertexMap[0,0]))  then
-               if (VertexMap[x,y,z] <> -1) and (VertexMap[x+1,y,z] <> -1) and (VertexMap[x,y,z+1] <> -1) and (VertexMap[x+1,y,z+1] <> -1) then
-               begin
-                  // 2. Is there any chance of the user look at this face?
-                  // To know it, we need to check if the pixels (y and y-1) that
-                  // this face splits are actually used.
-                  v1 := false;
-                  if _Voxel.GetVoxelSafe(x,y,z,v) then
-                     v1 := v.Used;
-                  v2 := false;
-                  if _Voxel.GetVoxelSafe(x,y-1,z,v) then
-                     v2 := v.Used;
-                  // We'll only make a face if exactly one of them is used.
-                  if (v1 xor v2) then
-                  begin
-                     // Then, we add the Face
-                     FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] := NumFaces;
-                     inc(NumFaces);
-                  end;
-               end;
+      // Checking for the side face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (x and x-1) that
+      // this face splits are actually used.
+      v1 := false;
+      if _Voxel.GetVoxelSafe(x,y,z,v) then
+         v1 := v.Used;
+      v2 := false;
+      if _Voxel.GetVoxelSafe(x-1,y,z,v) then
+         v2 := v.Used;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         FaceMap[x,y,z,C_VOXEL_FACE_SIDE] := NumFaces;
+         inc(NumFaces);
+      end;
 
-            // Checking for the height face.
-            // 1. Do the vertices exists?
-            if (x < High(VertexMap)) and (y < High(VertexMap[0]))  then
-               if (VertexMap[x,y,z] <> -1) and (VertexMap[x+1,y,z] <> -1) and (VertexMap[x,y+1,z] <> -1) and (VertexMap[x+1,y+1,z] <> -1) then
-               begin
-                  // 2. Is there any chance of the user look at this face?
-                  // To know it, we need to check if the pixels (x and x-1) that
-                  // this face splits are actually used.
-                  v1 := false;
-                  if _Voxel.GetVoxelSafe(x,y,z,v) then
-                     v1 := v.Used;
-                  v2 := false;
-                  if _Voxel.GetVoxelSafe(x,y,z-1,v) then
-                     v2 := v.Used;
-                  // We'll only make a face if exactly one of them is used.
-                  if (v1 xor v2) then
-                  begin
-                     // Then, we add the Face
-                     FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] := NumFaces;
-                     inc(NumFaces);
-                  end;
-               end;
+      // Checking for the height face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (x and x-1) that
+      // this face splits are actually used.
+      v1 := false;
+      if _Voxel.GetVoxelSafe(x,y,z,v) then
+         v1 := v.Used;
+      v2 := false;
+      if _Voxel.GetVoxelSafe(x,y,z-1,v) then
+         v2 := v.Used;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] := NumFaces;
+         inc(NumFaces);
+      end;
 
-         end;
+      // Checking for the depth face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (y and y-1) that
+      // this face splits are actually used.
+      v1 := false;
+      if _Voxel.GetVoxelSafe(x,y,z,v) then
+         v1 := v.Used;
+      v2 := false;
+      if _Voxel.GetVoxelSafe(x,y-1,z,v) then
+         v2 := v.Used;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] := NumFaces;
+         inc(NumFaces);
+      end;
+   end;
    // face map is done.
    // let's fill the faces array, normals, colours, etc.
    SetLength(Faces,NumFaces * VerticesPerFace);
