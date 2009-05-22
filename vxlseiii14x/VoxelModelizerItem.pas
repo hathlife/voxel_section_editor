@@ -46,7 +46,7 @@ type
          FilledEdges: array[0..11] of boolean;
          FilledFaces: array[0..5] of boolean;
          // Situation per face and its edges.
-         CubeSettings: array[0..5,0..3] of byte;
+         EdgeSettings: array[0..5,0..3] of byte;
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; _x, _y, _z : integer);
    end;
@@ -99,9 +99,12 @@ const
 
    FaceCheck: array[0..5] of byte = (0, 17, 9, 13, 15, 11);
 
+   FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
+   FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
+
    PointsPerVerts = 7;
 var
-   p,i,imax : integer;
+   v1,v2,p,i,imax : integer;
    Cube : TNormals;
    CheckPoint : TVector3f;
    Point : TVector3i;
@@ -116,6 +119,7 @@ begin
    i := 0;
    for p := 0 to 7 do
    begin
+      FilledVerts[p] := true;
       imax := i + 7;
       while i < imax do
       begin
@@ -124,7 +128,7 @@ begin
          Point.Y := y + Round(CheckPoint.Y);
          Point.Z := z + Round(CheckPoint.Z);
          VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
-         FilledVerts[p] := VoxelClassification >= C_SURFACE;
+         FilledVerts[p] := FilledVerts[p] and (VoxelClassification >= C_SURFACE);
          if not FilledVerts[p] then
          begin
             if VoxelClassification = C_SEMI_SURFACE then
@@ -132,16 +136,23 @@ begin
                if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSVerticesCheck[i] <> 0  then
                begin
                   FilledVerts[p] := true;
-               end;
-            end;
-         end;
-         inc(i);
+                  inc(i);
+               end
+               else
+                  i := imax;
+            end
+            else
+               i := imax;
+         end
+         else
+            inc(i);
       end;
    end;
    // Check which edges are in.
    i := 0;
    for p := 0 to 11 do
    begin
+      FilledEdges[p] := true;
       imax := i + 3;
       while i < imax do
       begin
@@ -150,7 +161,7 @@ begin
          Point.Y := y + Round(CheckPoint.Y);
          Point.Z := z + Round(CheckPoint.Z);
          VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
-         FilledEdges[p] := VoxelClassification >= C_SURFACE;
+         FilledEdges[p] := FilledEdges[p] and (VoxelClassification >= C_SURFACE);
          if not FilledEdges[p] then
          begin
             if VoxelClassification = C_SEMI_SURFACE then
@@ -158,10 +169,16 @@ begin
                if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSEdgesCheck[i] <> 0  then
                begin
                   FilledEdges[p] := true;
-               end;
-            end;
-         end;
-         inc(i);
+                  inc(i);
+               end
+               else
+                  i := imax;
+            end
+            else
+               i := imax;
+         end
+         else
+            inc(i);
       end;
    end;
    // Check which faces are in.
@@ -175,6 +192,32 @@ begin
       VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
       FilledEdges[p] := VoxelClassification >= C_SURFACE;
    end;
+
+   // Let's analyse the situation for each edge.
+   // First, split the cube into 6 faces. Each face has 4 edges.
+   // FaceVerts has (topright, bottomright, bottomleft, topleft) for each face
+   // FaceEdges has (right, bottomt, left, top) for each face.
+   for i := 0 to 5 do // for each face
+   begin
+      for p := 0 to 3 do // for each edge from the face i
+      begin
+         v1 := p * i; // vertice 1 and edge index
+         v2 := ((p + 1) mod 4) * i; // vertice 2 index
+         // We have the following cases:
+         // Edge | V1 | V2 | Outcome:
+         //   0  | 0  | 0  | No vertice in the surface. (outside the object)
+         //   0  | 0  | 1  | One vertice out of the edge.
+         //   0  | 1  | 0  | One vertice out of the edge.
+         //   0  | 1  | 1  | No vertice in the surface. <---???
+         //   1  | 0  | 0  | Two vertices in the edge.
+         //   1  | 0  | 1  | One vertice in the edge.
+         //   1  | 1  | 0  | One vertice in the edge.
+         //   1  | 1  | 1  | No vertice in the surface. <---??? (inside the object)
+
+
+      end;
+   end;
+
 
    Cube.Free;
 end;
