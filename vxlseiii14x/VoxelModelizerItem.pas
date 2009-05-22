@@ -185,12 +185,12 @@ begin
    i := 0;
    for p := 0 to 5 do
    begin
-      CheckPoint := Cube[EdgeCheck[p]];
+      CheckPoint := Cube[p];
       Point.X := x + Round(CheckPoint.X);
       Point.Y := y + Round(CheckPoint.Y);
       Point.Z := z + Round(CheckPoint.Z);
       VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
-      FilledEdges[p] := VoxelClassification >= C_SURFACE;
+      FilledFaces[p] := VoxelClassification >= C_SURFACE;
    end;
 
    // Let's analyse the situation for each edge.
@@ -208,11 +208,11 @@ begin
          //   0  | 0  | 0  | No vertice in the surface. (outside the object)
          //   0  | 0  | 1  | One vertice out of the edge.
          //   0  | 1  | 0  | One vertice out of the edge.
-         //   0  | 1  | 1  | No vertice in the surface. <---???
+         //   0  | 1  | 1  | Two vertices out of the edge.
          //   1  | 0  | 0  | Two vertices in the edge.
          //   1  | 0  | 1  | One vertice in the edge.
          //   1  | 1  | 0  | One vertice in the edge.
-         //   1  | 1  | 1  | No vertice in the surface. <---??? (inside the object)
+         //   1  | 1  | 1  | No vertice in the surface. (inside the object)
 
 
       end;
