@@ -21,10 +21,21 @@ type
 implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid);
+var
+   x, y, z: integer;
 begin
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
    GenerateItemsMap;
+   for x := Low(FMap) to High(FMap) do
+      for y := Low(FMap[x]) to High(FMap[x]) do
+         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+         begin
+            if FMap[x,y,z] <> -1 then
+            begin
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,x,y,z);
+            end;
+         end;
 end;
 
 procedure TVoxelModelizer.GenerateItemsMap;

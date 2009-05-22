@@ -79,9 +79,29 @@ const
    C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT,
    C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_TOP_BACK_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT);
 
+   EdgeCheck: array[0..35] of byte = (0, 1, 11, 17, 18, 11, 9, 10, 11, 13, 12, 11,
+   0, 2, 15, 17, 19, 15, 9, 16, 15, 13, 14, 15, 0, 3, 13, 17, 20, 13, 0, 4, 9, 17,
+   21, 9);
+
+   SSEdgesCheck: array[0..35] of integer = (C_SF_TOP_RIGHT_LINE, C_SF_BOTTOM_RIGHT_LINE,
+   C_SF_BOTTOM_LEFT_LINE, C_SF_TOP_LEFT_LINE, C_SF_BOTTOM_LEFT_LINE,
+   C_SF_BOTTOM_RIGHT_LINE, C_SF_TOP_FRONT_LINE, C_SF_BOTTOM_FRONT_LINE,
+   C_SF_BOTTOM_BACK_LINE, C_SF_TOP_BACK_LINE, C_SF_BOTTOM_BACK_LINE,
+   C_SF_BOTTOM_FRONT_LINE, C_SF_BOTTOM_RIGHT_LINE, C_SF_TOP_RIGHT_LINE,
+   C_SF_BOTTOM_LEFT_LINE, C_SF_BOTTOM_LEFT_LINE, C_SF_TOP_LEFT_LINE,
+   C_SF_BOTTOM_RIGHT_LINE, C_SF_BOTTOM_FRONT_LINE, C_SF_TOP_FRONT_LINE,
+   C_SF_TOP_BACK_LINE, C_SF_BOTTOM_BACK_LINE, C_SF_TOP_BACK_LINE,
+   C_SF_TOP_FRONT_LINE, C_SF_RIGHT_FRONT_LINE, C_SF_RIGHT_BACK_LINE,
+   C_SF_LEFT_BACK_LINE, C_SF_LEFT_FRONT_LINE, C_SF_LEFT_BACK_LINE,
+   C_SF_RIGHT_BACK_LINE, C_SF_RIGHT_BACK_LINE, C_SF_RIGHT_FRONT_LINE,
+   C_SF_LEFT_FRONT_LINE, C_SF_LEFT_BACK_LINE, C_SF_LEFT_FRONT_LINE,
+   C_SF_RIGHT_FRONT_LINE);
+
+   FaceCheck: array[0..5] of byte = (0, 17, 9, 13, 15, 11);
+
    PointsPerVerts = 7;
 var
-   vert,i,imax : integer;
+   p,i,imax : integer;
    Cube : TNormals;
    CheckPoint : TVector3f;
    Point : TVector3i;
@@ -92,9 +112,9 @@ begin
    z := _z;
 
    Cube := TNormals.Create(6);
-   // Check if all vertices are in.
+   // Check which vertices are in.
    i := 0;
-   for vert := 0 to 7 do
+   for p := 0 to 7 do
    begin
       imax := i + 7;
       while i < imax do
@@ -104,19 +124,56 @@ begin
          Point.Y := y + Round(CheckPoint.Y);
          Point.Z := z + Round(CheckPoint.Z);
          VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
-         FilledVerts[vert] := VoxelClassification >= C_SURFACE;
-         if not FilledVerts[vert] then
+         FilledVerts[p] := VoxelClassification >= C_SURFACE;
+         if not FilledVerts[p] then
          begin
             if VoxelClassification = C_SEMI_SURFACE then
             begin
                if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSVerticesCheck[i] <> 0  then
                begin
-                  FilledVerts[vert] := true;
+                  FilledVerts[p] := true;
                end;
             end;
          end;
          inc(i);
       end;
+   end;
+   // Check which edges are in.
+   i := 0;
+   for p := 0 to 11 do
+   begin
+      imax := i + 3;
+      while i < imax do
+      begin
+         CheckPoint := Cube[EdgeCheck[i]];
+         Point.X := x + Round(CheckPoint.X);
+         Point.Y := y + Round(CheckPoint.Y);
+         Point.Z := z + Round(CheckPoint.Z);
+         VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+         FilledEdges[p] := VoxelClassification >= C_SURFACE;
+         if not FilledEdges[p] then
+         begin
+            if VoxelClassification = C_SEMI_SURFACE then
+            begin
+               if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSEdgesCheck[i] <> 0  then
+               begin
+                  FilledEdges[p] := true;
+               end;
+            end;
+         end;
+         inc(i);
+      end;
+   end;
+   // Check which faces are in.
+   i := 0;
+   for p := 0 to 5 do
+   begin
+      CheckPoint := Cube[EdgeCheck[p]];
+      Point.X := x + Round(CheckPoint.X);
+      Point.Y := y + Round(CheckPoint.Y);
+      Point.Z := z + Round(CheckPoint.Z);
+      VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+      FilledEdges[p] := VoxelClassification >= C_SURFACE;
    end;
 
    Cube.Free;
