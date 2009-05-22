@@ -54,7 +54,7 @@ type
    TVoxelMap = class
       private
          // Variables
-         FMap : array of array of array of single;
+         FMap : T3DSingleGrid;
          FBias : integer;
          FSection : TVoxelSection;
          // Constructors and Destructors
@@ -70,7 +70,7 @@ type
          procedure SetMapSafe(_x,_y,_z: integer; _value: single);
          procedure SetBias(_value: integer);
          // Misc
-         procedure ResizeMap;
+         procedure SetMapSize;
       public
          // Constructors and Destructors
          constructor Create(const _Voxel: TVoxelSection; _Bias: integer); overload;
@@ -90,6 +90,7 @@ type
          procedure GenerateFullMap;
          // Copies
          procedure Assign(const _Map : TVoxelMap);
+         function CopyMap(const _Map: T3DSingleGrid): T3DSingleGrid;
          // Misc
          procedure FloodFill(const _Point : TVector3i; _value : single);
          procedure MergeMapData(const _Source : TVoxelMap; _Data : single);
@@ -220,7 +221,7 @@ end;
 
 procedure TVoxelMap.Initialize(_Mode : integer = C_MODE_NONE; _Value : integer = C_INSIDE_VOLUME);
 begin
-   ResizeMap;
+   SetMapSize;
    FillMap(_Mode,_Value);
 end;
 
@@ -295,9 +296,42 @@ begin
 end;
 
 procedure TVoxelMap.SetBias(_value: Integer);
+var
+   OldMapBias, Offset: integer;
+   Map : T3DSingleGrid;
+   x, y, z: Integer;
 begin
+   if FBias = _Value then exit;
+
+   OldMapBias := FBias;
+   Map := CopyMap(FMap);
    FBias := _Value;
-   ResizeMap;
+   SetMapSize;
+   Offset := abs(OldMapBias - FBias);
+   if OldMapBias > FBias then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[x]) to High(FMap[x]) do
+            for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+            begin
+               FMap[x,y,z] := Map[Offset+x,Offset+y,Offset+z];
+            end;
+   end
+   else
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[x]) to High(FMap[x]) do
+            for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+            begin
+               FMap[x,y,z] := 0;
+            end;
+      for x := Low(Map) to High(Map) do
+         for y := Low(Map[x]) to High(Map[x]) do
+            for z := Low(Map[x,y]) to High(Map[x,y]) do
+            begin
+               FMap[x+Offset,y+Offset,z+Offset] := Map[x,y,z];
+            end;
+   end;
 end;
 
 // Generates
@@ -367,7 +401,7 @@ var
 begin
    FBias := _Map.FBias;
    FSection := _Map.FSection;
-   ResizeMap;
+   SetMapSize;
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[0]) to High(FMap[0]) do
          for z := Low(FMap[0,0]) to High(FMap[0,0]) do
@@ -376,10 +410,23 @@ begin
          end;
 end;
 
+function TVoxelMap.CopyMap(const _Map: T3DSingleGrid): T3DSingleGrid;
+var
+   x, y, z: integer;
+begin
+   SetLength(Result,High(_Map)+1,High(_Map[0])+1,High(_Map[0,0])+1);
+   for x := Low(_Map) to High(_Map) do
+      for y := Low(_Map[0]) to High(_Map[0]) do
+         for z := Low(_Map[0,0]) to High(_Map[0,0]) do
+         begin
+            Result[x,y,z] := _Map[x,y,z];
+         end;
+end;
+
 
 
 // Misc
-procedure TVoxelMap.ResizeMap;
+procedure TVoxelMap.SetMapSize;
 var
    Bias : integer;
 begin

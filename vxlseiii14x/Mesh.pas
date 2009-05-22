@@ -344,9 +344,6 @@ begin
       // Is there any chance of the user look at this face?
       // To know it, we need to check if the pixels (x and x-1) that
       // this face splits are actually used.
-      v1 := false;
-      if _Voxel.GetVoxelSafe(x,y,z,v) then
-         v1 := v.Used;
       v2 := false;
       if _Voxel.GetVoxelSafe(x,y,z-1,v) then
          v2 := v.Used;
@@ -362,9 +359,6 @@ begin
       // Is there any chance of the user look at this face?
       // To know it, we need to check if the pixels (y and y-1) that
       // this face splits are actually used.
-      v1 := false;
-      if _Voxel.GetVoxelSafe(x,y,z,v) then
-         v1 := v.Used;
       v2 := false;
       if _Voxel.GetVoxelSafe(x,y-1,z,v) then
          v2 := v.Used;
