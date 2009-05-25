@@ -34,6 +34,16 @@ const
    C_FACE_FRONT = 3;
    C_FACE_BOTTOM = 4;
    C_FACE_TOP = 5;
+   // Vertex Outcome
+   C_VERT_OUT_OUT = 0;
+   C_VERT_OUT_IN = 1;
+   C_VERT_OUT_ONE_Q2 = 2;
+   C_VERT_OUT_ONE_Q7 = 3;
+   C_VERT_OUT_TWO_Q13 = 4;
+   C_VERT_OUT_TWO_Q04 = 5;
+   C_VERT_OUT_TWO_Q68 = 6;
+   C_VERT_OUT_TWO_Q59 = 7;
+
 
 type
    TVoxelModelizerItem = class
@@ -47,14 +57,19 @@ type
          FilledFaces: array[0..5] of boolean;
          // Situation per face and its edges.
          EdgeSettings: array[0..5,0..3] of byte;
+         EdgeVertices: array[0..5,0..3,0..1] of integer;
          // Constructors and Destructors
-         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; _x, _y, _z : integer);
+         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var TotalNumVertices: integer);
    end;
 
 implementation
 
-constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; _x, _y, _z : integer);
+constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var TotalNumVertices: integer);
 const
+   VerticeRequirements: array[0..7] of integer = (C_SF_TOP_BACK_LEFT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
+   C_SF_TOP_FRONT_LEFT_POINT, C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
+   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT);
+
    VerticeCheck: array[0..55] of byte = (0, 1, 4, 8, 9, 10, 11, 17, 18, 21, 25, 9, 10,
    11, 0, 1, 3, 6, 13, 12, 11, 17, 18, 20, 23, 13, 12, 11, 0, 2, 4, 7, 9, 16, 15,
    17, 19, 21, 24, 9, 16, 15, 0, 2, 3, 5, 13, 14, 15, 17, 19, 20, 22, 13, 14, 15);
@@ -79,6 +94,11 @@ const
    C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT,
    C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_TOP_BACK_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT);
 
+   EdgeRequirements: array[0..11] of integer = (C_SF_TOP_LEFT_LINE, C_SF_TOP_RIGHT_LINE,
+   C_SF_TOP_BACK_LINE, C_SF_TOP_FRONT_LINE, C_SF_BOTTOM_LEFT_LINE, C_SF_BOTTOM_RIGHT_LINE,
+   C_SF_BOTTOM_BACK_LINE, C_SF_BOTTOM_FRONT_LINE, C_SF_LEFT_FRONT_LINE, C_SF_RIGHT_FRONT_LINE,
+   C_SF_LEFT_BACK_LINE, C_SF_RIGHT_FRONT_LINE);
+
    EdgeCheck: array[0..35] of byte = (0, 1, 11, 17, 18, 11, 9, 10, 11, 13, 12, 11,
    0, 2, 15, 17, 19, 15, 9, 16, 15, 13, 14, 15, 0, 3, 13, 17, 20, 13, 0, 4, 9, 17,
    21, 9);
@@ -102,25 +122,49 @@ const
    FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
    FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
 
+   VertexOutcome: array[0..15] of byte = (C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
+   C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
+   C_VERT_OUT_ONE_Q2, C_VERT_OUT_TWO_Q04, C_VERT_OUT_TWO_Q68, C_VERT_OUT_ONE_Q7,
+   C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
+   C_VERT_OUT_ONE_Q2, C_VERT_OUT_IN);
+
+//   VertexQuarterPoints: array[0..5,0..3,0..9] of TVector3i = (((),(( )))
+
    PointsPerVerts = 7;
 var
-   v1,v2,p,i,imax : integer;
+   v1,v2,p,i,imax,value : integer;
    Cube : TNormals;
    CheckPoint : TVector3f;
    Point : TVector3i;
-   VoxelClassification: single;
+   VoxelClassification,MyClassification: single;
+   MySurface: integer;
+   v0x,v0y,v0z: integer;
 begin
    x := _x;
    y := _y;
    z := _z;
+   // initial position in the vertex map;
+   v0x := x * 4;
+   v0y := y * 4;
+   v0z := z * 4;
 
    Cube := TNormals.Create(6);
    // Check which vertices are in.
    i := 0;
+   MyClassification := _VoxelMap.MapSafe[x,y,z];
+   MySurface := _SurfaceMap[x,y,z];
    for p := 0 to 7 do
    begin
-      FilledVerts[p] := true;
-      imax := i + 7;
+      if (MyClassification = C_SURFACE) or ((MySurface and VerticeRequirements[p]) <> 0) then
+      begin
+         FilledVerts[p] := true;
+         imax := i + 7;
+      end
+      else
+      begin
+         FilledVerts[p] := false;
+         imax := i - 1;
+      end;
       while i < imax do
       begin
          CheckPoint := Cube[VerticeCheck[i]];
@@ -152,8 +196,16 @@ begin
    i := 0;
    for p := 0 to 11 do
    begin
-      FilledEdges[p] := true;
-      imax := i + 3;
+      if (MyClassification = C_SURFACE) or ((MySurface and VerticeRequirements[p]) <> 0) then
+      begin
+         FilledEdges[p] := true;
+         imax := i + 3;
+      end
+      else
+      begin
+         FilledEdges[p] := false;
+         imax := i - 1;
+      end;
       while i < imax do
       begin
          CheckPoint := Cube[EdgeCheck[i]];
@@ -204,17 +256,35 @@ begin
          v1 := p * i; // vertice 1 and edge index
          v2 := ((p + 1) mod 4) * i; // vertice 2 index
          // We have the following cases:
-         // Edge | V1 | V2 | Outcome:
-         //   0  | 0  | 0  | No vertice in the surface. (outside the object)
-         //   0  | 0  | 1  | One vertice out of the edge.
-         //   0  | 1  | 0  | One vertice out of the edge.
-         //   0  | 1  | 1  | Two vertices out of the edge.
-         //   1  | 0  | 0  | Two vertices in the edge.
-         //   1  | 0  | 1  | One vertice in the edge.
-         //   1  | 1  | 0  | One vertice in the edge.
-         //   1  | 1  | 1  | No vertice in the surface. (inside the object)
+         // Face | Edge | V1 | V2 | Outcome:
+         //   0  | 0    | 0  | 0  | No vertice in the surface. (outside the object) :: Outcome 0
+         //   0  | 0    | 0  | 1  | One vertice off the edge (Q7). :: Outcome 3
+         //   0  | 0    | 1  | 0  | One vertice off the edge (Q7). :: Outcome 3
+         //   0  | 0    | 1  | 1  | Two vertices off the edge (Q5 and Q9 independent). :: Outcome 7
+         //   0  | 1    | 0  | 0  | Two vertices in the edge (Q1 and Q3 dependent).  :: Outcome 4
+         //   0  | 1    | 0  | 1  | One vertice in the edge (Q2). :: Outcome 2
+         //   0  | 1    | 1  | 0  | One vertice in the edge (Q2). :: Outcome 2
+         //   0  | 1    | 1  | 1  | Two vertices in the edge (Q0 and Q4 independent). :: Outcome 5
+         //   1  | 0    | 0  | 0  | Two vertices out of the edge (Q6 and Q8 independent). :: Outcome 6
+         //   1  | 0    | 0  | 1  | One vertice out of the edge (Q7). :: Outcome 3
+         //   1  | 0    | 1  | 0  | One vertice out of the edge (Q7). :: Outcome 3
+         //   1  | 0    | 1  | 1  | Two vertices out of the edge (Q5 and Q9 independent). :: Outcome 7
+         //   1  | 1    | 0  | 0  | Two vertices in the edge (Q1 and Q3 dependent). :: Outcome 4
+         //   1  | 1    | 0  | 1  | One vertice in the edge (Q2). :: Outcome 2
+         //   1  | 1    | 1  | 0  | One vertice in the edge (Q2). :: Outcome 2
+         //   1  | 1    | 1  | 1  | No vertice in the surface. (inside the object) :: Outcome 1
 
-
+         // Note QX = Quarter X. 0 (0%)..4 (100%) in the edge. 5..9 is 0..4 outside the edge.
+         Value := 0;
+         if FilledFaces[i] then
+            inc(Value,8);
+         if FilledEdges[FaceEdges[v1]] then
+            inc(Value,4);
+         if FilledVerts[FaceVerts[v1]] then
+            inc(Value,2);
+         if FilledVerts[FaceVerts[v2]] then
+            inc(Value,1);
+         EdgeSettings[i,p] := VertexOutcome[value];
       end;
    end;
 
