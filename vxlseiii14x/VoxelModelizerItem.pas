@@ -130,7 +130,7 @@ const
 
    VertexOutcome: array[0..23] of byte = (C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
    C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
-   C_VERT_OUT_ONE_Q2, C_VERT_OUT_TWO_Q04, C_VERT_OUT_TWO_Q68, C_VERT_OUT_ONE_Q7,
+   C_VERT_OUT_ONE_Q2, C_VERT_OUT_TWO_Q04, C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
    C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
    C_VERT_OUT_ONE_Q2, C_VERT_OUT_IN, C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q3,
    C_VERT_OUT_ONE_Q1, C_VERT_OUT_TWO_Q68, C_VERT_OUT_OUT, C_VERT_OUT_OUT,
@@ -293,33 +293,33 @@ begin
          v2 := ((p + 1) mod 4) * i; // vertice 2 index
          // We have the following cases:
          // Face | Edge | V1 | V2 | Outcome:
-         //   0  | 0    | 0  | 0  | No vertice in the surface. (outside the object) :: Outcome 0
-         //   0  | 0    | 0  | 1  | One vertice off the edge (Q7). :: Outcome 3
-         //   0  | 0    | 1  | 0  | One vertice off the edge (Q7). :: Outcome 3
-         //   0  | 0    | 1  | 1  | Two vertices off the edge (Q5 and Q9 independent). :: Outcome 7
-         //   0  | 1    | 0  | 0  | Two vertices in the edge (Q1 and Q3 dependent).  :: Outcome 4
-         //   0  | 1    | 0  | 1  | One vertice in the edge (Q2). :: Outcome 2
-         //   0  | 1    | 1  | 0  | One vertice in the edge (Q2). :: Outcome 2
-         //   0  | 1    | 1  | 1  | Two vertices in the edge (Q0 and Q4 independent). :: Outcome 5
-         //   1  | 0    | 0  | 0  | Two vertices out of the edge (Q6 and Q8 independent). :: Outcome 6
-         //   1  | 0    | 0  | 1  | One vertice out of the edge (Q7). :: Outcome 3
-         //   1  | 0    | 1  | 0  | One vertice out of the edge (Q7). :: Outcome 3
-         //   1  | 0    | 1  | 1  | Two vertices out of the edge (Q5 and Q9 independent). :: Outcome 7
-         //   1  | 1    | 0  | 0  | Two vertices in the edge (Q1 and Q3 dependent). :: Outcome 4
-         //   1  | 1    | 0  | 1  | One vertice in the edge (Q2). :: Outcome 2
-         //   1  | 1    | 1  | 0  | One vertice in the edge (Q2). :: Outcome 2
-         //   1  | 1    | 1  | 1  | No vertice in the surface. (inside the object) :: Outcome 1
+         //   0  | 0    | 0  | 0  | No vertex in the surface. (outside the object) :: Outcome 0
+         //   0  | 0    | 0  | 1  | One vertex out of the edge (Q7). :: Outcome 3
+         //   0  | 0    | 1  | 0  | One vertex out of the edge (Q7). :: Outcome 3
+         //   0  | 0    | 1  | 1  | Two vertexes out of the edge (Q5 and Q9 independent). :: Outcome 7
+         //   0  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 dependent).  :: Outcome 4
+         //   0  | 1    | 0  | 1  | One vertex in the edge (Q2). :: Outcome 2
+         //   0  | 1    | 1  | 0  | One vertex in the edge (Q2). :: Outcome 2
+         //   0  | 1    | 1  | 1  | Two vertexes in the edge (Q0 and Q4 independent). :: Outcome 5
+         //   1  | 0    | 0  | 0  | No vertex in the surface. (outside the object) :: Outcome 0
+         //   1  | 0    | 0  | 1  | One vertex out of the edge (Q7). :: Outcome 3
+         //   1  | 0    | 1  | 0  | One vertex out of the edge (Q7). :: Outcome 3
+         //   1  | 0    | 1  | 1  | Two vertexes out of the edge (Q5 and Q9 independent). :: Outcome 7
+         //   1  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 dependent). :: Outcome 4
+         //   1  | 1    | 0  | 1  | One vertex in the edge (Q2). :: Outcome 2
+         //   1  | 1    | 1  | 0  | One vertex in the edge (Q2). :: Outcome 2
+         //   1  | 1    | 1  | 1  | No vertex in the surface. (inside the object) :: Outcome 1
 
          // And for semi-surfaces (Face is always 0)
          // Face | Edge | V1 | V2 | Outcome:
-         //   0  | 0    | 0  | 0  | No vertice in the surface. (outside the object) :: Outcome 0
-         //   0  | 0    | 0  | 1  | One vertice off the edge (Q3). :: Outcome 9
-         //   0  | 0    | 1  | 0  | One vertice off the edge (Q1). :: Outcome 8
-         //   0  | 0    | 1  | 1  | Two vertices off the edge (Q6 and Q8 independent). :: Outcome 6
+         //   0  | 0    | 0  | 0  | No vertex in the surface. (outside the object) :: Outcome 0
+         //   0  | 0    | 0  | 1  | One vertex out of the edge (Q3). :: Outcome 9
+         //   0  | 0    | 1  | 0  | One vertex out of the edge (Q1). :: Outcome 8
+         //   0  | 0    | 1  | 1  | Two vertexes out of the edge (Q6 and Q8 independent). :: Outcome 6
          //   0  | 1    | 0  | 0  | (Impossible)
          //   0  | 1    | 0  | 1  | (Impossible)
          //   0  | 1    | 1  | 0  | (Impossible)
-         //   0  | 1    | 1  | 1  | No vertice in the surface. (inside the object) :: Outcome 1
+         //   0  | 1    | 1  | 1  | No vertex in the surface. (inside the object) :: Outcome 1
 
          // Note QX = Quarter X. 0 (0%)..4 (100%) in the edge. 5..9 is 0..4 outside the edge.
          Value := 0;
