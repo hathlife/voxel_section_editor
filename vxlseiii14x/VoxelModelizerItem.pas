@@ -43,8 +43,9 @@ const
    C_VERT_OUT_TWO_Q04 = 5;
    C_VERT_OUT_TWO_Q68 = 6;
    C_VERT_OUT_TWO_Q59 = 7;
-
-
+   // Vertex Outcome for Semi-Surfaces
+   C_VERT_OUT_ONE_Q1 = 8;
+   C_VERT_OUT_ONE_Q3 = 9;
 type
    TVoxelModelizerItem = class
       private
@@ -127,11 +128,13 @@ const
    FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
    FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
 
-   VertexOutcome: array[0..15] of byte = (C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
+   VertexOutcome: array[0..23] of byte = (C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
    C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
    C_VERT_OUT_ONE_Q2, C_VERT_OUT_TWO_Q04, C_VERT_OUT_TWO_Q68, C_VERT_OUT_ONE_Q7,
    C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
-   C_VERT_OUT_ONE_Q2, C_VERT_OUT_IN);
+   C_VERT_OUT_ONE_Q2, C_VERT_OUT_IN, C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q3,
+   C_VERT_OUT_ONE_Q1, C_VERT_OUT_TWO_Q68, C_VERT_OUT_OUT, C_VERT_OUT_OUT,
+   C_VERT_OUT_OUT, C_VERT_OUT_IN);
 
    VertexQuarterPoints: array[0..5,0..3,0..9,0..2] of byte = ((((0,4,4), (0,4,3), (0,4,2), (0,4,1),
    (0,4,0), (0,3,4), (0,3,3), (0,3,2), (0,3,1), (0,3,0)), ((0,4,0), (0,3,0), (0,2,0), (0,1,0), (0,0,0),
@@ -157,10 +160,8 @@ const
    (0,1,4), (0,0,4), (1,4,4), (1,3,4), (1,2,4), (1,1,4), (1,0,4)),((0,0,4), (1,0,4), (2,0,4), (3,0,4),
    (4,0,4), (0,1,4), (1,1,4), (2,1,4), (3,1,4), (4,1,4))));
 
-   QuarterPerOutcomeIndexList: array[0..7,0..1] of integer = ((-1, -1),(-1, -1), (2, -1), (7, -1), (1, 3),
-   (0, 4), (6,8), (5,9));
-
-   PointsPerVerts = 7;
+   QuarterPerOutcomeIndexList: array[0..9,0..1] of integer = ((-1, -1),(-1, -1), (2, -1), (7, -1), (1, 3),
+   (0, 4), (6,8), (5,9), (1, -1), (3, -1));
 var
    v1,v2,p,i,imax,value : integer;
    Cube : TNormals;
@@ -265,14 +266,17 @@ begin
       end;
    end;
    // Check which faces are in.
-   for p := 0 to 5 do
+   if (MyClassification = C_SURFACE) then
    begin
-      CheckPoint := Cube[p];
-      Point.X := x + Round(CheckPoint.X);
-      Point.Y := y + Round(CheckPoint.Y);
-      Point.Z := z + Round(CheckPoint.Z);
-      VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
-      FilledFaces[p] := VoxelClassification >= C_SURFACE;
+      for p := 0 to 5 do
+      begin
+         CheckPoint := Cube[p];
+         Point.X := x + Round(CheckPoint.X);
+         Point.Y := y + Round(CheckPoint.Y);
+         Point.Z := z + Round(CheckPoint.Z);
+         VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+         FilledFaces[p] := VoxelClassification >= C_SURFACE;
+      end;
    end;
 
    // Let's analyse the situation for each edge and add the vertices.
@@ -306,8 +310,21 @@ begin
          //   1  | 1    | 1  | 0  | One vertice in the edge (Q2). :: Outcome 2
          //   1  | 1    | 1  | 1  | No vertice in the surface. (inside the object) :: Outcome 1
 
+         // And for semi-surfaces (Face is always 0)
+         // Face | Edge | V1 | V2 | Outcome:
+         //   0  | 0    | 0  | 0  | No vertice in the surface. (outside the object) :: Outcome 0
+         //   0  | 0    | 0  | 1  | One vertice off the edge (Q3). :: Outcome 9
+         //   0  | 0    | 1  | 0  | One vertice off the edge (Q1). :: Outcome 8
+         //   0  | 0    | 1  | 1  | Two vertices off the edge (Q6 and Q8 independent). :: Outcome 6
+         //   0  | 1    | 0  | 0  | (Impossible)
+         //   0  | 1    | 0  | 1  | (Impossible)
+         //   0  | 1    | 1  | 0  | (Impossible)
+         //   0  | 1    | 1  | 1  | No vertice in the surface. (inside the object) :: Outcome 1
+
          // Note QX = Quarter X. 0 (0%)..4 (100%) in the edge. 5..9 is 0..4 outside the edge.
          Value := 0;
+         if MyClassification = C_SEMI_SURFACE then
+            inc(Value,16);
          if FilledFaces[i] then
             inc(Value,8);
          if FilledEdges[FaceEdges[v1]] then
