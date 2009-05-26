@@ -58,13 +58,18 @@ type
          // Situation per face and its edges.
          EdgeSettings: array[0..5,0..3] of byte;
          EdgeVertices: array[0..5,0..3,0..1] of integer;
+         // Faces
+         NumFaces: integer;
+         Faces: array of integer;
          // Constructors and Destructors
-         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var TotalNumVertices: integer);
+         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertices: integer);
+         // Adds
+         function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer): integer;
    end;
 
 implementation
 
-constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var TotalNumVertices: integer);
+constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertices: integer);
 const
    VerticeRequirements: array[0..7] of integer = (C_SF_TOP_BACK_LEFT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
    C_SF_TOP_FRONT_LEFT_POINT, C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
@@ -152,6 +157,9 @@ const
    (0,1,4), (0,0,4), (1,4,4), (1,3,4), (1,2,4), (1,1,4), (1,0,4)),((0,0,4), (1,0,4), (2,0,4), (3,0,4),
    (4,0,4), (0,1,4), (1,1,4), (2,1,4), (3,1,4), (4,1,4))));
 
+   QuarterPerOutcomeIndexList: array[0..7,0..1] of integer = ((-1, -1),(-1, -1), (2, -1), (7, -1), (1, 3),
+   (0, 4), (6,8), (5,9));
+
    PointsPerVerts = 7;
 var
    v1,v2,p,i,imax,value : integer;
@@ -161,6 +169,7 @@ var
    VoxelClassification,MyClassification: single;
    MySurface: integer;
    v0x,v0y,v0z: integer;
+   FaceHasVertices,RegionHasVertices : boolean;
 begin
    x := _x;
    y := _y;
@@ -256,7 +265,6 @@ begin
       end;
    end;
    // Check which faces are in.
-   i := 0;
    for p := 0 to 5 do
    begin
       CheckPoint := Cube[p];
@@ -267,12 +275,14 @@ begin
       FilledFaces[p] := VoxelClassification >= C_SURFACE;
    end;
 
-   // Let's analyse the situation for each edge.
+   // Let's analyse the situation for each edge and add the vertices.
    // First, split the cube into 6 faces. Each face has 4 edges.
    // FaceVerts has (topright, bottomright, bottomleft, topleft) for each face
-   // FaceEdges has (right, bottomt, left, top) for each face.
+   // FaceEdges has (right, bottom, left, top) for each face.
+   RegionHasVertices := false;
    for i := 0 to 5 do // for each face
    begin
+      FaceHasVertices := false;
       for p := 0 to 3 do // for each edge from the face i
       begin
          v1 := p * i; // vertice 1 and edge index
@@ -307,11 +317,38 @@ begin
          if FilledVerts[FaceVerts[v2]] then
             inc(Value,1);
          EdgeSettings[i,p] := VertexOutcome[value];
+         // Now let's add the vertices according to the outcome.
+         if QuarterPerOutcomeIndexList[VertexOutcome[value],0] <> -1 then
+         begin
+            FaceHasVertices := true;
+            // Add the first vertex.
+            EdgeVertices[i,p,0] := AddVertex(_VertexMap,v0x + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],0],0], v0y + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],0],1], v0z + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],0],2],_TotalNumVertices);
+            if QuarterPerOutcomeIndexList[VertexOutcome[value],1] <> -1 then
+            begin
+               // Add the second vertex.
+               EdgeVertices[i,p,1] := AddVertex(_VertexMap,v0x + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],1],0], v0y + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],1],1], v0z + VertexQuarterPoints[i,p,QuarterPerOutcomeIndexList[VertexOutcome[value],1],2],_TotalNumVertices);
+            end;
+         end;
       end;
+      RegionHasVertices := RegionHasVertices or FaceHasVertices;
    end;
 
 
    Cube.Free;
+end;
+
+function TVoxelModelizerItem.AddVertex(var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer): integer;
+begin
+   if _VertexMap[_x,_y,_z] = -1 then
+   begin
+      _VertexMap[_x,_y,_z] := _NumVertices;
+      Result := _NumVertices;
+      inc(_NumVertices);
+   end
+   else
+   begin
+      Result := _VertexMap[_x,_y,_z];
+   end;
 end;
 
 end.
