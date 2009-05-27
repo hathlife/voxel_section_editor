@@ -45,6 +45,13 @@ const
    C_VERT_OUT_TWO_Q59 = 7;
    C_VERT_OUT_ONE_Q1 = 8;
    C_VERT_OUT_ONE_Q3 = 9;
+   C_VERT_OUT_ONE_Q0 = 10;
+
+   // Face Settings
+   C_FACE_SET_VERT = 0;
+   C_FACE_SET_EDGE = 1;
+   C_FACE_SET_FACE = 2;
+
 type
    TVoxelModelizerItem = class
       private
@@ -56,11 +63,14 @@ type
          FilledEdges: array[0..11] of boolean;
          FilledFaces: array[0..5] of boolean;
          // Situation per face and its edges.
+         FaceSettings: array[0..5] of byte;
          EdgeSettings: array[0..5,0..3] of byte;
          EdgeVertices: array[0..5,0..3,0..1] of integer;
          // Faces
          NumFaces: integer;
          Faces: array of integer;
+         VertexGeneratedList : array of integer;
+
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertices: integer);
          // Adds
@@ -127,40 +137,24 @@ const
    FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
    FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
 
-   VertexOutcome: array[0..23] of byte = (C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
-   C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
-   C_VERT_OUT_ONE_Q2, C_VERT_OUT_TWO_Q04, C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q7,
-   C_VERT_OUT_ONE_Q7, C_VERT_OUT_TWO_Q59, C_VERT_OUT_TWO_Q13, C_VERT_OUT_ONE_Q2,
-   C_VERT_OUT_ONE_Q2, C_VERT_OUT_IN, C_VERT_OUT_OUT, C_VERT_OUT_ONE_Q3,
-   C_VERT_OUT_ONE_Q1, C_VERT_OUT_TWO_Q68, C_VERT_OUT_OUT, C_VERT_OUT_OUT,
-   C_VERT_OUT_OUT, C_VERT_OUT_IN);
+   VertexQuarterPoints: array[0..5,0..3,0..1,0..2] of byte = ((((0,4,4), (0,4,2)),
+	((0,4,0), (0,2,0)),((0,0,0), (0,0,2)),((0,0,4), (0,2,4))),(((4,0,4), (4,0,2)),
+	((4,0,0), (4,2,0)),((4,4,0), (4,4,2)),((4,4,4), (4,2,4))),(((0,0,4), (0,0,2)),
+	((0,0,0), (2,0,0)),((4,0,0), (4,0,2)),((4,0,4), (2,0,4))),(((4,4,4), (4,4,2)),
+	((4,4,0), (2,4,0)),((0,4,0), (0,4,2)),((0,4,4), (2,4,4))),(((4,4,0), (4,2,0)),
+	((4,0,0), (2,0,0)),((0,0,0), (0,2,0)),((0,4,0), (2,4,0))),(((4,0,4), (4,2,4)),
+	((4,4,4), (2,4,4)),((0,4,4), (0,2,4)),((0,0,4), (2,0,4))));
 
-   VertexQuarterPoints: array[0..5,0..3,0..9,0..2] of byte = ((((0,4,4), (0,4,3), (0,4,2), (0,4,1),
-   (0,4,0), (0,3,4), (0,3,3), (0,3,2), (0,3,1), (0,3,0)), ((0,4,0), (0,3,0), (0,2,0), (0,1,0), (0,0,0),
-   (0,4,1), (0,3,1), (0,2,1), (0,1,1), (0,0,1)), ((0,0,0), (0,0,1), (0,0,2), (0,0,3), (0,0,4), (0,1,0),
-   (0,1,1), (0,1,2), (0,1,3), (0,1,4)), ((0,0,4), (0,1,4), (0,2,4), (0,3,4), (0,4,4), (0,0,3), (0,1,3),
-   (0,2,3), (0,3,3), (0,4,3))),(((4,0,4), (4,0,3), (4,0,2), (4,0,1), (4,0,0), (4,1,4), (4,1,3), (4,1,2),
-   (4,1,1), (4,1,0)),((4,0,0), (4,1,0), (4,2,0), (4,3,0), (4,4,0), (4,0,1), (4,1,1), (4,2,1), (4,3,1),
-   (4,4,1)),((4,4,0), (4,4,1), (4,4,2), (4,4,3), (4,4,4), (4,3,0), (4,3,1), (4,3,2), (4,3,3), (4,3,4)),
-	((4,4,4), (4,3,4), (4,2,4), (4,1,4), (4,0,4), (4,4,4), (4,3,4), (4,2,4), (4,1,4), (4,0,4))),
-   (((0,0,4), (0,0,3), (0,0,2), (0,0,1), (0,0,0), (1,0,4), (1,0,3), (1,0,2), (1,0,1), (1,0,0)), ((0,0,0),
-   (1,0,0), (2,0,0), (3,0,0), (4,0,0), (0,0,1), (1,0,1), (2,0,1), (3,0,1), (4,0,1)), ((4,0,0), (4,0,1),
-   (4,0,2), (4,0,3), (4,0,4), (3,0,0), (3,0,1), (3,0,2), (3,0,3), (3,0,4)),((4,0,4), (3,0,4), (2,0,4),
-   (1,0,4), (0,0,4), (4,0,3), (3,0,3), (2,0,3), (1,0,3), (0,0,3))),(((4,4,4), (4,4,3), (4,4,2), (4,4,1),
-   (4,4,0), (3,4,4), (3,4,3), (3,4,2), (3,4,1), (3,4,0)),((4,4,0), (3,4,0), (2,4,0), (1,4,0), (0,4,0),
-   (4,4,1), (3,4,1), (2,4,1), (1,4,1), (0,4,1)),((0,4,0), (0,4,1), (0,4,2), (0,4,3), (0,4,4), (1,4,0),
-   (1,4,1), (1,4,2), (1,4,3), (1,4,4)),((0,4,4), (1,4,4), (2,4,4), (3,4,4), (4,4,4), (0,4,3), (1,4,3),
-   (2,4,3), (3,4,3), (4,4,3))),(((4,4,0), (4,3,0), (4,2,0), (4,1,0), (4,0,0), (3,4,0), (3,3,0), (3,2,0),
-   (3,1,0), (3,0,0)),((4,0,0), (3,0,0), (2,0,0), (1,0,0), (0,0,0), (4,1,0), (3,1,0), (2,1,0), (1,1,0),
-   (0,1,0)),((0,0,0), (0,1,0), (0,2,0), (0,3,0), (0,4,0), (1,0,0), (1,1,0), (1,2,0), (1,3,0), (1,4,0)),
-	((0,4,0), (1,4,0), (2,4,0), (3,4,0), (4,4,0), (0,4,1), (1,4,1), (2,4,1), (3,4,1), (4,4,1))),(((4,0,4),
-   (4,1,4), (4,2,4), (4,3,4), (4,4,4), (3,0,4), (3,1,4), (3,2,4), (3,3,4), (3,4,4)), ((4,4,4), (3,4,4),
-   (2,4,4), (1,4,4), (0,4,4), (4,3,4), (3,3,4), (2,3,4), (1,3,4), (0,3,4)),((0,4,4), (0,3,4), (0,2,4),
-   (0,1,4), (0,0,4), (1,4,4), (1,3,4), (1,2,4), (1,1,4), (1,0,4)),((0,0,4), (1,0,4), (2,0,4), (3,0,4),
-   (4,0,4), (0,1,4), (1,1,4), (2,1,4), (3,1,4), (4,1,4))));
-
-   QuarterPerOutcomeIndexList: array[0..9,0..1] of integer = ((-1, -1),(-1, -1), (2, -1), (7, -1), (1, 3),
-   (0, 4), (6,8), (5,9), (1, -1), (3, -1));
+   EdgeNeighboorList: array[0..47] of byte = (C_EDGE_TOP_FRONT, C_EDGE_FRONT_LEFT, C_EDGE_BACK_LEFT,
+   C_EDGE_TOP_BACK, C_EDGE_TOP_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_TOP_FRONT,
+   C_EDGE_TOP_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_TOP_RIGHT, C_EDGE_TOP_RIGHT,
+   C_EDGE_FRONT_RIGHT, C_EDGE_FRONT_LEFT, C_EDGE_TOP_LEFT, C_EDGE_BOTTOM_FRONT, C_EDGE_FRONT_LEFT,
+   C_EDGE_BACK_LEFT, C_EDGE_BOTTOM_BACK, C_EDGE_BOTTOM_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT,
+   C_EDGE_BOTTOM_FRONT, C_EDGE_BOTTOM_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_BOTTOM_RIGHT,
+   C_EDGE_BOTTOM_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_FRONT_LEFT, C_EDGE_BOTTOM_BACK, C_EDGE_TOP_FRONT,
+   C_EDGE_BOTTOM_FRONT, C_EDGE_BOTTOM_LEFT, C_EDGE_TOP_LEFT, C_EDGE_TOP_RIGHT, C_EDGE_BOTTOM_RIGHT,
+   C_EDGE_BOTTOM_FRONT, C_EDGE_TOP_FRONT, C_EDGE_TOP_LEFT, C_EDGE_BOTTOM_LEFT, C_EDGE_BOTTOM_BACK,
+   C_EDGE_TOP_LEFT, C_EDGE_TOP_BACK, C_EDGE_BOTTOM_BACK, C_EDGE_BOTTOM_RIGHT, C_EDGE_TOP_RIGHT);
 var
    v1,v2,p,i,imax,value : integer;
    Cube : TNormals;
@@ -169,7 +163,7 @@ var
    VoxelClassification,MyClassification: single;
    MySurface: integer;
    v0x,v0y,v0z: integer;
-   FaceHasVertices,RegionHasVertices : boolean;
+   FaceHasVertices,FaceHasEdges : boolean;
 begin
    x := _x;
    y := _y;
@@ -278,6 +272,7 @@ begin
       end;
    end;
 
+{
    // Let's analyse the situation for each edge and add the vertices.
    // First, split the cube into 6 faces. Each face has 4 edges.
    // FaceVerts has (topright, bottomright, bottomleft, topleft) for each face
@@ -348,6 +343,76 @@ begin
       end;
       RegionHasVertices := RegionHasVertices or FaceHasVertices;
    end;
+}
+
+   SetLength(VertexGeneratedList,0);
+   for i := 0 to 5 do // for each face
+   begin
+      // check if this face will constructed based on vertexes (traditional marching cubes)
+      v1 := i * 4;
+      v2 := v1 + 3;
+      FaceHasVertices := false;
+      while v1 < v2 do
+      begin
+         FaceHasVertices := FaceHasVertices or FilledVerts[FaceVerts[v1]];
+         inc(v1);
+      end;
+      // We'll generate new vertexes based on edges where only one of its vertexes is in the volume.
+      if FaceHasVertices then
+      begin
+         FaceSettings[i] := C_FACE_SET_VERT;
+         for p := 0 to 3 do // for each edge from the face i
+         begin
+            v1 := p * i; // vertice 1 index
+            v2 := ((p + 1) mod 4) * i; // vertice 2 index
+            if FilledVerts[FaceVerts[v1]] xor FilledVerts[FaceVerts[v2]] then
+            begin
+               // Add a vertex in the middle of the edge.
+               SetLength(VertexGeneratedList,High(VertexGeneratedList)+2);
+               VertexGeneratedList[High(VertexGeneratedList)] := AddVertex(_VertexMap,v0x + VertexQuarterPoints[i,p,1,0], v0y + VertexQuarterPoints[i,p,1,1], v0z + VertexQuarterPoints[i,p,1,2],_TotalNumVertices);
+            end;
+         end;
+      end
+      else
+      begin
+         // check if this face will constructed based on edges
+         v1 := i * 4;
+         v2 := v1 + 3;
+         FaceHasEdges := false;
+         while v1 < v2 do
+         begin
+            FaceHasEdges := FaceHasEdges or FilledEdges[FaceEdges[v1]];
+            inc(v1);
+         end;
+         // We'll generate new vertexes based on filled edges
+         if FaceHasEdges then
+         begin
+            FaceSettings[i] := C_FACE_SET_EDGE;
+            for p := 0 to 3 do // for each edge from the face i
+            begin
+               v1 := p * i; // edge index on FaceEdge
+               if FilledEdges[FaceEdges[v1]] then
+               begin
+                  //
+
+               end;
+            end;
+
+         end;
+
+
+      end;
+
+
+
+
+
+
+
+
+   end;
+
+
 
 
    Cube.Free;
