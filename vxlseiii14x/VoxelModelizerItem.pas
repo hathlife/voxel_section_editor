@@ -70,6 +70,8 @@ type
          NumFaces: integer;
          Faces: array of integer;
          VertexGeneratedList : array of integer;
+         EdgeGeneratedList : array of integer;
+         FaceGeneratedList : array of integer;
 
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertices: integer);
@@ -145,6 +147,10 @@ const
 	((4,0,0), (2,0,0)),((0,0,0), (0,2,0)),((0,4,0), (2,4,0))),(((4,0,4), (4,2,4)),
 	((4,4,4), (2,4,4)),((0,4,4), (0,2,4)),((0,0,4), (2,0,4))));
 
+   EdgeCentralPoints: array[0..11,0..2] of byte = 	((0,2,4), (4,2,4), (2,0,4),
+   (2,4,4), (0,2,0), (4,2,0), (2,0,0), (2,4,0), (0,4,2), (4,4,2), (0,0,2), (4,0,2));
+
+
    EdgeNeighboorList: array[0..47] of byte = (C_EDGE_TOP_FRONT, C_EDGE_FRONT_LEFT, C_EDGE_BACK_LEFT,
    C_EDGE_TOP_BACK, C_EDGE_TOP_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_TOP_FRONT,
    C_EDGE_TOP_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_TOP_RIGHT, C_EDGE_TOP_RIGHT,
@@ -156,7 +162,7 @@ const
    C_EDGE_BOTTOM_FRONT, C_EDGE_TOP_FRONT, C_EDGE_TOP_LEFT, C_EDGE_BOTTOM_LEFT, C_EDGE_BOTTOM_BACK,
    C_EDGE_TOP_LEFT, C_EDGE_TOP_BACK, C_EDGE_BOTTOM_BACK, C_EDGE_BOTTOM_RIGHT, C_EDGE_TOP_RIGHT);
 var
-   v1,v2,p,i,imax,value : integer;
+   v1,v2,e1,e2,p,i,imax,value : integer;
    Cube : TNormals;
    CheckPoint : TVector3f;
    Point : TVector3i;
@@ -346,6 +352,8 @@ begin
 }
 
    SetLength(VertexGeneratedList,0);
+   SetLength(EdgeGeneratedList,0);
+   SetLength(FaceGeneratedList,0);
    for i := 0 to 5 do // for each face
    begin
       // check if this face will constructed based on vertexes (traditional marching cubes)
@@ -363,8 +371,8 @@ begin
          FaceSettings[i] := C_FACE_SET_VERT;
          for p := 0 to 3 do // for each edge from the face i
          begin
-            v1 := p * i; // vertice 1 index
-            v2 := ((p + 1) mod 4) * i; // vertice 2 index
+            v1 := p + (i * 4); // vertice 1 index
+            v2 := ((p + 1) mod 4) + (i * 4); // vertice 2 index
             if FilledVerts[FaceVerts[v1]] xor FilledVerts[FaceVerts[v2]] then
             begin
                // Add a vertex in the middle of the edge.
@@ -376,13 +384,13 @@ begin
       else
       begin
          // check if this face will constructed based on edges
-         v1 := i * 4;
-         v2 := v1 + 3;
+         e1 := i * 4;
+         e2 := e1 + 3;
          FaceHasEdges := false;
-         while v1 < v2 do
+         while e1 < e2 do
          begin
-            FaceHasEdges := FaceHasEdges or FilledEdges[FaceEdges[v1]];
-            inc(v1);
+            FaceHasEdges := FaceHasEdges or FilledEdges[FaceEdges[e1]];
+            inc(e1);
          end;
          // We'll generate new vertexes based on filled edges
          if FaceHasEdges then
@@ -390,17 +398,37 @@ begin
             FaceSettings[i] := C_FACE_SET_EDGE;
             for p := 0 to 3 do // for each edge from the face i
             begin
-               v1 := p * i; // edge index on FaceEdge
+               v1 := p + (i * 4); // edge index on FaceEdge
                if FilledEdges[FaceEdges[v1]] then
                begin
-                  //
-
+                  // Create vertexes in the middle of the 4 neighboor edges.
+                  e1 := FaceEdges[v1] * 4;
+                  e2 := e1 + 4;
+                  SetLength(EdgeGeneratedList,High(EdgeGeneratedList)+5);
+                  while e1 < e2 do
+                  begin
+                     // Add a vertex in the middle of the edge.
+                     EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+                     inc(e1);
+                  end;
                end;
             end;
-
+         end
+         else
+         begin
+            // We'll generate new vertexes based on filled faces
+            FaceSettings[i] := C_FACE_SET_FACE;
+            if FilledFaces[i] then
+            begin
+               SetLength(FaceGeneratedList,High(FaceGeneratedList)+5);
+               for p := 0 to 3 do // for each edge from the face i
+               begin
+                  e1 := p  + (i * 4); // edge index on FaceEdge
+                  // fill the beggining of each edge with a vertex
+                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexQuarterPoints[i,p,0,0], v0y + VertexQuarterPoints[i,p,0,1], v0z + VertexQuarterPoints[i,p,0,2],_TotalNumVertices);
+               end;
+            end;
          end;
-
-
       end;
 
 
