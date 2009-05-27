@@ -190,7 +190,7 @@ begin
 
    With p^.Section[i].Tailer do
    begin
-      label1.Caption:='Dimentions: '+Format('%dx%dx%d', [XSize,YSize,ZSize]);
+      label1.Caption:='Dimensions: '+Format('%dx%dx%d', [YSize,ZSize,XSize]);
    end;
    SpFrameChange(Sender);
 end;

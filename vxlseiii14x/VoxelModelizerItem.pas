@@ -43,7 +43,6 @@ const
    C_VERT_OUT_TWO_Q04 = 5;
    C_VERT_OUT_TWO_Q68 = 6;
    C_VERT_OUT_TWO_Q59 = 7;
-   // Vertex Outcome for Semi-Surfaces
    C_VERT_OUT_ONE_Q1 = 8;
    C_VERT_OUT_ONE_Q3 = 9;
 type
@@ -297,7 +296,7 @@ begin
          //   0  | 0    | 0  | 1  | One vertex out of the edge (Q7). :: Outcome 3
          //   0  | 0    | 1  | 0  | One vertex out of the edge (Q7). :: Outcome 3
          //   0  | 0    | 1  | 1  | Two vertexes out of the edge (Q5 and Q9 independent). :: Outcome 7
-         //   0  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 dependent).  :: Outcome 4
+         //   0  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 linked).  :: Outcome 4
          //   0  | 1    | 0  | 1  | One vertex in the edge (Q2). :: Outcome 2
          //   0  | 1    | 1  | 0  | One vertex in the edge (Q2). :: Outcome 2
          //   0  | 1    | 1  | 1  | Two vertexes in the edge (Q0 and Q4 independent). :: Outcome 5
@@ -305,7 +304,7 @@ begin
          //   1  | 0    | 0  | 1  | One vertex out of the edge (Q7). :: Outcome 3
          //   1  | 0    | 1  | 0  | One vertex out of the edge (Q7). :: Outcome 3
          //   1  | 0    | 1  | 1  | Two vertexes out of the edge (Q5 and Q9 independent). :: Outcome 7
-         //   1  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 dependent). :: Outcome 4
+         //   1  | 1    | 0  | 0  | Two vertexes in the edge (Q1 and Q3 linked). :: Outcome 4
          //   1  | 1    | 0  | 1  | One vertex in the edge (Q2). :: Outcome 2
          //   1  | 1    | 1  | 0  | One vertex in the edge (Q2). :: Outcome 2
          //   1  | 1    | 1  | 1  | No vertex in the surface. (inside the object) :: Outcome 1
