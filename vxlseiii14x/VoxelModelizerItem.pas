@@ -150,7 +150,6 @@ const
    EdgeCentralPoints: array[0..11,0..2] of byte = 	((0,2,4), (4,2,4), (2,0,4),
    (2,4,4), (0,2,0), (4,2,0), (2,0,0), (2,4,0), (0,4,2), (4,4,2), (0,0,2), (4,0,2));
 
-
    EdgeNeighboorList: array[0..47] of byte = (C_EDGE_TOP_FRONT, C_EDGE_FRONT_LEFT, C_EDGE_BACK_LEFT,
    C_EDGE_TOP_BACK, C_EDGE_TOP_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_TOP_FRONT,
    C_EDGE_TOP_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_TOP_RIGHT, C_EDGE_TOP_RIGHT,
@@ -170,6 +169,9 @@ var
    MySurface: integer;
    v0x,v0y,v0z: integer;
    FaceHasVertices,FaceHasEdges : boolean;
+   VisitedEdges: array[0..11] of boolean;
+   ExternalFaceEdges: array[0..11] of boolean;
+   InternalFaceEdges: array[0..11] of boolean;
 begin
    x := _x;
    y := _y;
@@ -351,9 +353,16 @@ begin
    end;
 }
 
+   // Prepare our variables for the construction of vertexes.
    SetLength(VertexGeneratedList,0);
    SetLength(EdgeGeneratedList,0);
    SetLength(FaceGeneratedList,0);
+   for i := 0 to 11 do
+   begin
+      VisitedEdges[i] := false;
+      InternalFaceEdges[i] := false;
+      ExternalFaceEdges[i] := false;
+   end;
    for i := 0 to 5 do // for each face
    begin
       // check if this face will constructed based on vertexes (traditional marching cubes)
@@ -399,16 +408,27 @@ begin
             for p := 0 to 3 do // for each edge from the face i
             begin
                v1 := p + (i * 4); // edge index on FaceEdge
-               if FilledEdges[FaceEdges[v1]] then
+               if (FilledEdges[FaceEdges[v1]] and (not VisitedEdges[FaceEdges[v1]])) then
                begin
+                  VisitedEdges[FaceEdges[v1]] := true;
                   // Create vertexes in the middle of the 4 neighboor edges.
                   e1 := FaceEdges[v1] * 4;
                   e2 := e1 + 4;
                   SetLength(EdgeGeneratedList,High(EdgeGeneratedList)+5);
                   while e1 < e2 do
                   begin
-                     // Add a vertex in the middle of the edge.
-                     EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+                     // Check if the neighboor edge is filled.
+                     if FilledEdges[EdgeNeighboorList[e1]] then
+                     begin
+                        // calculate the vertex between FaceEdges[v1] and FilledEdges[EdgeNeighboorList[e1]]
+                        // to prevent shapes from getting mixed up.
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertices);
+                     end
+                     else
+                     begin
+                        // Add a vertex in the middle of the edge.
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+                     end;
                      inc(e1);
                   end;
                end;
@@ -426,20 +446,36 @@ begin
                   e1 := p  + (i * 4); // edge index on FaceEdge
                   // fill the beggining of each edge with a vertex
                   FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexQuarterPoints[i,p,0,0], v0y + VertexQuarterPoints[i,p,0,1], v0z + VertexQuarterPoints[i,p,0,2],_TotalNumVertices);
+                  ExternalFaceEdges[FaceEdges[e1]] := true;
                end;
             end;
          end;
       end;
-
-
-
-
-
-
-
-
    end;
-
+   // Let's build the face vertex ones.
+   for i := 0 to 5 do
+   begin
+      // check the ones that have faces.
+      if FilledFaces[i] and (FaceSettings[i] = C_FACE_SET_FACE) then
+      begin
+         for p := 0 to 3 do // for each edge from the face i
+         begin
+            v1 := p  + (i * 4); // edge index on FaceEdge
+            e1 := FaceEdges[v1] * 4;
+            e2 := e1 + 4;
+            while e1 < e2 do
+            begin
+               if (not ExternalFaceEdges[EdgeNeighboorList[e1]]) and (not InternalFaceEdges[EdgeNeighboorList[e1]]) then
+               begin
+                  InternalFaceEdges[EdgeNeighboorList[e1]] := true;
+                  SetLength(FaceGeneratedList,High(FaceGeneratedList)+2);
+                  FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+               end;
+               inc(e1);
+            end;
+         end;
+      end;
+   end;
 
 
 
