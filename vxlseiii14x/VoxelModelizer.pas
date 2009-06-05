@@ -29,7 +29,7 @@ var
 begin
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
-   SetLength(FVertexMap,(High(FMap) + 1)*4,(High(FMap[0]) + 1)*4,(High(FMap[0,0]) + 1)*4); 
+   SetLength(FVertexMap,(High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
    GenerateItemsMap;
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
