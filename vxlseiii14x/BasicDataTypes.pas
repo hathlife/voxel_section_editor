@@ -30,6 +30,7 @@ type
    TVector3i = record
       X, Y, Z : integer;
    end;
+   TAVector3i = array of TVector3i;
 
    TVector3b = record
       R,G,B : Byte;

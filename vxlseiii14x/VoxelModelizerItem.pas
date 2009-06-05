@@ -136,9 +136,13 @@ const
 type
    TVoxelModelizerItem = class
       private
+         // Classification procedures
          procedure BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
          procedure BuildFilledEdges(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
          procedure BuildFilledFaces(const _VoxelMap: TVoxelMap; const Cube : TNormals; _MyClassification: single);
+         // vertex construction procedures
+         function FaceHasVertexes(_face: integer): boolean;
+         function FaceHasEdges(_face: integer): boolean;
       public
          // Position
          x, y, z: integer;
@@ -157,14 +161,14 @@ type
          EdgeGeneratedList : array of integer;
          FaceGeneratedList : array of integer;
 
-         VertexGeneratedPositions : array of TVector3i;
-         EdgeGeneratedPositions : array of TVector3i;
-         FaceGeneratedPositions : array of TVector3i;
+         VertexGeneratedPositions : TAVector3i;
+         EdgeGeneratedPositions : TAVector3i;
+         FaceGeneratedPositions : TAVector3i;
 
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertices: integer);
          // Adds
-         function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer): integer;
+         function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: TAVector3i): integer;
    end;
 
 implementation
@@ -176,7 +180,6 @@ var
    MyClassification: single;
    MySurface: integer;
    v0x,v0y,v0z: integer;
-   FaceHasVertices,FaceHasEdges : boolean;
    VisitedEdgesVertex: array[0..11] of boolean;
    VisitedEdges: array[0..11] of boolean;
    ExternalFaceEdges: array[0..11] of boolean;
@@ -210,6 +213,9 @@ begin
    SetLength(VertexGeneratedList,0);
    SetLength(EdgeGeneratedList,0);
    SetLength(FaceGeneratedList,0);
+   SetLength(VertexGeneratedPositions,0);
+   SetLength(EdgeGeneratedPositions,0);
+   SetLength(FaceGeneratedPositions,0);
    for i := 0 to 11 do
    begin
       VisitedEdgesVertex[i] := false;
@@ -219,18 +225,10 @@ begin
    end;
    for i := 0 to 5 do // for each face
    begin
-      // check if this face will constructed based on vertexes (traditional marching cubes)
-      v1 := i * 4;
-      v2 := v1 + 3;
-      FaceHasVertices := false;
-      while v1 < v2 do
+      // check if this face will constructed based on vertexes ('traditional' marching cubes)
+      if FaceHasVertexes(i) then
       begin
-         FaceHasVertices := FaceHasVertices or FilledVerts[FaceVerts[v1]];
-         inc(v1);
-      end;
-      // We'll generate new vertexes based on edges where only one of its vertexes is in the volume.
-      if FaceHasVertices then
-      begin
+         // We'll generate new vertexes based on edges where only one of its vertexes is in the volume.
          FaceSettings[i] := C_FACE_SET_VERT;
          for p := 0 to 3 do // for each edge from the face i
          begin
@@ -243,7 +241,7 @@ begin
                begin
                   // Add a vertex in the middle of the edge.
                   SetLength(VertexGeneratedList,High(VertexGeneratedList)+2);
-                  VertexGeneratedList[High(VertexGeneratedList)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,1,0], v0y + VertexPoints[i,p,1,1], v0z + VertexPoints[i,p,1,2],_TotalNumVertices);
+                  VertexGeneratedList[High(VertexGeneratedList)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,1,0], v0y + VertexPoints[i,p,1,1], v0z + VertexPoints[i,p,1,2],_TotalNumVertices,VertexGeneratedPositions);
                end;
             end;
          end;
@@ -251,17 +249,9 @@ begin
       else
       begin
          // check if this face will constructed based on edges
-         e1 := i * 4;
-         e2 := e1 + 3;
-         FaceHasEdges := false;
-         while e1 < e2 do
+         if FaceHasEdges(i) then
          begin
-            FaceHasEdges := FaceHasEdges or FilledEdges[FaceEdges[e1]];
-            inc(e1);
-         end;
-         // We'll generate new vertexes based on filled edges
-         if FaceHasEdges then
-         begin
+            // We'll generate new vertexes based on filled edges
             FaceSettings[i] := C_FACE_SET_EDGE;
             for p := 0 to 3 do // for each edge from the face i
             begin
@@ -280,12 +270,12 @@ begin
                      begin
                         // calculate the vertex between FaceEdges[v1] and FilledEdges[EdgeNeighboorList[e1]]
                         // to prevent shapes from getting mixed up.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertices);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertices,EdgeGeneratedPositions);
                      end
                      else
                      begin
                         // Add a vertex in the middle of the edge.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices,EdgeGeneratedPositions);
                      end;
                      inc(e1);
                   end;
@@ -303,7 +293,7 @@ begin
                begin
                   e1 := p  + (i * 4); // edge index on FaceEdge
                   // fill the beggining of each edge with a vertex
-                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertices);
+                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertices,FaceGeneratedPositions);
                   ExternalFaceEdges[FaceEdges[e1]] := true;
                end;
             end;
@@ -327,7 +317,7 @@ begin
                begin
                   InternalFaceEdges[EdgeNeighboorList[e1]] := true;
                   SetLength(FaceGeneratedList,High(FaceGeneratedList)+2);
-                  FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices);
+                  FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices,FaceGeneratedPositions);
                end;
                inc(e1);
             end;
@@ -481,8 +471,42 @@ begin
    end;
 end;
 
-function TVoxelModelizerItem.AddVertex(var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer): integer;
+function TVoxelModelizerItem.FaceHasVertexes(_face: integer): boolean;
+var
+   v,vmax : integer;
 begin
+   // check if this face will constructed based on vertexes (traditional marching cubes)
+   v := _face * 4;
+   vmax := v + 3;
+   Result := false;
+   while v < vmax do
+   begin
+      Result := Result or FilledVerts[FaceVerts[v]];
+      inc(v);
+   end;
+end;
+
+function TVoxelModelizerItem.FaceHasEdges(_face: integer): boolean;
+var
+   e,emax: integer;
+begin
+   // check if this face will constructed based on edges
+   e := _face * 4;
+   emax := e + 3;
+   Result := false;
+   while e < emax do
+   begin
+      Result := Result or FilledEdges[FaceEdges[e]];
+      inc(e);
+   end;
+end;
+
+function TVoxelModelizerItem.AddVertex(var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: TAVector3i): integer;
+begin
+   SetLength(_VertexList,High(_VertexList)+2);
+   _VertexList[High(_VertexList)].X := _x;
+   _VertexList[High(_VertexList)].Y := _y;
+   _VertexList[High(_VertexList)].Z := _z;
    if _VertexMap[_x,_y,_z] = -1 then
    begin
       _VertexMap[_x,_y,_z] := _NumVertices;
