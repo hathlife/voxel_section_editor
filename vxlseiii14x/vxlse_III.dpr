@@ -63,7 +63,8 @@ uses
   VoxelDocument in 'VoxelDocument.pas',
   VoxelDocumentBank in 'VoxelDocumentBank.pas',
   VoxelModelizer in 'VoxelModelizer.pas',
-  VoxelModelizerItem in 'VoxelModelizerItem.pas';
+  VoxelModelizerItem in 'VoxelModelizerItem.pas',
+  Class2DPointQueue in 'Class2DPointQueue.pas';
 
 {$R *.res}
 

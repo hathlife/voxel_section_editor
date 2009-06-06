@@ -2,7 +2,7 @@ unit VoxelModelizerItem;
 
 interface
 
-uses BasicFunctions, BasicDataTypes, VoxelMap, Normals;
+uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue;
 
 const
    // Vertices
@@ -43,6 +43,10 @@ const
    // Vertex Positions
    C_VP_HIGH = 8;
    C_VP_MID = C_VP_HIGH div 2;
+   C_VP_DIST2 = C_VP_HIGH * C_VP_HIGH;
+   C_VP_DIST1 = C_VP_DIST2 div 2;
+   C_VP_DIST3 = C_VP_DIST1 + C_VP_DIST2;
+   C_VP_DIST4 = C_VP_DIST1 + C_VP_DIST3;
 
    VertexRequirements: array[0..7] of integer = (C_SF_TOP_BACK_LEFT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
    C_SF_TOP_FRONT_LEFT_POINT, C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
@@ -140,9 +144,11 @@ type
          procedure BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
          procedure BuildFilledEdges(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
          procedure BuildFilledFaces(const _VoxelMap: TVoxelMap; const Cube : TNormals; _MyClassification: single);
-         // vertex construction procedures
+         // Vertex construction procedures
          function FaceHasVertexes(_face: integer): boolean;
          function FaceHasEdges(_face: integer): boolean;
+         // Face construction procedures
+         procedure MakeFacesFromVertexes(const _VertexList: TAVector3i);
       public
          // Position
          x, y, z: integer;
@@ -324,8 +330,30 @@ begin
          end;
       end;
    end;
+   // Here we start all procedures to build the faces.
+   // First we build the faces generated from vertexes.
+   MakeFacesFromVertexes(VertexGeneratedPositions);
+   // - 1) Build a distance table between the vertexes (not using square root).
+   // - 2) Order edges by distances (32, 64, 96 and 128)
+   // - 3) Draw each edge in the edge in the hashing and check for interceptions.
+   // - 4) Combine linked vertexes from the surviving edges to build the faces.
 
+   // Then we build the faces generated from edges.
+   // - 5) Build a set of faces using the given order.
 
+   // Finally we build the faces generated from faces.
+   // - 6) Follow steps 1 to 4 with the face generated vertexes.
+
+   // - 7) Write all faces.
+   // - 8) Paint the faces in the supervoxel.
+   // --------------------------------------------------------------------------
+   // After leaving this create, do the following things:
+   // --------------------------------------------------------------------------
+   // - 9) Classify the voxels from the supervoxel as in, out or surface.
+   // - 10) Check every face to ensure that it is in the surface. Cut the ones inside.
+   // - 11) Calculate the normals from each face.
+   // - 12) Use raycasting procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
+   // - 13) Set a colour for each face.
 
    Cube.Free;
 end;
@@ -517,6 +545,54 @@ begin
    begin
       Result := _VertexMap[_x,_y,_z];
    end;
+end;
+
+procedure TVoxelModelizerItem.MakeFacesFromVertexes(const _VertexList: TAVector3i);
+var
+   NumVerts: integer;
+   DistanceMatrix: array of array of integer;
+   QueueDist1, QueueDist2, QueueDist3, QueueDist4: C2DPointQueue;
+   i, j : integer;
+begin
+   // Prepare variables
+   QueueDist1 := C2DPointQueue.Create;
+   QueueDist2 := C2DPointQueue.Create;
+   QueueDist3 := C2DPointQueue.Create;
+   QueueDist4 := C2DPointQueue.Create;
+
+   // get number of vertexes that we'll work with.
+   NumVerts := High(_VertexList)+1;
+   // Prepare distance list.
+   SetLength(DistanceMatrix,NumVerts,NumVerts);
+   for i := 0 to NumVerts - 1 do
+      for j := 0 to NumVerts - 1 do
+         DistanceMatrix[i,j] := 0;
+   // Build the distance matrix.
+   i := 0;
+   while i < NumVerts do
+   begin
+      j := i+1;   // with j=i, the distance will always be 0, so we need to exclude it.
+      while j < NumVerts do
+      begin
+         // get a fake distance, since it doesn't have the square root, which is unnecessary in this case.
+         DistanceMatrix[i,j] := ((_VertexList[i].X - _VertexList[j].X) * (_VertexList[i].X - _VertexList[j].X)) + ((_VertexList[i].Y - _VertexList[j].Y) * (_VertexList[i].Y - _VertexList[j].Y)) + ((_VertexList[i].Z - _VertexList[j].Z) * (_VertexList[i].Z - _VertexList[j].Z));
+         // Add the edge to the list related to its distance.
+         case (DistanceMatrix[i,j]) of
+            C_VP_DIST1: QueueDist1.Add(i,j);
+            C_VP_DIST2: QueueDist2.Add(i,j);
+            C_VP_DIST3: QueueDist3.Add(i,j);
+            C_VP_DIST4: QueueDist4.Add(i,j);
+            else
+            begin
+               DistanceMatrix[i,j] := 0;
+            end;
+         end;
+         inc(j);
+      end;
+      inc(i);
+   end;
+   // So, there we go, with all distances and ordered edges in 4 lists.
+
 end;
 
 end.
