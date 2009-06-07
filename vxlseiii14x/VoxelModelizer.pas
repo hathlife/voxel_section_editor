@@ -11,13 +11,14 @@ type
          FItems : array of TVoxelModelizerItem;
          PVoxelMap : PVoxelMap;
          PSemiSurfacesMap : P3DIntGrid;
-         FNumVertices : integer;
+         FNumVertexes : integer;
          FVertexMap: T3DIntGrid;
+         FVertexes: TAVector3i;
          EdgeMap: T3DMap;
          F3DMap: T3DMap;
       public
          // Constructors and Destructors
-         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid);
+         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32);
          // Misc
          procedure GenerateItemsMap;
          procedure ResetVertexMap;
@@ -25,7 +26,7 @@ type
 
 implementation
 
-constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid);
+constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32);
 var
    x, y, z: integer;
 begin
@@ -44,11 +45,27 @@ begin
          begin
             if FMap[x,y,z] <> -1 then
             begin
-               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertices);
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertexes);
+               // Paint the faces in the 3D Map.
             end;
          end;
    // Confirm the vertex list.
-   // Paint the faces in the 3D Map.
+   SetLength(_Vertexes,FNumVertexes);
+   SetLength(FVertexes,FNumVertexes); // internal vertex list for future operations
+   for x := Low(FVertexMap) to High(FVertexMap) do
+      for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
+         for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
+         begin
+            if FVertexMap[x,y,z] <> -1 then
+            begin
+               _Vertexes[FVertexMap[x,y,z]].X := x / C_VP_HIGH;
+               _Vertexes[FVertexMap[x,y,z]].Y := y / C_VP_HIGH;
+               _Vertexes[FVertexMap[x,y,z]].Z := z / C_VP_HIGH;
+               FVertexes[FVertexMap[x,y,z]].X := x;
+               FVertexes[FVertexMap[x,y,z]].Y := y;
+               FVertexes[FVertexMap[x,y,z]].Z := z;
+            end;
+         end;
    // Classify the voxels from the 3D Map as in, out or surface.
    // Check every face to ensure that it is in the surface. Cut the ones inside.
    // Calculate the normals from each face.
@@ -86,7 +103,7 @@ procedure TVoxelModelizer.ResetVertexMap;
 var
    x, y, z: integer;
 begin
-   FNumVertices := 0;
+   FNumVertexes := 0;
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
          for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do

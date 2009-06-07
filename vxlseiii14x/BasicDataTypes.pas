@@ -115,6 +115,7 @@ type
    P3DSingleGrid = ^T3DSingleGrid;
 
    AInt32 = array of integer;
+   AUInt32 = array of longword;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
    
 implementation

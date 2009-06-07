@@ -34,10 +34,10 @@ type
          VerticesPerFace : byte; // for optimization purposes only.
          NumFaces : longword;
          NumVoxels : longword; // for statistic purposes.
-         Vertices : array of TVector3f;
+         Vertices : TAVector3f;
          Normals : array of TVector3f;
          Colours : array of TVector4f;
-         Faces : array of longword;
+         Faces : auint32;
          TextCoords : array of TVector2f;
          FaceNormals : array of TVector3f;
          // Graphical and colision
@@ -511,7 +511,7 @@ begin
    VoxelMap.GenerateSurfaceMap;
    VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
    // Mesh generation process
-   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap);
+   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces);
    // <--- Voxel modelizing code goes here --->
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);

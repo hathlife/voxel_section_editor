@@ -3,7 +3,7 @@ unit VoxelModelizerItem;
 interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,
-   BasicConstants, ThreeDMap;
+   BasicConstants, ThreeDMap, Voxel_Engine;
 
 const
    // Vertices
@@ -151,6 +151,7 @@ type
          // Face construction procedures
          procedure MakeFacesFromVertexes(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
          procedure MakeFacesFromEdges(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
+         procedure MakeACube(const _MyPosition: TVector3i; var _VertexMap : T3DIntGrid; var _NumVertices: integer);
       public
          // Position
          x, y, z: integer;
@@ -174,14 +175,14 @@ type
          FaceGeneratedPositions : TAVector3i;
 
          // Constructors and Destructors
-         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertices: integer);
+         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer);
          // Adds
          function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: TAVector3i): integer;
    end;
 
 implementation
 
-constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertices: integer);
+constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer);
 var
    v1,v2,e1,e2,p,i,imax,value : integer;
    Cube : TNormals;
@@ -249,7 +250,7 @@ begin
                begin
                   // Add a vertex in the middle of the edge.
                   SetLength(VertexGeneratedList,High(VertexGeneratedList)+2);
-                  VertexGeneratedList[High(VertexGeneratedList)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,1,0], v0y + VertexPoints[i,p,1,1], v0z + VertexPoints[i,p,1,2],_TotalNumVertices,VertexGeneratedPositions);
+                  VertexGeneratedList[High(VertexGeneratedList)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,1,0], v0y + VertexPoints[i,p,1,1], v0z + VertexPoints[i,p,1,2],_TotalNumVertexes,VertexGeneratedPositions);
                end;
             end;
          end;
@@ -278,12 +279,12 @@ begin
                      begin
                         // calculate the vertex between FaceEdges[v1] and FilledEdges[EdgeNeighboorList[e1]]
                         // to prevent shapes from getting mixed up.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertices,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertexes,EdgeGeneratedPositions);
                      end
                      else
                      begin
                         // Add a vertex in the middle of the edge.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,EdgeGeneratedPositions);
                      end;
                      inc(e1);
                   end;
@@ -301,7 +302,7 @@ begin
                begin
                   e1 := p  + (i * 4); // edge index on FaceEdge
                   // fill the beggining of each edge with a vertex
-                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertices,FaceGeneratedPositions);
+                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedPositions);
                   ExternalFaceEdges[FaceEdges[e1]] := true;
                end;
             end;
@@ -325,7 +326,7 @@ begin
                begin
                   InternalFaceEdges[EdgeNeighboorList[e1]] := true;
                   SetLength(FaceGeneratedList,High(FaceGeneratedList)+2);
-                  FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertices,FaceGeneratedPositions);
+                  FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,FaceGeneratedPositions);
                end;
                inc(e1);
             end;
@@ -334,13 +335,20 @@ begin
    end;
    // Here we start all procedures to build the faces.
    // First we build the faces generated from vertexes.
-   MakeFacesFromVertexes(VertexGeneratedPositions,VertexGeneratedList,_EdgeMap);
+   if High(VertexGeneratedPositions) > -1 then
+      MakeFacesFromVertexes(VertexGeneratedPositions,VertexGeneratedList,_EdgeMap);
 
    // Then we build the faces generated from edges.
-   MakeFacesFromEdges(EdgeGeneratedPositions,EdgeGeneratedList,_EdgeMap);
+   if High(EdgeGeneratedPositions) > -1 then
+      MakeFacesFromEdges(EdgeGeneratedPositions,EdgeGeneratedList,_EdgeMap);
 
    // Finally we build the faces generated from faces.
-   MakeFacesFromVertexes(FaceGeneratedPositions,FaceGeneratedList,_EdgeMap);
+   if High(FaceGeneratedPositions) > -1 then
+      MakeFacesFromVertexes(FaceGeneratedPositions,FaceGeneratedList,_EdgeMap);
+
+   // If vertexes, edges and faces = 0. Do the lonely cube.
+   if High(Faces) < 0 then
+      MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
    Cube.Free;
 end;
@@ -553,77 +561,92 @@ begin
 
    // get number of vertexes that we'll work with.
    NumVerts := High(_VertexList)+1;
-   // Prepare distance list.
-   SetLength(DistanceMatrix,NumVerts,NumVerts);
-   // Build the distance matrix.
-   i := 0;
-   while i < NumVerts do
+   // Check if we have a single face
+   if numVerts = 3 then
    begin
-      DistanceMatrix[i,i] := 0;
-      j := i+1;
-      while j < NumVerts do
-      begin
-         // get a fake distance, since it doesn't have the square root, which is unnecessary in this case.
-         DistanceMatrix[i,j] := ((_VertexPositions[i].X - _VertexPositions[j].X) * (_VertexPositions[i].X - _VertexPositions[j].X)) + ((_VertexPositions[i].Y - _VertexPositions[j].Y) * (_VertexPositions[i].Y - _VertexPositions[j].Y)) + ((_VertexPositions[i].Z - _VertexPositions[j].Z) * (_VertexPositions[i].Z - _VertexPositions[j].Z));
-         // Add the edge to the list related to its distance.
-         case (DistanceMatrix[i,j]) of
-            C_VP_DIST1: QueueDist[0].Add(i,j);
-            C_VP_DIST2: QueueDist[1].Add(i,j);
-            C_VP_DIST3: QueueDist[2].Add(i,j);
-            C_VP_DIST4: QueueDist[3].Add(i,j);
-            else
-            begin
-               DistanceMatrix[i,j] := 0;
-            end;
-         end;
-         DistanceMatrix[j,i] := DistanceMatrix[i,j];
-         inc(j);
-      end;
-      inc(i);
-   end;
-   // So, there we go, with all distances and ordered edges in 4 lists.
-   // Let's check the edges that intercept other edges and cut them.
-   for i := 0 to 3 do
+      // if we have a single face, the situation is ridiculous.
+      SetLength(Faces,High(Faces)+4);
+      Faces[High(Faces)-2] := _VertexList[0];
+      Faces[High(Faces)-1] := _VertexList[1];
+      Faces[High(Faces)] := _VertexList[2];
+   end
+   else
    begin
-      if not QueueDist[i].IsEmpty then
+      // We have more than 3 vertexes, so, we'll have to figure this face out with
+      // a complex operation.
+
+      // Prepare distance list.
+      SetLength(DistanceMatrix,NumVerts,NumVerts);
+      // Build the distance matrix.
+      i := 0;
+      while i < NumVerts do
       begin
-         QueueDist[i].GoToFirstElement;
-         while QueueDist[i].GetPosition(j,k) do
+         DistanceMatrix[i,i] := 0;
+         j := i+1;
+         while j < NumVerts do
          begin
-            if not _EdgeMap.TryPaintingEdge(_VertexPositions[j],_VertexPositions[k],1) then
-            begin
-               DistanceMatrix[j,k] := 0;
-               DistanceMatrix[k,j] := 0;
-            end;
-            QueueDist[i].GoToNextElement;
-         end;
-      end;
-   end;
-   // So, we have all edges. Let's build faces out of it and write them.
-   for i := Low(DistanceMatrix) to High(DistanceMatrix) do
-   begin
-      for j := Low(DistanceMatrix) to High(DistanceMatrix) do
-      begin
-         if DistanceMatrix[i,j] <> 0 then
-         begin
-            k := 0;
-            while k < NumVerts do
-            begin
-               if (DistanceMatrix[i,k] <> 0) and (DistanceMatrix[j,k] <> 0) then
-               begin
-                  // Add i, j, k to faces.
-                  SetLength(Faces,High(Faces)+4);
-                  Faces[High(Faces)] := k;
-                  Faces[High(Faces)-1] := j;
-                  Faces[High(Faces)-2] := i;
-                  // Ensure that they will not be detected anymore.
-                  DistanceMatrix[i,j] := 0;
-                  DistanceMatrix[j,k] := 0;
-                  DistanceMatrix[k,i] := 0;
-                  k := NumVerts;
-               end
+            // get a fake distance, since it doesn't have the square root, which is unnecessary in this case.
+            DistanceMatrix[i,j] := ((_VertexPositions[i].X - _VertexPositions[j].X) * (_VertexPositions[i].X - _VertexPositions[j].X)) + ((_VertexPositions[i].Y - _VertexPositions[j].Y) * (_VertexPositions[i].Y - _VertexPositions[j].Y)) + ((_VertexPositions[i].Z - _VertexPositions[j].Z) * (_VertexPositions[i].Z - _VertexPositions[j].Z));
+            // Add the edge to the list related to its distance.
+            case (DistanceMatrix[i,j]) of
+               C_VP_DIST1: QueueDist[0].Add(i,j);
+               C_VP_DIST2: QueueDist[1].Add(i,j);
+               C_VP_DIST3: QueueDist[2].Add(i,j);
+               C_VP_DIST4: QueueDist[3].Add(i,j);
                else
-                  inc(k);
+               begin
+                  DistanceMatrix[i,j] := 0;
+               end;
+            end;
+            DistanceMatrix[j,i] := DistanceMatrix[i,j];
+            inc(j);
+         end;
+         inc(i);
+      end;
+      // So, there we go, with all distances and ordered edges in 4 lists.
+      // Let's check the edges that intercept other edges and cut them.
+      for i := 0 to 3 do
+      begin
+         if not QueueDist[i].IsEmpty then
+         begin
+            QueueDist[i].GoToFirstElement;
+            while QueueDist[i].GetPosition(j,k) do
+            begin
+               if not _EdgeMap.TryPaintingEdge(_VertexPositions[j],_VertexPositions[k],1) then
+               begin
+                  DistanceMatrix[j,k] := 0;
+                  DistanceMatrix[k,j] := 0;
+               end;
+               QueueDist[i].GoToNextElement;
+            end;
+         end;
+      end;
+      // So, we have all edges. Let's build faces out of it and write them.
+      for i := Low(DistanceMatrix) to High(DistanceMatrix) do
+      begin
+         for j := Low(DistanceMatrix) to High(DistanceMatrix) do
+         begin
+            if DistanceMatrix[i,j] <> 0 then
+            begin
+               k := 0;
+               while k < NumVerts do
+               begin
+                  if (DistanceMatrix[i,k] <> 0) and (DistanceMatrix[j,k] <> 0) then
+                  begin
+                     // Add i, j, k to faces.
+                     SetLength(Faces,High(Faces)+4);
+                     Faces[High(Faces)] := k;
+                     Faces[High(Faces)-1] := j;
+                     Faces[High(Faces)-2] := i;
+                     // Ensure that they will not be detected anymore.
+                     DistanceMatrix[i,j] := 0;
+                     DistanceMatrix[j,k] := 0;
+                     DistanceMatrix[k,i] := 0;
+                     k := NumVerts;
+                  end
+                  else
+                     inc(k);
+               end;
             end;
          end;
       end;
@@ -663,6 +686,79 @@ begin
       inc(j,4);
       inc(i,6);
    end;
+end;
+
+// The lonely cube solution.
+procedure TVoxelModelizerItem.MakeACube(const _MyPosition: TVector3i; var _VertexMap : T3DIntGrid; var _NumVertices: integer);
+var
+   Vertexes: array[0..7] of integer;
+   VertexPositions: TAVector3i;
+begin
+   // Add all vertexes.
+   Vertexes[0] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y + C_VP_HIGH,_MyPosition.Z + C_VP_HIGH,_NumVertices,VertexPositions);
+   Vertexes[1] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y + C_VP_HIGH,_MyPosition.Z,_NumVertices,VertexPositions);
+   Vertexes[2] := AddVertex(_VertexMap,_MyPosition.X,_MyPosition.Y + C_VP_HIGH,_MyPosition.Z,_NumVertices,VertexPositions);
+   Vertexes[3] := AddVertex(_VertexMap,_MyPosition.X,_MyPosition.Y + C_VP_HIGH,_MyPosition.Z + C_VP_HIGH,_NumVertices,VertexPositions);
+   Vertexes[4] := AddVertex(_VertexMap,_MyPosition.X,_MyPosition.Y,_MyPosition.Z,_NumVertices,VertexPositions);
+   Vertexes[5] := AddVertex(_VertexMap,_MyPosition.X,_MyPosition.Y,_MyPosition.Z + C_VP_HIGH,_NumVertices,VertexPositions);
+   Vertexes[6] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y,_MyPosition.Z + C_VP_HIGH,_NumVertices,VertexPositions);
+   Vertexes[7] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y,_MyPosition.Z,_NumVertices,VertexPositions);
+   // Add All Faces
+   SetLength(Faces,36);
+   // Front triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[0] := Vertexes[0];
+   Faces[1] := Vertexes[2];
+   Faces[2] := Vertexes[1];
+   // Face 2: top right, top left, bottom left.
+   Faces[3] := Vertexes[0];
+   Faces[4] := Vertexes[3];
+   Faces[5] := Vertexes[2];
+   // Left triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[6] := Vertexes[3];
+   Faces[7] := Vertexes[4];
+   Faces[8] := Vertexes[2];
+   // Face 2: top right, top left, bottom left.
+   Faces[9] := Vertexes[3];
+   Faces[10] := Vertexes[5];
+   Faces[11] := Vertexes[4];
+   // Back triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[12] := Vertexes[5];
+   Faces[13] := Vertexes[7];
+   Faces[14] := Vertexes[4];
+   // Face 2: top right, top left, bottom left.
+   Faces[15] := Vertexes[5];
+   Faces[16] := Vertexes[6];
+   Faces[17] := Vertexes[7];
+   // Right triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[18] := Vertexes[6];
+   Faces[19] := Vertexes[1];
+   Faces[20] := Vertexes[7];
+   // Face 2: top right, top left, bottom left.
+   Faces[21] := Vertexes[6];
+   Faces[22] := Vertexes[0];
+   Faces[23] := Vertexes[1];
+   // Top triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[24] := Vertexes[7];
+   Faces[25] := Vertexes[3];
+   Faces[26] := Vertexes[6];
+   // Face 2: top right, top left, bottom left.
+   Faces[27] := Vertexes[7];
+   Faces[28] := Vertexes[3];
+   Faces[29] := Vertexes[5];
+   // Bottom triangles
+   // Face 1: top right, bottom left, bottom right.
+   Faces[30] := Vertexes[1];
+   Faces[31] := Vertexes[4];
+   Faces[32] := Vertexes[7];
+   // Face 2: top right, top left, bottom left.
+   Faces[33] := Vertexes[1];
+   Faces[34] := Vertexes[2];
+   Faces[35] := Vertexes[4];
 end;
 
 
