@@ -2,7 +2,7 @@ unit VoxelModelizer;
 
 interface
 
-uses VoxelMap, BasicDataTypes, VoxelModelizerItem;
+uses VoxelMap, BasicDataTypes, VoxelModelizerItem, BasicConstants, ThreeDMap;
 
 type
    TVoxelModelizer = class
@@ -13,6 +13,8 @@ type
          PSemiSurfacesMap : P3DIntGrid;
          FNumVertices : integer;
          FVertexMap: T3DIntGrid;
+         EdgeMap: T3DMap;
+         F3DMap: T3DMap;
       public
          // Constructors and Destructors
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid);
@@ -31,13 +33,14 @@ begin
    PSemiSurfacesMap := @_SemiSurfaces;
    SetLength(FVertexMap,(High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
    GenerateItemsMap;
+   EdgeMap := T3DMap.Create((High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
          for z := Low(FMap[x,y]) to High(FMap[x,y]) do
          begin
             if FMap[x,y,z] <> -1 then
             begin
-               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,x,y,z,FNumVertices);
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertices);
             end;
          end;
 end;

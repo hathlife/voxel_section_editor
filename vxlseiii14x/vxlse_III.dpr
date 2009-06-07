@@ -64,7 +64,9 @@ uses
   VoxelDocumentBank in 'VoxelDocumentBank.pas',
   VoxelModelizer in 'VoxelModelizer.pas',
   VoxelModelizerItem in 'VoxelModelizerItem.pas',
-  Class2DPointQueue in 'Class2DPointQueue.pas';
+  Class2DPointQueue in 'Class2DPointQueue.pas',
+  BasicConstants in 'BasicConstants.pas',
+  ThreeDMap in 'ThreeDMap.pas';
 
 {$R *.res}
 

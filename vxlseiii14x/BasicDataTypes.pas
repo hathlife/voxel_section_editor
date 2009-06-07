@@ -114,6 +114,7 @@ type
    T3DSingleGrid = array of array of array of single;
    P3DSingleGrid = ^T3DSingleGrid;
 
+   AInt32 = array of integer;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
    
 implementation
