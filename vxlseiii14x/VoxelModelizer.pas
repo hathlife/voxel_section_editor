@@ -29,11 +29,15 @@ constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfa
 var
    x, y, z: integer;
 begin
+   // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
-   SetLength(FVertexMap,(High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
-   GenerateItemsMap;
    EdgeMap := T3DMap.Create((High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
+   SetLength(FVertexMap,EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   F3DMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   // Find out the regions where we will have meshes.
+   GenerateItemsMap;
+   // Write faces and vertexes for each item of the map.
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
          for z := Low(FMap[x,y]) to High(FMap[x,y]) do
@@ -43,6 +47,14 @@ begin
                FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertices);
             end;
          end;
+   // Confirm the vertex list.
+   // Paint the faces in the 3D Map.
+   // Classify the voxels from the 3D Map as in, out or surface.
+   // Check every face to ensure that it is in the surface. Cut the ones inside.
+   // Calculate the normals from each face.
+   // Use raycasting procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
+   // Set a colour for each face.
+
 end;
 
 procedure TVoxelModelizer.GenerateItemsMap;

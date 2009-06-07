@@ -150,6 +150,7 @@ type
          function FaceHasEdges(_face: integer): boolean;
          // Face construction procedures
          procedure MakeFacesFromVertexes(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
+         procedure MakeFacesFromEdges(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
       public
          // Position
          x, y, z: integer;
@@ -336,20 +337,10 @@ begin
    MakeFacesFromVertexes(VertexGeneratedPositions,VertexGeneratedList,_EdgeMap);
 
    // Then we build the faces generated from edges.
-   // - 5) Build a set of faces using the given order.
+   MakeFacesFromEdges(EdgeGeneratedPositions,EdgeGeneratedList,_EdgeMap);
 
    // Finally we build the faces generated from faces.
    MakeFacesFromVertexes(FaceGeneratedPositions,FaceGeneratedList,_EdgeMap);
-
-   // --------------------------------------------------------------------------
-   // After leaving this create, do the following things:
-   // --------------------------------------------------------------------------
-   // - 8) Paint the faces in the 3D Map.
-   // - 9) Classify the voxels from the 3D Map as in, out or surface.
-   // - 10) Check every face to ensure that it is in the surface. Cut the ones inside.
-   // - 11) Calculate the normals from each face.
-   // - 12) Use raycasting procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
-   // - 13) Set a colour for each face.
 
    Cube.Free;
 end;
@@ -638,5 +629,41 @@ begin
       end;
    end;
 end;
+
+// Build a set of faces using the given order.
+procedure TVoxelModelizerItem.MakeFacesFromEdges(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
+var
+   NumFaces: integer;
+   i,j: integer;
+begin
+   NumFaces := (High(_VertexList)+1) div 2;
+   i := High(_VertexList);
+   j := 0;
+   SetLength(Faces,(High(Faces)+1) + (NumFaces*3));
+   while i <= High(_VertexList) do
+   begin
+      // Face 1: V1, V3, V2
+      Faces[i] := _VertexList[j];
+      Faces[i+1] := _VertexList[j+2];
+      Faces[i+2] := _VertexList[j+1];
+
+      // Face 2: V1, V4, V3
+      Faces[i+3] := _VertexList[j];
+      Faces[i+4] := _VertexList[j+3];
+      Faces[i+5] := _VertexList[j+2];
+
+      // Draw them in the edge map.
+      _EdgeMap.PaintEdge(_VertexPositions[j],_VertexPositions[j+1],1);
+      _EdgeMap.PaintEdge(_VertexPositions[j+1],_VertexPositions[j+2],1);
+      _EdgeMap.PaintEdge(_VertexPositions[j+2],_VertexPositions[j+3],1);
+      _EdgeMap.PaintEdge(_VertexPositions[j+3],_VertexPositions[j],1);
+      _EdgeMap.PaintEdge(_VertexPositions[j],_VertexPositions[j+2],1);
+
+      // Go to next two faces.
+      inc(j,4);
+      inc(i,6);
+   end;
+end;
+
 
 end.
