@@ -50,6 +50,7 @@ type
          procedure GenerateVolumeMap;
          procedure GenerateInfluenceMap;
          procedure GenerateSurfaceMap;
+         procedure GenerateSelfSurfaceMap;
          procedure GenerateInfluenceMapOnly;
          procedure GenerateFullMap;
          // Copies
@@ -263,6 +264,18 @@ begin
    FilledMap.Free;
    MapInfluences;
 end;
+
+procedure T3DMap.GenerateSelfSurfaceMap;
+var
+   FilledMap : T3DMap;
+begin
+   FilledMap := T3DMap.Create(FMap,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,1));
+   FilledMap.FloodFill(SetVectorI(0,0,0),0);
+   MergeMapData(FilledMap,1);
+   FilledMap.Free;
+   MapSurfaces(1);
+end;
+
 
 procedure T3DMap.GenerateSurfaceMap;
 var

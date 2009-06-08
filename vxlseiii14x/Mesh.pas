@@ -35,11 +35,11 @@ type
          NumFaces : longword;
          NumVoxels : longword; // for statistic purposes.
          Vertices : TAVector3f;
-         Normals : array of TVector3f;
-         Colours : array of TVector4f;
+         Normals : TAVector3f;
+         Colours : TAVector4f;
          Faces : auint32;
-         TextCoords : array of TVector2f;
-         FaceNormals : array of TVector3f;
+         TextCoords : TAVector2f;
+         FaceNormals : TAVector3f;
          // Graphical and colision
          BoundingBox : TRectangle3f;
          Scale : TVector3f;
@@ -506,12 +506,14 @@ begin
    FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
+   SetLength(TextCoords,0);
+   SetLength(Normals,0);
    // Voxel classification stage
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
    VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
    // Mesh generation process
-   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces);
+   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours);
    // <--- Voxel modelizing code goes here --->
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);

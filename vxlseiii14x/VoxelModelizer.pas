@@ -13,12 +13,9 @@ type
          PSemiSurfacesMap : P3DIntGrid;
          FNumVertexes : integer;
          FVertexMap: T3DIntGrid;
-         FVertexes: TAVector3i;
-         EdgeMap: T3DMap;
-         F3DMap: T3DMap;
       public
          // Constructors and Destructors
-         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32);
+         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
          // Misc
          procedure GenerateItemsMap;
          procedure ResetVertexMap;
@@ -26,16 +23,19 @@ type
 
 implementation
 
-constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32);
+constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
 var
    x, y, z, f: integer;
+   EdgeMap: T3DMap;
+   ModelMap: T3DMap;
+   Vertexes: TAVector3i;
 begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
    EdgeMap := T3DMap.Create((High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
    SetLength(FVertexMap,EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
-   F3DMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   ModelMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
    // Find out the regions where we will have meshes.
    GenerateItemsMap;
    // Write faces and vertexes for each item of the map.
@@ -50,7 +50,7 @@ begin
          end;
    // Confirm the vertex list.
    SetLength(_Vertexes,FNumVertexes);
-   SetLength(FVertexes,FNumVertexes); // internal vertex list for future operations
+   SetLength(Vertexes,FNumVertexes); // internal vertex list for future operations
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
          for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
@@ -60,9 +60,9 @@ begin
                _Vertexes[FVertexMap[x,y,z]].X := x / C_VP_HIGH;
                _Vertexes[FVertexMap[x,y,z]].Y := y / C_VP_HIGH;
                _Vertexes[FVertexMap[x,y,z]].Z := z / C_VP_HIGH;
-               FVertexes[FVertexMap[x,y,z]].X := x;
-               FVertexes[FVertexMap[x,y,z]].Y := y;
-               FVertexes[FVertexMap[x,y,z]].Z := z;
+               Vertexes[FVertexMap[x,y,z]].X := x;
+               Vertexes[FVertexMap[x,y,z]].Y := y;
+               Vertexes[FVertexMap[x,y,z]].Z := z;
             end;
          end;
    // Paint the faces in the 3D Map.
@@ -75,13 +75,17 @@ begin
                f := 0;
                while f <= High(FItems[FMap[x,y,z]].Faces) do
                begin
-                  F3DMap.PaintFace(FVertexes[FItems[FMap[x,y,z]].Faces[f]],FVertexes[FItems[FMap[x,y,z]].Faces[f+1]],FVertexes[FItems[FMap[x,y,z]].Faces[f+2]],1);
+                  ModelMap.PaintFace(Vertexes[FItems[FMap[x,y,z]].Faces[f]],Vertexes[FItems[FMap[x,y,z]].Faces[f+1]],Vertexes[FItems[FMap[x,y,z]].Faces[f+2]],1);
                   inc(f,3);
                end;
             end;
          end;
    // Classify the voxels from the 3D Map as in, out or surface.
-   // Check every face to ensure that it is in the surface. Cut the ones inside.
+   ModelMap.GenerateSelfSurfaceMap;
+   // Check every face to ensure that it is in the surface. Cut the ones inside
+   // the volume.
+
+
    // Calculate the normals from each face.
    // Use raycasting procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
    // Set a colour for each face.

@@ -26,11 +26,14 @@ type
    TVector2f = record
       U, V : single;
    end;
+   TAVector2f = array of TVector2f;
+   PAVector2f = ^TAVector2f;
 
    TVector3i = record
       X, Y, Z : integer;
    end;
    TAVector3i = array of TVector3i;
+   PAVector3i = ^TAVector3i;
 
    TVector3b = record
       R,G,B : Byte;
