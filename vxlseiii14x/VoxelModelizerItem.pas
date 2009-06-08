@@ -284,12 +284,12 @@ begin
                      begin
                         // calculate the vertex between FaceEdges[v1] and FilledEdges[EdgeNeighboorList[e1]]
                         // to prevent shapes from getting mixed up.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertexes,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1 - 1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertexes,EdgeGeneratedPositions);
                      end
                      else
                      begin
                         // Add a vertex in the middle of the edge.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1 - 1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,EdgeGeneratedPositions);
                      end;
                      inc(e1);
                   end;
@@ -307,7 +307,7 @@ begin
                begin
                   e1 := p  + (i * 4); // edge index on FaceEdge
                   // fill the beggining of each edge with a vertex
-                  FaceGeneratedList[High(FaceGeneratedList) - (4 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedPositions);
+                  FaceGeneratedList[High(FaceGeneratedList) - (3 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedPositions);
                   ExternalFaceEdges[FaceEdges[e1]] := true;
                end;
             end;
@@ -499,7 +499,7 @@ begin
       // check all 6 faces.
       for f := 0 to 5 do
       begin
-         CheckPoint := Cube[f];
+         CheckPoint := Cube[FaceCheck[f]];
          Point.X := x + Round(CheckPoint.X);
          Point.Y := y + Round(CheckPoint.Y);
          Point.Z := z + Round(CheckPoint.Z);
@@ -521,7 +521,7 @@ var
 begin
    // check if this face will constructed based on vertexes (traditional marching cubes)
    v := _face * 4;
-   vmax := v + 3;
+   vmax := v + 4;
    Result := false;
    while v < vmax do
    begin
@@ -536,7 +536,7 @@ var
 begin
    // check if this face will constructed based on edges
    e := _face * 4;
-   emax := e + 3;
+   emax := e + 4;
    Result := false;
    while e < emax do
    begin

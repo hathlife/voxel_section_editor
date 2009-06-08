@@ -33,7 +33,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 861
     object LeftPanel: TPanel
       Left = 1
       Top = 26
@@ -41,7 +40,6 @@ object FrmMain: TFrmMain
       Height = 853
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 834
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1248,7 +1246,6 @@ object FrmMain: TFrmMain
       Height = 853
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 834
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1548,7 +1545,6 @@ object FrmMain: TFrmMain
       Height = 853
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 834
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4274,7 +4270,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 803
       end
       object Panel5: TPanel
         Left = 1
@@ -4284,7 +4279,6 @@ object FrmMain: TFrmMain
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 817
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4506,7 +4500,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 861
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -5308,7 +5301,7 @@ object FrmMain: TFrmMain
     Left = 257
     Top = 98
     Bitmap = {
-      494C01012A002C00040010001000FFFFFFFFFF00FFFFFFFFFFFFFFFF424D3600
+      494C01012A002C00040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000040000000B0000000010020000000000000B0
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -6764,7 +6757,8 @@ object FrmMain: TFrmMain
       DF7BFFFFC003801FF00F801F8003801FF00F800F8003801FF00F80078003801F
       F00F80038003CFFFE00F80018003CFFFD007801F8003CF81F00F801F8003CB81
       F01F801F8003C081F00FCFE38003E081F06FFF6B8003F981DFFBFF9F8003FB81
-      FFFFFFFF8003FF87FFFFFFFFCFFFFFFF}
+      FFFFFFFF8003FF87FFFFFFFFCFFFFFFF00000000000000000000000000000000
+      000000000000}
   end
   object ColorDialog: TColorDialog
     Left = 696

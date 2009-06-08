@@ -37,11 +37,16 @@ begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
-   EdgeMap := T3DMap.Create((High(FMap) + 1)*C_VP_HIGH,(High(FMap[0]) + 1)*C_VP_HIGH,(High(FMap[0,0]) + 1)*C_VP_HIGH);
-   SetLength(FVertexMap,EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
-   ModelMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
    // Find out the regions where we will have meshes.
    GenerateItemsMap;
+   // Prepare other map types.
+   EdgeMap := T3DMap.Create(((High(FMap) + 1)*C_VP_HIGH)+1,((High(FMap[0]) + 1)*C_VP_HIGH)+1,((High(FMap[0,0]) + 1)*C_VP_HIGH)+1);
+   SetLength(FVertexMap,EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   for x := Low(FVertexMap) to High(FVertexMap) do
+      for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
+         for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
+            FVertexMap[x,y,z] := -1;
+   ModelMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
    // Write faces and vertexes for each item of the map.
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do

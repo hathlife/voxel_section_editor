@@ -30,10 +30,10 @@ type
          procedure SetMapSafe(_x,_y,_z: integer; _value: integer);
          // Paints
          function GetEdgeDirection(_V1, _V2: TVector3i): TVector3i;
-         function GetStepCounter(var _Direction: TVector3i): TVector3i;
-         procedure IncreaseVector(var _Vector, _IncCounter: TVector3i; const _StepCounter,_Direction: TVector3i);
-         function IsEdgePaintable(_V1, _V2, _Direction, _StepCounter: TVector3i; _Value: integer): boolean;
-         procedure PaintEdge(_V1, _V2, _Direction, _StepCounter: TVector3i; _Value: integer); overload;
+         function GetStepCounter(var _Direction: TVector3i): TVector3f;
+         procedure IncreaseVector(var _Vector: TVector3i; var _IncCounter: TVector3f; const _StepCounter: TVector3f; const _Direction: TVector3i);
+         function IsEdgePaintable(_V1, _V2, _Direction: TVector3i; const _StepCounter: TVector3f; _Value: integer): boolean;
+         procedure PaintEdge(_V1, _V2, _Direction: TVector3i; const _StepCounter: TVector3f; _Value: integer); overload;
          // Misc
          procedure SetMapSize;
       public
@@ -343,7 +343,8 @@ end;
 // Paints
 function T3DMap.TryPaintingEdge(_V1, _V2: TVector3i; _Value: integer): boolean;
 var
-   Direction,StepCounter: TVector3i;
+   Direction: TVector3i;
+   StepCounter : TVector3f;
 begin
    Direction := GetEdgeDirection(_V1,_V2);
    StepCounter := GetStepCounter(Direction);
@@ -354,19 +355,20 @@ end;
 
 procedure T3DMap.PaintEdge(_V1, _V2: TVector3i; _Value: integer);
 var
-   Direction,StepCounter: TVector3i;
+   Direction: TVector3i;
+   StepCounter: TVector3f;
 begin
    Direction := GetEdgeDirection(_V1,_V2);
    StepCounter := GetStepCounter(Direction);
    PaintEdge(_V1,_V2,Direction,StepCounter,_Value);
 end;
 
-procedure T3DMap.PaintEdge(_V1, _V2, _Direction, _StepCounter: TVector3i; _Value: integer);
+procedure T3DMap.PaintEdge(_V1, _V2, _Direction: TVector3i; const _StepCounter: TVector3f; _Value: integer);
 var
-   IncCounter: TVector3i;
+   IncCounter: TVector3f;
    CurrentVertex: TVector3i;
 begin
-   IncCounter := SetVectori(0,0,0);
+   IncCounter := SetVector(0,0,0);
    CurrentVertex := SetVectori(_V1.X,_V1.Y,_V1.Z);
    IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
    while (CurrentVertex.X <> _V2.X) or (CurrentVertex.Y <> _V2.Y) or (CurrentVertex.Z <> _V2.Z) do
@@ -378,9 +380,11 @@ end;
 
 procedure T3DMap.PaintFace(_V1, _V2, _V3: TVector3i; _Value: integer);
 var
-   Direction,StepCounter: TVector3i;
-   DirectionE1,StepCounterE1, IncCounterE1, CurrentV1: TVector3i;
-   DirectionE2,StepCounterE2, IncCounterE2, CurrentV2: TVector3i;
+   Direction: TVector3i;
+   DirectionE1, CurrentV1: TVector3i;
+   DirectionE2, CurrentV2: TVector3i;
+   StepCounter, StepCounterE1, StepCounterE2 : TVector3f;
+   IncCounterE1,IncCounterE2: TVector3f;
 begin
    Direction := GetEdgeDirection(_V2,_V3);
    StepCounter := GetStepCounter(Direction);
@@ -388,8 +392,8 @@ begin
    StepCounterE1 := GetStepCounter(DirectionE1);
    DirectionE2 := GetEdgeDirection(_V1,_V3);
    StepCounterE2 := GetStepCounter(DirectionE2);
-   IncCounterE1 := SetVectori(0,0,0);
-   IncCounterE2 := SetVectori(0,0,0);
+   IncCounterE1 := SetVector(0,0,0);
+   IncCounterE2 := SetVector(0,0,0);
    FMap[_V1.X,_V1.Y,_V1.Z] := _Value;
    FMap[_V2.X,_V2.Y,_V2.Z] := _Value;
    FMap[_V3.X,_V3.Y,_V3.Z] := _Value;
@@ -406,13 +410,13 @@ begin
 end;
 
 
-function T3DMap.IsEdgePaintable(_V1, _V2, _Direction, _StepCounter: TVector3i; _Value: integer): boolean;
+function T3DMap.IsEdgePaintable(_V1, _V2, _Direction: TVector3i; const _StepCounter: TVector3f; _Value: integer): boolean;
 var
-   IncCounter: TVector3i;
+   IncCounter: TVector3f;
    CurrentVertex: TVector3i;
 begin
    Result := true;
-   IncCounter := SetVectori(0,0,0);
+   IncCounter := SetVector(0,0,0);
    CurrentVertex := SetVectori(_V1.X,_V1.Y,_V1.Z);
    IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
    while (CurrentVertex.X <> _V2.X) or (CurrentVertex.Y <> _V2.Y) or (CurrentVertex.Z <> _V2.Z) do
@@ -428,9 +432,11 @@ end;
 
 function T3DMap.IsFaceValid(_V1, _V2, _V3: TVector3i; _Value: integer): boolean;
 var
-   Direction,StepCounter: TVector3i;
-   DirectionE1,StepCounterE1, IncCounterE1, CurrentV1: TVector3i;
-   DirectionE2,StepCounterE2, IncCounterE2, CurrentV2: TVector3i;
+   Direction: TVector3i;
+   DirectionE1, CurrentV1: TVector3i;
+   DirectionE2, CurrentV2: TVector3i;
+   StepCounter, StepCounterE1, StepCounterE2: TVector3f;
+   IncCounterE1, IncCounterE2: TVector3f;
 begin
    Result := true;
    Direction := GetEdgeDirection(_V2,_V3);
@@ -439,8 +445,8 @@ begin
    StepCounterE1 := GetStepCounter(DirectionE1);
    DirectionE2 := GetEdgeDirection(_V1,_V3);
    StepCounterE2 := GetStepCounter(DirectionE2);
-   IncCounterE1 := SetVectori(0,0,0);
-   IncCounterE2 := SetVectori(0,0,0);
+   IncCounterE1 := SetVector(0,0,0);
+   IncCounterE2 := SetVector(0,0,0);
    if (FMap[_V1.X,_V1.Y,_V1.Z] = _Value) or (FMap[_V2.X,_V2.Y,_V2.Z] = _Value) or (FMap[_V3.X,_V3.Y,_V3.Z] = _Value) then
    begin
       Result := false;
@@ -501,58 +507,68 @@ begin
    BaseValue := Min(abs(Result.X),abs(Result.Y));
    if BaseValue = 0 then
       BaseValue := Max(abs(Result.X),abs(Result.Y));
-   if Min(abs(Result.Z),BaseValue) <> 0 then
-      BaseValue := Min(abs(Result.Z),BaseValue);
-   Result.X := Result.X div BaseValue;
-   Result.Y := Result.Y div BaseValue;
-   Result.Z := Result.Z div BaseValue;
+   if BaseValue = 0 then
+   begin
+      BaseValue := abs(Result.Z);
+   end
+   else
+   begin
+      if Result.Z <> 0 then
+         BaseValue := Min(abs(Result.Z),BaseValue);
+   end;
+   if BaseValue <> 0 then
+   begin
+      Result.X := Result.X div BaseValue;
+      Result.Y := Result.Y div BaseValue;
+      Result.Z := Result.Z div BaseValue;
+   end;
 end;
 
-function T3DMap.GetStepCounter(var _Direction: TVector3i): TVector3i;
+function T3DMap.GetStepCounter(var _Direction: TVector3i): TVector3f;
 var
    MaxStep: integer;
 begin
    Result.X := abs(_Direction.X);
    Result.Y := abs(_Direction.Y);
    Result.Z := abs(_Direction.Z);
-   MaxStep := Max(Result.X,Result.Y);
-   MaxStep := Max(MaxStep,Result.Z);
+   MaxStep := Max(Round(Result.X),Round(Result.Y));
+   MaxStep := Max(MaxStep,Round(Result.Z));
    if Result.X <> 0 then
    begin
-      _Direction.X := _Direction.X div Result.X;
-      Result.X := MaxStep div Result.X;
+      _Direction.X := _Direction.X div Round(Result.X);
+      Result.X := MaxStep / Result.X;
    end;
    if Result.Y <> 0 then
    begin
-      _Direction.Y := _Direction.Y div Result.Y;
-      Result.Y := MaxStep div Result.Y;
+      _Direction.Y := _Direction.Y div Round(Result.Y);
+      Result.Y := MaxStep / Result.Y;
    end;
    if Result.Z <> 0 then
    begin
-      _Direction.Z := _Direction.Z div Result.Z;
-      Result.Z := MaxStep div Result.Z;
+      _Direction.Z := _Direction.Z div Round(Result.Z);
+      Result.Z := MaxStep / Result.Z;
    end;
 end;
 
-procedure T3DMap.IncreaseVector(var _Vector, _IncCounter: TVector3i; const _StepCounter,_Direction: TVector3i);
+procedure T3DMap.IncreaseVector(var _Vector: TVector3i; var _IncCounter: TVector3f; const _StepCounter: TVector3f; const _Direction: TVector3i);
 begin
-   inc(_IncCounter.X);
+   _IncCounter.X := _IncCounter.X + 1;
    if _IncCounter.X >= _StepCounter.X then
    begin
       _Vector.X := _Vector.X + _Direction.X;
-      _IncCounter.X := 0;
+      _IncCounter.X := _IncCounter.X - _StepCounter.X;
    end;
-   inc(_IncCounter.Y);
+   _IncCounter.Y := _IncCounter.Y + 1;
    if _IncCounter.Y >= _StepCounter.Y then
    begin
       _Vector.Y := _Vector.Y + _Direction.Y;
-      _IncCounter.Y := 0;
+      _IncCounter.Y := _IncCounter.Y - _StepCounter.Y;
    end;
-   inc(_IncCounter.Z);
+   _IncCounter.Z := _IncCounter.Z + 1;
    if _IncCounter.Z >= _StepCounter.Z then
    begin
       _Vector.Z := _Vector.Z + _Direction.Z;
-      _IncCounter.Z := 0;
+      _IncCounter.Z := _IncCounter.Z - _StepCounter.Z;
    end;
 end;
 

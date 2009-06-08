@@ -58,6 +58,7 @@ type
       procedure SetRotationAcceleration(_Vector: TVector3f); overload;
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
+      procedure SetHighQuality(_value: boolean);
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
@@ -303,6 +304,38 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.SetPositionAcceleration(_x, _y, _z: single);
+begin
+   PositionAcceleration.X := _x;
+   PositionAcceleration.Y := _y;
+   PositionAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetPositionAcceleration(_Vector: TVector3f);
+begin
+   PositionAcceleration.X := _Vector.X;
+   PositionAcceleration.Y := _Vector.Y;
+   PositionAcceleration.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationAcceleration(_x, _y, _z: single);
+begin
+   RotationAcceleration.X := _x;
+   RotationAcceleration.Y := _y;
+   RotationAcceleration.Z := _z;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SetRotationAcceleration(_Vector: TVector3f);
+begin
+   RotationAcceleration.X := _Vector.X;
+   RotationAcceleration.Y := _Vector.Y;
+   RotationAcceleration.Z := _Vector.Z;
+   RequestUpdateWorld := true;
+end;
+
 procedure TActor.SetNormalsModeRendering;
 var
    i : integer;
@@ -333,6 +366,23 @@ begin
          if Models[i] <> nil then
          begin
             Models[i]^.SetColourModeRendering;
+         end;
+      end;
+      RequestUpdateWorld := true;
+   end;
+end;
+
+procedure TActor.SetHighQuality(_value: boolean);
+var
+   i : integer;
+begin
+   if High(Models) >= 0 then
+   begin
+      for i := Low(Models) to High(Models) do
+      begin
+         if Models[i] <> nil then
+         begin
+            Models[i]^.SetHighQuality(_value);
          end;
       end;
       RequestUpdateWorld := true;
@@ -410,39 +460,6 @@ begin
    RequestUpdateWorld := true;
 end;
 
-procedure TActor.SetPositionAcceleration(_x, _y, _z: single);
-begin
-   PositionAcceleration.X := _x;
-   PositionAcceleration.Y := _y;
-   PositionAcceleration.Z := _z;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.SetPositionAcceleration(_Vector: TVector3f);
-begin
-   PositionAcceleration.X := _Vector.X;
-   PositionAcceleration.Y := _Vector.Y;
-   PositionAcceleration.Z := _Vector.Z;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.SetRotationAcceleration(_x, _y, _z: single);
-begin
-   RotationAcceleration.X := _x;
-   RotationAcceleration.Y := _y;
-   RotationAcceleration.Z := _z;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.SetRotationAcceleration(_Vector: TVector3f);
-begin
-   RotationAcceleration.X := _Vector.X;
-   RotationAcceleration.Y := _Vector.Y;
-   RotationAcceleration.Z := _Vector.Z;
-   RequestUpdateWorld := true;
-end;
-
-
 // Removes
 procedure TActor.Remove(var _Model : PModel);
 var
@@ -466,6 +483,7 @@ begin
       inc(i);
    end;
 end;
+
 
 // Switches
 procedure TActor.SwitchModels(_m1, _m2: integer);

@@ -45,10 +45,12 @@ type
       // Gets
       function GetNumLODs: longword;
       function IsOpened : boolean;
-      // Rendering methods
-      procedure Render(var _PolyCount,_VoxelCount: longword);
+      // Sets
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
+      procedure SetHighQuality(_value: boolean);
+      // Rendering methods
+      procedure Render(var _PolyCount,_VoxelCount: longword);
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
@@ -270,17 +272,11 @@ begin
    Result := Opened;
 end;
 
-
-// Rendering methods
-procedure TModel.Render(var _Polycount,_VoxelCount: longword);
+// Sets
+procedure TModel.SetHighQuality(_value: Boolean);
 begin
-   if IsVisible and Opened and (HVA <> nil) then
-   begin
-      if CurrentLOD <= High(LOD) then
-      begin
-         LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA);
-      end;
-   end;
+   HighQuality := _value;
+   RebuildModel;
 end;
 
 procedure TModel.SetNormalsModeRendering;
@@ -303,6 +299,17 @@ begin
    end;
 end;
 
+// Rendering methods
+procedure TModel.Render(var _Polycount,_VoxelCount: longword);
+begin
+   if IsVisible and Opened and (HVA <> nil) then
+   begin
+      if CurrentLOD <= High(LOD) then
+      begin
+         LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA);
+      end;
+   end;
+end;
 
 // Refresh OpenGL List
 procedure TModel.RefreshModel;
@@ -380,6 +387,7 @@ begin
    Filename := CopyString(_Model.Filename);
    Voxel := _Model.Voxel;
    IsSelected := _Model.IsSelected;
+   HighQuality := _Model.HighQuality;
 end;
 
 

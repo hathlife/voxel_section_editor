@@ -73,6 +73,11 @@ type
     SpFrame: TSpinEdit;
     AnimationTimer: TTimer;
     Anim360Timer: TTimer;
+    RenderQuality1: TMenuItem;
+    RenderCubes: TMenuItem;
+    RenderModel: TMenuItem;
+    procedure RenderModelClick(Sender: TObject);
+    procedure RenderCubesClick(Sender: TObject);
     procedure Anim360TimerTimer(Sender: TObject);
     procedure AnimationTimerTimer(Sender: TObject);
     procedure SpPlayClick(Sender: TObject);
@@ -173,7 +178,7 @@ begin
    FrmMain.Document.ActiveHVA^.Frame := 0;
 
    Actor := (Env.AddActor)^;
-   Actor.Add(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,false);
+   Actor.Add(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,RenderModel.Checked);
    SetActorModelTransparency;
 
    IsReady := true;
@@ -523,6 +528,20 @@ begin
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
    Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
+end;
+
+procedure TFrm3DPReview.RenderCubesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := true;
+   RenderModel.Checked := false;
+   Actor.SetHighQuality(RenderModel.Checked);
+end;
+
+procedure TFrm3DPReview.RenderModelClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderModel.Checked := true;
+   Actor.SetHighQuality(RenderModel.Checked);
 end;
 
 procedure TFrm3DPReview.Blue1Click(Sender: TObject);
