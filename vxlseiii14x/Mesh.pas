@@ -4,7 +4,7 @@ interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      VoxelModelizer;
+      VoxelModelizer, BasicConstants;
 
 type
    TRenderProc = procedure of object;
@@ -497,7 +497,7 @@ end;
 
 procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
-   VoxelMap : TVoxelMap;
+   VoxelMap,ColourMap : TVoxelMap;
    SemiSurfacesMap : T3DIntGrid;
    VoxelModelizer : TVoxelModelizer;
    x, y : integer;
@@ -512,13 +512,16 @@ begin
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
    VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
+   // Colour mapping stage
+   ColourMap := TVoxelMap.Create(_Voxel,0,C_MODE_COLOUR,C_OUTSIDE_VOLUME);
    // Mesh generation process
-   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours);
+   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours,_Palette,ColourMap);
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);
    // Clear memory
    VoxelModelizer.Free;
    VoxelMap.Free;
+   ColourMap.Free;
    for x := High(SemiSurfacesMap) downto Low(SemiSurfacesMap) do
    begin
       for y := High(SemiSurfacesMap[x]) downto Low(SemiSurfacesMap[x]) do

@@ -3,7 +3,7 @@ unit VoxelModelizerItem;
 interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,
-   BasicConstants, ThreeDMap, Voxel_Engine;
+   BasicConstants, ThreeDMap, Voxel_Engine, Palette;
 
 const
    // Vertices
@@ -141,6 +141,8 @@ const
 type
    TVoxelModelizerItem = class
       private
+         // Colouring procedure
+         procedure SetColour(const _VoxelMap, _ColourMap: TVoxelMap; const _Palette: TPalette; _MyClassification: single);
          // Classification procedures
          procedure BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
          procedure BuildFilledEdges(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; _MyClassification: single; _MySurface: integer);
@@ -155,11 +157,15 @@ type
       public
          // Position
          x, y, z: integer;
+         MyClassification: single;
+         MySurface: integer;
+         // Colour
+         Colour: TVector4f;
          // Region as a cube
          FilledVerts: array[0..7] of boolean;
          FilledEdges: array[0..11] of boolean;
          FilledFaces: array[0..5] of boolean;
-         // Situation per face and its edges.
+         // Situation per face.
          FaceSettings: array[0..5] of byte;
          // Faces
          Faces: array of integer;
@@ -173,7 +179,7 @@ type
          FaceGeneratedPositions : TAVector3i;
 
          // Constructors and Destructors
-         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer);
+         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
          destructor Destroy; override;
          // Adds
          function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: TAVector3i): integer;
@@ -181,12 +187,10 @@ type
 
 implementation
 
-constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer);
+constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
    v1,v2,e1,e2,p,i,imax,value : integer;
    Cube : TNormals;
-   MyClassification: single;
-   MySurface: integer;
    v0x,v0y,v0z: integer;
    VisitedEdgesVertex: array[0..11] of boolean;
    VisitedEdges: array[0..11] of boolean;
@@ -206,6 +210,8 @@ begin
    v0x := x * C_VP_HIGH;
    v0y := y * C_VP_HIGH;
    v0z := z * C_VP_HIGH;
+   // Set the Colour from all faces that we'll generate here
+   SetColour(_VoxelMap,_ColourMap,_Palette,MyClassification);
 
    // Check which vertices, edges and faces are in and out of the surface.
    BuildFilledVerts(_VoxelMap,_SurfaceMap,Cube,MyClassification,MySurface);
@@ -790,5 +796,77 @@ begin
    SetLength(VertexPositions,0);
 end;
 
+procedure TVoxelModelizerItem.SetColour(const _VoxelMap, _ColourMap: TVoxelMap; const _Palette: TPalette; _MyClassification: single);
+var
+   c : integer;
+begin
+   if _MyClassification = C_SURFACE then
+   begin
+      Colour := _Palette.ColourGL4[Round(_ColourMap[x,y,z])];
+   end
+   else
+   begin
+      c := 0;
+      Colour.X := 0;
+      Colour.Y := 0;
+      Colour.Z := 0;
+      Colour.W := 0;
+      if _VoxelMap.MapSafe[x+1,y,z] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x+1,y,z])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x+1,y,z])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x+1,y,z])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x+1,y,z])].W;
+         inc(c);
+      end;
+      if _VoxelMap.MapSafe[x-1,y,z] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x-1,y,z])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x-1,y,z])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x-1,y,z])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x-1,y,z])].W;
+         inc(c);
+      end;
+      if _VoxelMap.MapSafe[x,y+1,z] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x,y+1,z])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x,y+1,z])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x,y+1,z])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x,y+1,z])].W;
+         inc(c);
+      end;
+      if _VoxelMap.MapSafe[x,y-1,z] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x,y-1,z])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x,y-1,z])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x,y-1,z])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x,y-1,z])].W;
+         inc(c);
+      end;
+      if _VoxelMap.MapSafe[x,y,z+1] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z+1])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z+1])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z+1])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z+1])].W;
+         inc(c);
+      end;
+      if _VoxelMap.MapSafe[x,y,z-1] = C_SURFACE then
+      begin
+         Colour.X := Colour.X + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z-1])].X;
+         Colour.Y := Colour.Y + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z-1])].Y;
+         Colour.Z := Colour.Z + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z-1])].Z;
+         Colour.W := Colour.W + _Palette.ColourGL4[Round(_ColourMap.Map[x,y,z-1])].W;
+         inc(c);
+      end;
+      if c > 0 then
+      begin
+         Colour.X := Colour.X / c;
+         Colour.Y := Colour.Y / c;
+         Colour.Z := Colour.Z / c;
+         Colour.W := Colour.W / c;
+      end;
+   end;
+end;
 
 end.

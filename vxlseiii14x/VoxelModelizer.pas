@@ -2,7 +2,8 @@ unit VoxelModelizer;
 
 interface
 
-uses VoxelMap, BasicDataTypes, VoxelModelizerItem, BasicConstants, ThreeDMap;
+uses VoxelMap, BasicDataTypes, VoxelModelizerItem, BasicConstants, ThreeDMap,
+   Palette;
 
 type
    TVoxelModelizer = class
@@ -16,7 +17,7 @@ type
          function GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
       public
          // Constructors and Destructors
-         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
+         constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
          destructor Destroy; override;
          // Misc
          procedure GenerateItemsMap;
@@ -25,7 +26,7 @@ type
 
 implementation
 
-constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
+constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
    x, y, z, f, v, pos, NumFaces: integer;
    EdgeMap: T3DMap;
@@ -48,7 +49,7 @@ begin
          begin
             if FMap[x,y,z] <> -1 then
             begin
-               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertexes);
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertexes,_Palette,_ColourMap);
             end;
          end;
    // Confirm the vertex list.
@@ -148,6 +149,10 @@ begin
                      _Normals[pos].Y := Normal.Y;
                      _Normals[pos].Z := Normal.Z;
                      // Set a colour for each face.
+                     _Colours[pos].X := FItems[FMap[x,y,z]].Colour.X;
+                     _Colours[pos].Y := FItems[FMap[x,y,z]].Colour.Y;
+                     _Colours[pos].Z := FItems[FMap[x,y,z]].Colour.Z;
+                     _Colours[pos].W := FItems[FMap[x,y,z]].Colour.W;
                   end;
                   inc(f);
                   inc(v,3);
