@@ -165,6 +165,7 @@ type
          EdgeVertices: array[0..5,0..3,0..1] of integer;
          // Faces
          Faces: array of integer;
+         FaceLocation: array of integer;
          VertexGeneratedList : AInt32;
          EdgeGeneratedList : AInt32;
          FaceGeneratedList : Aint32;
@@ -349,6 +350,10 @@ begin
    if High(Faces) < 0 then
       MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
+   i := 0;
+   SetLength(FaceLocation,(High(Faces)+1) div 3);
+   for i:= Low(FaceLocation) to High(FaceLocation) do
+      FaceLocation[i] := -1;      
    Cube.Free;
 end;
 
