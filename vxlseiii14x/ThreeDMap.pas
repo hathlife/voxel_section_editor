@@ -7,7 +7,8 @@ unit ThreeDMap;
 
 interface
 
-uses BasicDataTypes, Class3DPointList, Normals, BasicConstants, Voxel_Engine, Math;
+uses BasicDataTypes, Class3DPointList, Normals, BasicConstants, Voxel_Engine,
+   Math;
 
 type
    T3DMap = class
@@ -68,6 +69,7 @@ type
          procedure MapSurfaces(_Value: integer);
          procedure MapSurfacesOnly(_Value: integer);
          procedure ConvertValues(_Values : array of integer);
+         function IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
          // Properties
          property Map[_x,_y,_z: integer] : integer read GetMap write SetMap; default;
          property MapSafe[_x,_y,_z: integer] : integer read GetMapSafe write SetMapSafe;
@@ -455,6 +457,35 @@ begin
       end;
       IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
       IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+   end;
+end;
+
+function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
+var
+   CentralPoint, TestPoint: TVector3i;
+   Direction: TVector3f;
+   MaxNormalValue: single;
+begin
+   CentralPoint.X := (((_V1.X + _V2.X) div 2) + _V3.X) div 2;
+   CentralPoint.Y := (((_V1.Y + _V2.Y) div 2) + _V3.Y) div 2;
+   CentralPoint.Z := (((_V1.Z + _V2.Z) div 2) + _V3.Z) div 2;
+   // Now that we have the central point, we need to have a point that will ensure
+   // that it will move us to another voxel. So one of the axis must be 1 or -1.
+   MaxNormalValue := Max(Max(abs(_Normal.X),abs(_Normal.Y)),abs(_Normal.Z));
+   Direction.X := _Normal.X / MaxNormalValue;
+   Direction.Y := _Normal.Y / MaxNormalValue;
+   Direction.Z := _Normal.Z / MaxNormalValue;
+   // Now, let's walk from the central point in the direction of the normals.
+   TestPoint.X := Round(CentralPoint.X + Direction.X);
+   TestPoint.Y := Round(CentralPoint.Y + Direction.Y);
+   TestPoint.Z := Round(CentralPoint.Z + Direction.Z);
+   if GetMapSafe(TestPoint.X,TestPoint.Y,TestPoint.Z) <= C_OUTSIDE_VOLUME then
+   begin
+      Result := true;
+   end
+   else
+   begin
+      Result := false;
    end;
 end;
 

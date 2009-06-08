@@ -13,6 +13,7 @@ type
          PSemiSurfacesMap : P3DIntGrid;
          FNumVertexes : integer;
          FVertexMap: T3DIntGrid;
+         function GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
       public
          // Constructors and Destructors
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
@@ -25,10 +26,11 @@ implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
 var
-   x, y, z, f, v, NumFaces: integer;
+   x, y, z, f, v, pos, NumFaces: integer;
    EdgeMap: T3DMap;
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
+   Normal : TVector3f;
 begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
@@ -121,12 +123,30 @@ begin
                begin
                   if FItems[FMap[x,y,z]].FaceLocation[f] > -1 then
                   begin
-                     _Faces[FItems[FMap[x,y,z]].FaceLocation[f]] := FItems[FMap[x,y,z]].Faces[v];
-                     _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+1] := FItems[FMap[x,y,z]].Faces[v+1];
-                     _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+2] := FItems[FMap[x,y,z]].Faces[v+2];
-                     // Set a colour for each face.
+                     pos := FItems[FMap[x,y,z]].FaceLocation[f] div 3;
                      // Calculate the normals from each face.
-                     // Use raycasting procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
+                     Normal := GetNormals(_Vertexes[FItems[FMap[x,y,z]].Faces[v]],_Vertexes[FItems[FMap[x,y,z]].Faces[v+1]],_Vertexes[FItems[FMap[x,y,z]].Faces[v+2]]);
+                     // Use 'raycasting' procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
+                     if not ModelMap.IsFaceNormalsCorrect(Vertexes[FItems[FMap[x,y,z]].Faces[v]],Vertexes[FItems[FMap[x,y,z]].Faces[v+1]],Vertexes[FItems[FMap[x,y,z]].Faces[v+2]],Normal) then
+                     begin
+                        Normal.X := Normal.X * (-1);
+                        Normal.Y := Normal.Y * (-1);
+                        Normal.Z := Normal.Z * (-1);
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]] := FItems[FMap[x,y,z]].Faces[v+2];
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+1] := FItems[FMap[x,y,z]].Faces[v+1];
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+2] := FItems[FMap[x,y,z]].Faces[v];
+                     end
+                     else
+                     begin
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]] := FItems[FMap[x,y,z]].Faces[v];
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+1] := FItems[FMap[x,y,z]].Faces[v+1];
+                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+2] := FItems[FMap[x,y,z]].Faces[v+2];
+                     end;
+                     // Set normals value
+                     _Normals[pos].X := Normal.X;
+                     _Normals[pos].Y := Normal.Y;
+                     _Normals[pos].Z := Normal.Z;
+                     // Set a colour for each face.
                   end;
                   inc(f);
                   inc(v,3);
@@ -175,5 +195,11 @@ begin
          end;
 end;
 
+function TVoxelModelizer.GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
+begin
+   Result.X := ((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z));
+   Result.Y := ((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X));
+   Result.Z := ((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y));
+end;
 
 end.
