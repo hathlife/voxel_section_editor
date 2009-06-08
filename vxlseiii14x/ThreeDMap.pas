@@ -58,6 +58,7 @@ type
          // Paints
          function TryPaintingEdge(_V1, _V2: TVector3i; _Value: integer): boolean;
          procedure PaintEdge(_V1, _V2: TVector3i; _Value: integer); overload;
+         procedure PaintFace(_V1, _V2, _V3: TVector3i; _Value: integer);
          // Misc
          procedure FloodFill(const _Point : TVector3i; _value : integer);
          procedure MergeMapData(const _Source : T3DMap; _Data : integer);
@@ -358,6 +359,36 @@ begin
       IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
    end;
 end;
+
+procedure T3DMap.PaintFace(_V1, _V2, _V3: TVector3i; _Value: integer);
+var
+   Direction,StepCounter: TVector3i;
+   DirectionE1,StepCounterE1, IncCounterE1, CurrentV1: TVector3i;
+   DirectionE2,StepCounterE2, IncCounterE2, CurrentV2: TVector3i;
+begin
+   Direction := GetEdgeDirection(_V2,_V3);
+   StepCounter := GetStepCounter(Direction);
+   DirectionE1 := GetEdgeDirection(_V1,_V2);
+   StepCounterE1 := GetStepCounter(DirectionE1);
+   DirectionE2 := GetEdgeDirection(_V1,_V3);
+   StepCounterE2 := GetStepCounter(DirectionE2);
+   IncCounterE1 := SetVectori(0,0,0);
+   IncCounterE2 := SetVectori(0,0,0);
+   FMap[_V1.X,_V1.Y,_V1.Z] := _Value;
+   FMap[_V2.X,_V2.Y,_V2.Z] := _Value;
+   FMap[_V3.X,_V3.Y,_V3.Z] := _Value;
+   IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
+   IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+   while (CurrentV1.X <> _V2.X) or (CurrentV1.Y <> _V2.Y) or (CurrentV1.Z <> _V2.Z) do
+   begin
+      FMap[CurrentV1.X,CurrentV1.Y,CurrentV1.Z] := _Value;
+      FMap[CurrentV2.X,CurrentV2.Y,CurrentV2.Z] := _Value;
+      PaintEdge(CurrentV1,CurrentV2,Direction,StepCounter,_Value);
+      IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
+      IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+   end;
+end;
+
 
 function T3DMap.IsEdgePaintable(_V1, _V2, _Direction, _StepCounter: TVector3i; _Value: integer): boolean;
 var

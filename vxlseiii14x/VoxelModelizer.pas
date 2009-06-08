@@ -28,7 +28,7 @@ implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32);
 var
-   x, y, z: integer;
+   x, y, z, f: integer;
 begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
@@ -46,7 +46,6 @@ begin
             if FMap[x,y,z] <> -1 then
             begin
                FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertexes);
-               // Paint the faces in the 3D Map.
             end;
          end;
    // Confirm the vertex list.
@@ -64,6 +63,21 @@ begin
                FVertexes[FVertexMap[x,y,z]].X := x;
                FVertexes[FVertexMap[x,y,z]].Y := y;
                FVertexes[FVertexMap[x,y,z]].Z := z;
+            end;
+         end;
+   // Paint the faces in the 3D Map.
+   for x := Low(FMap) to High(FMap) do
+      for y := Low(FMap[x]) to High(FMap[x]) do
+         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+         begin
+            if FMap[x,y,z] <> -1 then
+            begin
+               f := 0;
+               while f <= High(FItems[FMap[x,y,z]].Faces) do
+               begin
+                  F3DMap.PaintFace(FVertexes[FItems[FMap[x,y,z]].Faces[f]],FVertexes[FItems[FMap[x,y,z]].Faces[f+1]],FVertexes[FItems[FMap[x,y,z]].Faces[f+2]],1);
+                  inc(f,3);
+               end;
             end;
          end;
    // Classify the voxels from the 3D Map as in, out or surface.

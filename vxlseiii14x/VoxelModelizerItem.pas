@@ -164,7 +164,6 @@ type
          EdgeSettings: array[0..5,0..3] of byte;
          EdgeVertices: array[0..5,0..3,0..1] of integer;
          // Faces
-         NumFaces: integer;
          Faces: array of integer;
          VertexGeneratedList : AInt32;
          EdgeGeneratedList : AInt32;
