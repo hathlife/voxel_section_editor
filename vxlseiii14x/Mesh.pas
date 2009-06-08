@@ -514,7 +514,6 @@ begin
    VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
    // Mesh generation process
    VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours);
-   // <--- Voxel modelizing code goes here --->
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);
    // Clear memory

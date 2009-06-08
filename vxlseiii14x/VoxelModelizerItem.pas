@@ -161,8 +161,6 @@ type
          FilledFaces: array[0..5] of boolean;
          // Situation per face and its edges.
          FaceSettings: array[0..5] of byte;
-         EdgeSettings: array[0..5,0..3] of byte;
-         EdgeVertices: array[0..5,0..3,0..1] of integer;
          // Faces
          Faces: array of integer;
          FaceLocation: array of integer;
@@ -176,6 +174,7 @@ type
 
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer);
+         destructor Destroy; override;
          // Adds
          function AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: TAVector3i): integer;
    end;
@@ -350,11 +349,23 @@ begin
    if High(Faces) < 0 then
       MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
-   i := 0;
    SetLength(FaceLocation,(High(Faces)+1) div 3);
    for i:= Low(FaceLocation) to High(FaceLocation) do
       FaceLocation[i] := -1;      
    Cube.Free;
+end;
+
+destructor TVoxelModelizerItem.Destroy;
+begin
+   SetLength(Faces,0);
+   SetLength(FaceLocation,0);
+   SetLength(VertexGeneratedList,0);
+   SetLength(EdgeGeneratedList,0);
+   SetLength(FaceGeneratedList,0);
+   SetLength(VertexGeneratedPositions,0);
+   SetLength(EdgeGeneratedPositions,0);
+   SetLength(FaceGeneratedPositions,0);
+   inherited Destroy;
 end;
 
 // Check which vertexes are inside or outside the surface.
@@ -655,6 +666,18 @@ begin
          end;
       end;
    end;
+   // Free memory
+   QueueDist[0].Free;
+   QueueDist[1].Free;
+   QueueDist[2].Free;
+   QueueDist[3].Free;
+   i := High(DistanceMatrix);
+   while i >= 0 do
+   begin
+      SetLength(DistanceMatrix[0],0);
+      dec(i);
+   end;
+   SetLength(DistanceMatrix,0);
 end;
 
 // Build a set of faces using the given order.
@@ -763,6 +786,8 @@ begin
    Faces[33] := Vertexes[1];
    Faces[34] := Vertexes[2];
    Faces[35] := Vertexes[4];
+   // Free memory
+   SetLength(VertexPositions,0);
 end;
 
 

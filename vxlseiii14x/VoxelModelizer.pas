@@ -17,6 +17,7 @@ type
       public
          // Constructors and Destructors
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f);
+         destructor Destroy; override;
          // Misc
          procedure GenerateItemsMap;
          procedure ResetVertexMap;
@@ -154,7 +155,48 @@ begin
             end;
          end;
 
+   // Free memory
+   ModelMap.Free;
+   EdgeMap.Free;
+   SetLength(Vertexes,0);
+end;
 
+destructor TVoxelModelizer.Destroy;
+var
+   x,y : integer;
+begin
+   for x := Low(FItems) to High(FItems) do
+   begin
+      FItems[x].Free;
+   end;
+   SetLength(FItems,0);
+   x := High(FMap);
+   while x >= 0 do
+   begin
+      y := High(FMap[x]);
+      while y >= 0 do
+      begin
+         SetLength(FMap[x,y],0);
+         dec(y);
+      end;
+      SetLength(FMap[x],0);
+      dec(x);
+   end;
+   SetLength(FMap,0);
+   x := High(FVertexMap);
+   while x >= 0 do
+   begin
+      y := High(FVertexMap[x]);
+      while y >= 0 do
+      begin
+         SetLength(FVertexMap[x,y],0);
+         dec(y);
+      end;
+      SetLength(FVertexMap[x],0);
+      dec(x);
+   end;
+   SetLength(FVertexMap,0);
+   inherited Destroy;
 end;
 
 procedure TVoxelModelizer.GenerateItemsMap;
