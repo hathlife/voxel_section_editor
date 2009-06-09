@@ -82,7 +82,7 @@ begin
             if FMap[x,y,z] <> -1 then
             begin
                f := 0;
-               while f <= High(FItems[FMap[x,y,z]].Faces) do
+               while f < High(FItems[FMap[x,y,z]].Faces) do
                begin
                   ModelMap.PaintFace(Vertexes[FItems[FMap[x,y,z]].Faces[f]],Vertexes[FItems[FMap[x,y,z]].Faces[f+1]],Vertexes[FItems[FMap[x,y,z]].Faces[f+2]],1);
                   inc(f,3);

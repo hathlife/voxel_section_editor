@@ -3,140 +3,7 @@ unit VoxelModelizerItem;
 interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,
-   BasicConstants, ThreeDMap, Voxel_Engine, Palette;
-
-const
-   // Vertices
-   C_VERT_TOP_LEFT_BACK = 0;
-   C_VERT_TOP_RIGHT_BACK = 1;
-   C_VERT_TOP_LEFT_FRONT = 2;
-   C_VERT_TOP_RIGHT_FRONT = 3;
-   C_VERT_BOTTOM_LEFT_BACK = 4;
-   C_VERT_BOTTOM_RIGHT_BACK = 5;
-   C_VERT_BOTTOM_LEFT_FRONT = 6;
-   C_VERT_BOTTOM_RIGHT_FRONT = 7;
-   // Edges
-   C_EDGE_TOP_LEFT = 0;
-   C_EDGE_TOP_RIGHT = 1;
-   C_EDGE_TOP_BACK = 2;
-   C_EDGE_TOP_FRONT = 3;
-   C_EDGE_BOTTOM_LEFT = 4;
-   C_EDGE_BOTTOM_RIGHT = 5;
-   C_EDGE_BOTTOM_BACK = 6;
-   C_EDGE_BOTTOM_FRONT = 7;
-   C_EDGE_FRONT_LEFT = 8;
-   C_EDGE_FRONT_RIGHT = 9;
-   C_EDGE_BACK_LEFT = 10;
-   C_EDGE_BACK_RIGHT = 11;
-   // Faces
-   C_FACE_LEFT = 0;
-   C_FACE_RIGHT = 1;
-   C_FACE_BACK = 2;
-   C_FACE_FRONT = 3;
-   C_FACE_BOTTOM = 4;
-   C_FACE_TOP = 5;
-
-   // Face Settings
-   C_FACE_SET_VERT = 0;
-   C_FACE_SET_EDGE = 1;
-   C_FACE_SET_FACE = 2;
-
-   // Vertex Positions
-   C_VP_HIGH = 8;
-   C_VP_MID = C_VP_HIGH div 2;
-   C_VP_DIST2 = C_VP_HIGH * C_VP_HIGH;
-   C_VP_DIST1 = C_VP_DIST2 div 2;
-   C_VP_DIST3 = C_VP_DIST1 + C_VP_DIST2;
-   C_VP_DIST4 = C_VP_DIST1 + C_VP_DIST3;
-
-   VertexRequirements: array[0..7] of integer = (C_SF_TOP_BACK_LEFT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
-   C_SF_TOP_FRONT_LEFT_POINT, C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
-   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT);
-
-   VertexCheck: array[0..55] of byte = (0, 1, 4, 8, 9, 10, 11, 17, 18, 21, 25, 9, 10,
-   11, 0, 1, 3, 6, 13, 12, 11, 17, 18, 20, 23, 13, 12, 11, 0, 2, 4, 7, 9, 16, 15,
-   17, 19, 21, 24, 9, 16, 15, 0, 2, 3, 5, 13, 14, 15, 17, 19, 20, 22, 13, 14, 15);
-
-   SSVertexesCheck: array[0..55] of byte = (C_SF_TOP_BACK_RIGHT_POINT, C_SF_BOTTOM_BACK_RIGHT_POINT,
-   C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_TOP_FRONT_LEFT_POINT,
-   C_SF_BOTTOM_FRONT_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT,
-   C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT,
-   C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_RIGHT_POINT,
-   C_SF_TOP_FRONT_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
-   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_TOP_BACK_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
-   C_SF_BOTTOM_FRONT_LEFT_POINT, C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT,
-   C_SF_TOP_BACK_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_RIGHT_POINT,
-   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_BOTTOM_BACK_RIGHT_POINT,
-   C_SF_TOP_BACK_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT,
-   C_SF_BOTTOM_FRONT_LEFT_POINT, C_SF_TOP_FRONT_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT,
-   C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT,
-   C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT,
-   C_SF_TOP_BACK_RIGHT_POINT, C_SF_BOTTOM_FRONT_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT,
-   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_TOP_BACK_RIGHT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT,
-   C_SF_TOP_BACK_LEFT_POINT, C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_FRONT_LEFT_POINT,
-   C_SF_TOP_FRONT_LEFT_POINT, C_SF_BOTTOM_BACK_LEFT_POINT, C_SF_TOP_BACK_LEFT_POINT,
-   C_SF_BOTTOM_BACK_RIGHT_POINT, C_SF_TOP_BACK_RIGHT_POINT, C_SF_TOP_FRONT_RIGHT_POINT);
-
-   EdgeRequirements: array[0..11] of integer = (C_SF_TOP_LEFT_LINE, C_SF_TOP_RIGHT_LINE,
-   C_SF_TOP_BACK_LINE, C_SF_TOP_FRONT_LINE, C_SF_BOTTOM_LEFT_LINE, C_SF_BOTTOM_RIGHT_LINE,
-   C_SF_BOTTOM_BACK_LINE, C_SF_BOTTOM_FRONT_LINE, C_SF_LEFT_FRONT_LINE, C_SF_RIGHT_FRONT_LINE,
-   C_SF_LEFT_BACK_LINE, C_SF_RIGHT_FRONT_LINE);
-
-   EdgeCheck: array[0..35] of byte = (0, 1, 11, 17, 18, 11, 9, 10, 11, 13, 12, 11,
-   0, 2, 15, 17, 19, 15, 9, 16, 15, 13, 14, 15, 0, 3, 13, 17, 20, 13, 0, 4, 9, 17,
-   21, 9);
-
-   SSEdgesCheck: array[0..35] of integer = (C_SF_TOP_RIGHT_LINE, C_SF_BOTTOM_RIGHT_LINE,
-   C_SF_BOTTOM_LEFT_LINE, C_SF_TOP_LEFT_LINE, C_SF_BOTTOM_LEFT_LINE,
-   C_SF_BOTTOM_RIGHT_LINE, C_SF_TOP_FRONT_LINE, C_SF_BOTTOM_FRONT_LINE,
-   C_SF_BOTTOM_BACK_LINE, C_SF_TOP_BACK_LINE, C_SF_BOTTOM_BACK_LINE,
-   C_SF_BOTTOM_FRONT_LINE, C_SF_BOTTOM_RIGHT_LINE, C_SF_TOP_RIGHT_LINE,
-   C_SF_BOTTOM_LEFT_LINE, C_SF_BOTTOM_LEFT_LINE, C_SF_TOP_LEFT_LINE,
-   C_SF_BOTTOM_RIGHT_LINE, C_SF_BOTTOM_FRONT_LINE, C_SF_TOP_FRONT_LINE,
-   C_SF_TOP_BACK_LINE, C_SF_BOTTOM_BACK_LINE, C_SF_TOP_BACK_LINE,
-   C_SF_TOP_FRONT_LINE, C_SF_RIGHT_FRONT_LINE, C_SF_RIGHT_BACK_LINE,
-   C_SF_LEFT_BACK_LINE, C_SF_LEFT_FRONT_LINE, C_SF_LEFT_BACK_LINE,
-   C_SF_RIGHT_BACK_LINE, C_SF_RIGHT_BACK_LINE, C_SF_RIGHT_FRONT_LINE,
-   C_SF_LEFT_FRONT_LINE, C_SF_LEFT_BACK_LINE, C_SF_LEFT_FRONT_LINE,
-   C_SF_RIGHT_FRONT_LINE);
-
-   FaceCheck: array[0..5] of byte = (0, 17, 9, 13, 15, 11);
-
-   FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
-   FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
-
-   VertexPoints: array[0..5,0..3,0..1,0..2] of byte = ((((0,C_VP_HIGH,C_VP_HIGH),
-   (0,C_VP_HIGH,C_VP_MID)),	((0,C_VP_HIGH,0), (0,C_VP_MID,0)),((0,0,0),
-   (0,0,C_VP_MID)),((0,0,C_VP_HIGH), (0,C_VP_MID,C_VP_HIGH))),(((C_VP_HIGH,0,C_VP_HIGH),
-   (C_VP_HIGH,0,C_VP_MID)), ((C_VP_HIGH,0,0), (C_VP_HIGH,C_VP_MID,0)),
-   ((C_VP_HIGH,C_VP_HIGH,0), (C_VP_HIGH,C_VP_HIGH,C_VP_MID)),
-   ((C_VP_HIGH,C_VP_HIGH,C_VP_HIGH), (C_VP_HIGH,C_VP_MID,C_VP_HIGH))),(((0,0,C_VP_HIGH),
-   (0,0,C_VP_MID)), ((0,0,0), (C_VP_MID,0,0)),((C_VP_HIGH,0,0), (C_VP_HIGH,0,C_VP_MID)),
-   ((C_VP_HIGH,0,C_VP_HIGH), (C_VP_MID,0,C_VP_HIGH))),(((C_VP_HIGH,C_VP_HIGH,C_VP_HIGH),
-   (C_VP_HIGH,C_VP_HIGH,C_VP_MID)),	((C_VP_HIGH,C_VP_HIGH,0), (C_VP_MID,C_VP_HIGH,0)),
-   ((0,C_VP_HIGH,0), (0,C_VP_HIGH,C_VP_MID)),((0,C_VP_HIGH,C_VP_HIGH),
-   (C_VP_MID,C_VP_HIGH,C_VP_HIGH))),(((C_VP_HIGH,C_VP_HIGH,0), (C_VP_HIGH,C_VP_MID,0)),
-	((C_VP_HIGH,0,0), (C_VP_MID,0,0)),((0,0,0), (0,C_VP_MID,0)),((0,C_VP_HIGH,0),
-   (C_VP_MID,C_VP_HIGH,0))),(((C_VP_HIGH,0,C_VP_HIGH), (C_VP_HIGH,C_VP_MID,C_VP_HIGH)),
-	((C_VP_HIGH,C_VP_HIGH,C_VP_HIGH), (C_VP_MID,C_VP_HIGH,C_VP_HIGH)),
-   ((0,C_VP_HIGH,C_VP_HIGH), (0,C_VP_MID,C_VP_HIGH)),((0,0,C_VP_HIGH), (C_VP_MID,0,C_VP_HIGH))));
-
-   EdgeCentralPoints: array[0..11,0..2] of byte = 	((0,C_VP_MID,C_VP_HIGH),
-   (C_VP_HIGH,C_VP_MID,C_VP_HIGH), (C_VP_MID,0,C_VP_HIGH), (C_VP_MID,C_VP_HIGH,C_VP_HIGH),
-   (0,C_VP_MID,0), (C_VP_HIGH,C_VP_MID,0), (C_VP_MID,0,0), (C_VP_MID,C_VP_HIGH,0),
-   (0,C_VP_HIGH,C_VP_MID), (C_VP_HIGH,C_VP_HIGH,C_VP_MID), (0,0,C_VP_MID), (C_VP_HIGH,0,C_VP_MID));
-
-   EdgeNeighboorList: array[0..47] of byte = (C_EDGE_TOP_FRONT, C_EDGE_FRONT_LEFT, C_EDGE_BACK_LEFT,
-   C_EDGE_TOP_BACK, C_EDGE_TOP_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_TOP_FRONT,
-   C_EDGE_TOP_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_TOP_RIGHT, C_EDGE_TOP_RIGHT,
-   C_EDGE_FRONT_RIGHT, C_EDGE_FRONT_LEFT, C_EDGE_TOP_LEFT, C_EDGE_BOTTOM_FRONT, C_EDGE_FRONT_LEFT,
-   C_EDGE_BACK_LEFT, C_EDGE_BOTTOM_BACK, C_EDGE_BOTTOM_BACK, C_EDGE_BACK_RIGHT, C_EDGE_FRONT_RIGHT,
-   C_EDGE_BOTTOM_FRONT, C_EDGE_BOTTOM_LEFT, C_EDGE_BACK_LEFT, C_EDGE_BACK_RIGHT, C_EDGE_BOTTOM_RIGHT,
-   C_EDGE_BOTTOM_RIGHT, C_EDGE_FRONT_RIGHT, C_EDGE_FRONT_LEFT, C_EDGE_BOTTOM_BACK, C_EDGE_TOP_FRONT,
-   C_EDGE_BOTTOM_FRONT, C_EDGE_BOTTOM_LEFT, C_EDGE_TOP_LEFT, C_EDGE_TOP_RIGHT, C_EDGE_BOTTOM_RIGHT,
-   C_EDGE_BOTTOM_FRONT, C_EDGE_TOP_FRONT, C_EDGE_TOP_LEFT, C_EDGE_BOTTOM_LEFT, C_EDGE_BOTTOM_BACK,
-   C_EDGE_TOP_LEFT, C_EDGE_TOP_BACK, C_EDGE_BOTTOM_BACK, C_EDGE_BOTTOM_RIGHT, C_EDGE_TOP_RIGHT);
-
+   BasicConstants, ThreeDMap, Voxel_Engine, Palette, Dialogs, SysUtils;
 
 type
    TVoxelModelizerItem = class
@@ -167,9 +34,7 @@ type
          FilledFaces: array[0..5] of boolean;
          // Situation per face.
          FaceSettings: array[0..5] of byte;
-         // Faces
-         Faces: array of integer;
-         FaceLocation: array of integer;
+         // Vertex positions and lists.
          VertexGeneratedList : AInt32;
          EdgeGeneratedList : AInt32;
          FaceGeneratedList : Aint32;
@@ -177,6 +42,9 @@ type
          VertexGeneratedPositions : TAVector3i;
          EdgeGeneratedPositions : TAVector3i;
          FaceGeneratedPositions : TAVector3i;
+         // Faces
+         Faces: AInt32;
+         FaceLocation: AInt32;
 
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
@@ -189,7 +57,7 @@ implementation
 
 constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
-   v1,v2,e1,e2,p,i,imax,value : integer;
+   v1,v2,e1,e2,p,i : integer;
    Cube : TNormals;
    v0x,v0y,v0z: integer;
    VisitedEdgesVertex: array[0..11] of boolean;
@@ -355,9 +223,8 @@ begin
    if High(Faces) < 0 then
       MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
-   SetLength(FaceLocation,(High(Faces)+1) div 3);
    for i:= Low(FaceLocation) to High(FaceLocation) do
-      FaceLocation[i] := -1;      
+      FaceLocation[i] := -1;
    Cube.Free;
 end;
 
@@ -587,6 +454,7 @@ begin
    begin
       // if we have a single face, the situation is ridiculous.
       SetLength(Faces,High(Faces)+4);
+      SetLength(FaceLocation,High(FaceLocation)+2);
       Faces[High(Faces)-2] := _VertexList[0];
       Faces[High(Faces)-1] := _VertexList[1];
       Faces[High(Faces)] := _VertexList[2];
@@ -656,6 +524,7 @@ begin
                   begin
                      // Add i, j, k to faces.
                      SetLength(Faces,High(Faces)+4);
+                     SetLength(FaceLocation,High(FaceLocation)+2);
                      Faces[High(Faces)] := k;
                      Faces[High(Faces)-1] := j;
                      Faces[High(Faces)-2] := i;
@@ -689,14 +558,16 @@ end;
 // Build a set of faces using the given order.
 procedure TVoxelModelizerItem.MakeFacesFromEdges(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
 var
-   NumFaces: integer;
+   NumFaces,Maxj: integer;
    i,j: integer;
 begin
    NumFaces := (High(_VertexList)+1) div 2;
-   i := High(_VertexList);
+   i := High(Faces);
    j := 0;
    SetLength(Faces,(High(Faces)+1) + (NumFaces*3));
-   while i <= High(_VertexList) do
+   SetLength(FaceLocation,(High(FaceLocation)+1) + NumFaces);
+   Maxj := High(_VertexPositions)-2;
+   while j < Maxj do
    begin
       // Face 1: V1, V3, V2
       Faces[i] := _VertexList[j];
@@ -738,6 +609,7 @@ begin
    Vertexes[7] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y,_MyPosition.Z,_NumVertices,VertexPositions);
    // Add All Faces
    SetLength(Faces,36);
+   SetLength(FaceLocation,12);
    // Front triangles
    // Face 1: top right, bottom left, bottom right.
    Faces[0] := Vertexes[0];
