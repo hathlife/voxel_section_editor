@@ -562,7 +562,7 @@ var
    i,j: integer;
 begin
    NumFaces := (High(_VertexList)+1) div 2;
-   i := High(Faces);
+   i := High(Faces)+1;
    j := 0;
    SetLength(Faces,(High(Faces)+1) + (NumFaces*3));
    SetLength(FaceLocation,(High(FaceLocation)+1) + NumFaces);

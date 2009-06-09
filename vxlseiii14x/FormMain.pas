@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.30';
+   APPLICATION_VER = '1.39.31';
 
 type
   TFrmMain = class(TForm)
@@ -2400,7 +2400,7 @@ begin
       begin
          p_Frm3DPreview^.Actor.Clear;
       end;
-      p_Frm3DPreview^.Actor.Add(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,false);
+      p_Frm3DPreview^.Actor.Add(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.RenderModel.Checked);
       p_Frm3DPreview^.SetActorModelTransparency;
 
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;

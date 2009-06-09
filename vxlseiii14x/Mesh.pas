@@ -516,6 +516,7 @@ begin
    ColourMap := TVoxelMap.Create(_Voxel,0,C_MODE_COLOUR,C_OUTSIDE_VOLUME);
    // Mesh generation process
    VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours,_Palette,ColourMap);
+   NumFaces := (High(Faces)+1) div VerticesPerFace;
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);
    // Clear memory

@@ -390,7 +390,7 @@ var
    CurrentV1, CurrentV2: TVector3i;
    StepCounter, StepCounterE1, StepCounterE2 : TVector3f;
    IncCounterE1,IncCounterE2: TVector3f;
-   EdgeDistance,Distance : integer;
+   EdgeDistanceV1,EdgeDistanceV2,DistanceV1, DistanceV2 : integer;
 begin
    DirectionE1 := GetEdgeDirection(_V1,_V2);
    StepCounterE1 := GetStepCounter(DirectionE1);
@@ -405,9 +405,11 @@ begin
    FMap[_V3.X,_V3.Y,_V3.Z] := _Value;
    IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
    IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
-   Distance := GetDistance(_V1,CurrentV1);
-   EdgeDistance := GetDistance(_V1,_V2);
-   while EdgeDistance > Distance do
+   DistanceV1 := GetDistance(_V1,CurrentV1);
+   DistanceV2 := GetDistance(_V1,CurrentV2);
+   EdgeDistanceV1 := GetDistance(_V1,_V2);
+   EdgeDistanceV2 := GetDistance(_V1,_V3);
+   while (EdgeDistanceV1 > DistanceV1) and (EdgeDistanceV2 > DistanceV2) do
    begin
       FMap[CurrentV1.X,CurrentV1.Y,CurrentV1.Z] := _Value;
       FMap[CurrentV2.X,CurrentV2.Y,CurrentV2.Z] := _Value;
@@ -416,7 +418,8 @@ begin
       PaintEdge(CurrentV1,CurrentV2,Direction,StepCounter,_Value);
       IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
       IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
-      Distance := GetDistance(_V1,CurrentV1);
+      DistanceV1 := GetDistance(_V1,CurrentV1);
+      DistanceV2 := GetDistance(_V1,CurrentV2);
    end;
 end;
 
@@ -452,7 +455,7 @@ var
    CurrentV1, CurrentV2: TVector3i;
    StepCounter, StepCounterE1, StepCounterE2: TVector3f;
    IncCounterE1, IncCounterE2: TVector3f;
-   EdgeDistance,Distance : integer;
+   EdgeDistanceV1,EdgeDistanceV2,DistanceV1,DistanceV2 : integer;
 begin
    Result := true;
    DirectionE1 := GetEdgeDirection(_V1,_V2);
@@ -466,11 +469,15 @@ begin
       Result := false;
       exit;
    end;
+   CurrentV1 := SetVectori(_V1.X,_V1.Y,_V1.Z);
+   CurrentV2 := SetVectori(_V1.X,_V1.Y,_V1.Z);
    IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
    IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
-   Distance := GetDistance(_V1,CurrentV1);
-   EdgeDistance := GetDistance(_V1,_V2);
-   while EdgeDistance > Distance do
+   DistanceV1 := GetDistance(_V1,CurrentV1);
+   DistanceV2 := GetDistance(_V1,CurrentV2);
+   EdgeDistanceV1 := GetDistance(_V1,_V2);
+   EdgeDistanceV2 := GetDistance(_V1,_V3);
+   while (EdgeDistanceV1 > DistanceV1) and (EdgeDistanceV2 > DistanceV2) do
    begin
       Direction := GetEdgeDirection(CurrentV1,CurrentV2);
       StepCounter := GetStepCounter(Direction);
@@ -481,7 +488,8 @@ begin
       end;
       IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
       IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
-      Distance := GetDistance(_V1,CurrentV1);
+      DistanceV1 := GetDistance(_V1,CurrentV1);
+      DistanceV2 := GetDistance(_V1,CurrentV2);
    end;
 end;
 

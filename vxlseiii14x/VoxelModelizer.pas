@@ -28,7 +28,7 @@ implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
-   x, y, z, f, v, pos, NumFaces: integer;
+   x, y, z, i, f, v, pos, NumFaces: integer;
    EdgeMap: T3DMap;
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
@@ -75,95 +75,80 @@ begin
             end;
          end;
    // Paint the faces in the 3D Map.
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[x]) to High(FMap[x]) do
-         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
-         begin
-            if FMap[x,y,z] <> -1 then
-            begin
-               f := 0;
-               while f < High(FItems[FMap[x,y,z]].Faces) do
-               begin
-                  ModelMap.PaintFace(Vertexes[FItems[FMap[x,y,z]].Faces[f]],Vertexes[FItems[FMap[x,y,z]].Faces[f+1]],Vertexes[FItems[FMap[x,y,z]].Faces[f+2]],1);
-                  inc(f,3);
-               end;
-            end;
-         end;
+   for i := Low(FItems) to High(FItems) do
+   begin
+      f := 0;
+      while f < High(FItems[i].Faces) do
+      begin
+         ModelMap.PaintFace(Vertexes[FItems[i].Faces[f]],Vertexes[FItems[i].Faces[f+1]],Vertexes[FItems[i].Faces[f+2]],1);
+         inc(f,3);
+      end;
+   end;
    // Classify the voxels from the 3D Map as in, out or surface.
    ModelMap.GenerateSelfSurfaceMap;
    // Check every face to ensure that it is in the surface. Cut the ones inside
    // the volume.
    NumFaces := 0;
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[x]) to High(FMap[x]) do
-         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
-         begin
-            if FMap[x,y,z] <> -1 then
-            begin
-               v := 0;
-               f := 0;
-               while f <= High(FItems[FMap[x,y,z]].FaceLocation) do
-               begin
-                  if ModelMap.IsFaceValid(Vertexes[FItems[FMap[x,y,z]].Faces[v]],Vertexes[FItems[FMap[x,y,z]].Faces[v+1]],Vertexes[FItems[FMap[x,y,z]].Faces[v+2]],C_INSIDE_VOLUME) then
-                  begin
-                     FItems[FMap[x,y,z]].FaceLocation[f] := NumFaces*3;
-                     inc(NumFaces);
-                  end;
-                  inc(f);
-                  inc(v,3);
-               end;
-            end;
-         end;
+   for i := Low(FItems) to High(FItems) do
+   begin
+      v := 0;
+      f := 0;
+      while f <= High(FItems[i].FaceLocation) do
+      begin
+//         if ModelMap.IsFaceValid(Vertexes[FItems[i].Faces[v]],Vertexes[FItems[i].Faces[v+1]],Vertexes[FItems[i].Faces[v+2]],C_INSIDE_VOLUME) then
+//         begin
+            FItems[i].FaceLocation[f] := NumFaces*3;
+            inc(NumFaces);
+//         end;
+         inc(f);
+         inc(v,3);
+      end;
+   end;
    // Generate the final faces array.
    SetLength(_Faces,NumFaces*3);
    SetLength(_Colours,NumFaces);
    SetLength(_Normals,NumFaces);
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[x]) to High(FMap[x]) do
-         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+   for i := Low(FItems) to High(FItems) do
+   begin
+      v := 0;
+      f := 0;
+      while f <= High(FItems[i].FaceLocation) do
+      begin
+         if FItems[i].FaceLocation[f] > -1 then
          begin
-            if FMap[x,y,z] <> -1 then
+            pos := FItems[i].FaceLocation[f] div 3;
+            // Calculate the normals from each face.
+            Normal := GetNormals(_Vertexes[FItems[i].Faces[v]],_Vertexes[FItems[i].Faces[v+1]],_Vertexes[FItems[i].Faces[v+2]]);
+            // Use 'raycasting' procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
+            if not ModelMap.IsFaceNormalsCorrect(Vertexes[FItems[i].Faces[v]],Vertexes[FItems[i].Faces[v+1]],Vertexes[FItems[I].Faces[v+2]],Normal) then
             begin
-               v := 0;
-               f := 0;
-               while f <= High(FItems[FMap[x,y,z]].FaceLocation) do
-               begin
-                  if FItems[FMap[x,y,z]].FaceLocation[f] > -1 then
-                  begin
-                     pos := FItems[FMap[x,y,z]].FaceLocation[f] div 3;
-                     // Calculate the normals from each face.
-                     Normal := GetNormals(_Vertexes[FItems[FMap[x,y,z]].Faces[v]],_Vertexes[FItems[FMap[x,y,z]].Faces[v+1]],_Vertexes[FItems[FMap[x,y,z]].Faces[v+2]]);
-                     // Use 'raycasting' procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
-                     if not ModelMap.IsFaceNormalsCorrect(Vertexes[FItems[FMap[x,y,z]].Faces[v]],Vertexes[FItems[FMap[x,y,z]].Faces[v+1]],Vertexes[FItems[FMap[x,y,z]].Faces[v+2]],Normal) then
-                     begin
-                        Normal.X := Normal.X * (-1);
-                        Normal.Y := Normal.Y * (-1);
-                        Normal.Z := Normal.Z * (-1);
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]] := FItems[FMap[x,y,z]].Faces[v+2];
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+1] := FItems[FMap[x,y,z]].Faces[v+1];
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+2] := FItems[FMap[x,y,z]].Faces[v];
-                     end
-                     else
-                     begin
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]] := FItems[FMap[x,y,z]].Faces[v];
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+1] := FItems[FMap[x,y,z]].Faces[v+1];
-                        _Faces[FItems[FMap[x,y,z]].FaceLocation[f]+2] := FItems[FMap[x,y,z]].Faces[v+2];
-                     end;
-                     // Set normals value
-                     _Normals[pos].X := Normal.X;
-                     _Normals[pos].Y := Normal.Y;
-                     _Normals[pos].Z := Normal.Z;
-                     // Set a colour for each face.
-                     _Colours[pos].X := FItems[FMap[x,y,z]].Colour.X;
-                     _Colours[pos].Y := FItems[FMap[x,y,z]].Colour.Y;
-                     _Colours[pos].Z := FItems[FMap[x,y,z]].Colour.Z;
-                     _Colours[pos].W := FItems[FMap[x,y,z]].Colour.W;
-                  end;
-                  inc(f);
-                  inc(v,3);
-               end;
+               Normal.X := Normal.X * (-1);
+               Normal.Y := Normal.Y * (-1);
+               Normal.Z := Normal.Z * (-1);
+               _Faces[FItems[i].FaceLocation[f]] := FItems[i].Faces[v+2];
+               _Faces[FItems[i].FaceLocation[f]+1] := FItems[i].Faces[v+1];
+               _Faces[FItems[i].FaceLocation[f]+2] := FItems[i].Faces[v];
+            end
+            else
+            begin
+               _Faces[FItems[i].FaceLocation[f]] := FItems[i].Faces[v];
+               _Faces[FItems[i].FaceLocation[f]+1] := FItems[i].Faces[v+1];
+               _Faces[FItems[i].FaceLocation[f]+2] := FItems[i].Faces[v+2];
             end;
+            // Set normals value
+            _Normals[pos].X := Normal.X;
+            _Normals[pos].Y := Normal.Y;
+            _Normals[pos].Z := Normal.Z;
+            // Set a colour for each face.
+            _Colours[pos].X := FItems[i].Colour.X;
+            _Colours[pos].Y := FItems[i].Colour.Y;
+            _Colours[pos].Z := FItems[i].Colour.Z;
+            _Colours[pos].W := FItems[i].Colour.W;
          end;
+         inc(f);
+         inc(v,3);
+      end;
+   end;
 
    // Free memory
    ModelMap.Free;
