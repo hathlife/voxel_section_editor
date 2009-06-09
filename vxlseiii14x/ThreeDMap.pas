@@ -493,6 +493,51 @@ begin
    end;
 end;
 
+{
+function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
+var
+   CentralPoint: TVector3i;
+   TestPoint1,TestPoint2: TVector3f;
+   Direction: TVector3f;
+   MaxNormalValue: single;
+begin
+   CentralPoint.X := (((_V1.X + _V2.X) div 2) + _V3.X) div 2;
+   CentralPoint.Y := (((_V1.Y + _V2.Y) div 2) + _V3.Y) div 2;
+   CentralPoint.Z := (((_V1.Z + _V2.Z) div 2) + _V3.Z) div 2;
+   // Now that we have the central point, we need to have a point that will ensure
+   // that it will move us to another voxel. So one of the axis must be 1 or -1.
+   MaxNormalValue := Max(Max(abs(_Normal.X),abs(_Normal.Y)),abs(_Normal.Z));
+   Direction.X := _Normal.X / MaxNormalValue;
+   Direction.Y := _Normal.Y / MaxNormalValue;
+   Direction.Z := _Normal.Z / MaxNormalValue;
+   // Now, let's walk from the central point in the direction of the normals.
+   TestPoint1.X := CentralPoint.X + Direction.X;
+   TestPoint1.Y := CentralPoint.Y + Direction.Y;
+   TestPoint1.Z := CentralPoint.Z + Direction.Z;
+   TestPoint2.X := CentralPoint.X - Direction.X;
+   TestPoint2.Y := CentralPoint.Y - Direction.Y;
+   TestPoint2.Z := CentralPoint.Z - Direction.Z;
+   while GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z)) = GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z)) do
+   begin
+      TestPoint1.X := TestPoint1.X + Direction.X;
+      TestPoint1.Y := TestPoint1.Y + Direction.Y;
+      TestPoint1.Z := TestPoint1.Z + Direction.Z;
+      TestPoint2.X := TestPoint2.X - Direction.X;
+      TestPoint2.Y := TestPoint2.Y - Direction.Y;
+      TestPoint2.Z := TestPoint2.Z - Direction.Z;
+   end;
+
+   if GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z)) > GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z)) then
+   begin
+      Result := true;
+   end
+   else
+   begin
+      Result := false;
+   end;
+end;
+}
+
 function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
 var
    CentralPoint, TestPoint: TVector3i;

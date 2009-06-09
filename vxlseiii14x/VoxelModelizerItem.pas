@@ -525,9 +525,9 @@ begin
                      // Add i, j, k to faces.
                      SetLength(Faces,High(Faces)+4);
                      SetLength(FaceLocation,High(FaceLocation)+2);
-                     Faces[High(Faces)] := k;
-                     Faces[High(Faces)-1] := j;
-                     Faces[High(Faces)-2] := i;
+                     Faces[High(Faces)] := _VertexList[k];
+                     Faces[High(Faces)-1] := _VertexList[j];
+                     Faces[High(Faces)-2] := _VertexList[i];
                      // Ensure that they will not be detected anymore.
                      DistanceMatrix[i,j] := 0;
                      DistanceMatrix[j,k] := 0;
