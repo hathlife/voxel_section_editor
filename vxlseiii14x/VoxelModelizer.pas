@@ -28,8 +28,7 @@ implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
-   x, y, z, i, f, v, pos, NumFaces: integer;
-   EdgeMap: T3DMap;
+   x, y, z, i, pos, NumFaces: integer;
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
    Normal : TVector3f;
@@ -38,24 +37,22 @@ begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
-   // Find out the regions where we will have meshes.
-   GenerateItemsMap;
    // Prepare other map types.
-   EdgeMap := T3DMap.Create(((High(FMap) + 1)*C_VP_HIGH)+1,((High(FMap[0]) + 1)*C_VP_HIGH)+1,((High(FMap[0,0]) + 1)*C_VP_HIGH)+1);
-   SetLength(FVertexMap,EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   SetLength(FVertexMap,((PVoxelMap^.GetMaxX + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxY + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxZ + 1)*C_VP_HIGH)+1);
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
          for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
             FVertexMap[x,y,z] := -1;
-   ModelMap := T3DMap.Create(EdgeMap.GetMaxX + 1,EdgeMap.GetMaxY + 1,EdgeMap.GetMaxZ + 1);
+   ModelMap := T3DMap.Create(High(FVertexMap) + 1,High(FVertexMap) + 1,High(FVertexMap) + 1);
    // Write faces and vertexes for each item of the map.
+   GenerateItemsMap;
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
          for z := Low(FMap[x,y]) to High(FMap[x,y]) do
          begin
             if FMap[x,y,z] <> -1 then
             begin
-               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,EdgeMap,x,y,z,FNumVertexes,_Palette,_ColourMap);
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,ModelMap,x,y,z,FNumVertexes,_Palette,_ColourMap);
             end;
          end;
    // Confirm the vertex list.
@@ -147,7 +144,6 @@ begin
 
    // Free memory
    ModelMap.Free;
-   EdgeMap.Free;
    SetLength(Vertexes,0);
 end;
 
@@ -196,6 +192,7 @@ var
 begin
    PVoxelMap^.Bias := 0;
    NumItems := 0;
+   // Find out the regions where we will have meshes.
    SetLength(FMap,PVoxelMap^.GetMaxX+1,PVoxelMap^.GetMaxY+1,PVoxelMap^.GetMaxZ+1);
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do

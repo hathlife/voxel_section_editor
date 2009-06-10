@@ -67,7 +67,8 @@ uses
   Class2DPointQueue in 'Class2DPointQueue.pas',
   BasicConstants in 'BasicConstants.pas',
   ThreeDMap in 'ThreeDMap.pas',
-  ClassFaceQueue in 'ClassFaceQueue.pas';
+  ClassFaceQueue in 'ClassFaceQueue.pas',
+  ClassVertexQueue in 'ClassVertexQueue.pas';
 
 {$R *.res}
 

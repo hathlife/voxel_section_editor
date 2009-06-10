@@ -43,7 +43,7 @@ end;
 destructor C2DPointQueue.Destroy;
 begin
    Clear;
-   Reset;
+   inherited Destroy;
 end;
 
 procedure C2DPointQueue.Reset;

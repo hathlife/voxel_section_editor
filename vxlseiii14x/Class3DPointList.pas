@@ -41,7 +41,7 @@ end;
 destructor C3DPointList.Destroy;
 begin
    Clear;
-   Reset;
+   inherited Destroy;
 end;
 
 procedure C3DPointList.Reset;

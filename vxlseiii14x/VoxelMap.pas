@@ -100,7 +100,17 @@ begin
 end;
 
 procedure TVoxelMap.Clear;
+var
+   x,y : integer;
 begin
+   for x := High(FMap) downto Low(FMap) do
+   begin
+      for y := High(FMap[x]) downto Low(FMap[x]) do
+      begin
+         SetLength(FMap[x,y],0);
+      end;
+      SetLength(FMap[x],0);
+   end;
    SetLength(FMap,0,0,0);
 end;
 

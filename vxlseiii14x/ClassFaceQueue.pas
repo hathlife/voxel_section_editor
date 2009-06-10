@@ -41,6 +41,7 @@ destructor CFaceQueue.Destroy;
 begin
    Clear;
    Reset;
+   inherited Destroy;
 end;
 
 procedure CFaceQueue.Reset;
