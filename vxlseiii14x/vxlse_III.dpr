@@ -66,7 +66,8 @@ uses
   VoxelModelizerItem in 'VoxelModelizerItem.pas',
   Class2DPointQueue in 'Class2DPointQueue.pas',
   BasicConstants in 'BasicConstants.pas',
-  ThreeDMap in 'ThreeDMap.pas';
+  ThreeDMap in 'ThreeDMap.pas',
+  ClassFaceQueue in 'ClassFaceQueue.pas';
 
 {$R *.res}
 

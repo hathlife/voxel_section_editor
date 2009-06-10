@@ -113,8 +113,8 @@
 			<Linker Name="RemoteSymbols">False</Linker>
 			<Linker Name="GenerateDRC">False</Linker>
 			<Linker Name="MinStackSize">16384</Linker>
-			<Linker Name="MaxStackSize">1048576</Linker>
-			<Linker Name="ImageBase">4194304</Linker>
+			<Linker Name="MaxStackSize">16777216</Linker>
+			<Linker Name="ImageBase">67108864</Linker>
 			<Linker Name="ExeDescription"></Linker>
 			<Linker Name="GenerateHpps">False</Linker>
 		</Linker>

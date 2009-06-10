@@ -3,7 +3,8 @@ unit VoxelModelizerItem;
 interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,
-   BasicConstants, ThreeDMap, Voxel_Engine, Palette, Dialogs, SysUtils;
+   BasicConstants, ThreeDMap, Voxel_Engine, Palette, Dialogs, SysUtils,
+   ClassFaceQueue;
 
 type
    TVoxelModelizerItem = class
@@ -43,8 +44,9 @@ type
          EdgeGeneratedPositions : TAVector3i;
          FaceGeneratedPositions : TAVector3i;
          // Faces
-         Faces: AInt32;
-         FaceLocation: AInt32;
+         Faces: CFaceQueue;
+//         Faces: AInt32;
+//         FaceLocation: AInt32;
 
          // Constructors and Destructors
          constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
@@ -70,6 +72,7 @@ begin
    y := _y;
    z := _z;
    Cube := TNormals.Create(6);
+   Faces := CFaceQueue.Create;
    // Semi surface or surface?
    MyClassification := _VoxelMap.MapSafe[x,y,z];
    // Which kind of semi-surface?
@@ -152,12 +155,12 @@ begin
                      begin
                         // calculate the vertex between FaceEdges[v1] and FilledEdges[EdgeNeighboorList[e1]]
                         // to prevent shapes from getting mixed up.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1 - 1)] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertexes,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- e2 + e1 + 1] := AddVertex(_VertexMap,v0x + ((EdgeCentralPoints[EdgeNeighboorList[e1],0] + EdgeCentralPoints[FaceEdges[v1],0]) div 2), v0y + ((EdgeCentralPoints[EdgeNeighboorList[e1],1] + EdgeCentralPoints[FaceEdges[v1],1]) div 2), v0z + ((EdgeCentralPoints[EdgeNeighboorList[e1],2] + EdgeCentralPoints[FaceEdges[v1],2]) div 2),_TotalNumVertexes,EdgeGeneratedPositions);
                      end
                      else
                      begin
                         // Add a vertex in the middle of the edge.
-                        EdgeGeneratedList[High(EdgeGeneratedList)- (e2 - e1 - 1)] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,EdgeGeneratedPositions);
+                        EdgeGeneratedList[High(EdgeGeneratedList)- e2 + e1 + 1] := AddVertex(_VertexMap,v0x + EdgeCentralPoints[EdgeNeighboorList[e1],0], v0y + EdgeCentralPoints[EdgeNeighboorList[e1],1], v0z + EdgeCentralPoints[EdgeNeighboorList[e1],2],_TotalNumVertexes,EdgeGeneratedPositions);
                      end;
                      inc(e1);
                   end;
@@ -170,13 +173,16 @@ begin
             FaceSettings[i] := C_FACE_SET_FACE;
             if FilledFaces[i] then
             begin
-               SetLength(FaceGeneratedList,High(FaceGeneratedList)+5);
                for p := 0 to 3 do // for each edge from the face i
                begin
                   e1 := p  + (i * 4); // edge index on FaceEdge
                   // fill the beggining of each edge with a vertex
-                  FaceGeneratedList[High(FaceGeneratedList) - (3 - p)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedPositions);
-                  ExternalFaceEdges[FaceEdges[e1]] := true;
+                  if not ExternalFaceEdges[FaceEdges[e1]] then
+                  begin
+                     SetLength(FaceGeneratedList,High(FaceGeneratedList)+2);
+                     FaceGeneratedList[High(FaceGeneratedList)] := AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedPositions);
+                     ExternalFaceEdges[FaceEdges[e1]] := true;
+                  end;
                end;
             end;
          end;
@@ -220,24 +226,21 @@ begin
       MakeFacesFromVertexes(FaceGeneratedPositions,FaceGeneratedList,_EdgeMap);
 
    // If vertexes, edges and faces = 0. Do the lonely cube.
-   if High(Faces) < 0 then
+   if Faces.IsEmpty then
       MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
-   for i:= Low(FaceLocation) to High(FaceLocation) do
-      FaceLocation[i] := -1;
    Cube.Free;
 end;
 
 destructor TVoxelModelizerItem.Destroy;
 begin
-   SetLength(Faces,0);
-   SetLength(FaceLocation,0);
    SetLength(VertexGeneratedList,0);
    SetLength(EdgeGeneratedList,0);
    SetLength(FaceGeneratedList,0);
    SetLength(VertexGeneratedPositions,0);
    SetLength(EdgeGeneratedPositions,0);
    SetLength(FaceGeneratedPositions,0);
+   Faces.Free;
    inherited Destroy;
 end;
 
@@ -254,7 +257,7 @@ begin
    begin
       // i points to the first of the 7 neighboors that must be checked, to detect
       // if the vertex is inside or outside the surface.
-      i := v * 8;
+      i := v * 7;
       // check if the vertex is in a location where the surface can pass.
       if (_MyClassification = C_SURFACE) or ((_MySurface and VertexRequirements[v]) <> 0) then
       begin
@@ -311,7 +314,7 @@ begin
       // if the edge is inside or outside the surface.
       i := e * 3;
       // check if the edge is in a location where the surface can pass.
-      if (_MyClassification = C_SURFACE) or ((_MySurface and VertexRequirements[e]) <> 0) then
+      if (_MyClassification = C_SURFACE) or ((_MySurface and EdgeRequirements[e]) <> 0) then
       begin
          FilledEdges[e] := true;
          imax := i + 3;
@@ -453,11 +456,7 @@ begin
    if numVerts = 3 then
    begin
       // if we have a single face, the situation is ridiculous.
-      SetLength(Faces,High(Faces)+4);
-      SetLength(FaceLocation,High(FaceLocation)+2);
-      Faces[High(Faces)-2] := _VertexList[0];
-      Faces[High(Faces)-1] := _VertexList[1];
-      Faces[High(Faces)] := _VertexList[2];
+      Faces.Add(_VertexList[0],_VertexList[1],_VertexList[2]);
    end
    else
    begin
@@ -520,14 +519,10 @@ begin
                k := 0;
                while k < NumVerts do
                begin
-                  if (DistanceMatrix[i,k] <> 0) and (DistanceMatrix[j,k] <> 0) then
+                  if (DistanceMatrix[k,i] <> 0) and (DistanceMatrix[j,k] <> 0) then
                   begin
                      // Add i, j, k to faces.
-                     SetLength(Faces,High(Faces)+4);
-                     SetLength(FaceLocation,High(FaceLocation)+2);
-                     Faces[High(Faces)] := _VertexList[k];
-                     Faces[High(Faces)-1] := _VertexList[j];
-                     Faces[High(Faces)-2] := _VertexList[i];
+                     Faces.Add(_VertexList[i],_VertexList[j],_VertexList[k]);
                      // Ensure that they will not be detected anymore.
                      DistanceMatrix[i,j] := 0;
                      DistanceMatrix[j,k] := 0;
@@ -558,26 +553,17 @@ end;
 // Build a set of faces using the given order.
 procedure TVoxelModelizerItem.MakeFacesFromEdges(const _VertexPositions: TAVector3i; const _VertexList: AInt32; var _EdgeMap: T3DMap);
 var
-   NumFaces,Maxj: integer;
-   i,j: integer;
+   Maxj: integer;
+   j: integer;
 begin
-   NumFaces := (High(_VertexList)+1) div 2;
-   i := High(Faces)+1;
    j := 0;
-   SetLength(Faces,(High(Faces)+1) + (NumFaces*3));
-   SetLength(FaceLocation,(High(FaceLocation)+1) + NumFaces);
    Maxj := High(_VertexPositions)-2;
    while j < Maxj do
    begin
       // Face 1: V1, V3, V2
-      Faces[i] := _VertexList[j];
-      Faces[i+1] := _VertexList[j+2];
-      Faces[i+2] := _VertexList[j+1];
-
+      Faces.Add(_VertexList[j],_VertexList[j+2],_VertexList[j+1]);
       // Face 2: V1, V4, V3
-      Faces[i+3] := _VertexList[j];
-      Faces[i+4] := _VertexList[j+3];
-      Faces[i+5] := _VertexList[j+2];
+      Faces.Add(_VertexList[j],_VertexList[j+3],_VertexList[j+2]);
 
       // Draw them in the edge map.
       _EdgeMap.PaintEdge(_VertexPositions[j],_VertexPositions[j+1],1);
@@ -588,7 +574,6 @@ begin
 
       // Go to next two faces.
       inc(j,4);
-      inc(i,6);
    end;
 end;
 
@@ -608,62 +593,37 @@ begin
    Vertexes[6] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y,_MyPosition.Z + C_VP_HIGH,_NumVertices,VertexPositions);
    Vertexes[7] := AddVertex(_VertexMap,_MyPosition.X + C_VP_HIGH,_MyPosition.Y,_MyPosition.Z,_NumVertices,VertexPositions);
    // Add All Faces
-   SetLength(Faces,36);
-   SetLength(FaceLocation,12);
+
    // Front triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[0] := Vertexes[0];
-   Faces[1] := Vertexes[2];
-   Faces[2] := Vertexes[1];
+   Faces.Add(Vertexes[0],Vertexes[2],Vertexes[1]);
    // Face 2: top right, top left, bottom left.
-   Faces[3] := Vertexes[0];
-   Faces[4] := Vertexes[3];
-   Faces[5] := Vertexes[2];
+   Faces.Add(Vertexes[0],Vertexes[3],Vertexes[2]);
    // Left triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[6] := Vertexes[3];
-   Faces[7] := Vertexes[4];
-   Faces[8] := Vertexes[2];
+   Faces.Add(Vertexes[3],Vertexes[4],Vertexes[2]);
    // Face 2: top right, top left, bottom left.
-   Faces[9] := Vertexes[3];
-   Faces[10] := Vertexes[5];
-   Faces[11] := Vertexes[4];
+   Faces.Add(Vertexes[3],Vertexes[5],Vertexes[4]);
    // Back triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[12] := Vertexes[5];
-   Faces[13] := Vertexes[7];
-   Faces[14] := Vertexes[4];
+   Faces.Add(Vertexes[5],Vertexes[7],Vertexes[4]);
    // Face 2: top right, top left, bottom left.
-   Faces[15] := Vertexes[5];
-   Faces[16] := Vertexes[6];
-   Faces[17] := Vertexes[7];
+   Faces.Add(Vertexes[5],Vertexes[6],Vertexes[7]);
    // Right triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[18] := Vertexes[6];
-   Faces[19] := Vertexes[1];
-   Faces[20] := Vertexes[7];
+   Faces.Add(Vertexes[6],Vertexes[1],Vertexes[7]);
    // Face 2: top right, top left, bottom left.
-   Faces[21] := Vertexes[6];
-   Faces[22] := Vertexes[0];
-   Faces[23] := Vertexes[1];
+   Faces.Add(Vertexes[6],Vertexes[0],Vertexes[1]);
    // Top triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[24] := Vertexes[7];
-   Faces[25] := Vertexes[3];
-   Faces[26] := Vertexes[6];
+   Faces.Add(Vertexes[7],Vertexes[3],Vertexes[6]);
    // Face 2: top right, top left, bottom left.
-   Faces[27] := Vertexes[7];
-   Faces[28] := Vertexes[3];
-   Faces[29] := Vertexes[5];
+   Faces.Add(Vertexes[7],Vertexes[3],Vertexes[5]);
    // Bottom triangles
    // Face 1: top right, bottom left, bottom right.
-   Faces[30] := Vertexes[1];
-   Faces[31] := Vertexes[4];
-   Faces[32] := Vertexes[7];
+   Faces.Add(Vertexes[1],Vertexes[4],Vertexes[7]);
    // Face 2: top right, top left, bottom left.
-   Faces[33] := Vertexes[1];
-   Faces[34] := Vertexes[2];
-   Faces[35] := Vertexes[4];
+   Faces.Add(Vertexes[1],Vertexes[2],Vertexes[4]);
    // Free memory
    SetLength(VertexPositions,0);
 end;

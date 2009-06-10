@@ -3,7 +3,7 @@ unit VoxelModelizer;
 interface
 
 uses VoxelMap, BasicDataTypes, VoxelModelizerItem, BasicConstants, ThreeDMap,
-   Palette;
+   Palette, ClassFaceQueue;
 
 type
    TVoxelModelizer = class
@@ -33,6 +33,7 @@ var
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
    Normal : TVector3f;
+   Face: PFaceData;
 begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
@@ -77,11 +78,11 @@ begin
    // Paint the faces in the 3D Map.
    for i := Low(FItems) to High(FItems) do
    begin
-      f := 0;
-      while f < High(FItems[i].Faces) do
+      Face := FItems[i].Faces.GetFirstElement;
+      while Face <> nil do
       begin
-         ModelMap.PaintFace(Vertexes[FItems[i].Faces[f]],Vertexes[FItems[i].Faces[f+1]],Vertexes[FItems[i].Faces[f+2]],1);
-         inc(f,3);
+         ModelMap.PaintFace(Vertexes[Face^.V1],Vertexes[Face^.V2],Vertexes[Face^.V3],1);
+         Face := Face^.Next;
       end;
    end;
    // Classify the voxels from the 3D Map as in, out or surface.
@@ -91,17 +92,15 @@ begin
    NumFaces := 0;
    for i := Low(FItems) to High(FItems) do
    begin
-      v := 0;
-      f := 0;
-      while f <= High(FItems[i].FaceLocation) do
+      Face := FItems[i].Faces.GetFirstElement;
+      while Face <> nil do
       begin
-//         if ModelMap.IsFaceValid(Vertexes[FItems[i].Faces[v]],Vertexes[FItems[i].Faces[v+1]],Vertexes[FItems[i].Faces[v+2]],C_INSIDE_VOLUME) then
+//         if ModelMap.IsFaceValid(Vertexes[Face^.V1],Vertexes[Face^.V2],Vertexes[Face^.V3],C_INSIDE_VOLUME) then
 //         begin
-            FItems[i].FaceLocation[f] := NumFaces*3;
+            Face^.Location := NumFaces*3;
             inc(NumFaces);
 //         end;
-         inc(f);
-         inc(v,3);
+         Face := Face^.Next;
       end;
    end;
    // Generate the final faces array.
@@ -110,30 +109,27 @@ begin
    SetLength(_Normals,NumFaces);
    for i := Low(FItems) to High(FItems) do
    begin
-      v := 0;
-      f := 0;
-      while f <= High(FItems[i].FaceLocation) do
+      Face := FItems[i].Faces.GetFirstElement;
+      while Face <> nil do
       begin
-         if FItems[i].FaceLocation[f] > -1 then
+         if Face^.location > -1 then
          begin
-            pos := FItems[i].FaceLocation[f] div 3;
+            pos := Face^.location div 3;
             // Calculate the normals from each face.
-            Normal := GetNormals(_Vertexes[FItems[i].Faces[v]],_Vertexes[FItems[i].Faces[v+1]],_Vertexes[FItems[i].Faces[v+2]]);
+            Normal := GetNormals(_Vertexes[Face^.V1],_Vertexes[Face^.V2],_Vertexes[Face^.V3]);
             // Use 'raycasting' procedure to ensure that the vertexes are ordered correctly (anti-clockwise)
-            if not ModelMap.IsFaceNormalsCorrect(Vertexes[FItems[i].Faces[v]],Vertexes[FItems[i].Faces[v+1]],Vertexes[FItems[I].Faces[v+2]],Normal) then
+            if not ModelMap.IsFaceNormalsCorrect(Vertexes[Face^.V1],Vertexes[Face^.V2],Vertexes[Face^.V3],Normal) then
             begin
-               Normal.X := Normal.X * (-1);
-               Normal.Y := Normal.Y * (-1);
-               Normal.Z := Normal.Z * (-1);
-               _Faces[FItems[i].FaceLocation[f]] := FItems[i].Faces[v+2];
-               _Faces[FItems[i].FaceLocation[f]+1] := FItems[i].Faces[v+1];
-               _Faces[FItems[i].FaceLocation[f]+2] := FItems[i].Faces[v];
+               Normal := GetNormals(_Vertexes[Face^.V3],_Vertexes[Face^.V2],_Vertexes[Face^.V1]);
+               _Faces[Face^.location] := Face^.v3;
+               _Faces[Face^.location+1] := Face^.v2;
+               _Faces[Face^.location+2] := Face^.v1;
             end
             else
             begin
-               _Faces[FItems[i].FaceLocation[f]] := FItems[i].Faces[v];
-               _Faces[FItems[i].FaceLocation[f]+1] := FItems[i].Faces[v+1];
-               _Faces[FItems[i].FaceLocation[f]+2] := FItems[i].Faces[v+2];
+               _Faces[Face^.location] := Face^.v1;
+               _Faces[Face^.location+1] := Face^.v2;
+               _Faces[Face^.location+2] := Face^.v3;
             end;
             // Set normals value
             _Normals[pos].X := Normal.X;
@@ -145,8 +141,7 @@ begin
             _Colours[pos].Z := FItems[i].Colour.Z;
             _Colours[pos].W := FItems[i].Colour.W;
          end;
-         inc(f);
-         inc(v,3);
+         Face := Face^.Next;
       end;
    end;
 

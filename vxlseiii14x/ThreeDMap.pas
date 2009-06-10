@@ -8,7 +8,7 @@ unit ThreeDMap;
 interface
 
 uses BasicDataTypes, Class3DPointList, Normals, BasicConstants, Voxel_Engine,
-   Math;
+   Math, Dialogs, SysUtils;
 
 type
    T3DMap = class
@@ -16,6 +16,7 @@ type
          // Variables
          FMap : T3DIntGrid;
          FBaseMap : T3DIntGrid;
+         FSize : TVector3i;
          // Constructors and Destructors
          procedure Clear;
          procedure FillMap(_Mode : integer = C_MODE_NONE; _Value : integer = C_INSIDE_VOLUME);
@@ -30,10 +31,9 @@ type
          procedure SetMapSafe(_x,_y,_z: integer; _value: integer);
          // Paints
          function GetEdgeDirection(_V1, _V2: TVector3i): TVector3f;
-         function GetStepCounter(var _Direction: TVector3f): TVector3f;
-         procedure IncreaseVector(var _Vector: TVector3i; var _IncCounter: TVector3f; const _StepCounter,_Direction: TVector3f);
-         function IsEdgePaintable(_V1, _V2: TVector3i; const _Direction,_StepCounter: TVector3f; _Value: integer): boolean;
-         procedure PaintEdge(_V1, _V2: TVector3i; const _Direction,_StepCounter: TVector3f; _Value: integer); overload;
+         procedure IncreaseVector(var _Vector: TVector3f; const _Direction: TVector3f);
+         function IsEdgePaintable(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer): boolean;
+         procedure PaintEdge(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer); overload;
          function GetDistance(_V1, _V2: TVector3i): integer;
          // Misc
          procedure SetMapSize;
@@ -84,14 +84,9 @@ implementation
 
 // Constructors and Destructors
 constructor T3DMap.Create(_x, _y, _z: Integer);
-var
-   x,y,z: integer;
 begin
-   SetLength(FBaseMap,_x,_y,_z);
-   for x := Low(FBaseMap) to High(FBaseMap) do
-      for y := Low(FBaseMap[x]) to High(FBaseMap[x]) do
-         for z := Low(FBaseMap[x,y]) to High(FBaseMap[x,y]) do
-            FBaseMap[x,y,z] := 0;
+   FBaseMap := nil;
+   FSize := SetVectorI(_x,_y,_z);
    Initialize(C_MODE_NONE);
 end;
 
@@ -123,6 +118,8 @@ var
    Filled : integer;
    Unfilled : integer;
 begin
+   if FBaseMap = nil then
+      _Mode := C_MODE_NONE;
    if _Mode = C_MODE_USED then
    begin
       Unfilled := _Value and $FF;
@@ -345,40 +342,37 @@ end;
 function T3DMap.TryPaintingEdge(_V1, _V2: TVector3i; _Value: integer): boolean;
 var
    Direction: TVector3f;
-   StepCounter : TVector3f;
 begin
    Direction := GetEdgeDirection(_V1,_V2);
-   StepCounter := GetStepCounter(Direction);
-   Result := IsEdgePaintable(_V1,_V2,Direction,StepCounter,_Value);
+   Result := IsEdgePaintable(_V1,_V2,Direction,_Value);
    if Result then
-      PaintEdge(_V1,_V2,Direction,StepCounter,_Value);
+      PaintEdge(_V1,_V2,Direction,_Value);
 end;
 
 procedure T3DMap.PaintEdge(_V1, _V2: TVector3i; _Value: integer);
 var
    Direction: TVector3f;
-   StepCounter: TVector3f;
 begin
    Direction := GetEdgeDirection(_V1,_V2);
-   StepCounter := GetStepCounter(Direction);
-   PaintEdge(_V1,_V2,Direction,StepCounter,_Value);
+   PaintEdge(_V1,_V2,Direction,_Value);
 end;
 
-procedure T3DMap.PaintEdge(_V1, _V2: TVector3i; const _Direction,_StepCounter: TVector3f; _Value: integer);
+procedure T3DMap.PaintEdge(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer);
 var
-   IncCounter: TVector3f;
+   CurrentPosition: TVector3f;
    CurrentVertex: TVector3i;
    EdgeDistance,Distance : integer;
 begin
-   IncCounter := SetVector(0,0,0);
-   CurrentVertex := SetVectori(_V1.X,_V1.Y,_V1.Z);
-   IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
+   CurrentPosition := SetVector(_V1.X,_V1.Y,_V1.Z);
+   IncreaseVector(CurrentPosition,_Direction);
+   CurrentVertex := SetVectori(Round(CurrentPosition.X),Round(CurrentPosition.Y),Round(CurrentPosition.Z));
    Distance := GetDistance(_V1,CurrentVertex);
    EdgeDistance := GetDistance(_V1,_V2);
    while EdgeDistance > Distance  do
    begin
       FMap[CurrentVertex.X,CurrentVertex.Y,CurrentVertex.Z] := _Value;
-      IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
+      IncreaseVector(CurrentPosition,_Direction);
+      CurrentVertex := SetVectori(Round(CurrentPosition.X),Round(CurrentPosition.Y),Round(CurrentPosition.Z));
       Distance := GetDistance(_V1,CurrentVertex);
    end;
 end;
@@ -388,23 +382,20 @@ var
    Direction: TVector3f;
    DirectionE1, DirectionE2: TVector3f;
    CurrentV1, CurrentV2: TVector3i;
-   StepCounter, StepCounterE1, StepCounterE2 : TVector3f;
-   IncCounterE1,IncCounterE2: TVector3f;
+   CurrentPos1,CurrentPos2: TVector3f;
    EdgeDistanceV1,EdgeDistanceV2,DistanceV1, DistanceV2 : integer;
 begin
    DirectionE1 := GetEdgeDirection(_V1,_V2);
-   StepCounterE1 := GetStepCounter(DirectionE1);
    DirectionE2 := GetEdgeDirection(_V1,_V3);
-   StepCounterE2 := GetStepCounter(DirectionE2);
-   IncCounterE1 := SetVector(0,0,0);
-   IncCounterE2 := SetVector(0,0,0);
-   CurrentV1 := SetVectori(_V1.X,_V1.Y,_V1.Z);
-   CurrentV2 := SetVectori(_V1.X,_V1.Y,_V1.Z);
+   CurrentPos1 := SetVector(_V1.X,_V1.Y,_V1.Z);
+   CurrentPos2 := SetVector(_V1.X,_V1.Y,_V1.Z);
    FMap[_V1.X,_V1.Y,_V1.Z] := _Value;
    FMap[_V2.X,_V2.Y,_V2.Z] := _Value;
    FMap[_V3.X,_V3.Y,_V3.Z] := _Value;
-   IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
-   IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+   IncreaseVector(CurrentPos1,DirectionE1);
+   IncreaseVector(CurrentPos2,DirectionE2);
+   CurrentV1 := SetVectori(Round(CurrentPos1.X),Round(CurrentPos1.Y),Round(CurrentPos1.Z));
+   CurrentV2 := SetVectori(Round(CurrentPos2.X),Round(CurrentPos2.Y),Round(CurrentPos2.Z));
    DistanceV1 := GetDistance(_V1,CurrentV1);
    DistanceV2 := GetDistance(_V1,CurrentV2);
    EdgeDistanceV1 := GetDistance(_V1,_V2);
@@ -414,26 +405,27 @@ begin
       FMap[CurrentV1.X,CurrentV1.Y,CurrentV1.Z] := _Value;
       FMap[CurrentV2.X,CurrentV2.Y,CurrentV2.Z] := _Value;
       Direction := GetEdgeDirection(CurrentV1,CurrentV2);
-      StepCounter := GetStepCounter(Direction);
-      PaintEdge(CurrentV1,CurrentV2,Direction,StepCounter,_Value);
-      IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
-      IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+      PaintEdge(CurrentV1,CurrentV2,Direction,_Value);
+      IncreaseVector(CurrentPos1,DirectionE1);
+      IncreaseVector(CurrentPos2,DirectionE2);
+      CurrentV1 := SetVectori(Round(CurrentPos1.X),Round(CurrentPos1.Y),Round(CurrentPos1.Z));
+      CurrentV2 := SetVectori(Round(CurrentPos2.X),Round(CurrentPos2.Y),Round(CurrentPos2.Z));
       DistanceV1 := GetDistance(_V1,CurrentV1);
       DistanceV2 := GetDistance(_V1,CurrentV2);
    end;
 end;
 
 
-function T3DMap.IsEdgePaintable(_V1, _V2: TVector3i; const  _Direction,_StepCounter: TVector3f; _Value: integer): boolean;
+function T3DMap.IsEdgePaintable(_V1, _V2: TVector3i; const  _Direction: TVector3f; _Value: integer): boolean;
 var
-   IncCounter: TVector3f;
+   CurrentPosition: TVector3f;
    CurrentVertex: TVector3i;
    EdgeDistance,Distance : integer;
 begin
    Result := true;
-   IncCounter := SetVector(0,0,0);
-   CurrentVertex := SetVectori(_V1.X,_V1.Y,_V1.Z);
-   IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
+   CurrentPosition := SetVector(_V1.X,_V1.Y,_V1.Z);
+   IncreaseVector(CurrentPosition,_Direction);
+   CurrentVertex := SetVectori(Round(CurrentPosition.X),Round(CurrentPosition.Y),Round(CurrentPosition.Z));
    Distance := GetDistance(_V1,CurrentVertex);
    EdgeDistance := GetDistance(_V1,_V2);
    while EdgeDistance > Distance do
@@ -443,7 +435,8 @@ begin
          Result := false;
          exit;
       end;
-      IncreaseVector(CurrentVertex,IncCounter,_StepCounter,_Direction);
+      IncreaseVector(CurrentPosition,_Direction);
+      CurrentVertex := SetVectori(Round(CurrentPosition.X),Round(CurrentPosition.Y),Round(CurrentPosition.Z));
       Distance := GetDistance(_V1,CurrentVertex);
    end;
 end;
@@ -453,26 +446,23 @@ var
    Direction: TVector3f;
    DirectionE1, DirectionE2: TVector3f;
    CurrentV1, CurrentV2: TVector3i;
-   StepCounter, StepCounterE1, StepCounterE2: TVector3f;
-   IncCounterE1, IncCounterE2: TVector3f;
+   CurrentPos1, CurrentPos2: TVector3f;
    EdgeDistanceV1,EdgeDistanceV2,DistanceV1,DistanceV2 : integer;
 begin
    Result := true;
    DirectionE1 := GetEdgeDirection(_V1,_V2);
-   StepCounterE1 := GetStepCounter(DirectionE1);
    DirectionE2 := GetEdgeDirection(_V1,_V3);
-   StepCounterE2 := GetStepCounter(DirectionE2);
-   IncCounterE1 := SetVector(0,0,0);
-   IncCounterE2 := SetVector(0,0,0);
    if (FMap[_V1.X,_V1.Y,_V1.Z] = _Value) or (FMap[_V2.X,_V2.Y,_V2.Z] = _Value) or (FMap[_V3.X,_V3.Y,_V3.Z] = _Value) then
    begin
       Result := false;
       exit;
    end;
-   CurrentV1 := SetVectori(_V1.X,_V1.Y,_V1.Z);
-   CurrentV2 := SetVectori(_V1.X,_V1.Y,_V1.Z);
-   IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
-   IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+   CurrentPos1 := SetVector(_V1.X,_V1.Y,_V1.Z);
+   CurrentPos2 := SetVector(_V1.X,_V1.Y,_V1.Z);
+   IncreaseVector(CurrentPos1,DirectionE1);
+   IncreaseVector(CurrentPos2,DirectionE2);
+   CurrentV1 := SetVectori(Round(CurrentPos1.X),Round(CurrentPos1.Y),Round(CurrentPos1.Z));
+   CurrentV2 := SetVectori(Round(CurrentPos2.X),Round(CurrentPos2.Y),Round(CurrentPos2.Z));
    DistanceV1 := GetDistance(_V1,CurrentV1);
    DistanceV2 := GetDistance(_V1,CurrentV2);
    EdgeDistanceV1 := GetDistance(_V1,_V2);
@@ -480,30 +470,36 @@ begin
    while (EdgeDistanceV1 > DistanceV1) and (EdgeDistanceV2 > DistanceV2) do
    begin
       Direction := GetEdgeDirection(CurrentV1,CurrentV2);
-      StepCounter := GetStepCounter(Direction);
-      if (FMap[CurrentV1.X,CurrentV1.Y,CurrentV1.Z] = _Value) or (FMap[CurrentV2.X,CurrentV2.Y,CurrentV2.Z] = _Value) or IsEdgePaintable(CurrentV1,CurrentV2,Direction,StepCounter,_Value) then
+      if (FMap[CurrentV1.X,CurrentV1.Y,CurrentV1.Z] = _Value) or (FMap[CurrentV2.X,CurrentV2.Y,CurrentV2.Z] = _Value) or IsEdgePaintable(CurrentV1,CurrentV2,Direction,_Value) then
       begin
          Result := false;
          exit;
       end;
-      IncreaseVector(CurrentV1,IncCounterE1,StepCounterE1,DirectionE1);
-      IncreaseVector(CurrentV2,IncCounterE2,StepCounterE2,DirectionE2);
+      IncreaseVector(CurrentPos1,DirectionE1);
+      IncreaseVector(CurrentPos2,DirectionE2);
+      CurrentV1 := SetVectori(Round(CurrentPos1.X),Round(CurrentPos1.Y),Round(CurrentPos1.Z));
+      CurrentV2 := SetVectori(Round(CurrentPos2.X),Round(CurrentPos2.Y),Round(CurrentPos2.Z));
       DistanceV1 := GetDistance(_V1,CurrentV1);
       DistanceV2 := GetDistance(_V1,CurrentV2);
    end;
 end;
 
-{
+
 function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
 var
    CentralPoint: TVector3i;
    TestPoint1,TestPoint2: TVector3f;
    Direction: TVector3f;
    MaxNormalValue: single;
+   i : integer;
+   Score1,Score2: integer;
 begin
    CentralPoint.X := (((_V1.X + _V2.X) div 2) + _V3.X) div 2;
    CentralPoint.Y := (((_V1.Y + _V2.Y) div 2) + _V3.Y) div 2;
    CentralPoint.Z := (((_V1.Z + _V2.Z) div 2) + _V3.Z) div 2;
+//   if GetMapSafe(CentralPoint.X,CentralPoint.Y,CentralPoint.Z) <> C_SURFACE then
+//      ShowMessage('V1: (' + IntToStr(_V1.X) + ',' + IntToStr(_V1.Y) + ',' + IntToStr(_V1.Z) + ') V2: (' + IntToStr(_V2.X) + ',' + IntToStr(_V2.Y) + ',' + IntToStr(_V2.Z) + ') V3: (' + IntToStr(_V3.X) + ',' + IntToStr(_V3.Y) + ',' + IntToStr(_V3.Z) + ') Central: (' + IntToStr(CentralPoint.X) + ',' + IntToStr(CentralPoint.Y) + ',' + IntToStr(CentralPoint.Z) + ') em ' + IntToStr(GetMapSafe(CentralPoint.X,CentralPoint.Y,CentralPoint.Z)));
+
    // Now that we have the central point, we need to have a point that will ensure
    // that it will move us to another voxel. So one of the axis must be 1 or -1.
    MaxNormalValue := Max(Max(abs(_Normal.X),abs(_Normal.Y)),abs(_Normal.Z));
@@ -517,7 +513,10 @@ begin
    TestPoint2.X := CentralPoint.X - Direction.X;
    TestPoint2.Y := CentralPoint.Y - Direction.Y;
    TestPoint2.Z := CentralPoint.Z - Direction.Z;
-   while GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z)) = GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z)) do
+   Score1 := GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z));
+   Score2 := GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z));
+   i := 0;
+   while i < 10 do
    begin
       TestPoint1.X := TestPoint1.X + Direction.X;
       TestPoint1.Y := TestPoint1.Y + Direction.Y;
@@ -525,9 +524,12 @@ begin
       TestPoint2.X := TestPoint2.X - Direction.X;
       TestPoint2.Y := TestPoint2.Y - Direction.Y;
       TestPoint2.Z := TestPoint2.Z - Direction.Z;
+      Score1 := Score1 + GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z));
+      Score2 := Score2 + GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z));
+      inc(i);
    end;
 
-   if GetMapSafe(Round(TestPoint1.X),Round(TestPoint1.Y),Round(TestPoint1.Z)) > GetMapSafe(Round(TestPoint2.X),Round(TestPoint2.Y),Round(TestPoint2.Z)) then
+   if Score1 >= Score2 then
    begin
       Result := true;
    end
@@ -536,8 +538,8 @@ begin
       Result := false;
    end;
 end;
-}
 
+{
 function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
 var
    CentralPoint, TestPoint: TVector3i;
@@ -566,28 +568,17 @@ begin
       Result := false;
    end;
 end;
-
+}
 function T3DMap.GetEdgeDirection(_V1, _V2: TVector3i): TVector3f;
 var
-   BaseValue: integer;
+   BaseValue: single;
 begin
    // Get direction
    Result.X := _V2.X - _V1.X;
    Result.Y := _V2.Y - _V1.Y;
    Result.Z := _V2.Z - _V1.Z;
    // Ensure that we'll get a step 1 direction.
-   BaseValue := Min(abs(Trunc(Result.X)),abs(Trunc(Result.Y)));
-   if BaseValue = 0 then
-      BaseValue := Max(abs(Trunc(Result.X)),abs(Trunc(Result.Y)));
-   if BaseValue = 0 then
-   begin
-      BaseValue := abs(Trunc(Result.Z));
-   end
-   else
-   begin
-      if Result.Z <> 0 then
-         BaseValue := Min(abs(Trunc(Result.Z)),BaseValue);
-   end;
+   BaseValue := Max(Max(abs(Result.X),abs(Result.Y)),abs(Result.Z));
    if BaseValue <> 0 then
    begin
       Result.X := Result.X / BaseValue;
@@ -596,63 +587,26 @@ begin
    end;
 end;
 
-function T3DMap.GetStepCounter(var _Direction: TVector3f): TVector3f;
-var
-   MaxStep: single;
-begin
-   Result.X := abs(_Direction.X);
-   Result.Y := abs(_Direction.Y);
-   Result.Z := abs(_Direction.Z);
-   MaxStep := Max(Max(Result.X,Result.Y),Result.Z);
-   if Result.X <> 0 then
-   begin
-      _Direction.X := Trunc(_Direction.X / Result.X);
-      Result.X := MaxStep / Result.X;
-   end;
-   if Result.Y <> 0 then
-   begin
-      _Direction.Y := Trunc(_Direction.Y / Result.Y);
-      Result.Y := MaxStep / Result.Y;
-   end;
-   if Result.Z <> 0 then
-   begin
-      _Direction.Z := Trunc(_Direction.Z / Result.Z);
-      Result.Z := MaxStep / Result.Z;
-   end;
-end;
-
+// no need for square root.
 function T3DMap.GetDistance(_V1, _V2: TVector3i): integer;
 begin
    Result := ((_V1.X - _V2.X) * (_V1.X - _V2.X)) + ((_V1.Y - _V2.Y) * (_V1.Y - _V2.Y)) + ((_V1.Z - _V2.Z) * (_V1.Z - _V2.Z));
 end;
 
-procedure T3DMap.IncreaseVector(var _Vector: TVector3i; var _IncCounter: TVector3f; const _StepCounter, _Direction: TVector3f);
+procedure T3DMap.IncreaseVector(var _Vector: TVector3f; const _Direction: TVector3f);
 begin
-   _IncCounter.X := _IncCounter.X + 1;
-   if _IncCounter.X >= _StepCounter.X then
-   begin
-      _Vector.X := _Vector.X + Trunc(_Direction.X);
-      _IncCounter.X := _IncCounter.X - _StepCounter.X;
-   end;
-   _IncCounter.Y := _IncCounter.Y + 1;
-   if _IncCounter.Y >= _StepCounter.Y then
-   begin
-      _Vector.Y := _Vector.Y + Trunc(_Direction.Y);
-      _IncCounter.Y := _IncCounter.Y - _StepCounter.Y;
-   end;
-   _IncCounter.Z := _IncCounter.Z + 1;
-   if _IncCounter.Z >= _StepCounter.Z then
-   begin
-      _Vector.Z := _Vector.Z + Trunc(_Direction.Z);
-      _IncCounter.Z := _IncCounter.Z - _StepCounter.Z;
-   end;
+   _Vector.X := _Vector.X + _Direction.X;
+   _Vector.Y := _Vector.Y + _Direction.Y;
+   _Vector.Z := _Vector.Z + _Direction.Z;
 end;
 
 
 // Misc
 procedure T3DMap.SetMapSize;
 begin
-   if High(FBaseMap) < 0 then
+   if FBaseMap = nil then
+      SetLength(FMap,FSize.X,FSize.Y,FSize.Z)
+   else if High(FBaseMap) < 0 then
       SetLength(FMap, 0, 0, 0)
    else if High(FBaseMap[0]) < 0 then
       SetLength(FMap, 0, 0, 0)
