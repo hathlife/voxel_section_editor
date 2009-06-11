@@ -35,6 +35,7 @@ type
          function IsEdgePaintable(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer): boolean;
          procedure PaintEdge(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer); overload;
          function GetDistance(_V1, _V2: TVector3i): integer;
+         function AreVertexesEqual(const _V1, _V2: TVector3i): boolean;
          // Misc
          procedure SetMapSize;
       public
@@ -440,7 +441,7 @@ begin
    EdgeDistance := GetDistance(_V1,_V2);
    while EdgeDistance > Distance do
    begin
-      if FMap[CurrentVertex.X,CurrentVertex.Y,CurrentVertex.Z] = _Value then
+      if (FMap[CurrentVertex.X,CurrentVertex.Y,CurrentVertex.Z] = _Value) and (not AreVertexesEqual(CurrentVertex,_V2)) then
       begin
          Result := false;
          exit;
@@ -547,6 +548,11 @@ begin
    begin
       Result := false;
    end;
+end;
+
+function T3DMap.AreVertexesEqual(const _V1, _V2: TVector3i): boolean;
+begin
+   Result := (_V1.X = _V2.X) and (_V1.Y = _V2.Y) and (_V1.Z = _V2.Z);
 end;
 
 {
@@ -686,7 +692,7 @@ begin
       for y := 0 to High(_Source.FMap[x]) do
          for z := 0 to High(_Source.FMap[x,y]) do
          begin
-            if _Source[x,y,z] = _Data then
+            if _Source.FMap[x,y,z] = _Data then
                FMap[x,y,z] := _Data;
          end;
 end;

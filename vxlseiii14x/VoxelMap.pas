@@ -197,7 +197,7 @@ end;
 procedure TVoxelMap.Reset;
 begin
    Clear;
-   Initialize(C_MODE_ALL,0);
+   Initialize(C_MODE_NONE,0);
 end;
 
 // Gets
@@ -382,8 +382,8 @@ begin
    FSection := _Map.FSection;
    SetMapSize;
    for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[0]) to High(FMap[0]) do
-         for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for y := Low(FMap[x]) to High(FMap[x]) do
+         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
          begin
             FMap[x,y,z] := _Map.FMap[x,y,z];
          end;
@@ -395,8 +395,8 @@ var
 begin
    SetLength(Result,High(_Map)+1,High(_Map[0])+1,High(_Map[0,0])+1);
    for x := Low(_Map) to High(_Map) do
-      for y := Low(_Map[0]) to High(_Map[0]) do
-         for z := Low(_Map[0,0]) to High(_Map[0,0]) do
+      for y := Low(_Map[x]) to High(_Map[x]) do
+         for z := Low(_Map[x,y]) to High(_Map[x,y]) do
          begin
             Result[x,y,z] := _Map[x,y,z];
          end;
@@ -477,7 +477,7 @@ begin
          for y := 0 to High(_Source.FMap[x]) do
             for z := 0 to High(_Source.FMap[x,y]) do
             begin
-               if _Source[x,y,z] = _Data then
+               if _Source.FMap[x,y,z] = _Data then
                   FMap[x,y,z] := _Data;
             end;
    end;

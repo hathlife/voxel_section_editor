@@ -8,7 +8,6 @@ uses VoxelMap, BasicDataTypes, VoxelModelizerItem, BasicConstants, ThreeDMap,
 type
    TVoxelModelizer = class
       private
-         FMap : T3DIntGrid;
          FItems : array of TVoxelModelizerItem;
          PVoxelMap : PVoxelMap;
          PSemiSurfacesMap : P3DIntGrid;
@@ -22,7 +21,7 @@ type
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
          destructor Destroy; override;
          // Misc
-         procedure GenerateItemsMap;
+         procedure GenerateItemsMap(var FMap : T3DIntGrid);
          procedure ResetVertexMap;
    end;
 
@@ -30,6 +29,7 @@ implementation
 
 constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
+   FMap : T3DIntGrid;
    x, y, z, i, pos, NumFaces: integer;
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
@@ -47,18 +47,32 @@ begin
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
          for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
             FVertexMap[x,y,z] := -1;
-   ModelMap := T3DMap.Create(High(FVertexMap) + 1,High(FVertexMap) + 1,High(FVertexMap) + 1);
    // Write faces and vertexes for each item of the map.
-   GenerateItemsMap;
+   GenerateItemsMap(FMap);
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
          for z := Low(FMap[x,y]) to High(FMap[x,y]) do
          begin
             if FMap[x,y,z] <> -1 then
             begin
-               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,ModelMap,x,y,z,FNumVertexes,_Palette,_ColourMap);
+               FItems[FMap[x,y,z]] := TVoxelModelizerItem.Create(PVoxelMap^,PSemiSurfacesMap^,FVertexMap,x,y,z,FNumVertexes,_Palette,_ColourMap);
             end;
          end;
+   // Get rid of FMap and create Model Map.
+   x := High(FMap);
+   while x >= 0 do
+   begin
+      y := High(FMap[x]);
+      while y >= 0 do
+      begin
+         SetLength(FMap[x,y],0);
+         dec(y);
+      end;
+      SetLength(FMap[x],0);
+      dec(x);
+   end;
+   SetLength(FMap,0);
+   ModelMap := T3DMap.Create(High(FVertexMap) + 1,High(FVertexMap) + 1,High(FVertexMap) + 1);
    // Confirm the vertex list.
    SetLength(_Vertexes,FNumVertexes);
    SetLength(Vertexes,FNumVertexes); // internal vertex list for future operations
@@ -160,19 +174,6 @@ begin
       FItems[x].Free;
    end;
    SetLength(FItems,0);
-   x := High(FMap);
-   while x >= 0 do
-   begin
-      y := High(FMap[x]);
-      while y >= 0 do
-      begin
-         SetLength(FMap[x,y],0);
-         dec(y);
-      end;
-      SetLength(FMap[x],0);
-      dec(x);
-   end;
-   SetLength(FMap,0);
    x := High(FVertexMap);
    while x >= 0 do
    begin
@@ -189,7 +190,7 @@ begin
    inherited Destroy;
 end;
 
-procedure TVoxelModelizer.GenerateItemsMap;
+procedure TVoxelModelizer.GenerateItemsMap(var FMap : T3DIntGrid);
 var
    x, y, z: integer;
    NumItems : integer;

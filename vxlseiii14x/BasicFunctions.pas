@@ -16,6 +16,7 @@ function GetPow2Size(Size : Cardinal) : Cardinal;
 function SetVector4f(x, y, z, w : single) : TVector4f;
 Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
 Function TColorToTVector3f(Color : TColor) : TVector3f;
+function Subtract3i(_V1,_V2: TVector3i): TVector3i;
 
 implementation
 
@@ -117,5 +118,11 @@ begin
    Result.Z := GetBValue(Color) / 255;
 end;
 
+function Subtract3i(_V1,_V2: TVector3i): TVector3i;
+begin
+   Result.X := _V1.X - _V2.X;
+   Result.Y := _V1.Y - _V2.Y;
+   Result.Z := _V1.Z - _V2.Z;
+end;
 
 end.

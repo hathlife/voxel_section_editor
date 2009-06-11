@@ -24,8 +24,8 @@ type
          function FaceHasVertexes(const _FilledVerts: TFilledVerts; _face: integer): boolean;
          function FaceHasEdges(const _FilledEdges: TFilledEdges; _face: integer): boolean;
          // Face construction procedures
-         procedure MakeFacesFromVertexes(const _VertexList: CVertexQueue; var _EdgeMap: T3DMap);
-         procedure MakeFacesFromEdges(const _VertexList: CVertexQueue; var _EdgeMap: T3DMap);
+         procedure MakeFacesFromVertexes(const _VertexList: CVertexQueue; _x,_y,_z: integer);
+         procedure MakeFacesFromEdges(const _VertexList: CVertexQueue);
          procedure MakeACube(const _MyPosition: TVector3i; var _VertexMap : T3DIntGrid; var _NumVertices: integer);
          // Adds
          procedure AddVertex( var _VertexMap : T3DIntGrid; _x,_y,_z: integer; var _NumVertices: integer; var _VertexList: CVertexQueue);
@@ -36,14 +36,14 @@ type
          Faces: CFaceQueue;
 
          // Constructors and Destructors
-         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
+         constructor Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
          destructor Destroy; override;
    end;
    PVoxelModelizerItem = ^TVoxelModelizerItem;
 
 implementation
 
-constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; var _EdgeMap: T3DMap; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
+constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
    v1,v2,e1,e2,p,i : integer;
    Cube : TNormals;
@@ -214,21 +214,19 @@ begin
    // Here we start all procedures to build the faces.
    // First we build the faces generated from vertexes.
    if VertexGeneratedList.GetNumItems > 0 then
-      MakeFacesFromVertexes(VertexGeneratedList,_EdgeMap);
+      MakeFacesFromVertexes(VertexGeneratedList,v0x,v0y,v0z);
 
    // Then we build the faces generated from edges.
    if EdgeGeneratedList.GetNumItems > 0 then
-      MakeFacesFromEdges(EdgeGeneratedList,_EdgeMap);
+      MakeFacesFromEdges(EdgeGeneratedList);
 
    // Finally we build the faces generated from faces.
    if FaceGeneratedList.GetNumItems > 0 then
-      MakeFacesFromVertexes(FaceGeneratedList,_EdgeMap);
+      MakeFacesFromVertexes(FaceGeneratedList,v0x,v0y,v0z);
 
    // If vertexes, edges and faces = 0. Do the lonely cube.
    if (Faces.IsEmpty) and (MyClassification = C_SURFACE) then
-      MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes)
-   else if Faces.IsEmpty then
-      ShowMessage('Semi-Surface Bug: ' + IntToStr(MySurface) + ' and Classification ' + FloatToStr(MyClassification));
+      MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
 
    VertexGeneratedList.Free;
    EdgeGeneratedList.Free;
@@ -431,7 +429,7 @@ end;
 // - 2) Order edges by distances (32, 64, 96 and 128)
 // - 3) Draw each edge in the edge in the hashing and check for interceptions.
 // - 4) Combine linked vertexes from the surviving edges to build the faces.
-procedure TVoxelModelizerItem.MakeFacesFromVertexes(const _VertexList: CVertexQueue; var _EdgeMap: T3DMap);
+procedure TVoxelModelizerItem.MakeFacesFromVertexes(const _VertexList: CVertexQueue; _x,_y,_z: integer);
 const
    MAX_DIST = 7;
 var
@@ -441,6 +439,8 @@ var
    i, j, k : integer;
    VertexList: array of PVertexData;
    MyVertex: PVertexData;
+   EdgeMap : T3DMap;
+   FaceMap : T3DMap;
 begin
    // Prepare variables
    for i := 0 to MAX_DIST do
@@ -470,6 +470,8 @@ begin
 
       // Prepare distance list.
       SetLength(DistanceMatrix,NumVerts,NumVerts);
+      EdgeMap := T3DMap.Create(C_VP_HIGH+1,C_VP_HIGH+1,C_VP_HIGH+1);
+      FaceMap := T3DMap.Create(NumVerts,NumVerts,NumVerts);
       // Build the distance matrix.
       i := 0;
       while i < NumVerts do
@@ -511,7 +513,7 @@ begin
             QueueDist[i].GoToFirstElement;
             while QueueDist[i].GetPosition(j,k) do
             begin
-               if not _EdgeMap.TryPaintingEdge(_VertexList.GetVector3i(VertexList[j]),_VertexList.GetVector3i(VertexList[k]),1) then
+               if not EdgeMap.TryPaintingEdge(Subtract3i(_VertexList.GetVector3i(VertexList[j]),SetVectori(_x,_y,_z)),Subtract3i(_VertexList.GetVector3i(VertexList[k]),SetVectori(_x,_y,_z)),1) then
                begin
                   DistanceMatrix[j,k] := 0;
                   DistanceMatrix[k,j] := 0;
@@ -530,7 +532,7 @@ begin
                k := 0;
                while k < NumVerts do
                begin
-                  if (DistanceMatrix[k,i] <> 0) and (DistanceMatrix[j,k] <> 0) then
+                  if (DistanceMatrix[k,i] <> 0) and (DistanceMatrix[j,k] <> 0) and (FaceMap[i,j,k] = 0) then
                   begin
                      // Add i, j, k to faces.
                      Faces.Add(VertexList[i]^.Position,VertexList[j]^.Position,VertexList[k]^.Position);
@@ -538,6 +540,12 @@ begin
                      DistanceMatrix[i,j] := 0;
                      DistanceMatrix[j,k] := 0;
                      DistanceMatrix[k,i] := 0;
+                     FaceMap.Map[i,j,k] := 1;
+                     FaceMap.Map[i,k,j] := 1;
+                     FaceMap.Map[j,i,k] := 1;
+                     FaceMap.Map[j,k,i] := 1;
+                     FaceMap.Map[k,i,j] := 1;
+                     FaceMap.Map[k,j,i] := 1;
                      k := NumVerts;
                   end
                   else
@@ -546,6 +554,8 @@ begin
             end;
          end;
       end;
+      EdgeMap.Free;
+      FaceMap.Free;
    end;
    // Free memory
    for i := 0 to MAX_DIST do
@@ -563,7 +573,7 @@ begin
 end;
 
 // Build a set of faces using the given order.
-procedure TVoxelModelizerItem.MakeFacesFromEdges(const _VertexList: CVertexQueue; var _EdgeMap: T3DMap);
+procedure TVoxelModelizerItem.MakeFacesFromEdges(const _VertexList: CVertexQueue);
 var
    Maxj: integer;
    j: integer;
@@ -585,13 +595,6 @@ begin
       Faces.Add(VertexList[j]^.Position,VertexList[j+2]^.Position,VertexList[j+1]^.Position);
       // Face 2: V1, V4, V3
       Faces.Add(VertexList[j]^.Position,VertexList[j+3]^.Position,VertexList[j+2]^.Position);
-
-      // Draw them in the edge map.
-      _EdgeMap.PaintEdge(_VertexList.GetVector3i(VertexList[j]),_VertexList.GetVector3i(VertexList[j+1]),1);
-      _EdgeMap.PaintEdge(_VertexList.GetVector3i(VertexList[j+1]),_VertexList.GetVector3i(VertexList[j+2]),1);
-      _EdgeMap.PaintEdge(_VertexList.GetVector3i(VertexList[j+2]),_VertexList.GetVector3i(VertexList[j+3]),1);
-      _EdgeMap.PaintEdge(_VertexList.GetVector3i(VertexList[j+3]),_VertexList.GetVector3i(VertexList[j]),1);
-      _EdgeMap.PaintEdge(_VertexList.GetVector3i(VertexList[j]),_VertexList.GetVector3i(VertexList[j+2]),1);
 
       // Go to next two faces.
       inc(j,4);
