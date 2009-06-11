@@ -1,3 +1,4 @@
+{$SetPEFlags $0020}
 
 (***********************************************************************************************************************)
 (* defines that are defined here will usable in all modules, as these all include this file!                           *)
