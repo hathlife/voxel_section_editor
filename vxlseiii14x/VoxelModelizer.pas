@@ -40,8 +40,8 @@ begin
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
    // Prepare other map types.
-   PVoxelMap^.Bias := 0;
-   RemoveMapBias(PSemiSurfacesMap^);
+//   PVoxelMap^.Bias := 0;
+//   RemoveMapBias(PSemiSurfacesMap^);
    SetLength(FVertexMap,((PVoxelMap^.GetMaxX + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxY + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxZ + 1)*C_VP_HIGH)+1);
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
@@ -60,7 +60,6 @@ begin
             end;
          end;
    // Confirm the vertex list.
-   SetLength(_Vertexes,0);
    SetLength(_Vertexes,FNumVertexes);
    SetLength(Vertexes,FNumVertexes); // internal vertex list for future operations
    for x := Low(FVertexMap) to High(FVertexMap) do
@@ -106,7 +105,6 @@ begin
       end;
    end;
    // Generate the final faces array.
-   SetLength(_Faces,0);
    SetLength(_Faces,NumFaces*3);
    SetLength(_Colours,NumFaces);
    SetLength(_Normals,NumFaces);
@@ -255,7 +253,7 @@ var
    x, y, z: Integer;
 begin
    Map := CopyMap(_Map);
-   SetLength(_Map, High(_Map)-1, High(_Map[0])-1, High(_Map)-1);
+   SetLength(_Map, High(Map)-1, High(Map[0])-1, High(Map[0,0])-1);
    for x := Low(_Map) to High(_Map) do
       for y := Low(_Map[x]) to High(_Map[x]) do
          for z := Low(_Map[x,y]) to High(_Map[x,y]) do

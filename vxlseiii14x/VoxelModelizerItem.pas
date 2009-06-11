@@ -225,8 +225,10 @@ begin
       MakeFacesFromVertexes(FaceGeneratedList,_EdgeMap);
 
    // If vertexes, edges and faces = 0. Do the lonely cube.
-   if Faces.IsEmpty then
+   if (Faces.IsEmpty) and (MyClassification = C_SURFACE) then
       MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
+//   else if Faces.IsEmpty then
+//      ShowMessage('Semi-Surface Bug: ' + IntToStr(MySurface));
 
    VertexGeneratedList.Free;
    EdgeGeneratedList.Free;

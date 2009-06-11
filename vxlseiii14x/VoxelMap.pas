@@ -419,6 +419,7 @@ var
    x,y,z : integer;
 begin
    List := C3DPointList.Create;
+   List.UseSmartMemoryManagement(true);
    List.Add(_Point.X,_Point.Y,_Point.Z);
    FMap[_Point.X,_Point.Y,_Point.Z] := _value;
    // It will fill the map while there are elements in the list.
@@ -461,7 +462,6 @@ begin
             FMap[x,y,z+1] := _value;
             List.Add(x,y,z+1);
          end;
-      List.GoToNextElement;
    end;
    List.Free;
 end;
@@ -809,7 +809,7 @@ begin
                            CubeNormal := CubeNeighboors[SSMapVertsList[c]];
                            if FMap[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] < C_SURFACE then
                            begin
-                              _SemiSurfaces[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] := SSMapResultsList[c];
+                              _SemiSurfaces[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] := _SemiSurfaces[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] or SSMapResultsList[c];
                               FMap[x + Round(CubeNormal.X),y + Round(CubeNormal.Y),z + Round(CubeNormal.Z)] := C_SEMI_SURFACE;
                            end;
                            inc(c);

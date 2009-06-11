@@ -25,7 +25,7 @@ type
          // Delete
          procedure Clear;
          // Sets
-         procedure UseSmartMemoryManagement;
+         procedure UseSmartMemoryManagement(_value: boolean);
          // Gets
          function GetPositionTraditional (var x,y,z : integer): boolean;
          function GetPositionWithDeletion (var x,y,z : integer): boolean;
@@ -121,9 +121,12 @@ begin
 end;
 
 // Sets
-procedure C3DPointList.UseSmartMemoryManagement;
+procedure C3DPointList.UseSmartMemoryManagement(_value: boolean);
 begin
-   GetPosition := GetPositionWithDeletion;
+   if _Value then
+      GetPosition := GetPositionWithDeletion
+   else
+      GetPosition := GetPositionTraditional;
 end;
 
 
