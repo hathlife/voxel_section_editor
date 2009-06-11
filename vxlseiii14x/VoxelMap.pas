@@ -301,6 +301,16 @@ begin
                FMap[x+Offset,y+Offset,z+Offset] := Map[x,y,z];
             end;
    end;
+   // Free memory
+   for x := High(Map) downto Low(Map) do
+   begin
+      for y := High(Map[x]) downto Low(Map[x]) do
+      begin
+         SetLength(Map[x,y],0);
+      end;
+      SetLength(Map[x],0);
+   end;
+   SetLength(Map,0);
 end;
 
 // Generates

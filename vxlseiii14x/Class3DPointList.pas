@@ -9,11 +9,13 @@ type
       Next : P3DPosition;
    end;
 
+   TGetPositionFunction = function (var x,y,z : integer): boolean of object;
    C3DPointList = class
       private
          Start,Last,Active : P3DPosition;
          procedure Reset;
       public
+         GetPosition: TGetPositionFunction;
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
@@ -22,8 +24,11 @@ type
          procedure Delete;
          // Delete
          procedure Clear;
+         // Sets
+         procedure UseSmartMemoryManagement;
          // Gets
-         function GetPosition (var x,y,z : integer): boolean;
+         function GetPositionTraditional (var x,y,z : integer): boolean;
+         function GetPositionWithDeletion (var x,y,z : integer): boolean;
          function GetX: integer;
          function GetY: integer;
          function GetZ: integer;
@@ -35,6 +40,7 @@ implementation
 
 constructor C3DPointList.Create;
 begin
+   GetPosition := GetPositionTraditional;
    Reset;
 end;
 
@@ -114,14 +120,40 @@ begin
    end;
 end;
 
+// Sets
+procedure C3DPointList.UseSmartMemoryManagement;
+begin
+   GetPosition := GetPositionWithDeletion;
+end;
+
+
 // Gets
-function C3DPointList.GetPosition (var x,y,z : integer): boolean;
+function C3DPointList.GetPositionTraditional (var x,y,z : integer): boolean;
 begin
    if Active <> nil then
    begin
       x := Active^.x;
       y := Active^.y;
       z := Active^.z;
+      Result := true;
+   end
+   else
+   begin
+      Result := false;
+   end;
+end;
+
+function C3DPointList.GetPositionWithDeletion (var x,y,z : integer): boolean;
+begin
+   if Start <> nil then
+   begin
+      x := Start^.x;
+      y := Start^.y;
+      z := Start^.z;
+      Active := Start;
+      Start := Start^.Next;
+      Dispose(Active);
+      Active := Start;
       Result := true;
    end
    else

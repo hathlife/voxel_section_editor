@@ -15,7 +15,7 @@ type
       private
          // Variables
          FMap : T3DIntGrid;
-         FBaseMap : T3DIntGrid;
+         FBaseMap : P3DIntGrid;
          FSize : TVector3i;
          // Constructors and Destructors
          procedure Clear;
@@ -40,7 +40,7 @@ type
       public
          // Constructors and Destructors
          constructor Create(_x, _y, _z: integer); overload;
-         constructor Create(const _BaseMap : T3DIntGrid; _Mode: integer; _Value : integer); overload;
+         constructor Create(const _BaseMap : P3DIntGrid; _Mode: integer; _Value : integer); overload;
          constructor Create(const _Map : T3DMap); overload;
          procedure Reset;
          destructor Destroy; override;
@@ -90,7 +90,7 @@ begin
    Initialize(C_MODE_NONE);
 end;
 
-constructor T3DMap.Create(const _BaseMap : T3DIntGrid; _Mode: integer; _Value: integer);
+constructor T3DMap.Create(const _BaseMap : P3DIntGrid; _Mode: integer; _Value: integer);
 begin
    FBaseMap := _BaseMap;
    Initialize(_Mode,_Value);
@@ -195,7 +195,7 @@ end;
 function T3DMap.GetBaseMap(_x: Integer; _y: Integer; _z: Integer): integer;
 begin
    try
-      Result := FBaseMap[_x,_y,_z];
+      Result := FBaseMap^[_x,_y,_z];
    except
       Result := -1;
    end;
@@ -205,7 +205,7 @@ function T3DMap.GetBaseMapSafe(_x: Integer; _y: Integer; _z: Integer): integer;
 begin
    if IsBaseMapPointOK(_x,_y,_z) then
    begin
-      Result := FBaseMap[_x,_y,_z];
+      Result := FBaseMap^[_x,_y,_z];
    end
    else
    begin
@@ -280,7 +280,7 @@ procedure T3DMap.GenerateSelfSurfaceMap;
 var
    FilledMap : T3DMap;
 begin
-   FilledMap := T3DMap.Create(FMap,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,1));
+   FilledMap := T3DMap.Create(@FMap,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,1));
    FilledMap.FloodFill(SetVectorI(0,0,0),0);
    MergeMapData(FilledMap,1);
    FilledMap.Free;
@@ -616,12 +616,12 @@ procedure T3DMap.SetMapSize;
 begin
    if FBaseMap = nil then
       SetLength(FMap,FSize.X,FSize.Y,FSize.Z)
-   else if High(FBaseMap) < 0 then
+   else if High(FBaseMap^) < 0 then
       SetLength(FMap, 0, 0, 0)
-   else if High(FBaseMap[0]) < 0 then
+   else if High(FBaseMap^[0]) < 0 then
       SetLength(FMap, 0, 0, 0)
    else
-      SetLength(FMap, High(FBaseMap)+1, High(FBaseMap[0])+1, High(FBaseMap[0,0]));
+      SetLength(FMap, High(FBaseMap^)+1, High(FBaseMap^[0])+1, High(FBaseMap^[0,0]));
 end;
 
 procedure T3DMap.FloodFill(const _Point : TVector3i; _value : integer);
@@ -630,6 +630,7 @@ var
    x,y,z : integer;
 begin
    List := C3DPointList.Create;
+   List.UseSmartMemoryManagement;
    List.Add(_Point.X,_Point.Y,_Point.Z);
    FMap[_Point.X,_Point.Y,_Point.Z] := _value;
    // It will fill the map while there are elements in the list.
@@ -672,7 +673,7 @@ begin
             FMap[x,y,z+1] := _value;
             List.Add(x,y,z+1);
          end;
-      List.GoToNextElement;
+//      List.GoToNextElement;
    end;
    List.Free;
 end;
@@ -928,9 +929,9 @@ end;
 function T3DMap.IsBaseMapPointOK (const x,y,z: integer) : boolean;
 begin
    result := false;
-   if (x < 0) or (x >= High(FBaseMap)) then exit;
-   if (y < 0) or (y >= High(FBaseMap[0])) then exit;
-   if (z < 0) or (z >= High(FBaseMap[0,0])) then exit;
+   if (x < 0) or (x >= High(FBaseMap^)) then exit;
+   if (y < 0) or (y >= High(FBaseMap^[0])) then exit;
+   if (z < 0) or (z >= High(FBaseMap^[0,0])) then exit;
    result := true;
 end;
 

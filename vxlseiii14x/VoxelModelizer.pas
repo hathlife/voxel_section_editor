@@ -15,6 +15,8 @@ type
          FNumVertexes : integer;
          FVertexMap: T3DIntGrid;
          function GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
+         function CopyMap(const _Map: T3DIntGrid): T3DIntGrid;
+         procedure RemoveMapBias(var _Map: T3DIntGrid);
       public
          // Constructors and Destructors
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
@@ -38,6 +40,8 @@ begin
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
    // Prepare other map types.
+   PVoxelMap^.Bias := 0;
+   RemoveMapBias(PSemiSurfacesMap^);
    SetLength(FVertexMap,((PVoxelMap^.GetMaxX + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxY + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxZ + 1)*C_VP_HIGH)+1);
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
@@ -56,6 +60,7 @@ begin
             end;
          end;
    // Confirm the vertex list.
+   SetLength(_Vertexes,0);
    SetLength(_Vertexes,FNumVertexes);
    SetLength(Vertexes,FNumVertexes); // internal vertex list for future operations
    for x := Low(FVertexMap) to High(FVertexMap) do
@@ -101,6 +106,7 @@ begin
       end;
    end;
    // Generate the final faces array.
+   SetLength(_Faces,0);
    SetLength(_Faces,NumFaces*3);
    SetLength(_Colours,NumFaces);
    SetLength(_Normals,NumFaces);
@@ -190,7 +196,6 @@ var
    x, y, z: integer;
    NumItems : integer;
 begin
-   PVoxelMap^.Bias := 0;
    NumItems := 0;
    // Find out the regions where we will have meshes.
    SetLength(FMap,PVoxelMap^.GetMaxX+1,PVoxelMap^.GetMaxY+1,PVoxelMap^.GetMaxZ+1);
@@ -230,5 +235,44 @@ begin
    Result.Y := ((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X));
    Result.Z := ((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y));
 end;
+
+function TVoxelModelizer.CopyMap(const _Map: T3DIntGrid): T3DIntGrid;
+var
+   x, y, z: integer;
+begin
+   SetLength(Result,High(_Map)+1,High(_Map[0])+1,High(_Map[0,0])+1);
+   for x := Low(_Map) to High(_Map) do
+      for y := Low(_Map[0]) to High(_Map[0]) do
+         for z := Low(_Map[0,0]) to High(_Map[0,0]) do
+         begin
+            Result[x,y,z] := _Map[x,y,z];
+         end;
+end;
+
+procedure TVoxelModelizer.RemoveMapBias(var _Map: T3DIntGrid);
+var
+   Map : T3DIntGrid;
+   x, y, z: Integer;
+begin
+   Map := CopyMap(_Map);
+   SetLength(_Map, High(_Map)-1, High(_Map[0])-1, High(_Map)-1);
+   for x := Low(_Map) to High(_Map) do
+      for y := Low(_Map[x]) to High(_Map[x]) do
+         for z := Low(_Map[x,y]) to High(_Map[x,y]) do
+         begin
+            _Map[x,y,z] := Map[x+1,y+1,z+1];
+         end;
+   // Free memory
+   for x := High(Map) downto Low(Map) do
+   begin
+      for y := High(Map[x]) downto Low(Map[x]) do
+      begin
+         SetLength(Map[x,y],0);
+      end;
+      SetLength(Map[x],0);
+   end;
+   SetLength(Map,0);
+end;
+
 
 end.
