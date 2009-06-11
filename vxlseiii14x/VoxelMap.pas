@@ -900,9 +900,9 @@ end;
 function TVoxelMap.IsPointOK (const x,y,z: integer) : boolean;
 begin
    result := false;
-   if (x < 0) or (x >= High(FMap)) then exit;
-   if (y < 0) or (y >= High(FMap[0])) then exit;
-   if (z < 0) or (z >= High(FMap[0,0])) then exit;
+   if (x < 0) or (x > High(FMap)) then exit;
+   if (y < 0) or (y > High(FMap[0])) then exit;
+   if (z < 0) or (z > High(FMap[0,0])) then exit;
    result := true;
 end;
 

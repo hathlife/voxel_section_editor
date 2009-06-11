@@ -226,9 +226,9 @@ begin
 
    // If vertexes, edges and faces = 0. Do the lonely cube.
    if (Faces.IsEmpty) and (MyClassification = C_SURFACE) then
-      MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes);
-//   else if Faces.IsEmpty then
-//      ShowMessage('Semi-Surface Bug: ' + IntToStr(MySurface));
+      MakeACube(SetVectori(v0x,v0y,v0z),_VertexMap,_TotalNumVertexes)
+   else if Faces.IsEmpty then
+      ShowMessage('Semi-Surface Bug: ' + IntToStr(MySurface) + ' and Classification ' + FloatToStr(MyClassification));
 
    VertexGeneratedList.Free;
    EdgeGeneratedList.Free;
@@ -281,7 +281,7 @@ begin
          begin
             if VoxelClassification = C_SEMI_SURFACE then
             begin
-               if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSVertexesCheck[i] <> 0  then
+               if (_SurfaceMap[Point.X,Point.Y,Point.Z] and SSVertexesCheck[i]) <> 0  then
                begin // if the semi-surface exists, then it is still in.
                   _FilledVerts[v] := true;
                   inc(i);
@@ -336,7 +336,7 @@ begin
          begin
             if VoxelClassification = C_SEMI_SURFACE then
             begin
-               if _SurfaceMap[Point.X,Point.Y,Point.Z] and SSEdgesCheck[i] <> 0  then
+               if (_SurfaceMap[Point.X,Point.Y,Point.Z] and SSEdgesCheck[i]) <> 0  then
                begin
                   _FilledEdges[e] := true;
                   inc(i);
