@@ -84,9 +84,9 @@ begin
          begin
             if FVertexMap[x,y,z] <> -1 then
             begin
-               _Vertexes[FVertexMap[x,y,z]].X := x / C_VP_HIGH;
-               _Vertexes[FVertexMap[x,y,z]].Y := y / C_VP_HIGH;
-               _Vertexes[FVertexMap[x,y,z]].Z := z / C_VP_HIGH;
+               _Vertexes[FVertexMap[x,y,z]].X := (x-1) / C_VP_HIGH;
+               _Vertexes[FVertexMap[x,y,z]].Y := (y-1) / C_VP_HIGH;
+               _Vertexes[FVertexMap[x,y,z]].Z := (z-1) / C_VP_HIGH;
                Vertexes[FVertexMap[x,y,z]].X := x;
                Vertexes[FVertexMap[x,y,z]].Y := y;
                Vertexes[FVertexMap[x,y,z]].Z := z;

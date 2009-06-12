@@ -52,6 +52,7 @@ var
    VisitedEdgesVertex: array[0..11] of boolean;
    // Edge generation caching
    VisitedEdges: array[0..11] of boolean;
+   AddedEdgeVertexes: array[0..7] of boolean;
    // Face generation caching
    ExternalFaceEdges: array[0..11] of boolean;
    MarkedFaceVertexes: array[0..7] of boolean;
@@ -124,7 +125,7 @@ begin
                if FilledVerts[FaceVerts[v1]] xor FilledVerts[FaceVerts[v2]] then
                begin
                   // Add a vertex in the middle of the edge.
-                  AddVertex(_VertexMap,v0x + VertexPoints[i,p,1,0], v0y + VertexPoints[i,p,1,1], v0z + VertexPoints[i,p,1,2],_TotalNumVertexes,VertexGeneratedList);
+                  AddVertex(_VertexMap,v0x + FaceBasedVertexPoints[i,p,1,0], v0y + FaceBasedVertexPoints[i,p,1,1], v0z + FaceBasedVertexPoints[i,p,1,2],_TotalNumVertexes,VertexGeneratedList);
                end;
             end;
          end;
@@ -139,9 +140,16 @@ begin
             for p := 0 to 3 do // for each edge from the face i
             begin
                v1 := p + (i * 4); // edge index on FaceEdge
+               v2 := ((p + 1) mod 4) + (i * 4); // vertice 2 index
                if (FilledEdges[FaceEdges[v1]] and (not VisitedEdges[FaceEdges[v1]])) then
                begin
                   VisitedEdges[FaceEdges[v1]] := true;
+                  // Add both edge vertexes, if needed.
+//                  if not AddedEdgeVertexes[FaceVerts[v1]] then
+//                     AddVertex(_VertexMap,v0x + VertexPoints[v1,0], v0y + VertexPoints[v1,1], v0z + VertexPoints[v1,2],_TotalNumVertexes,EdgeGeneratedList);
+//                  if not AddedEdgeVertexes[FaceVerts[v2]] then
+//                     AddVertex(_VertexMap,v0x + VertexPoints[v2,0], v0y + VertexPoints[v2,1], v0z + VertexPoints[v2,2],_TotalNumVertexes,EdgeGeneratedList);
+
                   // Create vertexes in the middle of the 4 neighboor edges.
                   e1 := FaceEdges[v1] * 4;
                   e2 := e1 + 4;
@@ -178,7 +186,7 @@ begin
                   begin
                      if not MarkedFaceVertexes[FaceVerts[e1]] then
                      begin
-                        AddVertex(_VertexMap,v0x + VertexPoints[i,p,0,0], v0y + VertexPoints[i,p,0,1], v0z + VertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedList);
+                        AddVertex(_VertexMap,v0x + FaceBasedVertexPoints[i,p,0,0], v0y + FaceBasedVertexPoints[i,p,0,1], v0z + FaceBasedVertexPoints[i,p,0,2],_TotalNumVertexes,FaceGeneratedList);
                         ExternalFaceEdges[FaceEdges[e1]] := true;
                         MarkedFaceVertexes[FaceVerts[e1]] := true;
                      end;
@@ -218,8 +226,8 @@ begin
 
    // Then we build the faces generated from edges.
    if EdgeGeneratedList.GetNumItems > 0 then
+//      MakeFacesFromVertexes(EdgeGeneratedList,v0x,v0y,v0z);
       MakeFacesFromEdges(EdgeGeneratedList);
-
    // Finally we build the faces generated from faces.
    if FaceGeneratedList.GetNumItems > 0 then
       MakeFacesFromVertexes(FaceGeneratedList,v0x,v0y,v0z);

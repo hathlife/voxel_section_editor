@@ -123,7 +123,7 @@ const
    EdgeRequirements: array[0..11] of integer = (C_SF_TOP_LEFT_LINE, C_SF_TOP_RIGHT_LINE,
    C_SF_TOP_BACK_LINE, C_SF_TOP_FRONT_LINE, C_SF_BOTTOM_LEFT_LINE, C_SF_BOTTOM_RIGHT_LINE,
    C_SF_BOTTOM_BACK_LINE, C_SF_BOTTOM_FRONT_LINE, C_SF_LEFT_FRONT_LINE, C_SF_RIGHT_FRONT_LINE,
-   C_SF_LEFT_BACK_LINE, C_SF_RIGHT_FRONT_LINE);
+   C_SF_LEFT_BACK_LINE, C_SF_RIGHT_BACK_LINE);
 
    EdgeCheck: array[0..35] of byte = (0, 1, 11, 17, 18, 11, 9, 10, 11, 13, 12, 11,
    0, 2, 15, 17, 19, 15, 9, 16, 15, 13, 14, 15, 0, 3, 13, 17, 20, 13, 0, 4, 9, 17,
@@ -148,7 +148,11 @@ const
    FaceVerts: array [0..23] of byte = (2,6,4,0,1,5,7,3,0,4,5,1,3,7,6,2,7,5,4,6,1,3,2,0);
    FaceEdges: array[0..23] of byte = (8,4,10,0,11,5,9,1,10,6,11,2,9,7,8,3,5,6,4,7,1,3,0,2);
 
-   VertexPoints: array[0..5,0..3,0..1,0..2] of byte = ((((0,C_VP_HIGH,C_VP_HIGH),
+   VertexPoints: array[0..7,0..2] of byte = ((0,0,C_VP_HIGH),(C_VP_HIGH,0,C_VP_HIGH),
+   (0,C_VP_HIGH,C_VP_HIGH), (C_VP_HIGH,C_VP_HIGH,C_VP_HIGH), (0,0,0), (C_VP_HIGH,0,0),
+   (0,C_VP_HIGH,0), (C_VP_HIGH,C_VP_HIGH,0));
+
+   FaceBasedVertexPoints: array[0..5,0..3,0..1,0..2] of byte = ((((0,C_VP_HIGH,C_VP_HIGH),
    (0,C_VP_HIGH,C_VP_MID)), ((0,C_VP_HIGH,0), (0,C_VP_MID,0)),((0,0,0), (0,0,C_VP_MID)),
    ((0,0,C_VP_HIGH), (0,C_VP_MID,C_VP_HIGH))),(((C_VP_HIGH,0,C_VP_HIGH),
    (C_VP_HIGH,0,C_VP_MID)), ((C_VP_HIGH,0,0), (C_VP_HIGH,C_VP_MID,0)), ((C_VP_HIGH,C_VP_HIGH,0),
