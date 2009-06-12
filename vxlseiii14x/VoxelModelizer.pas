@@ -12,7 +12,6 @@ type
          PVoxelMap : PVoxelMap;
          PSemiSurfacesMap : P3DIntGrid;
          FNumVertexes : integer;
-         FVertexMap: T3DIntGrid;
          function GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
          function CopyMap(const _Map: T3DIntGrid): T3DIntGrid;
          procedure RemoveMapBias(var _Map: T3DIntGrid);
@@ -22,7 +21,6 @@ type
          destructor Destroy; override;
          // Misc
          procedure GenerateItemsMap(var FMap : T3DIntGrid);
-         procedure ResetVertexMap;
    end;
 
 implementation
@@ -31,6 +29,8 @@ constructor TVoxelModelizer.Create(const _VoxelMap : TVoxelMap; const _SemiSurfa
 var
    FMap : T3DIntGrid;
    x, y, z, i, pos, NumFaces: integer;
+   Size : TVector3i;
+   FVertexMap: T3DIntGrid;
    ModelMap: T3DMap;
    Vertexes: TAVector3i;
    Normal : TVector3f;
@@ -39,16 +39,19 @@ begin
    // Prepare basic variables.
    PVoxelMap := @_VoxelMap;
    PSemiSurfacesMap := @_SemiSurfaces;
+   // Store VertexMap size for ModelMap.
+   Size.X := ((PVoxelMap^.GetMaxX + 1)*C_VP_HIGH)+1;
+   Size.Y := ((PVoxelMap^.GetMaxY + 1)*C_VP_HIGH)+1;
+   Size.Z := ((PVoxelMap^.GetMaxZ + 1)*C_VP_HIGH)+1;
    // Prepare other map types.
-//   PVoxelMap^.Bias := 0;
-//   RemoveMapBias(PSemiSurfacesMap^);
-   SetLength(FVertexMap,((PVoxelMap^.GetMaxX + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxY + 1)*C_VP_HIGH)+1,((PVoxelMap^.GetMaxZ + 1)*C_VP_HIGH)+1);
+   SetLength(FVertexMap,Size.X,Size.Y,Size.Z);
    for x := Low(FVertexMap) to High(FVertexMap) do
       for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
          for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
             FVertexMap[x,y,z] := -1;
    // Write faces and vertexes for each item of the map.
    GenerateItemsMap(FMap);
+   FNumVertexes := 0;
    for x := Low(FMap) to High(FMap) do
       for y := Low(FMap[x]) to High(FMap[x]) do
          for z := Low(FMap[x,y]) to High(FMap[x,y]) do
@@ -72,7 +75,6 @@ begin
       dec(x);
    end;
    SetLength(FMap,0);
-   ModelMap := T3DMap.Create(High(FVertexMap) + 1,High(FVertexMap) + 1,High(FVertexMap) + 1);
    // Confirm the vertex list.
    SetLength(_Vertexes,FNumVertexes);
    SetLength(Vertexes,FNumVertexes); // internal vertex list for future operations
@@ -90,7 +92,22 @@ begin
                Vertexes[FVertexMap[x,y,z]].Z := z;
             end;
          end;
+   // Wipe the VertexMap.
+   x := High(FVertexMap);
+   while x >= 0 do
+   begin
+      y := High(FVertexMap[x]);
+      while y >= 0 do
+      begin
+         SetLength(FVertexMap[x,y],0);
+         dec(y);
+      end;
+      SetLength(FVertexMap[x],0);
+      dec(x);
+   end;
+   SetLength(FVertexMap,0);
    // Paint the faces in the 3D Map.
+   ModelMap := T3DMap.Create(Size.X,Size.Y,Size.Z);
    for i := Low(FItems) to High(FItems) do
    begin
       Face := FItems[i].Faces.GetFirstElement;
@@ -174,19 +191,6 @@ begin
       FItems[x].Free;
    end;
    SetLength(FItems,0);
-   x := High(FVertexMap);
-   while x >= 0 do
-   begin
-      y := High(FVertexMap[x]);
-      while y >= 0 do
-      begin
-         SetLength(FVertexMap[x,y],0);
-         dec(y);
-      end;
-      SetLength(FVertexMap[x],0);
-      dec(x);
-   end;
-   SetLength(FVertexMap,0);
    inherited Destroy;
 end;
 
@@ -213,19 +217,6 @@ begin
             end;
          end;
    SetLength(FItems,NumItems);
-end;
-
-procedure TVoxelModelizer.ResetVertexMap;
-var
-   x, y, z: integer;
-begin
-   FNumVertexes := 0;
-   for x := Low(FVertexMap) to High(FVertexMap) do
-      for y := Low(FVertexMap[x]) to High(FVertexMap[x]) do
-         for z := Low(FVertexMap[x,y]) to High(FVertexMap[x,y]) do
-         begin
-            FVertexMap[x,y,z] := -1;
-         end;
 end;
 
 function TVoxelModelizer.GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;

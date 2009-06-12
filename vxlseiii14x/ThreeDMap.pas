@@ -35,7 +35,8 @@ type
          function IsEdgePaintable(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer): boolean;
          procedure PaintEdge(_V1, _V2: TVector3i; const _Direction: TVector3f; _Value: integer); overload;
          function GetDistance(_V1, _V2: TVector3i): integer;
-         function AreVertexesEqual(const _V1, _V2: TVector3i): boolean;
+         function AreVertexesEqual(const _V1, _V2: TVector3i): boolean; overload;
+         function AreVertexesEqual(const _V1: TVector3f; _V2: TVector3i): boolean; overload;
          // Misc
          procedure SetMapSize;
       public
@@ -441,11 +442,13 @@ begin
    EdgeDistance := GetDistance(_V1,_V2);
    while EdgeDistance > Distance do
    begin
-      if (FMap[CurrentVertex.X,CurrentVertex.Y,CurrentVertex.Z] = _Value) and (not AreVertexesEqual(CurrentVertex,_V2)) then
-      begin
-         Result := false;
-         exit;
-      end;
+      // Bug Fix: Verify interception of rounded positions only.
+      if AreVertexesEqual(CurrentPosition,CurrentVertex) then
+         if (FMap[CurrentVertex.X,CurrentVertex.Y,CurrentVertex.Z] = _Value) and (not AreVertexesEqual(CurrentVertex,_V2)) then
+         begin
+            Result := false;
+            exit;
+         end;
       IncreaseVector(CurrentPosition,_Direction);
       CurrentVertex := SetVectori(Round(CurrentPosition.X),Round(CurrentPosition.Y),Round(CurrentPosition.Z));
       Distance := GetDistance(_V1,CurrentVertex);
@@ -554,6 +557,12 @@ function T3DMap.AreVertexesEqual(const _V1, _V2: TVector3i): boolean;
 begin
    Result := (_V1.X = _V2.X) and (_V1.Y = _V2.Y) and (_V1.Z = _V2.Z);
 end;
+
+function T3DMap.AreVertexesEqual(const _V1: TVector3f; _V2: TVector3i): boolean;
+begin
+   Result := (_V1.X = _V2.X) and (_V1.Y = _V2.Y) and (_V1.Z = _V2.Z);
+end;
+
 
 {
 function T3DMap.IsFaceNormalsCorrect(const _V1, _V2, _V3: TVector3i; const _Normal: TVector3f): boolean;
