@@ -27,6 +27,7 @@ type
          function GetX: integer;
          function GetY: integer;
          function IsEmpty: boolean;
+         function IsEndOfQueue: boolean;
          // Misc
          procedure GoToNextElement;
          procedure GoToFirstElement;
@@ -170,6 +171,11 @@ end;
 procedure C2DPointQueue.GoToLastElement;
 begin
    Active := Last;
+end;
+
+function C2DPointQueue.IsEndOfQueue: boolean;
+begin
+   Result := Active = Last;
 end;
 
 

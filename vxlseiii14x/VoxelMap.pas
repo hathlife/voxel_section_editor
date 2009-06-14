@@ -709,6 +709,8 @@ end;
 
 procedure TVoxelMap.MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
 const
+   SSRequirements: array [0..19] of integer = (33, 17, 9, 5, 25, 41, 21, 37,
+   36, 40, 24, 20, 34, 18, 10, 6, 26, 42, 22, 38);
    SSMapPointerList: array [0..19] of integer = (0, 2, 4, 6, 8, 14, 20, 26, 32,
       34, 36, 38, 40, 42, 44, 46, 48, 54, 60, 66);
    SSMapQuantList: array [0..19] of integer = (2, 2, 2, 2, 6, 6, 6, 6, 2, 2, 2,
@@ -759,8 +761,7 @@ var
    CurrentNormal : TVector3f;
    CubeNormal : TVector3f;
    VertsAndEdgesNeighboors: TNormals;
-   i, c, maxC, MaxFace, MaxEdge: integer;
-   found : boolean;
+   i, c, maxC, MaxFace, MaxEdge,MissingFaces: integer;
 begin
    CubeNeighboors := TNormals.Create(6);
    FaceNeighboors := TNormals.Create(7);
@@ -779,24 +780,22 @@ begin
             // Let's check if the surface has face neighbors
             if FMap[x,y,z] = C_SURFACE then
             begin
-               found := false;
+               MissingFaces := 0;
                i := 0;
                while (i <= MaxFace) do
                begin
                   CurrentNormal := FaceNeighboors[i];
-                  if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= C_SURFACE) then
+                  if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) < C_SURFACE) then
                   begin
-                     found := true;
-                     i := MaxFace;
+                     MissingFaces := MissingFaces or ($1 shl i);
                   end;
                   inc(i);
                end;
-               // if not found, it will generate semi-surfaces around it.
-               if not found then
+               i := 0;
+               // check all non-face neighboors (8 vertices and 12 edges)
+               while (i <= MaxEdge) do
                begin
-                  i := 0;
-                  // check all non-face neighboors (8 vertices and 12 edges)
-                  while (i <= MaxEdge) do
+                  if (MissingFaces and SSRequirements[i]) >= SSRequirements[i] then
                   begin
                      CurrentNormal := VertsAndEdgesNeighboors[i];
                      // if neighboor has content, we'll estabilish a connection in the _SemiSurfaces.
@@ -815,8 +814,8 @@ begin
                            inc(c);
                         end;
                      end;
-                     inc(i);
                   end;
+                  inc(i);
                end;
             end;
          end;

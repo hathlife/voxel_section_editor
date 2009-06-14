@@ -4,7 +4,7 @@ interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,
    BasicConstants, ThreeDMap, Voxel_Engine, Palette, Dialogs, SysUtils,
-   ClassFaceQueue, ClassVertexQueue;
+   ClassFaceQueue, ClassVertexQueue, Class2DPointOrderList;
 
 type
    TFilledVerts = array[0..7] of boolean;
@@ -144,12 +144,6 @@ begin
                if (FilledEdges[FaceEdges[v1]] and (not VisitedEdges[FaceEdges[v1]])) then
                begin
                   VisitedEdges[FaceEdges[v1]] := true;
-                  // Add both edge vertexes, if needed.
-//                  if not AddedEdgeVertexes[FaceVerts[v1]] then
-//                     AddVertex(_VertexMap,v0x + VertexPoints[v1,0], v0y + VertexPoints[v1,1], v0z + VertexPoints[v1,2],_TotalNumVertexes,EdgeGeneratedList);
-//                  if not AddedEdgeVertexes[FaceVerts[v2]] then
-//                     AddVertex(_VertexMap,v0x + VertexPoints[v2,0], v0y + VertexPoints[v2,1], v0z + VertexPoints[v2,2],_TotalNumVertexes,EdgeGeneratedList);
-
                   // Create vertexes in the middle of the 4 neighboor edges.
                   e1 := FaceEdges[v1] * 4;
                   e2 := e1 + 4;
@@ -169,6 +163,9 @@ begin
                      end;
                      inc(e1);
                   end;
+                  // Add both edge vertexes.
+                  AddVertex(_VertexMap,v0x + VertexPoints[v2,0], v0y + VertexPoints[v2,1], v0z + VertexPoints[v2,2],_TotalNumVertexes,EdgeGeneratedList);
+                  AddVertex(_VertexMap,v0x + VertexPoints[v1,0], v0y + VertexPoints[v1,1], v0z + VertexPoints[v1,2],_TotalNumVertexes,EdgeGeneratedList);
                end;
             end;
          end
@@ -443,7 +440,7 @@ const
 var
    NumVerts: integer;
    DistanceMatrix: array of array of integer;
-   QueueDist: array[0..MAX_DIST] of C2DPointQueue;
+   QueueDist: C2DPointOrderList;
    i, j, k : integer;
    VertexList: array of PVertexData;
    MyVertex: PVertexData;
@@ -451,10 +448,7 @@ var
    FaceMap : T3DMap;
 begin
    // Prepare variables
-   for i := 0 to MAX_DIST do
-   begin
-      QueueDist[i] := C2DPointQueue.Create;
-   end;
+   QueueDist := C2DPointOrderList.Create;
 
    // get number of vertexes that we'll work with.
    NumVerts := _VertexList.GetNumItems;
@@ -491,21 +485,9 @@ begin
             // get a fake distance, since it doesn't have the square root, which is unnecessary in this case.
             DistanceMatrix[i,j] := ((VertexList[i]^.X - VertexList[j]^.X) * (VertexList[i]^.X - VertexList[j]^.X)) + ((VertexList[i]^.Y - VertexList[j]^.Y) * (VertexList[i]^.Y - VertexList[j]^.Y)) + ((VertexList[i]^.Z - VertexList[j]^.Z) * (VertexList[i]^.Z - VertexList[j]^.Z));
             // Add the edge to the list related to its distance.
-            case (DistanceMatrix[i,j]) of
-               C_VP_DIST0: QueueDist[0].Add(i,j);
-               C_VP_DIST1: QueueDist[1].Add(i,j);
-               C_VP_DIST2: QueueDist[2].Add(i,j);
-               C_VP_DIST3: QueueDist[3].Add(i,j);
-               C_VP_DIST4: QueueDist[4].Add(i,j);
-               C_VP_DIST5: QueueDist[5].Add(i,j);
-               C_VP_DIST6: QueueDist[6].Add(i,j);
-               C_VP_DIST7: QueueDist[7].Add(i,j);
-               0: DistanceMatrix[i,j] := 0;
-               else
-               begin
-                  ShowMessage(IntToStr(DistanceMatrix[i,j]));
-                  DistanceMatrix[i,j] := 0;
-               end;
+            if DistanceMatrix[i,j] <> 0 then
+            begin
+               QueueDist.Add(DistanceMatrix[i,j],i,j);
             end;
             DistanceMatrix[j,i] := DistanceMatrix[i,j];
             inc(j);
@@ -514,20 +496,17 @@ begin
       end;
       // So, there we go, with all distances and ordered edges in 4 lists.
       // Let's check the edges that intercept other edges and cut them.
-      for i := 0 to MAX_DIST do
+      if not QueueDist.IsEmpty then
       begin
-         if not QueueDist[i].IsEmpty then
+         QueueDist.GoToFirstElement;
+         while QueueDist.GetPosition(j,k) do
          begin
-            QueueDist[i].GoToFirstElement;
-            while QueueDist[i].GetPosition(j,k) do
+            if not EdgeMap.TryPaintingEdge(Subtract3i(_VertexList.GetVector3i(VertexList[j]),SetVectori(_x,_y,_z)),Subtract3i(_VertexList.GetVector3i(VertexList[k]),SetVectori(_x,_y,_z)),1) then
             begin
-               if not EdgeMap.TryPaintingEdge(Subtract3i(_VertexList.GetVector3i(VertexList[j]),SetVectori(_x,_y,_z)),Subtract3i(_VertexList.GetVector3i(VertexList[k]),SetVectori(_x,_y,_z)),1) then
-               begin
-                  DistanceMatrix[j,k] := 0;
-                  DistanceMatrix[k,j] := 0;
-               end;
-               QueueDist[i].GoToNextElement;
+               DistanceMatrix[j,k] := 0;
+               DistanceMatrix[k,j] := 0;
             end;
+            QueueDist.GoToNextElement;
          end;
       end;
       // So, we have all edges. Let's build faces out of it and write them.
@@ -566,10 +545,7 @@ begin
       FaceMap.Free;
    end;
    // Free memory
-   for i := 0 to MAX_DIST do
-   begin
-      QueueDist[i].Free;
-   end;
+   QueueDist.Free;
    i := High(DistanceMatrix);
    while i >= 0 do
    begin
@@ -603,9 +579,12 @@ begin
       Faces.Add(VertexList[j]^.Position,VertexList[j+2]^.Position,VertexList[j+1]^.Position);
       // Face 2: V1, V4, V3
       Faces.Add(VertexList[j]^.Position,VertexList[j+3]^.Position,VertexList[j+2]^.Position);
-
+      // Face 3: V2, V1, V5
+      Faces.Add(VertexList[j+1]^.Position,VertexList[j]^.Position,VertexList[j+4]^.Position);
+      // Face 4: V3, V4, V6
+      Faces.Add(VertexList[j+2]^.Position,VertexList[j+3]^.Position,VertexList[j+5]^.Position);
       // Go to next two faces.
-      inc(j,4);
+      inc(j,6);
    end;
 end;
 
