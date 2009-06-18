@@ -27,7 +27,11 @@ type
          function GetX: integer;
          function GetY: integer;
          function IsEmpty: boolean;
+         function IsActive(_Elem: P2DPosition): boolean;
          function IsEndOfQueue: boolean;
+         function GetFirstElement: P2DPosition;
+         procedure GetNextElement(var _Elem: P2DPosition);
+         function GetActive: P2DPosition;
          // Misc
          procedure GoToNextElement;
          procedure GoToFirstElement;
@@ -86,6 +90,7 @@ begin
       if Active = Start then
       begin
          Start := Start^.Next;
+         Previous := Start;
       end
       else
       begin
@@ -100,6 +105,7 @@ begin
          end;
       end;
       Dispose(Active);
+      Active := Previous;
    end;
 end;
 
@@ -153,6 +159,30 @@ function C2DPointQueue.IsEmpty: boolean;
 begin
    Result := (Start = nil);
 end;
+
+function C2DPointQueue.IsActive(_Elem: P2DPosition): boolean;
+begin
+   Result := (_Elem = Active);
+end;
+
+function C2DPointQueue.GetFirstElement: P2DPosition;
+begin
+   Result := Start;
+end;
+
+function C2DPointQueue.GetActive: P2DPosition;
+begin
+   Result := Active;
+end;
+
+procedure C2DPointQueue.GetNextElement(var _Elem: P2DPosition);
+begin
+   if _Elem <> nil then
+   begin
+      _Elem := _Elem^.Next;
+   end;
+end;
+
 
 // Misc
 procedure C2DPointQueue.GoToNextElement;

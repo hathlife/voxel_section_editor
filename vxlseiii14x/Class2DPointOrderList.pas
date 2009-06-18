@@ -30,6 +30,10 @@ type
          function GetX: integer;
          function GetY: integer;
          function IsEmpty: boolean;
+         function IsActive(var _List: P2DPointOrderItem; var _Elem: P2DPosition): boolean;
+         procedure GetFirstElement(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
+         procedure GetNextElement(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
+         procedure GetActive(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
          // Misc
          procedure GoToNextElement;
          procedure GoToFirstElement;
@@ -114,21 +118,27 @@ var
 begin
    if Active <> nil then
    begin
-      Previous := Start;
-      if Active = Start then
+      Active^.Edges.Delete;
+      if Active^.Edges.IsEmpty then
       begin
-         Start := Start^.Next;
-      end
-      else
-      begin
-         while Previous^.Next <> Active do
+         Previous := Start;
+         if Active = Start then
          begin
-            Previous := Previous^.Next;
+            Start := Start^.Next;
+            Previous := Start;
+         end
+         else
+         begin
+            while Previous^.Next <> Active do
+            begin
+               Previous := Previous^.Next;
+            end;
+            Previous^.Next := Active^.Next;
          end;
-         Previous^.Next := Active^.Next;
+         Active^.Edges.Free;
+         Dispose(Active);
+         Active := Previous;
       end;
-      Active^.Edges.Free;
-      Dispose(Active);
    end;
 end;
 
@@ -182,6 +192,59 @@ function C2DPointOrderList.IsEmpty: boolean;
 begin
    Result := (Start = nil);
 end;
+
+function C2DPointOrderList.IsActive(var _List: P2DPointOrderItem; var _Elem: P2DPosition): boolean;
+begin
+   Result := false;
+   if _List = Active then
+   begin
+      Result := _List^.Edges.IsActive(_Elem);
+   end;
+end;
+
+
+procedure C2DPointOrderList.GetFirstElement(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
+begin
+   _List := Start;
+   if _List <> nil then
+   begin
+      _Elem := _List^.Edges.GetFirstElement;
+   end;
+end;
+
+procedure C2DPointOrderList.GetNextElement(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
+begin
+   if _List <> nil then
+   begin
+      _List^.Edges.GetNextElement(_Elem);
+      if _Elem = nil then
+      begin
+         _List := _List^.Next;
+         if _List <> nil then
+         begin
+            _Elem := _List^.Edges.GetFirstElement;
+         end
+         else
+         begin
+            _Elem := nil;
+         end;
+      end;
+   end
+   else
+   begin
+      _Elem := nil;
+   end;
+end;
+
+procedure C2DPointOrderList.GetActive(var _List: P2DPointOrderItem; var _Elem: P2DPosition);
+begin
+   _List := Active;
+   if _List <> nil then
+   begin
+      _Elem := _List^.Edges.GetActive;
+   end;
+end;
+
 
 // Misc
 procedure C2DPointOrderList.GoToNextElement;

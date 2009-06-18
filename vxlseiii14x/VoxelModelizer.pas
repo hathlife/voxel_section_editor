@@ -14,7 +14,6 @@ type
          FNumVertexes : integer;
          function GetNormals(_V1,_V2,_V3: TVector3f): TVector3f;
          function CopyMap(const _Map: T3DIntGrid): T3DIntGrid;
-         procedure RemoveMapBias(var _Map: T3DIntGrid);
       public
          // Constructors and Destructors
          constructor Create(const _VoxelMap : TVoxelMap; const _SemiSurfaces: T3DIntGrid; var _Vertexes: TAVector3f; var _Faces: auint32; var _Normals: TAVector3f; var _Colours: TAVector4f; const _Palette: TPalette; const _ColourMap: TVoxelMap);
@@ -184,7 +183,7 @@ end;
 
 destructor TVoxelModelizer.Destroy;
 var
-   x,y : integer;
+   x : integer;
 begin
    for x := Low(FItems) to High(FItems) do
    begin
@@ -238,31 +237,5 @@ begin
             Result[x,y,z] := _Map[x,y,z];
          end;
 end;
-
-procedure TVoxelModelizer.RemoveMapBias(var _Map: T3DIntGrid);
-var
-   Map : T3DIntGrid;
-   x, y, z: Integer;
-begin
-   Map := CopyMap(_Map);
-   SetLength(_Map, High(Map)-1, High(Map[0])-1, High(Map[0,0])-1);
-   for x := Low(_Map) to High(_Map) do
-      for y := Low(_Map[x]) to High(_Map[x]) do
-         for z := Low(_Map[x,y]) to High(_Map[x,y]) do
-         begin
-            _Map[x,y,z] := Map[x+1,y+1,z+1];
-         end;
-   // Free memory
-   for x := High(Map) downto Low(Map) do
-   begin
-      for y := High(Map[x]) downto Low(Map[x]) do
-      begin
-         SetLength(Map[x,y],0);
-      end;
-      SetLength(Map[x],0);
-   end;
-   SetLength(Map,0);
-end;
-
 
 end.

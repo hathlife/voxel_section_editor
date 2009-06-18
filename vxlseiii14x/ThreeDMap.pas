@@ -427,7 +427,6 @@ begin
    end;
 end;
 
-
 function T3DMap.IsEdgePaintable(_V1, _V2: TVector3i; const  _Direction: TVector3f; _Value: integer): boolean;
 var
    CurrentPosition: TVector3f;
