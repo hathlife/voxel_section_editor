@@ -190,6 +190,7 @@ begin
    end;
 
    // block faces according to the filled faces.
+{
    for i := 0 to 5 do
    begin
       if FilledFaces[i] then
@@ -209,7 +210,7 @@ begin
          end;
       end;
    end;
-
+}
 
    // Now we construct the faces.
    BuildFaces(EdgesDistanceMatrix,FaceMap,VertexList);
