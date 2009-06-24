@@ -135,8 +135,8 @@ begin
             inc(v1);
          end;
          // Now we ensure that some of the edges will not be in the final result
-         e1 := i * 12;
-         e2 := e1 + 12;
+         e1 := i * 4;//12;
+         e2 := e1 + 4;//12;
          while e1 < e2 do
          begin
             EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,0],ForbiddenEdgesPerEdges[e1,1]] := C_FORBIDDEN;
@@ -457,10 +457,7 @@ begin
             begin
                // Add i, j, k to faces.
                Faces.Add(_VertexList[i],_VertexList[j],_VertexList[k]);
-               // Ensure that they will not be detected anymore.
-               _DistanceMatrix[i,j] := C_FORBIDDEN;
-               _DistanceMatrix[j,k] := C_FORBIDDEN;
-               _DistanceMatrix[k,i] := C_FORBIDDEN;
+               // Ensure that the same face will not be detected anymore.
                _FaceMap.Map[i,j,k] := C_FORBIDDEN;
                _FaceMap.Map[i,k,j] := C_FORBIDDEN;
                _FaceMap.Map[j,i,k] := C_FORBIDDEN;
@@ -480,13 +477,72 @@ begin
 end;
 
 function TVoxelModelizerItem.IsEdgePaintable( _P1, _P2, _P3, _P4: integer):boolean;
+{
+const
+   EPS = 1;
+var
+   x21,x43,x13: integer;
+   y21,y43,y13: integer;
+   z21,z43,z13: integer;
+   d1343,d4321,d1321,d4343,d2121: integer;
+   denom,numer: integer;
+   mua,mub : single;
+begin
+   x13 := VertexPoints[_P1,0] - VertexPoints[_P3,0];
+   y13 := VertexPoints[_P1,1] - VertexPoints[_P3,1];
+   z13 := VertexPoints[_P1,2] - VertexPoints[_P3,2];
+   x43 := VertexPoints[_P4,0] - VertexPoints[_P3,0];
+   y43 := VertexPoints[_P4,1] - VertexPoints[_P3,1];
+   z43 := VertexPoints[_P4,2] - VertexPoints[_P3,2];
+   if (abs(x43) < EPS) and (abs(y43) < EPS) and (abs(z43) < EPS) then
+   begin
+      Result := false;
+      exit;
+   end;
+   x21 := VertexPoints[_P2,0] - VertexPoints[_P1,0];
+   y21 := VertexPoints[_P2,1] - VertexPoints[_P1,1];
+   z21 := VertexPoints[_P2,2] - VertexPoints[_P1,2];
+   if (abs(x21) < EPS) and (abs(y21) < EPS) and (abs(z21) < EPS) then
+   begin
+      Result := false;
+      exit;
+   end;
+
+   d1343 := (x13 * x43) + (y13 * y43) + (z13 * z43);
+   d4321 := (x43 * x21) + (y43 * y21) + (z43 * z21);
+   d1321 := (x13 * x21) + (y13 * y21) + (z13 * z21);
+   d4343 := (x43 * x43) + (y43 * y43) + (z43 * z43);
+   d2121 := (x21 * x21) + (y21 * y21) + (z21 * z21);
+
+   denom := (d2121 * d4343) - (d4321 * d4321);
+   if (abs(denom) < EPS) then
+   begin
+      Result := false;
+      exit;
+   end;
+   numer := (d1343 * d4321) - (d1321 * d4343);
+
+   mua := numer / denom;
+   mub := (d1343 + (d4321 * mua)) / d4343;
+//   if (abs(mub) < EPS) and (abs(mua) < EPS) and (mua <> 0) and (mub <> 0) then
+//      Result := false
+//   else
+      Result := true;
+end;
+}
+
 var
    PositionA,PositionB: single;
-   x21,x43,x31: integer;
-   y21,y43,y31: integer;
-   z21,z43,z31: integer;
+   x21,x43,x31,x41: integer;
+   y21,y43,y31,y41: integer;
+   z21,z43,z31,z41: integer;
    factorxy,factorxz,factoryz: integer;
    denom: integer;
+   distance: array[0..3] of integer;
+   points: array[0..3] of integer;
+   maxdistance, i : integer;
+   Det: integer;
+   IsPointInsideEdge: boolean;
    procedure GetPositionA(_PositionB: single);
    begin
       if x21 <> 0 then
@@ -496,91 +552,412 @@ var
       else
          PositionA := (z31 + (PositionB * z43)) / z21;
    end;
+   function IsParalelOrCoincident: boolean;
+   var
+      Average: single;
+   begin
+      Average := 0;
+      if x43 <> 0 then
+      begin
+         if x21 = 0 then
+         begin
+            Result := false;
+            exit;
+         end;
+         Average := x21 / x43;
+      end;
+      if y43 <> 0 then
+      begin
+         if y21 = 0 then
+         begin
+            Result := false;
+            exit;
+         end;
+         if Average <> 0 then
+         begin
+            if Average <> (y21 / y43) then
+            begin
+               Result := false;
+               exit;
+            end;
+         end
+         else
+         begin
+            Average := y21 / y43;
+         end;
+      end;
+      if z43 <> 0 then
+      begin
+         if z21 = 0 then
+         begin
+            Result := false;
+            exit;
+         end;
+         if Average <> 0 then
+         begin
+            if Average <> (z21 / z43) then
+            begin
+               Result := false;
+               exit;
+            end;
+         end
+         else
+         begin
+            Average := z21 / z43;
+         end;
+      end;
+      Result := true;
+   end;
 begin
    Result := true;
-   x21 := VertexPoints[_P2,0] - VertexPoints[_P1,0];
-   x43 := VertexPoints[_P4,0] - VertexPoints[_P3,0];
-   x31 := VertexPoints[_P3,0] - VertexPoints[_P1,0];
-   y21 := VertexPoints[_P2,1] - VertexPoints[_P1,1];
-   y43 := VertexPoints[_P4,1] - VertexPoints[_P3,1];
-   y31 := VertexPoints[_P3,1] - VertexPoints[_P1,1];
-   z21 := VertexPoints[_P2,2] - VertexPoints[_P1,2];
-   z43 := VertexPoints[_P4,2] - VertexPoints[_P3,2];
-   z31 := VertexPoints[_P3,2] - VertexPoints[_P1,2];
-   factorxz := (z21 * x43) - (z43 * x21);
-   factorxy := (y21 * x43) - (y43 * x21);
-   factoryz := (z21 * y43) - (z43 * y21);
-   if (factorxy <> 0) then
+   // Let's make sure P1 and P3's distance is the highest possible.
+   maxdistance := 0;
+   distance[0] := ((VertexPoints[_P1,0] - VertexPoints[_P3,0]) * (VertexPoints[_P1,0] - VertexPoints[_P3,0])) + ((VertexPoints[_P1,1] - VertexPoints[_P3,1]) * (VertexPoints[_P1,1] - VertexPoints[_P3,1])) + ((VertexPoints[_P1,2] - VertexPoints[_P3,2]) * (VertexPoints[_P1,2] - VertexPoints[_P3,2]));
+   distance[1] := ((VertexPoints[_P2,0] - VertexPoints[_P3,0]) * (VertexPoints[_P2,0] - VertexPoints[_P3,0])) + ((VertexPoints[_P2,1] - VertexPoints[_P3,1]) * (VertexPoints[_P2,1] - VertexPoints[_P3,1])) + ((VertexPoints[_P2,2] - VertexPoints[_P3,2]) * (VertexPoints[_P2,2] - VertexPoints[_P3,2]));
+   distance[2] := ((VertexPoints[_P1,0] - VertexPoints[_P4,0]) * (VertexPoints[_P1,0] - VertexPoints[_P4,0])) + ((VertexPoints[_P1,1] - VertexPoints[_P4,1]) * (VertexPoints[_P1,1] - VertexPoints[_P4,1])) + ((VertexPoints[_P1,2] - VertexPoints[_P4,2]) * (VertexPoints[_P1,2] - VertexPoints[_P4,2]));
+   distance[3] := ((VertexPoints[_P2,0] - VertexPoints[_P4,0]) * (VertexPoints[_P2,0] - VertexPoints[_P4,0])) + ((VertexPoints[_P2,1] - VertexPoints[_P4,1]) * (VertexPoints[_P2,1] - VertexPoints[_P4,1])) + ((VertexPoints[_P2,2] - VertexPoints[_P4,2]) * (VertexPoints[_P2,2] - VertexPoints[_P4,2]));
+   for i := 1 to 3 do
    begin
-      PositionB := ((x21 * y31) - (x31 * y21)) / factorxy;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+      if distance[i] > distance[maxdistance] then
       begin
-         GetPositionA(PositionB);
-         if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
-         begin
-            Result := false;
-            exit;
-         end;
+         maxdistance := i;
       end;
    end;
-   if (factorxz <> 0) then
-   begin
-      PositionB := ((x21 * z31) - (x31 * z21)) / factorxz;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+   case maxdistance of
+      0:
       begin
-         GetPositionA(PositionB);
-         if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
-         begin
-            Result := false;
-            exit;
-         end;
+         Points[0] := _P1;
+         Points[1] := _P2;
+         Points[2] := _P3;
+         Points[3] := _P4;
+      end;
+      1:
+      begin
+         Points[0] := _P2;
+         Points[1] := _P1;
+         Points[2] := _P3;
+         Points[3] := _P4;
+      end;
+      2:
+      begin
+         Points[0] := _P1;
+         Points[1] := _P2;
+         Points[2] := _P4;
+         Points[3] := _P3;
+      end;
+      3:
+      begin
+         Points[0] := _P2;
+         Points[1] := _P1;
+         Points[2] := _P4;
+         Points[3] := _P3;
       end;
    end;
-   if (factoryz <> 0) then
+   // get edge points.
+   x21 := VertexPoints[Points[1],0] - VertexPoints[Points[0],0];
+   x43 := VertexPoints[Points[3],0] - VertexPoints[Points[2],0];
+   x31 := VertexPoints[Points[2],0] - VertexPoints[Points[0],0];
+   x41 := VertexPoints[Points[3],0] - VertexPoints[Points[0],0];
+   y21 := VertexPoints[Points[1],1] - VertexPoints[Points[0],1];
+   y43 := VertexPoints[Points[3],1] - VertexPoints[Points[2],1];
+   y31 := VertexPoints[Points[2],1] - VertexPoints[Points[0],1];
+   y41 := VertexPoints[Points[3],1] - VertexPoints[Points[0],1];
+   z21 := VertexPoints[Points[1],2] - VertexPoints[Points[0],2];
+   z43 := VertexPoints[Points[3],2] - VertexPoints[Points[2],2];
+   z31 := VertexPoints[Points[2],2] - VertexPoints[Points[0],2];
+   z41 := VertexPoints[Points[3],2] - VertexPoints[Points[0],2];
+   // check if the edges are paralel or not.
+   if IsParalelOrCoincident then
    begin
-      PositionB := ((y21 * z31) - (y31 * z21)) / factoryz;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+      // check if one of the points coincides in the othe edges.
+      //x3 = x1 + t(x2 - x1) -> t = x31 / x21
+      PositionA := 0;
+      // check Point 3 on edge 2-1 in axis X
+      if x21 <> 0 then
       begin
-         GetPositionA(PositionB);
-         if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
+         PositionA := x31 / x21;
+         IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+      end
+      else
+      begin
+         IsPointInsideEdge := VertexPoints[Points[2],0] = VertexPoints[Points[0],0];
+      end;
+      // Axis Y
+      if IsPointInsideEdge then
+      begin
+         if y21 <> 0 then
          begin
-            Result := false;
-            exit;
+            if PositionA <> 0 then
+            begin
+               IsPointInsideEdge := PositionA = (y31 / y21);
+            end
+            else
+            begin
+               PositionA := y31 / y21;
+               IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+            end;
+         end
+         else
+         begin
+            IsPointInsideEdge := VertexPoints[Points[2],1] = VertexPoints[Points[0],1];
+         end;
+         // Axis Z
+         if IsPointInsideEdge then
+         begin
+            if z21 <> 0 then
+            begin
+               if PositionA <> 0 then
+               begin
+                  IsPointInsideEdge := PositionA = (z31 / z21);
+               end
+               else
+               begin
+                  PositionA := z31 / z21;
+                  IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+               end;
+            end
+            else
+            begin
+               IsPointInsideEdge := VertexPoints[Points[2],2] = VertexPoints[Points[0],2];
+            end;
+            if IsPointInsideEdge then
+            begin
+               Result := false;
+               exit;
+            end;
          end;
       end;
-   end;
+      //x4 = x1 + t(x2 - x1) -> t = x41 / x21
+      PositionA := 0;
+      // check Point 4 on edge 2-1 in axis X
+      if x21 <> 0 then
+      begin
+         PositionA := x41 / x21;
+         IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+      end
+      else
+      begin
+         IsPointInsideEdge := VertexPoints[Points[3],0] = VertexPoints[Points[0],0];
+      end;
+      // Axis Y
+      if IsPointInsideEdge then
+      begin
+         if y21 <> 0 then
+         begin
+            if PositionA <> 0 then
+            begin
+               IsPointInsideEdge := PositionA = (y41 / y21);
+            end
+            else
+            begin
+               PositionA := y41 / y21;
+               IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+            end;
+         end
+         else
+         begin
+            IsPointInsideEdge := VertexPoints[Points[3],1] = VertexPoints[Points[0],1];
+         end;
+         // Axis Z
+         if IsPointInsideEdge then
+         begin
+            if z21 <> 0 then
+            begin
+               if PositionA <> 0 then
+               begin
+                  IsPointInsideEdge := PositionA = (z41 / z21);
+               end
+               else
+               begin
+                  PositionA := z41 / z21;
+                  IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+               end;
+            end
+            else
+            begin
+               IsPointInsideEdge := VertexPoints[Points[3],2] = VertexPoints[Points[0],2];
+            end;
+            if IsPointInsideEdge then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+      //x1 = x3 + t(x4 - x3) -> t = (-x31) / x43
+      PositionA := 0;
+      // check Point 1 on edge 4-3 in axis X
+      if x43 <> 0 then
+      begin
+         PositionA := (-x31) / x43;
+         IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+      end
+      else
+      begin
+         IsPointInsideEdge := VertexPoints[Points[0],0] = VertexPoints[Points[2],0];
+      end;
+      // Axis Y
+      if IsPointInsideEdge then
+      begin
+         if y43 <> 0 then
+         begin
+            if PositionA <> 0 then
+            begin
+               IsPointInsideEdge := PositionA = ((-y31) / y43);
+            end
+            else
+            begin
+               PositionA := (-y43) / y43;
+               IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+            end;
+         end
+         else
+         begin
+            IsPointInsideEdge := VertexPoints[Points[0],1] = VertexPoints[Points[2],1];
+         end;
+         // Axis Z
+         if IsPointInsideEdge then
+         begin
+            if z43 <> 0 then
+            begin
+               if PositionA <> 0 then
+               begin
+                  IsPointInsideEdge := PositionA = (-z31 / z43);
+               end
+               else
+               begin
+                  PositionA := (-z43) / z43;
+                  IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+               end;
+            end
+            else
+            begin
+               IsPointInsideEdge := VertexPoints[Points[0],2] = VertexPoints[Points[2],2];
+            end;
+            if IsPointInsideEdge then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+      //x2 = x3 + t(x4 - x3) -> t = x23 / x43
+      PositionA := 0;
+      // check Point 1 on edge 4-3 in axis X
+      if x43 <> 0 then
+      begin
+         PositionA := (VertexPoints[Points[1],0] - VertexPoints[Points[2],0]) / x43;
+         IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+      end
+      else
+      begin
+         IsPointInsideEdge := VertexPoints[Points[1],0] = VertexPoints[Points[2],0];
+      end;
+      // Axis Y
+      if IsPointInsideEdge then
+      begin
+         if y43 <> 0 then
+         begin
+            if PositionA <> 0 then
+            begin
+               IsPointInsideEdge := PositionA = ((VertexPoints[Points[1],1] - VertexPoints[Points[2],1]) / y43);
+            end
+            else
+            begin
+               PositionA := (VertexPoints[Points[1],1] - VertexPoints[Points[2],1]) / y43;
+               IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+            end;
+         end
+         else
+         begin
+            IsPointInsideEdge := VertexPoints[Points[1],1] = VertexPoints[Points[2],1];
+         end;
+         // Axis Z
+         if IsPointInsideEdge then
+         begin
+            if z43 <> 0 then
+            begin
+               if PositionA <> 0 then
+               begin
+                  IsPointInsideEdge := PositionA = ((VertexPoints[Points[1],2] - VertexPoints[Points[2],2]) / z43);
+               end
+               else
+               begin
+                  PositionA := (VertexPoints[Points[1],2] - VertexPoints[Points[2],2]) / z43;
+                  IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
+               end;
+            end
+            else
+            begin
+               IsPointInsideEdge := VertexPoints[Points[1],2] = VertexPoints[Points[2],2];
+            end;
+            if IsPointInsideEdge then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      // check if the edges are in the plane
+      // Det = 0
+      Det := (x21 * y43 * z31) + (y21 * z43 * x21) + (z21 * x43 * y31) - (x21 * z43 * y31) - (y21 * x43 * z31) - (z21 * y43 * x31);
+      if Det <> 0 then
+      begin
+         exit;
+      end;
 
+      factorxz := (z21 * x43) - (z43 * x21);
+      factorxy := (y21 * x43) - (y43 * x21);
+      factoryz := (z21 * y43) - (z43 * y21);
+      if (factorxy <> 0) then
+      begin
+         PositionB := ((x21 * y31) - (x31 * y21)) / factorxy;
+         if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+         begin
+            GetPositionA(PositionB);
+            if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+      if (factorxz <> 0) then
+      begin
+         PositionB := ((x21 * z31) - (x31 * z21)) / factorxz;
+         if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+         begin
+            GetPositionA(PositionB);
+            if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+      if (factoryz <> 0) then
+      begin
+         PositionB := ((y21 * z31) - (y31 * z21)) / factoryz;
+         if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
+         begin
+            GetPositionA(PositionB);
+            if (abs(PositionA) > 0) and (abs(PositionA) < 1) then
+            begin
+               Result := false;
+               exit;
+            end;
+         end;
+      end;
+      if (factorxy = 0) and (factorxz = 0) and (factoryz = 0) then
+      begin
+
+
+      end;
+   end;
 {
-   denom := x21 - x43;
-   if (factoryz = 0) and (factorxz = 0) and (factorxy = 0) and (denom <> 0) then
-   begin
-      PositionB := x31 / denom;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
-      begin
-         Result := false;
-         exit;
-      end;
-   end;
-   denom := y21 - y43;
-   if (factoryz = 0) and (factorxz = 0) and (factorxy = 0) and (denom <> 0) then
-   begin
-      PositionB := y31 / denom;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
-      begin
-         Result := false;
-         exit;
-      end;
-   end;
-   denom := z21 - z43;
-   if (factoryz = 0) and (factorxz = 0) and (factorxy = 0) and (denom <> 0) then
-   begin
-      PositionB := z31 / denom;
-      if (abs(PositionB) > 0) and (abs(PositionB) < 1) then
-      begin
-         Result := false;
-         exit;
-      end;
-   end;
    denom := 2 * factorxz * factorxy;
    if denom <> 0 then
    begin
