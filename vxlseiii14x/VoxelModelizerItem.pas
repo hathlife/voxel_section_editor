@@ -134,6 +134,7 @@ begin
             end;
             inc(v1);
          end;
+{
          // Now we ensure that some of the edges will not be in the final result
          e1 := i * 4;//12;
          e2 := e1 + 4;//12;
@@ -143,6 +144,7 @@ begin
             EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,1],ForbiddenEdgesPerEdges[e1,0]] := C_FORBIDDEN;
             inc(e1);
          end;
+}
       end;
    end;
 
