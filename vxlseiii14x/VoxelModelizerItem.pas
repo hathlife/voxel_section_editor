@@ -483,6 +483,7 @@ function TVoxelModelizerItem.IsEdgePaintable( _P1, _P2, _P3, _P4: integer):boole
 {
 const
    EPS = 1;
+   EPSF = 0.000001;
 var
    x21,x43,x13: integer;
    y21,y43,y13: integer;
@@ -499,7 +500,7 @@ begin
    z43 := VertexPoints[_P4,2] - VertexPoints[_P3,2];
    if (abs(x43) < EPS) and (abs(y43) < EPS) and (abs(z43) < EPS) then
    begin
-      Result := false;
+      Result := true;
       exit;
    end;
    x21 := VertexPoints[_P2,0] - VertexPoints[_P1,0];
@@ -507,7 +508,7 @@ begin
    z21 := VertexPoints[_P2,2] - VertexPoints[_P1,2];
    if (abs(x21) < EPS) and (abs(y21) < EPS) and (abs(z21) < EPS) then
    begin
-      Result := false;
+      Result := true;
       exit;
    end;
 
@@ -518,18 +519,18 @@ begin
    d2121 := (x21 * x21) + (y21 * y21) + (z21 * z21);
 
    denom := (d2121 * d4343) - (d4321 * d4321);
-   if (abs(denom) < EPS) then
+   if (abs(denom) < EPSF) then
    begin
-      Result := false;
+      Result := true;
       exit;
    end;
    numer := (d1343 * d4321) - (d1321 * d4343);
 
    mua := numer / denom;
    mub := (d1343 + (d4321 * mua)) / d4343;
-//   if (abs(mub) < EPS) and (abs(mua) < EPS) and (mua <> 0) and (mub <> 0) then
-//      Result := false
-//   else
+   if (mub > EPSF) and (mua > EPSF) and ((mua-1) < -EPSF) and ((mub-1) < -EPSF) then
+      Result := false
+   else
       Result := true;
 end;
 }
@@ -557,59 +558,22 @@ var
    end;
    function IsParalelOrCoincident: boolean;
    var
-      Average: single;
+      N1, N2: TVector3f;
+      Denominator: single;
    begin
-      Average := 0;
-      if x43 <> 0 then
-      begin
-         if x21 = 0 then
-         begin
-            Result := false;
-            exit;
-         end;
-         Average := x21 / x43;
-      end;
-      if y43 <> 0 then
-      begin
-         if y21 = 0 then
-         begin
-            Result := false;
-            exit;
-         end;
-         if Average <> 0 then
-         begin
-            if Average <> (y21 / y43) then
-            begin
-               Result := false;
-               exit;
-            end;
-         end
-         else
-         begin
-            Average := y21 / y43;
-         end;
-      end;
-      if z43 <> 0 then
-      begin
-         if z21 = 0 then
-         begin
-            Result := false;
-            exit;
-         end;
-         if Average <> 0 then
-         begin
-            if Average <> (z21 / z43) then
-            begin
-               Result := false;
-               exit;
-            end;
-         end
-         else
-         begin
-            Average := z21 / z43;
-         end;
-      end;
-      Result := true;
+      Denominator := sqrt((x21 * x21) + (y21 * y21) + (z21 * z21));
+      N1.X := abs(x21 / Denominator);
+      N1.Y := abs(y21 / Denominator);
+      N1.Z := abs(z21 / Denominator);
+      Denominator := sqrt((x43 * x43) + (y43 * y43) + (z43 * z43));
+      N2.X := abs(x43 / Denominator);
+      N2.Y := abs(y43 / Denominator);
+      N2.Z := abs(z43 / Denominator);
+      Result := false;
+      if N1.X = N2.X then
+         if N1.Y = N2.Y then
+            if N1.Z = N2.Z then
+               Result := true;
    end;
 begin
    Result := true;
@@ -806,11 +770,11 @@ begin
          begin
             if PositionA <> 0 then
             begin
-               IsPointInsideEdge := PositionA = ((-y31) / y43);
+               IsPointInsideEdge := PositionA = (-y31) / y43;
             end
             else
             begin
-               PositionA := (-y43) / y43;
+               PositionA := (-y31) / y43;
                IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
             end;
          end
@@ -829,7 +793,7 @@ begin
                end
                else
                begin
-                  PositionA := (-z43) / z43;
+                  PositionA := (-z31) / z43;
                   IsPointInsideEdge := (PositionA > 0) and (PositionA < 1);
                end;
             end
