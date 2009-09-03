@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.34';
+   APPLICATION_VER = '1.39.37';
 
 type
   TFrmMain = class(TForm)
@@ -653,7 +653,8 @@ end;
 
 procedure TFrmMain.CnvView0Paint(Sender: TObject);
 begin
-   PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
+   if Document.ActiveSection <> nil then
+      PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
 end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
@@ -779,7 +780,8 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: CnvView1Paint');
    {$endif}
-   PaintView2(1,false,CnvView[1],Document.ActiveSection^.View[1]);
+   if Document.ActiveSection <> nil then
+      PaintView2(1,false,CnvView[1],Document.ActiveSection^.View[1]);
 end;
 
 procedure TFrmMain.CnvView2Paint(Sender: TObject);
@@ -787,7 +789,8 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: CnvView2Paint');
    {$endif}
-   PaintView2(2,false,CnvView[2],Document.ActiveSection^.View[2]);
+   if Document.ActiveSection <> nil then
+      PaintView2(2,false,CnvView[2],Document.ActiveSection^.View[2]);
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);

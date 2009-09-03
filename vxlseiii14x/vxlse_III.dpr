@@ -1,5 +1,6 @@
 program vxlse_III;
 
+{$SetPEFlags $0020}
 {%File 'Global_Conditionals.inc'}
 
 uses
