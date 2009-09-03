@@ -3,7 +3,7 @@ object Frm3DPReview: TFrm3DPReview
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
-  ClientHeight = 251
+  ClientHeight = 270
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 225
+    Height = 244
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 206
+    ExplicitHeight = 225
   end
   object Panel1: TPanel
     Left = 0
@@ -434,6 +434,7 @@ object Frm3DPReview: TFrm3DPReview
       end
       object RenderModel: TMenuItem
         Caption = 'Triangle Based 3D Model (High)'
+        Enabled = False
         OnClick = RenderModelClick
       end
     end
@@ -476,6 +477,29 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'White'
         Visible = False
         OnClick = White1Click
+      end
+    end
+    object ModelEffects1: TMenuItem
+      Caption = 'Model Effects'
+      object ModelFXSmooth: TMenuItem
+        Caption = 'Smooth'
+        OnClick = ModelFXSmoothClick
+      end
+      object ModelFXHeavySmooth: TMenuItem
+        Caption = 'Heavy Smooth'
+        OnClick = ModelFXHeavySmoothClick
+      end
+      object ModelFXUnsharp: TMenuItem
+        Caption = 'Unsharp Masking'
+        OnClick = ModelFXUnsharpClick
+      end
+      object ModelFXInflate: TMenuItem
+        Caption = 'Inflate'
+        OnClick = ModelFXInflateClick
+      end
+      object ModelFXDeflate: TMenuItem
+        Caption = 'Deflate'
+        OnClick = ModelFXDeflateClick
       end
     end
   end

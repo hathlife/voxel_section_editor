@@ -54,6 +54,12 @@ type
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
+      // Model Effects
+      procedure SmoothModel;
+      procedure CubicSmoothModel;
+      procedure UnsharpModel;
+      procedure InflateModel;
+      procedure DeflateModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -321,6 +327,33 @@ procedure TModel.RefreshMesh(_MeshID: integer);
 begin
    LOD[CurrentLOD].RefreshMesh(_MeshID);
 end;
+
+// Model Effects
+procedure TModel.SmoothModel;
+begin
+   LOD[CurrentLOD].SmoothLOD;
+end;
+
+procedure TModel.CubicSmoothModel;
+begin
+   LOD[CurrentLOD].CubicSmoothLOD;
+end;
+
+procedure TModel.UnsharpModel;
+begin
+   LOD[CurrentLOD].UnsharpLOD;
+end;
+
+procedure TModel.InflateModel;
+begin
+   LOD[CurrentLOD].InflateLOD;
+end;
+
+procedure TModel.DeflateModel;
+begin
+   LOD[CurrentLOD].DeflateLOD;
+end;
+
 
 // Transparency methods
 procedure TModel.ForceTransparency(_level: single);

@@ -31,6 +31,12 @@ type
       // Refresh OpenGL List
       procedure RefreshLOD;
       procedure RefreshMesh(_MeshID: integer);
+      // LOD Effects
+      procedure SmoothLOD;
+      procedure CubicSmoothLOD;
+      procedure UnsharpLOD;
+      procedure InflateLOD;
+      procedure DeflateLOD;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -138,6 +144,58 @@ begin
    if _MeshID <= High(Mesh) then
       Mesh[_MeshID].ForceRefresh;
 end;
+
+// LOD Effects
+procedure TLOD.SmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSmooth;
+   end;
+end;
+
+procedure TLOD.CubicSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshCubicSmooth;
+   end;
+end;
+
+procedure TLOD.UnsharpLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshUnsharpMasking;
+   end;
+end;
+
+procedure TLOD.InflateLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshInflate;
+   end;
+end;
+
+procedure TLOD.DeflateLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshDeflate;
+   end;
+end;
+
 
 // Transparency methods
 procedure TLOD.ForceTransparency(_level: single);

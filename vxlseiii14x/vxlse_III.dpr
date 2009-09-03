@@ -69,7 +69,8 @@ uses
   ThreeDMap in 'ThreeDMap.pas',
   ClassFaceQueue in 'ClassFaceQueue.pas',
   ClassVertexQueue in 'ClassVertexQueue.pas',
-  Class2DPointOrderList in 'Class2DPointOrderList.pas';
+  Class2DPointOrderList in 'Class2DPointOrderList.pas',
+  Class3DPointsDetector in 'Class3DPointsDetector.pas';
 
 {$R *.res}
 

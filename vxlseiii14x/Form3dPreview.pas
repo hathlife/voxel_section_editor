@@ -76,6 +76,17 @@ type
     RenderQuality1: TMenuItem;
     RenderCubes: TMenuItem;
     RenderModel: TMenuItem;
+    ModelEffects1: TMenuItem;
+    ModelFXSmooth: TMenuItem;
+    ModelFXUnsharp: TMenuItem;
+    ModelFXHeavySmooth: TMenuItem;
+    ModelFXDeflate: TMenuItem;
+    ModelFXInflate: TMenuItem;
+    procedure ModelFXInflateClick(Sender: TObject);
+    procedure ModelFXDeflateClick(Sender: TObject);
+    procedure ModelFXHeavySmoothClick(Sender: TObject);
+    procedure ModelFXUnsharpClick(Sender: TObject);
+    procedure ModelFXSmoothClick(Sender: TObject);
     procedure RenderModelClick(Sender: TObject);
     procedure RenderCubesClick(Sender: TObject);
     procedure Anim360TimerTimer(Sender: TObject);
@@ -358,6 +369,11 @@ begin
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
 
+procedure TFrm3DPReview.ModelFXUnsharpClick(Sender: TObject);
+begin
+   Actor.UnsharpModel;
+end;
+
 procedure TFrm3DPReview.AnimationTimerTimer(Sender: TObject);
 begin
    if FrmMain.Document.ActiveHVA^.Header.N_Frames = 1 then
@@ -592,6 +608,26 @@ begin
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
    Actor.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+end;
+
+procedure TFrm3DPReview.ModelFXHeavySmoothClick(Sender: TObject);
+begin
+   Actor.CubicSmoothModel;
+end;
+
+procedure TFrm3DPReview.ModelFXInflateClick(Sender: TObject);
+begin
+   Actor.InflateModel;
+end;
+
+procedure TFrm3DPReview.ModelFXDeflateClick(Sender: TObject);
+begin
+   Actor.DeflateModel;
+end;
+
+procedure TFrm3DPReview.ModelFXSmoothClick(Sender: TObject);
+begin
+   Actor.SmoothModel;
 end;
 
 procedure TFrm3DPReview.Purple1Click(Sender: TObject);

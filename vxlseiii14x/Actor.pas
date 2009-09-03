@@ -76,6 +76,12 @@ type
       procedure ChangeRemappable (_Colour : TColor); overload;
       procedure ChangeRemappable (_r,_g,_b : byte); overload;
       procedure ChangePalette (const _Filename: string);
+      // Actor Effects
+      procedure SmoothModel;
+      procedure CubicSmoothModel;
+      procedure UnsharpModel;
+      procedure InflateModel;
+      procedure DeflateModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -533,6 +539,77 @@ begin
       begin
          Models[i]^.ChangePalette(_Filename);
          Models[i]^.ChangeRemappable(FactionColour);
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+// Actor Effects
+procedure TActor.SmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.CubicSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.CubicSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.UnsharpModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.UnsharpModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.InflateModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.InflateModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.DeflateModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.DeflateModel;
       end;
    end;
    RequestUpdateWorld := true;

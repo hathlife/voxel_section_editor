@@ -4,7 +4,7 @@ interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      VoxelModelizer, BasicConstants;
+      VoxelModelizer, BasicConstants, Math;
 
 type
    TRenderProc = procedure of object;
@@ -23,6 +23,7 @@ type
          procedure SetRenderingProcedure;
          // Misc
          procedure OverrideTransparency;
+         function FindMeshCenter: TVector3f;
       public
          // These are the formal atributes
          Name : string;
@@ -64,10 +65,14 @@ type
          procedure SetNormalsType(_NormalsType: integer);
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
          procedure ForceColoursRendering;
-
          // Gets
          function IsOpened: boolean;
-
+         // Mesh Effects
+         procedure MeshSmooth;
+         procedure MeshCubicSmooth;
+         procedure MeshUnsharpMasking;
+         procedure MeshInflate;
+         procedure MeshDeflate;
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
          procedure RenderWithoutNormalsAndColours;
@@ -549,6 +554,291 @@ begin
    Opened := true;
 end;
 
+// Mesh Effects.
+procedure TMesh.MeshSmooth;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      Vertices[v].X := Vertices[v].X / HitCounter[v];
+      Vertices[v].Y := Vertices[v].Y / HitCounter[v];
+      Vertices[v].Z := Vertices[v].Z / HitCounter[v];
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.MeshCubicSmooth;
+const
+   ONE_THIRD = 1/3;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+      VertsHit[i,i] := true;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + Power((OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X),3);
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + Power((OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y),3);
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + Power((OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z),3);
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+      Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+      Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.MeshUnsharpMasking;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+      VertsHit[i,i] := true;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do the unsharp masking effect here.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
+      Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
+      Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.MeshDeflate;
+var
+   v : integer;
+   CenterPoint: TVector3f;
+   Temp: single;
+begin
+   CenterPoint := FindMeshCenter;
+
+    // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      Temp := (CenterPoint.X - Vertices[v].X) * 0.1;
+      if Temp > 0 then
+         Vertices[v].X := Vertices[v].X  + Power(Temp,2)
+      else
+         Vertices[v].X := Vertices[v].X - Power(Temp,2);
+      Temp := (CenterPoint.Y - Vertices[v].Y) * 0.1;
+      if Temp > 0 then
+         Vertices[v].Y := Vertices[v].Y + Power(Temp,2)
+      else
+         Vertices[v].Y := Vertices[v].Y - Power(Temp,2);
+      Temp := (CenterPoint.Z - Vertices[v].Z) * 0.1;
+      if Temp > 0 then
+         Vertices[v].Z := Vertices[v].Z + Power(Temp,2)
+      else
+         Vertices[v].Z := Vertices[v].Z - Power(Temp,2);
+   end;
+   ForceRefresh;
+end;
+
+procedure TMesh.MeshInflate;
+var
+   v : integer;
+   CenterPoint: TVector3f;
+   Temp: single;
+begin
+   CenterPoint := FindMeshCenter;
+
+    // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      Temp := (CenterPoint.X - Vertices[v].X) * 0.1;
+      if Temp > 0 then
+         Vertices[v].X := Vertices[v].X - Power(Temp,2)
+      else
+         Vertices[v].X := Vertices[v].X + Power(Temp,2);
+      Temp := (CenterPoint.Y - Vertices[v].Y) * 0.1;
+      if Temp > 0 then
+         Vertices[v].Y := Vertices[v].Y - Power(Temp,2)
+      else
+         Vertices[v].Y := Vertices[v].Y + Power(Temp,2);
+      Temp := (CenterPoint.Z - Vertices[v].Z) * 0.1;
+      if Temp > 0 then
+         Vertices[v].Z := Vertices[v].Z - Power(Temp,2)
+      else
+         Vertices[v].Z := Vertices[v].Z + Power(Temp,2);
+   end;
+   ForceRefresh;
+end;
+
+
 
 // Sets
 procedure TMesh.SetRenderingProcedure;
@@ -974,6 +1264,59 @@ begin
    TransparencyLevel := _TransparencyLevel;
    OverrideTransparency;
    ForceRefresh;
+end;
+
+function TMesh.FindMeshCenter: TVector3f;
+var
+   v : integer;
+   MaxPoint,MinPoint: TVector3f;
+begin
+   if High(Vertices) >= 0 then
+   begin
+      MinPoint.X := Vertices[0].X;
+      MinPoint.Y := Vertices[0].Y;
+      MinPoint.Z := Vertices[0].Z;
+      MaxPoint.X := Vertices[0].X;
+      MaxPoint.Y := Vertices[0].Y;
+      MaxPoint.Z := Vertices[0].Z;
+      // Find mesh scope.
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         if (Vertices[v].X < MinPoint.X) and (Vertices[v].X <> -NAN) then
+         begin
+            MinPoint.X := Vertices[v].X;
+         end;
+         if Vertices[v].X > MaxPoint.X then
+         begin
+            MaxPoint.X := Vertices[v].X;
+         end;
+         if (Vertices[v].Y < MinPoint.Y) and (Vertices[v].Y <> -NAN) then
+         begin
+            MinPoint.Y := Vertices[v].Y;
+         end;
+         if Vertices[v].Y > MaxPoint.Y then
+         begin
+            MaxPoint.Y := Vertices[v].Y;
+         end;
+         if (Vertices[v].Z < MinPoint.Z) and (Vertices[v].Z <> -NAN) then
+         begin
+            MinPoint.Z := Vertices[v].Z;
+         end;
+         if Vertices[v].Z > MaxPoint.Z then
+         begin
+            MaxPoint.Z := Vertices[v].Z;
+         end;
+      end;
+      Result.X := (MinPoint.X + MaxPoint.X) / 2;
+      Result.Y := (MinPoint.Y + MaxPoint.Y) / 2;
+      Result.Z := (MinPoint.Z + MaxPoint.Z) / 2;
+   end
+   else
+   begin
+      Result.X := 0;
+      Result.Y := 0;
+      Result.Z := 0;
+   end;
 end;
 
 end.

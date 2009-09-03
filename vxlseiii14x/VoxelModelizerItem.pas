@@ -20,6 +20,8 @@ type
 
    TVoxelModelizerItem = class
       private
+         // Resolution detection methods
+         function Is1PixelWall(const _VoxelMap: TVoxelMap; _MyClassification: single; _x,_y,_z: integer): boolean;
          // Colouring procedure
          procedure SetColour(const _VoxelMap, _ColourMap: TVoxelMap; const _Palette: TPalette; _MyClassification: single; _x,_y,_z: integer);
          // Classification procedures
@@ -51,6 +53,8 @@ var
    Cube : TNormals;
    v0x,v0y,v0z: integer;
    // Vertexes
+   NumVerts: integer;
+   InitialVertexList: TVertexesArray;
    VertexList: TVertexesArray;
    HasVertex: boolean;
    // Edges Distance
@@ -79,6 +83,19 @@ begin
    // Set the Colour from all faces that we'll generate here
    SetColour(_VoxelMap,_ColourMap,_Palette,MyClassification,_x,_y,_z);
 
+   // First, we check if the resolution is ok. If it is not, then we'll have to
+   // 'octree it'.
+   if (MyClassification = C_SEMI_SURFACE) or Is1PixelWall(_VoxelMap,MyClassification,_x,_y,_z) then
+   begin
+      // In both cases, we'll have to deal with 8 subparts of the region.
+
+   end
+   else
+   begin
+      // Resolution is fine. We'll deal with the whole region at once. 
+
+   end;
+
    // Check which vertices, edges and faces are in and out of the surface.
    BuildFilledVerts(_VoxelMap,_SurfaceMap,Cube,FilledVerts,MyClassification,_x,_y,_z,MySurface);
    BuildFilledEdges(_VoxelMap,_SurfaceMap,Cube,FilledEdges,MyClassification,_x,_y,_z,MySurface);
@@ -92,6 +109,7 @@ begin
    // Prepare our variables for the construction of vertexes.
    for i := 0 to 19 do
    begin
+      InitialVertexList[i] := 0;
       VertexList[i] := C_NOTCHECKED;
       for p := 0 to 19 do
       begin
@@ -99,6 +117,69 @@ begin
       end;
    end;
    HasVertex := false;
+
+   NumVerts := 0;
+   // construct the vertexes from edges.
+   for i := 0 to 11 do
+   begin
+      // if the two neighbor vertexes are different, then we have a point.
+      v1 := i * 2;
+      if FilledVerts[EdgeVertexes[v1]] <> FilledVerts[EdgeVertexes[v1+1]] then
+      begin
+         HasVertex := true;
+         VertexList[i+8] := 0;
+         InitialVertexList[i+8] := 1;
+      end
+      else // if they are equal then,
+      begin
+         // if the edge is different than these vertexes, we have a point.
+         if FilledEdges[i] <> FilledVerts[EdgeVertexes[v1]] then
+         begin
+            HasVertex := true;
+            VertexList[i+8] := 0;
+            InitialVertexList[i+8] := 1;
+         end;
+      end;
+   end;
+
+   // Construct the vertexes from vertexes.
+   for i := 0 to 7 do
+   begin
+      // if the 3 neighbor edges not equal, then we have a point.
+      v1 := i * 3;
+      if FilledVerts[i] then
+      begin
+         if ((not(FilledEdges[VertexNeighborEdges[v1]])) and (VertexList[VertexNeighborEdges[v1]+8] = 0)) or ((not(FilledEdges[VertexNeighborEdges[v1+1]])) and (VertexList[VertexNeighborEdges[v1+1]+8] = 0)) or ((not(FilledEdges[VertexNeighborEdges[v1+2]])) and (VertexList[VertexNeighborEdges[v1+2]+8] = 0)) then
+         begin
+            HasVertex := true;
+            VertexList[i] := 0;
+            InitialVertexList[i] := 1;
+//            ShowMessage('Modo 1');
+         end;
+      end
+      else
+      begin
+         if ((FilledEdges[VertexNeighborEdges[v1]]) and (VertexList[VertexNeighborEdges[v1]+8] <> 0)) or ((FilledEdges[VertexNeighborEdges[v1+1]]) and (VertexList[VertexNeighborEdges[v1+1]+8] <> 0)) or ((FilledEdges[VertexNeighborEdges[v1+2]]) and (VertexList[VertexNeighborEdges[v1+2]+8] <> 0)) then
+         begin
+            HasVertex := true;
+            VertexList[i] := 0;
+            InitialVertexList[i] := 1;
+            ShowMessage('Modo 2');
+         end;
+      end;
+   end;
+{
+   // add vertexes for faces that have no vertexes.
+   for i := 0 to 5 do
+   begin
+      // if this face has no vertexes and face is set, then, we set four points.
+      if FilledFaces[i] then
+      begin
+
+      end;
+   end;
+
+{
    // construct the vertexes from vertexes.
    for i := 0 to 7 do
    begin
@@ -134,19 +215,18 @@ begin
             end;
             inc(v1);
          end;
-{
          // Now we ensure that some of the edges will not be in the final result
-         e1 := i * 4;//12;
-         e2 := e1 + 4;//12;
+         e1 := i * 5;//12;
+         e2 := e1 + 5;//12;
          while e1 < e2 do
          begin
             EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,0],ForbiddenEdgesPerEdges[e1,1]] := C_FORBIDDEN;
             EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,1],ForbiddenEdgesPerEdges[e1,0]] := C_FORBIDDEN;
             inc(e1);
          end;
-}
       end;
    end;
+}
 
    // The lonely cube case... or those who only have faces and nothing else.
    if (not HasVertex) and (MyClassification = C_SURFACE) then
@@ -164,7 +244,7 @@ begin
       if VertexList[i] >= 0 then
       begin
          VertexList[i] := AddVertex(_VertexMap,v0x + VertexPoints[i,0], v0y + VertexPoints[i,1], v0z + VertexPoints[i,2],_TotalNumVertexes);
-
+         inc(NumVerts);
          // There is no edge with only one vertex.
          EdgesDistanceMatrix[i,i] := C_FORBIDDEN;
       end
@@ -178,7 +258,12 @@ begin
          end;
       end;
    end;
-
+{
+   if NumVerts < 3 then
+   begin
+      ShowMessage('Warning: Voxel at position ' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + ' has ' + IntToStr(NumVerts) + ' vertexes.');
+   end;
+}
    // Prepare FaceMap:
    FaceMap := T3DMap.Create(20,20,20);
    for i := 0 to 11 do
@@ -190,9 +275,8 @@ begin
       FaceMap.Map[ForbiddenFaces[i,2],ForbiddenFaces[i,0],ForbiddenFaces[i,1]] := C_FORBIDDEN;
       FaceMap.Map[ForbiddenFaces[i,2],ForbiddenFaces[i,1],ForbiddenFaces[i,0]] := C_FORBIDDEN;
    end;
-
-   // block faces according to the filled faces.
 {
+   // block faces according to the filled faces.
    for i := 0 to 5 do
    begin
       if FilledFaces[i] then
@@ -226,6 +310,30 @@ begin
    Faces.Free;
    inherited Destroy;
 end;
+
+function TVoxelModelizerItem.Is1PixelWall(const _VoxelMap: TVoxelMap; _MyClassification: single; _x,_y,_z: integer): boolean;
+begin
+   // This is restricted for surfaces.
+   if (_MyClassification = C_SURFACE) then
+   begin
+      if (_VoxelMap.MapSafe[_x-1,_y,_z] < C_SURFACE) and (_VoxelMap.MapSafe[_x+1,_y,_z] < C_SURFACE) then
+      begin
+         Result := true;
+         exit;
+      end;
+      if (_VoxelMap.MapSafe[_x,_y-1,_z] < C_SURFACE) and (_VoxelMap.MapSafe[_x,_y+1,_z] < C_SURFACE) then
+      begin
+         Result := true;
+         exit;
+      end;
+      if (_VoxelMap.MapSafe[_x,_y,_z-1] < C_SURFACE) and (_VoxelMap.MapSafe[_x,_y,_z+1] < C_SURFACE) then
+      begin
+         Result := true;
+         exit;
+      end;
+   end;
+end;
+
 
 // Check which vertexes are inside or outside the surface.
 procedure TVoxelModelizerItem.BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledVerts: TFilledVerts; _MyClassification: single; _x,_y,_z,_MySurface: integer);
@@ -387,8 +495,6 @@ end;
 // - 3) Draw each edge in the edge in the hashing and check for interceptions.
 // - 4) Combine linked vertexes from the surviving edges to build the faces.
 procedure TVoxelModelizerItem.BuildFaces(var _DistanceMatrix: TEdgesMatrix; var _FaceMap: T3DMap; const _VertexList: TVertexesArray);
-const
-   RESOLUTION = 1;
 var
    QueueDist: C2DPointOrderList;
    i, j, k, l : integer;
@@ -423,6 +529,7 @@ begin
    end;
    // So, there we go, with all distances and ordered edges in 4 lists.
    // Let's check the edges that intercept other edges and cut them.
+{
    if not QueueDist.IsEmpty then
    begin
       QueueDist.GoToFirstElement;
@@ -447,6 +554,7 @@ begin
          QueueDist.GoToNextElement;
       end;
    end;
+}
    // So, we have all edges. Let's build faces out of it and write them.
    if not QueueDist.IsEmpty then
    begin
