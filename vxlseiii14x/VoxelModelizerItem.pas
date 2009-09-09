@@ -22,12 +22,16 @@ type
       private
          // Resolution detection methods
          function Is1PixelWall(const _VoxelMap: TVoxelMap; _MyClassification: single; _x,_y,_z: integer): boolean;
+         function GetNeighboorhodMap(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _SurfaceNeighboorMap: T3DIntGrid; _x,_y,_z: integer): T3DMap;
+         function GetNeighboorhodOctreeMap(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _SurfaceNeighboorMap: T3DIntGrid; _x,_y,_z: integer): T3DMap;
          // Colouring procedure
          procedure SetColour(const _VoxelMap, _ColourMap: TVoxelMap; const _Palette: TPalette; _MyClassification: single; _x,_y,_z: integer);
          // Classification procedures
-         procedure BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledVerts: TFilledVerts; _MyClassification: single; _x,_y,_z,_MySurface: integer);
-         procedure BuildFilledEdges(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_MySurface: integer);
-         procedure BuildFilledFaces(const _VoxelMap: TVoxelMap; const Cube : TNormals; var _FilledFaces: TFilledFaces; _MyClassification: single; _x,_y,_z: integer);
+         procedure BuildFilledVerts(const _Map: T3DMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledVerts: TFilledVerts; _MyClassification: single; _x,_y,_z,_MySurface: integer);
+         procedure BuildFilledEdges(const _Map: T3DMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_MySurface: integer);
+         procedure BuildFilledFaces(const _Map: T3DMap; const Cube : TNormals; var _FilledFaces: TFilledFaces; _MyClassification: single; _x,_y,_z: integer);
+         // Vertex Generation procedure
+//         procedure FindVertexes(const _NeighboorMap: T3DMap; const _NeighboorSurfaceMap: T3DIntGrid; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_MySurface: integer);
          // Face construction procedures
          procedure BuildFaces(var _DistanceMatrix: TEdgesMatrix;  var _FaceMap: T3DMap; const _VertexList: TVertexesArray);
          function IsEdgePaintable( _P1, _P2, _P3, _P4: integer):boolean;
@@ -50,13 +54,15 @@ implementation
 constructor TVoxelModelizerItem.Create(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _VertexMap : T3DIntGrid; _x, _y, _z : integer; var _TotalNumVertexes: integer; const _Palette: TPalette; const _ColourMap: TVoxelMap);
 var
    v1,v2,e1,e2,p,i : integer;
-   Cube : TNormals;
    v0x,v0y,v0z: integer;
    // Vertexes
    NumVerts: integer;
-   InitialVertexList: TVertexesArray;
-   VertexList: TVertexesArray;
+   VertexList: array of TAVector3i;
+   VertexPositions: array of auint32;
    HasVertex: boolean;
+   // Neighboorhod
+   NeighboorMap : T3DMap;
+   NeighboorSurfaceMap: T3DIntGrid;
    // Edges Distance
    EdgesDistanceMatrix : TEdgesMatrix;
    // FaceMap
@@ -64,13 +70,8 @@ var
    // Situation
    MyClassification: single;
    MySurface: integer;
-   // Region as a cube
-   FilledVerts: TFilledVerts;
-   FilledEdges: TFilledEdges;
-   FilledFaces: TFilledFaces;
 begin
    // Reset basic variables.
-   Cube := TNormals.Create(6);
    Faces := CFaceQueue.Create;
    // Semi surface or surface?
    MyClassification := _VoxelMap.MapSafe[_x,_y,_z];
@@ -85,185 +86,19 @@ begin
 
    // First, we check if the resolution is ok. If it is not, then we'll have to
    // 'octree it'.
-   if (MyClassification = C_SEMI_SURFACE) or Is1PixelWall(_VoxelMap,MyClassification,_x,_y,_z) then
+   if (MyClassification = C_SEMI_SURFACE) then
+      exit; // deal with it later.
+   if Is1PixelWall(_VoxelMap,MyClassification,_x,_y,_z) then
    begin
-      // In both cases, we'll have to deal with 8 subparts of the region.
-
+      // We'll have to deal with 8 subparts of the region.
+      NeighboorMap := GetNeighboorhodOctreeMap(_VoxelMap,_SurfaceMap,NeighboorSurfaceMap,_x,_y,_z);
    end
    else
    begin
-      // Resolution is fine. We'll deal with the whole region at once. 
-
+      // Resolution is fine. We'll deal with the whole region at once.
+      NeighboorMap := GetNeighboorhodMap(_VoxelMap,_SurfaceMap,NeighboorSurfaceMap,_x,_y,_z);
    end;
 
-   // Check which vertices, edges and faces are in and out of the surface.
-   BuildFilledVerts(_VoxelMap,_SurfaceMap,Cube,FilledVerts,MyClassification,_x,_y,_z,MySurface);
-   BuildFilledEdges(_VoxelMap,_SurfaceMap,Cube,FilledEdges,MyClassification,_x,_y,_z,MySurface);
-   BuildFilledFaces(_VoxelMap,Cube,FilledFaces,MyClassification,_x,_y,_z);
-
-   // Let's analyse the situation for each edge and add the vertices.
-   // First, split the cube into 6 faces. Each face has 4 edges.
-   // FaceVerts has (topright, bottomright, bottomleft, topleft) for each face
-   // FaceEdges has (right, bottom, left, top) for each face.
-
-   // Prepare our variables for the construction of vertexes.
-   for i := 0 to 19 do
-   begin
-      InitialVertexList[i] := 0;
-      VertexList[i] := C_NOTCHECKED;
-      for p := 0 to 19 do
-      begin
-         EdgesDistanceMatrix[i,p] := C_NOTCHECKED;
-      end;
-   end;
-   HasVertex := false;
-
-   NumVerts := 0;
-   // construct the vertexes from edges.
-   for i := 0 to 11 do
-   begin
-      // if the two neighbor vertexes are different, then we have a point.
-      v1 := i * 2;
-      if FilledVerts[EdgeVertexes[v1]] <> FilledVerts[EdgeVertexes[v1+1]] then
-      begin
-         HasVertex := true;
-         VertexList[i+8] := 0;
-         InitialVertexList[i+8] := 1;
-      end
-      else // if they are equal then,
-      begin
-         // if the edge is different than these vertexes, we have a point.
-         if FilledEdges[i] <> FilledVerts[EdgeVertexes[v1]] then
-         begin
-            HasVertex := true;
-            VertexList[i+8] := 0;
-            InitialVertexList[i+8] := 1;
-         end;
-      end;
-   end;
-
-   // Construct the vertexes from vertexes.
-   for i := 0 to 7 do
-   begin
-      // if the 3 neighbor edges not equal, then we have a point.
-      v1 := i * 3;
-      if FilledVerts[i] then
-      begin
-         if ((not(FilledEdges[VertexNeighborEdges[v1]])) and (VertexList[VertexNeighborEdges[v1]+8] = 0)) or ((not(FilledEdges[VertexNeighborEdges[v1+1]])) and (VertexList[VertexNeighborEdges[v1+1]+8] = 0)) or ((not(FilledEdges[VertexNeighborEdges[v1+2]])) and (VertexList[VertexNeighborEdges[v1+2]+8] = 0)) then
-         begin
-            HasVertex := true;
-            VertexList[i] := 0;
-            InitialVertexList[i] := 1;
-//            ShowMessage('Modo 1');
-         end;
-      end
-      else
-      begin
-         if ((FilledEdges[VertexNeighborEdges[v1]]) and (VertexList[VertexNeighborEdges[v1]+8] <> 0)) or ((FilledEdges[VertexNeighborEdges[v1+1]]) and (VertexList[VertexNeighborEdges[v1+1]+8] <> 0)) or ((FilledEdges[VertexNeighborEdges[v1+2]]) and (VertexList[VertexNeighborEdges[v1+2]+8] <> 0)) then
-         begin
-            HasVertex := true;
-            VertexList[i] := 0;
-            InitialVertexList[i] := 1;
-            ShowMessage('Modo 2');
-         end;
-      end;
-   end;
-{
-   // add vertexes for faces that have no vertexes.
-   for i := 0 to 5 do
-   begin
-      // if this face has no vertexes and face is set, then, we set four points.
-      if FilledFaces[i] then
-      begin
-
-      end;
-   end;
-
-{
-   // construct the vertexes from vertexes.
-   for i := 0 to 7 do
-   begin
-      if FilledVerts[i] then
-      begin
-         HasVertex := true;
-         VertexList[i] := C_FORBIDDEN;
-         // set the neighbours as potential vertexes.
-         v1 := i * 3;
-         v2 := v1 + 3;
-         while v1 < v2 do
-         begin
-            VertexList[VertexNeighbors[v1]] := 0;
-            inc(v1);
-         end;
-      end;
-   end;
-   // construct the vertexes from edges.
-   for i := 0 to 11 do
-   begin
-      if FilledEdges[i] then
-      begin
-         HasVertex := true;
-         VertexList[i+8] := C_FORBIDDEN;
-         // try to create vertexes in the neigbours if possible.
-         v1 := i * 6;
-         v2 := v1 + 6;
-         while v1 < v2 do
-         begin
-            if VertexList[EdgeVertexesList[v1]] <> C_FORBIDDEN then
-            begin
-               VertexList[EdgeVertexesList[v1]] := 0;
-            end;
-            inc(v1);
-         end;
-         // Now we ensure that some of the edges will not be in the final result
-         e1 := i * 5;//12;
-         e2 := e1 + 5;//12;
-         while e1 < e2 do
-         begin
-            EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,0],ForbiddenEdgesPerEdges[e1,1]] := C_FORBIDDEN;
-            EdgesDistanceMatrix[ForbiddenEdgesPerEdges[e1,1],ForbiddenEdgesPerEdges[e1,0]] := C_FORBIDDEN;
-            inc(e1);
-         end;
-      end;
-   end;
-}
-
-   // The lonely cube case... or those who only have faces and nothing else.
-   if (not HasVertex) and (MyClassification = C_SURFACE) then
-   begin
-      // Force a cube.
-      for i := 0 to 7 do
-      begin
-         VertexList[i] := 0;
-      end;
-   end;
-
-   // Add all vertexes
-   for i := 0 to 19 do
-   begin
-      if VertexList[i] >= 0 then
-      begin
-         VertexList[i] := AddVertex(_VertexMap,v0x + VertexPoints[i,0], v0y + VertexPoints[i,1], v0z + VertexPoints[i,2],_TotalNumVertexes);
-         inc(NumVerts);
-         // There is no edge with only one vertex.
-         EdgesDistanceMatrix[i,i] := C_FORBIDDEN;
-      end
-      else // if the vertex does not exist, there will be no edges for it.
-      begin
-         VertexList[i] := C_FORBIDDEN;
-         for p := 0 to 19 do
-         begin
-            EdgesDistanceMatrix[i,p] := C_FORBIDDEN;
-            EdgesDistanceMatrix[p,i] := C_FORBIDDEN;
-         end;
-      end;
-   end;
-{
-   if NumVerts < 3 then
-   begin
-      ShowMessage('Warning: Voxel at position ' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + ' has ' + IntToStr(NumVerts) + ' vertexes.');
-   end;
-}
    // Prepare FaceMap:
    FaceMap := T3DMap.Create(20,20,20);
    for i := 0 to 11 do
@@ -275,34 +110,11 @@ begin
       FaceMap.Map[ForbiddenFaces[i,2],ForbiddenFaces[i,0],ForbiddenFaces[i,1]] := C_FORBIDDEN;
       FaceMap.Map[ForbiddenFaces[i,2],ForbiddenFaces[i,1],ForbiddenFaces[i,0]] := C_FORBIDDEN;
    end;
-{
-   // block faces according to the filled faces.
-   for i := 0 to 5 do
-   begin
-      if FilledFaces[i] then
-      begin
-         // try to create vertexes in the neigbours if possible.
-         v1 := i * 53;
-         v2 := v1 + 53;
-         while v1 < v2 do
-         begin
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,0],ForbiddenFacesPerFaces[v1,1],ForbiddenFacesPerFaces[v1,2]] := C_FORBIDDEN;
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,0],ForbiddenFacesPerFaces[v1,2],ForbiddenFacesPerFaces[v1,1]] := C_FORBIDDEN;
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,1],ForbiddenFacesPerFaces[v1,0],ForbiddenFacesPerFaces[v1,2]] := C_FORBIDDEN;
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,1],ForbiddenFacesPerFaces[v1,2],ForbiddenFacesPerFaces[v1,0]] := C_FORBIDDEN;
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,2],ForbiddenFacesPerFaces[v1,0],ForbiddenFacesPerFaces[v1,1]] := C_FORBIDDEN;
-            FaceMap.Map[ForbiddenFacesPerFaces[v1,2],ForbiddenFacesPerFaces[v1,1],ForbiddenFacesPerFaces[v1,0]] := C_FORBIDDEN;
-            inc(v1);
-         end;
-      end;
-   end;
-}
 
    // Now we construct the faces.
-   BuildFaces(EdgesDistanceMatrix,FaceMap,VertexList);
+//   BuildFaces(EdgesDistanceMatrix,FaceMap,VertexList);
 
    FaceMap.Free;
-   Cube.Free;
 end;
 
 destructor TVoxelModelizerItem.Destroy;
@@ -334,9 +146,148 @@ begin
    end;
 end;
 
+function TVoxelModelizerItem.GetNeighboorhodMap(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _SurfaceNeighboorMap: T3DIntGrid; _x,_y,_z: integer): T3DMap;
+var
+   x,y,z: integer;
+begin
+   Result := T3DMap.Create(3,3,3);
+   SetLength(_SurfaceNeighboorMap,3,3,3);
+   for x := 0 to 2 do
+      for y := 0 to 2 do
+         for z := 0 to 2 do
+         begin
+            Result.MapSafe[x,y,z] := Round(_VoxelMap.MapSafe[_x+x-1,_y+y-1,_z+z-1]);
+            _SurfaceNeighboorMap[x,y,z] := _SurfaceMap[_x+x-1,_y+y-1,_z+z-1];
+         end;
+end;
+
+function TVoxelModelizerItem.GetNeighboorhodOctreeMap(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; var _SurfaceNeighboorMap: T3DIntGrid; _x,_y,_z: integer): T3DMap;
+var
+   x,y,z: integer;
+begin
+   Result := T3DMap.Create(4,4,4);
+   SetLength(_SurfaceNeighboorMap,4,4,4);
+   // The vertex based borders
+   Result.MapSafe[0,0,0] := Round(_VoxelMap.MapSafe[_x-1,_y-1,_z-1]);
+   Result.MapSafe[0,0,3] := Round(_VoxelMap.MapSafe[_x-1,_y-1,_z+1]);
+   Result.MapSafe[0,3,0] := Round(_VoxelMap.MapSafe[_x-1,_y+1,_z-1]);
+   Result.MapSafe[0,3,3] := Round(_VoxelMap.MapSafe[_x-1,_y+1,_z+1]);
+   Result.MapSafe[3,0,0] := Round(_VoxelMap.MapSafe[_x+1,_y-1,_z-1]);
+   Result.MapSafe[3,0,3] := Round(_VoxelMap.MapSafe[_x+1,_y-1,_z+1]);
+   Result.MapSafe[3,3,0] := Round(_VoxelMap.MapSafe[_x+1,_y+1,_z-1]);
+   Result.MapSafe[3,3,3] := Round(_VoxelMap.MapSafe[_x+1,_y+1,_z+1]);
+   _SurfaceNeighboorMap[0,0,0] := _SurfaceMap[_x-1,_y-1,_z-1];
+   _SurfaceNeighboorMap[0,0,3] := _SurfaceMap[_x-1,_y-1,_z+1];
+   _SurfaceNeighboorMap[0,3,0] := _SurfaceMap[_x-1,_y+1,_z-1];
+   _SurfaceNeighboorMap[0,3,3] := _SurfaceMap[_x-1,_y+1,_z+1];
+   _SurfaceNeighboorMap[3,0,0] := _SurfaceMap[_x+1,_y-1,_z-1];
+   _SurfaceNeighboorMap[3,0,3] := _SurfaceMap[_x+1,_y-1,_z+1];
+   _SurfaceNeighboorMap[3,3,0] := _SurfaceMap[_x+1,_y+1,_z-1];
+   _SurfaceNeighboorMap[3,3,3] := _SurfaceMap[_x+1,_y+1,_z+1];
+   // The edge based borders
+   Result.MapSafe[0,0,1] := Round(_VoxelMap.MapSafe[_x-1,_y-1,_z]);
+   Result.MapSafe[0,0,2] := Round(_VoxelMap.MapSafe[_x-1,_y-1,_z]);
+   Result.MapSafe[0,1,0] := Round(_VoxelMap.MapSafe[_x-1,_y,_z-1]);
+   Result.MapSafe[0,2,0] := Round(_VoxelMap.MapSafe[_x-1,_y,_z-1]);
+   Result.MapSafe[1,0,0] := Round(_VoxelMap.MapSafe[_x,_y-1,_z-1]);
+   Result.MapSafe[2,0,0] := Round(_VoxelMap.MapSafe[_x,_y-1,_z-1]);
+   Result.MapSafe[0,1,3] := Round(_VoxelMap.MapSafe[_x-1,_y,_z+1]);
+   Result.MapSafe[0,2,3] := Round(_VoxelMap.MapSafe[_x-1,_y,_z+1]);
+   Result.MapSafe[1,0,3] := Round(_VoxelMap.MapSafe[_x,_y-1,_z+1]);
+   Result.MapSafe[2,0,3] := Round(_VoxelMap.MapSafe[_x,_y-1,_z+1]);
+   Result.MapSafe[0,3,1] := Round(_VoxelMap.MapSafe[_x-1,_y+1,_z]);
+   Result.MapSafe[0,3,2] := Round(_VoxelMap.MapSafe[_x-1,_y+1,_z]);
+   Result.MapSafe[1,3,0] := Round(_VoxelMap.MapSafe[_x,_y+1,_z-1]);
+   Result.MapSafe[2,3,0] := Round(_VoxelMap.MapSafe[_x,_y+1,_z-1]);
+   Result.MapSafe[1,3,3] := Round(_VoxelMap.MapSafe[_x,_y+1,_z+1]);
+   Result.MapSafe[2,3,3] := Round(_VoxelMap.MapSafe[_x,_y+1,_z+1]);
+   Result.MapSafe[3,1,0] := Round(_VoxelMap.MapSafe[_x+1,_y,_z-1]);
+   Result.MapSafe[3,2,0] := Round(_VoxelMap.MapSafe[_x+1,_y,_z-1]);
+   Result.MapSafe[3,0,1] := Round(_VoxelMap.MapSafe[_x+1,_y-1,_z]);
+   Result.MapSafe[3,0,2] := Round(_VoxelMap.MapSafe[_x+1,_y-1,_z]);
+   Result.MapSafe[3,1,3] := Round(_VoxelMap.MapSafe[_x+1,_y,_z+1]);
+   Result.MapSafe[3,2,3] := Round(_VoxelMap.MapSafe[_x+1,_y,_z+1]);
+   Result.MapSafe[3,3,1] := Round(_VoxelMap.MapSafe[_x+1,_y+1,_z]);
+   Result.MapSafe[3,3,2] := Round(_VoxelMap.MapSafe[_x+1,_y+1,_z]);
+   _SurfaceNeighboorMap[0,0,1] := _SurfaceMap[_x-1,_y-1,_z] and $F0F0F;
+   _SurfaceNeighboorMap[0,0,2] := _SurfaceMap[_x-1,_y-1,_z] and $FF0F0;
+   _SurfaceNeighboorMap[0,1,0] := _SurfaceMap[_x-1,_y,_z-1] and $AEECC;
+   _SurfaceNeighboorMap[0,2,0] := _SurfaceMap[_x-1,_y,_z-1] and $5DD33;
+   _SurfaceNeighboorMap[1,0,0] := _SurfaceMap[_x,_y-1,_z-1] and $37755;
+   _SurfaceNeighboorMap[2,0,0] := _SurfaceMap[_x,_y-1,_z-1] and $ABBAA;
+   _SurfaceNeighboorMap[0,1,3] := _SurfaceMap[_x-1,_y,_z+1] and $AEECC;
+   _SurfaceNeighboorMap[0,2,3] := _SurfaceMap[_x-1,_y,_z+1] and $5DD33;
+   _SurfaceNeighboorMap[1,0,3] := _SurfaceMap[_x,_y-1,_z+1] and $37755;
+   _SurfaceNeighboorMap[2,0,3] := _SurfaceMap[_x,_y-1,_z+1] and $ABBAA;
+   _SurfaceNeighboorMap[0,3,1] := _SurfaceMap[_x-1,_y+1,_z] and $F0F0F;
+   _SurfaceNeighboorMap[0,3,2] := _SurfaceMap[_x-1,_y+1,_z] and $FF0F0;
+   _SurfaceNeighboorMap[1,3,0] := _SurfaceMap[_x,_y+1,_z-1] and $37755;
+   _SurfaceNeighboorMap[2,3,0] := _SurfaceMap[_x,_y+1,_z-1] and $ABBAA;
+   _SurfaceNeighboorMap[1,3,3] := _SurfaceMap[_x,_y+1,_z+1] and $37755;
+   _SurfaceNeighboorMap[2,3,3] := _SurfaceMap[_x,_y+1,_z+1] and $ABBAA;
+   _SurfaceNeighboorMap[3,1,0] := _SurfaceMap[_x+1,_y,_z-1] and $AEECC;
+   _SurfaceNeighboorMap[3,2,0] := _SurfaceMap[_x+1,_y,_z-1] and $5DD33;
+   _SurfaceNeighboorMap[3,0,1] := _SurfaceMap[_x+1,_y-1,_z] and $F0F0F;
+   _SurfaceNeighboorMap[3,0,2] := _SurfaceMap[_x+1,_y-1,_z] and $FF0F0;
+   _SurfaceNeighboorMap[3,1,3] := _SurfaceMap[_x+1,_y,_z+1] and $AEECC;
+   _SurfaceNeighboorMap[3,2,3] := _SurfaceMap[_x+1,_y,_z+1] and $5DD33;
+   _SurfaceNeighboorMap[3,3,1] := _SurfaceMap[_x+1,_y+1,_z] and $F0F0F;
+   _SurfaceNeighboorMap[3,3,2] := _SurfaceMap[_x+1,_y+1,_z] and $FF0F0;
+   // The face based borders
+   for y := 1 to 2 do
+      for z := 1 to 2 do
+         Result.MapSafe[0,y,z] := Round(_VoxelMap.MapSafe[_x-1,_y,_z]);
+   _SurfaceNeighboorMap[0,1,1] := _SurfaceMap[_x-1,_y,_z] and $A0E0C;
+   _SurfaceNeighboorMap[0,1,2] := _SurfaceMap[_x-1,_y,_z] and $AE0C0;
+   _SurfaceNeighboorMap[0,2,1] := _SurfaceMap[_x-1,_y,_z] and $50D03;
+   _SurfaceNeighboorMap[0,2,2] := _SurfaceMap[_x-1,_y,_z] and $5D030;
+   for y := 1 to 2 do
+      for z := 1 to 2 do
+         Result.MapSafe[3,y,z] := Round(_VoxelMap.MapSafe[_x+1,_y,_z]);
+   _SurfaceNeighboorMap[3,1,1] := _SurfaceMap[_x+1,_y,_z] and $A0E0C;
+   _SurfaceNeighboorMap[3,1,2] := _SurfaceMap[_x+1,_y,_z] and $AE0C0;
+   _SurfaceNeighboorMap[3,2,1] := _SurfaceMap[_x+1,_y,_z] and $50D03;
+   _SurfaceNeighboorMap[3,2,2] := _SurfaceMap[_x+1,_y,_z] and $5D030;
+   for x := 1 to 2 do
+      for z := 1 to 2 do
+         Result.MapSafe[x,0,z] := Round(_VoxelMap.MapSafe[_x,_y-1,_z]);
+   _SurfaceNeighboorMap[1,0,1] := _SurfaceMap[_x,_y-1,_z] and $30705;
+   _SurfaceNeighboorMap[1,0,2] := _SurfaceMap[_x,_y-1,_z] and $37050;
+   _SurfaceNeighboorMap[2,0,1] := _SurfaceMap[_x,_y-1,_z] and $C0B0A;
+   _SurfaceNeighboorMap[2,0,2] := _SurfaceMap[_x,_y-1,_z] and $CB0A0;
+   for x := 1 to 2 do
+      for z := 1 to 2 do
+         Result.MapSafe[x,3,z] := Round(_VoxelMap.MapSafe[_x,_y+1,_z]);
+   _SurfaceNeighboorMap[1,3,1] := _SurfaceMap[_x,_y+1,_z] and $30705;
+   _SurfaceNeighboorMap[1,3,2] := _SurfaceMap[_x,_y+1,_z] and $37050;
+   _SurfaceNeighboorMap[2,3,1] := _SurfaceMap[_x,_y+1,_z] and $C0B0A;
+   _SurfaceNeighboorMap[2,3,2] := _SurfaceMap[_x,_y+1,_z] and $CB0A0;
+   for x := 1 to 2 do
+      for y := 1 to 2 do
+         Result.MapSafe[x,y,0] := Round(_VoxelMap.MapSafe[_x,_y,_z-1]);
+   _SurfaceNeighboorMap[1,1,0] := _SurfaceMap[_x,_y,_z-1] and $26644;
+   _SurfaceNeighboorMap[1,2,0] := _SurfaceMap[_x,_y,_z-1] and $15511;
+   _SurfaceNeighboorMap[2,1,0] := _SurfaceMap[_x,_y,_z-1] and $8AA88;
+   _SurfaceNeighboorMap[2,2,0] := _SurfaceMap[_x,_y,_z-1] and $49922;
+   for x := 1 to 2 do
+      for y := 1 to 2 do
+         Result.MapSafe[x,y,3] := Round(_VoxelMap.MapSafe[_x,_y,_z+1]);
+   _SurfaceNeighboorMap[1,1,3] := _SurfaceMap[_x,_y,_z+1] and $26644;
+   _SurfaceNeighboorMap[1,2,3] := _SurfaceMap[_x,_y,_z+1] and $15511;
+   _SurfaceNeighboorMap[2,1,3] := _SurfaceMap[_x,_y,_z+1] and $8AA88;
+   _SurfaceNeighboorMap[2,2,3] := _SurfaceMap[_x,_y,_z+1] and $49922;
+   // The center
+   for x := 1 to 2 do
+      for y := 1 to 2 do
+         for z := 1 to 2 do
+         begin
+            Result.MapSafe[x,y,z] := Round(_VoxelMap.MapSafe[_x,_y,_z]);
+         end;
+end;
+
 
 // Check which vertexes are inside or outside the surface.
-procedure TVoxelModelizerItem.BuildFilledVerts(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledVerts: TFilledVerts; _MyClassification: single; _x,_y,_z,_MySurface: integer);
+procedure TVoxelModelizerItem.BuildFilledVerts(const _Map: T3DMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledVerts: TFilledVerts; _MyClassification: single; _x,_y,_z,_MySurface: integer);
 var
    i,imax,v : integer;
    CheckPoint : TVector3f;
@@ -367,7 +318,7 @@ begin
          Point.X := _x + Round(CheckPoint.X);
          Point.Y := _y + Round(CheckPoint.Y);
          Point.Z := _z + Round(CheckPoint.Z);
-         VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+         VoxelClassification := _Map.MapSafe[Point.X,Point.Y,Point.Z];
          _FilledVerts[v] := _FilledVerts[v] and (VoxelClassification >= C_SURFACE);
          // if the neighboor is not a surface, check for semi-surface.
          if not _FilledVerts[v] then
@@ -392,7 +343,7 @@ begin
 end;
 
 // Check which edges are inside or outside the surface.
-procedure TVoxelModelizerItem.BuildFilledEdges(const _VoxelMap: TVoxelMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_MySurface: integer);
+procedure TVoxelModelizerItem.BuildFilledEdges(const _Map: T3DMap; const _SurfaceMap: T3DIntGrid; const Cube : TNormals; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_MySurface: integer);
 var
    i,imax,e : integer;
    CheckPoint : TVector3f;
@@ -422,7 +373,7 @@ begin
          Point.X := _x + Round(CheckPoint.X);
          Point.Y := _y + Round(CheckPoint.Y);
          Point.Z := _z + Round(CheckPoint.Z);
-         VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+         VoxelClassification := _Map.MapSafe[Point.X,Point.Y,Point.Z];
          _FilledEdges[e] := _FilledEdges[e] and (VoxelClassification >= C_SURFACE);
          // if the neighboor is not a surface, check for semi-surface.
          if not _FilledEdges[e] then
@@ -447,7 +398,7 @@ begin
 end;
 
 // Check which faces are inside or outside the surface.
-procedure TVoxelModelizerItem.BuildFilledFaces(const _VoxelMap: TVoxelMap; const Cube : TNormals; var _FilledFaces: TFilledFaces; _MyClassification: single; _x,_y,_z: integer);
+procedure TVoxelModelizerItem.BuildFilledFaces(const _Map: T3DMap; const Cube : TNormals; var _FilledFaces: TFilledFaces; _MyClassification: single; _x,_y,_z: integer);
 var
    f : integer;
    CheckPoint : TVector3f;
@@ -464,7 +415,7 @@ begin
          Point.X := _x + Round(CheckPoint.X);
          Point.Y := _y + Round(CheckPoint.Y);
          Point.Z := _z + Round(CheckPoint.Z);
-         VoxelClassification := _VoxelMap.MapSafe[Point.X,Point.Y,Point.Z];
+         VoxelClassification := _Map.MapSafe[Point.X,Point.Y,Point.Z];
          _FilledFaces[f] := VoxelClassification >= C_SURFACE;
       end;
    end
@@ -1152,4 +1103,70 @@ begin
    end;
 end;
 
+{
+procedure TVoxelModelizerItem.FindVertexes(const _NeighboorMap: T3DMap; const _NeighboorSurfaceMap: T3DIntGrid; var _VertsList: TAVector3i; var _VertsPositions: auint32; var _FilledEdges: TFilledEdges; _MyClassification: single; _x,_y,_z,_v0x,_v0y,_v0z,_MySurface: integer);
+var
+   i: integer;
+   Cube : TNormals;
+   // Region as a cube
+   FilledVerts: TFilledVerts;
+   FilledEdges: TFilledEdges;
+   FilledFaces: TFilledFaces;
+   NumVerts,v1 : integer;
+begin
+   Cube := TNormals.Create(6);
+
+   // Check which vertices, edges and faces are in and out of the surface.
+   BuildFilledVerts(_NeighboorMap,_NeighboorSurfaceMap,Cube,FilledVerts,_MyClassification,_x,_y,_z,_MySurface);
+   BuildFilledEdges(_NeighboorMap,_NeighboorSurfaceMap,Cube,FilledEdges,_MyClassification,_x,_y,_z,_MySurface);
+   BuildFilledFaces(_NeighboorMap,Cube,FilledFaces,_MyClassification,_x,_y,_z);
+
+   // Let's analyse the situation for each edge and add the vertices.
+   // First, split the cube into 6 faces. Each face has 4 edges.
+   // FaceVerts has (topright, bottomright, bottomleft, topleft) for each face
+   // FaceEdges has (right, bottom, left, top) for each face.
+
+   NumVerts := 0;
+{
+   // construct the vertexes from edges.
+   for i := 0 to 11 do
+   begin
+      // if the two neighbor vertexes are different, then we have a point.
+      v1 := i * 2;
+      if FilledVerts[EdgeVertexes[v1]] <> FilledVerts[EdgeVertexes[v1+1]] then
+      begin
+         VertexList[i] := 0;
+      end
+      else // if they are equal then,
+      begin
+         // if the edge is different than these vertexes, we have a point.
+         if FilledEdges[i] <> FilledVerts[EdgeVertexes[v1]] then
+         begin
+            VertexList[i+8] := 0;
+         end;
+      end;
+   end;
+
+   // Add all vertexes
+   for i := 0 to 19 do
+   begin
+      if VertexList[i] >= 0 then
+      begin
+         VertexList[i] := AddVertex(_VertexMap,v0x + VertexPoints[i,0], v0y + VertexPoints[i,1], v0z + VertexPoints[i,2],_TotalNumVertexes);
+         inc(NumVerts);
+      end
+      else // if the vertex does not exist, there will be no edges for it.
+      begin
+         VertexList[i] := C_FORBIDDEN;
+      end;
+   end;
+{
+   if NumVerts < 3 then
+   begin
+      ShowMessage('Warning: Voxel at position ' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + ' has ' + IntToStr(NumVerts) + ' vertexes.');
+   end;
+
+   Cube.Free;
+end;
+}
 end.

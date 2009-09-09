@@ -71,7 +71,8 @@ uses
   ClassFaceQueue in 'ClassFaceQueue.pas',
   ClassVertexQueue in 'ClassVertexQueue.pas',
   Class2DPointOrderList in 'Class2DPointOrderList.pas',
-  Class3DPointsDetector in 'Class3DPointsDetector.pas';
+  Class3DPointsDetector in 'Class3DPointsDetector.pas',
+  ThreeDSFile in 'ThreeDSFile.pas';
 
 {$R *.res}
 

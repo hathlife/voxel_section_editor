@@ -67,12 +67,14 @@ type
          procedure ForceColoursRendering;
          // Gets
          function IsOpened: boolean;
+
          // Mesh Effects
          procedure MeshSmooth;
          procedure MeshCubicSmooth;
          procedure MeshUnsharpMasking;
          procedure MeshInflate;
          procedure MeshDeflate;
+
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
          procedure RenderWithoutNormalsAndColours;
@@ -88,6 +90,9 @@ type
 
          // Copies
          procedure Assign(const _Mesh : TMesh);
+
+         // Texture related
+         function CollectColours(var _ColourMap: auint32): TAVector4f;
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
@@ -1247,6 +1252,41 @@ begin
    end;
    Next := _Mesh.Next;
 end;
+
+// Texture related
+function TMesh.CollectColours(var _ColourMap: auint32): TAVector4f;
+var
+   i,f: integer;
+   found : boolean;
+begin
+   SetLength(Result,0);
+   SetLength(_ColourMap,High(Colours)+1);
+   for f := Low(Colours) to High(Colours) do
+   begin
+      i := Low(Result);
+      found := false;
+      while (i < High(Result)) and (not found) do
+      begin
+         if (Colours[f].X = Result[i].X) and (Colours[f].Y = Result[i].Y) and (Colours[f].Z = Result[i].Z) and (Colours[f].W = Result[i].W) then
+         begin
+            found := true;
+            _ColourMap[f] := i;
+         end
+         else
+            inc(i);
+      end;
+      if not found then
+      begin
+         SetLength(Result,High(Result)+2);
+         Result[High(Result)].X := Colours[f].X;
+         Result[High(Result)].Y := Colours[f].Y;
+         Result[High(Result)].Z := Colours[f].Z;
+         Result[High(Result)].W := Colours[f].W;
+         _ColourMap[f] := High(Result);
+      end;
+   end;
+end;
+
 
 // Miscelaneous
 procedure TMesh.OverrideTransparency;
