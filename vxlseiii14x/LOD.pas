@@ -34,9 +34,11 @@ type
       // LOD Effects
       procedure SmoothLOD;
       procedure CubicSmoothLOD;
+      procedure LanczosSmoothLOD;
       procedure UnsharpLOD;
       procedure InflateLOD;
       procedure DeflateLOD;
+      procedure RenormalizeLOD;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -166,6 +168,16 @@ begin
    end;
 end;
 
+procedure TLOD.LanczosSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshLanczosSmooth;
+   end;
+end;
+
 procedure TLOD.UnsharpLOD;
 var
    i : integer;
@@ -195,6 +207,17 @@ begin
       Mesh[i].MeshDeflate;
    end;
 end;
+
+procedure TLOD.ReNormalizeLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ReNormalizeMesh;
+   end;
+end;
+
 
 
 // Transparency methods

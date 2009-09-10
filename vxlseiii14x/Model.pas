@@ -57,9 +57,11 @@ type
       // Model Effects
       procedure SmoothModel;
       procedure CubicSmoothModel;
+      procedure LanczosSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
+      procedure ReNormalizeModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -339,6 +341,11 @@ begin
    LOD[CurrentLOD].CubicSmoothLOD;
 end;
 
+procedure TModel.LanczosSmoothModel;
+begin
+   LOD[CurrentLOD].LanczosSmoothLOD;
+end;
+
 procedure TModel.UnsharpModel;
 begin
    LOD[CurrentLOD].UnsharpLOD;
@@ -352,6 +359,11 @@ end;
 procedure TModel.DeflateModel;
 begin
    LOD[CurrentLOD].DeflateLOD;
+end;
+
+procedure TModel.ReNormalizeModel;
+begin
+   LOD[CurrentLOD].RenormalizeLOD;
 end;
 
 

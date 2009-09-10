@@ -3,7 +3,7 @@ object Frm3DPReview: TFrm3DPReview
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
-  ClientHeight = 270
+  ClientHeight = 289
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 244
+    Height = 263
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 225
+    ExplicitHeight = 244
   end
   object Panel1: TPanel
     Left = 0
@@ -489,6 +489,10 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'Heavy Smooth'
         OnClick = ModelFXHeavySmoothClick
       end
+      object ModelFXLanczos: TMenuItem
+        Caption = 'Lanczos Smooth'
+        OnClick = ModelFXLanczosClick
+      end
       object ModelFXUnsharp: TMenuItem
         Caption = 'Unsharp Masking'
         OnClick = ModelFXUnsharpClick
@@ -500,6 +504,10 @@ object Frm3DPReview: TFrm3DPReview
       object ModelFXDeflate: TMenuItem
         Caption = 'Deflate'
         OnClick = ModelFXDeflateClick
+      end
+      object ModelFXNormalize: TMenuItem
+        Caption = 'ReNormalize Mesh'
+        OnClick = ModelFXNormalizeClick
       end
     end
   end

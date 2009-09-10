@@ -79,9 +79,11 @@ type
       // Actor Effects
       procedure SmoothModel;
       procedure CubicSmoothModel;
+      procedure LanczosSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
+      procedure ReNormalizeModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -573,6 +575,20 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.LanczosSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.LanczosSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
 procedure TActor.UnsharpModel;
 var
    i : integer;
@@ -610,6 +626,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.DeflateModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.ReNormalizeModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ReNormalizeModel;
       end;
    end;
    RequestUpdateWorld := true;

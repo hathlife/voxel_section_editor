@@ -82,6 +82,10 @@ type
     ModelFXHeavySmooth: TMenuItem;
     ModelFXDeflate: TMenuItem;
     ModelFXInflate: TMenuItem;
+    ModelFXNormalize: TMenuItem;
+    ModelFXLanczos: TMenuItem;
+    procedure ModelFXLanczosClick(Sender: TObject);
+    procedure ModelFXNormalizeClick(Sender: TObject);
     procedure ModelFXInflateClick(Sender: TObject);
     procedure ModelFXDeflateClick(Sender: TObject);
     procedure ModelFXHeavySmoothClick(Sender: TObject);
@@ -415,6 +419,11 @@ begin
    Camera.SetRotation(-90,0,90);
 end;
 
+procedure TFrm3DPReview.ModelFXLanczosClick(Sender: TObject);
+begin
+   Actor.LanczosSmoothModel;
+end;
+
 procedure TFrm3DPReview.LEft1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,0);
@@ -618,6 +627,11 @@ end;
 procedure TFrm3DPReview.ModelFXInflateClick(Sender: TObject);
 begin
    Actor.InflateModel;
+end;
+
+procedure TFrm3DPReview.ModelFXNormalizeClick(Sender: TObject);
+begin
+   Actor.ReNormalizeModel;
 end;
 
 procedure TFrm3DPReview.ModelFXDeflateClick(Sender: TObject);
