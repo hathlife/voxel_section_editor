@@ -80,7 +80,7 @@ type
          procedure ReNormalizeMesh;
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
-         function GetNormalsValue(_V1,_V2,_V3: TVector3f): TVector3f;
+         function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -790,9 +790,18 @@ begin
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
-      Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
-      Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
    end;
    // Free memory
    SetLength(HitCounter,0);
@@ -1474,15 +1483,16 @@ begin
       begin
          FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
          Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
-         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / 2;
-         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / 2;
-         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / 2;
+         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / -2;
+         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / -2;
+         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / -2;
       end;
    end
    else if High(Normals) >= 0 then
    begin
 
    end;
+   ForceRefresh;
 end;
 
 procedure TMesh.ReNormalizeTriangles;
@@ -1500,13 +1510,15 @@ begin
    begin
 
    end;
+   ForceRefresh;
 end;
 
-function TMesh.GetNormalsValue(_V1,_V2,_V3: TVector3f): TVector3f;
+function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
 begin
-   Result.X := ((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z));
-   Result.Y := ((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X));
-   Result.Z := ((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y));
+   Result.X := (((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z)));
+   Result.Y := (((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X)));
+   Result.Z := (((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y)));
+   Normalize(Result);
 end;
 
 end.

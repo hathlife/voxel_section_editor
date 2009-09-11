@@ -72,7 +72,8 @@ uses
   ClassVertexQueue in 'ClassVertexQueue.pas',
   Class2DPointOrderList in 'Class2DPointOrderList.pas',
   Class3DPointsDetector in 'Class3DPointsDetector.pas',
-  ThreeDSFile in 'ThreeDSFile.pas';
+  ThreeDSFile in 'ThreeDSFile.pas',
+  OBJFile in 'OBJFile.pas';
 
 {$R *.res}
 

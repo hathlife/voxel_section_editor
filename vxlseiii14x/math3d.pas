@@ -70,14 +70,15 @@ end;
 function Normalize(var v : TVector3f) : single;
 var l : single;
 begin
-  l := sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+   l := sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
 
-  if (l > 0) then begin
-    v.x := v.x/l;
-    v.y := v.y/l;
-    v.z := v.Z/l;
-  end;
-  result := l;  
+   if (l > 0) then
+   begin
+      v.x := v.x/l;
+      v.y := v.y/l;
+      v.z := v.Z/l;
+   end;
+   result := l;
 end;
 
 function ScaleVector(v : TVector3f; s : single) : TVector3f;
