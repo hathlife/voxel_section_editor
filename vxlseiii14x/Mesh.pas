@@ -104,7 +104,7 @@ type
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
    end;
-
+   PMesh = ^TMesh;
 
 implementation
 
