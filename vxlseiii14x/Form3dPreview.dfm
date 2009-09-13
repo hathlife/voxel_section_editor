@@ -3,7 +3,7 @@ object Frm3DPReview: TFrm3DPReview
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
-  ClientHeight = 289
+  ClientHeight = 308
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 263
+    Height = 282
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 244
+    ExplicitHeight = 263
   end
   object Panel1: TPanel
     Left = 0
@@ -312,6 +312,13 @@ object Frm3DPReview: TFrm3DPReview
     Top = 40
     object File1: TMenuItem
       Caption = 'File'
+      object SaveModelAs: TMenuItem
+        Caption = 'Save Model As...'
+        OnClick = SaveModelAsClick
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
       object Exit1: TMenuItem
         Caption = 'Exit'
         OnClick = Exit1Click
@@ -524,5 +531,11 @@ object Frm3DPReview: TFrm3DPReview
     OnTimer = Anim360TimerTimer
     Left = 208
     Top = 72
+  end
+  object SaveModelDialog: TSaveDialog
+    DefaultExt = 'obj'
+    Filter = 'Wavefront OBJ|*.obj'
+    Left = 208
+    Top = 40
   end
 end

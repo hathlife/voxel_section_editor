@@ -6,11 +6,14 @@ unit LOD;
 
 interface
 
-uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants;
+uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
+   SysUtils;
 
 type
    TLOD = class
    private
+      // I/O
+      procedure SaveToOBJFile(const _Filename: string);
       // Rendering Methods
       procedure RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA);
    public
@@ -22,6 +25,8 @@ type
       constructor Create(const _LOD: TLOD); overload;
       destructor Destroy; override;
       procedure Clear;
+      // I/O
+      procedure SaveToFile(const _Filename: string);
       // Gets
       function GetNumMeshes: longword;
       // Rendering Methods
@@ -81,6 +86,32 @@ begin
       dec(i);
    end;
    SetLength(Mesh,0);
+end;
+
+// I/O
+procedure TLOD.SaveToFile(const _Filename: string);
+var
+   ext : string;
+begin
+   ext := Lowercase(ExtractFileExt(_Filename));
+   if CompareStr(ext,'.obj') = 0 then
+   begin
+      SaveToOBJFile(_Filename);
+   end;
+end;
+
+procedure TLOD.SaveToOBJFile(const _Filename: string);
+var
+   Obj : TObjFile;
+   i : integer;
+begin
+   Obj := TObjFile.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Obj.AddMesh(Addr(Mesh[i]));
+   end;
+   Obj.SaveToFile(_Filename);
+   Obj.Free;
 end;
 
 // Gets

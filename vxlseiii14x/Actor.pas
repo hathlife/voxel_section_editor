@@ -34,6 +34,8 @@ type
       destructor Destroy; override;
       procedure Clear;
       procedure Reset;
+      // I/O
+      procedure SaveToFile(const _Filename: string; _ModelID: integer);
        // Execution
       procedure Render(var _PolyCount,_VoxelCount: longword);
       procedure RotateActor;
@@ -138,6 +140,12 @@ begin
    RotationSpeed := SetVector(0,0,0);
    PositionAcceleration := SetVector(0,0,0);
    RotationAcceleration := SetVector(0,0,0);
+end;
+
+// I/O
+procedure TActor.SaveToFile(const _Filename: string; _ModelID: integer);
+begin
+   ModelBank.Save(Models[_ModelID],_Filename);
 end;
 
 procedure TActor.Render(var _PolyCount,_VoxelCount: longword);

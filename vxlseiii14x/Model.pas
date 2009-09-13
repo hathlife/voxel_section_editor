@@ -42,6 +42,7 @@ type
       procedure RebuildModel;
       procedure RebuildLOD(i: integer);
       procedure RebuildCurrentLOD;
+      procedure SaveLODToFile(const _Filename: string);
       // Gets
       function GetNumLODs: longword;
       function IsOpened : boolean;
@@ -221,6 +222,11 @@ begin
    CurrentLOD := 0;
    HVA := HVABank.LoadNew(nil);
    Opened := true;
+end;
+
+procedure TModel.SaveLODToFile(const _Filename: string);
+begin
+   LOD[CurrentLOD].SaveToFile(_Filename);
 end;
 
 procedure TModel.RebuildModel;

@@ -109,7 +109,7 @@ begin
    if i <> -1 then
    begin
       Model := Items[i].GetModel;
-//      Model^.SaveToFile(_Filename);
+      Model^.SaveLODToFile(_Filename);
       Items[i].SetFilename(_Filename);
       Result := true;
    end

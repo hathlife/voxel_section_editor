@@ -84,6 +84,10 @@ type
     ModelFXInflate: TMenuItem;
     ModelFXNormalize: TMenuItem;
     ModelFXLanczos: TMenuItem;
+    SaveModelAs: TMenuItem;
+    N4: TMenuItem;
+    SaveModelDialog: TSaveDialog;
+    procedure SaveModelAsClick(Sender: TObject);
     procedure ModelFXLanczosClick(Sender: TObject);
     procedure ModelFXNormalizeClick(Sender: TObject);
     procedure ModelFXInflateClick(Sender: TObject);
@@ -704,6 +708,16 @@ begin
    CurrentSectionOnly1.Checked := not CurrentSectionOnly1.Checked;
    WholeVoxel1.Checked := not CurrentSectionOnly1.Checked;
    SetActorModelTransparency;
+end;
+
+procedure TFrm3DPReview.SaveModelAsClick(Sender: TObject);
+begin
+   // We write the save code here...
+   SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
+   if SaveModelDialog.Execute then
+   begin
+      Actor.SaveToFile(SaveModelDialog.FileName,0);
+   end;
 end;
 
 procedure TFrm3DPReview.SetActorModelTransparency;

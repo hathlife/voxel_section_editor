@@ -41,7 +41,7 @@ type
          // I/O
          procedure SaveToFile(const _Filename: string);
          // Adds
-         procedure AddMesh(const _Mesh: TMesh);
+         procedure AddMesh(const _Mesh: PMesh);
    end;
 
 implementation
@@ -134,8 +134,14 @@ end;
 
 procedure TObjFile.WriteGroupName(var _File: System.Text; const _GroupName: string);
 begin
-   Writeln(_File,'g ' + _GroupName);
-   Writeln(_File);
+   if Length(_GroupName) = 0 then
+   begin // create a random name.
+      Writeln(_File,'g mesh_' + IntToStr(Random(9999)));
+   end
+   else
+   begin
+      Writeln(_File,'g ' + _GroupName);
+   end;
 end;
 
 procedure TObjFile.WriteGroupFaces(var _File: System.Text; _VertexStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
@@ -250,12 +256,12 @@ begin
 end;
 
 // Adds
-procedure TObjFile.AddMesh(const _Mesh: TMesh);
+procedure TObjFile.AddMesh(const _Mesh: PMesh);
 var
    Previous,Element: PObjMeshUnit;
 begin
    new(Element);
-   Element^.Mesh := @_Mesh;
+   Element^.Mesh := _Mesh;
    Element^.VertexStart := 1;
    Element^.NormalStart := 1;
    Element^.TextureStart := 1;
@@ -271,7 +277,7 @@ begin
       begin
          Previous := Previous^.Next;
       end;
-      Previous^.Next := Meshes;
+      Previous^.Next := Element;
    end;
 end;
 
