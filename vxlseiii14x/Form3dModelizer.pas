@@ -84,6 +84,8 @@ type
     N4: TMenuItem;
     SaveModelDialog: TSaveDialog;
     RenderQuads: TMenuItem;
+    ModelFXCleanupInvisibleFaces: TMenuItem;
+    procedure ModelFXCleanupInvisibleFacesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
     procedure ModelFXLanczosClick(Sender: TObject);
@@ -645,6 +647,11 @@ end;
 procedure TFrm3DModelizer.ModelFXNormalizeClick(Sender: TObject);
 begin
    Actor.ReNormalizeModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXCleanupInvisibleFacesClick(Sender: TObject);
+begin
+   Actor.RemoveInvisibleFaces;
 end;
 
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);

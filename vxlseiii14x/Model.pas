@@ -74,6 +74,8 @@ type
       procedure SetSelection(_value: boolean);
       // Copies
       procedure Assign(const _Model: TModel);
+      // Mesh Optimization
+      procedure RemoveInvisibleFaces;
       // Misc
       procedure MakeVoxelHVAIndependent;
    end;
@@ -442,6 +444,13 @@ begin
    IsSelected := _Model.IsSelected;
    Quality := _Model.Quality;
 end;
+
+// Mesh Optimizations
+procedure TModel.RemoveInvisibleFaces;
+begin
+   LOD[CurrentLOD].RemoveInvisibleFaces;
+end;
+
 
 // Misc
 procedure TModel.MakeVoxelHVAIndependent;

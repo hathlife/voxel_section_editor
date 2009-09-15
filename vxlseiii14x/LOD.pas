@@ -52,6 +52,8 @@ type
       procedure SetSelection(_value: boolean);
       // Copies
       procedure Assign(const _LOD: TLOD);
+      // Mesh Optimizations
+      procedure RemoveInvisibleFaces;
    end;
 
 implementation
@@ -302,6 +304,17 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i] := TMesh.Create(_LOD.Mesh[i]);
+   end;
+end;
+
+// Mesh Optimizations
+procedure TLOD.RemoveInvisibleFaces;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].RemoveInvisibleFaces;
    end;
 end;
 

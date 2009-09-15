@@ -111,6 +111,9 @@ type
          // Texture related
          function CollectColours(var _ColourMap: auint32): TAVector4f;
 
+         // Model optimization
+         procedure RemoveInvisibleFaces;
+
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
    end;
@@ -660,9 +663,12 @@ begin
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      Vertices[v].X := Vertices[v].X / HitCounter[v];
-      Vertices[v].Y := Vertices[v].Y / HitCounter[v];
-      Vertices[v].Z := Vertices[v].Z / HitCounter[v];
+      if HitCounter[v] > 0 then
+      begin
+         Vertices[v].X := Vertices[v].X / HitCounter[v];
+         Vertices[v].Y := Vertices[v].Y / HitCounter[v];
+         Vertices[v].Z := Vertices[v].Z / HitCounter[v];
+      end;
    end;
    // Free memory
    SetLength(HitCounter,0);
@@ -736,9 +742,18 @@ begin
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
-      Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
-      Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
    end;
    // Free memory
    SetLength(HitCounter,0);
@@ -908,9 +923,18 @@ begin
    // Finally, we do the unsharp masking effect here.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
-      Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
-      Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
    end;
    // Free memory
    SetLength(HitCounter,0);
@@ -1554,6 +1578,80 @@ begin
    Result.Y := (((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X)));
    Result.Z := (((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y)));
    Normalize(Result);
+end;
+
+procedure TMesh.RemoveInvisibleFaces;
+var
+   iRead,iWrite,v: integer;
+   MarkForRemoval: boolean;
+   Normal : TVector3f;
+begin
+   iRead := 0;
+   iWrite := 0;
+   while iRead <= High(Faces) do
+   begin
+      MarkForRemoval := false;
+      // check if vertexes are NaN.
+      v := 0;
+      while v < VerticesPerFace do
+      begin
+         if IsNaN(Vertices[Faces[iRead+v]].X) or IsNaN(Vertices[Faces[iRead+v]].Y) or IsNaN(Vertices[Faces[iRead+v]].Z) or IsInfinite(Vertices[Faces[iRead+v]].X) or IsInfinite(Vertices[Faces[iRead+v]].Y) or IsInfinite(Vertices[Faces[iRead+v]].Z) then
+         begin
+            MarkForRemoval := true;
+         end;
+         inc(v);
+      end;
+      if not MarkForRemoval then
+      begin
+         // check if normal is 0,0,0.
+         Normal := GetNormalsValue(Vertices[Faces[iRead]],Vertices[Faces[iRead+1]],Vertices[Faces[iRead+2]]);
+         if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
+            MarkForRemoval := true;
+         if VerticesPerFace = 4 then
+         begin
+            Normal := GetNormalsValue(Vertices[Faces[iRead+2]],Vertices[Faces[iRead+3]],Vertices[Faces[iRead]]);
+            if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
+               MarkForRemoval := true;
+          end;
+      end;
+
+      // Finally, we remove it.
+      if not MarkForRemoval then
+      begin
+         v := 0;
+         while v < VerticesPerFace do
+         begin
+            Faces[iWrite+v] := Faces[iRead+v];
+            inc(v);
+         end;
+         if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+         begin
+            FaceNormals[iWrite div VerticesPerFace].X := FaceNormals[iRead div VerticesPerFace].X;
+            FaceNormals[iWrite div VerticesPerFace].Y := FaceNormals[iRead div VerticesPerFace].Y;
+            FaceNormals[iWrite div VerticesPerFace].Z := FaceNormals[iRead div VerticesPerFace].Z;
+         end;
+         if (ColoursType = C_COLOURS_PER_FACE) then
+         begin
+            Colours[iWrite div VerticesPerFace].X := Colours[iRead div VerticesPerFace].X;
+            Colours[iWrite div VerticesPerFace].Y := Colours[iRead div VerticesPerFace].Y;
+            Colours[iWrite div VerticesPerFace].Z := Colours[iRead div VerticesPerFace].Z;
+            Colours[iWrite div VerticesPerFace].W := Colours[iRead div VerticesPerFace].W;
+         end;
+         iWrite := iWrite + VerticesPerFace;
+      end;
+      iRead := iRead + VerticesPerFace;
+   end;
+   NumFaces := iWrite div VerticesPerFace;
+   SetLength(Faces,iWrite);
+   if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+   begin
+      SetLength(FaceNormals,NumFaces);
+   end;
+   if (ColoursType = C_COLOURS_PER_FACE) then
+   begin
+      SetLength(Colours,NumFaces);
+   end;
+   ForceRefresh;
 end;
 
 end.

@@ -96,6 +96,8 @@ type
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _ModelID,_MeshID: integer);
+      // Mesh Operations
+      procedure RemoveInvisibleFaces;
    end;
 
 implementation
@@ -720,5 +722,21 @@ begin
    end;
    RequestUpdateWorld := true;
 end;
+
+// Mesh Operations
+procedure TActor.RemoveInvisibleFaces;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.RemoveInvisibleFaces;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
 
 end.

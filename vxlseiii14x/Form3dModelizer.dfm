@@ -519,6 +519,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'ReNormalize Mesh'
         OnClick = ModelFXNormalizeClick
       end
+      object ModelFXCleanupInvisibleFaces: TMenuItem
+        Caption = 'Cleanup Invisible Faces'
+        OnClick = ModelFXCleanupInvisibleFacesClick
+      end
     end
   end
   object AnimationTimer: TTimer
