@@ -9,13 +9,13 @@ uses
   ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
   ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
-  Camera, BasicFunctions, GlConstants;
+  Camera, BasicFunctions, GlConstants, Form3dModelizer;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.38';
+   APPLICATION_VER = '1.39.40';
 
 type
   TFrmMain = class(TForm)
@@ -339,6 +339,8 @@ type
     SpeedButton14: TSpeedButton;
     TSPalettes: TMenuItem;
     RA2Palettes: TMenuItem;
+    O3DModelizer1: TMenuItem;
+    procedure O3DModelizer1Click(Sender: TObject);
     procedure CCFilefront1Click(Sender: TObject);
     procedure CNCNZcom1Click(Sender: TObject);
     procedure ProjectSVN1Click(Sender: TObject);
@@ -578,6 +580,7 @@ type
      ShiftPressed : boolean;
      AltPressed : boolean;
      p_Frm3DPreview : PFrm3DPReview;
+     p_Frm3DModelizer: PFrm3DModelizer;
      Document : TVoxelDocument;
      Env : TRenderEnvironment;
      Actor : PActor;
@@ -645,6 +648,11 @@ begin
       begin
          p_Frm3DPreview^.SpFrame.MaxValue := 1;
          p_Frm3DPreview^.SpStopClick(nil);
+      end;
+      if p_Frm3DModelizer <> nil then
+      begin
+         p_Frm3DModelizer^.SpFrame.MaxValue := 1;
+         p_Frm3DModelizer^.SpStopClick(nil);
       end;
       DoAfterLoadingThings;
    end;
@@ -727,6 +735,7 @@ begin
    Application.OnIdle := nil;
 
    p_Frm3DPreview := nil;
+   p_Frm3DModelizer := nil;
 
    Application.OnDeactivate := FormDeactivate;
    Application.OnActivate := FormActivate;
@@ -869,6 +878,12 @@ begin
          p_Frm3DPreview^.Release;
          p_Frm3DPreview := nil;
       end;
+      // We'll force a closure of the 3D MOdelizer window.
+      if p_Frm3DModelizer <> nil then
+      begin
+         p_Frm3DModelizer^.Release;
+         p_Frm3DModelizer := nil;
+      end;
 
       // 1.32 Aditions:
       cnvView0.OnMouseDown := nil;
@@ -989,7 +1004,7 @@ begin
    CursorReset;
    if High(Actor^.Models) >= 0 then
       Actor^.Clear;
-   Actor^.Add(Document.ActiveSection,Document.Palette,false);
+   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CURVED);
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.SetActorModelTransparency;
@@ -1403,6 +1418,22 @@ begin
    begin
       Camera.SetPosition(Camera.Position.X,Camera.Position.Y,Camera.Position.Z - (Y-ZCoord)/3);
       Zcoord := Y;
+   end;
+end;
+
+procedure TFrmMain.O3DModelizer1Click(Sender: TObject);
+begin
+   if p_Frm3DModelizer = nil then
+   begin
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: O3DModelizer1Click');
+      {$endif}
+      Application.OnIdle := nil;
+      new(p_Frm3DModelizer);
+      p_Frm3DModelizer^ := TFrm3DModelizer.Create(self);
+      p_Frm3DModelizer^.Show;
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle;
    end;
 end;
 
@@ -2396,18 +2427,30 @@ begin
    begin
       Actor^.Clear;
    end;
-   Actor^.Add(Document.ActiveSection,Document.Palette,false);
+   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CURVED);
    if p_Frm3DPreview <> nil then
    begin
       if High(p_Frm3DPreview^.Actor.Models) >= 0 then
       begin
          p_Frm3DPreview^.Actor.Clear;
       end;
-      p_Frm3DPreview^.Actor.Add(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.RenderModel.Checked);
+      p_Frm3DPreview^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
       p_Frm3DPreview^.SetActorModelTransparency;
 
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
+   end;
+   if p_Frm3DModelizer <> nil then
+   begin
+      if High(p_Frm3DModelizer^.Actor.Models) >= 0 then
+      begin
+         p_Frm3DModelizer^.Actor.Clear;
+      end;
+      p_Frm3DModelizer^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
+      p_Frm3DModelizer^.SetActorModelTransparency;
+
+      p_Frm3DModelizer^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
+      p_Frm3DModelizer^.SpFrame.Value := 1;
    end;
    if not Display3dView1.Checked then
       if @Application.OnIdle = nil then
@@ -2864,7 +2907,7 @@ begin
    {$endif}
    if Display3dView1.Checked then
    begin
-      if p_Frm3DPreview = nil then
+      if (p_Frm3DPreview = nil) and (p_Frm3DModelizer = nil) then
       begin
          Application.OnIdle := nil;
       end
@@ -3271,6 +3314,11 @@ begin
             p_Frm3DPreview^.SpFrame.MaxValue := 1;
             p_Frm3DPreview^.SpStopClick(nil);
          end;
+         if p_Frm3DModelizer <> nil then
+         begin
+            p_Frm3DModelizer^.SpFrame.MaxValue := 1;
+            p_Frm3DModelizer^.SpStopClick(nil);
+         end;
          DoAfterLoadingThings;
       end;
       IsVXLLoading := false;
@@ -3406,6 +3454,14 @@ begin
       except;
       end;
       p_Frm3DPreview := nil;
+   end;
+   if p_Frm3DModelizer <> nil then
+   begin
+      try
+         p_Frm3DModelizer^.Release;
+      except;
+      end;
+      p_Frm3DModelizer := nil;
    end;
 end;
 
@@ -4540,12 +4596,16 @@ begin
       begin
          p_Frm3DPreview^.AnimationTimer.Enabled := p_Frm3DPreview^.AnimationState;
       end;
+      if p_Frm3DModelizer <> nil then
+      begin
+         p_Frm3DModelizer^.AnimationTimer.Enabled := p_Frm3DModelizer^.AnimationState;
+      end;
       if @Application.OnIdle = nil then
          Application.OnIdle := Idle;
    end
    else
    begin
-      if p_Frm3DPreview = nil then
+      if (p_Frm3DPreview = nil) and (p_Frm3DModelizer = nil) then
       begin
          Application.OnIdle := nil;
       end

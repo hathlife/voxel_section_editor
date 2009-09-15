@@ -5018,6 +5018,10 @@ object FrmMain: TFrmMain
       object Animation1: TMenuItem
         Caption = 'Animation'
       end
+      object O3DModelizer1: TMenuItem
+        Caption = '3D Modelizer...'
+        OnClick = O3DModelizer1Click
+      end
       object N22: TMenuItem
         Caption = '-'
       end

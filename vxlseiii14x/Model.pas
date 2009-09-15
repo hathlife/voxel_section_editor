@@ -3,7 +3,7 @@ unit Model;
 interface
 
 uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
-   SysUtils, Graphics;
+   SysUtils, Graphics, GlConstants;
 
 type
    PModel = ^TModel;
@@ -24,13 +24,13 @@ type
       Filename : string;
       Voxel : PVoxel;
       VoxelSection : PVoxelSection;
-      HighQuality: boolean;
+      Quality: integer;
       // GUI
       IsSelected : boolean;
       // constructors and destructors
       constructor Create(const _Filename: string); overload;
-      constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _HighQuality : boolean); overload;
-      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _HighQuality : boolean); overload;
+      constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _Quality : integer); overload;
+      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _Quality : integer); overload;
       constructor Create(const _Model: TModel); overload;
       destructor Destroy; override;
       procedure CommonCreationProcedures;
@@ -49,9 +49,9 @@ type
       // Sets
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
-      procedure SetHighQuality(_value: boolean);
+      procedure SetQuality(_value: integer);
       // Rendering methods
-      procedure Render(var _PolyCount,_VoxelCount: longword);
+      procedure Render(var _PolyCount,_VoxelCount: longword; _Frame: integer);
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
@@ -74,6 +74,8 @@ type
       procedure SetSelection(_value: boolean);
       // Copies
       procedure Assign(const _Model: TModel);
+      // Misc
+      procedure MakeVoxelHVAIndependent;
    end;
 
 implementation
@@ -85,31 +87,31 @@ begin
    Filename := CopyString(_Filename);
    Voxel := nil;
    VoxelSection := nil;
-   HighQuality := true;
+   Quality := C_QUALITY_MAX;
    // Create a new 32 bits palette.
    New(Palette);
    Palette^ := TPalette.Create;
    CommonCreationProcedures;
 end;
 
-constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; const _HVA: PHVA; _HighQuality : boolean);
+constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; const _HVA: PHVA; _Quality : integer);
 begin
    Filename := '';
    Voxel := VoxelBank.Add(_Voxel);
    HVA := HVABank.Add(_HVA);
    VoxelSection := nil;
-   HighQuality := _HighQuality;
+   Quality := _Quality;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
 end;
 
-constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _HighQuality : boolean);
+constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _Quality : integer);
 begin
    Filename := '';
    Voxel := nil;
    VoxelSection := _VoxelSection;
-   HighQuality := _HighQuality;
+   Quality := _Quality;
    New(Palette);
    Palette^ := TPalette.Create(_Palette^);
    CommonCreationProcedures;
@@ -204,7 +206,7 @@ begin
    SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
    for i := 0 to (Voxel^.Header.NumSections-1) do
    begin
-      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,HighQuality);
+      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,Quality);
       LOD[0].Mesh[i].Next := i+1;
    end;
    LOD[0].Mesh[High(LOD[0].Mesh)].Next := -1;
@@ -218,7 +220,7 @@ begin
    SetLength(LOD,1);
    LOD[0] := TLOD.Create;
    SetLength(LOD[0].Mesh,1);
-   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,HighQuality);
+   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,Quality);
    CurrentLOD := 0;
    HVA := HVABank.LoadNew(nil);
    Opened := true;
@@ -251,18 +253,18 @@ begin
          SetLength(LOD[i].Mesh,Voxel^.Header.NumSections);
          for j := start to Voxel^.Header.NumSections - 1 do
          begin
-            LOD[i].Mesh[j] := TMesh.CreateFromVoxel(j,Voxel^.Section[j],Palette^,HighQuality);
+            LOD[i].Mesh[j] := TMesh.CreateFromVoxel(j,Voxel^.Section[j],Palette^,Quality);
             LOD[i].Mesh[j].Next := j+1;
          end;
       end;
       for j := Low(LOD[i].Mesh) to High(LOD[i].Mesh) do
       begin
-         LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[j],Palette^,HighQuality);
+         LOD[i].Mesh[j].RebuildVoxel(Voxel^.Section[j],Palette^,Quality);
       end;
    end
    else if VoxelSection <> nil then
    begin
-      LOD[i].Mesh[0].RebuildVoxel(VoxelSection^,Palette^,HighQuality);
+      LOD[i].Mesh[0].RebuildVoxel(VoxelSection^,Palette^,Quality);
    end
    else
    begin
@@ -287,9 +289,9 @@ begin
 end;
 
 // Sets
-procedure TModel.SetHighQuality(_value: Boolean);
+procedure TModel.SetQuality(_value: integer);
 begin
-   HighQuality := _value;
+   Quality := _value;
    RebuildModel;
 end;
 
@@ -314,13 +316,13 @@ begin
 end;
 
 // Rendering methods
-procedure TModel.Render(var _Polycount,_VoxelCount: longword);
+procedure TModel.Render(var _Polycount,_VoxelCount: longword; _Frame: integer);
 begin
    if IsVisible and Opened and (HVA <> nil) then
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA);
+         LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA,_Frame);
       end;
    end;
 end;
@@ -438,8 +440,29 @@ begin
    Filename := CopyString(_Model.Filename);
    Voxel := _Model.Voxel;
    IsSelected := _Model.IsSelected;
-   HighQuality := _Model.HighQuality;
+   Quality := _Model.Quality;
 end;
+
+// Misc
+procedure TModel.MakeVoxelHVAIndependent;
+var
+   HVATemp: PHVA;
+   VoxelTemp: PVoxel;
+begin
+   if (HVA <> nil) then
+   begin
+      HVATemp := HVABank.Clone(HVA);
+      HVABank.Delete(HVA);
+      HVA := HVATemp;
+   end;
+   if (Voxel <> nil) then
+   begin
+      VoxelTemp := VoxelBank.Clone(Voxel);
+      VoxelBank.Delete(Voxel);
+      Voxel := VoxelTemp;
+   end;
+end;
+
 
 
 end.

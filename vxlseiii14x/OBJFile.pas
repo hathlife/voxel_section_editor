@@ -146,14 +146,15 @@ end;
 
 procedure TObjFile.WriteGroupFaces(var _File: System.Text; _VertexStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
 var
-   f,v : integer;
+   maxf,f,v : integer;
 begin
-   for f := Low(_Faces) to (High(_Faces)+1)div _VertsPerFace do
+   maxf := ((High(_Faces)+1)div _VertsPerFace) -1;
+   for f := Low(_Faces) to maxf do
    begin
       Write(_File,'f ');
       for v := 0 to (_VertsPerFace-1) do
       begin
-         Write(_File,IntToStr(_Faces[f*_VertsPerFace] + v + _VertexStart) + '//' + IntToStr(f + _NormalsStart) + ' ');
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '//' + IntToStr(f + _NormalsStart) + ' ');
       end;
       Writeln(_File);
    end;
@@ -161,14 +162,15 @@ end;
 
 procedure TObjFile.WriteGroupFacesTexture(var _File: System.Text; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
 var
-   f,v : integer;
+   maxf,f,v : integer;
 begin
-   for f := Low(_Faces) to (High(_Faces)+1)div _VertsPerFace do
+   maxf := ((High(_Faces)+1)div _VertsPerFace) -1;
+   for f := Low(_Faces) to maxf do
    begin
       Write(_File,'f ');
       for v := 0 to (_VertsPerFace-1) do
       begin
-         Write(_File,IntToStr(_Faces[f*_VertsPerFace] + v + _VertexStart) + '/' + IntToStr(f + _TextureStart) + '/' + IntToStr(f + _NormalsStart) + ' ');
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(f + _TextureStart) + '/' + IntToStr(f + _NormalsStart) + ' ');
       end;
       Writeln(_File);
    end;

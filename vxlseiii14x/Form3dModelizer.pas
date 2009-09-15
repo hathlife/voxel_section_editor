@@ -1,8 +1,4 @@
-// Originaly Made by Jan Horn (Quake 3 Model Viewer)
-// Modifyed By Stuart Carey (To a VXL Previewer)
-// And modified by Carlos "Banshee" Muniz for VXLSE III.
-// And modified again by Banshee to support the OS 3D Engine from VXLSE III 2.0 and OSGIC
-unit Form3dPreview;
+unit Form3dModelizer;
 
 interface
 
@@ -14,8 +10,8 @@ uses
   BasicFunctions;
 
 type
-  PFrm3DPReview = ^TFrm3DPReview;
-  TFrm3DPReview = class(TForm)
+  PFrm3DModelizer = ^TFrm3DModelizer;
+  TFrm3DModelizer = class(TForm)
     Panel2: TPanel;
     MainMenu1: TMainMenu;
     File1: TMenuItem;
@@ -76,6 +72,14 @@ type
     RenderQuality1: TMenuItem;
     RenderCubes: TMenuItem;
     RenderModel: TMenuItem;
+    ModelEffects1: TMenuItem;
+    ModelFXSmooth: TMenuItem;
+    ModelFXUnsharp: TMenuItem;
+    ModelFXHeavySmooth: TMenuItem;
+    ModelFXDeflate: TMenuItem;
+    ModelFXInflate: TMenuItem;
+    ModelFXNormalize: TMenuItem;
+    ModelFXLanczos: TMenuItem;
     SaveModelAs: TMenuItem;
     N4: TMenuItem;
     SaveModelDialog: TSaveDialog;
@@ -161,8 +165,8 @@ type
     Camera : TCamera;
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
-    function GetQualityModel: integer;
     Procedure Reset3DView;
+    function GetQualityModel: integer;
   end;
 
 implementation
@@ -172,7 +176,7 @@ uses FormMain, GlobalVars;
 {$R *.DFM}
 
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.FormCreate(Sender: TObject);
+procedure TFrm3DModelizer.FormCreate(Sender: TObject);
 begin
    // OpenGL initialization
    EnvP := GlobalVars.Render.AddEnvironment(Panel2.Handle,Panel2.Width,Panel2.Height);
@@ -191,6 +195,7 @@ begin
 
    Actor := (Env.AddActor)^;
    Actor.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
+   Actor.Models[0].MakeVoxelHVAIndependent;
    SetActorModelTransparency;
 end;
 
@@ -200,7 +205,7 @@ end;
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.FormResize(Sender: TObject);
+procedure TFrm3DModelizer.FormResize(Sender: TObject);
 begin
    if width < 330 then
       Width := 330;
@@ -210,16 +215,16 @@ end;
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.FormDestroy(Sender: TObject);
+procedure TFrm3DModelizer.FormDestroy(Sender: TObject);
 begin
    GlobalVars.Render.RemoveEnvironment(EnvP);
-   FrmMain.p_Frm3DPreview := nil;
+   FrmMain.p_Frm3DModelizer := nil;
 end;
 
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.Panel2MouseMove(Sender: TObject; Shift: TShiftState; X,
+procedure TFrm3DModelizer.Panel2MouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 begin
    if MouseButton = 1 then
@@ -238,7 +243,7 @@ end;
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.Panel2MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TFrm3DModelizer.Panel2MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
    if Button = mbLeft  then
@@ -254,25 +259,25 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.Panel2MouseUp(Sender: TObject; Button: TMouseButton;
+procedure TFrm3DModelizer.Panel2MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
    MouseButton :=0;
 end;
 
-procedure TFrm3DPReview.Exit1Click(Sender: TObject);
+procedure TFrm3DModelizer.Exit1Click(Sender: TObject);
 begin
    Close;
 end;
 
-procedure TFrm3DPReview.BackgroundColour1Click(Sender: TObject);
+procedure TFrm3DModelizer.BackgroundColour1Click(Sender: TObject);
 begin
    ColorDialog1.Color := TVector3fToTColor(Env.BackgroundColour);
    if ColorDialog1.Execute then
       Env.SetBackgroundColour(TColorToTVector3f(ColorDialog1.Color));
 end;
 
-Procedure TFrm3DPReview.SetRotationAdders;
+Procedure TFrm3DModelizer.SetRotationAdders;
 var
    V : single;
 begin
@@ -297,7 +302,7 @@ begin
       Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
-procedure TFrm3DPReview.btn3DRotateX2Click(Sender: TObject);
+procedure TFrm3DModelizer.btn3DRotateX2Click(Sender: TObject);
 begin
    if btn3DRotateX2.Down then
    begin
@@ -309,7 +314,7 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.btn3DRotateXClick(Sender: TObject);
+procedure TFrm3DModelizer.btn3DRotateXClick(Sender: TObject);
 begin
    if btn3DRotateX.Down then
    begin
@@ -319,7 +324,7 @@ begin
       Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 end;
 
-procedure TFrm3DPReview.btn3DRotateY2Click(Sender: TObject);
+procedure TFrm3DModelizer.btn3DRotateY2Click(Sender: TObject);
 begin
    if btn3DRotateY2.Down then
    begin
@@ -329,7 +334,7 @@ begin
       Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
-procedure TFrm3DPReview.btn3DRotateYClick(Sender: TObject);
+procedure TFrm3DModelizer.btn3DRotateYClick(Sender: TObject);
 begin
    if btn3DRotateY.Down then
    begin
@@ -339,12 +344,12 @@ begin
       Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
 end;
 
-procedure TFrm3DPReview.spin3DjmpChange(Sender: TObject);
+procedure TFrm3DModelizer.spin3DjmpChange(Sender: TObject);
 begin
    SetRotationAdders;
 end;
 
-procedure TFrm3DPReview.SpPlayClick(Sender: TObject);
+procedure TFrm3DModelizer.SpPlayClick(Sender: TObject);
 begin
    // Enable timer here.
    if not AnimationTimer.Enabled then
@@ -359,7 +364,7 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.SpStopClick(Sender: TObject);
+procedure TFrm3DModelizer.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
    Actor.Frame := 0;
@@ -368,12 +373,12 @@ begin
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
 
-procedure TFrm3DPReview.ModelFXUnsharpClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXUnsharpClick(Sender: TObject);
 begin
    Actor.UnsharpModel;
 end;
 
-procedure TFrm3DPReview.AnimationTimerTimer(Sender: TObject);
+procedure TFrm3DModelizer.AnimationTimerTimer(Sender: TObject);
 begin
    if FrmMain.Document.ActiveHVA^.Header.N_Frames = 1 then
    begin
@@ -387,7 +392,7 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.SpFrameChange(Sender: TObject);
+procedure TFrm3DModelizer.SpFrameChange(Sender: TObject);
 begin
    if StrToIntDef(SpFrame.Text,-1) <> -1 then
    begin
@@ -400,75 +405,75 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.FontColor1Click(Sender: TObject);
+procedure TFrm3DModelizer.FontColor1Click(Sender: TObject);
 begin
    ColorDialog1.Color := TVector3fToTColor(Env.FontColour);
    if ColorDialog1.Execute then
       Env.SetFontColour(TColorToTVector3f(ColorDialog1.Color));
 end;
 
-procedure TFrm3DPReview.Front1Click(Sender: TObject);
+procedure TFrm3DModelizer.Front1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,-90);
 end;
 
-procedure TFrm3DPReview.Back1Click(Sender: TObject);
+procedure TFrm3DModelizer.Back1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,90);
 end;
 
-procedure TFrm3DPReview.ModelFXLanczosClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXLanczosClick(Sender: TObject);
 begin
    Actor.LanczosSmoothModel;
 end;
 
-procedure TFrm3DPReview.LEft1Click(Sender: TObject);
+procedure TFrm3DModelizer.LEft1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,0);
 end;
 
-procedure TFrm3DPReview.Right1Click(Sender: TObject);
+procedure TFrm3DModelizer.Right1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,-180);
 end;
 
-procedure TFrm3DPReview.Bottom1Click(Sender: TObject);
+procedure TFrm3DModelizer.Bottom1Click(Sender: TObject);
 begin
    Camera.SetRotation(180,0,180);
 end;
 
-procedure TFrm3DPReview.op1Click(Sender: TObject);
+procedure TFrm3DModelizer.op1Click(Sender: TObject);
 begin
    Camera.SetRotation(0,0,180);
 end;
 
-procedure TFrm3DPReview.Cameo1Click(Sender: TObject);
+procedure TFrm3DModelizer.Cameo1Click(Sender: TObject);
 begin
    Camera.SetRotation(287,0,225);
 end;
 
-procedure TFrm3DPReview.SpeedButton1MouseUp(Sender: TObject;
+procedure TFrm3DModelizer.SpeedButton1MouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    Popup3d.Popup(Left+SpeedButton1.Left+5,Top+ 60+ SpeedButton1.Top);
 end;
 
-procedure TFrm3DPReview.Cameo21Click(Sender: TObject);
+procedure TFrm3DModelizer.Cameo21Click(Sender: TObject);
 begin
    Camera.SetRotation(287,0,315);
 end;
 
-procedure TFrm3DPReview.Cameo31Click(Sender: TObject);
+procedure TFrm3DModelizer.Cameo31Click(Sender: TObject);
 begin
    Camera.SetRotation(287,0,255);
 end;
 
-procedure TFrm3DPReview.Cameo41Click(Sender: TObject);
+procedure TFrm3DModelizer.Cameo41Click(Sender: TObject);
 begin
    Camera.SetRotation(287,0,285);
 end;
 
-procedure TFrm3DPReview.ake360DegScreenshots1Click(Sender: TObject);
+procedure TFrm3DModelizer.ake360DegScreenshots1Click(Sender: TObject);
 begin
    Env.Take360Animation(VXLFilename,90,10,stGif);
 
@@ -490,7 +495,7 @@ begin
    Anim360Timer.Enabled := true;
 end;
 
-procedure TFrm3DPReview.Anim360TimerTimer(Sender: TObject);
+procedure TFrm3DModelizer.Anim360TimerTimer(Sender: TObject);
 begin
    if not Env.IsScreenshoting then
    begin
@@ -510,27 +515,27 @@ begin
 end;
 
 
-procedure TFrm3DPReview.akeScreenshot1Click(Sender: TObject);
+procedure TFrm3DModelizer.akeScreenshot1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stTGA);
 end;
 
-procedure TFrm3DPReview.akeScreenshotBMP1Click(Sender: TObject);
+procedure TFrm3DModelizer.akeScreenshotBMP1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stBMP);
 end;
 
-procedure TFrm3DPReview.akeScreenshotJPG1Click(Sender: TObject);
+procedure TFrm3DModelizer.akeScreenshotJPG1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stJPG);
 end;
 
-procedure TFrm3DPReview.akeScreenshotPNG1Click(Sender: TObject);
+procedure TFrm3DModelizer.akeScreenshotPNG1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stPNG);
 end;
 
-procedure TFrm3DPReview.ClearRemapClicks;
+procedure TFrm3DModelizer.ClearRemapClicks;
 begin
    Red1.Checked := false;
    Blue1.Checked := false;
@@ -543,7 +548,7 @@ begin
    DarkSky1.Checked := false;
 end;
 
-procedure TFrm3DPReview.Red1Click(Sender: TObject);
+procedure TFrm3DModelizer.Red1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Red1.Checked := true;
@@ -553,7 +558,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
 end;
 
-procedure TFrm3DPReview.RenderCubesClick(Sender: TObject);
+procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
 begin
    RenderCubes.Checked := true;
    RenderQuads.Checked := false;
@@ -561,7 +566,7 @@ begin
    Actor.SetQuality(GetQualityModel);
 end;
 
-procedure TFrm3DPReview.RenderModelClick(Sender: TObject);
+procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
 begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := false;
@@ -569,7 +574,7 @@ begin
    Actor.SetQuality(GetQualityModel);
 end;
 
-procedure TFrm3DPReview.RenderQuadsClick(Sender: TObject);
+procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
 begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := true;
@@ -577,7 +582,7 @@ begin
    Actor.SetQuality(GetQualityModel);
 end;
 
-procedure TFrm3DPReview.Blue1Click(Sender: TObject);
+procedure TFrm3DModelizer.Blue1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Blue1.Checked := true;
@@ -587,7 +592,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
 end;
 
-procedure TFrm3DPReview.Green1Click(Sender: TObject);
+procedure TFrm3DModelizer.Green1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Green1.Checked := true;
@@ -597,7 +602,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
 end;
 
-procedure TFrm3DPReview.White1Click(Sender: TObject);
+procedure TFrm3DModelizer.White1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    White1.Checked := true;
@@ -607,7 +612,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
 end;
 
-procedure TFrm3DPReview.Orange1Click(Sender: TObject);
+procedure TFrm3DModelizer.Orange1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Orange1.Checked := true;
@@ -617,7 +622,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
 end;
 
-procedure TFrm3DPReview.Magenta1Click(Sender: TObject);
+procedure TFrm3DModelizer.Magenta1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Magenta1.Checked := true;
@@ -627,32 +632,32 @@ begin
    Actor.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
 end;
 
-procedure TFrm3DPReview.ModelFXHeavySmoothClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXHeavySmoothClick(Sender: TObject);
 begin
    Actor.CubicSmoothModel;
 end;
 
-procedure TFrm3DPReview.ModelFXInflateClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXInflateClick(Sender: TObject);
 begin
    Actor.InflateModel;
 end;
 
-procedure TFrm3DPReview.ModelFXNormalizeClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXNormalizeClick(Sender: TObject);
 begin
    Actor.ReNormalizeModel;
 end;
 
-procedure TFrm3DPReview.ModelFXDeflateClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);
 begin
    Actor.DeflateModel;
 end;
 
-procedure TFrm3DPReview.ModelFXSmoothClick(Sender: TObject);
+procedure TFrm3DModelizer.ModelFXSmoothClick(Sender: TObject);
 begin
    Actor.SmoothModel;
 end;
 
-procedure TFrm3DPReview.Purple1Click(Sender: TObject);
+procedure TFrm3DModelizer.Purple1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Purple1.Checked := true;
@@ -662,7 +667,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
 end;
 
-procedure TFrm3DPReview.Gold1Click(Sender: TObject);
+procedure TFrm3DModelizer.Gold1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    Gold1.Checked := true;
@@ -672,7 +677,7 @@ begin
    Actor.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
 end;
 
-procedure TFrm3DPReview.DarkSky1Click(Sender: TObject);
+procedure TFrm3DModelizer.DarkSky1Click(Sender: TObject);
 begin
    ClearRemapClicks;
    DarkSky1.Checked := true;
@@ -682,12 +687,12 @@ begin
    Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
 end;
 
-procedure TFrm3DPReview.SpeedButton2Click(Sender: TObject);
+procedure TFrm3DModelizer.SpeedButton2Click(Sender: TObject);
 begin
    Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-150);
 end;
 
-Procedure TFrm3DPReview.Reset3DView;
+Procedure TFrm3DModelizer.Reset3DView;
 begin
    SpeedButton2Click(nil); // Reset Depth
    Cameo1Click(nil); // Set To Cameo1
@@ -699,22 +704,22 @@ begin
    btn3DRotateX2.Down := false;
 end;
 
-procedure TFrm3DPReview.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TFrm3DModelizer.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-   FrmMain.p_Frm3DPreview := nil;
+   FrmMain.p_Frm3DModelizer := nil;
    if FrmMain.Display3dView1.Checked then
       Application.OnIdle := nil;
    Free;
 end;
 
-procedure TFrm3DPReview.CurrentSectionOnly1Click(Sender: TObject);
+procedure TFrm3DModelizer.CurrentSectionOnly1Click(Sender: TObject);
 begin
    CurrentSectionOnly1.Checked := not CurrentSectionOnly1.Checked;
    WholeVoxel1.Checked := not CurrentSectionOnly1.Checked;
    SetActorModelTransparency;
 end;
 
-procedure TFrm3DPReview.SaveModelAsClick(Sender: TObject);
+procedure TFrm3DModelizer.SaveModelAsClick(Sender: TObject);
 begin
    // We write the save code here...
    SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
@@ -724,7 +729,7 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.SetActorModelTransparency;
+procedure TFrm3DModelizer.SetActorModelTransparency;
 begin
    if WholeVoxel1.Checked then
    begin
@@ -736,19 +741,19 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.FormActivate(Sender: TObject);
+procedure TFrm3DModelizer.FormActivate(Sender: TObject);
 begin
    FrmMain.OnActivate(sender);
 end;
 
-procedure TFrm3DPReview.FormDeactivate(Sender: TObject);
+procedure TFrm3DModelizer.FormDeactivate(Sender: TObject);
 begin
    FrmMain.OnDeactivate(sender);
    AnimationState := AnimationTimer.Enabled;
    AnimationTimer.Enabled := false;
 end;
 
-function TFrm3DPReview.GetQualityModel: integer;
+function TFrm3DModelizer.GetQualityModel: integer;
 begin
    if RenderModel.checked then
    begin
@@ -763,6 +768,5 @@ begin
       Result := C_QUALITY_CURVED;
    end;
 end;
-
 
 end.

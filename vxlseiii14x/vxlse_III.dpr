@@ -73,7 +73,8 @@ uses
   Class2DPointOrderList in 'Class2DPointOrderList.pas',
   Class3DPointsDetector in 'Class3DPointsDetector.pas',
   ThreeDSFile in 'ThreeDSFile.pas',
-  OBJFile in 'OBJFile.pas';
+  OBJFile in 'OBJFile.pas',
+  Form3dModelizer in 'Form3dModelizer.pas' {Frm3DModelizer};
 
 {$R *.res}
 

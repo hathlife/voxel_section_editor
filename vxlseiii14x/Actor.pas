@@ -18,6 +18,8 @@ type
       Next : PActor;
       // Atributes
       Models : array of PModel;
+      // Animation
+      Frame: integer;
       // physics cinematics.
       PositionAcceleration : TVector3f;
       RotationAcceleration : TVector3f;
@@ -60,16 +62,20 @@ type
       procedure SetRotationAcceleration(_Vector: TVector3f); overload;
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
-      procedure SetHighQuality(_value: boolean);
+      procedure SetQuality(_value: integer);
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
-      procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
-      procedure Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false); overload;
+      procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
       procedure AddReadOnly(const _filename: string); overload;
       procedure AddReadOnly(const _Model: PModel); overload;
-      procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
-      procedure AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false); overload;
+      procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure Clone(const _filename: string); overload;
+      procedure Clone(const _Model: PModel); overload;
+      procedure Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
       // Removes
       procedure Remove(var _Model : PModel);
       // switches
@@ -130,6 +136,7 @@ end;
 
 procedure TActor.Reset;
 begin
+   Frame := 0;
    Rotation.X := 0;
    Rotation.Y := 0;
    Rotation.Z := 0;
@@ -159,7 +166,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.Render(_PolyCount,_VoxelCount);
+            Models[i]^.Render(_PolyCount,_VoxelCount,Frame);
          end;
       end;
    glPopMatrix;
@@ -388,7 +395,7 @@ begin
    end;
 end;
 
-procedure TActor.SetHighQuality(_value: boolean);
+procedure TActor.SetQuality(_value: integer);
 var
    i : integer;
 begin
@@ -398,7 +405,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.SetHighQuality(_value);
+            Models[i]^.SetQuality(_value);
          end;
       end;
       RequestUpdateWorld := true;
@@ -421,17 +428,17 @@ begin
    CommonAddActions;
 end;
 
-procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
+procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_HighQuality);
+   Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_Quality);
    CommonAddActions;
 end;
 
-procedure TActor.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
+procedure TActor.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_HighQuality);
+   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_Quality);
    CommonAddActions;
 end;
 
@@ -449,17 +456,45 @@ begin
    CommonAddActions;
 end;
 
-procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: Boolean);
+procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_HighQuality);
+   Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_Quality);
    CommonAddActions;
 end;
 
-procedure TActor.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: Boolean);
+procedure TActor.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,_HighQuality);
+   Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,_Quality);
+   CommonAddActions;
+end;
+
+procedure TActor.Clone(const _filename: string);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Clone(_filename);
+   CommonAddActions;
+end;
+
+procedure TActor.Clone(const _Model: PModel);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Clone(_Model);
+   CommonAddActions;
+end;
+
+procedure TActor.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Clone(_Voxel,_HVA,_Palette,_Quality);
+   CommonAddActions;
+end;
+
+procedure TActor.Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
+begin
+   SetLength(Models,High(Models)+2);
+   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_Quality);
    CommonAddActions;
 end;
 

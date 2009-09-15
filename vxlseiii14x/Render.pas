@@ -66,6 +66,7 @@ begin
          CurrentEnvironment := CurrentEnvironment^.Next;
       CurrentEnvironment^.Next := NewEnvironment;
    end;
+   ForceFPS;
    Result := NewEnvironment;
 end;
 

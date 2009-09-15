@@ -1,9 +1,9 @@
-object Frm3DPReview: TFrm3DPReview
+object Frm3DModelizer: TFrm3DModelizer
   Left = 723
   Top = 264
   BorderStyle = bsSizeToolWin
-  Caption = 'OpenGL 3D Preview'
-  ClientHeight = 327
+  Caption = '3D Modelizer'
+  ClientHeight = 308
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 301
+    Height = 282
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,6 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 282
   end
   object Panel1: TPanel
     Left = 0
@@ -424,11 +423,11 @@ object Frm3DPReview: TFrm3DPReview
       Caption = 'Display'
       object CurrentSectionOnly1: TMenuItem
         Caption = 'Current Section Only'
-        Checked = True
         OnClick = CurrentSectionOnly1Click
       end
       object WholeVoxel1: TMenuItem
         Caption = 'Whole Voxel'
+        Checked = True
         OnClick = CurrentSectionOnly1Click
       end
     end
@@ -436,11 +435,11 @@ object Frm3DPReview: TFrm3DPReview
       Caption = 'Model Quality'
       object RenderCubes: TMenuItem
         Caption = 'Editing Cubes (Low)'
-        Checked = True
         OnClick = RenderCubesClick
       end
       object RenderQuads: TMenuItem
-        Caption = 'Quad Based 3D Model (Medium)'
+        Caption = 'Quad Based 3D Model'
+        Checked = True
         OnClick = RenderQuadsClick
       end
       object RenderModel: TMenuItem
@@ -488,6 +487,37 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'White'
         Visible = False
         OnClick = White1Click
+      end
+    end
+    object ModelEffects1: TMenuItem
+      Caption = 'Model Effects'
+      object ModelFXSmooth: TMenuItem
+        Caption = 'Smooth'
+        OnClick = ModelFXSmoothClick
+      end
+      object ModelFXHeavySmooth: TMenuItem
+        Caption = 'Heavy Smooth'
+        OnClick = ModelFXHeavySmoothClick
+      end
+      object ModelFXLanczos: TMenuItem
+        Caption = 'Lanczos Smooth'
+        OnClick = ModelFXLanczosClick
+      end
+      object ModelFXUnsharp: TMenuItem
+        Caption = 'Unsharp Masking'
+        OnClick = ModelFXUnsharpClick
+      end
+      object ModelFXInflate: TMenuItem
+        Caption = 'Inflate'
+        OnClick = ModelFXInflateClick
+      end
+      object ModelFXDeflate: TMenuItem
+        Caption = 'Deflate'
+        OnClick = ModelFXDeflateClick
+      end
+      object ModelFXNormalize: TMenuItem
+        Caption = 'ReNormalize Mesh'
+        OnClick = ModelFXNormalizeClick
       end
     end
   end

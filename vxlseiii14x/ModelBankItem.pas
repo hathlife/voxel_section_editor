@@ -2,7 +2,7 @@ unit ModelBankItem;
 
 interface
 
-uses Model, BasicFunctions, Voxel, HVA, Palette;
+uses Model, BasicFunctions, Voxel, HVA, Palette, GlConstants;
 
 type
    TModelBankItem = class
@@ -15,8 +15,8 @@ type
          // Constructor and Destructor
          constructor Create; overload;
          constructor Create(const _Filename: string); overload;
-         constructor Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false); overload;
-         constructor Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false); overload;
+         constructor Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+         constructor Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
          constructor Create(const _Model: PModel); overload;
          destructor Destroy; override;
          // Sets
@@ -58,16 +58,16 @@ begin
    Filename := CopyString(Model.Filename);
 end;
 
-constructor TModelBankItem.Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false);
+constructor TModelBankItem.Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED);
 begin
-   Model := TModel.Create(_Voxel,_Palette,_HVA,_HighQuality);
+   Model := TModel.Create(_Voxel,_Palette,_HVA,_Quality);
    Counter := 1;
    Filename := CopyString(Model.Filename);
 end;
 
-constructor TModelBankItem.Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false);
+constructor TModelBankItem.Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED);
 begin
-   Model := TModel.Create(_VoxelSection,_Palette,_HighQuality);
+   Model := TModel.Create(_VoxelSection,_Palette,_Quality);
    Counter := 1;
    Filename := CopyString(Model.Filename);
 end;

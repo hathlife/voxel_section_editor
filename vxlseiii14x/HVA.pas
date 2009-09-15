@@ -39,8 +39,6 @@ type
          procedure CopyTM(Source, Dest : integer);
          procedure CopyFrameTM(Source, Dest : integer);
       public
-         Frame : longword;
-         Section : longword;
          // Constructors/Destructors
          Constructor Create(); overload;
          constructor Create(const _Filename : string; _pVoxel : PVoxel); overload;
@@ -76,7 +74,7 @@ type
          Procedure SetPosition(_Frame,_Section : Integer; _Position : TVector3f);
          Function SetAngle(_Section,_Frames : Integer; _x,_y,_z : single) : TVector3f;
          // Miscelaneous
-         Procedure ApplyMatrix(_VoxelScale : TVector3f; _Section : Integer);
+         Procedure ApplyMatrix(_VoxelScale : TVector3f; _Section : Integer; _Frame: integer);
          Procedure MovePosition(_Frame,_Section : Integer; _X,_Y,_Z : single);
          // Assign
          procedure Assign(const _HVA: THVA);
@@ -149,8 +147,6 @@ begin
             Data[i].SectionName[x] := p_Voxel^.section[i].Header.Name[x];
    end;
    AddBlankFrame;
-   Frame := 0;
-   Section := 0;
 end;
 
 Procedure THVA.SaveFile(const _Filename : string);
@@ -224,7 +220,6 @@ begin
    CloseFile(f);
    If Header.N_Frames < 1 then
       exit;
-   Frame := 0;
    Result := True;
 end;
 
@@ -481,7 +476,7 @@ begin
          TransformMatrices[_Frame*Header.N_Sections+_Section][x][y] := _m[x][y];
 end;
 
-Procedure THVA.ApplyMatrix(_VoxelScale : TVector3f; _Section : Integer);
+Procedure THVA.ApplyMatrix(_VoxelScale : TVector3f; _Section : Integer; _Frame: integer);
 var
    Matrix : TGLMatrixf4;
    Scale : single;
@@ -498,24 +493,24 @@ begin
 
    if Header.N_Sections > 0 then
    begin
-      Matrix[0,0] := GetTMValue(1,1,_Section,Frame);
-      Matrix[0,1] := GetTMValue(2,1,_Section,Frame);
-      Matrix[0,2] := GetTMValue(3,1,_Section,Frame);
+      Matrix[0,0] := GetTMValue(1,1,_Section,_Frame);
+      Matrix[0,1] := GetTMValue(2,1,_Section,_Frame);
+      Matrix[0,2] := GetTMValue(3,1,_Section,_Frame);
       Matrix[0,3] := 0;
 
-      Matrix[1,0] := GetTMValue(1,2,_Section,Frame);
-      Matrix[1,1] := GetTMValue(2,2,_Section,Frame);
-      Matrix[1,2] := GetTMValue(3,2,_Section,Frame);
+      Matrix[1,0] := GetTMValue(1,2,_Section,_Frame);
+      Matrix[1,1] := GetTMValue(2,2,_Section,_Frame);
+      Matrix[1,2] := GetTMValue(3,2,_Section,_Frame);
       Matrix[1,3] := 0;
 
-      Matrix[2,0] := GetTMValue(1,3,_Section,Frame);
-      Matrix[2,1] := GetTMValue(2,3,_Section,Frame);
-      Matrix[2,2] := GetTMValue(3,3,_Section,Frame);
+      Matrix[2,0] := GetTMValue(1,3,_Section,_Frame);
+      Matrix[2,1] := GetTMValue(2,3,_Section,_Frame);
+      Matrix[2,2] := GetTMValue(3,3,_Section,_Frame);
       Matrix[2,3] := 0;
 
-      Matrix[3,0] := (GetTMValue(1,4,_Section,Frame)* Scale) * _VoxelScale.X;
-      Matrix[3,1] := (GetTMValue(2,4,_Section,Frame)* Scale) * _VoxelScale.Y;
-      Matrix[3,2] := (GetTMValue(3,4,_Section,Frame)* Scale) * _VoxelScale.Z;
+      Matrix[3,0] := (GetTMValue(1,4,_Section,_Frame)* Scale) * _VoxelScale.X;
+      Matrix[3,1] := (GetTMValue(2,4,_Section,_Frame)* Scale) * _VoxelScale.Y;
+      Matrix[3,2] := (GetTMValue(3,4,_Section,_Frame)* Scale) * _VoxelScale.Z;
       Matrix[3,3] := 1;
    end
    else
@@ -678,8 +673,6 @@ procedure THVA.Assign(const _HVA: THVA);
 var
    i,j,k: integer;
 begin
-   Frame := _HVA.Frame;
-   Section := _HVA.Section;
    for i := 1 to 16 do
       Header.FilePath[i] := _HVA.Header.FilePath[i];
    Header.N_Frames := _HVA.Header.N_Frames;

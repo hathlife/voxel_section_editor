@@ -7,6 +7,16 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       VoxelModelizer, BasicConstants, Math;
 
 type
+   TMeshMaterial = record
+      TextureID: GLINT;
+      TextureBehavior: integer;
+      Ambient: TVector4f;
+      Diffuse: TVector4f;
+      Specular: TVector4f;
+      Shininess: TVector4f;
+      Emission: TVector4f;
+   end;
+
    TRenderProc = procedure of object;
    TMesh = class
       private
@@ -55,11 +65,11 @@ type
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          constructor Create(const _Mesh : TMesh); overload;
-         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CURVED);
          destructor Destroy; override;
          procedure Clear;
          // I/O
-         procedure RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+         procedure RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CURVED);
          // Sets
          procedure SetColoursType(_ColoursType: integer);
          procedure SetNormalsType(_NormalsType: integer);
@@ -111,6 +121,7 @@ implementation
 constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
 begin
    // Set basic variables:
+   List := C_LIST_NONE;
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
    NumFaces := _NumFaces;
@@ -159,24 +170,34 @@ end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
 begin
+   List := C_LIST_NONE;
    Assign(_Mesh);
 end;
 
-constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CURVED);
 begin
+   List := C_LIST_NONE;
    Clear;
    ColoursType := C_COLOURS_PER_FACE;
    ColourGenStructure := C_COLOURS_PER_FACE;
    ID := _ID;
    TransparencyLevel := 0;
    NumVoxels := 0;
-   if _HighQuality then
-   begin
-      ModelizeFromVoxel(_Voxel,_Palette);
-   end
-   else
-   begin
-      LoadFromVoxel(_Voxel,_Palette);
+   Name := _Voxel.Header.Name;
+   case _Quality of
+      C_QUALITY_CURVED:
+      begin
+         LoadFromVoxel(_Voxel,_Palette);
+      end;
+      C_QUALITY_LANCZOS_QUADS:
+      begin
+         LoadFromVoxel(_Voxel,_Palette);
+         MeshLanczosSmooth;
+      end;
+      C_QUALITY_HIGH:
+      begin
+         ModelizeFromVoxel(_Voxel,_Palette);
+      end;
    end;
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
@@ -205,16 +226,23 @@ end;
 
 
 // I/O;
-procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _HighQuality: boolean = false);
+procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CURVED);
 begin
    Clear;
-   if _HighQuality then
-   begin
-      ModelizeFromVoxel(_Voxel,_Palette);
-   end
-   else
-   begin
-      LoadFromVoxel(_Voxel,_Palette);
+   case _Quality of
+      C_QUALITY_CURVED:
+      begin
+         LoadFromVoxel(_Voxel,_Palette);
+      end;
+      C_QUALITY_LANCZOS_QUADS:
+      begin
+         LoadFromVoxel(_Voxel,_Palette);
+         MeshLanczosSmooth;
+      end;
+      C_QUALITY_HIGH:
+      begin
+         ModelizeFromVoxel(_Voxel,_Palette);
+      end;
    end;
    OverrideTransparency;
 end;
@@ -1501,7 +1529,7 @@ var
 begin
    if High(FaceNormals) >= 0 then
    begin
-      for f := Low(FaceNormals) to High(faceNormals) do
+      for f := Low(FaceNormals) to High(FaceNormals) do
       begin
          FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
       end;

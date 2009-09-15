@@ -2,7 +2,7 @@ unit ModelBank;
 
 interface
 
-uses Model, ModelBankItem, SysUtils, Voxel, HVA, Palette;
+uses Model, ModelBankItem, SysUtils, Voxel, HVA, Palette, GlConstants;
 
 type
    TModelBank = class
@@ -28,21 +28,23 @@ type
          // Adds
          function Add(const _filename: string): PModel; overload;
          function Add(const _Model: PModel): PModel; overload;
-         function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
-         function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
+         function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
+         function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
          function AddReadOnly(const _filename: string): PModel; overload;
          function AddReadOnly(const _Model: PModel): PModel; overload;
-         function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
-         function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
+         function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
+         function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
          function Clone(const _filename: string): PModel; overload;
          function Clone(const _Model: PModel): PModel; overload;
-         function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _HighQuality: boolean = false): PModel; overload;
+         function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
          // Deletes
          procedure Delete(const _Model : PModel);
    end;
 
 
 implementation
+
+uses GlobalVars;
 
 // Constructors and Destructors
 constructor TModelBank.Create;
@@ -312,7 +314,7 @@ begin
    end;
 end;
 
-function TModelBank.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+function TModelBank.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
 var
    i : integer;
 begin
@@ -325,15 +327,15 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_HighQuality);
+      Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_Quality);
       Result := Items[High(Items)].GetModel;
    end;
 end;
 
-function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_HighQuality);
+   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_Quality);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -373,7 +375,7 @@ begin
    end;
 end;
 
-function TModelBank.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+function TModelBank.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
 var
    i : integer;
 begin
@@ -386,15 +388,15 @@ begin
    else
    begin
       SetLength(Items,High(Items)+2);
-      Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_HighQuality);
+      Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_Quality);
       Result := Items[High(Items)].GetModel;
    end;
 end;
 
-function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_HighQuality);
+   Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_Quality);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -413,10 +415,10 @@ begin
    Result := Items[High(Items)].GetModel;
 end;
 
-function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _HighQuality: boolean = false): PModel;
+function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_HighQuality);
+   Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_Quality);
    Result := Items[High(Items)].GetModel;
 end;
 
