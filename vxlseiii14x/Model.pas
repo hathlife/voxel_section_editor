@@ -460,6 +460,7 @@ begin
       VoxelTemp := VoxelBank.Clone(Voxel);
       VoxelBank.Delete(Voxel);
       Voxel := VoxelTemp;
+      HVA^.p_Voxel := Voxel;
    end;
 end;
 

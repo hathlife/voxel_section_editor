@@ -175,6 +175,8 @@ begin
 end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CURVED);
+var
+   c : integer;
 begin
    List := C_LIST_NONE;
    Clear;
@@ -183,7 +185,12 @@ begin
    ID := _ID;
    TransparencyLevel := 0;
    NumVoxels := 0;
-   Name := _Voxel.Header.Name;
+   c := 1;
+   while (c <= 16) and (_Voxel.Header.Name[c] <> #0) do
+   begin
+      Name := Name + _Voxel.Header.Name[c];
+      inc(c);
+   end;
    case _Quality of
       C_QUALITY_CURVED:
       begin
