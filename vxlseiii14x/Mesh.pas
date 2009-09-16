@@ -56,7 +56,6 @@ type
          Scale : TVector3f;
          IsColisionEnabled : boolean;
          IsVisible : boolean;
-         Texture: integer;
          // Rendering optimization
          RenderingProcedure : TRenderProc;
          List : Integer;
@@ -85,6 +84,12 @@ type
          procedure MeshUnsharpMasking;
          procedure MeshInflate;
          procedure MeshDeflate;
+
+         // Colour Effects
+         procedure ColourSmooth;
+         procedure ColourCubicSmooth;
+         procedure ColourLanczosSmooth;
+         procedure ColourUnsharpMasking;
 
          // Normals related
          procedure ReNormalizeMesh;
@@ -1009,6 +1014,369 @@ begin
    ForceRefresh;
 end;
 
+// Colour Effects.
+procedure TMesh.ColourSmooth;
+var
+   HitCounter: array of integer;
+   OriginalColours,VertColours : array of TVector4f;
+   i,j,f,v,v1 : integer;
+   MaxVerticePerFace: integer;
+   MidPoint : TVector3f;
+   Distance: single;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalColours,High(Colours)+1);
+   SetLength(VertColours,High(Vertices)+1);
+   // Reset values.
+   for i := Low(Colours) to High(Colours) do
+   begin
+      OriginalColours[i].X := Colours[i].X;
+      OriginalColours[i].Y := Colours[i].Y;
+      OriginalColours[i].Z := Colours[i].Z;
+      OriginalColours[i].W := Colours[i].W;
+      Colours[i].X := 0;
+      Colours[i].Y := 0;
+      Colours[i].Z := 0;
+      Colours[i].W := 0;
+   end;
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      VertColours[i].X := 0;
+      VertColours[i].Y := 0;
+      VertColours[i].Z := 0;
+      VertColours[i].W := 0;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // find central position of the face.
+      MidPoint.X := 0;
+      MidPoint.Y := 0;
+      MidPoint.Z := 0;
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         MidPoint.X := MidPoint.X + Vertices[Faces[v1]].X;
+         MidPoint.Y := MidPoint.Y + Vertices[Faces[v1]].Y;
+         MidPoint.Z := MidPoint.Z + Vertices[Faces[v1]].Z;
+      end;
+
+      // check all colours from all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         Distance := sqrt(Power(MidPoint.X - Vertices[Faces[v1]].X,2) + Power(MidPoint.Y - Vertices[Faces[v1]].Y,2) + Power(MidPoint.Z - Vertices[Faces[v1]].Z,2));
+         VertColours[Faces[v1]].X := VertColours[Faces[v1]].X + (OriginalColours[f].X / Distance);
+         VertColours[Faces[v1]].Y := VertColours[Faces[v1]].Y + (OriginalColours[f].Y / Distance);
+         VertColours[Faces[v1]].Z := VertColours[Faces[v1]].Z + (OriginalColours[f].Z / Distance);
+         VertColours[Faces[v1]].W := VertColours[Faces[v1]].W + (OriginalColours[f].W / Distance);
+         inc(HitCounter[Faces[v1]]);
+      end;
+   end;
+   // Then, we do an average for each vertice.
+   for v := Low(VertColours) to High(VertColours) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         VertColours[v].X := VertColours[v].X / HitCounter[v];
+         VertColours[v].Y := VertColours[v].Y / HitCounter[v];
+         VertColours[v].Z := VertColours[v].Z / HitCounter[v];
+         VertColours[v].W := VertColours[v].W / HitCounter[v];
+      end;
+   end;
+   // Finally, define face colours.
+   for f := 0 to NumFaces-1 do
+   begin
+      // average all colours from all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         Colours[f].X := Colours[f].X + VertColours[Faces[v1]].X;
+         Colours[f].Y := Colours[f].Y + VertColours[Faces[v1]].Y;
+         Colours[f].Z := Colours[f].Z + VertColours[Faces[v1]].Z;
+         Colours[f].W := Colours[f].W + VertColours[Faces[v1]].W;
+      end;
+      // Get result
+      Colours[f].X := OriginalColours[f].X + (Colours[f].X / VerticesPerFace);
+      Colours[f].Y := OriginalColours[f].Y + (Colours[f].Y / VerticesPerFace);
+      Colours[f].Z := OriginalColours[f].Z + (Colours[f].Z / VerticesPerFace);
+      Colours[f].W := OriginalColours[f].W + (Colours[f].W / VerticesPerFace);
+      // Avoid problematic colours:
+      if Colours[f].X < 0 then
+         Colours[f].X := 0
+      else if Colours[f].X > 1 then
+         Colours[f].X := 1;
+      if Colours[f].Y < 0 then
+         Colours[f].Y := 0
+      else if Colours[f].Y > 1 then
+         Colours[f].Y := 1;
+      if Colours[f].Z < 0 then
+         Colours[f].Z := 0
+      else if Colours[f].Z > 1 then
+         Colours[f].Z := 1;
+      if Colours[f].W < 0 then
+         Colours[f].W := 0
+      else if Colours[f].W > 1 then
+         Colours[f].W := 1;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalColours,0);
+   SetLength(VertColours,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.ColourCubicSmooth;
+const
+   ONE_THIRD = 1/3;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + Power((OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X),3);
+            Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + Power((OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y),3);
+            Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + Power((OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z),3);
+            inc(HitCounter[Faces[v1]]);
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.ColourLanczosSmooth;
+const
+   PI2 = Pi * Pi;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+   Distance: single;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+      VertsHit[i,i] := true;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Distance := OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X;
+               if Distance > 0 then
+                  Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2))
+               else if Distance < 0 then
+                  Vertices[Faces[v1]].X := Vertices[Faces[v1]].X - 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2));
+               Distance := OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y;
+               if Distance > 0 then
+                  Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2))
+               else if Distance < 0 then
+                  Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y - 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2));
+               Distance := OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z;
+               if Distance > 0 then
+                  Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2))
+               else if Distance < 0 then
+                  Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z - 1 - (Power(sin(Pi * Distance),2) / Power((PI * Distance),2));
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.ColourUnsharpMasking;
+var
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+      VertsHit[i,i] := true;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         v1 := (f * VerticesPerFace) + v;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
+      end;
+   end;
+   // Finally, we do the unsharp masking effect here.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HItCounter[v] > 0 then
+      begin
+         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
+end;
 
 
 // Sets
@@ -1369,7 +1737,6 @@ begin
    IsColisionEnabled := _Mesh.IsColisionEnabled;
    IsVisible := _Mesh.IsVisible;
    IsSelected := _Mesh.IsSelected;
-   Texture := _Mesh.Texture;
    BoundingBox.Min.X := _Mesh.BoundingBox.Min.X;
    BoundingBox.Min.Y := _Mesh.BoundingBox.Min.Y;
    BoundingBox.Min.Z := _Mesh.BoundingBox.Min.Z;

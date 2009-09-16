@@ -92,6 +92,8 @@ type
       procedure InflateModel;
       procedure DeflateModel;
       procedure ReNormalizeModel;
+      // Colour Effects
+      procedure ColourSmoothModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -686,6 +688,21 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ReNormalizeModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+// Colour Effects
+procedure TActor.ColourSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ColourSmoothModel;
       end;
    end;
    RequestUpdateWorld := true;

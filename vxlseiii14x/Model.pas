@@ -63,6 +63,8 @@ type
       procedure InflateModel;
       procedure DeflateModel;
       procedure ReNormalizeModel;
+      // Colour Effects
+      procedure ColourSmoothModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -377,6 +379,11 @@ begin
    LOD[CurrentLOD].RenormalizeLOD;
 end;
 
+// Colour Effects
+procedure TModel.ColourSmoothModel;
+begin
+   LOD[CurrentLOD].ColourSmoothLOD;
+end;
 
 // Transparency methods
 procedure TModel.ForceTransparency(_level: single);

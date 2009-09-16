@@ -86,6 +86,9 @@ type
     RenderQuads: TMenuItem;
     ModelFXCleanupInvisibleFaces: TMenuItem;
     ModelFXConvertQuadstoTriangles: TMenuItem;
+    ColourEffects1: TMenuItem;
+    ColourFXSmooth: TMenuItem;
+    procedure ColourFXSmoothClick(Sender: TObject);
     procedure ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
     procedure ModelFXCleanupInvisibleFacesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
@@ -550,6 +553,11 @@ begin
    Purple1.Checked := false;
    Gold1.Checked := false;
    DarkSky1.Checked := false;
+end;
+
+procedure TFrm3DModelizer.ColourFXSmoothClick(Sender: TObject);
+begin
+   Actor.ColourSmoothModel;
 end;
 
 procedure TFrm3DModelizer.Red1Click(Sender: TObject);
