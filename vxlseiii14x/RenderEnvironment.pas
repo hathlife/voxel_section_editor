@@ -202,7 +202,6 @@ var
    temp : int64;
    t2 : double;
    Actor : PActor;
-   WorldUpdate: boolean;
 begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
@@ -249,7 +248,6 @@ begin
    glEnable(GL_LIGHTING);
    glEnable(GL_COLOR_MATERIAL);
 
-   WorldUpdate:= FUpdateWorld;
    if FUpdateWorld then
    begin
       FUpdateWorld := false;

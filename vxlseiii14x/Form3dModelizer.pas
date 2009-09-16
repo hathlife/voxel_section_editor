@@ -85,6 +85,8 @@ type
     SaveModelDialog: TSaveDialog;
     RenderQuads: TMenuItem;
     ModelFXCleanupInvisibleFaces: TMenuItem;
+    ModelFXConvertQuadstoTriangles: TMenuItem;
+    procedure ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
     procedure ModelFXCleanupInvisibleFacesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
@@ -652,6 +654,11 @@ end;
 procedure TFrm3DModelizer.ModelFXCleanupInvisibleFacesClick(Sender: TObject);
 begin
    Actor.RemoveInvisibleFaces;
+end;
+
+procedure TFrm3DModelizer.ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
+begin
+   Actor.ConvertQuadsToTris;
 end;
 
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);

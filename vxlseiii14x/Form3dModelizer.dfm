@@ -523,6 +523,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Cleanup Invisible Faces'
         OnClick = ModelFXCleanupInvisibleFacesClick
       end
+      object ModelFXConvertQuadstoTriangles: TMenuItem
+        Caption = 'Convert Quads to Triangles'
+        OnClick = ModelFXConvertQuadstoTrianglesClick
+      end
     end
   end
   object AnimationTimer: TTimer

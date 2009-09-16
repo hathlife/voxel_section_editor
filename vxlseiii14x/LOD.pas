@@ -54,6 +54,7 @@ type
       procedure Assign(const _LOD: TLOD);
       // Mesh Optimizations
       procedure RemoveInvisibleFaces;
+      procedure ConvertQuadsToTris;
    end;
 
 implementation
@@ -315,6 +316,16 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].RemoveInvisibleFaces;
+   end;
+end;
+
+procedure TLOD.ConvertQuadsToTris;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertQuadsToTris;
    end;
 end;
 

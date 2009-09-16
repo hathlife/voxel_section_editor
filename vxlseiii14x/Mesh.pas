@@ -90,6 +90,7 @@ type
          procedure ReNormalizeMesh;
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
+         procedure ReNormalizePerVertex;
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
 
          // Rendering methods
@@ -113,6 +114,7 @@ type
 
          // Model optimization
          procedure RemoveInvisibleFaces;
+         procedure ConvertQuadsToTris;
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
@@ -1549,7 +1551,7 @@ begin
    end
    else if High(Normals) >= 0 then
    begin
-
+      ReNormalizePerVertex;
    end;
    ForceRefresh;
 end;
@@ -1563,13 +1565,89 @@ begin
       for f := Low(FaceNormals) to High(FaceNormals) do
       begin
          FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
+         FaceNormals[f].X := -FaceNormals[f].X;
+         FaceNormals[f].Y := -FaceNormals[f].Y;
+         FaceNormals[f].Z := -FaceNormals[f].Z;
       end;
    end
    else if High(Normals) >= 0 then
    begin
-
+      ReNormalizePerVertex;
    end;
    ForceRefresh;
+end;
+
+procedure TMesh.ReNormalizePerVertex;
+var
+   HitCounter: array of integer;
+   OriginalNormals : array of TVector3f;
+   i,f,v,v1 : integer;
+   MaxVerticePerFace: integer;
+   Normals1,Normals2 : TVector3f;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalNormals,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      OriginalNormals[i].X := Normals[i].X;
+      OriginalNormals[i].Y := Normals[i].Y;
+      OriginalNormals[i].Z := Normals[i].Z;
+      Normals[i].X := 0;
+      Normals[i].Y := 0;
+      Normals[i].Z := 0;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   if MaxVerticePerFace = 2 then
+   begin
+      for f := 0 to NumFaces-1 do
+      begin
+         v1 := (f * VerticesPerFace);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+
+         // check all vertexes from the face.
+         for v := 0 to MaxVerticePerFace do
+         begin
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - Normals1.X;
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - Normals1.Y;
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - Normals1.Z;
+            inc(HitCounter[Faces[v1+v]]);
+         end;
+      end;
+   end
+   else
+   begin
+      for f := 0 to NumFaces-1 do
+      begin
+         v1 := (f * VerticesPerFace);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+         Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
+
+         // check all vertexes from the face.
+         for v := 0 to MaxVerticePerFace do
+         begin
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - ((Normals1.X + Normals2.X) / 2);
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - ((Normals1.Y + Normals2.Y) / 2);
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - ((Normals1.Z + Normals2.Z) / 2);
+            inc(HitCounter[Faces[v1+v]]);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         Normals[v].X := Normals[v].X / HitCounter[v];
+         Normals[v].Y := Normals[v].Y / HitCounter[v];
+         Normals[v].Z := Normals[v].Z / HitCounter[v];
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalNormals,0);
 end;
 
 function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
@@ -1653,5 +1731,92 @@ begin
    end;
    ForceRefresh;
 end;
+
+procedure TMesh.ConvertQuadsToTris;
+var
+   OldFaces: auint32;
+   OldFaceNormals: TAVector3f;
+   OldColours: TAVector4f;
+   OldNumFaces : integer;
+   i : integer;
+begin
+   if VerticesPerFace <> 3 then
+   begin
+      // Start with face conversion.
+      VerticesPerFace := 3;
+      FaceType := GL_TRIANGLES;
+      OldNumFaces := NumFaces;
+      NumFaces := NumFaces * 2;
+      // Make a backup of the faces first.
+      SetLength(OldFaces,High(Faces)+1);
+      for i := Low(Faces) to High(Faces) do
+         OldFaces[i] := Faces[i];
+      // Now we transform each quad in two tris.
+      SetLength(Faces,Round((High(Faces)+1)*1.5));
+      for i := 0 to OldNumFaces - 1 do
+      begin
+         Faces[i*6] := OldFaces[i*4];
+         Faces[(i*6)+1] := OldFaces[(i*4)+1];
+         Faces[(i*6)+2] := OldFaces[(i*4)+2];
+         Faces[(i*6)+3] := OldFaces[(i*4)+2];
+         Faces[(i*6)+4] := OldFaces[(i*4)+3];
+         Faces[(i*6)+5] := OldFaces[(i*4)];
+      end;
+      SetLength(OldFaces,0);
+      // Go with Colour conversion.
+      if (ColoursType = C_COLOURS_PER_FACE) then
+      begin
+         // Make a backup of the colours first.
+         SetLength(OldColours,High(Colours)+1);
+         for i := Low(Colours) to High(Colours) do
+         begin
+            OldColours[i].X := Colours[i].X;
+            OldColours[i].Y := Colours[i].Y;
+            OldColours[i].Z := Colours[i].Z;
+            OldColours[i].W := Colours[i].W;
+         end;
+         // Duplicate the colours.
+         SetLength(Colours,NumFaces);
+         for i := 0 to OldNumFaces - 1 do
+         begin
+            Colours[i*2].X := OldColours[i].X;
+            Colours[i*2].Y := OldColours[i].Y;
+            Colours[i*2].Z := OldColours[i].Z;
+            Colours[i*2].W := OldColours[i].W;
+            Colours[(i*2)+1].X := OldColours[i].X;
+            Colours[(i*2)+1].Y := OldColours[i].Y;
+            Colours[(i*2)+1].Z := OldColours[i].Z;
+            Colours[(i*2)+1].W := OldColours[i].W;
+         end;
+         SetLength(OldColours,0);
+      end;
+      // Go with Normals conversion.
+      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+      begin
+         // Make a backup of the normals first.
+         SetLength(OldFaceNormals,High(FaceNormals)+1);
+         for i := Low(FaceNormals) to High(FaceNormals) do
+         begin
+            OldFaceNormals[i].X := FaceNormals[i].X;
+            OldFaceNormals[i].Y := FaceNormals[i].Y;
+            OldFaceNormals[i].Z := FaceNormals[i].Z;
+         end;
+         // Duplicate the face normals.
+         SetLength(FaceNormals,NumFaces);
+         for i := 0 to OldNumFaces - 1 do
+         begin
+            FaceNormals[i*2].X := OldFaceNormals[i].X;
+            FaceNormals[i*2].Y := OldFaceNormals[i].Y;
+            FaceNormals[i*2].Z := OldFaceNormals[i].Z;
+            FaceNormals[(i*2)+1].X := OldFaceNormals[i].X;
+            FaceNormals[(i*2)+1].Y := OldFaceNormals[i].Y;
+            FaceNormals[(i*2)+1].Z := OldFaceNormals[i].Z;
+         end;
+         SetLength(OldFaceNormals,0);
+      end;
+      ForceRefresh;
+   end;
+end;
+
 
 end.

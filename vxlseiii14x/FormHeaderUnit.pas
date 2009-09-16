@@ -129,7 +129,7 @@ end;
 
 procedure TFrmHeader.cmbSectionChange(Sender: TObject);
 var
-   i,j,k: Integer;
+   i: Integer;
 begin
    //now populate those other list boxes...
    i:=cmbSection.ItemIndex;
