@@ -36,7 +36,6 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 282
   end
   object Panel1: TPanel
     Left = 0
@@ -435,13 +434,17 @@ object Frm3DModelizer: TFrm3DModelizer
     object RenderQuality1: TMenuItem
       Caption = 'Model Quality'
       object RenderCubes: TMenuItem
-        Caption = 'Editing Cubes (Low)'
+        Caption = 'Editing Cubes (Very Low)'
         OnClick = RenderCubesClick
       end
       object RenderQuads: TMenuItem
-        Caption = 'Quad Based 3D Model'
-        Checked = True
+        Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
+      end
+      object RenderTriangles: TMenuItem
+        Caption = 'Triangle Smoothed 3D Model (Medium)'
+        Checked = True
+        OnClick = RenderTrianglesClick
       end
       object RenderModel: TMenuItem
         Caption = 'Triangle Based 3D Model (High)'
@@ -516,10 +519,6 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Deflate'
         OnClick = ModelFXDeflateClick
       end
-      object ModelFXNormalize: TMenuItem
-        Caption = 'ReNormalize Mesh'
-        OnClick = ModelFXNormalizeClick
-      end
       object ModelFXCleanupInvisibleFaces: TMenuItem
         Caption = 'Cleanup Invisible Faces'
         OnClick = ModelFXCleanupInvisibleFacesClick
@@ -534,6 +533,21 @@ object Frm3DModelizer: TFrm3DModelizer
       object ColourFXSmooth: TMenuItem
         Caption = 'Smooth'
         OnClick = ColourFXSmoothClick
+      end
+      object ColourFXHeavySmooth: TMenuItem
+        Caption = 'Heavy Smooth'
+        OnClick = ColourFXHeavySmoothClick
+      end
+    end
+    object NormalEffects1: TMenuItem
+      Caption = 'Normal Effects'
+      object NormalFXNormalize: TMenuItem
+        Caption = 'ReNormalize Mesh'
+        OnClick = NormalFXNormalizeClick
+      end
+      object NormalsFXConvertFaceToVertexNormals: TMenuItem
+        Caption = 'Convert Face Normals to Vertex Normals'
+        OnClick = NormalsFXConvertFaceToVertexNormalsClick
       end
     end
   end

@@ -23,9 +23,10 @@ const
    C_LIST_NONE = 0;
 
    // Mesh Quality
-   C_QUALITY_CURVED = 0;
+   C_QUALITY_CUBED = 0;
    C_QUALITY_LANCZOS_QUADS = 1;
-   C_QUALITY_HIGH = 2;
+   C_QUALITY_LANCZOS_TRIS = 2;
+   C_QUALITY_HIGH = 3;
    C_QUALITY_MAX = C_QUALITY_HIGH;
 
    RemapColourMap : array [0..8] of TVector3b =

@@ -78,7 +78,7 @@ type
     ModelFXHeavySmooth: TMenuItem;
     ModelFXDeflate: TMenuItem;
     ModelFXInflate: TMenuItem;
-    ModelFXNormalize: TMenuItem;
+    NormalFXNormalize: TMenuItem;
     ModelFXLanczos: TMenuItem;
     SaveModelAs: TMenuItem;
     N4: TMenuItem;
@@ -88,13 +88,20 @@ type
     ModelFXConvertQuadstoTriangles: TMenuItem;
     ColourEffects1: TMenuItem;
     ColourFXSmooth: TMenuItem;
+    ColourFXHeavySmooth: TMenuItem;
+    NormalEffects1: TMenuItem;
+    NormalsFXConvertFaceToVertexNormals: TMenuItem;
+    RenderTriangles: TMenuItem;
+    procedure RenderTrianglesClick(Sender: TObject);
+    procedure NormalsFXConvertFaceToVertexNormalsClick(Sender: TObject);
+    procedure ColourFXHeavySmoothClick(Sender: TObject);
     procedure ColourFXSmoothClick(Sender: TObject);
     procedure ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
     procedure ModelFXCleanupInvisibleFacesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
     procedure ModelFXLanczosClick(Sender: TObject);
-    procedure ModelFXNormalizeClick(Sender: TObject);
+    procedure NormalFXNormalizeClick(Sender: TObject);
     procedure ModelFXInflateClick(Sender: TObject);
     procedure ModelFXDeflateClick(Sender: TObject);
     procedure ModelFXHeavySmoothClick(Sender: TObject);
@@ -555,6 +562,11 @@ begin
    DarkSky1.Checked := false;
 end;
 
+procedure TFrm3DModelizer.ColourFXHeavySmoothClick(Sender: TObject);
+begin
+   Actor.ColourCubicSmoothModel
+end;
+
 procedure TFrm3DModelizer.ColourFXSmoothClick(Sender: TObject);
 begin
    Actor.ColourSmoothModel;
@@ -575,6 +587,7 @@ begin
    RenderCubes.Checked := true;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -583,6 +596,7 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := true;
+   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -591,6 +605,16 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := true;
    RenderModel.Checked := false;
+   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+end;
+
+procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -654,9 +678,15 @@ begin
    Actor.InflateModel;
 end;
 
-procedure TFrm3DModelizer.ModelFXNormalizeClick(Sender: TObject);
+procedure TFrm3DModelizer.NormalFXNormalizeClick(Sender: TObject);
 begin
    Actor.ReNormalizeModel;
+end;
+
+procedure TFrm3DModelizer.NormalsFXConvertFaceToVertexNormalsClick(
+  Sender: TObject);
+begin
+   Actor.ConvertFaceToVertexNormals;
 end;
 
 procedure TFrm3DModelizer.ModelFXCleanupInvisibleFacesClick(Sender: TObject);
@@ -785,9 +815,13 @@ begin
    begin
       Result := C_QUALITY_LANCZOS_QUADS;
    end
+   else if RenderTriangles.Checked then
+   begin
+      Result := C_QUALITY_LANCZOS_TRIS;
+   end
    else
    begin
-      Result := C_QUALITY_CURVED;
+      Result := C_QUALITY_CUBED;
    end;
 end;
 

@@ -62,9 +62,12 @@ type
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
-      procedure ReNormalizeModel;
       // Colour Effects
       procedure ColourSmoothModel;
+      procedure ColourCubicSmoothModel;
+      // Normals
+      procedure ReNormalizeModel;
+      procedure ConvertFaceToVertexNormals;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -374,15 +377,26 @@ begin
    LOD[CurrentLOD].DeflateLOD;
 end;
 
+// Colour Effects
+procedure TModel.ColourSmoothModel;
+begin
+   LOD[CurrentLOD].ColourSmoothLOD;
+end;
+
+procedure TModel.ColourCubicSmoothModel;
+begin
+   LOD[CurrentLOD].ColourCubicSmoothLOD;
+end;
+
+// Normals
 procedure TModel.ReNormalizeModel;
 begin
    LOD[CurrentLOD].RenormalizeLOD;
 end;
 
-// Colour Effects
-procedure TModel.ColourSmoothModel;
+procedure TModel.ConvertFaceToVertexNormals;
 begin
-   LOD[CurrentLOD].ColourSmoothLOD;
+   LOD[CurrentLOD].ConvertFaceToVertexNormals;
 end;
 
 // Transparency methods

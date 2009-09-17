@@ -66,16 +66,16 @@ type
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
-      procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
-      procedure Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+      procedure Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       procedure AddReadOnly(const _filename: string); overload;
       procedure AddReadOnly(const _Model: PModel); overload;
-      procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
-      procedure AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+      procedure AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       procedure Clone(const _filename: string); overload;
       procedure Clone(const _Model: PModel); overload;
-      procedure Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
-      procedure Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED); overload;
+      procedure Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+      procedure Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       // Removes
       procedure Remove(var _Model : PModel);
       // switches
@@ -91,9 +91,12 @@ type
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
-      procedure ReNormalizeModel;
       // Colour Effects
       procedure ColourSmoothModel;
+      procedure ColourCubicSmoothModel;
+      // Normals
+      procedure ReNormalizeModel;
+      procedure ConvertFaceToVertexNormals;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -679,20 +682,6 @@ begin
    RequestUpdateWorld := true;
 end;
 
-procedure TActor.ReNormalizeModel;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         Models[i]^.ReNormalizeModel;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
 // Colour Effects
 procedure TActor.ColourSmoothModel;
 var
@@ -707,6 +696,50 @@ begin
    end;
    RequestUpdateWorld := true;
 end;
+
+procedure TActor.ColourCubicSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ColourCubicSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+// Normals
+procedure TActor.ReNormalizeModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ReNormalizeModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.ConvertFaceToVertexNormals;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ConvertFaceToVertexNormals;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
 
 // Transparency methods
 procedure TActor.ForceTransparency(_level: single);

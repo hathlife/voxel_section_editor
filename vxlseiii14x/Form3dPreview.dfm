@@ -3,7 +3,7 @@ object Frm3DPReview: TFrm3DPReview
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
-  ClientHeight = 327
+  ClientHeight = 346
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 301
+    Height = 320
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 282
+    ExplicitHeight = 301
   end
   object Panel1: TPanel
     Left = 0
@@ -435,13 +435,17 @@ object Frm3DPReview: TFrm3DPReview
     object RenderQuality1: TMenuItem
       Caption = 'Model Quality'
       object RenderCubes: TMenuItem
-        Caption = 'Editing Cubes (Low)'
+        Caption = 'Editing Cubes (Very Low)'
         Checked = True
         OnClick = RenderCubesClick
       end
       object RenderQuads: TMenuItem
-        Caption = 'Quad Based 3D Model (Medium)'
+        Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
+      end
+      object RenderTriangles: TMenuItem
+        Caption = 'Triangle Smoothed 3D Model (Medium)'
+        OnClick = RenderTrianglesClick
       end
       object RenderModel: TMenuItem
         Caption = 'Triangle Based 3D Model (High)'

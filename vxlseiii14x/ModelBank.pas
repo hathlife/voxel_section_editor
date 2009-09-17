@@ -28,15 +28,15 @@ type
          // Adds
          function Add(const _filename: string): PModel; overload;
          function Add(const _Model: PModel): PModel; overload;
-         function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
-         function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
+         function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
+         function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          function AddReadOnly(const _filename: string): PModel; overload;
          function AddReadOnly(const _Model: PModel): PModel; overload;
-         function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
-         function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
+         function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
+         function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          function Clone(const _filename: string): PModel; overload;
          function Clone(const _Model: PModel): PModel; overload;
-         function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CURVED): PModel; overload;
+         function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          // Deletes
          procedure Delete(const _Model : PModel);
    end;
@@ -314,7 +314,7 @@ begin
    end;
 end;
 
-function TModelBank.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
+function TModelBank.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CUBED): PModel;
 var
    i : integer;
 begin
@@ -332,7 +332,7 @@ begin
    end;
 end;
 
-function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
+function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CUBED): PModel;
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_Quality);
@@ -375,7 +375,7 @@ begin
    end;
 end;
 
-function TModelBank.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
+function TModelBank.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CUBED): PModel;
 var
    i : integer;
 begin
@@ -393,7 +393,7 @@ begin
    end;
 end;
 
-function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
+function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CUBED): PModel;
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_Quality);
@@ -415,7 +415,7 @@ begin
    Result := Items[High(Items)].GetModel;
 end;
 
-function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CURVED): PModel;
+function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette;  _Quality: integer = C_QUALITY_CUBED): PModel;
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_Quality);

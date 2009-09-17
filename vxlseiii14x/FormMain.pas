@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.42';
+   APPLICATION_VER = '1.39.43';
 
 type
   TFrmMain = class(TForm)
@@ -1004,7 +1004,7 @@ begin
    CursorReset;
    if High(Actor^.Models) >= 0 then
       Actor^.Clear;
-   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CURVED);
+   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.SetActorModelTransparency;
@@ -2427,7 +2427,7 @@ begin
    begin
       Actor^.Clear;
    end;
-   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CURVED);
+   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
    if p_Frm3DPreview <> nil then
    begin
       if High(p_Frm3DPreview^.Actor.Models) >= 0 then

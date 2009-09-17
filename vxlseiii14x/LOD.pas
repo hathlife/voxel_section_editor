@@ -43,9 +43,12 @@ type
       procedure UnsharpLOD;
       procedure InflateLOD;
       procedure DeflateLOD;
-      procedure RenormalizeLOD;
       // Colour Effects
       procedure ColourSmoothLOD;
+      procedure ColourCubicSmoothLOD;
+      // Normals
+      procedure RenormalizeLOD;
+      procedure ConvertFaceToVertexNormals;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -244,6 +247,28 @@ begin
    end;
 end;
 
+// Colour Effects
+procedure TLOD.ColourSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ColourSmooth;
+   end;
+end;
+
+procedure TLOD.ColourCubicSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ColourCubicSmooth;
+   end;
+end;
+
+// Normals
 procedure TLOD.ReNormalizeLOD;
 var
    i : integer;
@@ -254,14 +279,13 @@ begin
    end;
 end;
 
-// Colour Effects
-procedure TLOD.ColourSmoothLOD;
+procedure TLOD.ConvertFaceToVertexNormals;
 var
    i : integer;
 begin
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].ColourSmooth;
+      Mesh[i].ConvertFaceToVertexNormals;
    end;
 end;
 

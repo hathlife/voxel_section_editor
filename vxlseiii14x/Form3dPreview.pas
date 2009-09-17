@@ -80,6 +80,8 @@ type
     N4: TMenuItem;
     SaveModelDialog: TSaveDialog;
     RenderQuads: TMenuItem;
+    RenderTriangles: TMenuItem;
+    procedure RenderTrianglesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
     procedure ModelFXLanczosClick(Sender: TObject);
@@ -558,6 +560,7 @@ begin
    RenderCubes.Checked := true;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -566,6 +569,7 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := true;
+   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -574,6 +578,16 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := true;
    RenderModel.Checked := false;
+   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+end;
+
+procedure TFrm3DPReview.RenderTrianglesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
 end;
 
@@ -758,9 +772,13 @@ begin
    begin
       Result := C_QUALITY_LANCZOS_QUADS;
    end
+   else if RenderTriangles.Checked then
+   begin
+      Result := C_QUALITY_LANCZOS_TRIS;
+   end
    else
    begin
-      Result := C_QUALITY_CURVED;
+      Result := C_QUALITY_CUBED;
    end;
 end;
 
