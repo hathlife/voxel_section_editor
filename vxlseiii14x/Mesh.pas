@@ -218,7 +218,6 @@ begin
          LoadFromVoxel(_Voxel,_Palette);
          ConvertQuadsToTris;
          MeshLanczosSmooth;
-         ColourSmooth;
          ConvertFaceToVertexNormals;
       end;
       C_QUALITY_HIGH:
@@ -271,7 +270,6 @@ begin
          LoadFromVoxel(_Voxel,_Palette);
          ConvertQuadsToTris;
          MeshLanczosSmooth;
-         ColourSmooth;
          ConvertFaceToVertexNormals;
       end;
       C_QUALITY_HIGH:
