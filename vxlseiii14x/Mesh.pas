@@ -20,7 +20,6 @@ type
    TRenderProc = procedure of object;
    TMesh = class
       private
-         NormalsType : byte;
          ColoursType : byte;
          ColourGenStructure : byte;
          TransparencyLevel : single;
@@ -48,6 +47,7 @@ type
          // Graphical atributes goes here
          FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
          VerticesPerFace : byte; // for optimization purposes only.
+         NormalsType : byte;
          NumFaces : longword;
          NumVoxels : longword; // for statistic purposes.
          Vertices : TAVector3f;

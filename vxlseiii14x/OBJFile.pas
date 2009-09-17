@@ -2,7 +2,7 @@ unit OBJFile;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, SysUtils, Mesh;
+uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;
@@ -26,6 +26,9 @@ type
          procedure WriteGroupName(var _File: System.Text; const _GroupName: string);
          procedure WriteGroupFaces(var _File: System.Text; _VertexStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
          procedure WriteGroupFacesTexture(var _File: System.Text; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+         procedure WriteGroupVN(var _File: System.Text; const _GroupName: string; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+         procedure WriteGroupFacesVN(var _File: System.Text; _VertexStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+         procedure WriteGroupFacesTextureVN(var _File: System.Text; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
          procedure WriteVertexes(var _File: System.Text);
          procedure WriteNormals(var _File: System.Text);
          procedure WriteTextures(var _File: System.Text);
@@ -102,7 +105,14 @@ begin
    MyMesh := Meshes;
    while MyMesh <> nil do
    begin
-      WriteGroup(F,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+      if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
+      begin
+         WriteGroupVN(F,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+      end
+      else
+      begin
+         WriteGroup(F,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+      end;
       MyMesh := MyMesh^.Next;
    end;
    CloseFile(F);
@@ -120,6 +130,29 @@ begin
    else
    begin
       WriteGroupFaces(_File,_VertexStart,_NormalsStart,_VertsPerFace,_Faces);
+   end;
+   if _VertsPerFace = 3 then
+   begin
+      Writeln(_File,'# ' + IntToStr((High(_Faces)+1) div 3) + ' triangles in group.');
+   end
+   else if _VertsPerFace = 4 then
+   begin
+      Writeln(_File,'# ' + IntToStr((High(_Faces)+1) div 4) + ' quads in group.');
+   end;
+   Writeln(_File);
+end;
+
+procedure TObjFile.WriteGroupVN(var _File: System.Text; const _GroupName: string; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+begin
+   WriteGroupName(_File,_GroupName);
+   // usemtl stuff goes here.
+   if UseTexture then
+   begin
+      WriteGroupFacesTextureVN(_File,_VertexStart,_TextureStart,_NormalsStart,_VertsPerFace,_Faces);
+   end
+   else
+   begin
+      WriteGroupFacesVN(_File,_VertexStart,_NormalsStart,_VertsPerFace,_Faces);
    end;
    if _VertsPerFace = 3 then
    begin
@@ -176,6 +209,39 @@ begin
    end;
 end;
 
+// Vertex Normals version.
+procedure TObjFile.WriteGroupFacesVN(var _File: System.Text; _VertexStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+var
+   maxf,f,v : integer;
+begin
+   maxf := ((High(_Faces)+1)div _VertsPerFace) -1;
+   for f := Low(_Faces) to maxf do
+   begin
+      Write(_File,'f ');
+      for v := 0 to (_VertsPerFace-1) do
+      begin
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '//' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _NormalsStart) + ' ');
+      end;
+      Writeln(_File);
+   end;
+end;
+
+procedure TObjFile.WriteGroupFacesTextureVN(var _File: System.Text; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
+var
+   maxf,f,v : integer;
+begin
+   maxf := ((High(_Faces)+1)div _VertsPerFace) -1;
+   for f := Low(_Faces) to maxf do
+   begin
+      Write(_File,'f ');
+      for v := 0 to (_VertsPerFace-1) do
+      begin
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(f + _TextureStart) + '/' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _NormalsStart) + ' ');
+      end;
+      Writeln(_File);
+   end;
+end;
+
 procedure TObjFile.WriteVertexes(var _File: System.Text);
 var
    MyMesh : PObjMeshUnit;
@@ -211,7 +277,14 @@ begin
    while MyMesh <> nil do
    begin
       MyMesh^.NormalStart := NormalsCount + 1;
-      WriteMeshNormals(_File,MyMesh^.Mesh^.FaceNormals);
+      if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
+      begin
+         WriteMeshNormals(_File,MyMesh^.Mesh^.Normals);
+      end
+      else
+      begin
+         WriteMeshNormals(_File,MyMesh^.Mesh^.FaceNormals);
+      end;
       MyMesh := MyMesh^.Next;
    end;
    Writeln(_File,'# ' + IntToStr(NormalsCount) + ' normals.');
