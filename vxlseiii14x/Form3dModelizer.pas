@@ -92,6 +92,16 @@ type
     NormalEffects1: TMenuItem;
     NormalsFXConvertFaceToVertexNormals: TMenuItem;
     RenderTriangles: TMenuItem;
+    LanczosDilatation1: TMenuItem;
+    ColourFXConvertFaceToVertexS: TMenuItem;
+    ColourFXConvertFaceToVertexHS: TMenuItem;
+    ColourFXConvertFaceToVertexLS: TMenuItem;
+    ColourFXConvertVertexToFace: TMenuItem;
+    procedure ColourFXConvertVertexToFaceClick(Sender: TObject);
+    procedure ColourFXConvertFaceToVertexLSClick(Sender: TObject);
+    procedure ColourFXConvertFaceToVertexHSClick(Sender: TObject);
+    procedure ColourFXConvertFaceToVertexSClick(Sender: TObject);
+    procedure LanczosDilatation1Click(Sender: TObject);
     procedure RenderTrianglesClick(Sender: TObject);
     procedure NormalsFXConvertFaceToVertexNormalsClick(Sender: TObject);
     procedure ColourFXHeavySmoothClick(Sender: TObject);
@@ -181,6 +191,7 @@ type
     procedure SetActorModelTransparency;
     Procedure Reset3DView;
     function GetQualityModel: integer;
+   procedure SetColourPerVertex(_value: boolean);
   end;
 
 implementation
@@ -441,6 +452,11 @@ begin
    Actor.LanczosSmoothModel;
 end;
 
+procedure TFrm3DModelizer.LanczosDilatation1Click(Sender: TObject);
+begin
+   Actor.ColourLanczosSmoothModel;
+end;
+
 procedure TFrm3DModelizer.LEft1Click(Sender: TObject);
 begin
    Camera.SetRotation(-90,0,0);
@@ -562,6 +578,30 @@ begin
    DarkSky1.Checked := false;
 end;
 
+procedure TFrm3DModelizer.ColourFXConvertFaceToVertexHSClick(Sender: TObject);
+begin
+   Actor.ConvertFaceToVertexColoursCubic;
+   SetColourPerVertex(true);
+end;
+
+procedure TFrm3DModelizer.ColourFXConvertFaceToVertexLSClick(Sender: TObject);
+begin
+   Actor.ConvertFaceToVertexColoursLanczos;
+   SetColourPerVertex(true);
+end;
+
+procedure TFrm3DModelizer.ColourFXConvertFaceToVertexSClick(Sender: TObject);
+begin
+   Actor.ConvertFaceToVertexColoursLinear;
+   SetColourPerVertex(true);
+end;
+
+procedure TFrm3DModelizer.ColourFXConvertVertexToFaceClick(Sender: TObject);
+begin
+   Actor.ConvertVertexToFaceColours;
+   SetColourPerVertex(false);
+end;
+
 procedure TFrm3DModelizer.ColourFXHeavySmoothClick(Sender: TObject);
 begin
    Actor.ColourCubicSmoothModel
@@ -589,6 +629,7 @@ begin
    RenderModel.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
@@ -598,6 +639,7 @@ begin
    RenderModel.Checked := true;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
@@ -607,6 +649,7 @@ begin
    RenderModel.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
@@ -616,6 +659,7 @@ begin
    RenderModel.Checked := false;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.Blue1Click(Sender: TObject);
@@ -823,6 +867,14 @@ begin
    begin
       Result := C_QUALITY_CUBED;
    end;
+end;
+
+procedure TFrm3DModelizer.SetColourPerVertex(_value: boolean);
+begin
+   ColourFXConvertFaceToVertexS.Enabled := not _value;
+   ColourFXConvertFaceToVertexHS.Enabled := not _value;
+   ColourFXConvertFaceToVertexLS.Enabled := not _value;
+   ColourFXConvertVertexToFace.Enabled := _value;
 end;
 
 end.

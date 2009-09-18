@@ -65,6 +65,11 @@ type
       // Colour Effects
       procedure ColourSmoothModel;
       procedure ColourCubicSmoothModel;
+      procedure ColourLanczosSmoothModel;
+      procedure ConvertVertexToFaceColours;
+      procedure ConvertFaceToVertexColoursLinear;
+      procedure ConvertFaceToVertexColoursCubic;
+      procedure ConvertFaceToVertexColoursLanczos;
       // Normals
       procedure ReNormalizeModel;
       procedure ConvertFaceToVertexNormals;
@@ -386,6 +391,31 @@ end;
 procedure TModel.ColourCubicSmoothModel;
 begin
    LOD[CurrentLOD].ColourCubicSmoothLOD;
+end;
+
+procedure TModel.ColourLanczosSmoothModel;
+begin
+   LOD[CurrentLOD].ColourLanczosSmoothLOD;
+end;
+
+procedure TModel.ConvertVertexToFaceColours;
+begin
+   LOD[CurrentLOD].ConvertVertexToFaceColours;
+end;
+
+procedure TModel.ConvertFaceToVertexColoursLinear;
+begin
+   LOD[CurrentLOD].ConvertFaceToVertexColoursLinear;
+end;
+
+procedure TModel.ConvertFaceToVertexColoursCubic;
+begin
+   LOD[CurrentLOD].ConvertFaceToVertexColoursCubic;
+end;
+
+procedure TModel.ConvertFaceToVertexColoursLanczos;
+begin
+   LOD[CurrentLOD].ConvertFaceToVertexColoursLanczos;
 end;
 
 // Normals

@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 327
+  ClientHeight = 365
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 301
+    Height = 339
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,6 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
+    ExplicitHeight = 320
   end
   object Panel1: TPanel
     Left = 0
@@ -504,7 +505,7 @@ object Frm3DModelizer: TFrm3DModelizer
         OnClick = ModelFXHeavySmoothClick
       end
       object ModelFXLanczos: TMenuItem
-        Caption = 'Lanczos Smooth'
+        Caption = 'Lanczos Erosion'
         OnClick = ModelFXLanczosClick
       end
       object ModelFXUnsharp: TMenuItem
@@ -537,6 +538,27 @@ object Frm3DModelizer: TFrm3DModelizer
       object ColourFXHeavySmooth: TMenuItem
         Caption = 'Heavy Smooth'
         OnClick = ColourFXHeavySmoothClick
+      end
+      object LanczosDilatation1: TMenuItem
+        Caption = 'Lanczos Smooth'
+        OnClick = LanczosDilatation1Click
+      end
+      object ColourFXConvertFaceToVertexS: TMenuItem
+        Caption = 'Convert Face To Vertex Colours (with Smooth)'
+        OnClick = ColourFXConvertFaceToVertexSClick
+      end
+      object ColourFXConvertFaceToVertexHS: TMenuItem
+        Caption = 'Convert Face To Vertex Colours (with Heavy Smooth)'
+        OnClick = ColourFXConvertFaceToVertexHSClick
+      end
+      object ColourFXConvertFaceToVertexLS: TMenuItem
+        Caption = 'Convert Face To Vertex Colours (with Lanczos Smooth)'
+        OnClick = ColourFXConvertFaceToVertexLSClick
+      end
+      object ColourFXConvertVertexToFace: TMenuItem
+        Caption = 'Convert Vertex To Face Colours'
+        Enabled = False
+        OnClick = ColourFXConvertVertexToFaceClick
       end
     end
     object NormalEffects1: TMenuItem

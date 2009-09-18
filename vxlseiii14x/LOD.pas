@@ -46,6 +46,11 @@ type
       // Colour Effects
       procedure ColourSmoothLOD;
       procedure ColourCubicSmoothLOD;
+      procedure ColourLanczosSmoothLOD;
+      procedure ConvertVertexToFaceColours;
+      procedure ConvertFaceToVertexColoursLinear;
+      procedure ConvertFaceToVertexColoursCubic;
+      procedure ConvertFaceToVertexColoursLanczos;
       // Normals
       procedure RenormalizeLOD;
       procedure ConvertFaceToVertexNormals;
@@ -267,6 +272,57 @@ begin
       Mesh[i].ColourCubicSmooth;
    end;
 end;
+
+procedure TLOD.ColourLanczosSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ColourLanczosSmooth;
+   end;
+end;
+
+procedure TLOD.ConvertVertexToFaceColours;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertVertexToFaceColours;
+   end;
+end;
+
+procedure TLOD.ConvertFaceToVertexColoursLinear;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertFaceToVertexColoursLinear;
+   end;
+end;
+
+procedure TLOD.ConvertFaceToVertexColoursCubic;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertFaceToVertexColoursCubic;
+   end;
+end;
+
+procedure TLOD.ConvertFaceToVertexColoursLanczos;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertFaceToVertexColoursLanczos;
+   end;
+end;
+
 
 // Normals
 procedure TLOD.ReNormalizeLOD;
