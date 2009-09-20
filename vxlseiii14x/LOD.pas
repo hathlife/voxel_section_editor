@@ -48,6 +48,7 @@ type
       procedure ColourCubicSmoothLOD;
       procedure ColourLanczosSmoothLOD;
       procedure ConvertVertexToFaceColours;
+      procedure ConvertFaceToVertexColours;
       procedure ConvertFaceToVertexColoursLinear;
       procedure ConvertFaceToVertexColoursCubic;
       procedure ConvertFaceToVertexColoursLanczos;
@@ -290,6 +291,16 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].ConvertVertexToFaceColours;
+   end;
+end;
+
+procedure TLOD.ConvertFaceToVertexColours;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ConvertFaceToVertexColours;
    end;
 end;
 

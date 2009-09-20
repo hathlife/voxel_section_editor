@@ -67,6 +67,7 @@ type
       procedure ColourCubicSmoothModel;
       procedure ColourLanczosSmoothModel;
       procedure ConvertVertexToFaceColours;
+      procedure ConvertFaceToVertexColours;
       procedure ConvertFaceToVertexColoursLinear;
       procedure ConvertFaceToVertexColoursCubic;
       procedure ConvertFaceToVertexColoursLanczos;
@@ -401,6 +402,11 @@ end;
 procedure TModel.ConvertVertexToFaceColours;
 begin
    LOD[CurrentLOD].ConvertVertexToFaceColours;
+end;
+
+procedure TModel.ConvertFaceToVertexColours;
+begin
+   LOD[CurrentLOD].ConvertFaceToVertexColours;
 end;
 
 procedure TModel.ConvertFaceToVertexColoursLinear;

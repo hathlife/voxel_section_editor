@@ -191,7 +191,8 @@ type
     procedure SetActorModelTransparency;
     Procedure Reset3DView;
     function GetQualityModel: integer;
-   procedure SetColourPerVertex(_value: boolean);
+    procedure UpdateQualityUI;
+    procedure SetColourPerVertex(_value: boolean);
   end;
 
 implementation
@@ -659,7 +660,7 @@ begin
    RenderModel.Checked := false;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetColourPerVertex(true);
 end;
 
 procedure TFrm3DModelizer.Blue1Click(Sender: TObject);
@@ -866,6 +867,26 @@ begin
    else
    begin
       Result := C_QUALITY_CUBED;
+   end;
+end;
+
+procedure TFrm3DModelizer.UpdateQualityUI;
+begin
+   if RenderModel.checked then
+   begin
+      RenderModelClick(nil);
+   end
+   else if RenderQuads.Checked then
+   begin
+      RenderQuadsClick(nil);
+   end
+   else if RenderTriangles.Checked then
+   begin
+      RenderTrianglesClick(nil);
+   end
+   else
+   begin
+      RenderCubesClick(nil);
    end;
 end;
 

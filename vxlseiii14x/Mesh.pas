@@ -41,10 +41,11 @@ type
          procedure FilterAndFixColours;
          procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
          procedure TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f);
+         function GetIgnoredDistance(_Distance : single): single;
          function GetLinearDistance(_Distance : single): single;
          function GetCubicDistance(_Distance : single): single;
          function GetLanczosDistance(_Distance : single): single;
-         procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc);
+         procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc); overload;
          // Misc
          procedure OverrideTransparency;
          function FindMeshCenter: TVector3f;
@@ -106,6 +107,7 @@ type
          procedure ColourLanczosSmooth;
          procedure ColourUnsharpMasking;
          procedure ConvertVertexToFaceColours;
+         procedure ConvertFaceToVertexColours; overload;
          procedure ConvertFaceToVertexColoursLinear;
          procedure ConvertFaceToVertexColoursCubic;
          procedure ConvertFaceToVertexColoursLanczos;
@@ -234,6 +236,7 @@ begin
          ConvertQuadsToTris;
          MeshLanczosSmooth;
          ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
       end;
       C_QUALITY_HIGH:
       begin
@@ -286,6 +289,7 @@ begin
          ConvertQuadsToTris;
          MeshLanczosSmooth;
          ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
       end;
       C_QUALITY_HIGH:
       begin
@@ -1062,6 +1066,11 @@ begin
    ApplyColourSmooth(GetLanczosDistance);
 end;
 
+procedure TMesh.ConvertFaceToVertexColours;
+begin
+   ConvertFaceToVertexColours(GetIgnoredDistance);
+end;
+
 procedure TMesh.ConvertFaceToVertexColoursLinear;
 begin
    ConvertFaceToVertexColours(GetLinearDistance);
@@ -1157,6 +1166,7 @@ begin
    end;
    FilterAndFixColours;
    SetLength(OriginalColours,0);
+   ColourGenStructure := C_COLOURS_PER_VERTEX;
    SetColoursType(C_COLOURS_PER_VERTEX);
    ForceRefresh;
 end;
@@ -1189,6 +1199,7 @@ begin
    end;
    FilterAndFixColours;
    SetLength(OriginalColours,0);
+   ColourGenStructure := C_COLOURS_PER_FACE;
    SetColoursType(C_COLOURS_PER_FACE);
    ForceRefresh;
 end;
@@ -1253,6 +1264,11 @@ begin
       end;
    end;
    SetLength(HitCounter,0);
+end;
+
+function TMesh.GetIgnoredDistance(_Distance : single): single;
+begin
+   Result := 0;
 end;
 
 function TMesh.GetLinearDistance(_Distance : single): single;

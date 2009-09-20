@@ -2448,6 +2448,7 @@ begin
       end;
       p_Frm3DModelizer^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
       p_Frm3DModelizer^.SetActorModelTransparency;
+      p_Frm3DModelizer^.UpdateQualityUI;
 
       p_Frm3DModelizer^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DModelizer^.SpFrame.Value := 1;

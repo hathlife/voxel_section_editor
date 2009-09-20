@@ -96,6 +96,7 @@ type
       procedure ColourCubicSmoothModel;
       procedure ColourLanczosSmoothModel;
       procedure ConvertVertexToFaceColours;
+      procedure ConvertFaceToVertexColours;
       procedure ConvertFaceToVertexColoursLinear;
       procedure ConvertFaceToVertexColoursCubic;
       procedure ConvertFaceToVertexColoursLanczos;
@@ -739,6 +740,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ConvertVertexToFaceColours;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.ConvertFaceToVertexColours;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ConvertFaceToVertexColours;
       end;
    end;
    RequestUpdateWorld := true;
