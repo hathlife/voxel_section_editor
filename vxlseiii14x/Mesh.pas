@@ -1211,7 +1211,7 @@ end;
 
 procedure TMesh.TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
 var
-   HitCounter: array of integer;
+   HitCounter: array of single;
    i,f,v,v1 : integer;
    MaxVerticePerFace: integer;
    MidPoint : TVector3f;
@@ -1242,19 +1242,21 @@ begin
          MidPoint.Y := MidPoint.Y + Vertices[Faces[v1]].Y;
          MidPoint.Z := MidPoint.Z + Vertices[Faces[v1]].Z;
       end;
+      MidPoint.X := MidPoint.X / VerticesPerFace;
+      MidPoint.Y := MidPoint.Y / VerticesPerFace;
+      MidPoint.Z := MidPoint.Z / VerticesPerFace;
 
       // check all colours from all vertexes from the face.
       for v := 0 to MaxVerticePerFace do
       begin
          v1 := (f * VerticesPerFace) + v;
          Distance := sqrt(Power(MidPoint.X - Vertices[Faces[v1]].X,2) + Power(MidPoint.Y - Vertices[Faces[v1]].Y,2) + Power(MidPoint.Z - Vertices[Faces[v1]].Z,2));
-         // Lanczos3 formula goes here:
          Distance := _DistanceFunction(Distance);
-         _VertColours[Faces[v1]].X := _VertColours[Faces[v1]].X + _FaceColours[f].X + Distance;
-         _VertColours[Faces[v1]].Y := _VertColours[Faces[v1]].Y + _FaceColours[f].Y + Distance;
-         _VertColours[Faces[v1]].Z := _VertColours[Faces[v1]].Z + _FaceColours[f].Z + Distance;
-         _VertColours[Faces[v1]].W := _VertColours[Faces[v1]].W + _FaceColours[f].W + Distance;
-         inc(HitCounter[Faces[v1]]);
+         _VertColours[Faces[v1]].X := _VertColours[Faces[v1]].X + (_FaceColours[f].X * Distance);
+         _VertColours[Faces[v1]].Y := _VertColours[Faces[v1]].Y + (_FaceColours[f].Y * Distance);
+         _VertColours[Faces[v1]].Z := _VertColours[Faces[v1]].Z + (_FaceColours[f].Z * Distance);
+         _VertColours[Faces[v1]].W := _VertColours[Faces[v1]].W + (_FaceColours[f].W * Distance);
+         HitCounter[Faces[v1]] := HitCounter[Faces[v1]] + Distance;
       end;
    end;
    // Then, we do an average for each vertice.
@@ -1273,17 +1275,17 @@ end;
 
 function TMesh.GetIgnoredDistance(_Distance : single): single;
 begin
-   Result := 0;
+   Result := 1;
 end;
 
 function TMesh.GetLinearDistance(_Distance : single): single;
 begin
-   Result := 1 / _Distance;
+   Result := 1 / (_Distance + 1);
 end;
 
 function TMesh.GetCubicDistance(_Distance : single): single;
 begin
-   Result := 1 / Power(_Distance,3);
+   Result := 1 / (1 + Power(_Distance,3));
 end;
 
 function TMesh.GetLanczosDistance(_Distance : single): single;
