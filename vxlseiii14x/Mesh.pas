@@ -2079,20 +2079,16 @@ begin
    end;
    MaxVerticePerFace := VerticesPerFace - 1;
    // Now, let's check each face.
-   if MaxVerticePerFace = 2 then
+   for f := 0 to NumFaces-1 do
    begin
-      for f := 0 to NumFaces-1 do
+      v1 := (f * VerticesPerFace);
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
       begin
-         v1 := (f * VerticesPerFace);
-
-         // check all vertexes from the face.
-         for v := 0 to MaxVerticePerFace do
-         begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + FaceNormals[f].X;
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + FaceNormals[f].Y;
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + FaceNormals[f].Z;
-            inc(HitCounter[Faces[v1+v]]);
-         end;
+         Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + FaceNormals[f].X;
+         Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + FaceNormals[f].Y;
+         Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + FaceNormals[f].Z;
+         inc(HitCounter[Faces[v1+v]]);
       end;
    end;
    // Finally, we do an average for all vertices.
