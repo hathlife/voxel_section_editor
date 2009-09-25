@@ -9,12 +9,12 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
 type
    TMeshMaterial = record
       TextureID: GLINT;
-      TextureBehavior: integer;
       Ambient: TVector4f;
       Diffuse: TVector4f;
       Specular: TVector4f;
       Shininess: TVector4f;
       Emission: TVector4f;
+      ShaderID: integer;
    end;
 
    TRenderProc = procedure of object;
@@ -273,6 +273,11 @@ end;
 procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
 begin
    Clear;
+   ColourGenStructure := C_COLOURS_PER_FACE;
+   if ColoursType = C_COLOURS_PER_VERTEX then
+   begin
+      SetColoursType(C_COLOURS_PER_FACE);
+   end;
    case _Quality of
       C_QUALITY_CUBED:
       begin
