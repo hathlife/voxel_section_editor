@@ -28,5 +28,7 @@
     <Transaction>2009/09/03 15:11:48.796.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ThreeDSFile.pas</Transaction>
     <Transaction>2009/09/10 23:06:41.218.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\OBJFile.pas</Transaction>
     <Transaction>2009/09/14 19:05:35.578.dfm,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.dfm=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Form3dModelizer.dfm</Transaction>
+    <Transaction>2009/09/26 20:13:23.500.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassNeighboorDetector.pas</Transaction>
+    <Transaction>2009/09/26 20:47:23.578.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassNeighboorDetector.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassNeighborDetector.pas</Transaction>
   </Transactions>
 </BorlandProject>
