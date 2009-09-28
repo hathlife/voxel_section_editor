@@ -1234,7 +1234,7 @@ end;
 
 function TMesh.GetLinearDistance(_Distance : single): single;
 begin
-   Result := 1 / (_Distance + 1);
+   Result := 1 / (abs(_Distance) + 1);
 end;
 
 function TMesh.GetCubicDistance(_Distance : single): single;
@@ -1252,6 +1252,8 @@ const
    PIDIV3 = Pi / 3;
 begin
    Result := ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+      Result := Result * -1;
 end;
 
 function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
@@ -1509,7 +1511,7 @@ end;
 
 procedure TMesh.NormalLanczosSmooth;
 begin
-   SmoothNormalsOperation(GetLanczos1DA3Distance);
+   SmoothNormalsOperation(GetLanczosDistance);
 end;
 
 procedure TMesh.ReNormalizeMesh;
@@ -1733,11 +1735,14 @@ begin
          while Value <> -1 do
          begin
             Distance := Vertices[Value].X - Vertices[i].X;
-            NormalsHandicap[i].X := NormalsHandicap[i].X - (Normals[Value].X * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].X := NormalsHandicap[i].X + (Normals[Value].X * _DistanceFunction(Distance));
             Distance := Vertices[Value].Y - Vertices[i].Y;
-            NormalsHandicap[i].Y := NormalsHandicap[i].Y - (Normals[Value].Y * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].Y := NormalsHandicap[i].Y + (Normals[Value].Y * _DistanceFunction(Distance));
             Distance := Vertices[Value].Z - Vertices[i].Z;
-            NormalsHandicap[i].Z := NormalsHandicap[i].Z - (Normals[Value].Z * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].Z := NormalsHandicap[i].Z + (Normals[Value].Z * _DistanceFunction(Distance));
             inc(HitCounter[i]);
             Value := Neighbors.GetNextNeighbor;
          end;
@@ -1750,6 +1755,7 @@ begin
             Normals[i].X := Normals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
             Normals[i].Y := Normals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
             Normals[i].Z := Normals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
+            Normalize(Normals[i]);
          end;
       end;
    end
@@ -1775,11 +1781,14 @@ begin
          while Value <> -1 do
          begin
             Distance := Vertices[Value].X - Vertices[i].X;
-            NormalsHandicap[i].X := NormalsHandicap[i].X - (FaceNormals[Value].X * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].X := NormalsHandicap[i].X + (FaceNormals[Value].X * _DistanceFunction(Distance));
             Distance := Vertices[Value].Y - Vertices[i].Y;
-            NormalsHandicap[i].Y := NormalsHandicap[i].Y - (FaceNormals[Value].Y * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].Y := NormalsHandicap[i].Y + (FaceNormals[Value].Y * _DistanceFunction(Distance));
             Distance := Vertices[Value].Z - Vertices[i].Z;
-            NormalsHandicap[i].Z := NormalsHandicap[i].Z - (FaceNormals[Value].Z * _DistanceFunction(Distance));
+            if Distance <> 0 then
+               NormalsHandicap[i].Z := NormalsHandicap[i].Z + (FaceNormals[Value].Z * _DistanceFunction(Distance));
             inc(HitCounter[i]);
             Value := Neighbors.GetNextNeighbor;
          end;
@@ -1792,6 +1801,7 @@ begin
             FaceNormals[i].X := FaceNormals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
             FaceNormals[i].Y := FaceNormals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
             FaceNormals[i].Z := FaceNormals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
+            Normalize(FaceNormals[i]);
          end;
       end;
    end;
