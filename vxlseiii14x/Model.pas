@@ -59,6 +59,10 @@ type
       procedure SmoothModel;
       procedure CubicSmoothModel;
       procedure LanczosSmoothModel;
+      procedure SincSmoothModel;
+      procedure EulerSmoothModel;
+      procedure EulerSquaredSmoothModel;
+      procedure SincInfiniteSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
@@ -74,6 +78,10 @@ type
       // Normals
       procedure ReNormalizeModel;
       procedure ConvertFaceToVertexNormals;
+      procedure NormalSmoothModel;
+      procedure NormalLinearSmoothModel;
+      procedure NormalCubicSmoothModel;
+      procedure NormalLanczosSmoothModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -368,6 +376,26 @@ begin
    LOD[CurrentLOD].LanczosSmoothLOD;
 end;
 
+procedure TModel.SincSmoothModel;
+begin
+   LOD[CurrentLOD].SincSmoothLOD;
+end;
+
+procedure TModel.EulerSmoothModel;
+begin
+   LOD[CurrentLOD].EulerSmoothLOD;
+end;
+
+procedure TModel.EulerSquaredSmoothModel;
+begin
+   LOD[CurrentLOD].EulerSquaredSmoothLOD;
+end;
+
+procedure TModel.SincInfiniteSmoothModel;
+begin
+   LOD[CurrentLOD].SincInfiniteSmoothLOD;
+end;
+
 procedure TModel.UnsharpModel;
 begin
    LOD[CurrentLOD].UnsharpLOD;
@@ -433,6 +461,26 @@ end;
 procedure TModel.ConvertFaceToVertexNormals;
 begin
    LOD[CurrentLOD].ConvertFaceToVertexNormals;
+end;
+
+procedure TModel.NormalSmoothModel;
+begin
+   LOD[CurrentLOD].NormalSmoothLOD;
+end;
+
+procedure TModel.NormalLinearSmoothModel;
+begin
+   LOD[CurrentLOD].NormalLinearSmoothLOD;
+end;
+
+procedure TModel.NormalCubicSmoothModel;
+begin
+   LOD[CurrentLOD].NormalCubicSmoothLOD;
+end;
+
+procedure TModel.NormalLanczosSmoothModel;
+begin
+   LOD[CurrentLOD].NormalLanczosSmoothLOD;
 end;
 
 // Transparency methods

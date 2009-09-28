@@ -40,6 +40,10 @@ type
       procedure SmoothLOD;
       procedure CubicSmoothLOD;
       procedure LanczosSmoothLOD;
+      procedure SincSmoothLOD;
+      procedure EulerSmoothLOD;
+      procedure EulerSquaredSmoothLOD;
+      procedure SincInfiniteSmoothLOD;
       procedure UnsharpLOD;
       procedure InflateLOD;
       procedure DeflateLOD;
@@ -55,6 +59,10 @@ type
       // Normals
       procedure RenormalizeLOD;
       procedure ConvertFaceToVertexNormals;
+      procedure NormalSmoothLOD;
+      procedure NormalLinearSmoothLOD;
+      procedure NormalCubicSmoothLOD;
+      procedure NormalLanczosSmoothLOD;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -223,6 +231,46 @@ begin
    end;
 end;
 
+procedure TLOD.SincSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSincSmooth;
+   end;
+end;
+
+procedure TLOD.EulerSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshEulerSmooth;
+   end;
+end;
+
+procedure TLOD.EulerSquaredSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshEulerSquaredSmooth;
+   end;
+end;
+
+procedure TLOD.SincInfiniteSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSincInfiniteSmooth;
+   end;
+end;
+
 procedure TLOD.UnsharpLOD;
 var
    i : integer;
@@ -356,6 +404,45 @@ begin
    end;
 end;
 
+procedure TLOD.NormalSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].NormalSmooth;
+   end;
+end;
+
+procedure TLOD.NormalLinearSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].NormalLinearSmooth;
+   end;
+end;
+
+procedure TLOD.NormalCubicSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].NormalCubicSmooth;
+   end;
+end;
+
+procedure TLOD.NormalLanczosSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].NormalLanczosSmooth;
+   end;
+end;
 
 // Transparency methods
 procedure TLOD.ForceTransparency(_level: single);

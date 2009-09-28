@@ -4,7 +4,7 @@ interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      VoxelModelizer, BasicConstants, Math;
+      VoxelModelizer, BasicConstants, Math, ClassNeighborDetector;
 
 type
    TMeshMaterial = record
@@ -31,21 +31,33 @@ type
          procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Sets
          procedure SetRenderingProcedure;
+         // Mesh
+         procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          // Normals
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
          procedure ReNormalizePerVertex;
          procedure TransformFaceToVertexNormals;
+         procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
          // Colours
          procedure ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
          procedure FilterAndFixColours;
          procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
          procedure TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f);
+         procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc); overload;
+         // Distance Functions
          function GetIgnoredDistance(_Distance : single): single;
          function GetLinearDistance(_Distance : single): single;
          function GetCubicDistance(_Distance : single): single;
+         function GetCubic1DDistance(_Distance : single): single;
          function GetLanczosDistance(_Distance : single): single;
-         procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc); overload;
+         function GetLanczos1DA1Distance(_Distance : single): single;
+         function GetLanczos1DA3Distance(_Distance : single): single;
+         function GetLanczos1DACDistance(_Distance : single): single;
+         function GetSinc1DDistance(_Distance : single): single;
+         function GetEuler1DDistance(_Distance : single): single;
+         function GetEulerSquared1DDistance(_Distance : single): single;
+         function GetSincInfinite1DDistance(_Distance : single): single;
          // Misc
          procedure OverrideTransparency;
          function FindMeshCenter: TVector3f;
@@ -97,6 +109,10 @@ type
          procedure MeshSmooth;
          procedure MeshCubicSmooth;
          procedure MeshLanczosSmooth;
+         procedure MeshSincSmooth;
+         procedure MeshEulerSmooth;
+         procedure MeshEulerSquaredSmooth;
+         procedure MeshSincInfiniteSmooth;
          procedure MeshUnsharpMasking;
          procedure MeshInflate;
          procedure MeshDeflate;
@@ -116,6 +132,10 @@ type
          procedure ReNormalizeMesh;
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
          procedure ConvertFaceToVertexNormals;
+         procedure NormalSmooth;
+         procedure NormalLinearSmooth;
+         procedure NormalCubicSmooth;
+         procedure NormalLanczosSmooth;
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -729,94 +749,37 @@ begin
 end;
 
 procedure TMesh.MeshCubicSmooth;
-const
-   ONE_THIRD = 1/3;
-var
-   HitCounter: array of integer;
-   OriginalVertexes : array of TVector3f;
-   VertsHit: array of array of boolean;
-   i,j,f,v,v1,v2 : integer;
-   MaxVerticePerFace: integer;
 begin
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      OriginalVertexes[i].X := Vertices[i].X;
-      OriginalVertexes[i].Y := Vertices[i].Y;
-      OriginalVertexes[i].Z := Vertices[i].Z;
-      Vertices[i].X := 0;
-      Vertices[i].Y := 0;
-      Vertices[i].Z := 0;
-      for j := Low(HitCounter) to High(HitCounter) do
-      begin
-         VertsHit[i,j] := false;
-      end;
-      VertsHit[i,i] := true;
-   end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
-   begin
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
-      begin
-         v1 := (f * VerticesPerFace) + v;
-         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
-         j := 0;
-         // for each vertex, get the previous, the current and the next.
-         while j < 3 do
-         begin
-            v2 := v1 - v + i;
-            // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
-            begin
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + Power((OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X),3);
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + Power((OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y),3);
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + Power((OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z),3);
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
-            end;
-            // increment vertex.
-            i := (i + 1) mod VerticesPerFace;
-            inc(j);
-         end;
-      end;
-   end;
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HItCounter[v] > 0 then
-      begin
-         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
-         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
-         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
-      end
-      else
-      begin
-         Vertices[v].X := OriginalVertexes[v].X;
-         Vertices[v].Y := OriginalVertexes[v].Y;
-         Vertices[v].Z := OriginalVertexes[v].Z;
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
-   for i := Low(Vertices) to High(Vertices) do
-   begin
-      SetLength(VertsHit[i],0);
-   end;
-   SetLength(VertsHit,0);
-   ForceRefresh;
+   MeshSmoothOperation(GetCubic1DDistance);
 end;
 
 procedure TMesh.MeshLanczosSmooth;
-const
-   PI2 = Pi * Pi;
-   PIDIV3 = Pi / 3;
+begin
+   MeshSmoothOperation(GetLanczos1DA3Distance);
+end;
+
+procedure TMesh.MeshSincSmooth;
+begin
+   MeshSmoothOperation(GetSinc1DDistance);
+end;
+
+procedure TMesh.MeshEulerSmooth;
+begin
+   MeshSmoothOperation(GetEuler1DDistance);
+end;
+
+procedure TMesh.MeshEulerSquaredSmooth;
+begin
+   MeshSmoothOperation(GetEulerSquared1DDistance);
+end;
+
+procedure TMesh.MeshSincInfiniteSmooth;
+begin
+   MeshSmoothOperation(GetSincInfinite1DDistance);
+end;
+
+
+procedure TMesh.MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
 var
    HitCounter: array of integer;
    OriginalVertexes : array of TVector3f;
@@ -861,21 +824,12 @@ begin
             // if this connection wasn't summed, add it to the sum.
             if not VertsHit[Faces[v1],Faces[v2]] then
             begin
-               Distance := OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X;
-               if Distance > 0 then
-                  Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2))
-               else if Distance < 0 then
-                  Vertices[Faces[v1]].X := Vertices[Faces[v1]].X - 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2));
-               Distance := OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y;
-               if Distance > 0 then
-                  Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2))
-               else if Distance < 0 then
-                  Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y - 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2));
-               Distance := OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z;
-               if Distance > 0 then
-                  Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2))
-               else if Distance < 0 then
-                  Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z - 1 - (3 * sin(Pi * Distance) * sin(PIDIV3 * Distance) / Power((PI * Distance),2));
+               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X);
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + Distance;
+               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y);
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + Distance;
+               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z);
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + Distance;
                inc(HitCounter[Faces[v1]]);
                VertsHit[Faces[v1],Faces[v2]] := true;
             end;
@@ -888,7 +842,7 @@ begin
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      if HItCounter[v] > 0 then
+      if HitCounter[v] > 0 then
       begin
          Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
          Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
@@ -1288,12 +1242,120 @@ begin
    Result := 1 / (1 + Power(_Distance,3));
 end;
 
+function TMesh.GetCubic1DDistance(_Distance : single): single;
+begin
+   Result := Power(_Distance,3);
+end;
+
 function TMesh.GetLanczosDistance(_Distance : single): single;
 const
    PIDIV3 = Pi / 3;
 begin
    Result := ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
 end;
+
+function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
+const
+   PIDIV3 = Pi / 3;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+      Result := 1 - (Power(sin(Pi * _Distance),2) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetLanczos1DA3Distance(_Distance : single): single;
+const
+   PIDIV3 = Pi / 3;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+     Result := 1 - ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+     Result := Result * -1;
+end;
+
+function TMesh.GetLanczos1DACDistance(_Distance : single): single;
+const
+   CONST_A = 1000;
+   PIDIV10 = Pi / CONST_A;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+     Result := 1 - ((CONST_A * sin(Pi * _Distance) * sin(PIDIV10 * _Distance)) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+     Result := Result * -1;
+end;
+
+function TMesh.GetSinc1DDistance(_Distance : single): single;
+const
+   PIDIV3 = Pi / 3;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+      Result := 1 - (sin(Pi * _Distance) / (Pi * _Distance));
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetEuler1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+   Distance : single;
+begin
+   i := 2;
+   Result := 1;
+   c := 0;
+   Distance := abs(_Distance);
+   while c <= 30 do
+   begin
+      Result := Result * cos(Distance / i);
+      i := i * 2;
+      inc(c);
+   end;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
+function TMesh.GetEulerSquared1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+begin
+   i := 2;
+   Result := 1;
+   c := 0;
+   while c <= 30 do
+   begin
+      Result := Result * cos(_Distance / i);
+      i := i * 2;
+      inc(c);
+   end;
+   Result := Result * Result;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
+function TMesh.GetSincInfinite1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+   Distance2: single;
+begin
+   c := 0;
+   i := 1;
+   Distance2 := _Distance * _Distance;
+   Result := 1;
+   while c <= 100 do
+   begin
+      Result := Result * (1 - (Distance2 / (i * i)));
+      inc(c);
+      inc(i);
+   end;
+   Result := 1 - Result;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
 
 procedure TMesh.TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f);
 var
@@ -1429,6 +1491,317 @@ begin
    ForceRefresh;
 end;
 
+// Normals Effects
+procedure TMesh.NormalSmooth;
+begin
+   SmoothNormalsOperation(GetIgnoredDistance);
+end;
+
+procedure TMesh.NormalLinearSmooth;
+begin
+   SmoothNormalsOperation(GetLinearDistance);
+end;
+
+procedure TMesh.NormalCubicSmooth;
+begin
+   SmoothNormalsOperation(GetCubic1DDistance);
+end;
+
+procedure TMesh.NormalLanczosSmooth;
+begin
+   SmoothNormalsOperation(GetLanczos1DA3Distance);
+end;
+
+procedure TMesh.ReNormalizeMesh;
+begin
+   if FaceType = GL_QUADS then
+      ReNormalizeQuads
+   else
+      ReNormalizeTriangles;
+end;
+
+procedure TMesh.ReNormalizeQuads;
+var
+   f : integer;
+   temp : TVector3f;
+begin
+   if High(FaceNormals) >= 0 then
+   begin
+      for f := Low(FaceNormals) to High(faceNormals) do
+      begin
+         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
+         Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
+         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / -2;
+         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / -2;
+         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / -2;
+      end;
+   end
+   else if High(Normals) >= 0 then
+   begin
+      ReNormalizePerVertex;
+   end;
+   ForceRefresh;
+end;
+
+procedure TMesh.ReNormalizeTriangles;
+var
+   f : integer;
+begin
+   if High(FaceNormals) >= 0 then
+   begin
+      for f := Low(FaceNormals) to High(FaceNormals) do
+      begin
+         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
+         FaceNormals[f].X := -FaceNormals[f].X;
+         FaceNormals[f].Y := -FaceNormals[f].Y;
+         FaceNormals[f].Z := -FaceNormals[f].Z;
+      end;
+   end
+   else if High(Normals) >= 0 then
+   begin
+      ReNormalizePerVertex;
+   end;
+   ForceRefresh;
+end;
+
+procedure TMesh.ReNormalizePerVertex;
+var
+   HitCounter: array of integer;
+   i,f,v,v1 : integer;
+   MaxVerticePerFace: integer;
+   Normals1,Normals2 : TVector3f;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(Normals,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      Normals[i].X := 0;
+      Normals[i].Y := 0;
+      Normals[i].Z := 0;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   if MaxVerticePerFace = 2 then
+   begin
+      for f := 0 to NumFaces-1 do
+      begin
+         v1 := (f * VerticesPerFace);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+
+         // check all vertexes from the face.
+         for v := 0 to MaxVerticePerFace do
+         begin
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - Normals1.X;
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - Normals1.Y;
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - Normals1.Z;
+            inc(HitCounter[Faces[v1+v]]);
+         end;
+      end;
+   end
+   else
+   begin
+      for f := 0 to NumFaces-1 do
+      begin
+         v1 := (f * VerticesPerFace);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+         Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
+
+         // check all vertexes from the face.
+         for v := 0 to MaxVerticePerFace do
+         begin
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - ((Normals1.X + Normals2.X) / 2);
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - ((Normals1.Y + Normals2.Y) / 2);
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - ((Normals1.Z + Normals2.Z) / 2);
+            inc(HitCounter[Faces[v1+v]]);
+         end;
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         Normals[v].X := Normals[v].X / HitCounter[v];
+         Normals[v].Y := Normals[v].Y / HitCounter[v];
+         Normals[v].Z := Normals[v].Z / HitCounter[v];
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+end;
+
+procedure TMesh.TransformFaceToVertexNormals;
+var
+   HitCounter: array of integer;
+   i,f,v,v1 : integer;
+   MaxVerticePerFace: integer;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(Normals,High(Vertices)+1);
+   // Reset values.
+   for i := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[i] := 0;
+      Normals[i].X := 0;
+      Normals[i].Y := 0;
+      Normals[i].Z := 0;
+   end;
+   MaxVerticePerFace := VerticesPerFace - 1;
+   // Now, let's check each face.
+   for f := 0 to NumFaces-1 do
+   begin
+      v1 := (f * VerticesPerFace);
+      // check all vertexes from the face.
+      for v := 0 to MaxVerticePerFace do
+      begin
+         Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + FaceNormals[f].X;
+         Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + FaceNormals[f].Y;
+         Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + FaceNormals[f].Z;
+         inc(HitCounter[Faces[v1+v]]);
+      end;
+   end;
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         Normals[v].X := Normals[v].X / HitCounter[v];
+         Normals[v].Y := Normals[v].Y / HitCounter[v];
+         Normals[v].Z := Normals[v].Z / HitCounter[v];
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+end;
+
+procedure TMesh.ConvertFaceToVertexNormals;
+begin
+   if (NormalsType and C_NORMALS_PER_VERTEX) = 0 then
+   begin
+      NormalsType := C_NORMALS_PER_VERTEX;
+      if High(FaceNormals) >= 0 then
+      begin
+         TransformFaceToVertexNormals;
+         SetLength(FaceNormals,0);
+      end
+      else
+      begin
+         ReNormalizePerVertex;
+      end;
+      SetRenderingProcedure;
+   end;
+end;
+
+function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
+begin
+   Result.X := (((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z)));
+   Result.Y := (((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X)));
+   Result.Z := (((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y)));
+   Normalize(Result);
+end;
+
+procedure TMesh.SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
+var
+   Neighbors : TNeighborDetector;
+   i,Value : integer;
+   NormalsHandicap : TAVector3f;
+   HitCounter : auint32;
+   Distance: single;
+begin
+   // Setup Neighbors.
+   Neighbors := TNeighborDetector.Create;
+   if (NormalsType and C_NORMALS_PER_FACE) = 0 then
+   begin
+      // Get neighbor vertexes from vertexes.
+      Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      // Setup Normals Handicap and Hit Counter.
+      SetLength(NormalsHandicap,High(Normals)+1);
+      SetLength(HitCounter,High(Normals)+1);
+      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
+      begin
+         NormalsHandicap[i].X := 0;
+         NormalsHandicap[i].Y := 0;
+         NormalsHandicap[i].Z := 0;
+         HitCounter[i] := 0;
+      end;
+      // Main loop goes here.
+      for i := Low(Vertices) to High(Vertices) do
+      begin
+         Value := Neighbors.GetNeighborFromID(i);
+         while Value <> -1 do
+         begin
+            Distance := Vertices[Value].X - Vertices[i].X;
+            NormalsHandicap[i].X := NormalsHandicap[i].X - (Normals[Value].X * _DistanceFunction(Distance));
+            Distance := Vertices[Value].Y - Vertices[i].Y;
+            NormalsHandicap[i].Y := NormalsHandicap[i].Y - (Normals[Value].Y * _DistanceFunction(Distance));
+            Distance := Vertices[Value].Z - Vertices[i].Z;
+            NormalsHandicap[i].Z := NormalsHandicap[i].Z - (Normals[Value].Z * _DistanceFunction(Distance));
+            inc(HitCounter[i]);
+            Value := Neighbors.GetNextNeighbor;
+         end;
+      end;
+      // Finally, we do an average for all vertices.
+      for i := Low(Vertices) to High(Vertices) do
+      begin
+         if HitCounter[i] > 0 then
+         begin
+            Normals[i].X := Normals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
+            Normals[i].Y := Normals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
+            Normals[i].Z := Normals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
+         end;
+      end;
+   end
+   else
+   begin
+      // Get neighbor faces from faces.
+      Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE;
+      Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      // Setup Normals Handicap.
+      SetLength(NormalsHandicap,High(FaceNormals)+1);
+      SetLength(HitCounter,High(FaceNormals)+1);
+      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
+      begin
+         NormalsHandicap[i].X := 0;
+         NormalsHandicap[i].Y := 0;
+         NormalsHandicap[i].Z := 0;
+         HitCounter[i] := 0;
+      end;
+      // Main loop goes here.
+      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
+      begin
+         Value := Neighbors.GetNeighborFromID(i);
+         while Value <> -1 do
+         begin
+            Distance := Vertices[Value].X - Vertices[i].X;
+            NormalsHandicap[i].X := NormalsHandicap[i].X - (FaceNormals[Value].X * _DistanceFunction(Distance));
+            Distance := Vertices[Value].Y - Vertices[i].Y;
+            NormalsHandicap[i].Y := NormalsHandicap[i].Y - (FaceNormals[Value].Y * _DistanceFunction(Distance));
+            Distance := Vertices[Value].Z - Vertices[i].Z;
+            NormalsHandicap[i].Z := NormalsHandicap[i].Z - (FaceNormals[Value].Z * _DistanceFunction(Distance));
+            inc(HitCounter[i]);
+            Value := Neighbors.GetNextNeighbor;
+         end;
+      end;
+      // Finally, we do an average for all vertices.
+      for i := Low(FaceNormals) to High(FaceNormals) do
+      begin
+         if HitCounter[i] > 0 then
+         begin
+            FaceNormals[i].X := FaceNormals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
+            FaceNormals[i].Y := FaceNormals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
+            FaceNormals[i].Z := FaceNormals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
+         end;
+      end;
+   end;
+
+   // Free memory
+   SetLength(NormalsHandicap,0);
+   SetLength(HitCounter,0);
+   Neighbors.Free;
+   ForceRefresh;
+end;
 
 // Sets
 procedure TMesh.SetRenderingProcedure;
@@ -1941,197 +2314,6 @@ begin
       Result.Y := 0;
       Result.Z := 0;
    end;
-end;
-
-procedure TMesh.ReNormalizeMesh;
-begin
-   if FaceType = GL_QUADS then
-      ReNormalizeQuads
-   else
-      ReNormalizeTriangles;
-end;
-
-procedure TMesh.ReNormalizeQuads;
-var
-   f : integer;
-   temp : TVector3f;
-begin
-   if High(FaceNormals) >= 0 then
-   begin
-      for f := Low(FaceNormals) to High(faceNormals) do
-      begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
-         Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
-         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / -2;
-         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / -2;
-         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / -2;
-      end;
-   end
-   else if High(Normals) >= 0 then
-   begin
-      ReNormalizePerVertex;
-   end;
-   ForceRefresh;
-end;
-
-procedure TMesh.ReNormalizeTriangles;
-var
-   f : integer;
-begin
-   if High(FaceNormals) >= 0 then
-   begin
-      for f := Low(FaceNormals) to High(FaceNormals) do
-      begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
-         FaceNormals[f].X := -FaceNormals[f].X;
-         FaceNormals[f].Y := -FaceNormals[f].Y;
-         FaceNormals[f].Z := -FaceNormals[f].Z;
-      end;
-   end
-   else if High(Normals) >= 0 then
-   begin
-      ReNormalizePerVertex;
-   end;
-   ForceRefresh;
-end;
-
-procedure TMesh.ReNormalizePerVertex;
-var
-   HitCounter: array of integer;
-   i,f,v,v1 : integer;
-   MaxVerticePerFace: integer;
-   Normals1,Normals2 : TVector3f;
-begin
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(Normals,High(Vertices)+1);
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      Normals[i].X := 0;
-      Normals[i].Y := 0;
-      Normals[i].Z := 0;
-   end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   if MaxVerticePerFace = 2 then
-   begin
-      for f := 0 to NumFaces-1 do
-      begin
-         v1 := (f * VerticesPerFace);
-         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
-
-         // check all vertexes from the face.
-         for v := 0 to MaxVerticePerFace do
-         begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - Normals1.X;
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - Normals1.Y;
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - Normals1.Z;
-            inc(HitCounter[Faces[v1+v]]);
-         end;
-      end;
-   end
-   else
-   begin
-      for f := 0 to NumFaces-1 do
-      begin
-         v1 := (f * VerticesPerFace);
-         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
-         Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
-
-         // check all vertexes from the face.
-         for v := 0 to MaxVerticePerFace do
-         begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - ((Normals1.X + Normals2.X) / 2);
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - ((Normals1.Y + Normals2.Y) / 2);
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - ((Normals1.Z + Normals2.Z) / 2);
-            inc(HitCounter[Faces[v1+v]]);
-         end;
-      end;
-   end;
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HitCounter[v] > 0 then
-      begin
-         Normals[v].X := Normals[v].X / HitCounter[v];
-         Normals[v].Y := Normals[v].Y / HitCounter[v];
-         Normals[v].Z := Normals[v].Z / HitCounter[v];
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-end;
-
-procedure TMesh.TransformFaceToVertexNormals;
-var
-   HitCounter: array of integer;
-   i,f,v,v1 : integer;
-   MaxVerticePerFace: integer;
-begin
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(Normals,High(Vertices)+1);
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      Normals[i].X := 0;
-      Normals[i].Y := 0;
-      Normals[i].Z := 0;
-   end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
-   begin
-      v1 := (f * VerticesPerFace);
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
-      begin
-         Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + FaceNormals[f].X;
-         Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + FaceNormals[f].Y;
-         Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + FaceNormals[f].Z;
-         inc(HitCounter[Faces[v1+v]]);
-      end;
-   end;
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HitCounter[v] > 0 then
-      begin
-         Normals[v].X := Normals[v].X / HitCounter[v];
-         Normals[v].Y := Normals[v].Y / HitCounter[v];
-         Normals[v].Z := Normals[v].Z / HitCounter[v];
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-end;
-
-
-procedure TMesh.ConvertFaceToVertexNormals;
-begin
-   if (NormalsType and C_NORMALS_PER_VERTEX) = 0 then
-   begin
-      NormalsType := C_NORMALS_PER_VERTEX;
-      if High(FaceNormals) >= 0 then
-      begin
-         TransformFaceToVertexNormals;
-         SetLength(FaceNormals,0);
-      end
-      else
-      begin
-         ReNormalizePerVertex;
-      end;
-      SetRenderingProcedure;
-   end;
-end;
-
-function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
-begin
-   Result.X := (((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z)));
-   Result.Y := (((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X)));
-   Result.Z := (((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y)));
-   Normalize(Result);
 end;
 
 procedure TMesh.RemoveInvisibleFaces;

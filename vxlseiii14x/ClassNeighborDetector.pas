@@ -267,6 +267,7 @@ begin
       // check each vertex of the face.
       for v := 0 to _VertexesPerFace - 1 do
       begin
+         FacesHit[f div _VertexesPerFace] := true;
          Value := TempDetector.GetNeighborFromID(_Faces[f+v]);
          while Value <> -1 do
          begin

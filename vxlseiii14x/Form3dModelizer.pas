@@ -84,8 +84,8 @@ type
     N4: TMenuItem;
     SaveModelDialog: TSaveDialog;
     RenderQuads: TMenuItem;
-    ModelFXCleanupInvisibleFaces: TMenuItem;
-    ModelFXConvertQuadstoTriangles: TMenuItem;
+    FaceFXCleanupInvisibleFaces: TMenuItem;
+    FaceFXConvertQuadstoTriangles: TMenuItem;
     ColourEffects1: TMenuItem;
     ColourFXSmooth: TMenuItem;
     ColourFXHeavySmooth: TMenuItem;
@@ -97,6 +97,23 @@ type
     ColourFXConvertFaceToVertexHS: TMenuItem;
     ColourFXConvertFaceToVertexLS: TMenuItem;
     ColourFXConvertVertexToFace: TMenuItem;
+    FaceSetup1: TMenuItem;
+    ModelFXSincErosion: TMenuItem;
+    ModelFXEulerErosion: TMenuItem;
+    ModelFXHeavyEulerErosion: TMenuItem;
+    ModelFXSincInfiniteErosion: TMenuItem;
+    NormalsFXQuickSmoothNormals: TMenuItem;
+    NormalsFXSmoothNormals: TMenuItem;
+    NormalsFXCubicSmoothNormals: TMenuItem;
+    NormalsFXLanczosSmoothNormals: TMenuItem;
+    procedure NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
+    procedure NormalsFXCubicSmoothNormalsClick(Sender: TObject);
+    procedure NormalsFXSmoothNormalsClick(Sender: TObject);
+    procedure NormalsFXQuickSmoothNormalsClick(Sender: TObject);
+    procedure ModelFXSincInfiniteErosionClick(Sender: TObject);
+    procedure ModelFXHeavyEulerErosionClick(Sender: TObject);
+    procedure ModelFXEulerErosionClick(Sender: TObject);
+    procedure ModelFXSincErosionClick(Sender: TObject);
     procedure ColourFXConvertVertexToFaceClick(Sender: TObject);
     procedure ColourFXConvertFaceToVertexLSClick(Sender: TObject);
     procedure ColourFXConvertFaceToVertexHSClick(Sender: TObject);
@@ -106,8 +123,8 @@ type
     procedure NormalsFXConvertFaceToVertexNormalsClick(Sender: TObject);
     procedure ColourFXHeavySmoothClick(Sender: TObject);
     procedure ColourFXSmoothClick(Sender: TObject);
-    procedure ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
-    procedure ModelFXCleanupInvisibleFacesClick(Sender: TObject);
+    procedure FaceFXConvertQuadstoTrianglesClick(Sender: TObject);
+    procedure FaceFXCleanupInvisibleFacesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
     procedure ModelFXLanczosClick(Sender: TObject);
@@ -713,6 +730,11 @@ begin
    Actor.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
 end;
 
+procedure TFrm3DModelizer.ModelFXHeavyEulerErosionClick(Sender: TObject);
+begin
+   Actor.EulerSquaredSmoothModel;
+end;
+
 procedure TFrm3DModelizer.ModelFXHeavySmoothClick(Sender: TObject);
 begin
    Actor.CubicSmoothModel;
@@ -734,12 +756,32 @@ begin
    Actor.ConvertFaceToVertexNormals;
 end;
 
-procedure TFrm3DModelizer.ModelFXCleanupInvisibleFacesClick(Sender: TObject);
+procedure TFrm3DModelizer.NormalsFXCubicSmoothNormalsClick(Sender: TObject);
+begin
+   Actor.NormalCubicSmoothModel;
+end;
+
+procedure TFrm3DModelizer.NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
+begin
+   Actor.NormalLanczosSmoothModel;
+end;
+
+procedure TFrm3DModelizer.NormalsFXQuickSmoothNormalsClick(Sender: TObject);
+begin
+   Actor.NormalSmoothModel;
+end;
+
+procedure TFrm3DModelizer.NormalsFXSmoothNormalsClick(Sender: TObject);
+begin
+   Actor.NormalLinearSmoothModel;
+end;
+
+procedure TFrm3DModelizer.FaceFXCleanupInvisibleFacesClick(Sender: TObject);
 begin
    Actor.RemoveInvisibleFaces;
 end;
 
-procedure TFrm3DModelizer.ModelFXConvertQuadstoTrianglesClick(Sender: TObject);
+procedure TFrm3DModelizer.FaceFXConvertQuadstoTrianglesClick(Sender: TObject);
 begin
    Actor.ConvertQuadsToTris;
 end;
@@ -747,6 +789,21 @@ end;
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);
 begin
    Actor.DeflateModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXEulerErosionClick(Sender: TObject);
+begin
+   Actor.EulerSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXSincErosionClick(Sender: TObject);
+begin
+   Actor.SincSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXSincInfiniteErosionClick(Sender: TObject);
+begin
+   Actor.SincInfiniteSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSmoothClick(Sender: TObject);

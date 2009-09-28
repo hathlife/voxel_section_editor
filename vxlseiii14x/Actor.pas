@@ -88,6 +88,10 @@ type
       procedure SmoothModel;
       procedure CubicSmoothModel;
       procedure LanczosSmoothModel;
+      procedure SincSmoothModel;
+      procedure EulerSmoothModel;
+      procedure EulerSquaredSmoothModel;
+      procedure SincInfiniteSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
@@ -103,6 +107,10 @@ type
       // Normals
       procedure ReNormalizeModel;
       procedure ConvertFaceToVertexNormals;
+      procedure NormalSmoothModel;
+      procedure NormalLinearSmoothModel;
+      procedure NormalCubicSmoothModel;
+      procedure NormalLanczosSmoothModel;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -646,6 +654,62 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.SincSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SincSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.EulerSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.EulerSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.EulerSquaredSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.EulerSquaredSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SincInfiniteSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SincInfiniteSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
 procedure TActor.UnsharpModel;
 var
    i : integer;
@@ -831,6 +895,61 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.NormalSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.NormalSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.NormalLinearSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.NormalLinearSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.NormalCubicSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.NormalCubicSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.NormalLanczosSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.NormalLanczosSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
 
 // Transparency methods
 procedure TActor.ForceTransparency(_level: single);
