@@ -110,6 +110,13 @@ type
    EVoxelViewOrient = (oriX, oriY, oriZ);
    EVoxelViewDir = (dirTowards, dirAway);
    TVoxelType = (vtLand, vtAir);
+
+   PIntegerItem = ^TIntegerItem;
+   TIntegerItem = record
+      Value : integer;
+      Next : PIntegerItem;
+   end;
+
    TGLMatrixf4 = array[0..3, 0..3] of Single;
 
    T3DIntGrid = array of array of array of integer;
@@ -120,7 +127,8 @@ type
    AInt32 = array of integer;
    AUInt32 = array of longword;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
-   
+
+
 implementation
 
 end.

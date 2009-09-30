@@ -75,7 +75,8 @@ uses
   ThreeDSFile in 'ThreeDSFile.pas',
   OBJFile in 'OBJFile.pas',
   Form3dModelizer in 'Form3dModelizer.pas' {Frm3DModelizer},
-  ClassNeighborDetector in 'ClassNeighborDetector.pas';
+  ClassNeighborDetector in 'ClassNeighborDetector.pas',
+  ClassIntegerList in 'ClassIntegerList.pas';
 
 {$R *.res}
 

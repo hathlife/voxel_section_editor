@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.47';
+   APPLICATION_VER = '1.39.48';
 
 type
   TFrmMain = class(TForm)

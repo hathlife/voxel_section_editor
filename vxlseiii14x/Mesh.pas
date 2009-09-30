@@ -4,7 +4,7 @@ interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      VoxelModelizer, BasicConstants, Math, ClassNeighborDetector;
+      VoxelModelizer, BasicConstants, Math, ClassNeighborDetector, ClassIntegerList;
 
 type
    TMeshMaterial = record
@@ -33,6 +33,7 @@ type
          procedure SetRenderingProcedure;
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+         procedure MeshOptimization(_QualityLoss : single);
          // Normals
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
@@ -158,6 +159,7 @@ type
 
          // Model optimization
          procedure RemoveInvisibleFaces;
+         procedure OptimeMeshLossLess;
          procedure ConvertQuadsToTris;
 
          // Miscelaneous
@@ -2486,5 +2488,237 @@ begin
    end;
 end;
 
+procedure TMesh.MeshOptimization(_QualityLoss : single);
+var
+   VertexNeighbors,FaceNeighbors: TNeighborDetector;
+   VertexTransformation,FaceTransformation : aint32;
+   v, Value,HitCounter : integer;
+   Distance : single;
+   List : CIntegerList;
+   Position : TVector3f;
+   VertexBackup,NormalsBackup: TAVector3f;
+   ColoursBackup: TAVector4f;
+   FacesBackup: aint32;
+begin
+   VertexNeighbors := TNeighborDetector.Create;
+   VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   // Case 1: normals per vertex and colours per vertex.
+   if (NormalsType = C_NORMALS_PER_VERTEX) and (ColoursType = C_COLOURS_PER_VERTEX) then
+   begin
+      SetLength(VertexTransformation,High(Vertices)+1);
+      // Step 1: check vertexes that can be removed.
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         VertexTransformation[v] := v;
+         // Here we check if every neighbor has the same colour and normal is
+         // close to the vertex (v) being evaluated.
+         Value := VertexNeighbors.GetNeighborFromID(v);
+         while Value <> -1 do
+         begin
+            // if colour is different, then the vertex stays.
+            if (Colours[v].X <> Colours[Value].X) or (Colours[v].Y <> Colours[Value].Y) or (Colours[v].Z <> Colours[Value].Z) or (Colours[v].W <> Colours[Value].W)  then
+            begin
+               VertexTransformation[v] := v;
+               Value := -1;
+            end
+            else // if colour is the same, we check the normals.
+            begin
+               Distance := sqrt(Power(Normals[v].X - Normals[Value].X,2) + Power(Normals[v].Y - Normals[Value].Y,2) + Power(Normals[v].Z - Normals[Value].Z,2));
+               if Distance <= _QualityLoss then
+               begin
+                  VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
+               end;
+               Value := VertexNeighbors.GetNextNeighbor;
+            end;
+         end;
+      end;
+      // Step 2: Find edges from potentialy removed vertexes.
+      List := CIntegerList.Create;
+      List.UseSmartMemoryManagement(true);
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         if VertexTransformation[v] = -1 then
+         begin
+            // Here we look out for all neighbors that are also in -1 and merge
+            // them into one vertex.
+            Position.X := Vertices[v].X;
+            Position.Y := Vertices[v].Y;
+            Position.Z := Vertices[v].Z;
+            HitCounter := 1;
+            List.Add(v);
+            VertexTransformation[v] := v;
+            while List.GetValue(Value) do
+            begin
+               Value := VertexNeighbors.GetNeighborFromID(Value);
+               while Value <> -1 do
+               begin
+                  if VertexTransformation[Value] = -1 then
+                  begin
+                     Position.X := Position.X + Vertices[Value].X;
+                     Position.Y := Position.Y + Vertices[Value].Y;
+                     Position.Z := Position.Z + Vertices[Value].Z;
+                     inc(HitCounter);
+                     VertexTransformation[Value] := v;
+                     List.Add(Value);
+                  end;
+                  Value := VertexNeighbors.GetNextNeighbor;
+               end;
+            end;
+            // Now we effectively find the vertex's new position.
+            Vertices[v].X := Position.X / HitCounter;
+            Vertices[v].Y := Position.Y / HitCounter;
+            Vertices[v].Z := Position.Z / HitCounter;
+         end;
+      end;
+      List.Free;
+      // Step 3: Convert the vertexes from the faces to the new values.
+      for v := Low(Faces) to High(Faces) do
+      begin
+         Faces[v] := VertexTransformation[Faces[v]];
+      end;
+      // Step 4: Get the positions of the vertexes in the new vertex list.
+      HitCounter := 0;
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         if VertexTransformation[v] <> v then
+         begin
+            VertexTransformation[v] := -1;    // eliminated
+         end
+         else
+         begin
+            VertexTransformation[v] := HitCounter;
+            inc(HitCounter);
+         end;
+      end;
+      // Step 5: Backup vertexes.
+      SetLength(VertexBackup,High(Vertices)+1);
+      SetLength(NormalsBackup,High(Vertices)+1);
+      SetLength(ColoursBackup,High(Vertices)+1);
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         VertexBackup[v].X := Vertices[v].X;
+         VertexBackup[v].Y := Vertices[v].Y;
+         VertexBackup[v].Z := Vertices[v].Z;
+         NormalsBackup[v].X := Normals[v].X;
+         NormalsBackup[v].Y := Normals[v].Y;
+         NormalsBackup[v].Z := Normals[v].Z;
+         ColoursBackup[v].X := Colours[v].X;
+         ColoursBackup[v].Y := Colours[v].Y;
+         ColoursBackup[v].Z := Colours[v].Z;
+         ColoursBackup[v].W := Colours[v].W;
+      end;
+      // Step 6: Now we rewrite the vertex list.
+      SetLength(Vertices,HitCounter);
+      SetLength(Normals,HitCounter);
+      SetLength(Colours,HitCounter);
+      for v := Low(VertexTransformation) to High(VertexTransformation) do
+      begin
+         if VertexTransformation[v] <> -1 then
+         begin
+            Vertices[VertexTransformation[v]].X := VertexBackup[v].X;
+            Vertices[VertexTransformation[v]].Y := VertexBackup[v].Y;
+            Vertices[VertexTransformation[v]].Z := VertexBackup[v].Z;
+            Normals[VertexTransformation[v]].X := NormalsBackup[v].X;
+            Normals[VertexTransformation[v]].Y := NormalsBackup[v].Y;
+            Normals[VertexTransformation[v]].Z := NormalsBackup[v].Z;
+            Colours[VertexTransformation[v]].X := ColoursBackup[v].X;
+            Colours[VertexTransformation[v]].Y := ColoursBackup[v].Y;
+            Colours[VertexTransformation[v]].Z := ColoursBackup[v].Z;
+            Colours[VertexTransformation[v]].W := ColoursBackup[v].W;
+         end;
+      end;
+      SetLength(VertexBackup,0);
+      SetLength(NormalsBackup,0);
+      SetLength(ColoursBackup,0);
+      // Step 7: Reconvert the vertexes from the faces to the new values.
+      for v := Low(Faces) to High(Faces) do
+      begin
+         Faces[v] := VertexTransformation[Faces[v]];
+      end;
+      // Step 9: Backup faces.
+      SetLength(FacesBackup,High(Faces)+1);
+      for v := Low(Faces) to High(Faces) do
+      begin
+         FacesBackup[v] := Faces[v];
+      end;
+      // Step 8: Check for faces with two or more equal vertexes and mark
+      // them for elimination.
+      for v := Low(Vertices) to High(Vertices) do
+      begin
+         VertexTransformation[v] := 0; // we'll use this vector to detect repetition.
+      end;
+      v := 0;
+      while v <= High(Faces) do
+      begin
+         // Check for repetition
+         Value := v;
+         while Value < (v + VerticesPerFace) do
+         begin
+            if VertexTransformation[Faces[Value]] = 0 then
+            begin
+               VertexTransformation[Faces[Value]] := 1;
+               inc(Value);
+            end
+            else // We have a repetition and we'll wipe this face.
+            begin
+               Value := v + VerticesPerFace + 1;
+            end;
+         end;
+         if Value < (v + VerticesPerFace + 1) then
+         begin
+            // Quickly clean up VertexTransformation
+            Value := v;
+            while Value < (v + VerticesPerFace) do
+            begin
+               VertexTransformation[Faces[Value]] := 0;
+               inc(Value);
+            end;
+         end
+         else
+         begin
+            // Face elimination happens here.
+            Value := v;
+            while Value < (v + VerticesPerFace) do
+            begin
+               VertexTransformation[Faces[Value]] := 0;
+               FacesBackup[Value] := -1;
+               inc(Value);
+            end;
+         end;
+         // Let's move on.
+         inc(v,VerticesPerFace);
+      end;
+      SetLength(VertexTransformation,0);
+      // Step 10: Rewrite the faces.
+      HitCounter := 0;
+      v := 0;
+      while v <= High(Faces) do
+      begin
+         if FacesBackup[v] <> -1 then
+         begin
+            Value := 0;
+            while Value < VerticesPerFace do
+            begin
+               Faces[HitCounter+Value] := FacesBackup[v+Value];
+               inc(Value);
+            end;
+            inc(HitCounter,VerticesPerFace);
+         end;
+         inc(v,VerticesPerFace);
+      end;
+      NumFaces := HitCounter div VerticesPerFace;
+      SetLength(Faces,HitCounter);
+      SetLength(FacesBackup,0);
+   end;
+
+   // Clean up memory
+   VertexNeighbors.Free;
+   ForceRefresh;
+end;
+
+procedure TMesh.OptimeMeshLossLess;
+begin
+   MeshOptimization(0);
+end;
 
 end.

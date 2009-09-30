@@ -106,6 +106,8 @@ type
     NormalsFXSmoothNormals: TMenuItem;
     NormalsFXCubicSmoothNormals: TMenuItem;
     NormalsFXLanczosSmoothNormals: TMenuItem;
+    FaceFXOptimizeMesh: TMenuItem;
+    procedure FaceFXOptimizeMeshClick(Sender: TObject);
     procedure NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
     procedure NormalsFXCubicSmoothNormalsClick(Sender: TObject);
     procedure NormalsFXSmoothNormalsClick(Sender: TObject);
@@ -708,6 +710,11 @@ begin
    RemapColour.Y := RemapColourMap[3].G /255;
    RemapColour.Z := RemapColourMap[3].B /255;
    Actor.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
+end;
+
+procedure TFrm3DModelizer.FaceFXOptimizeMeshClick(Sender: TObject);
+begin
+   Actor.OptimizeMeshMaxQuality;
 end;
 
 procedure TFrm3DModelizer.Orange1Click(Sender: TObject);

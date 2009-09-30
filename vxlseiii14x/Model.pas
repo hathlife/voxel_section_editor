@@ -95,6 +95,7 @@ type
       procedure Assign(const _Model: TModel);
       // Mesh Optimization
       procedure RemoveInvisibleFaces;
+      procedure OptimizeMeshMaxQuality;
       procedure ConvertQuadsToTris;
       // Misc
       procedure MakeVoxelHVAIndependent;
@@ -555,6 +556,11 @@ end;
 procedure TModel.RemoveInvisibleFaces;
 begin
    LOD[CurrentLOD].RemoveInvisibleFaces;
+end;
+
+procedure TModel.OptimizeMeshMaxQuality;
+begin
+   LOD[CurrentLOD].OptimizeMeshMaxQuality;
 end;
 
 procedure TModel.ConvertQuadsToTris;

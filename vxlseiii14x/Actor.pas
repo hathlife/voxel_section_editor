@@ -117,6 +117,7 @@ type
       procedure ForceTransparencyExceptOnAMesh(_Level: single; _ModelID,_MeshID: integer);
       // Mesh Operations
       procedure RemoveInvisibleFaces;
+      procedure OptimizeMeshMaxQuality;
       procedure ConvertQuadsToTris;
    end;
 
@@ -994,6 +995,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.RemoveInvisibleFaces;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.OptimizeMeshMaxQuality;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.OptimizeMeshMaxQuality;
       end;
    end;
    RequestUpdateWorld := true;

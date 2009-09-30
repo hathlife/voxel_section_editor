@@ -11,12 +11,6 @@ const
    C_NEIGHBTYPE_FACE_FACE = 3;         // face neighbors of faces.
 
 type
-   PIntegerItem = ^TIntegerItem;
-   TIntegerItem = record
-      Value : integer;
-      Next : PIntegerItem;
-   end;
-
    TNeighborDetector = class
       private
          FNeighbors: array of PIntegerItem;
