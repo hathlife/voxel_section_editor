@@ -2529,8 +2529,13 @@ begin
                if Distance <= _QualityLoss then
                begin
                   VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
+                  Value := VertexNeighbors.GetNextNeighbor;
+               end
+               else
+               begin
+                  VertexTransformation[v] := v; // It won't be removed.
+                  Value := -1;
                end;
-               Value := VertexNeighbors.GetNextNeighbor;
             end;
          end;
       end;
@@ -2749,8 +2754,13 @@ begin
             if Distance <= _QualityLoss then
             begin
                VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
+               Value := VertexNeighbors.GetNextNeighbor;
+            end
+            else
+            begin
+               VertexTransformation[v] := v; // It won't be removed.
+               Value := -1;
             end;
-            Value := VertexNeighbors.GetNextNeighbor;
          end;
       end;
       // Step 2: Find edges from potentialy removed vertexes.
