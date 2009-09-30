@@ -96,6 +96,7 @@ type
       // Mesh Optimization
       procedure RemoveInvisibleFaces;
       procedure OptimizeMeshMaxQuality;
+      procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure ConvertQuadsToTris;
       // Misc
       procedure MakeVoxelHVAIndependent;
@@ -561,6 +562,11 @@ end;
 procedure TModel.OptimizeMeshMaxQuality;
 begin
    LOD[CurrentLOD].OptimizeMeshMaxQuality;
+end;
+
+procedure TModel.OptimizeMeshMaxQualityIgnoreColours;
+begin
+   LOD[CurrentLOD].OptimizeMeshMaxQualityIgnoreColours;
 end;
 
 procedure TModel.ConvertQuadsToTris;

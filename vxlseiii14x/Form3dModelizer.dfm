@@ -508,6 +508,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Optimize Mesh'
         OnClick = FaceFXOptimizeMeshClick
       end
+      object FaceFXOptimizeMeshIgnoringColours: TMenuItem
+        Caption = 'Optimize Mesh Ignoring Colours'
+        OnClick = FaceFXOptimizeMeshIgnoringColoursClick
+      end
     end
     object ModelEffects1: TMenuItem
       Caption = 'Model Effects'

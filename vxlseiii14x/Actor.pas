@@ -118,6 +118,7 @@ type
       // Mesh Operations
       procedure RemoveInvisibleFaces;
       procedure OptimizeMeshMaxQuality;
+      procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure ConvertQuadsToTris;
    end;
 
@@ -1009,6 +1010,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.OptimizeMeshMaxQuality;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.OptimizeMeshMaxQualityIgnoreColours;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.OptimizeMeshMaxQualityIgnoreColours;
       end;
    end;
    RequestUpdateWorld := true;

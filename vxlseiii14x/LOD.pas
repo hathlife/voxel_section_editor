@@ -74,6 +74,7 @@ type
       // Mesh Optimizations
       procedure RemoveInvisibleFaces;
       procedure OptimizeMeshMaxQuality;
+      procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure ConvertQuadsToTris;
    end;
 
@@ -517,6 +518,16 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].OptimeMeshLossLess;
+   end;
+end;
+
+procedure TLOD.OptimizeMeshMaxQualityIgnoreColours;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].OptimeMeshLossLessIgnoreColours;
    end;
 end;
 

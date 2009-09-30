@@ -107,6 +107,8 @@ type
     NormalsFXCubicSmoothNormals: TMenuItem;
     NormalsFXLanczosSmoothNormals: TMenuItem;
     FaceFXOptimizeMesh: TMenuItem;
+    FaceFXOptimizeMeshIgnoringColours: TMenuItem;
+    procedure FaceFXOptimizeMeshIgnoringColoursClick(Sender: TObject);
     procedure FaceFXOptimizeMeshClick(Sender: TObject);
     procedure NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
     procedure NormalsFXCubicSmoothNormalsClick(Sender: TObject);
@@ -715,6 +717,12 @@ end;
 procedure TFrm3DModelizer.FaceFXOptimizeMeshClick(Sender: TObject);
 begin
    Actor.OptimizeMeshMaxQuality;
+end;
+
+procedure TFrm3DModelizer.FaceFXOptimizeMeshIgnoringColoursClick(
+  Sender: TObject);
+begin
+   Actor.OptimizeMeshMaxQualityIgnoreColours;
 end;
 
 procedure TFrm3DModelizer.Orange1Click(Sender: TObject);
