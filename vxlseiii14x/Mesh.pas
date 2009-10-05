@@ -39,6 +39,8 @@ type
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
          procedure ReNormalizePerVertex;
+         procedure ReNormalizeFaces;
+         procedure RebuildFaceNormals;
          procedure TransformFaceToVertexNormals;
          procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
          // Colours
@@ -782,67 +784,49 @@ begin
    MeshSmoothOperation(GetSincInfinite1DDistance);
 end;
 
-
 procedure TMesh.MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
 var
-   HitCounter: array of integer;
+   HitCounter: array of single;
    OriginalVertexes : array of TVector3f;
-   VertsHit: array of array of boolean;
-   i,j,f,v,v1,v2 : integer;
-   MaxVerticePerFace: integer;
+   v,v1 : integer;
    Distance: single;
+   NeighborDetector : TNeighborDetector;
 begin
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
-   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
    // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
+   for v := Low(HitCounter) to High(HitCounter) do
    begin
-      HitCounter[i] := 0;
-      OriginalVertexes[i].X := Vertices[i].X;
-      OriginalVertexes[i].Y := Vertices[i].Y;
-      OriginalVertexes[i].Z := Vertices[i].Z;
-      Vertices[i].X := 0;
-      Vertices[i].Y := 0;
-      Vertices[i].Z := 0;
-      for j := Low(HitCounter) to High(HitCounter) do
-      begin
-         VertsHit[i,j] := false;
-      end;
-      VertsHit[i,i] := true;
+      HitCounter[v] := 0;
+      OriginalVertexes[v].X := Vertices[v].X;
+      OriginalVertexes[v].Y := Vertices[v].Y;
+      OriginalVertexes[v].Z := Vertices[v].Z;
+      Vertices[v].X := 0;
+      Vertices[v].Y := 0;
+      Vertices[v].Z := 0;
    end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
+   // Sum up vertices with its neighbours, using the desired distance formula.
+   NeighborDetector := TNeighborDetector.Create;
+   NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   for v := Low(Vertices) to High(Vertices) do
    begin
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
       begin
-         v1 := (f * VerticesPerFace) + v;
-         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
-         j := 0;
-         // for each vertex, get the previous, the current and the next.
-         while j < 3 do
-         begin
-            v2 := v1 - v + i;
-            // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
-            begin
-               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].X - OriginalVertexes[Faces[v1]].X);
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + Distance;
-               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].Y - OriginalVertexes[Faces[v1]].Y);
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + Distance;
-               Distance := _DistanceFunction(OriginalVertexes[Faces[v2]].Z - OriginalVertexes[Faces[v1]].Z);
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + Distance;
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
-            end;
-            // increment vertex.
-            i := (i + 1) mod VerticesPerFace;
-            inc(j);
-         end;
+         Distance := _DistanceFunction(OriginalVertexes[v1].X - OriginalVertexes[v].X);
+         Vertices[v].X := Vertices[v].X + Distance;
+         Distance := _DistanceFunction(OriginalVertexes[v1].Y - OriginalVertexes[v].Y);
+         Vertices[v].Y := Vertices[v].Y + Distance;
+         Distance := _DistanceFunction(OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
+         Vertices[v].Z := Vertices[v].Z + Distance;
+         Distance := sqrt(Power(OriginalVertexes[v1].X - OriginalVertexes[v].X,2) + Power(OriginalVertexes[v1].Y - OriginalVertexes[v].Y,2) + Power(OriginalVertexes[v1].Z - OriginalVertexes[v].Z,2));
+         HitCounter[v] := HitCounter[v] + Distance;
+
+         v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
+   NeighborDetector.Free;
+
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
@@ -862,11 +846,6 @@ begin
    // Free memory
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
-   for i := Low(Vertices) to High(Vertices) do
-   begin
-      SetLength(VertsHit[i],0);
-   end;
-   SetLength(VertsHit,0);
    ForceRefresh;
 end;
 
@@ -1261,8 +1240,6 @@ begin
 end;
 
 function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
-const
-   PIDIV3 = Pi / 3;
 begin
    Result := 0;
    if _Distance <> 0 then
@@ -1285,11 +1262,11 @@ end;
 function TMesh.GetLanczos1DACDistance(_Distance : single): single;
 const
    CONST_A = 1000;
-   PIDIV10 = Pi / CONST_A;
+   PIDIVA = Pi / CONST_A;
 begin
    Result := 0;
    if _Distance <> 0 then
-     Result := 1 - ((CONST_A * sin(Pi * _Distance) * sin(PIDIV10 * _Distance)) / Power(Pi * _Distance,2));
+     Result := 1 - ((CONST_A * sin(Pi * _Distance) * sin(PIDIVA * _Distance)) / Power(Pi * _Distance,2));
    if _Distance < 0 then
      Result := Result * -1;
 end;
@@ -1638,6 +1615,44 @@ begin
    SetLength(HitCounter,0);
 end;
 
+procedure TMesh.ReNormalizeFaces;
+var
+   f : integer;
+   temp : TVector3f;
+begin
+   if High(FaceNormals) >= 0 then
+   begin
+      if VerticesPerFace = 3 then
+      begin
+         for f := Low(FaceNormals) to High(FaceNormals) do
+         begin
+            FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
+            FaceNormals[f].X := -FaceNormals[f].X;
+            FaceNormals[f].Y := -FaceNormals[f].Y;
+            FaceNormals[f].Z := -FaceNormals[f].Z;
+         end;
+      end
+      else if VerticesPerFace = 4 then
+      begin
+         for f := Low(FaceNormals) to High(faceNormals) do
+         begin
+            FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
+            Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
+            FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / -2;
+            FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / -2;
+            FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / -2;
+         end;
+      end;
+   end;
+end;
+
+procedure TMesh.RebuildFaceNormals;
+begin
+   SetLength(FaceNormals,NumFaces);
+   ReNormalizeFaces;
+end;
+
+
 procedure TMesh.TransformFaceToVertexNormals;
 var
    HitCounter: array of integer;
@@ -1713,7 +1728,7 @@ var
    Neighbors : TNeighborDetector;
    i,Value : integer;
    NormalsHandicap : TAVector3f;
-   HitCounter : auint32;
+   HitCounter : array of single;
    Distance: single;
 begin
    // Setup Neighbors.
@@ -1747,7 +1762,8 @@ begin
             Distance := Vertices[Value].Z - Vertices[i].Z;
             if Distance <> 0 then
                NormalsHandicap[i].Z := NormalsHandicap[i].Z + (Normals[Value].Z * _DistanceFunction(Distance));
-            inc(HitCounter[i]);
+            Distance := sqrt(Power(Vertices[Value].X - Vertices[i].X,2) + Power(Vertices[Value].Y - Vertices[i].Y,2) + Power(Vertices[Value].Z - Vertices[i].Z,2));
+            HitCounter[i] := HitCounter[i] + Distance;
             Value := Neighbors.GetNextNeighbor;
          end;
       end;
@@ -1793,7 +1809,8 @@ begin
             Distance := Vertices[Value].Z - Vertices[i].Z;
             if Distance <> 0 then
                NormalsHandicap[i].Z := NormalsHandicap[i].Z + (FaceNormals[Value].Z * _DistanceFunction(Distance));
-            inc(HitCounter[i]);
+            Distance := sqrt(Power(Vertices[Value].X - Vertices[i].X,2) + Power(Vertices[Value].Y - Vertices[i].Y,2) + Power(Vertices[Value].Z - Vertices[i].Z,2));
+            HitCounter[i] := HitCounter[i] + Distance;
             Value := Neighbors.GetNextNeighbor;
          end;
       end;
@@ -2504,17 +2521,21 @@ var
 begin
    VertexNeighbors := TNeighborDetector.Create;
    VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+   FaceNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+
    // Case 1: normals per vertex and colours per vertex.
    if (NormalsType = C_NORMALS_PER_VERTEX) and (ColoursType = C_COLOURS_PER_VERTEX) then
    begin
       SetLength(VertexTransformation,High(Vertices)+1);
+      RebuildFaceNormals;
       // Step 1: check vertexes that can be removed.
       for v := Low(Vertices) to High(Vertices) do
       begin
          VertexTransformation[v] := v;
          // Here we check if every neighbor has the same colour and normal is
          // close to the vertex (v) being evaluated.
-         Value := VertexNeighbors.GetNeighborFromID(v);
+         Value := FaceNeighbors.GetNeighborFromID(v);
          while Value <> -1 do
          begin
             // if colour is different, then the vertex stays.
@@ -2525,11 +2546,11 @@ begin
             end
             else // if colour is the same, we check the normals.
             begin
-               Distance := sqrt(Power(Normals[v].X - Normals[Value].X,2) + Power(Normals[v].Y - Normals[Value].Y,2) + Power(Normals[v].Z - Normals[Value].Z,2));
+               Distance := sqrt(Power(Normals[v].X - FaceNormals[Value].X,2) + Power(Normals[v].Y - FaceNormals[Value].Y,2) + Power(Normals[v].Z - FaceNormals[Value].Z,2));
                if Distance <= _QualityLoss then
                begin
                   VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
-                  Value := VertexNeighbors.GetNextNeighbor;
+                  Value := FaceNeighbors.GetNextNeighbor;
                end
                else
                begin
@@ -2539,6 +2560,7 @@ begin
             end;
          end;
       end;
+      SetLength(FaceNormals,0);
       // Step 2: Find edges from potentialy removed vertexes.
       List := CIntegerList.Create;
       List.UseSmartMemoryManagement(true);
@@ -2561,12 +2583,16 @@ begin
                begin
                   if VertexTransformation[Value] = -1 then
                   begin
-                     Position.X := Position.X + Vertices[Value].X;
-                     Position.Y := Position.Y + Vertices[Value].Y;
-                     Position.Z := Position.Z + Vertices[Value].Z;
-                     inc(HitCounter);
-                     VertexTransformation[Value] := v;
-                     List.Add(Value);
+                     Distance := sqrt(Power(Normals[v].X - Normals[Value].X,2) + Power(Normals[v].Y - Normals[Value].Y,2) + Power(Normals[v].Z - Normals[Value].Z,2));
+                     if Distance <= _QualityLoss then
+                     begin
+                        Position.X := Position.X + Vertices[Value].X;
+                        Position.Y := Position.Y + Vertices[Value].Y;
+                        Position.Z := Position.Z + Vertices[Value].Z;
+                        inc(HitCounter);
+                        VertexTransformation[Value] := v;
+                        List.Add(Value);
+                     end;
                   end;
                   Value := VertexNeighbors.GetNextNeighbor;
                end;
@@ -2737,24 +2763,28 @@ var
 begin
    VertexNeighbors := TNeighborDetector.Create;
    VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+   FaceNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+
    // Case 1: normals per vertex and colours per vertex.
    if (NormalsType = C_NORMALS_PER_VERTEX) and (ColoursType = C_COLOURS_PER_VERTEX) then
    begin
       SetLength(VertexTransformation,High(Vertices)+1);
+      RebuildFaceNormals;
       // Step 1: check vertexes that can be removed.
       for v := Low(Vertices) to High(Vertices) do
       begin
          VertexTransformation[v] := v;
          // Here we check if every neighbor has the same colour and normal is
          // close to the vertex (v) being evaluated.
-         Value := VertexNeighbors.GetNeighborFromID(v);
+         Value := FaceNeighbors.GetNeighborFromID(v);
          while Value <> -1 do
          begin
-            Distance := sqrt(Power(Normals[v].X - Normals[Value].X,2) + Power(Normals[v].Y - Normals[Value].Y,2) + Power(Normals[v].Z - Normals[Value].Z,2));
+            Distance := sqrt(Power(Normals[v].X - FaceNormals[Value].X,2) + Power(Normals[v].Y - FaceNormals[Value].Y,2) + Power(Normals[v].Z - FaceNormals[Value].Z,2));
             if Distance <= _QualityLoss then
             begin
                VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
-               Value := VertexNeighbors.GetNextNeighbor;
+               Value := FaceNeighbors.GetNextNeighbor;
             end
             else
             begin
@@ -2763,6 +2793,7 @@ begin
             end;
          end;
       end;
+      SetLength(FaceNormals,0);
       // Step 2: Find edges from potentialy removed vertexes.
       List := CIntegerList.Create;
       List.UseSmartMemoryManagement(true);
@@ -2785,12 +2816,16 @@ begin
                begin
                   if VertexTransformation[Value] = -1 then
                   begin
-                     Position.X := Position.X + Vertices[Value].X;
-                     Position.Y := Position.Y + Vertices[Value].Y;
-                     Position.Z := Position.Z + Vertices[Value].Z;
-                     inc(HitCounter);
-                     VertexTransformation[Value] := v;
-                     List.Add(Value);
+                     Distance := sqrt(Power(Normals[v].X - Normals[Value].X,2) + Power(Normals[v].Y - Normals[Value].Y,2) + Power(Normals[v].Z - Normals[Value].Z,2));
+                     if Distance <= _QualityLoss then
+                     begin
+                        Position.X := Position.X + Vertices[Value].X;
+                        Position.Y := Position.Y + Vertices[Value].Y;
+                        Position.Z := Position.Z + Vertices[Value].Z;
+                        inc(HitCounter);
+                        VertexTransformation[Value] := v;
+                        List.Add(Value);
+                     end;
                   end;
                   Value := VertexNeighbors.GetNextNeighbor;
                end;
