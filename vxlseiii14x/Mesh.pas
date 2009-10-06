@@ -117,6 +117,7 @@ type
          procedure MeshEulerSmooth;
          procedure MeshEulerSquaredSmooth;
          procedure MeshSincInfiniteSmooth;
+         procedure MeshGaussianSmooth;
          procedure MeshUnsharpMasking;
          procedure MeshInflate;
          procedure MeshDeflate;
@@ -822,6 +823,97 @@ begin
          Distance := sqrt(Power(OriginalVertexes[v1].X - OriginalVertexes[v].X,2) + Power(OriginalVertexes[v1].Y - OriginalVertexes[v].Y,2) + Power(OriginalVertexes[v1].Z - OriginalVertexes[v].Z,2));
          HitCounter[v] := HitCounter[v] + Distance;
 
+         v1 := NeighborDetector.GetNextNeighbor;
+      end;
+   end;
+   NeighborDetector.Free;
+
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := OriginalVertexes[v].Y + (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := OriginalVertexes[v].Z + (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   ForceRefresh;
+end;
+
+procedure TMesh.MeshGaussianSmooth;
+const
+   C_2PI = 2 * Pi;
+   C_E = 2.718281828;
+var
+   HitCounter: array of single;
+   OriginalVertexes : array of TVector3f;
+   v,v1 : integer;
+   Distance: single;
+   NeighborDetector : TNeighborDetector;
+   Deviation: single;
+begin
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   // Reset values.
+   for v := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[v] := 0;
+      OriginalVertexes[v].X := Vertices[v].X;
+      OriginalVertexes[v].Y := Vertices[v].Y;
+      OriginalVertexes[v].Z := Vertices[v].Z;
+      Vertices[v].X := 0;
+      Vertices[v].Y := 0;
+      Vertices[v].Z := 0;
+   end;
+   // Sum up vertices with its neighbours, using the desired distance formula.
+   NeighborDetector := TNeighborDetector.Create;
+   NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      // get the standard deviation.
+      Deviation := 0;
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
+      begin
+         Distance := Power(OriginalVertexes[v1].X - OriginalVertexes[v].X,2) + Power(OriginalVertexes[v1].Y - OriginalVertexes[v].Y,2) + Power(OriginalVertexes[v1].Z - OriginalVertexes[v].Z,2);
+         Deviation := Deviation + Distance;
+         HitCounter[v] := HitCounter[v] + 1;
+
+         v1 := NeighborDetector.GetNextNeighbor;
+      end;
+      Deviation := Sqrt(Deviation / HitCounter[v]);
+      // calculate the vertex position that will be divided later.
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
+      begin
+         if Deviation <> 0 then
+         begin
+            Distance := OriginalVertexes[v1].X - OriginalVertexes[v].X;
+            if Distance > 0 then
+               Vertices[v].X := Vertices[v].X + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
+            else if Distance < 0 then
+               Vertices[v].X := Vertices[v].X - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
+            Distance := OriginalVertexes[v1].Y - OriginalVertexes[v].Y;
+            if Distance > 0 then
+               Vertices[v].Y := Vertices[v].Y + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
+            else if Distance < 0 then
+               Vertices[v].Y := Vertices[v].Y - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
+            Distance := OriginalVertexes[v1].Z - OriginalVertexes[v].Z;
+            if Distance > 0 then
+               Vertices[v].Z := Vertices[v].Z + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
+            else if Distance < 0 then
+               Vertices[v].Z := Vertices[v].Z - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
+         end;
          v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;

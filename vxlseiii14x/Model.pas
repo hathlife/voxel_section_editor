@@ -63,6 +63,7 @@ type
       procedure EulerSmoothModel;
       procedure EulerSquaredSmoothModel;
       procedure SincInfiniteSmoothModel;
+      procedure GaussianSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
@@ -396,6 +397,11 @@ end;
 procedure TModel.SincInfiniteSmoothModel;
 begin
    LOD[CurrentLOD].SincInfiniteSmoothLOD;
+end;
+
+procedure TModel.GaussianSmoothModel;
+begin
+   LOD[CurrentLOD].GaussianSmoothLOD;
 end;
 
 procedure TModel.UnsharpModel;

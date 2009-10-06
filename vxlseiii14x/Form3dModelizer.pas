@@ -108,6 +108,8 @@ type
     NormalsFXLanczosSmoothNormals: TMenuItem;
     FaceFXOptimizeMesh: TMenuItem;
     FaceFXOptimizeMeshIgnoringColours: TMenuItem;
+    ModelFXGaussianSmooth: TMenuItem;
+    procedure ModelFXGaussianSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshIgnoringColoursClick(Sender: TObject);
     procedure FaceFXOptimizeMeshClick(Sender: TObject);
     procedure NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
@@ -809,6 +811,14 @@ end;
 procedure TFrm3DModelizer.ModelFXEulerErosionClick(Sender: TObject);
 begin
    Actor.EulerSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXGaussianSmoothClick(Sender: TObject);
+var
+   i : integer;
+begin
+   for i := 0 to 4 do
+      Actor.GaussianSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincErosionClick(Sender: TObject);

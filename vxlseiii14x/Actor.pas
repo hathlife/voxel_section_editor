@@ -92,6 +92,7 @@ type
       procedure EulerSmoothModel;
       procedure EulerSquaredSmoothModel;
       procedure SincInfiniteSmoothModel;
+      procedure GaussianSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
       procedure DeflateModel;
@@ -707,6 +708,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.SincInfiniteSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GaussianSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.GaussianSmoothModel;
       end;
    end;
    RequestUpdateWorld := true;

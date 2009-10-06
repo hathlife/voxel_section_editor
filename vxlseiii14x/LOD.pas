@@ -44,6 +44,7 @@ type
       procedure EulerSmoothLOD;
       procedure EulerSquaredSmoothLOD;
       procedure SincInfiniteSmoothLOD;
+      procedure GaussianSmoothLOD;
       procedure UnsharpLOD;
       procedure InflateLOD;
       procedure DeflateLOD;
@@ -270,6 +271,16 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].MeshSincInfiniteSmooth;
+   end;
+end;
+
+procedure TLOD.GaussianSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshGaussianSmooth;
    end;
 end;
 
