@@ -109,6 +109,8 @@ type
     FaceFXOptimizeMesh: TMenuItem;
     FaceFXOptimizeMeshIgnoringColours: TMenuItem;
     ModelFXGaussianSmooth: TMenuItem;
+    RenderVisibleCubes: TMenuItem;
+    procedure RenderVisibleCubesClick(Sender: TObject);
     procedure ModelFXGaussianSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshIgnoringColoursClick(Sender: TObject);
     procedure FaceFXOptimizeMeshClick(Sender: TObject);
@@ -649,6 +651,7 @@ end;
 procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
 begin
    RenderCubes.Checked := true;
+   RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
    RenderTriangles.Checked := false;
@@ -659,6 +662,7 @@ end;
 procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
 begin
    RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := true;
    RenderTriangles.Checked := false;
@@ -669,6 +673,7 @@ end;
 procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
 begin
    RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := true;
    RenderModel.Checked := false;
    RenderTriangles.Checked := false;
@@ -679,11 +684,23 @@ end;
 procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
 begin
    RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(true);
+end;
+
+procedure TFrm3DModelizer.RenderVisibleCubesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := true;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.Blue1Click(Sender: TObject);
@@ -946,6 +963,10 @@ begin
    begin
       Result := C_QUALITY_LANCZOS_TRIS;
    end
+   else if RenderVisibleCubes.Checked then
+   begin
+      Result := C_QUALITY_VISIBLE_CUBED;
+   end
    else
    begin
       Result := C_QUALITY_CUBED;
@@ -966,11 +987,16 @@ begin
    begin
       RenderTrianglesClick(nil);
    end
+   else if RenderVisibleCubes.Checked then
+   begin
+      RenderVisibleCubesClick(nil);
+   end
    else
    begin
       RenderCubesClick(nil);
    end;
 end;
+
 
 procedure TFrm3DModelizer.SetColourPerVertex(_value: boolean);
 begin

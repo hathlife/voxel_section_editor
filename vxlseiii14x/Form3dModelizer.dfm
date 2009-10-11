@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 422
+  ClientHeight = 441
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 396
+    Height = 415
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 377
+    ExplicitHeight = 396
   end
   object Panel1: TPanel
     Left = 0
@@ -437,6 +437,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object RenderCubes: TMenuItem
         Caption = 'Editing Cubes (Very Low)'
         OnClick = RenderCubesClick
+      end
+      object RenderVisibleCubes: TMenuItem
+        Caption = 'Visible Cubes (Very Low)'
+        OnClick = RenderVisibleCubesClick
       end
       object RenderQuads: TMenuItem
         Caption = 'Quad Based 3D Model (Low)'
