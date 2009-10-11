@@ -34,8 +34,6 @@ type
          procedure SetRenderingProcedure;
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
-         procedure MeshOptimization(_QualityLoss : single);
-         procedure MeshOptimizationIgnoreColours(_QualityLoss : single);
          // Normals
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
@@ -164,8 +162,10 @@ type
 
          // Model optimization
          procedure RemoveInvisibleFaces;
-         procedure OptimeMeshLossLess;
-         procedure OptimeMeshLossLessIgnoreColours;
+         procedure OptimizeMeshLossLess;
+         procedure OptimizeMeshLossLessIgnoreColours;
+         procedure MeshOptimization(_QualityLoss : single);
+         procedure MeshOptimizationIgnoreColours(_QualityLoss : single);
          procedure ConvertQuadsToTris;
 
          // Miscelaneous
@@ -1153,8 +1153,7 @@ begin
          Vertices[v].Y := Vertices[v].Y + Distance;
          Distance := _DistanceFunction(OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
          Vertices[v].Z := Vertices[v].Z + Distance;
-         Distance := sqrt(Power(OriginalVertexes[v1].X - OriginalVertexes[v].X,2) + Power(OriginalVertexes[v1].Y - OriginalVertexes[v].Y,2) + Power(OriginalVertexes[v1].Z - OriginalVertexes[v].Z,2));
-         HitCounter[v] := HitCounter[v] + Distance;
+         HitCounter[v] := HitCounter[v] + 1;
 
          v1 := NeighborDetector.GetNextNeighbor;
       end;
@@ -2187,8 +2186,7 @@ begin
             Distance := Vertices[Value].Z - Vertices[i].Z;
             if Distance <> 0 then
                NormalsHandicap[i].Z := NormalsHandicap[i].Z + (Normals[Value].Z * _DistanceFunction(Distance));
-            Distance := sqrt(Power(Vertices[Value].X - Vertices[i].X,2) + Power(Vertices[Value].Y - Vertices[i].Y,2) + Power(Vertices[Value].Z - Vertices[i].Z,2));
-            HitCounter[i] := HitCounter[i] + Distance;
+            HitCounter[i] := HitCounter[i] + 1;
             Value := Neighbors.GetNextNeighbor;
          end;
       end;
@@ -3407,12 +3405,12 @@ begin
    ForceRefresh;
 end;
 
-procedure TMesh.OptimeMeshLossLess;
+procedure TMesh.OptimizeMeshLossLess;
 begin
    MeshOptimization(0);
 end;
 
-procedure TMesh.OptimeMeshLossLessIgnoreColours;
+procedure TMesh.OptimizeMeshLossLessIgnoreColours;
 begin
    MeshOptimizationIgnoreColours(0);
 end;
