@@ -147,6 +147,7 @@ object FrmMain: TFrmMain
           Top = 12
           Width = 137
           Height = 21
+          Style = csDropDownList
           ItemHeight = 13
           TabOrder = 0
           OnChange = SectionComboChange
