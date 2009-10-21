@@ -832,18 +832,18 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x-1,y,z,v);
-            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y+1,z+1];
-            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
-            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y,z];
-            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
-         end
-         else
-         begin
-            _Voxel.GetVoxelSafe(x-1,y,z,v);
             Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y+1,z+1];
             Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y+1,z];
             Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y,z];
             Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y,z+1];
+         end
+         else
+         begin
+            _Voxel.GetVoxelSafe(x-1,y,z,v);
+            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace)] := VertexMap[x,y+1,z+1];
+            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 1] := VertexMap[x,y+1,z];
+            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 2] := VertexMap[x,y,z];
+            Faces[(FaceMap[x,y,z,C_VOXEL_FACE_SIDE] * VerticesPerFace) + 3] := VertexMap[x,y,z+1];
          end;
          // Normals
          FaceNormals[FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := _Voxel.Normals[v.Normal].X;
@@ -1936,11 +1936,11 @@ begin
    begin
       for f := Low(FaceNormals) to High(faceNormals) do
       begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
-         Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
-         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / -2;
-         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / -2;
-         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / -2;
+         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]+2],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)]]);
+         Temp := GetNormalsValue(Vertices[Faces[(f*4)]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]+2]);
+         FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / 2;
+         FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / 2;
+         FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / 2;
       end;
    end
    else if High(Normals) >= 0 then
