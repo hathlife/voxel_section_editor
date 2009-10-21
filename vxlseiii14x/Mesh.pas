@@ -1995,14 +1995,14 @@ begin
       for f := 0 to NumFaces-1 do
       begin
          v1 := (f * VerticesPerFace);
-         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+1]],Vertices[Faces[v1]]);
 
          // check all vertexes from the face.
          for v := 0 to MaxVerticePerFace do
          begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - Normals1.X;
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - Normals1.Y;
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - Normals1.Z;
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + Normals1.X;
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + Normals1.Y;
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + Normals1.Z;
             inc(HitCounter[Faces[v1+v]]);
          end;
       end;
@@ -2012,15 +2012,15 @@ begin
       for f := 0 to NumFaces-1 do
       begin
          v1 := (f * VerticesPerFace);
-         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
-         Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
+         Normals1 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+1]],Vertices[Faces[v1]]);
+         Normals2 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+3]],Vertices[Faces[v1+2]]);
 
          // check all vertexes from the face.
          for v := 0 to MaxVerticePerFace do
          begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X - ((Normals1.X + Normals2.X) / 2);
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y - ((Normals1.Y + Normals2.Y) / 2);
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z - ((Normals1.Z + Normals2.Z) / 2);
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + ((Normals1.X + Normals2.X) / 2);
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + ((Normals1.Y + Normals2.Y) / 2);
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + ((Normals1.Z + Normals2.Z) / 2);
             inc(HitCounter[Faces[v1+v]]);
          end;
       end;

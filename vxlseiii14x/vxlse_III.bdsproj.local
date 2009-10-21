@@ -32,5 +32,7 @@
     <Transaction>2009/09/26 20:47:23.578.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassNeighboorDetector.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassNeighborDetector.pas</Transaction>
     <Transaction>2009/09/29 15:37:27.359.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassIntegerList.pas</Transaction>
     <Transaction>2009/10/08 01:14:25.921.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTextureGenerator.pas</Transaction>
+    <Transaction>2009/10/20 20:39:17.500.pas,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\FormOptimizeMesh.pas</Transaction>
+    <Transaction>2009/10/20 20:39:17.500.dfm,J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.dfm=J:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\FormOptimizeMesh.dfm</Transaction>
   </Transactions>
 </BorlandProject>

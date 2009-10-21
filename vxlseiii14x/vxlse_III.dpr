@@ -77,7 +77,8 @@ uses
   Form3dModelizer in 'Form3dModelizer.pas' {Frm3DModelizer},
   ClassNeighborDetector in 'ClassNeighborDetector.pas',
   ClassIntegerList in 'ClassIntegerList.pas',
-  ClassTextureGenerator in 'ClassTextureGenerator.pas';
+  ClassTextureGenerator in 'ClassTextureGenerator.pas',
+  FormOptimizeMesh in 'FormOptimizeMesh.pas' {FrmOptimizeMesh};
 
 {$R *.res}
 

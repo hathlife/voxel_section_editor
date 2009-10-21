@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 441
+  ClientHeight = 460
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 415
+    Height = 434
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 396
+    ExplicitHeight = 415
   end
   object Panel1: TPanel
     Left = 0
@@ -516,6 +516,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Optimize Mesh Ignoring Colours'
         OnClick = FaceFXOptimizeMeshIgnoringColoursClick
       end
+      object FaceFXOptimizeMeshCustom: TMenuItem
+        Caption = 'Custom Mesh Optimization...'
+        OnClick = FaceFXOptimizeMeshCustomClick
+      end
     end
     object ModelEffects1: TMenuItem
       Caption = 'Model Effects'
@@ -577,6 +581,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object LanczosDilatation1: TMenuItem
         Caption = 'Lanczos Smooth'
         OnClick = LanczosDilatation1Click
+      end
+      object ColourFXConvertFacetoVertex: TMenuItem
+        Caption = 'Convert Face to Vertex Colours'
+        OnClick = ColourFXConvertFacetoVertexClick
       end
       object ColourFXConvertFaceToVertexS: TMenuItem
         Caption = 'Convert Face To Vertex Colours (with Smooth)'

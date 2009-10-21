@@ -7,7 +7,7 @@ uses
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
   HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions;
+  BasicFunctions, FormOptimizeMesh;
 
 type
   PFrm3DModelizer = ^TFrm3DModelizer;
@@ -110,6 +110,10 @@ type
     FaceFXOptimizeMeshIgnoringColours: TMenuItem;
     ModelFXGaussianSmooth: TMenuItem;
     RenderVisibleCubes: TMenuItem;
+    ColourFXConvertFacetoVertex: TMenuItem;
+    FaceFXOptimizeMeshCustom: TMenuItem;
+    procedure FaceFXOptimizeMeshCustomClick(Sender: TObject);
+    procedure ColourFXConvertFacetoVertexClick(Sender: TObject);
     procedure RenderVisibleCubesClick(Sender: TObject);
     procedure ModelFXGaussianSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshIgnoringColoursClick(Sender: TObject);
@@ -604,6 +608,13 @@ begin
    DarkSky1.Checked := false;
 end;
 
+procedure TFrm3DModelizer.ColourFXConvertFacetoVertexClick(
+  Sender: TObject);
+begin
+   Actor.ConvertFaceToVertexColours;
+   SetColourPerVertex(true);
+end;
+
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexHSClick(Sender: TObject);
 begin
    Actor.ConvertFaceToVertexColoursCubic;
@@ -736,6 +747,19 @@ end;
 procedure TFrm3DModelizer.FaceFXOptimizeMeshClick(Sender: TObject);
 begin
    Actor.OptimizeMeshMaxQuality;
+end;
+
+procedure TFrm3DModelizer.FaceFXOptimizeMeshCustomClick(Sender: TObject);
+var
+   FrmOptimizeMesh: TFrmOptimizeMesh;
+begin
+   FrmOptimizeMesh := TFrmOptimizeMesh.Create(self);
+   FrmOptimizeMesh.ShowModal;
+   if FrmOptimizeMesh.Apply then
+   begin
+      Actor.OptimizeMesh(FrmOptimizeMesh.Threshold,FrmOptimizeMesh.cbIgnoreColours.Checked);
+   end;
+   FrmOptimizeMesh.Release;
 end;
 
 procedure TFrm3DModelizer.FaceFXOptimizeMeshIgnoringColoursClick(
@@ -1000,6 +1024,7 @@ end;
 
 procedure TFrm3DModelizer.SetColourPerVertex(_value: boolean);
 begin
+   ColourFXConvertFaceToVertex.Enabled := not _value;
    ColourFXConvertFaceToVertexS.Enabled := not _value;
    ColourFXConvertFaceToVertexHS.Enabled := not _value;
    ColourFXConvertFaceToVertexLS.Enabled := not _value;
