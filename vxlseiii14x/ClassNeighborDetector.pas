@@ -2,7 +2,7 @@ unit ClassNeighborDetector;
 
 interface
 
-uses BasicDataTypes;
+uses BasicDataTypes, SysUtils, PSAPI, Windows;
 
 const
    C_NEIGHBTYPE_VERTEX_VERTEX = 0;     // vertex neighbors of vertexes.
@@ -20,13 +20,17 @@ type
          procedure InitializeNeighbors(_NumElements: integer);
          // Executes
          procedure OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+         procedure OrganizeVertexVertexLowMemory(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          // Adds
          procedure AddElementAtTarget(_Value: integer; _Target: integer);
+         procedure AddElementAtTargetLowMemory(_Value: integer; _Target: integer);
          // Removes
          procedure ClearElement(_Element : PIntegerItem);
+         // Memory Usage
+         function IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
       public
          NeighborType : byte;
          // Constructors and Destructors
@@ -99,7 +103,8 @@ begin
    Case(NeighborType) of
       C_NEIGHBTYPE_VERTEX_VERTEX:     // vertex neighbors of vertexes.
       begin
-         OrganizeVertexVertex(_Faces,_VertexesPerFace,_NumVertexes);
+         OrganizeVertexVertexLowMemory(_Faces,_VertexesPerFace,_NumVertexes); // Much faster and safer!
+//         OrganizeVertexVertex(_Faces,_VertexesPerFace,_NumVertexes);
       end;
       C_NEIGHBTYPE_VERTEX_FACE:       // face neighbors of vertexes.
       begin
@@ -116,22 +121,64 @@ begin
    end;
 end;
 
-
+// Deprecated: Low memory version "flies" compared to this one.
 procedure TNeighborDetector.OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, i : integer;
    VertsHit : array of array of boolean;
 begin
    // Setup VertsHit
-   SetLength(VertsHit,_NumVertexes,_NumVertexes);
-   for v := Low(VertsHit) to High(VertsHit) do
+   if IsRAMEnoughForVertsHit(_NumVertexes) then
    begin
-      for i := Low(VertsHit[v]) to High(VertsHit[v]) do
+      SetLength(VertsHit,_NumVertexes,_NumVertexes);
+      for v := Low(VertsHit) to High(VertsHit) do
       begin
-         VertsHit[v,i] := false;
+         for i := Low(VertsHit[v]) to High(VertsHit[v]) do
+         begin
+            VertsHit[v,i] := false;
+         end;
+         VertsHit[v,v] := true;
       end;
-      VertsHit[v,v] := true;
+      // Setup Neighbors.
+      InitializeNeighbors(_NumVertexes);
+
+      // Main loop goes here.
+      f := 0;
+      while f < High(_Faces) do
+      begin
+         // check each vertex of the face.
+         for v := 0 to _VertexesPerFace - 1 do
+         begin
+            // for each vertex, try to add all its neighbors.
+            for i := 0 to _VertexesPerFace - 1 do
+            begin
+               if not VertsHit[_Faces[f+v],_Faces[f+i]] then
+               begin
+                  // Here we add the element to FNeighbors[f+v]
+                  AddElementAtTarget(_Faces[f+i],_Faces[f+v]);
+                  VertsHit[_Faces[f+v],_Faces[f+i]] := true;
+               end;
+            end;
+         end;
+         inc(f,_VertexesPerFace);
+      end;
+      // Clean up memory
+      for v := Low(VertsHit) to High(VertsHit) do
+      begin
+         SetLength(VertsHit[v],0);
+      end;
+      SetLength(VertsHit,0);
+   end
+   else
+   begin
+      OrganizeVertexVertexLowMemory(_Faces,_VertexesPerFace,_NumVertexes);
    end;
+end;
+
+procedure TNeighborDetector.OrganizeVertexVertexLowMemory(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+var
+   f, v, i : integer;
+begin
    // Setup Neighbors.
    InitializeNeighbors(_NumVertexes);
 
@@ -145,22 +192,12 @@ begin
          // for each vertex, try to add all its neighbors.
          for i := 0 to _VertexesPerFace - 1 do
          begin
-            if not VertsHit[_Faces[f+v],_Faces[f+i]] then
-            begin
-               // Here we add the element to FNeighbors[f+v]
-               AddElementAtTarget(_Faces[f+i],_Faces[f+v]);
-               VertsHit[_Faces[f+v],_Faces[f+i]] := true;
-            end;
+            // Here we add the element to FNeighbors[f+v]
+            AddElementAtTargetLowMemory(_Faces[f+i],_Faces[f+v]);
          end;
       end;
       inc(f,_VertexesPerFace);
    end;
-   // Clean up memory
-   for v := Low(VertsHit) to High(VertsHit) do
-   begin
-      SetLength(VertsHit[v],0);
-   end;
-   SetLength(VertsHit,0);
 end;
 
 procedure TNeighborDetector.OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
@@ -310,6 +347,36 @@ begin
    end;
 end;
 
+procedure TNeighborDetector.AddElementAtTargetLowMemory(_Value: integer; _Target: integer);
+var
+   Element,Previous: PIntegerItem;
+begin
+   if FNeighbors[_Target] <> nil then
+   begin
+      Previous := FNeighbors[_Target];
+      if _Value <> Previous^.Value then
+      begin
+         while Previous^.Next <> nil do
+         begin
+            Previous := Previous^.Next;
+            if _Value = Previous^.Value then
+               exit;
+         end;
+         new(Element);
+         Element^.Value := _Value;
+         Element^.Next := nil;
+         Previous^.Next := Element;
+      end;
+   end
+   else
+   begin
+      new(Element);
+      Element^.Value := _Value;
+      Element^.Next := nil;
+      FNeighbors[_Target] := Element;
+   end;
+end;
+
 
 // Removes
 procedure TNeighborDetector.ClearElement(_Element : PIntegerItem);
@@ -344,6 +411,24 @@ begin
    end
    else
       Result := -1;
+end;
+
+// Memory Usage
+function TNeighborDetector.IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
+var
+   RealSize : int64;
+   PMC: TProcessMemoryCounters;
+begin
+   RealSize := _NumVertexes * _NumVertexes * sizeof(Boolean);
+   pmc.cb := SizeOf(pmc) ;
+   if GetProcessMemoryInfo(GetCurrentProcess, @pmc, SizeOf(pmc)) then
+   begin
+      Result := pmc.PeakWorkingSetSize > (pmc.WorkingSetSize + RealSize);
+   end
+   else
+   begin
+      RaiseLastOSError;
+   end;
 end;
 
 
