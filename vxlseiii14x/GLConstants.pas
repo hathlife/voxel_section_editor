@@ -30,6 +30,10 @@ const
    C_QUALITY_HIGH = 4;
    C_QUALITY_MAX = C_QUALITY_HIGH;
 
+   // Angle Detection
+   C_ANGLE_NONE = -99999;
+
+   // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (
       ( //DarkRed

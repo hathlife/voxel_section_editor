@@ -9,13 +9,13 @@ uses
   ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
   ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
-  Camera, BasicFunctions, GlConstants, Form3dModelizer;
+  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.50';
+   APPLICATION_VER = '1.39.52';
 
 type
   TFrmMain = class(TForm)
@@ -750,6 +750,8 @@ begin
 
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: FormCreate Loaded');
+   // If you don't have Delphi 2006 or better, disable the line below!
+   ReportMemoryLeaksOnShutdown := true;
    {$endif}
 end;
 
@@ -1399,6 +1401,10 @@ begin
    DeactivateRenderingContext;
    UpdateHistoryMenu;
    Config.SaveSettings;
+   Config.Free;
+   RA2Normals.Free;
+   TSNormals.Free;
+   CubeNormals.Free;
 end;
 
 procedure TFrmMain.OGL3DPreviewMouseMove(Sender: TObject;
@@ -3707,7 +3713,7 @@ begin
    rest := copy(text,w+1,length(text));
 end;
 
-function searchcscheme(s : tstringlist; f : string) : string;
+function searchcscheme(const s : tstringlist; f : string) : string;
 var
    x : integer;
    first,rest : string;
@@ -3737,11 +3743,6 @@ var
    GameType: string;
 begin
    // prepare
-   // c := 0;
-
-   // SetLength(ColourSchemes,0);
-   //   ColourScheme1.Visible := false;
-
    path := Concat(Dir, '*.cscheme');
 
    // find files
@@ -3918,9 +3919,9 @@ begin
             ColourScheme1.Visible := True;
             PalPack1.Visible := True;
          end;
+         s.Free;
       until FindNext(f) <> 0;
    FindClose(f);
-
    Result := c;
 end;
 
@@ -3970,6 +3971,7 @@ begin
    ApplyTempView(Document.ActiveSection^);
    UpdateUndo_RedoState;
    RefreshAll;
+   s.Free;
 end;
 
 procedure TFrmMain.About2Click(Sender: TObject);
