@@ -26,6 +26,10 @@ type
          function CleanAngle(Angle: single): single;
       public
          constructor Create;
+         destructor Destroy; override;
+         procedure Initialize;
+         procedure Reset;
+         procedure Clear;
    end;
 
 
@@ -33,7 +37,29 @@ implementation
 
 constructor CTextureGenerator.Create;
 begin
-   // do nothing?
+   Initialize;
+end;
+
+destructor CTextureGenerator.Destroy;
+begin
+   Clear;
+   inherited Destroy;
+end;
+
+procedure CTextureGenerator.Initialize;
+begin
+   // do nothing
+end;
+
+procedure CTextureGenerator.Clear;
+begin
+   // do nothing
+end;
+
+procedure CTextureGenerator.Reset;
+begin
+   Clear;
+   Initialize;
 end;
 
 // Transform Matrix Operations
