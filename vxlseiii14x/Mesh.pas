@@ -2941,6 +2941,7 @@ var
    VertexBackup,NormalsBackup: TAVector3f;
    ColoursBackup: TAVector4f;
    FacesBackup: aint32;
+   SkipNeighbourCheck : boolean;
 begin
    VertexNeighbors := TNeighborDetector.Create;
    VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
@@ -2958,7 +2959,8 @@ begin
          VertexTransformation[v] := v;
          // Here we check if every neighbor has the same colour and normal is
          // close to the vertex (v) being evaluated.
-         Value := FaceNeighbors.GetNeighborFromID(v);
+         Value := VertexNeighbors.GetNeighborFromID(v);
+         SkipNeighbourCheck := false;
          while Value <> -1 do
          begin
             // if colour is different, then the vertex stays.
@@ -2966,8 +2968,15 @@ begin
             begin
                VertexTransformation[v] := v;
                Value := -1;
+               SkipNeighbourCheck := true;
             end
-            else // if colour is the same, we check the normals.
+            else
+               Value := VertexNeighbors.GetNextNeighbor;
+         end;
+         if not SkipNeighbourCheck then
+         begin
+            Value := FaceNeighbors.GetNeighborFromID(v);
+            while Value <> -1 do
             begin
                Distance := sqrt(Power(Normals[v].X - FaceNormals[Value].X,2) + Power(Normals[v].Y - FaceNormals[Value].Y,2) + Power(Normals[v].Z - FaceNormals[Value].Z,2));
                if Distance <= _QualityLoss then
