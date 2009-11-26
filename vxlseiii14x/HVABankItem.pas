@@ -98,9 +98,12 @@ begin
    if HVA.p_Voxel <> nil then
    begin
       Filename := CopyString(HVA.p_Voxel^.Filename);
-      Filename[Length(Filename)-2] := 'h';
-      Filename[Length(Filename)-1] := 'v';
-      Filename[Length(Filename)] := 'a';
+      if Length(Filename) > 2 then
+      begin
+         Filename[Length(Filename)-2] := 'h';
+         Filename[Length(Filename)-1] := 'v';
+         Filename[Length(Filename)] := 'a';
+      end;
       if not FileExists(Filename) then
          Filename := '';
    end
