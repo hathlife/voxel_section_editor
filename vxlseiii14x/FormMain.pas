@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.52';
+   APPLICATION_VER = '1.39.53';
 
 type
   TFrmMain = class(TForm)
@@ -1405,6 +1405,9 @@ begin
    RA2Normals.Free;
    TSNormals.Free;
    CubeNormals.Free;
+  {$ifdef SPEED_TEST}
+   GlobalVars.SpeedFile.Free;
+   {$endif}
 end;
 
 procedure TFrmMain.OGL3DPreviewMouseMove(Sender: TObject;

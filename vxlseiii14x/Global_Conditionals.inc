@@ -4,6 +4,8 @@
 
 {// $DEFINE DEBUG_NORMALS} // disabled for now
 //{$DEFINE DEBUG_FILE}
+//{$DEFINE SPEED_TEST}       // to check speed for UFF's final graduation project
+
 
 (***********************************************************************************************************************)
 (* flags (bounds checking, optimisation etc) defined here will apply to all modules, as these all include this file!   *)

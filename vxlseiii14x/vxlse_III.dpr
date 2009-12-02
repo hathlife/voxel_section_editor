@@ -78,7 +78,8 @@ uses
   ClassNeighborDetector in 'ClassNeighborDetector.pas',
   ClassIntegerList in 'ClassIntegerList.pas',
   ClassTextureGenerator in 'ClassTextureGenerator.pas',
-  FormOptimizeMesh in 'FormOptimizeMesh.pas' {FrmOptimizeMesh};
+  FormOptimizeMesh in 'FormOptimizeMesh.pas' {FrmOptimizeMesh},
+  ClassStopWatch in 'ClassStopWatch.pas';
 
 {$R *.res}
 

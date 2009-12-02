@@ -4,8 +4,10 @@ interface
 
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      VoxelModelizer, BasicConstants, Math, ClassNeighborDetector, ClassIntegerList;
+      VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
+      ClassIntegerList, ClassStopWatch;
 
+{$INCLUDE Global_Conditionals.inc}
 type
    TMeshMaterial = record
       TextureID: GLINT;
@@ -174,6 +176,8 @@ type
    PMesh = ^TMesh;
 
 implementation
+
+uses GlobalVars;
 
 constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
 begin
@@ -349,7 +353,13 @@ var
    x, y, z, i : longword;
    V : TVoxelUnpacked;
    v1, v2 : boolean;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    VerticesPerFace := 4;
    FaceType := GL_QUADS;
    SetNormalsType(C_NORMALS_PER_FACE);
@@ -629,7 +639,34 @@ begin
          Colours[FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL4[v.Colour];
       end;
    end;
+   for x := Low(VertexMap) to High(VertexMap) do
+   begin
+      for y := Low(VertexMap[x]) to High(VertexMap[x]) do
+      begin
+         SetLength(VertexMap[x,y],0);
+      end;
+      SetLength(VertexMap[x],0);
+   end;
+   SetLength(VertexMap,0);
+   for x := Low(FaceMap) to High(FaceMap) do
+   begin
+      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
+      begin
+         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
+         begin
+            SetLength(FaceMap[x,y,z],0);
+         end;
+         SetLength(FaceMap[x,y],0);
+      end;
+      SetLength(FaceMap[x],0);
+   end;
+   SetLength(FaceMap,0);
    CommonVoxelLoadingActions(_Voxel);
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('LoadFromVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -642,7 +679,13 @@ var
    x, y, z, i : longword;
    V : TVoxelUnpacked;
    v1, v2 : boolean;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    VerticesPerFace := 4;
    FaceType := GL_QUADS;
    SetNormalsType(C_NORMALS_PER_FACE);
@@ -954,7 +997,34 @@ begin
    SetLength(Vertices,NumVertices);
    SetLength(VertexTransformation,0);
    VoxelMap.Free;
+   for x := Low(VertexMap) to High(VertexMap) do
+   begin
+      for y := Low(VertexMap[x]) to High(VertexMap[x]) do
+      begin
+         SetLength(VertexMap[x,y],0);
+      end;
+      SetLength(VertexMap[x],0);
+   end;
+   SetLength(VertexMap,0);
+   for x := Low(FaceMap) to High(FaceMap) do
+   begin
+      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
+      begin
+         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
+         begin
+            SetLength(FaceMap[x,y,z],0);
+         end;
+         SetLength(FaceMap[x,y],0);
+      end;
+      SetLength(FaceMap[x],0);
+   end;
+   SetLength(FaceMap,0);
    CommonVoxelLoadingActions(_Voxel);
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('LoadFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -963,7 +1033,13 @@ var
    SemiSurfacesMap : T3DIntGrid;
    VoxelModelizer : TVoxelModelizer;
    x, y : integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    VerticesPerFace := 3;
    FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
@@ -994,6 +1070,11 @@ begin
       SetLength(SemiSurfacesMap[x],0);
    end;
    SetLength(SemiSurfacesMap,0);
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Modelize From Voxel for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
@@ -1019,7 +1100,13 @@ var
    VertsHit: array of array of boolean;
    i,j,f,v,v1,v2 : integer;
    MaxVerticePerFace: integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
    SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
@@ -1086,6 +1173,11 @@ begin
    end;
    SetLength(VertsHit,0);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.MeshCubicSmooth;
@@ -1125,7 +1217,13 @@ var
    v,v1 : integer;
    Distance: single;
    NeighborDetector : TNeighborDetector;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
    // Reset values.
@@ -1180,6 +1278,11 @@ begin
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Smooth Operation for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.MeshGaussianSmooth;
@@ -1193,7 +1296,13 @@ var
    Distance: single;
    NeighborDetector : TNeighborDetector;
    Deviation: single;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
    // Reset values.
@@ -1271,19 +1380,31 @@ begin
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Gaussian Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.MeshUnsharpMasking;
 var
    HitCounter: array of integer;
    OriginalVertexes : array of TVector3f;
-   VertsHit: array of array of boolean;
    i,j,f,v,v1,v2 : integer;
    MaxVerticePerFace: integer;
+   NeighborDetector : TNeighborDetector;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
-   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   NeighborDetector := TNeighborDetector.Create;
+   NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
    // Reset values.
    for i := Low(HitCounter) to High(HitCounter) do
    begin
@@ -1294,49 +1415,32 @@ begin
       Vertices[i].X := 0;
       Vertices[i].Y := 0;
       Vertices[i].Z := 0;
-      for j := Low(HitCounter) to High(HitCounter) do
-      begin
-         VertsHit[i,j] := false;
-      end;
-      VertsHit[i,i] := true;
    end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
+   // sum all values from neighbors
+   for v := Low(Vertices) to High(Vertices) do
    begin
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
       begin
-         v1 := (f * VerticesPerFace) + v;
-         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
-         j := 0;
-         // for each vertex, get the previous, the current and the next.
-         while j < 3 do
-         begin
-            v2 := v1 - v + i;
-            // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
-            begin
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
-            end;
-            // increment vertex.
-            i := (i + 1) mod VerticesPerFace;
-            inc(j);
-         end;
+         Vertices[v].X := Vertices[v].X + OriginalVertexes[v1].X;
+         Vertices[v].Y := Vertices[v].Y + OriginalVertexes[v1].Y;
+         Vertices[v].Z := Vertices[v].Z + OriginalVertexes[v1].Z;
+         inc(HitCounter[v]);
+         v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
+   NeighborDetector.Free;
    // Finally, we do the unsharp masking effect here.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      if HItCounter[v] > 0 then
+      if HitCounter[v] > 0 then
       begin
-         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
-         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
-         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+//         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
+//         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
+//         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+         Vertices[v].X := ((HitCounter[v] + 1) * OriginalVertexes[v].X) - Vertices[v].X;
+         Vertices[v].Y := ((HitCounter[v] + 1) * OriginalVertexes[v].Y) - Vertices[v].Y;
+         Vertices[v].Z := ((HitCounter[v] + 1) * OriginalVertexes[v].Z) - Vertices[v].Z;
       end
       else
       begin
@@ -1348,12 +1452,12 @@ begin
    // Free memory
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
-   for i := Low(Vertices) to High(Vertices) do
-   begin
-      SetLength(VertsHit[i],0);
-   end;
-   SetLength(VertsHit,0);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Unsharp Masking for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.MeshDeflate;
@@ -1456,7 +1560,13 @@ procedure TMesh.ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
 var
    OriginalColours,VertColours,FaceColours : TAVector4f;
    i : integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if (ColoursType = C_COLOURS_PER_FACE) then
    begin
       SetLength(OriginalColours,High(Colours)+1);
@@ -1502,13 +1612,24 @@ begin
    FilterAndFixColours;
    SetLength(OriginalColours,0);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Apply Colour Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc);
 var
    OriginalColours : TAVector4f;
    i : integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if (ColoursType = C_COLOURS_PER_FACE) then
    begin
       SetLength(OriginalColours,High(Colours)+1);
@@ -1535,13 +1656,24 @@ begin
    ColourGenStructure := C_COLOURS_PER_VERTEX;
    SetColoursType(C_COLOURS_PER_VERTEX);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Convert Face To Vertex Colours for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ConvertVertexToFaceColours;
 var
    OriginalColours : TAVector4f;
    i : integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if (ColoursType = C_COLOURS_PER_VERTEX) then
    begin
       SetLength(OriginalColours,High(Colours)+1);
@@ -1568,6 +1700,11 @@ begin
    ColourGenStructure := C_COLOURS_PER_FACE;
    SetColoursType(C_COLOURS_PER_FACE);
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Convert Vertex To Face Colours for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
@@ -1931,7 +2068,13 @@ procedure TMesh.ReNormalizeQuads;
 var
    f : integer;
    temp : TVector3f;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if High(FaceNormals) >= 0 then
    begin
       for f := Low(FaceNormals) to High(faceNormals) do
@@ -1948,12 +2091,23 @@ begin
       ReNormalizePerVertex;
    end;
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('ReNormalize Quads for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ReNormalizeTriangles;
 var
    f : integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if High(FaceNormals) >= 0 then
    begin
       for f := Low(FaceNormals) to High(FaceNormals) do
@@ -1969,6 +2123,11 @@ begin
       ReNormalizePerVertex;
    end;
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('ReNormalize Triangles for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ReNormalizePerVertex;
@@ -2122,7 +2281,14 @@ begin
 end;
 
 procedure TMesh.ConvertFaceToVertexNormals;
+   {$ifdef SPEED_TEST}
+var
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    if (NormalsType and C_NORMALS_PER_VERTEX) = 0 then
    begin
       NormalsType := C_NORMALS_PER_VERTEX;
@@ -2137,6 +2303,11 @@ begin
       end;
       SetRenderingProcedure;
    end;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Face To Vertex Normals Conversion for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
@@ -2154,7 +2325,13 @@ var
    NormalsHandicap : TAVector3f;
    HitCounter : array of single;
    Distance: single;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    // Setup Neighbors.
    Neighbors := TNeighborDetector.Create;
    if (NormalsType and C_NORMALS_PER_FACE) = 0 then
@@ -2255,6 +2432,11 @@ begin
    SetLength(HitCounter,0);
    Neighbors.Free;
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Smooth Normals Operation for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 // Sets
@@ -2942,7 +3124,13 @@ var
    ColoursBackup: TAVector4f;
    FacesBackup: aint32;
    SkipNeighbourCheck : boolean;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    VertexNeighbors := TNeighborDetector.Create;
    VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
    FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
@@ -3179,6 +3367,11 @@ begin
    // Clean up memory
    VertexNeighbors.Free;
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Optimization for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.MeshOptimizationIgnoreColours(_QualityLoss : single);
@@ -3192,7 +3385,13 @@ var
    VertexBackup,NormalsBackup: TAVector3f;
    ColoursBackup: TAVector4f;
    FacesBackup: aint32;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    VertexNeighbors := TNeighborDetector.Create;
    VertexNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
    FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
@@ -3412,6 +3611,11 @@ begin
    // Clean up memory
    VertexNeighbors.Free;
    ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Optimization without colour restriction for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.OptimizeMeshLossLess;
