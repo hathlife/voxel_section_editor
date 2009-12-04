@@ -132,7 +132,7 @@ var
    Res : TVector3f;
    Sum : TVector3f;
    {Alpha,}x,y,z : integer;
-   xx,yy,zz : byte;
+   xx,yy,zz : integer;
    MyPoint : TVector3i;
    MinPoint,MaxPoint : TVector3i;
    MidPointMinusRange : integer;

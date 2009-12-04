@@ -1097,9 +1097,8 @@ procedure TMesh.MeshSmooth;
 var
    HitCounter: array of integer;
    OriginalVertexes : array of TVector3f;
-   VertsHit: array of array of boolean;
    i,j,f,v,v1,v2 : integer;
-   MaxVerticePerFace: integer;
+   NeighborDetector : TNeighborDetector;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -1109,7 +1108,6 @@ begin
    {$endif}
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
-   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
    // Reset values.
    for i := Low(HitCounter) to High(HitCounter) do
    begin
@@ -1120,40 +1118,25 @@ begin
       Vertices[i].X := 0;
       Vertices[i].Y := 0;
       Vertices[i].Z := 0;
-      for j := Low(HitCounter) to High(HitCounter) do
-      begin
-         VertsHit[i,j] := false;
-      end;
    end;
-   MaxVerticePerFace := VerticesPerFace - 1;
+   NeighborDetector := TNeighborDetector.Create;
+   NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
    // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
+   for v := Low(Vertices) to High(Vertices) do
    begin
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
       begin
-         v1 := (f * VerticesPerFace) + v;
-         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
-         j := 0;
-         // for each vertex, get the previous, the current and the next.
-         while j < 3 do
-         begin
-            v2 := v1 - v + i;
-            // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
-            begin
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
-            end;
-            // increment vertex.
-            i := (i + 1) mod VerticesPerFace;
-            inc(j);
-         end;
+         // add it to the sum.
+         Vertices[v].X := Vertices[v].X + OriginalVertexes[v1].X;
+         Vertices[v].Y := Vertices[v].Y + OriginalVertexes[v1].Y;
+         Vertices[v].Z := Vertices[v].Z + OriginalVertexes[v1].Z;
+         inc(HitCounter[v]);
+
+         v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
+   NeighborDetector.Free;
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
@@ -1167,11 +1150,6 @@ begin
    // Free memory
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
-   for i := Low(Vertices) to High(Vertices) do
-   begin
-      SetLength(VertsHit[i],0);
-   end;
-   SetLength(VertsHit,0);
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
