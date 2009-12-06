@@ -435,7 +435,7 @@ begin
             for z := 0 to Voxel.Tailer.ZSize-1 do
             begin
                Voxel.GetVoxel(x,y,z,v);
-               if (not AffectOnlyNonNormalized) or (v.Normal > 0) then
+               if (not AffectOnlyNonNormalized) or (v.Normal = 0) then
                   GetNewNormals(Voxel,FloatMap,Dist,V,MidPoint,Range,x,y,z,Applied);
             end;
    end
@@ -446,7 +446,7 @@ begin
             for z := 0 to Voxel.Tailer.ZSize-1 do
             begin
                Voxel.GetVoxel(x,y,z,v);
-               if (not AffectOnlyNonNormalized) or (v.Normal > 0) then
+               if (not AffectOnlyNonNormalized) or (v.Normal = 0) then
                   GetNewNormalsWithNoSmooth(Voxel,FloatMap,V,Range,x,y,z,Applied);
             end;
    end;
