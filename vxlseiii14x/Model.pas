@@ -57,6 +57,7 @@ type
       procedure RefreshMesh(_MeshID: integer);
       // Model Effects
       procedure SmoothModel;
+      procedure QuadricSmoothModel;
       procedure CubicSmoothModel;
       procedure LanczosSmoothModel;
       procedure SincSmoothModel;
@@ -368,6 +369,11 @@ end;
 procedure TModel.SmoothModel;
 begin
    LOD[CurrentLOD].SmoothLOD;
+end;
+
+procedure TModel.QuadricSmoothModel;
+begin
+   LOD[CurrentLOD].QuadricSmoothLOD;
 end;
 
 procedure TModel.CubicSmoothModel;

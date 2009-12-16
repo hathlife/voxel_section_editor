@@ -112,6 +112,8 @@ type
     RenderVisibleCubes: TMenuItem;
     ColourFXConvertFacetoVertex: TMenuItem;
     FaceFXOptimizeMeshCustom: TMenuItem;
+    ModelFXSquaredSmooth: TMenuItem;
+    procedure ModelFXSquaredSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshCustomClick(Sender: TObject);
     procedure ColourFXConvertFacetoVertexClick(Sender: TObject);
     procedure RenderVisibleCubesClick(Sender: TObject);
@@ -426,6 +428,11 @@ begin
    Env.ForceRefresh;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+end;
+
+procedure TFrm3DModelizer.ModelFXSquaredSmoothClick(Sender: TObject);
+begin
+   Actor.QuadricSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXUnsharpClick(Sender: TObject);
@@ -858,8 +865,7 @@ procedure TFrm3DModelizer.ModelFXGaussianSmoothClick(Sender: TObject);
 var
    i : integer;
 begin
-   for i := 0 to 4 do
-      Actor.GaussianSmoothModel;
+   Actor.GaussianSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincErosionClick(Sender: TObject);

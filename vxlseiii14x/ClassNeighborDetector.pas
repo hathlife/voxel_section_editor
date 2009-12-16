@@ -193,7 +193,8 @@ begin
          for i := 0 to _VertexesPerFace - 1 do
          begin
             // Here we add the element to FNeighbors[f+v]
-            AddElementAtTargetLowMemory(_Faces[f+i],_Faces[f+v]);
+            if (_Faces[f+i] <> _Faces[f+v]) then
+               AddElementAtTargetLowMemory(_Faces[f+i],_Faces[f+v]);
          end;
       end;
       inc(f,_VertexesPerFace);
@@ -224,18 +225,11 @@ end;
 procedure TNeighborDetector.OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, NumFaces, Value : integer;
-   VertsHit : array of boolean;
    TempDetector : TNeighborDetector;
 begin
    // Setup Neighbors.
    NumFaces := (High(_Faces)+1) div _VertexesPerFace;
    InitializeNeighbors(NumFaces);
-   // Setup VertsHit
-   SetLength(VertsHit,_NumVertexes);
-   for v := Low(VertsHit) to High(VertsHit) do
-   begin
-      VertsHit[v] := false;
-   end;
    // Get Vertex neighbors from vertexes.
    TempDetector := TNeighborDetector.Create;
    TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
@@ -250,43 +244,26 @@ begin
          Value := TempDetector.GetNeighborFromID(_Faces[f+v]);
          while Value <> -1 do
          begin
-            if not VertsHit[Value] then
-            begin
-               // Here we add the element to the face
-               AddElementAtTarget(Value,f div _VertexesPerFace);
-               VertsHit[Value] := true;
-            end;
+            // Here we add the element to the face
+            AddElementAtTargetLowMemory(Value,f div _VertexesPerFace);
             Value := TempDetector.GetNextNeighbor;
          end;
-      end;
-      // Reset VertsHit
-      for v := Low(VertsHit) to High(VertsHit) do
-      begin
-         VertsHit[v] := false;
       end;
       inc(f,_VertexesPerFace);
    end;
 
    // Clean up memory
    TempDetector.Free;
-   SetLength(VertsHit,0);
 end;
 
 procedure TNeighborDetector.OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, NumFaces, Value : integer;
-   FacesHit : array of boolean;
    TempDetector : TNeighborDetector;
 begin
    // Setup Neighbors.
    NumFaces := (High(_Faces)+1) div _VertexesPerFace;
    InitializeNeighbors(NumFaces);
-   // Setup VertsHit
-   SetLength(FacesHit,NumFaces);
-   for v := Low(FacesHit) to High(FacesHit) do
-   begin
-      FacesHit[v] := false;
-   end;
    // Get face neighbors from vertexes.
    TempDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
    TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
@@ -298,30 +275,19 @@ begin
       // check each vertex of the face.
       for v := 0 to _VertexesPerFace - 1 do
       begin
-         FacesHit[f div _VertexesPerFace] := true;
          Value := TempDetector.GetNeighborFromID(_Faces[f+v]);
          while Value <> -1 do
          begin
-            if not FacesHit[Value] then
-            begin
-               // Here we add the element to the face
-               AddElementAtTarget(Value,f div _VertexesPerFace);
-               FacesHit[Value] := true;
-            end;
+            // Here we add the element to the face
+            AddElementAtTargetLowMemory(Value,f div _VertexesPerFace);
             Value := TempDetector.GetNextNeighbor;
          end;
-      end;
-      // Reset VertsHit
-      for v := Low(FacesHit) to High(FacesHit) do
-      begin
-         FacesHit[v] := false;
       end;
       inc(f,_VertexesPerFace);
    end;
 
    // Clean up memory
    TempDetector.Free;
-   SetLength(FacesHit,0);
 end;
 
 // Adds

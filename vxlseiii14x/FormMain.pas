@@ -15,7 +15,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.54';
+   APPLICATION_VER = '1.39.60';
 
 type
   TFrmMain = class(TForm)
@@ -1407,6 +1407,9 @@ begin
    CubeNormals.Free;
   {$ifdef SPEED_TEST}
    GlobalVars.SpeedFile.Free;
+   {$endif}
+  {$ifdef MESH_TEST}
+   GlobalVars.MeshFile.Free;
    {$endif}
 end;
 
@@ -3377,6 +3380,7 @@ begin
       p_Frm3DPreview^.Actor.ChangePalette(_Filename);
    end;
    cnvPalette.Repaint;
+   RefreshAll;
 end;
 
 

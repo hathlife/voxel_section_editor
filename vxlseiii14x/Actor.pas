@@ -86,6 +86,7 @@ type
       procedure ChangePalette (const _Filename: string);
       // Actor Effects
       procedure SmoothModel;
+      procedure QuadricSmoothModel;
       procedure CubicSmoothModel;
       procedure LanczosSmoothModel;
       procedure SincSmoothModel;
@@ -625,6 +626,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.SmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.QuadricSmoothModel;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.QuadricSmoothModel;
       end;
    end;
    RequestUpdateWorld := true;

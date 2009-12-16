@@ -38,6 +38,7 @@ type
       procedure RefreshMesh(_MeshID: integer);
       // LOD Effects
       procedure SmoothLOD;
+      procedure QuadricSmoothLOD;
       procedure CubicSmoothLOD;
       procedure LanczosSmoothLOD;
       procedure SincSmoothLOD;
@@ -212,6 +213,16 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].MeshSmooth;
+   end;
+end;
+
+procedure TLOD.QuadricSmoothLOD;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshQuadricSmooth;
    end;
 end;
 

@@ -30,6 +30,9 @@ const
    C_QUALITY_HIGH = 4;
    C_QUALITY_MAX = C_QUALITY_HIGH;
 
+   // Frequency normalization
+   C_FREQ_NORMALIZER = 4/3;
+
    // Angle Detection
    C_ANGLE_NONE = -99999;
 
