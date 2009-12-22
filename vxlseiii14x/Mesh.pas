@@ -2067,8 +2067,8 @@ begin
    begin
       for f := Low(FaceNormals) to High(faceNormals) do
       begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]+2],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)]]);
-         Temp := GetNormalsValue(Vertices[Faces[(f*4)]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]+2]);
+         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
+         Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
          FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / 2;
          FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / 2;
          FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / 2;
