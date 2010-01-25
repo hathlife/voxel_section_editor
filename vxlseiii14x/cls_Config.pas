@@ -22,7 +22,7 @@ type
       public
          Icon: Integer;
          Assoc,Palette: Boolean;
-         TS,RA2 : string;
+         TS,RA2,Location3ds2vxl,INILocation3ds2vxl : string;
          FPSCap : longword;
          constructor Create();
          destructor Destroy(); override;
@@ -112,6 +112,16 @@ begin
             FPSCap := Reg.ReadInteger('FPSCap')
          else
             FPSCap := 70;
+
+         if Reg.ValueExists('3ds2vxlLocation') then
+            Location3ds2vxl := Reg.ReadString('3ds2vxlLocation')
+         else
+            Location3ds2vxl := '';
+
+         if Reg.ValueExists('3ds2vxlINILocation') then
+            INILocation3ds2vxl := Reg.ReadString('3ds2vxlINILocation')
+         else
+            INILocation3ds2vxl := '';
       end
       else
       begin
@@ -166,6 +176,8 @@ begin
    Reg.WriteString('TS',TS);
    Reg.WriteString('RA2',RA2);
    Reg.WriteInteger('FPSCap',FPSCap);
+   Reg.WriteString('3ds2vxlLocation',Location3ds2vxl);
+   Reg.WriteString('3ds2vxlINILocation',INILocation3ds2vxl);
 
    Reg.CloseKey;
    Reg.Free;

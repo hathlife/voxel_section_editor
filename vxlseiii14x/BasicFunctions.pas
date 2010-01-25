@@ -2,25 +2,33 @@ unit BasicFunctions;
 
 interface
 
-uses BasicDataTypes,SysUtils, Classes, Math, Windows, Graphics;
+uses BasicDataTypes,SysUtils, Classes, Math, Windows, Graphics, ShellAPI;
 
+// String related
 function WriteStringToStream(const _String: string; var _Stream : TStream): boolean;
 function ReadStringFromStream(var _Stream: TStream): string;
 function CopyString(const _String : string): string;
 
-function GetBool(_Value : integer): boolean;
+function GetBool(_Value : integer): boolean; overload;
+function GetBool(_Value : string): boolean; overload;
 function GetStringID(_ID : integer): string;
 
+// Graphics related (OpenGL engine)
 function GetPow2Size(Size : Cardinal) : Cardinal;
-
 function SetVector4f(x, y, z, w : single) : TVector4f;
 Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
 Function TColorToTVector3f(Color : TColor) : TVector3f;
 function Subtract3i(_V1,_V2: TVector3i): TVector3i;
 
+// Program related
+function RunAProgram (const theProgram, itsParameters, defaultDirectory : string): integer;
+function RunProgram (const theProgram, itsParameters, defaultDirectory : string): TShellExecuteInfo;
+function GetParamStr: String;
+
+
 implementation
 
-
+// String related
 function WriteStringToStream(const _String: string; var _Stream : TStream): boolean;
 var
    MyChar : integer;
@@ -70,9 +78,18 @@ begin
       Result := false;
 end;
 
+function GetBool(_Value : string): boolean;
+begin
+   if CompareText(_Value,'true') = 0 then
+      Result := true
+   else
+      Result := false;
+end;
+
+
 function GetStringID(_ID : integer): string;
 begin
-   if _ID < 9999 then
+   if _ID < 10000 then
    begin
       if (_ID > 999) then
          Result := IntToStr(_ID)
@@ -85,6 +102,7 @@ begin
    end;
 end;
 
+// Graphics related (OpenGL engine)
 function GetPow2Size(Size : Cardinal) : Cardinal;
 var
    Step : Byte;
@@ -124,5 +142,82 @@ begin
    Result.Y := _V1.Y - _V2.Y;
    Result.Z := _V1.Z - _V2.Z;
 end;
+
+// Program related.
+function RunAProgram (const theProgram, itsParameters, defaultDirectory : string): integer;
+var
+   msg : string;
+begin
+   Result := ShellExecute(0, 'open', pChar(theProgram), pChar(itsParameters), pChar(defaultDirectory), sw_ShowNormal);
+   if Result <= 32 then
+   begin
+      case Result of
+         0,
+         se_err_OOM :             msg := 'Out of memory/resources';
+         error_File_Not_Found :   msg := 'File "' + theProgram + '" not found';
+         error_Path_Not_Found :   msg := 'Path not found';
+         error_Bad_Format :       msg := 'Damaged or invalid exe';
+         se_err_AccessDenied :    msg := 'Access denied';
+         se_err_NoAssoc,
+         se_err_AssocIncomplete : msg := 'Filename association invalid';
+         se_err_DDEBusy,
+         se_err_DDEFail,
+         se_err_DDETimeOut :      msg := 'DDE error';
+         se_err_Share :        msg := 'Sharing violation';
+         else                    msg := 'no text';
+      end; // of case
+      raise Exception.Create ('ShellExecute error #' + IntToStr(Result) + ': ' + msg);
+   end;
+end;
+
+function RunProgram (const theProgram, itsParameters, defaultDirectory : string): TShellExecuteInfo;
+var
+   msg : string;
+begin
+   Result.cbSize := sizeof(TShellExecuteInfo);
+   Result.lpFile := pChar(theProgram);
+   Result.lpParameters := pChar(itsParameters);
+   Result.lpDirectory := pChar(defaultDirectory);
+   Result.nShow := sw_ShowNormal;
+   Result.fMask := SEE_MASK_NOCLOSEPROCESS;
+   Result.Wnd := 0;
+   Result.lpVerb := 'open';
+   if not ShellExecuteEx(@Result) then
+   begin
+      if Result.hInstApp <= 32 then
+      begin
+         case Result.hInstApp of
+            0,
+            se_err_OOM :             msg := 'Out of memory/resources';
+            error_File_Not_Found :   msg := 'File "' + theProgram + '" not found';
+            error_Path_Not_Found :   msg := 'Path not found';
+            error_Bad_Format :       msg := 'Damaged or invalid exe';
+            se_err_AccessDenied :    msg := 'Access denied';
+            se_err_NoAssoc,
+            se_err_AssocIncomplete : msg := 'Filename association invalid';
+            se_err_DDEBusy,
+            se_err_DDEFail,
+            se_err_DDETimeOut :      msg := 'DDE error';
+            se_err_Share :        msg := 'Sharing violation';
+            else                    msg := 'no text';
+         end; // of case
+         raise Exception.Create ('ShellExecute error #' + IntToStr(Result.hInstApp) + ': ' + msg);
+      end;
+   end;
+end;
+
+
+function GetParamStr: String;
+var
+x : integer;
+begin
+   Result := '';
+   for x := 1 to ParamCount do
+      if Result <> '' then
+         Result := Result + ' ' +ParamStr(x)
+      else
+         Result := ParamStr(x);
+end;
+
 
 end.

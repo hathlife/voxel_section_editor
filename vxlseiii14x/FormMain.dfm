@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 899
+  ClientHeight = 937
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,17 +29,19 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 880
+    Height = 918
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 899
     object LeftPanel: TPanel
       Left = 1
       Top = 26
       Width = 152
-      Height = 853
+      Height = 891
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 872
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1244,9 +1246,10 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 853
+      Height = 891
       Align = alRight
       TabOrder = 1
+      ExplicitHeight = 872
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1543,9 +1546,10 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 503
-      Height = 853
+      Height = 891
       Align = alClient
       TabOrder = 2
+      ExplicitHeight = 872
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1568,7 +1572,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 485
-        Height = 822
+        Height = 860
         Align = alClient
         PopupMenu = MainViewPopup
         OnMouseDown = CnvView0MouseDown
@@ -4262,7 +4266,7 @@ object FrmMain: TFrmMain
         Left = 486
         Top = 14
         Width = 16
-        Height = 822
+        Height = 860
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4271,15 +4275,17 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
+        ExplicitHeight = 841
       end
       object Panel5: TPanel
         Left = 1
-        Top = 836
+        Top = 874
         Width = 501
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
+        ExplicitTop = 855
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4482,7 +4488,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 880
+    Top = 918
     Width = 862
     Height = 19
     Panels = <
@@ -4501,6 +4507,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
+    ExplicitTop = 899
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -4548,6 +4555,17 @@ object FrmMain: TFrmMain
         OnClick = SaveAs1Click
       end
       object N7: TMenuItem
+        Caption = '-'
+      end
+      object Import1: TMenuItem
+        Caption = 'Import'
+        object using3ds2vxl1: TMenuItem
+          Caption = '3D models with 3ds2vxl...'
+          Enabled = False
+          OnClick = using3ds2vxl1Click
+        end
+      end
+      object N20: TMenuItem
         Caption = '-'
       end
       object N6: TMenuItem
@@ -4975,6 +4993,13 @@ object FrmMain: TFrmMain
             Caption = 'blank'
             Visible = False
           end
+        end
+        object N25: TMenuItem
+          Caption = '-'
+        end
+        object UpdateSchemes1: TMenuItem
+          Caption = 'Update Colour Scheme List'
+          OnClick = UpdateSchemes1Click
         end
       end
     end

@@ -9,17 +9,16 @@ uses
   ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
   ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
-  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals;
+  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals, CustomScheme;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.60';
+   APPLICATION_VER = '1.39.65';
 
 type
   TFrmMain = class(TForm)
-    MainMenu1: TMainMenu;
     File1: TMenuItem;
     Open1: TMenuItem;
     OpenVXLDialog: TOpenDialog;
@@ -340,6 +339,14 @@ type
     TSPalettes: TMenuItem;
     RA2Palettes: TMenuItem;
     O3DModelizer1: TMenuItem;
+    Import1: TMenuItem;
+    N20: TMenuItem;
+    using3ds2vxl1: TMenuItem;
+    MainMenu1: TMainMenu;
+    N25: TMenuItem;
+    UpdateSchemes1: TMenuItem;
+    procedure UpdateSchemes1Click(Sender: TObject);
+    procedure using3ds2vxl1Click(Sender: TObject);
     procedure O3DModelizer1Click(Sender: TObject);
     procedure CCFilefront1Click(Sender: TObject);
     procedure CNCNZcom1Click(Sender: TObject);
@@ -530,10 +537,15 @@ type
     procedure ClearUndoSystem1Click(Sender: TObject);
     procedure PasteFull1Click(Sender: TObject);
     procedure Paste1Click(Sender: TObject);
+    function CreateSplitterMenuItem: TMenuItem;
+    procedure InsertItemAtMenu(var _item,_menu: TMenuItem; Split: boolean);
+    procedure AddScheme(const _Filename: string);
+    function UpdateCScheme : integer;
     function LoadCScheme : integer;
     procedure blank2Click(Sender: TObject);
     procedure About2Click(Sender: TObject);
-    function LoadCSchemes(Dir : string; c : integer) : Integer;
+    function LoadCSchemes(_Dir : string; _c : integer) : Integer;
+    function UpdateCSchemes(_Latest: integer; _Dir : string; _c : integer) : Integer;
     procedure EmptyVoxel1Click(Sender: TObject);
     procedure EmptyVoxel2Click(Sender: TObject);
     Procedure NewVFile(Game : integer);
@@ -570,6 +582,7 @@ type
     RemapColour : TVector3f;
     Xcoord, Ycoord, Zcoord : Integer;
     MouseButton : Integer;
+    LatestScheme : integer;
     procedure Idle(Sender: TObject; var Done: Boolean);
     procedure BuildUsedColoursArray;
     function CharToStr: string;
@@ -585,6 +598,7 @@ type
      Env : TRenderEnvironment;
      Actor : PActor;
      Camera : TCamera;
+     ColourSchemes : TColourSchemesInfo;
      {$ifdef DEBUG_FILE}
      DebugFile: TDebugFile;
      {$endif}
@@ -599,71 +613,6 @@ implementation
 
 uses FormHeaderUnit,LoadForm,FormNewSectionSizeUnit,FormPalettePackAbout,HVA,FormReplaceColour,FormVoxelTexture,
   FormBoundsManager, FormImportSection,FormFullResize,FormPreferences,FormVxlError;
-
-procedure RunAProgram (const theProgram, itsParameters, defaultDirectory : string);
-var rslt     : integer;
-    msg      : string;
-begin
-rslt := ShellExecute (0, 'open',
-                        pChar (theProgram),
-                        pChar (itsParameters),
-                        pChar (defaultDirectory),
-                        sw_ShowNormal);
-if rslt <= 32
-then begin
-     case rslt of
-          0,
-          se_err_OOM :             msg := 'Out of memory/resources';
-          error_File_Not_Found :   msg := 'File "' + theProgram + '" not found';
-          error_Path_Not_Found :   msg := 'Path not found';
-          error_Bad_Format :       msg := 'Damaged or invalid exe';
-          se_err_AccessDenied :    msg := 'Access denied';
-          se_err_NoAssoc,
-          se_err_AssocIncomplete : msg := 'Filename association invalid';
-          se_err_DDEBusy,
-          se_err_DDEFail,
-          se_err_DDETimeOut :      msg := 'DDE error';
-         se_err_Share :        msg := 'Sharing violation';
-          else                    msg := 'no text';
-          end; // of case
-     raise Exception.Create ('ShellExecute error #' + IntToStr (rslt) + ': ' + msg);
-     end;
-end;
-
-procedure TFrmMain.Open1Click(Sender: TObject);
-begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: Open1Click');
-   {$endif}
-   IsVXLLoading := true;
-   Application.OnIdle := nil; //Idle;
-   CheckVXLChanged;
-
-   if OpenVXLDialog.Execute then
-      SetIsEditable(LoadVoxel(Document,OpenVXLDialog.FileName));
-
-   if IsEditable then
-   begin
-      if p_Frm3DPreview <> nil then
-      begin
-         p_Frm3DPreview^.SpFrame.MaxValue := 1;
-         p_Frm3DPreview^.SpStopClick(nil);
-      end;
-      if p_Frm3DModelizer <> nil then
-      begin
-         p_Frm3DModelizer^.SpFrame.MaxValue := 1;
-         p_Frm3DModelizer^.SpStopClick(nil);
-      end;
-      DoAfterLoadingThings;
-   end;
-   IsVXLLoading := false;
-end;
-
-procedure TFrmMain.CnvView0Paint(Sender: TObject);
-begin
-   if Document.ActiveSection <> nil then
-      PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
-end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -755,8 +704,74 @@ begin
    {$endif}
 end;
 
-{------------------------------------------------------------------}
-{------------------------------------------------------------------}
+procedure TFrmMain.FormShow(Sender: TObject);
+var
+   frm: TLoadFrm;
+   l: Integer;
+   Reg: TRegistry;
+   LatestVersion: string;
+   VoxelName: string;
+begin
+   frm := TLoadFrm.Create(Self);
+   if testbuild then
+      frm.Label4.Caption := APPLICATION_VER + ' TB '+testbuildversion
+   else
+      frm.Label4.Caption := APPLICATION_VER;
+
+   // 1.2:For future compatibility with other OS tools, we are
+   // using the registry keys to confirm its existance.
+   Reg :=TRegistry.Create;
+   Reg.RootKey := HKEY_LOCAL_MACHINE;
+   if Reg.OpenKey('Software\CnC Tools\VXLSEIII\',true) then
+   begin
+      LatestVersion := Reg.ReadString('Version');
+      if APPLICATION_VER > LatestVersion then
+      begin
+         Reg.WriteString('Path',ParamStr(0));
+         Reg.WriteString('Version',APPLICATION_VER);
+      end;
+      Reg.CloseKey;
+   end;
+   Reg.Free;
+
+   frm.Show;
+   l := 0;
+   while l < 25 do
+   begin
+      if l = 0 then begin frm.Loading.Caption := 'Loading: 3rd Party Palettes';frm.Loading.Refresh; LoadPalettes; end;
+      if l = 10 then begin frm.Loading.Caption := 'Loading: Colour Schemes'; frm.Loading.Refresh; LoadCScheme; end;
+      if l = 23 then begin frm.Loading.Caption := 'Finished Loading'; delay(50); end;
+      l := l + 1;
+      delay(2);
+   end;
+   frm.Close;
+   frm.Free;
+
+   WindowState := wsMaximized;
+//  refresh;
+   setupscrollbars;
+   UpdateUndo_RedoState;
+   VXLTool := 4;
+
+   if ParamCount > 0 then
+   begin
+      VoxelName := GetParamStr;
+      If FileExists(VoxelName) then
+      Begin
+         IsVXLLoading := true;
+         SetIsEditable(LoadVoxel(Document,VoxelName));
+         if IsEditable then
+         begin
+            DoAfterLoadingThings;
+         end;
+         IsVXLLoading := false;
+      End;
+   end;
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: FormShow Loaded');
+   {$endif}
+end;
+
 procedure TFrmMain.Idle(Sender: TObject; var Done: Boolean);
 begin
    {$ifdef DEBUG_FILE}
@@ -778,30 +793,33 @@ begin
    setupscrollbars;
 end;
 
-procedure TFrmMain.changecaption(Filename : boolean; FName : string);
-begin
-   Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER;
-
-   if Filename then
-      Caption := Caption + ' [' + extractfilename(FName) + ']';
-end;
-
-procedure TFrmMain.CnvView1Paint(Sender: TObject);
+procedure TFrmMain.Open1Click(Sender: TObject);
 begin
    {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView1Paint');
+   DebugFile.Add('FrmMain: Open1Click');
    {$endif}
-   if Document.ActiveSection <> nil then
-      PaintView2(1,false,CnvView[1],Document.ActiveSection^.View[1]);
-end;
+   IsVXLLoading := true;
+   Application.OnIdle := nil; //Idle;
+   CheckVXLChanged;
 
-procedure TFrmMain.CnvView2Paint(Sender: TObject);
-begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView2Paint');
-   {$endif}
-   if Document.ActiveSection <> nil then
-      PaintView2(2,false,CnvView[2],Document.ActiveSection^.View[2]);
+   if OpenVXLDialog.Execute then
+      SetIsEditable(LoadVoxel(Document,OpenVXLDialog.FileName));
+
+   if IsEditable then
+   begin
+      if p_Frm3DPreview <> nil then
+      begin
+         p_Frm3DPreview^.SpFrame.MaxValue := 1;
+         p_Frm3DPreview^.SpStopClick(nil);
+      end;
+      if p_Frm3DModelizer <> nil then
+      begin
+         p_Frm3DModelizer^.SpFrame.MaxValue := 1;
+         p_Frm3DModelizer^.SpStopClick(nil);
+      end;
+      DoAfterLoadingThings;
+   end;
+   IsVXLLoading := false;
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);
@@ -964,6 +982,124 @@ begin
       OGL3DPreview.Refresh;
 end;
 
+procedure TFrmMain.DoAfterLoadingThings;
+var
+   v,n : boolean;
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: DoAfterLoadingThings');
+   {$endif}
+   if VXLFilename = '' then
+      changecaption(true,'Untitled')
+   else
+      changecaption(true,VXLFilename);
+
+   v := not IsVoxelValid;
+   n := HasNormalsBug;
+
+   if v or n then
+      CreateVxlError(v,n);
+
+   SetupSections;
+   SetViewMode(ModeEmphasiseDepth);
+   SetSpectrum(SpectrumMode);
+   SetActiveNormal(ActiveNormal,true);
+   // 1.2b: Refresh Show Use Colours
+   if UsedColoursOption then
+      BuildUsedColoursArray;
+   // End of 1.2b adition
+   setupscrollbars;
+   SetupStatusBar;
+   CursorReset;
+   ResetUndoRedo;
+   UpdateUndo_RedoState;
+   SelectCorrectPalette;
+   PaintPalette(cnvPalette,True);
+   if High(Actor^.Models) >= 0 then
+   begin
+      Actor^.Clear;
+   end;
+   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
+   if p_Frm3DPreview <> nil then
+   begin
+      if High(p_Frm3DPreview^.Actor.Models) >= 0 then
+      begin
+         p_Frm3DPreview^.Actor.Clear;
+      end;
+      p_Frm3DPreview^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
+      p_Frm3DPreview^.SetActorModelTransparency;
+
+      p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
+      p_Frm3DPreview^.SpFrame.Value := 1;
+   end;
+   if p_Frm3DModelizer <> nil then
+   begin
+      if High(p_Frm3DModelizer^.Actor.Models) >= 0 then
+      begin
+         p_Frm3DModelizer^.Actor.Clear;
+      end;
+      p_Frm3DModelizer^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
+      p_Frm3DModelizer^.SetActorModelTransparency;
+      p_Frm3DModelizer^.UpdateQualityUI;
+
+      p_Frm3DModelizer^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
+      p_Frm3DModelizer^.SpFrame.Value := 1;
+   end;
+   if not Display3dView1.Checked then
+      if @Application.OnIdle = nil then
+         Application.OnIdle := Idle
+   else
+      Application.OnIdle := nil;
+
+   RefreshAll;
+end;
+
+procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+   CheckVXLChanged;
+   if p_Frm3DPreview <> nil then
+   begin
+      try
+         p_Frm3DPreview^.Release;
+      except;
+      end;
+      p_Frm3DPreview := nil;
+   end;
+   if p_Frm3DModelizer <> nil then
+   begin
+      try
+         p_Frm3DModelizer^.Release;
+      except;
+      end;
+      p_Frm3DModelizer := nil;
+   end;
+end;
+
+procedure TFrmMain.FormDestroy(Sender: TObject);
+begin
+   VoxelOpen := false;
+   IsEditable := false;
+   GlobalVars.Render.Free;
+   GlobalVars.Documents.Free;
+   GlobalVars.VoxelBank.Free;
+   GlobalVars.HVABank.Free;
+   GlobalVars.ModelBank.Free;
+   DeactivateRenderingContext;
+   UpdateHistoryMenu;
+   Config.SaveSettings;
+   Config.Free;
+   RA2Normals.Free;
+   TSNormals.Free;
+   CubeNormals.Free;
+  {$ifdef SPEED_TEST}
+   GlobalVars.SpeedFile.Free;
+   {$endif}
+  {$ifdef MESH_TEST}
+   GlobalVars.MeshFile.Free;
+   {$endif}
+   SetLength(ColourSchemes,0);
+end;
+
 Procedure TFrmMain.RefreshAll;
 begin
    {$ifdef DEBUG_FILE}
@@ -977,6 +1113,44 @@ begin
    begin
       p_Frm3DPreview^.Actor.RebuildActor;
    end;
+end;
+
+{------------------------------------------------------------------}
+{------------------------------------------------------------------}
+
+procedure TFrmMain.changecaption(Filename : boolean; FName : string);
+begin
+   Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER;
+
+   if Filename then
+      Caption := Caption + ' [' + extractfilename(FName) + ']';
+end;
+
+procedure TFrmMain.CnvView0Paint(Sender: TObject);
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: CnvView0Paint');
+   {$endif}
+   if Document.ActiveSection <> nil then
+      PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
+end;
+
+procedure TFrmMain.CnvView1Paint(Sender: TObject);
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: CnvView1Paint');
+   {$endif}
+   if Document.ActiveSection <> nil then
+      PaintView2(1,false,CnvView[1],Document.ActiveSection^.View[1]);
+end;
+
+procedure TFrmMain.CnvView2Paint(Sender: TObject);
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: CnvView2Paint');
+   {$endif}
+   if Document.ActiveSection <> nil then
+      PaintView2(2,false,CnvView[2],Document.ActiveSection^.View[2]);
 end;
 
 Procedure TFrmMain.SetupSections;
@@ -1246,86 +1420,6 @@ begin
       ScrollBar2.Enabled := false;
 end;
 
-Function GetParamStr : String;
-var
-x : integer;
-begin
-   Result := '';
-   for x := 1 to ParamCount do
-      if Result <> '' then
-         Result := Result + ' ' +ParamStr(x)
-      else
-         Result := ParamStr(x);
-end;
-
-procedure TFrmMain.FormShow(Sender: TObject);
-var
-   frm: TLoadFrm;
-   l: Integer;
-   Reg: TRegistry;
-   LatestVersion: string;
-   VoxelName: string;
-begin
-   frm:=TLoadFrm.Create(Self);
-   if testbuild then
-      frm.Label4.Caption := APPLICATION_VER + ' TB '+testbuildversion
-   else
-      frm.Label4.Caption := APPLICATION_VER;
-
-   // 1.2:For future compatibility with other OS tools, we are
-   // using the registry keys to confirm its existance.
-   Reg :=TRegistry.Create;
-   Reg.RootKey := HKEY_LOCAL_MACHINE;
-   if Reg.OpenKey('Software\CnC Tools\VXLSEIII\',true) then
-   begin
-      LatestVersion := Reg.ReadString('Version');
-      if APPLICATION_VER > LatestVersion then
-      begin
-         Reg.WriteString('Path',ParamStr(0));
-         Reg.WriteString('Version',APPLICATION_VER);
-      end;
-      Reg.CloseKey;
-   end;
-   Reg.Free;
-
-   frm.Show;
-   l := 0;
-   while l < 25 do
-   begin
-      if l = 0 then begin frm.Loading.Caption := 'Loading: 3rd Party Palettes';frm.Loading.Refresh; LoadPalettes; end;
-      if l = 10 then begin frm.Loading.Caption := 'Loading: Colour Schemes'; frm.Loading.Refresh; LoadCScheme; end;
-      if l = 23 then begin frm.Loading.Caption := 'Finished Loading'; delay(50); end;
-      l := l + 1;
-      delay(2);
-   end;
-   frm.Close;
-   frm.Free;
-
-   WindowState := wsMaximized;
-//  refresh;
-   setupscrollbars;
-   UpdateUndo_RedoState;
-   VXLTool := 4;
-
-   if ParamCount > 0 then
-   begin
-      VoxelName := GetParamStr;
-      If FileExists(VoxelName) then
-      Begin
-         IsVXLLoading := true;
-         SetIsEditable(LoadVoxel(Document,VoxelName));
-         if IsEditable then
-         begin
-            DoAfterLoadingThings;
-         end;
-         IsVXLLoading := false;
-      End;
-   end;
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: FormShow Loaded');
-   {$endif}
-end;
-
 procedure TFrmMain.cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var colwidth, rowheight: Real;
@@ -1388,29 +1482,6 @@ begin
    if UsedColoursOption then
       BuildUsedColoursArray;
    PaintPalette(cnvPalette,True);
-end;
-
-procedure TFrmMain.FormDestroy(Sender: TObject);
-begin
-   VoxelOpen := false;
-   GlobalVars.Render.Free;
-   GlobalVars.Documents.Free;
-   GlobalVars.VoxelBank.Free;
-   GlobalVars.HVABank.Free;
-   GlobalVars.ModelBank.Free;
-   DeactivateRenderingContext;
-   UpdateHistoryMenu;
-   Config.SaveSettings;
-   Config.Free;
-   RA2Normals.Free;
-   TSNormals.Free;
-   CubeNormals.Free;
-  {$ifdef SPEED_TEST}
-   GlobalVars.SpeedFile.Free;
-   {$endif}
-  {$ifdef MESH_TEST}
-   GlobalVars.MeshFile.Free;
-   {$endif}
 end;
 
 procedure TFrmMain.OGL3DPreviewMouseMove(Sender: TObject;
@@ -2402,78 +2473,6 @@ begin
    frm.Free;
 end;
 
-procedure TFrmMain.DoAfterLoadingThings;
-var
-   v,n : boolean;
-begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: DoAfterLoadingThings');
-   {$endif}
-   if VXLFilename = '' then
-      changecaption(true,'Untitled')
-   else
-      changecaption(true,VXLFilename);
-
-   v := not IsVoxelValid;
-   n := HasNormalsBug;
-
-   if v or n then
-      CreateVxlError(v,n);
-
-   SetupSections;
-   SetViewMode(ModeEmphasiseDepth);
-   SetSpectrum(SpectrumMode);
-   SetActiveNormal(ActiveNormal,true);
-   // 1.2b: Refresh Show Use Colours
-   if UsedColoursOption then
-      BuildUsedColoursArray;
-   // End of 1.2b adition
-   setupscrollbars;
-   SetupStatusBar;
-   CursorReset;
-   ResetUndoRedo;
-   UpdateUndo_RedoState;
-   SelectCorrectPalette;
-   PaintPalette(cnvPalette,True);
-   if High(Actor^.Models) >= 0 then
-   begin
-      Actor^.Clear;
-   end;
-   Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
-   if p_Frm3DPreview <> nil then
-   begin
-      if High(p_Frm3DPreview^.Actor.Models) >= 0 then
-      begin
-         p_Frm3DPreview^.Actor.Clear;
-      end;
-      p_Frm3DPreview^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
-      p_Frm3DPreview^.SetActorModelTransparency;
-
-      p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
-      p_Frm3DPreview^.SpFrame.Value := 1;
-   end;
-   if p_Frm3DModelizer <> nil then
-   begin
-      if High(p_Frm3DModelizer^.Actor.Models) >= 0 then
-      begin
-         p_Frm3DModelizer^.Actor.Clear;
-      end;
-      p_Frm3DModelizer^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
-      p_Frm3DModelizer^.SetActorModelTransparency;
-      p_Frm3DModelizer^.UpdateQualityUI;
-
-      p_Frm3DModelizer^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
-      p_Frm3DModelizer^.SpFrame.Value := 1;
-   end;
-   if not Display3dView1.Checked then
-      if @Application.OnIdle = nil then
-         Application.OnIdle := Idle
-   else
-      Application.OnIdle := nil;
-
-   RefreshAll;
-end;
-
 procedure TFrmMain.Brush_1Click(Sender: TObject);
 begin
    VXLBrush := 0;
@@ -2721,6 +2720,19 @@ begin
 
    Undo1.Enabled := mnuBarUndo.Enabled;
    Redo1.Enabled := mnuBarRedo.Enabled;
+end;
+
+procedure TFrmMain.using3ds2vxl1Click(Sender: TObject);
+begin
+   // check if the location from 3ds2vxl exists.
+   if FileExists(Config.Location3ds2vxl) and FileExists(Config.INILocation3ds2vxl) then
+   begin
+      RunAProgram(Config.Location3ds2vxl,'',ExtractFileDir(Config.Location3ds2vxl));
+   end
+   else
+   begin
+
+   end;
 end;
 
 procedure TFrmMain.mnuBarUndoClick(Sender: TObject);
@@ -3451,31 +3463,10 @@ begin
          T := 'Save Untitled'
       else
          T := 'Save changes in ' + T;
-      if MessageDlg('Last changes not saved. ' + T +' ?',mtWarning,[mbYes,mbNo],0) = mrYes then begin
+      if MessageDlg('Last changes not saved. ' + T +' ?',mtWarning,[mbYes,mbNo],0) = mrYes then
+      begin
          Save1.Click;
-   end;
-end;
-
-end;
-
-procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-   CheckVXLChanged;
-   if p_Frm3DPreview <> nil then
-   begin
-      try
-         p_Frm3DPreview^.Release;
-      except;
       end;
-      p_Frm3DPreview := nil;
-   end;
-   if p_Frm3DModelizer <> nil then
-   begin
-      try
-         p_Frm3DModelizer^.Release;
-      except;
-      end;
-      p_Frm3DModelizer := nil;
    end;
 end;
 
@@ -3655,307 +3646,142 @@ begin
    VXLChanged := true;
 end;
 
-procedure firstlastword(const words : string; var first,rest : string);
-var
-   x,w : integer;
-   seps : array[0..50] of string;
-   endofword : boolean;
-   text : string;
+function TFrmMain.CreateSplitterMenuItem: TMenuItem;
 begin
-   text := words;
-   seps[0] := ' ';
-   seps[1] := '(';
-   seps[2] := ')';
-   seps[3] := '[';
-   seps[4] := #09;
-   seps[5] := ']';
-   seps[6] := ':';
-   seps[7] := '''';
-   seps[8] := '"';
-   seps[9] := '=';
-   seps[10] := ',';
-   seps[11] := ';';
-   repeat
-      w := 0;
-      endofword:=false;
-      for x := 1 to length(text) do
-         if endofword=false then
-            if (copy(text,x,1) <> seps[0]) and (copy(text,x,1) <> seps[1])and (copy(text,x,1) <> seps[2]) and (copy(text,x,1) <> seps[3]) and (copy(text,x,1) <> seps[4]) and (copy(text,x,1) <> seps[5]) and (copy(text,x,1) <> seps[6]) and (copy(text,x,1) <> seps[7]) and (copy(text,x,1) <> seps[8]) and (copy(text,x,1) <> seps[9]) and (copy(text,x,1) <> seps[10]) and (copy(text,x,1) <> seps[11]) then
-               w := w + 1
-            else
-               endofword := true;
-
-      if w = 0 then
-         text := copy(text,2,length(text));
-   until (w > 0) or (length(text) = 0);
-   first := copy(text,1,w);
-   rest := copy(text,w+1,length(text));
+   Result := TMenuItem.Create(Owner);
+   Result.Caption := '-';
 end;
 
-procedure firstlastword2(const words : string; var first,rest : string);
-var
-   x,w : integer;
-   seps : array[0..50] of string;
-   endofword : boolean;
-   text : string;
+procedure TFrmMain.InsertItemAtMenu(var _item,_menu: TMenuItem; Split: boolean);
 begin
-   text := words;
-   seps[0] := #09;
-   seps[1] := ';';
-   seps[2] := '=';
-   repeat
-      w := 0;
-      endofword:=false;
-      for x := 1 to length(text) do
-         if endofword=false then
-            if (copy(text,x,1) <> seps[0]) and (copy(text,x,1) <> seps[1]) and (copy(text,x,1) <> seps[2]) then
-               w := w + 1
-            else
-               endofword := true;
-
-      if w = 0 then
-         text := copy(text,2,length(text));
-   until (w > 0) or (length(text) = 0);
-   first := copy(text,1,w);
-   rest := copy(text,w+1,length(text));
+   if Split then
+      _Menu.Insert(_Menu.Count - 1, CreateSplitterMenuItem());
+   _Menu.Insert(_Menu.Count - 1, _Item);
+   _Menu.Visible := True;
 end;
 
-function searchcscheme(const s : tstringlist; f : string) : string;
+procedure TFrmMain.AddScheme(const _Filename: string);
 var
-   x : integer;
-   first,rest : string;
+   item: TMenuItem;
+   Scheme : TCustomScheme;
+   c : integer;
 begin
-   result := '!ERROR!';
+   c := High(ColourSchemes)+2;
+   SetLength(ColourSchemes, c + 1);
 
-   for x := 0 to s.Count-1 do
-      if ansilowercase(copy(s.Strings[x],1,length(f))) = ansilowercase(f) then
-      begin
-         firstlastword(s.Strings[x],first,rest);
-         if f = 'name=' then
-            firstlastword2(rest,first,rest)
-         else
-            firstlastword(rest,first,rest);
-         result := first;
-      end;
+   Scheme := TCustomScheme.CreateForVXLSE(_Filename);
+   ColourSchemes[c].FileName := CopyString(_Filename);
+
+   item     := TMenuItem.Create(Owner);
+   item.Caption := Scheme.Name;
+   item.Tag := c; // so we know which it is
+   item.OnClick := blank2Click;
+   item.ImageIndex := Scheme.ImageIndex;
+
+   case (Scheme.GameType) of
+      0: InsertItemAtMenu(item,Others1,Scheme.Split); // Others
+      1: InsertItemAtMenu(item,iberianSun2,Scheme.Split); // TS
+      2: InsertItemAtMenu(item,RedAlert22,Scheme.Split); // RA2
+      3: InsertItemAtMenu(item,YurisRevenge1,Scheme.Split); //YR
+      4: InsertItemAtMenu(item,Allied1,Scheme.Split);
+      5: InsertItemAtMenu(item,Soviet1,Scheme.Split);
+      6: InsertItemAtMenu(item,Yuri1,Scheme.Split);
+      7: InsertItemAtMenu(item,Brick1,Scheme.Split);
+      8: InsertItemAtMenu(item,GrayScale1,Scheme.Split);
+      9: InsertItemAtMenu(item,Remap1,Scheme.Split);
+      10: InsertItemAtMenu(item,Brown11,Scheme.Split);
+      11: InsertItemAtMenu(item,Brown21,Scheme.Split);
+      12: InsertItemAtMenu(item,Blue2,Scheme.Split);
+      13: InsertItemAtMenu(item,Green2,Scheme.Split);
+      14: InsertItemAtMenu(item,NoUnlit1,Scheme.Split);
+      15: InsertItemAtMenu(item,Red2,Scheme.Split);
+      16: InsertItemAtMenu(item,Yellow1,Scheme.Split);
+      else InsertItemAtMenu(item,Others1,Scheme.Split);
+   end;
+   Scheme.Free;
 end;
 
-function TFrmMain.LoadCSchemes(Dir: string; c: integer): integer;
+function TFrmMain.UpdateCSchemes(_Latest: integer; _Dir : string; _c : integer) : Integer;
 var
    f:     TSearchRec;
    path:  string;
-   Filename: string;
-   item, item2: TMenuItem;
-   s:     TStringList;
-   Split: string;
-   GameType: string;
 begin
    // prepare
-   path := Concat(Dir, '*.cscheme');
+   path := Concat(_Dir, '*.cscheme');
+   // find files
+   if FindFirst(path, faAnyFile, f) = 0 then
+      repeat
+         if f.Time > _Latest then
+         begin
+            AddScheme(Concat(_Dir, f.Name));
+            if f.Time > LatestScheme then
+            begin
+               LatestScheme := f.Time;
+            end;
+            inc(_c);
+         end;
+      until FindNext(f) <> 0;
+   FindClose(f);
+   Result := _c;
+end;
+
+function TFrmMain.LoadCSchemes(_Dir: string; _c: integer): integer;
+var
+   f:     TSearchRec;
+   path:  string;
+begin
+   // prepare
+   path := Concat(_Dir, '*.cscheme');
 
    // find files
    if FindFirst(path, faAnyFile, f) = 0 then
       repeat
-         Filename := Concat(Dir, f.Name);
-
-         Inc(c);
-         SetLength(ColourSchemes, c + 1);
-
-         ColourSchemes[c].FileName := Filename;
-
-         s := TStringList.Create;
-         s.LoadFromFile(Filename);
-
-         SetLength(ColourSchemes, c + 1);
-
-         Split := searchcscheme(s, 'split=');
-
-         item     := TMenuItem.Create(Owner);
-         item.Caption := searchcscheme(s, 'name=');
-         item.Tag := c; // so we know which it is
-         item.OnClick := blank2Click;
-         item.ImageIndex := StrToInt(searchcscheme(s, 'imageindex='));
-
-         item2 := TMenuItem.Create(Owner);
-         item2.Caption := '-';
-
-         GameType := searchcscheme(s, 'gametype=');
-         if GameType = '0' then // Others
-         begin
-            if split = 'true' then
-               Others1.Insert(Others1.Count - 1, item2);
-            Others1.Insert(Others1.Count - 1, item);
-            Others1.Visible := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '1' then // TS
-         begin
-            if split = 'true' then
-               iberianSun2.Insert(iberianSun2.Count - 1, item2);
-            iberianSun2.Insert(iberianSun2.Count - 1, item);
-            iberianSun2.Visible   := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '2' then // RA2
-         begin
-            if split = 'true' then
-               RedAlert22.Insert(RedAlert22.Count - 1, item2);
-            RedAlert22.Insert(RedAlert22.Count - 1, item);
-            RedAlert22.Visible    := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '3' then //YR
-         begin
-            if split = 'true' then
-               YurisRevenge1.Insert(YurisRevenge1.Count - 1, item2);
-            YurisRevenge1.Insert(YurisRevenge1.Count - 1, item);
-            YurisRevenge1.Visible := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '4' then
-         begin
-            if split = 'true' then
-               Allied1.Insert(Allied1.Count - 1, item2);
-            Allied1.Insert(Allied1.Count - 1, item);
-            Allied1.Visible  := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '5' then
-         begin
-            if split = 'true' then
-               Soviet1.Insert(Soviet1.Count - 1, item2);
-            Soviet1.Insert(Soviet1.Count - 1, item);
-            Soviet1.Visible  := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '6' then
-         begin
-            if split = 'true' then
-               Yuri1.Insert(Yuri1.Count - 1, item2);
-            Yuri1.Insert(Yuri1.Count - 1, item);
-            Yuri1.Visible    := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '7' then
-         begin
-            if split = 'true' then
-               Brick1.Insert(Brick1.Count - 1, item2);
-            Brick1.Insert(Brick1.Count - 1, item);
-            Brick1.Visible   := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '8' then
-         begin
-            if split = 'true' then
-               Grayscale1.Insert(Grayscale1.Count - 1, item2);
-            Grayscale1.Insert(Grayscale1.Count - 1, item);
-            Grayscale1.Visible    := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible      := True;
-         end
-         else if GameType = '9' then
-         begin
-            if split = 'true' then
-               Remap1.Insert(Remap1.Count - 1, item2);
-            Remap1.Insert(Remap1.Count - 1, item);
-            Remap1.Visible := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '10' then
-         begin
-            if split = 'true' then
-               Brown11.Insert(Brown11.Count - 1, item2);
-            Brown11.Insert(Brown11.Count - 1, item);
-            Brown11.Visible := True;
-            ColourScheme1.Visible := True;
-         end
-         else if GameType = '11' then
-         begin
-            if split = 'true' then
-               Brown21.Insert(Brown21.Count - 1, item2);
-            Brown21.Insert(Brown21.Count - 1, item);
-            Brown21.Visible  := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '12' then
-         begin
-            if split = 'true' then
-               Blue2.Insert(Blue2.Count - 1, item2);
-            Blue2.Insert(Blue2.Count - 1, item);
-            Blue2.Visible    := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '13' then
-         begin
-            if split = 'true' then
-               Green2.Insert(Green2.Count - 1, item2);
-            Green2.Insert(Green2.Count - 1, item);
-            Green2.Visible   := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '14' then
-         begin
-            if split = 'true' then
-               NoUnlit1.Insert(NoUnlit1.Count - 1, item2);
-            NoUnlit1.Insert(NoUnlit1.Count - 1, item);
-            NoUnlit1.Visible      := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible      := True;
-         end
-         else if GameType = '15' then
-         begin
-            if split = 'true' then
-               Red2.Insert(Red2.Count - 1, item2);
-            Red2.Insert(Red2.Count - 1, item);
-            Red2.Visible     := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end
-         else if GameType = '16' then
-         begin
-            if split = 'true' then
-               Yellow1.Insert(Yellow1.Count - 1, item2);
-            Yellow1.Insert(Yellow1.Count - 1, item);
-            Yellow1.Visible  := True;
-            ColourScheme1.Visible := True;
-            PalPack1.Visible := True;
-         end;
-         s.Free;
+         AddScheme(Concat(_Dir, f.Name));
       until FindNext(f) <> 0;
    FindClose(f);
-   Result := c;
+   Result := High(ColourSchemes)+1;
+end;
+
+function TFrmMain.UpdateCScheme : integer;
+var
+   User,c,LastScheme : integer;
+begin
+   LastScheme := LatestScheme;
+   User := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
+   c := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
+   Result := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
 end;
 
 function TFrmMain.LoadCScheme : integer;
 var
-   c : integer;
+   User,c : integer;
 begin
    SetLength(ColourSchemes,0);
-   c := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
-   c := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',c);
+   User := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
+   c := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
    Result := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
+   if c > 0 then
+   begin
+      ColourScheme1.Visible := True;
+      if User < Result then
+      begin
+         PalPack1.Visible := True;
+      end;
+   end;
 end;
 
 procedure TFrmMain.blank2Click(Sender: TObject);
 var
    x,y,z : integer;
-   s : tstringlist;
    V : TVoxelUnpacked;
+   Scheme : TCustomScheme;
+   Data : TCustomSchemeData;
 begin
-   s := TStringList.Create;
-   s.LoadFromFile(ColourSchemes[Tmenuitem(Sender).Tag].Filename);
+   Scheme := TCustomScheme.CreateForData(ColourSchemes[Tmenuitem(Sender).Tag].Filename);
+   Data := Scheme.Data;
 
    tempview.Data_no := tempview.Data_no +0;
    setlength(tempview.Data,tempview.Data_no +0);
-
-   for x := 0 to 255 do
-      ColourSchemes[Tmenuitem(Sender).Tag].Data[x] := strtoint(searchcscheme(s,inttostr(x)+'='));
 
    for x := 0 to Document.ActiveSection^.Tailer.XSize-1 do
       for y := 0 to Document.ActiveSection^.Tailer.YSize-1 do
@@ -3964,7 +3790,7 @@ begin
             Document.ActiveSection^.GetVoxel(x,y,z,v);
             if v.Used then
             begin
-               V.Colour := ColourSchemes[Tmenuitem(Sender).Tag].Data[V.Colour];
+               V.Colour := Data[V.Colour];
                tempview.Data_no := tempview.Data_no +1;
                setlength(tempview.Data,tempview.Data_no +1);
                tempview.Data[tempview.Data_no].VC.X := x;
@@ -3975,10 +3801,10 @@ begin
             end;
          end;
 
+   Scheme.Free;
    ApplyTempView(Document.ActiveSection^);
    UpdateUndo_RedoState;
    RefreshAll;
-   s.Free;
 end;
 
 procedure TFrmMain.About2Click(Sender: TObject);
@@ -4149,7 +3975,7 @@ end;
 
 procedure TFrmMain.OpenHyperlink(HyperLink: PChar);
 begin
-  ShellExecute(Application.Handle,nil,HyperLink,'','',SW_SHOWNORMAL);
+   ShellExecute(Application.Handle,nil,HyperLink,'','',SW_SHOWNORMAL);
 end;
 
 procedure TFrmMain.CnCSource1Click(Sender: TObject);
@@ -4344,6 +4170,7 @@ begin
    end;
 end;
 
+
 procedure TFrmMain.Resize1Click(Sender: TObject);
 var
   FrmNew: TFrmNew;
@@ -4452,6 +4279,14 @@ begin
    StatusBar1.Panels[3].Text :=  'Pos: ' + inttostr(Y) + ',' + inttostr(Z) + ',' + inttostr(X);
 end;
 
+procedure TFrmMain.UpdateSchemes1Click(Sender: TObject);
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: UpdateSchemes1Click');
+   {$endif}
+   UpdateCScheme;
+end;
+
 procedure TFrmMain.ToolButton9Click(Sender: TObject);
 var
    frm: TFrmPreferences;
@@ -4482,7 +4317,7 @@ end;
 
 Function TFrmMain.CharToStr : String;
 var
-x : integer;
+   x : integer;
 begin
    for x := 1 to 16 do
       Result := Document.ActiveVoxel^.Header.FileType[x];

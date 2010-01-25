@@ -81,9 +81,8 @@ type
       Data_no : integer;
    end;
 
-   TColourSchemes = array of packed record
+   TColourSchemesInfo = array of packed record
         Name,Filename,By,Website : string;
-        Data : array [0..255] of byte;
    end;
 
    TVoxelPacked = LongInt;

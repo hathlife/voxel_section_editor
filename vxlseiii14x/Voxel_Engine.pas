@@ -33,7 +33,6 @@ Var
    mnuReopen : PMenuItem;
    PaletteList : TPaletteList;
    VXLChanged : Boolean = false;
-   ColourSchemes : TColourSchemes;
    OldMousePos : TPoint;
    MousePos : TPoint;
    // 1.2b adition:

@@ -79,7 +79,8 @@ uses
   ClassIntegerList in 'ClassIntegerList.pas',
   ClassTextureGenerator in 'ClassTextureGenerator.pas',
   FormOptimizeMesh in 'FormOptimizeMesh.pas' {FrmOptimizeMesh},
-  ClassStopWatch in 'ClassStopWatch.pas';
+  ClassStopWatch in 'ClassStopWatch.pas',
+  CustomScheme in 'CustomScheme.pas';
 
 {$R *.res}
 
