@@ -33,7 +33,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 899
     object LeftPanel: TPanel
       Left = 1
       Top = 26
@@ -41,7 +40,6 @@ object FrmMain: TFrmMain
       Height = 891
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 872
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1249,7 +1247,6 @@ object FrmMain: TFrmMain
       Height = 891
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 872
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1549,7 +1546,6 @@ object FrmMain: TFrmMain
       Height = 891
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 872
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4275,7 +4271,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 841
       end
       object Panel5: TPanel
         Left = 1
@@ -4285,7 +4280,6 @@ object FrmMain: TFrmMain
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 855
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4507,7 +4501,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 899
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -4561,7 +4554,6 @@ object FrmMain: TFrmMain
         Caption = 'Import'
         object using3ds2vxl1: TMenuItem
           Caption = '3D models with 3ds2vxl...'
-          Enabled = False
           OnClick = using3ds2vxl1Click
         end
       end
@@ -6920,8 +6912,8 @@ object FrmMain: TFrmMain
   end
   object mnuDirectionPopup: TPopupMenu
     OnPopup = mnuDirectionPopupPopup
-    Left = 609
-    Top = 48
+    Left = 321
+    Top = 96
     object mnuEdit: TMenuItem
       Caption = '&Edit'
       OnClick = mnuEditClick
@@ -8609,5 +8601,10 @@ object FrmMain: TFrmMain
   object XPManifest1: TXPManifest
     Left = 288
     Top = 240
+  end
+  object OpenDialog3ds2vxl: TOpenDialog
+    Filter = '3ds2vxl executable|3ds2vxl.exe'
+    Left = 320
+    Top = 64
   end
 end

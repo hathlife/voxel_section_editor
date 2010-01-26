@@ -9,7 +9,8 @@ uses
   ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
   ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
-  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals, CustomScheme;
+  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals, CustomScheme,
+  INIFiles;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -345,6 +346,7 @@ type
     MainMenu1: TMainMenu;
     N25: TMenuItem;
     UpdateSchemes1: TMenuItem;
+    OpenDialog3ds2vxl: TOpenDialog;
     procedure UpdateSchemes1Click(Sender: TObject);
     procedure using3ds2vxl1Click(Sender: TObject);
     procedure O3DModelizer1Click(Sender: TObject);
@@ -362,6 +364,7 @@ type
     procedure ModEnc1Click(Sender: TObject);
     procedure RockPatch2Click(Sender: TObject);
     procedure Open1Click(Sender: TObject);
+    procedure OpenVoxelInterface(const _Filename: string);
     procedure CnvView0Paint(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -798,13 +801,17 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Open1Click');
    {$endif}
+   if OpenVXLDialog.Execute then
+      OpenVoxelInterface(OpenVXLDialog.FileName);
+end;
+
+procedure TFrmMain.OpenVoxelInterface(const _Filename: string);
+begin
    IsVXLLoading := true;
-   Application.OnIdle := nil; //Idle;
+   Application.OnIdle := nil;
    CheckVXLChanged;
 
-   if OpenVXLDialog.Execute then
-      SetIsEditable(LoadVoxel(Document,OpenVXLDialog.FileName));
-
+   SetIsEditable(LoadVoxel(Document,_Filename));
    if IsEditable then
    begin
       if p_Frm3DPreview <> nil then
@@ -2723,15 +2730,41 @@ begin
 end;
 
 procedure TFrmMain.using3ds2vxl1Click(Sender: TObject);
+var
+   SEInfo : TShellExecuteInfo;
+   ExitCode : dword;
+   OptionsFile : TINIFile;
+   Destination : string;
 begin
    // check if the location from 3ds2vxl exists.
-   if FileExists(Config.Location3ds2vxl) and FileExists(Config.INILocation3ds2vxl) then
+   while (not FileExists(Config.Location3ds2vxl)) or (not FileExists(Config.INILocation3ds2vxl)) do
    begin
-      RunAProgram(Config.Location3ds2vxl,'',ExtractFileDir(Config.Location3ds2vxl));
-   end
-   else
+      ShowMessage('Please inform the location of the 3ds2vxl executable. If you do not have it, download it from http://get3ds2vxl.ppmsite.com.');
+      if OpenDialog3ds2vxl.Execute then
+      begin
+         Config.Location3ds2vxl := OpenDialog3ds2vxl.FileName;
+         Config.INILocation3ds2vxl := IncludeTrailingPathDelimiter(ExtractFileDir(OpenDialog3ds2vxl.FileName)) + '3DS2VXL FE.ini';
+      end;
+   end;
+   SEInfo := RunProgram(Config.Location3ds2vxl,'',ExtractFileDir(Config.Location3ds2vxl));
+   if SEInfo.hInstApp > 32 then
    begin
-
+      repeat
+         Sleep(2000);
+         Application.ProcessMessages;
+         GetExitCodeProcess(SEInfo.hProcess, ExitCode);
+      until (ExitCode <> STILL_ACTIVE) or Application.Terminated;
+      // Once it's over, let's check the created file.
+      OptionsFile := TINIFile.Create(Config.INILocation3ds2vxl);
+      if (OptionsFile.ReadInteger('main','enable_voxelizer',0) = 1) and (OptionsFile.ReadInteger('main','activate_batch_voxelization',1) = 0) then
+      begin
+         Destination := OptionsFile.ReadString('main','destination','');
+         if FileExists(Destination) then
+         begin
+            // Open it!
+            OpenVoxelInterface(Destination);
+         end;
+      end;
    end;
 end;
 
@@ -3328,25 +3361,8 @@ begin
          exit;
       end;
 
-      IsVXLLoading := true;
-      Application.OnIdle := nil;
       VoxelName := Config.GetHistory(p^.Tag);
-      SetIsEditable(LoadVoxel(Document,VoxelName));
-      if IsEditable then
-      begin
-         if p_Frm3DPreview <> nil then
-         begin
-            p_Frm3DPreview^.SpFrame.MaxValue := 1;
-            p_Frm3DPreview^.SpStopClick(nil);
-         end;
-         if p_Frm3DModelizer <> nil then
-         begin
-            p_Frm3DModelizer^.SpFrame.MaxValue := 1;
-            p_Frm3DModelizer^.SpStopClick(nil);
-         end;
-         DoAfterLoadingThings;
-      end;
-      IsVXLLoading := false;
+      OpenVoxelInterface(VoxelName);
    end;
 end;
 
