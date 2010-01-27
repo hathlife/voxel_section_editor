@@ -348,15 +348,30 @@ begin
       end;
       dec(f);
    end;
+   // Now we add the data part:
+   SetLength(Data,Header.N_Sections);
+   i := Header.N_Sections-1;
+   while i > _SectionNumber do
+   begin
+      for s := 1 to 16 do
+      begin
+         Data[i].SectionName[s] := Data[i-1].SectionName[s];
+      end;
+      dec(i);
+   end;
 end;
 
 procedure THVA.CopySection(_Source,_Dest : integer);
 var
    f : integer;
 begin
-   for f := 0 to Header.N_frames - 1 do
+   for f := 0 to (Header.N_frames - 1) do
    begin
       CopyTM((f * Header.N_Sections) + _Source,(f * Header.N_Sections) +  _Dest);
+   end;
+   for f := 1 to 16 do
+   begin
+      Data[_Dest].SectionName[f] := Data[_Source].SectionName[f];
    end;
 end;
 
@@ -364,11 +379,15 @@ Procedure THVA.CopySection(_Source,_Dest : integer; const HVA: THVA);
 var
    f,y,z : integer;
 begin
-   for f := 0 to Header.N_frames - 1 do
+   for f := 0 to (Header.N_frames - 1) do
    begin
       for y := 1 to 3 do
          for z := 1 to 4 do
             TransformMatrices[(f * Header.N_Sections) + _Dest,y,z] := HVA.TransformMatrices[(f * Header.N_Sections) +  _Source,y,z];
+   end;
+   for f := 1 to 16 do
+   begin
+      Data[_Dest].SectionName[f] := HVA.Data[_Source].SectionName[f];
    end;
 end;
 
@@ -417,6 +436,17 @@ begin
       end;
       inc(f);
    end;
+   // Let's update the data content
+   i := _SectionNumber;
+   while i < Header.N_Sections do
+   begin
+      for s := 1 to 16 do
+      begin
+         Data[i].SectionName[s] := Data[i+1].SectionName[s];
+      end;
+      inc(i);
+   end;
+   SetLength(Data,Header.N_Sections);
 end;
 
 
