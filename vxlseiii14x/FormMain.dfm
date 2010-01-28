@@ -4744,17 +4744,17 @@ object FrmMain: TFrmMain
       end
       object Flip1: TMenuItem
         Caption = 'Flip'
-        object FlipXswitchFrontBack1: TMenuItem
-          Caption = 'Flip X (switch Front/Back)'
-          OnClick = FlipXswitchFrontBack1Click
+        object FlipXswitchRightLeft1: TMenuItem
+          Caption = 'Flip X (switch Right/Left)'
+          OnClick = FlipXswitchRightLeft1Click
         end
-        object FlipYswitchRightLeft1: TMenuItem
-          Caption = 'Flip Y (switch Right/Left)'
-          OnClick = FlipYswitchRightLeft1Click
+        object FlipYswitchTopBottom1: TMenuItem
+          Caption = 'Flip Y (switch Top/Bottom)'
+          OnClick = FlipYswitchTopBottom1Click
         end
-        object FlipZswitchTopBottom1: TMenuItem
-          Caption = 'Flip Z (switch Top/Bottom)'
-          OnClick = FlipZswitchTopBottom1Click
+        object FlipZswitchFrontBack1: TMenuItem
+          Caption = 'Flip Z (switch Front/Back)'
+          OnClick = FlipZswitchFrontBack1Click
         end
       end
       object Mirror1: TMenuItem

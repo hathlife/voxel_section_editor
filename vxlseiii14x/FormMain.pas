@@ -208,9 +208,9 @@ type
     N15: TMenuItem;
     Mirror1: TMenuItem;
     Nudge1: TMenuItem;
-    FlipXswitchFrontBack1: TMenuItem;
-    FlipYswitchRightLeft1: TMenuItem;
-    FlipZswitchTopBottom1: TMenuItem;
+    FlipZswitchFrontBack1: TMenuItem;
+    FlipXswitchRightLeft1: TMenuItem;
+    FlipYswitchTopBottom1: TMenuItem;
     MirrorBottomToTop1: TMenuItem;
     MirrorTopToBottom1: TMenuItem;
     N16: TMenuItem;
@@ -503,9 +503,9 @@ type
     procedure VXLSEHelp1Click(Sender: TObject);
     procedure Display3dView1Click(Sender: TObject);
     procedure About1Click(Sender: TObject);
-    procedure FlipXswitchFrontBack1Click(Sender: TObject);
-    procedure FlipYswitchRightLeft1Click(Sender: TObject);
-    procedure FlipZswitchTopBottom1Click(Sender: TObject);
+    procedure FlipZswitchFrontBack1Click(Sender: TObject);
+    procedure FlipXswitchRightLeft1Click(Sender: TObject);
+    procedure FlipYswitchTopBottom1Click(Sender: TObject);
     procedure MirrorBottomToTop1Click(Sender: TObject);
     procedure MirrorLeftToRight1Click(Sender: TObject);
     procedure MirrorBackToFront1Click(Sender: TObject);
@@ -3002,7 +3002,7 @@ begin
    frm.Free;
 end;
 
-procedure TFrmMain.FlipXswitchFrontBack1Click(Sender: TObject);
+procedure TFrmMain.FlipZswitchFrontBack1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
@@ -3013,7 +3013,7 @@ begin
    VXLChanged := true;
 end;
 
-procedure TFrmMain.FlipYswitchRightLeft1Click(Sender: TObject);
+procedure TFrmMain.FlipXswitchRightLeft1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
@@ -3024,7 +3024,7 @@ begin
    VXLChanged := true;
 end;
 
-procedure TFrmMain.FlipZswitchTopBottom1Click(Sender: TObject);
+procedure TFrmMain.FlipYswitchTopBottom1Click(Sender: TObject);
 begin
    //Create a transformation matrix...
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
@@ -3157,8 +3157,8 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   FlipXswitchFrontBack1Click(Sender);
-   Document.ActiveSection^.Mirror(oriX);
+   FlipZswitchFrontBack1Click(Sender);
+   Document.ActiveSection^.Mirror(oriZ);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3168,7 +3168,7 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   Document.ActiveSection^.Mirror(oriX);
+   Document.ActiveSection^.Mirror(oriZ);
    RefreshAll;
    VXLChanged := true;
 end;
