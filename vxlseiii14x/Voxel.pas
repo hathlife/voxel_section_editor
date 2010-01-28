@@ -98,6 +98,9 @@ type
 //    function SaveToFileHeader(var F: File): EError;
       function SaveToFileBody(var F: File): EError;
  //   function SaveToFileTailer(var F: File): EError;
+      procedure OpenGLToWestwoodCoordinates;
+      procedure WestwoodToOpenGLCoordinates;
+
       // utility methods
       function Name: string;
       // new by Koen
@@ -220,19 +223,19 @@ begin
             Tailer.Transform[i,j] := 0;
 
    Tailer.MaxBounds[1] := (Tailer.XSize / 2);
-   Tailer.MaxBounds[2] := (Tailer.YSize / 2);
+   Tailer.MaxBounds[3] := (Tailer.ZSize / 2);
    Tailer.MinBounds[1] := 0 - (Tailer.XSize / 2);
-   Tailer.MinBounds[2] := 0 - (Tailer.YSize / 2);
+   Tailer.MinBounds[3] := 0 - (Tailer.ZSize / 2);
 
    if VoxelType = vtAir then
    begin
-      Tailer.MaxBounds[3] := (Tailer.ZSize / 2);
-      Tailer.MinBounds[3] := 0 - (Tailer.ZSize / 2);
+      Tailer.MaxBounds[2] := (Tailer.YSize / 2);
+      Tailer.MinBounds[2] := 0 - (Tailer.YSize / 2);
    end
    else
    begin
-      Tailer.MaxBounds[3] := Tailer.ZSize;
-      Tailer.MinBounds[3] := 0;
+      Tailer.MaxBounds[2] := Tailer.YSize;
+      Tailer.MinBounds[2] := 0;
    end;
 end;
 
@@ -262,9 +265,9 @@ begin
    Y := (Tailer.YSize div 2);
    Z := (Tailer.ZSize div 2);
    // set views
-   View[0] := TVoxelView.Create(Self,oriX,dirTowards);
-   View[1] := TVoxelView.Create(Self,oriY,dirTowards);
-   View[2] := TVoxelView.Create(Self,oriZ,dirTowards);
+   View[0] := TVoxelView.Create(Self,oriZ,dirTowards);
+   View[1] := TVoxelView.Create(Self,oriX,dirTowards);
+   View[2] := TVoxelView.Create(Self,oriY,dirTowards);
    for i := 0 to 2 do
    begin
       with ViewPort[i] do
@@ -498,9 +501,9 @@ begin
    PackedVoxel := PackVoxel(Empty);
    Normals.Clear;
 // and set each and every voxel
-   for x := 0 to (Tailer.XSize - 1) do
-      for y := 0 to (Tailer.YSize - 1) do
-         for z := 0 to (Tailer.ZSize - 1) do
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
             Data[x,y,z] := PackedVoxel;
 end;
 
@@ -734,7 +737,8 @@ begin
 {$IFDEF DEBUG_NORMALS}
       DebugMsg('Max normals = ' + IntToStr(MaxNormal),mtInformation);
 {$ENDIF}
-   // done
+      WestwoodToOpenGLCoordinates;
+    // done
    except
       Result := Unhandled_Exception;
       CleanUp(True);
@@ -849,6 +853,92 @@ begin
       end;
    Result := OK;
 end;
+
+// Westwood's coordinate system is different than OpenGL's.
+// So, we'll turn (x,y,z) into (y,z,x)
+procedure TVoxelSection.OpenGLToWestwoodCoordinates;
+var
+   x,y,z : integer;
+   temp : byte;
+   TempBound : single;
+   TempInt : integer;
+   TempData : array of array of array of TVoxelPacked;
+begin
+   // backup data.
+   SetLength(TempData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            TempData[x,y,z] := Data[x,y,z];
+   // switch Tailer.Sizes
+   temp := Tailer.XSize;
+   Tailer.XSize := Tailer.ZSize;
+   Tailer.ZSize := Tailer.YSize;
+   Tailer.YSize := temp;
+   // switch data.
+   SetDataSize(Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            Data[x,y,z] := TempData[y,z,x];
+   // Switch Bounds;
+   TempBound := Tailer.MinBounds[1];
+   Tailer.MinBounds[1] := Tailer.MinBounds[3];
+   Tailer.MinBounds[3] := Tailer.MinBounds[2];
+   Tailer.MinBounds[2] := TempBound;
+   TempBound := Tailer.MaxBounds[1];
+   Tailer.MaxBounds[1] := Tailer.MaxBounds[3];
+   Tailer.MaxBounds[3] := Tailer.MaxBounds[2];
+   Tailer.MaxBounds[2] := TempBound;
+   // Switch X, Y, Z
+   TempInt := Self.X;
+   Self.X := Self.Z;
+   Self.Z := Self.Y;
+   Self.Y := TempInt;
+end;
+
+// Do exactly the opposite of PrepareToSave()
+procedure TVoxelSection.WestwoodToOpenGLCoordinates;
+var
+   x,y,z : integer;
+   temp : byte;
+   TempInt : integer;
+   TempBound : single;
+   TempData : array of array of array of TVoxelPacked;
+begin
+   // backup data.
+   SetLength(TempData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            TempData[x,y,z] := Data[x,y,z];
+   // switch Tailer.Sizes
+   temp := Tailer.XSize;
+   Tailer.XSize := Tailer.YSize;
+   Tailer.YSize := Tailer.ZSize;
+   Tailer.ZSize := temp;
+   // switch data.
+   SetDataSize(Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            Data[x,y,z] := TempData[z,x,y];
+   // Switch Bounds;
+   TempBound := Tailer.MinBounds[1];
+   Tailer.MinBounds[1] := Tailer.MinBounds[2];
+   Tailer.MinBounds[2] := Tailer.MinBounds[3];
+   Tailer.MinBounds[3] := TempBound;
+   TempBound := Tailer.MaxBounds[1];
+   Tailer.MaxBounds[1] := Tailer.MaxBounds[2];
+   Tailer.MaxBounds[2] := Tailer.MaxBounds[3];
+   Tailer.MaxBounds[3] := TempBound;
+   // Switch X, Y, Z
+   TempInt := Self.X;
+   Self.X := Self.Y;
+   Self.Y := Self.Z;
+   Self.Z := TempInt;
+end;
+
 
 {$OPTIMIZATION ON}
 {$RANGECHECKS OFF}
@@ -968,6 +1058,7 @@ var
    end;
 var
    i, BodyStart, BodyEnd: Integer;
+   temp : byte;
 begin
    if not Loaded then Exit; // cannot save an empty voxel?
    //-- when we save an empty voxel - this voxel will be unsupported - we must change this [Kamil ^aka Plasmadroid]
@@ -978,6 +1069,11 @@ begin
       AssignFile(F,Filename);
       FileMode := fmOpenWrite; // we save file, so write mode [VK]
       Rewrite(F,1); // file of byte
+      // Prepare sections for save with Westwood's coordinate system
+      for i := Low(Section) to High(Section) do
+      begin
+         Section[i].OpenGLToWestwoodCoordinates;
+      end;
       // write main header (overwritten later)
       ErrorCode := WriteBlank(SizeOf(TVoxelHeader));
       if (ErrorCode <> OK) then
@@ -1034,6 +1130,7 @@ begin
             Dec(SpanEndOfs,BodyStart);
             Dec(SpanDataOfs,BodyStart);
          end;
+
          BlockWrite(F,Section[i].Tailer,BytesToWrite,BytesWritten);
          if (BytesWritten <> BytesToWrite) then
          begin
@@ -1055,6 +1152,11 @@ begin
          Exit;
       end;
       CloseFile(F);
+      // Fix coordinates system from the voxel for editing purposes
+      for i := Low(Section) to High(Section) do
+      begin
+         Section[i].WestwoodToOpenGLCoordinates;
+      end;
    except on E : EInOutError do // VK 1.36 U
 		MessageDlg('Error: ' + E.Message + Char($0A) + Filename, mtError, [mbOK], 0);
    end;

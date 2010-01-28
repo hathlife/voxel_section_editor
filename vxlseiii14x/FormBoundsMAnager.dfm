@@ -932,21 +932,21 @@ object FrmBoundsManager: TFrmBoundsManager
   end
   object XOffset: TEdit
     Left = 168
-    Top = 112
+    Top = 64
     Width = 121
     Height = 21
     TabOrder = 2
   end
   object YOffset: TEdit
     Left = 168
-    Top = 64
+    Top = 88
     Width = 121
     Height = 21
     TabOrder = 3
   end
   object ZOffset: TEdit
     Left = 168
-    Top = 88
+    Top = 112
     Width = 121
     Height = 21
     TabOrder = 4

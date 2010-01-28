@@ -61,12 +61,12 @@ Const
    VXLTool_Measure = 11;
 
    ViewName: array[0..5] of string = (
-      ' Back',
-      ' Front',
       ' Right',
       ' Left',
       ' Top',
-      ' Bottom');
+      ' Bottom',
+      ' Back',
+      ' Front');
 
 Function LoadVoxel(var Document: TVoxelDocument; Filename : String) : boolean;
 Function NewVoxel(var Document: TVoxelDocument; Game,x,y,z : integer) : boolean;

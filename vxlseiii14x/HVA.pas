@@ -48,6 +48,8 @@ type
          procedure Clear;
          procedure LoadFile(const _Filename : string; _pVoxel : PVoxel);
          Procedure SaveFile(const _Filename : string);
+         procedure WestwoodToOpenGLCoordinates;
+         procedure OpenGLToWestwoodCoordinates;
          // Frame Operations
          procedure AddBlankFrame;
          Procedure InsertFrame(FrameNumber : integer);
@@ -154,6 +156,7 @@ var
    f : file;
    wrote,x : integer;
 begin
+   OpenGLToWestwoodCoordinates;
    //SetCharArray('',HVAFile.Header.FilePath);
    for x := 1 to 16 do
       Header.FilePath[x] := #0;
@@ -185,6 +188,7 @@ begin
    {$endif}
 
    CloseFile(f);
+   WestwoodToOpenGLCoordinates;
 end;
 
 procedure THVA.LoadFile(const _Filename : string; _pVoxel : PVoxel);
@@ -220,7 +224,64 @@ begin
    CloseFile(f);
    If Header.N_Frames < 1 then
       exit;
+   WestwoodToOpenGLCoordinates;
    Result := True;
+end;
+
+// This function converts the Westwood coordinates into OpenGL's
+// (x,y,z) becomes (y,z,x)
+procedure THVA.WestwoodToOpenGLCoordinates;
+var
+   i : integer;
+   Temp: single;
+begin
+   for i := Low(TransformMatrices) to High(TransformMatrices) do
+   begin
+      Temp := TransformMatrices[i][1][1];
+      TransformMatrices[i][1][1] := TransformMatrices[i][2][2];
+      TransformMatrices[i][2][2] := TransformMatrices[i][3][3];
+      TransformMatrices[i][3][3] := Temp;
+      Temp := TransformMatrices[i][1][2];
+      TransformMatrices[i][1][2] := TransformMatrices[i][2][3];
+      TransformMatrices[i][2][3] := TransformMatrices[i][3][1];
+      TransformMatrices[i][3][1] := Temp;
+      Temp := TransformMatrices[i][1][3];
+      TransformMatrices[i][1][3] := TransformMatrices[i][2][1];
+      TransformMatrices[i][2][1] := TransformMatrices[i][3][2];
+      TransformMatrices[i][3][2] := Temp;
+      Temp := TransformMatrices[i][1][4];
+      TransformMatrices[i][1][4] := TransformMatrices[i][2][4];
+      TransformMatrices[i][2][4] := TransformMatrices[i][3][4];
+      TransformMatrices[i][3][4] := Temp;
+   end;
+end;
+
+// This function converts the OpenGL coordinates into Westwood's
+// (x,y,z) becomes (z,x,y)
+procedure THVA.OpenGLToWestwoodCoordinates;
+var
+   i : integer;
+   Temp: single;
+begin
+   for i := Low(TransformMatrices) to High(TransformMatrices) do
+   begin
+      Temp := TransformMatrices[i][1][1];
+      TransformMatrices[i][1][1] := TransformMatrices[i][3][3];
+      TransformMatrices[i][3][3] := TransformMatrices[i][2][2];
+      TransformMatrices[i][2][2] := Temp;
+      Temp := TransformMatrices[i][1][2];
+      TransformMatrices[i][1][2] := TransformMatrices[i][3][1];
+      TransformMatrices[i][3][1] := TransformMatrices[i][2][3];
+      TransformMatrices[i][2][3] := Temp;
+      Temp := TransformMatrices[i][1][3];
+      TransformMatrices[i][1][3] := TransformMatrices[i][3][2];
+      TransformMatrices[i][3][2] := TransformMatrices[i][2][1];
+      TransformMatrices[i][2][1] := Temp;
+      Temp := TransformMatrices[i][1][4];
+      TransformMatrices[i][1][4] := TransformMatrices[i][3][4];
+      TransformMatrices[i][3][4] := TransformMatrices[i][2][4];
+      TransformMatrices[i][2][4] := Temp;
+   end;
 end;
 
 // Frame Operations

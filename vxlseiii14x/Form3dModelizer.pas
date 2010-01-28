@@ -286,7 +286,7 @@ procedure TFrm3DModelizer.Panel2MouseMove(Sender: TObject; Shift: TShiftState; X
 begin
    if MouseButton = 1 then
    begin
-      Camera.SetRotation(Camera.Rotation.X + (Y - Ycoord)/2,Camera.Rotation.Y,Camera.Rotation.Z + (X - Xcoord)/2);
+      Camera.SetRotation(Camera.Rotation.X + (Y - Ycoord)/2,Camera.Rotation.Y + (X - Xcoord)/2,Camera.Rotation.Z);
       Xcoord := X;
       Ycoord := Y;
    end;
@@ -352,11 +352,11 @@ begin
       Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 
    if btn3DRotateY2.Down then
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,-V)
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,V,Camera.RotationSpeed.Z)
    else if btn3DRotateY.Down then
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,V)
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,-V,Camera.RotationSpeed.Z)
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrm3DModelizer.btn3DRotateX2Click(Sender: TObject);
@@ -388,7 +388,7 @@ begin
       SetRotationAdders;
    end
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrm3DModelizer.btn3DRotateYClick(Sender: TObject);
@@ -398,7 +398,7 @@ begin
       SetRotationAdders;
    end
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrm3DModelizer.spin3DjmpChange(Sender: TObject);

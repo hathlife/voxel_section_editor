@@ -16,7 +16,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.65';
+   APPLICATION_VER = '1.39.66';
 
 type
   TFrmMain = class(TForm)
@@ -1500,7 +1500,7 @@ begin
    {$endif}
    if MouseButton = 1 then
    begin
-      Camera.SetRotation(Camera.Rotation.X + (Y - Ycoord)/2,Camera.Rotation.Y,Camera.Rotation.Z + (X - Xcoord)/2);
+      Camera.SetRotation(Camera.Rotation.X + (Y - Ycoord)/2,Camera.Rotation.Y + (X - Xcoord)/2,Camera.Rotation.Z);
       Xcoord := X;
       Ycoord := Y;
    end;
@@ -1592,11 +1592,11 @@ begin
       Camera.SetRotationSpeed(0,Camera.RotationSpeed.Y,Camera.RotationSpeed.Z);
 
    if btn3DRotateY2.Down then
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,-V)
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,-V,Camera.RotationSpeed.Z)
    else if btn3DRotateY.Down then
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,V)
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,V,Camera.RotationSpeed.Z)
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrmMain.SpeedButton2Click(Sender: TObject);
@@ -1642,7 +1642,7 @@ begin
       SetRotationAdders;
    end
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrmMain.btn3DRotateYClick(Sender: TObject);
@@ -1655,7 +1655,7 @@ begin
       SetRotationAdders;
    end
    else
-      Camera.SetRotationSpeed(Camera.RotationSpeed.X,Camera.RotationSpeed.Y,0);
+      Camera.SetRotationSpeed(Camera.RotationSpeed.X,0,Camera.RotationSpeed.Z);
 end;
 
 procedure TFrmMain.spin3DjmpChange(Sender: TObject);
@@ -2086,7 +2086,7 @@ begin
    else
       StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(Document.ActiveSection^.Tailer.Unknown);
 
-   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(Document.ActiveSection^.Tailer.YSize) + ', Y Size: ' + inttostr(Document.ActiveSection^.Tailer.ZSize) + ', Z Size: ' + inttostr(Document.ActiveSection^.Tailer.XSize);
+   StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(Document.ActiveSection^.Tailer.XSize) + ', Y Size: ' + inttostr(Document.ActiveSection^.Tailer.YSize) + ', Z Size: ' + inttostr(Document.ActiveSection^.Tailer.ZSize);
    StatusBar1.Panels[2].Text := '';
    StatusBar1.Refresh;
 end;
@@ -4292,7 +4292,7 @@ end;
 
 procedure TFrmMain.UpdatePositionStatus(x,y,z : integer);
 begin
-   StatusBar1.Panels[3].Text :=  'Pos: ' + inttostr(Y) + ',' + inttostr(Z) + ',' + inttostr(X);
+   StatusBar1.Panels[3].Text :=  'Pos: ' + inttostr(X) + ',' + inttostr(Y) + ',' + inttostr(Z);
 end;
 
 procedure TFrmMain.UpdateSchemes1Click(Sender: TObject);

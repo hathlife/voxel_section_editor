@@ -59,9 +59,9 @@ end;
 
 procedure TCamera.Reset;
 begin
-   Rotation.X := 270;
-   Rotation.Y := 0;
-   Rotation.Z := 275;
+   Rotation.X := 0;
+   Rotation.Y := -5;
+   Rotation.Z := 0;
    Position.X := 0;
    Position.Y := 0;
    Position.Z := -150;

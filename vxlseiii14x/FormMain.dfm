@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 956
+  ClientHeight = 975
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,19 +29,19 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 937
+    Height = 956
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 918
+    ExplicitHeight = 937
     object LeftPanel: TPanel
       Left = 1
       Top = 26
       Width = 152
-      Height = 910
+      Height = 929
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 891
+      ExplicitHeight = 910
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -816,29 +816,41 @@ object FrmMain: TFrmMain
           Top = 8
           Width = 10
           Height = 13
+          Hint = 'Lateral'
           Caption = 'X:'
+          ParentShowHint = False
+          ShowHint = True
         end
         object Label3: TLabel
           Left = 8
           Top = 26
           Width = 10
           Height = 13
+          Hint = 'Heigh'
           Caption = 'Y:'
+          ParentShowHint = False
+          ShowHint = True
         end
         object Label4: TLabel
           Left = 8
           Top = 44
           Width = 10
           Height = 13
+          Hint = 'Depth'
           Caption = 'Z:'
+          ParentShowHint = False
+          ShowHint = True
         end
         object XCursorBar: TTrackBar
           Left = 24
-          Top = 42
+          Top = 8
           Width = 105
           Height = 17
+          Hint = 'Lateral'
           Ctl3D = True
           ParentCtl3D = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 0
           ThumbLength = 10
           TickStyle = tsNone
@@ -846,11 +858,14 @@ object FrmMain: TFrmMain
         end
         object YCursorBar: TTrackBar
           Left = 24
-          Top = 8
+          Top = 26
           Width = 105
           Height = 17
+          Hint = 'Height'
           Ctl3D = True
           ParentCtl3D = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
           ThumbLength = 10
           TickStyle = tsNone
@@ -858,11 +873,14 @@ object FrmMain: TFrmMain
         end
         object ZCursorBar: TTrackBar
           Left = 24
-          Top = 24
+          Top = 42
           Width = 105
           Height = 17
+          Hint = 'Depth'
           Ctl3D = True
           ParentCtl3D = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 2
           ThumbLength = 10
           TickStyle = tsNone
@@ -870,7 +888,7 @@ object FrmMain: TFrmMain
         end
         object SpinButton3: TSpinButton
           Left = 127
-          Top = 8
+          Top = 26
           Width = 15
           Height = 17
           DownGlyph.Data = {
@@ -900,7 +918,7 @@ object FrmMain: TFrmMain
         end
         object SpinButton1: TSpinButton
           Left = 127
-          Top = 26
+          Top = 42
           Width = 15
           Height = 17
           DownGlyph.Data = {
@@ -930,7 +948,7 @@ object FrmMain: TFrmMain
         end
         object SpinButton2: TSpinButton
           Left = 127
-          Top = 42
+          Top = 8
           Width = 15
           Height = 17
           DownGlyph.Data = {
@@ -1246,10 +1264,10 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 910
+      Height = 929
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 891
+      ExplicitHeight = 910
       object CnvView2: TPaintBox
         Left = 1
         Top = 230
@@ -1546,10 +1564,10 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 503
-      Height = 910
+      Height = 929
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 891
+      ExplicitHeight = 910
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1572,7 +1590,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 485
-        Height = 879
+        Height = 898
         Align = alClient
         PopupMenu = MainViewPopup
         OnMouseDown = CnvView0MouseDown
@@ -4266,7 +4284,7 @@ object FrmMain: TFrmMain
         Left = 486
         Top = 14
         Width = 16
-        Height = 879
+        Height = 898
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4275,17 +4293,17 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 860
+        ExplicitHeight = 879
       end
       object Panel5: TPanel
         Left = 1
-        Top = 893
+        Top = 912
         Width = 501
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 874
+        ExplicitTop = 893
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4488,7 +4506,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 937
+    Top = 956
     Width = 862
     Height = 19
     Panels = <
@@ -4507,7 +4525,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 918
+    ExplicitTop = 937
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
