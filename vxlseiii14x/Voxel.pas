@@ -72,6 +72,7 @@ type
       constructor Create(const _VoxelSection : TVoxelSection); overload;
       destructor Destroy; override;
       procedure Resize(XSize,YSize,ZSize: Integer);
+      procedure Crop;
       procedure ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
 	//Plasmadroid v1.4+ drawing tools
       //View-fix, combined with RectangleFill (for shorter code, less bugs :)
@@ -114,6 +115,7 @@ type
       //a directional and a positional vector (x,y,z)=PosVector+t*DirectionVector
       procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
       procedure Mirror(MirrorView: EVoxelViewOrient);
+
       procedure Assign(const _VoxelSection : TVoxelSection);
       function GetTransformAsOpenGLMatrix : TGlmatrixf4;
    end;
@@ -520,6 +522,7 @@ begin
          begin
             SetLength(Data[x,y],0);
          end;
+         SetLength(Data[x],0);
       end;
    end;
    // Old code continues here.
@@ -895,6 +898,16 @@ begin
    Self.X := Self.Z;
    Self.Z := Self.Y;
    Self.Y := TempInt;
+   // Cleanup TempData
+   for x := Low(Data) to High(Data) do
+   begin
+      for y := Low(Data[x]) to High(Data[x]) do
+      begin
+         SetLength(TempData[x,y],0);
+      end;
+      SetLength(TempData[x],0);
+   end;
+   SetLength(TempData,0);
 end;
 
 // Do exactly the opposite of PrepareToSave()
@@ -937,6 +950,16 @@ begin
    Self.X := Self.Y;
    Self.Y := Self.Z;
    Self.Z := TempInt;
+   // Cleanup TempData
+   for x := Low(Data) to High(Data) do
+   begin
+      for y := Low(Data[x]) to High(Data[x]) do
+      begin
+         SetLength(TempData[x,y],0);
+      end;
+      SetLength(TempData[x],0);
+   end;
+   SetLength(TempData,0);
 end;
 
 
@@ -2359,6 +2382,206 @@ begin
       SetLength(Done[i],0);
    end;
    SetLength(Done,0);
+end;
+
+procedure TVoxelSection.Crop;
+var
+   x,y,z,x_min, y_min, z_min, x_max, y_max, z_max: integer;
+   found: boolean;
+   v : TVoxelUnpacked;
+   Scale : TVector3f;
+   TempData : array of array of array of TVoxelPacked;
+begin
+   // Detect scale
+   Scale.X := (Tailer.MaxBounds[1] - Tailer.MinBounds[1]) / Tailer.XSize;
+   Scale.Y := (Tailer.MaxBounds[2] - Tailer.MinBounds[2]) / Tailer.YSize;
+   Scale.Z := (Tailer.MaxBounds[3] - Tailer.MinBounds[3]) / Tailer.ZSize;
+   // Detect minimums
+   // x_min
+   x_min := 0;
+   found := false;
+   while (not found) and (x_min < Tailer.XSize) do
+   begin
+      y := 0;
+      while (not found) and (y < Tailer.YSize) do
+      begin
+         z := 0;
+         while (not found) and (z < Tailer.ZSize) do
+         begin
+            GetVoxel(x_min,y,z,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(z);
+         end;
+         inc(y);
+      end;
+      if not found then
+         inc(x_min);
+   end;
+   // y_min
+   y_min := 0;
+   found := false;
+   while (not found) and (y_min < Tailer.YSize) do
+   begin
+      x := 0;
+      while (not found) and (x < Tailer.XSize) do
+      begin
+         z := 0;
+         while (not found) and (z < Tailer.ZSize) do
+         begin
+            GetVoxel(x,y_min,z,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(z);
+         end;
+         inc(x);
+      end;
+      if not found then
+         inc(y_min);
+   end;
+   // z_min
+   z_min := 0;
+   found := false;
+   while (not found) and (z_min < Tailer.ZSize) do
+   begin
+      y := 0;
+      while (not found) and (y < Tailer.YSize) do
+      begin
+         x := 0;
+         while (not found) and (x < Tailer.XSize) do
+         begin
+            GetVoxel(x,y,z_min,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(x);
+         end;
+         inc(y);
+      end;
+      if not found then
+         inc(z_min);
+   end;
+   // Detect maximums
+   // x_max
+   x_max := Tailer.XSize-1;
+   found := false;
+   while (not found) and (x_min >= 0) do
+   begin
+      y := 0;
+      while (not found) and (y < Tailer.YSize) do
+      begin
+         z := 0;
+         while (not found) and (z < Tailer.ZSize) do
+         begin
+            GetVoxel(x_max,y,z,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(z);
+         end;
+         inc(y);
+      end;
+      if not found then
+         dec(x_max);
+   end;
+   // y_max
+   y_max := Tailer.YSize-1;
+   found := false;
+   while (not found) and (y_max >= 0) do
+   begin
+      x := 0;
+      while (not found) and (x < Tailer.XSize) do
+      begin
+         z := 0;
+         while (not found) and (z < Tailer.ZSize) do
+         begin
+            GetVoxel(x,y_max,z,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(z);
+         end;
+         inc(x);
+      end;
+      if not found then
+         dec(y_max);
+   end;
+   // z_max
+   z_max := Tailer.ZSize-1;
+   found := false;
+   while (not found) and (z_max >= 0) do
+   begin
+      y := 0;
+      while (not found) and (y < Tailer.YSize) do
+      begin
+         x := 0;
+         while (not found) and (x < Tailer.XSize) do
+         begin
+            GetVoxel(x,y,z_max,v);
+            if v.Used then
+            begin
+               found := true;
+            end;
+            inc(x);
+         end;
+         inc(y);
+      end;
+      if not found then
+         dec(z_max);
+   end;
+   // Fix bounds
+   Tailer.MinBounds[1] := Tailer.MinBounds[1] + (x_min * Scale.X);
+   Tailer.MinBounds[2] := Tailer.MinBounds[2] + (y_min * Scale.Y);
+   Tailer.MinBounds[3] := Tailer.MinBounds[3] + (z_min * Scale.Z);
+   Tailer.MaxBounds[1] := Tailer.MaxBounds[1] - ((Tailer.XSize - x_max) * Scale.X);
+   Tailer.MaxBounds[2] := Tailer.MaxBounds[2] - ((Tailer.YSize - y_max) * Scale.Y);
+   Tailer.MaxBounds[3] := Tailer.MaxBounds[3] - ((Tailer.ZSize - z_max) * Scale.Z);
+   // Backup Data.
+   SetLength(TempData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            TempData[x,y,z] := Data[x,y,z];
+   // Fix sizes
+   Tailer.XSize := x_max - x_min + 1;
+   Tailer.YSize := y_max - y_min + 1;
+   Tailer.ZSize := z_max - z_min + 1;
+   // Compress data
+   SetDataSize(Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for x := Low(Data) to High(Data) do
+      for y := Low(Data[x]) to High(Data[x]) do
+         for z := Low(Data[x,y]) to High(Data[x,y]) do
+            Data[x,y,z] := TempData[x+x_min,y+y_min,z+z_min];
+   // Fix X, Y and Z
+   if Self.X >= Tailer.XSize then
+      Self.X := Tailer.XSize - 1;
+   if Self.Y >= Tailer.YSize then
+      Self.Y := Tailer.YSize - 1;
+   if Self.Z >= Tailer.ZSize then
+      Self.Z := Tailer.ZSize - 1;
+   // Refresh views
+   for x := 0 to 2 do
+   begin
+      View[x].Clear;
+      View[x].CreateCanvas;
+   end;
+   // Cleanup TempData
+   for x := Low(Data) to High(Data) do
+   begin
+      for y := Low(Data[x]) to High(Data[x]) do
+      begin
+         SetLength(TempData[x,y],0);
+      end;
+      SetLength(TempData[x],0);
+   end;
+   SetLength(TempData,0);
 end;
 
 end.

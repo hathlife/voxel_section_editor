@@ -348,6 +348,8 @@ type
     UpdateSchemes1: TMenuItem;
     OpenDialog3ds2vxl: TOpenDialog;
     Importfromamodelusing3ds2vxl1: TMenuItem;
+    CropSection1: TMenuItem;
+    procedure CropSection1Click(Sender: TObject);
     procedure Importfromamodelusing3ds2vxl1Click(Sender: TObject);
     procedure UpdateSchemes1Click(Sender: TObject);
     procedure using3ds2vxl1Click(Sender: TObject);
@@ -1210,6 +1212,7 @@ begin
    SetViewMode(ModeFull);
    RepaintViews;
 end;
+
 
 procedure TFrmMain.CrossSection1Click(Sender: TObject);
 begin
@@ -3350,6 +3353,24 @@ begin
    //MajorRepaint;
    SectionCombo.ItemIndex:=SectionIndex;
    SectionComboChange(Self);
+   VXLChanged := true;
+end;
+
+procedure TFrmMain.CropSection1Click(Sender: TObject);
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: CropSection1Click');
+   {$endif}
+   SetisEditable(False);
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   // Here we do the crop
+   Document.ActiveSection^.Crop;
+   SetisEditable(True);
+   RefreshAll;
    VXLChanged := true;
 end;
 

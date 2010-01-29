@@ -4743,6 +4743,10 @@ object FrmMain: TFrmMain
         ShortCut = 16453
         OnClick = ClearEntireSection1Click
       end
+      object CropSection1: TMenuItem
+        Caption = 'Crop Section'
+        OnClick = CropSection1Click
+      end
       object N10: TMenuItem
         Caption = '-'
       end
