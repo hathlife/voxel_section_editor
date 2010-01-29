@@ -347,6 +347,8 @@ type
     N25: TMenuItem;
     UpdateSchemes1: TMenuItem;
     OpenDialog3ds2vxl: TOpenDialog;
+    Importfromamodelusing3ds2vxl1: TMenuItem;
+    procedure Importfromamodelusing3ds2vxl1Click(Sender: TObject);
     procedure UpdateSchemes1Click(Sender: TObject);
     procedure using3ds2vxl1Click(Sender: TObject);
     procedure O3DModelizer1Click(Sender: TObject);
@@ -561,6 +563,8 @@ type
     procedure MigEater1Click(Sender: TObject);
     procedure CnCGuild1Click(Sender: TObject);
     procedure TiberiumWeb1Click(Sender: TObject);
+    function GetVoxelImportedBy3ds2vxl(var _Destination: string): boolean;
+    procedure ImportSectionFromVoxel(const _Filename: string);
     procedure Importfrommodel1Click(Sender: TObject);
     procedure Resize1Click(Sender: TObject);
     procedure SpinButton3UpClick(Sender: TObject);
@@ -2729,14 +2733,14 @@ begin
    Redo1.Enabled := mnuBarRedo.Enabled;
 end;
 
-procedure TFrmMain.using3ds2vxl1Click(Sender: TObject);
+function TFrmMain.GetVoxelImportedBy3ds2vxl(var _Destination: string): boolean;
 var
    SEInfo : TShellExecuteInfo;
    ExitCode : dword;
    OptionsFile : TINIFile;
-   Destination : string;
 begin
    // check if the location from 3ds2vxl exists.
+   Result := false;
    while (not FileExists(Config.Location3ds2vxl)) or (not FileExists(Config.INILocation3ds2vxl)) do
    begin
       ShowMessage('Please inform the location of the 3ds2vxl executable. If you do not have it, download it from http://get3ds2vxl.ppmsite.com.');
@@ -2758,13 +2762,22 @@ begin
       OptionsFile := TINIFile.Create(Config.INILocation3ds2vxl);
       if (OptionsFile.ReadInteger('main','enable_voxelizer',0) = 1) and (OptionsFile.ReadInteger('main','activate_batch_voxelization',1) = 0) then
       begin
-         Destination := OptionsFile.ReadString('main','destination','');
-         if FileExists(Destination) then
+         _Destination := OptionsFile.ReadString('main','destination','');
+         if FileExists(_Destination) then
          begin
-            // Open it!
-            OpenVoxelInterface(Destination);
+            Result := true;
          end;
       end;
+   end;
+end;
+
+procedure TFrmMain.using3ds2vxl1Click(Sender: TObject);
+var
+   Destination : string;
+begin
+   if GetVoxelImportedBy3ds2vxl(Destination) then
+   begin
+      OpenVoxelInterface(Destination);
    end;
 end;
 
@@ -4130,11 +4143,70 @@ begin
 //   Update3dViewVOXEL(Document.ActiveVoxel^);
 end;
 
-procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
+procedure TFrmMain.ImportSectionFromVoxel(const _Filename: string);
 var
    TempDocument : TVoxelDocument;
    i, SectionIndex,tempsectionindex: Integer;
    frm: Tfrmimportsection;
+begin
+   TempDocument := TVoxelDocument.Create(_FileName);
+   if TempDocument.ActiveVoxel = nil then
+   begin
+      TempDocument.Free;
+      exit;
+   end;
+   tempsectionindex := 0;
+   if TempDocument.ActiveVoxel^.Header.NumSections > 1 then
+   begin
+      frm:=Tfrmimportsection.Create(Self);
+      frm.Visible:=False;
+
+      frm.ComboBox1.Items.Clear;
+      for i:=0 to TempDocument.ActiveVoxel^.Header.NumSections-1 do
+      begin
+         frm.ComboBox1.Items.Add(TempDocument.ActiveVoxel^.Section[i].Name);
+      end;
+      frm.ComboBox1.ItemIndex:=0;
+      frm.ShowModal;
+      tempsectionindex := frm.ComboBox1.ItemIndex;
+      frm.Free;
+   end;
+   SetIsEditable(false);
+   SectionIndex:=Document.ActiveSection^.Header.Number;
+   Inc(SectionIndex);
+   Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
+   Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
+   Document.ActiveVoxel^.Section[SectionIndex].Header.Number := SectionIndex;
+   Document.ActiveHVA^.InsertSection(SectionIndex);
+   Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
+   //MajorRepaint;
+   SectionCombo.ItemIndex:=SectionIndex;
+   SectionComboChange(Self);
+
+   ResetUndoRedo;
+   UpdateUndo_RedoState;
+   SetIsEditable(true);
+
+   SetupSections;
+   VXLChanged := true;
+end;
+
+procedure TFrmMain.Importfromamodelusing3ds2vxl1Click(Sender: TObject);
+var
+   Destination : string;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: Importfromamodelusing3ds2vxl1Click');
+   {$endif}
+   if GetVoxelImportedBy3ds2vxl(Destination) then
+   begin
+      ImportSectionFromVoxel(Destination);
+   end;
+end;
+
+procedure TFrmMain.Importfrommodel1Click(Sender: TObject);
 begin
    if not isEditable then exit;
 
@@ -4143,46 +4215,7 @@ begin
    {$endif}
    if OpenVXLDialog.execute then
    begin
-      TempDocument := TVoxelDocument.Create(OpenVXLDialog.FileName);
-      if TempDocument.ActiveVoxel = nil then
-      begin
-         TempDocument.Free;
-         exit;
-      end;
-      tempsectionindex := 0;
-      if TempDocument.ActiveVoxel^.Header.NumSections > 1 then
-      begin
-         frm:=Tfrmimportsection.Create(Self);
-         frm.Visible:=False;
-
-         frm.ComboBox1.Items.Clear;
-         for i:=0 to TempDocument.ActiveVoxel^.Header.NumSections-1 do
-         begin
-            frm.ComboBox1.Items.Add(TempDocument.ActiveVoxel^.Section[i].Name);
-         end;
-         frm.ComboBox1.ItemIndex:=0;
-         frm.ShowModal;
-         tempsectionindex := frm.ComboBox1.ItemIndex;
-         frm.Free;
-      end;
-      SetIsEditable(false);
-      SectionIndex:=Document.ActiveSection^.Header.Number;
-      Inc(SectionIndex);
-      Document.ActiveVoxel^.InsertSection(SectionIndex,TempDocument.ActiveVoxel^.Section[tempsectionindex].Name,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.XSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.YSize,TempDocument.ActiveVoxel^.Section[tempsectionindex].Tailer.ZSize);
-      Document.ActiveVoxel^.Section[SectionIndex].Assign(TempDocument.ActiveVoxel^.Section[tempsectionindex]);
-      Document.ActiveVoxel^.Section[SectionIndex].Header.Number := SectionIndex;
-      Document.ActiveHVA^.InsertSection(SectionIndex);
-      Document.ActiveHVA^.CopySection(tempsectionindex,SectionIndex,TempDocument.ActiveHVA^);
-      //MajorRepaint;
-      SectionCombo.ItemIndex:=SectionIndex;
-      SectionComboChange(Self);
-
-      ResetUndoRedo;
-      UpdateUndo_RedoState;
-      SetIsEditable(true);
-
-      SetupSections;
-      VXLChanged := true;
+      ImportSectionFromVoxel(OpenVXLDialog.FileName);
    end;
 end;
 

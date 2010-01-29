@@ -4707,6 +4707,10 @@ object FrmMain: TFrmMain
           ShortCut = 16469
           OnClick = Importfrommodel1Click
         end
+        object Importfromamodelusing3ds2vxl1: TMenuItem
+          Caption = 'Import from a model using 3ds2vxl'
+          OnClick = Importfromamodelusing3ds2vxl1Click
+        end
       end
       object N9: TMenuItem
         Caption = '-'
