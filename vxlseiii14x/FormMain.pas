@@ -3387,7 +3387,6 @@ begin
       //and now do some dirty things with pointers...
       p:=@Sender;
       s := Config.GetHistory(p^.Tag);
-      CheckVXLChanged;
 
       if not fileexists(s) then
       begin
@@ -4535,5 +4534,6 @@ procedure TFrmMain.FormDeactivate(Sender: TObject);
 begin
    Application.OnIdle := nil;
 end;
+
 
 end.

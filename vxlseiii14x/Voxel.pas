@@ -899,9 +899,9 @@ begin
    Self.Z := Self.Y;
    Self.Y := TempInt;
    // Cleanup TempData
-   for x := Low(Data) to High(Data) do
+   for x := Low(TempData) to High(TempData) do
    begin
-      for y := Low(Data[x]) to High(Data[x]) do
+      for y := Low(TempData[x]) to High(TempData[x]) do
       begin
          SetLength(TempData[x,y],0);
       end;
@@ -951,9 +951,9 @@ begin
    Self.Y := Self.Z;
    Self.Z := TempInt;
    // Cleanup TempData
-   for x := Low(Data) to High(Data) do
+   for x := Low(TempData) to High(TempData) do
    begin
-      for y := Low(Data[x]) to High(Data[x]) do
+      for y := Low(TempData[x]) to High(TempData[x]) do
       begin
          SetLength(TempData[x,y],0);
       end;
@@ -2573,9 +2573,9 @@ begin
       View[x].CreateCanvas;
    end;
    // Cleanup TempData
-   for x := Low(Data) to High(Data) do
+   for x := Low(TempData) to High(TempData) do
    begin
-      for y := Low(Data[x]) to High(Data[x]) do
+      for y := Low(TempData[x]) to High(TempData[x]) do
       begin
          SetLength(TempData[x,y],0);
       end;

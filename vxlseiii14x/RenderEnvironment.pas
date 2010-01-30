@@ -719,7 +719,7 @@ begin
   Bitmap := GetScreenShot;
   PNGImage := TPNGObject.Create;
   PNGImage.Assign(Bitmap);
-  PNGImage.CompressionLevel := _Compression;
+//  PNGImage.CompressionLevel := _Compression;
   PNGImage.SaveToFile(Filename);
   Bitmap.Free;
   PNGImage.Free;
