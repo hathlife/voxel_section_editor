@@ -5,6 +5,8 @@ interface
 uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
    Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate;
 
+{$INCLUDE Global_Conditionals.inc}
+   
 type
    PRenderEnvironment = ^TRenderEnvironment;
    TRenderEnvironment = class
@@ -61,7 +63,7 @@ type
          LightAmb : TVector4f;
          LightDif: TVector4f;
          // Constructors;
-         constructor Create(_Handle : THandle; _width, _height : longword);
+         constructor Create(_Handle : THandle; _FirstRC: HGLRC; _width, _height : longword);
          destructor Destroy; override;
 
          // Renders and Related
@@ -99,8 +101,12 @@ type
 
 implementation
 
+{$ifdef TEXTURE_DEBUG}
+uses FormMain;
+{$endif}
+
 // Constructors;
-constructor TRenderEnvironment.Create(_Handle: Cardinal;  _width, _height : longword);
+constructor TRenderEnvironment.Create(_Handle: Cardinal; _FirstRC: HGLRC; _width, _height : longword);
 begin
    // The basics, to avoid memory issues.
    Next := nil;
@@ -112,6 +118,8 @@ begin
    Handle := _Handle;
    DC := GetDC(Handle);
    RC := CreateRenderingContext(DC,[opDoubleBuffered],32,24,0,0,0,0);
+   if _FirstRC <> 0 then
+      wglShareLists(_FirstRC,RC);
    ActivateRenderingContext(DC, RC);
    // Setup GL settings
    glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
@@ -271,6 +279,9 @@ begin
       if ScreenTexture <> 0 then
          glDeleteTextures(1,@ScreenTexture);
       glGenTextures(1, @ScreenTexture);
+      {$ifdef TEXTURE_DEBUG}
+      FrmMain.DebugFile.Add('Render Environment: ' + IntToStr(Cardinal(Addr(ScreenTexture))) + ', Handle: ' + IntToStr(Handle) + ', ScreenTexture ID: ' + IntToStr(ScreenTexture));
+      {$endif}
       glBindTexture(GL_TEXTURE_2D, ScreenTexture);
       glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, GetPow2Size(Width),GetPow2Size(Height), 0);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -719,6 +730,7 @@ begin
   Bitmap := GetScreenShot;
   PNGImage := TPNGObject.Create;
   PNGImage.Assign(Bitmap);
+  // The next line is commented out, since it causes infinite loop.
 //  PNGImage.CompressionLevel := _Compression;
   PNGImage.SaveToFile(Filename);
   Bitmap.Free;

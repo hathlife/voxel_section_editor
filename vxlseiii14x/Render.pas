@@ -8,6 +8,7 @@ type
    TRender = class
       private
          FPSCap : longword;
+         FirstRC : HGLRC;
          // Misc
          procedure ForceFPS;
       public
@@ -32,6 +33,7 @@ implementation
 constructor TRender.Create;
 begin
    InitOpenGL;
+   FirstRC := 0;
    Environment := nil;
 end;
 
@@ -54,10 +56,11 @@ var
    NewEnvironment,CurrentEnvironment : PRenderEnvironment;
 begin
    new(NewEnvironment);
-   NewEnvironment^ := TRenderEnvironment.Create(_Handle,_width,_height);
+   NewEnvironment^ := TRenderEnvironment.Create(_Handle,FirstRC,_width,_height);
    if Environment = nil then
    begin
       Environment := NewEnvironment;
+      FirstRC := NewEnvironment^.RC;
    end
    else
    begin
@@ -82,6 +85,14 @@ begin
       if _Environment = Environment then
       begin
          Environment := _Environment^.Next;
+         if Environment <> nil then
+         begin
+            FirstRC := Environment^.RC;
+         end
+         else
+         begin
+            FirstRC := 0;
+         end;
       end
       else // It could be inside the list, but it's not the first.
       begin

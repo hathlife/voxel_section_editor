@@ -16,7 +16,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.66';
+   APPLICATION_VER = '1.39.67';
 
 type
   TFrmMain = class(TForm)
@@ -611,6 +611,9 @@ type
      {$ifdef DEBUG_FILE}
      DebugFile: TDebugFile;
      {$endif}
+     {$ifdef TEXTURE_DEBUG}
+     DebugFile: TDebugFile;
+     {$endif}
   end;
 
 var
@@ -629,6 +632,10 @@ var
 begin
    // 1.32: Debug adition
    {$ifdef DEBUG_FILE}
+   DebugFile := TDebugFile.Create('debugdev.txt');
+   DebugFile.Add('FrmMain: FormCreate');
+   {$endif}
+   {$ifdef TEXTURE_DEBUG}
    DebugFile := TDebugFile.Create('debugdev.txt');
    DebugFile.Add('FrmMain: FormCreate');
    {$endif}
