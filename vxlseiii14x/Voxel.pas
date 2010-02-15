@@ -1625,14 +1625,14 @@ procedure TVoxelView.TranslateClick(i, j: Integer; var X, Y, Z: Integer);
    procedure TranslateX;
    begin
       X := Foreground;
-      if SwapY then
-         Y := Width - 1 - i
-      else
-         Y := i;
       if SwapZ then
-         Z := Height - 1 - j
+         Z := Width - 1 - i
       else
          Z := j;
+      if SwapY then
+         Y := Height - 1 - j
+      else
+         Y := i;
    end;
    procedure TranslateY;
    begin
@@ -1671,14 +1671,14 @@ end;
 procedure TVoxelView.getPhysicalCursorCoords(var X, Y: integer);
    procedure TranslateX;
    begin
-      if SwapY then
-         X := Width - 1 - Voxel.Y
-      else
-         X := Voxel.Y;
       if SwapZ then
-         Y := Height - 1 - Voxel.Z
+         X := Width - 1 - Voxel.Z
       else
-         Y := Voxel.Z;
+         X := Voxel.Z;
+      if SwapY then
+         Y := Height - 1 - Voxel.Y
+      else
+         Y := Voxel.Y;
    end;
    procedure TranslateY;
    begin
