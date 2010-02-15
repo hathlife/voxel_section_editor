@@ -1223,8 +1223,8 @@ begin
       case Orient of
          oriX:
          begin
-            Width := YSize;
-            Height := ZSize;
+            Width := ZSize;
+            Height := YSize;
          end;
          oriY:
          begin
@@ -1327,7 +1327,7 @@ procedure TVoxelView.Refresh;
       iFactor, iOp, jFactor, jOp: integer;
    begin
       Foreground := Voxel.X;
-      if SwapY then
+      if SwapZ then
       begin
          iFactor := Width - 1;
          iOp := -1;
@@ -1337,7 +1337,7 @@ procedure TVoxelView.Refresh;
          iFactor := 0;
          iOp := 1;
       end;
-      if SwapZ then
+      if SwapY then
       begin
          jFactor := Height - 1;
          jOp := -1;
@@ -1350,8 +1350,8 @@ procedure TVoxelView.Refresh;
       // increment on the x axis
       if Dir = dirTowards then
       begin
-         for y := 0 to (Width - 1) do
-            for z := 0 to (Height - 1) do
+         for z := 0 to (Width - 1) do
+            for y := 0 to (Height - 1) do
             begin
                x := Foreground;
                Voxel.GetVoxel(x,y,z,v);
@@ -1365,8 +1365,8 @@ procedure TVoxelView.Refresh;
                   Voxel.GetVoxel(x,y,z,v);
                end;
                // and set the voxel appropriately
-               i := iFactor + (iOp * y);
-               j := jFactor + (jOp * z);
+               i := iFactor + (iOp * z);
+               j := jFactor + (jOp * y);
                with Canvas[i,j] do
                begin
                   Depth := x;
@@ -1384,8 +1384,8 @@ procedure TVoxelView.Refresh;
       end
       else
       begin // Dir = dirAway
-         for y := 0 to (Width - 1) do
-            for z := 0 to (Height - 1) do
+         for z := 0 to (Width - 1) do
+            for y := 0 to (Height - 1) do
             begin
                x := Foreground;
                Voxel.GetVoxel(x,y,z,v);
@@ -1399,8 +1399,8 @@ procedure TVoxelView.Refresh;
                   Voxel.GetVoxel(x,y,z,v);
                end;
                // and set the voxel appropriately
-               i := iFactor + (iOp * y);
-               j := jFactor + (jOp * z);
+               i := iFactor + (iOp * z);
+               j := jFactor + (jOp * y);
                with Canvas[i,j] do
                begin
                   Depth := x;
@@ -1745,37 +1745,37 @@ begin
    idx := getViewNameIdx;
    case idx of
       0:
-      begin // Back to Front
-         SwapX := False;
-         SwapY := False;
-         SwapZ := True;
-      end;
-      1:
-      begin // Front to Back
-         SwapX := False;
-         SwapY := True;
-         SwapZ := True;
-      end;
-      2:
       begin // Right to Left
          SwapX := False;
          SwapY := True;
          SwapZ := True;
       end;
-      3:
+      1:
       begin // Left to Right
+         SwapX := False;
+         SwapY := True;
+         SwapZ := False;
+      end;
+      2:
+      begin // Top to Bottom
+         SwapX := False;
+         SwapY := True;
+         SwapZ := True;
+      end;
+      3:
+      begin // Bottom to Top
          SwapX := True;
          SwapY := True;
          SwapZ := True;
       end;
       4:
-      begin // Top to Bottom
+      begin // Back to Front
          SwapX := False;
          SwapY := True;
          SwapZ := False;
       end;
       5:
-      begin // Bottom to Top
+      begin // Front to Back
          SwapX := True;
          SwapY := True;
          SwapZ := False;
