@@ -19,6 +19,7 @@ function SetVector4f(x, y, z, w : single) : TVector4f;
 Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
 Function TColorToTVector3f(Color : TColor) : TVector3f;
 function Subtract3i(_V1,_V2: TVector3i): TVector3i;
+function RGBA(r, g, b, a: Byte): COLORREF;
 
 // Program related
 function RunAProgram (const theProgram, itsParameters, defaultDirectory : string): integer;
@@ -104,14 +105,10 @@ end;
 
 // Graphics related (OpenGL engine)
 function GetPow2Size(Size : Cardinal) : Cardinal;
-var
-   Step : Byte;
 begin
-   Step   := 0;
-   Repeat
-      Result := Trunc(Power(2,Step));
-      inc(Step);
-   Until (Result >= Size) or (Result >= 4096);
+   Result := 1;
+   while (Result < Size) and (Result < 4096) do
+      Result := Result shl 2;
    if Result > 4096 then
       Result := 4096;
 end;
@@ -141,6 +138,11 @@ begin
    Result.X := _V1.X - _V2.X;
    Result.Y := _V1.Y - _V2.Y;
    Result.Z := _V1.Z - _V2.Z;
+end;
+
+function RGBA(r, g, b, a: Byte): COLORREF;
+begin
+  Result := (r or (g shl 8) or (b shl 16) or (a shl 24));
 end;
 
 // Program related.
