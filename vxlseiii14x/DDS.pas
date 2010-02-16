@@ -384,4 +384,26 @@ begin
    result := true;
 end;
 
+function SaveDDS(Stream: TStream; Var Texture : Cardinal): boolean;
+var
+   hdr: TDDSHeader;
+   mipMapCount, x, y, xSize, ySize: Cardinal;
+   li: ^TDDSLoadInfo;
+   data,pixels: PBytes;
+   unpacked: PGLuints;
+   size, ix, zz: Cardinal;
+begin
+   result := false;
+   //  DDS is so simple to write, too
+   hdr.dwMagic := DDS_MAGIC;
+   hdr.dwSize := 124;
+   glBindTexture(GL_TEXTURE_2D,Texture);
+
+   Stream.Write(hdr, sizeof(hdr));
+   if (hdr.dwMagic<>DDS_MAGIC) or (hdr.dwSize<>124) or ((hdr.dwFlags and DDSD_PIXELFORMAT)=0) or ((hdr.dwFlags and DDSD_CAPS)=0) then
+      exit;
+
+
+end;
+
 end.

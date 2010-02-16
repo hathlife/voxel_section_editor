@@ -1228,8 +1228,8 @@ begin
          end;
          oriY:
          begin
-            Width := XSize;
-            Height := ZSize;
+            Width := ZSize;
+            Height := XSize;
          end;
          oriZ:
          begin
@@ -1425,7 +1425,7 @@ procedure TVoxelView.Refresh;
       iFactor, iOp, jFactor, jOp: integer;
    begin
       Foreground := Voxel.Y;
-      if SwapX then
+      if SwapZ then
       begin
          iFactor := Width - 1;
          iOp := -1;
@@ -1435,7 +1435,7 @@ procedure TVoxelView.Refresh;
          iFactor := 0;
          iOp := 1;
       end;
-      if SwapZ then
+      if SwapX then
       begin
          jFactor := Height - 1;
          jOp := -1;
@@ -1447,8 +1447,8 @@ procedure TVoxelView.Refresh;
       end;
       if Dir = dirTowards then
       begin
-         for x := 0 to (Width - 1) do
-            for z := 0 to (Height - 1) do
+         for z := 0 to (Width - 1) do
+            for x := 0 to (Height - 1) do
             begin
                y := Foreground;
                Voxel.GetVoxel(x,y,z,v);
@@ -1462,8 +1462,8 @@ procedure TVoxelView.Refresh;
                   Voxel.GetVoxel(x,y,z,v);
                end;
                // and set the voxel appropriately
-               i := iFactor + (iOp * x);
-               j := jFactor + (jOp * z);
+               i := iFactor + (iOp * z);
+               j := jFactor + (jOp * x);
                with Canvas[i,j] do
                begin
                   Depth := y;
@@ -1481,8 +1481,8 @@ procedure TVoxelView.Refresh;
       end
       else
       begin // Dir = dirAway
-         for x := 0 to (Width - 1) do
-            for z := 0 to (Height - 1) do
+         for z := 0 to (Width - 1) do
+            for x := 0 to (Height - 1) do
             begin
                y := Foreground;
                Voxel.GetVoxel(x,y,z,v);
@@ -1496,8 +1496,8 @@ procedure TVoxelView.Refresh;
                   Voxel.GetVoxel(x,y,z,v);
                end;
                // and set the voxel appropriately
-               i := iFactor + (iOp * x);
-               j := jFactor + (jOp * z);
+               i := iFactor + (iOp * z);
+               j := jFactor + (jOp * x);
                with Canvas[i,j] do
                begin
                   Depth := y;
@@ -1636,15 +1636,15 @@ procedure TVoxelView.TranslateClick(i, j: Integer; var X, Y, Z: Integer);
    end;
    procedure TranslateY;
    begin
-      if SwapX then
-         X := Width - 1 - i
-      else
-         X := i;
-      Y := Foreground;
       if SwapZ then
-         Z := Height - 1 - j
+         Z := Width - 1 - i
       else
-         Z := j;
+         Z := i;
+      Y := Foreground;
+      if SwapX then
+         X := Height - 1 - j
+      else
+         X := j;
    end;
 
    procedure TranslateZ;
@@ -1682,14 +1682,14 @@ procedure TVoxelView.getPhysicalCursorCoords(var X, Y: integer);
    end;
    procedure TranslateY;
    begin
-      if SwapX then
-         X := Width - 1 - Voxel.X
-      else
-         X := Voxel.X;
       if SwapZ then
-         Y := Height - 1 - Voxel.Z
+         X := Width - 1 - Voxel.Z
       else
-         Y := Voxel.Z;
+         X := Voxel.Z;
+      if SwapX then
+         Y := Height - 1 - Voxel.X
+      else
+         Y := Voxel.X;
    end;
    procedure TranslateZ;
    begin
@@ -1748,25 +1748,25 @@ begin
       begin // Right to Left
          SwapX := False;
          SwapY := True;
-         SwapZ := True;
+         SwapZ := False;
       end;
       1:
       begin // Left to Right
          SwapX := False;
          SwapY := True;
-         SwapZ := False;
+         SwapZ := True;
       end;
       2:
       begin // Top to Bottom
          SwapX := False;
          SwapY := True;
-         SwapZ := True;
+         SwapZ := False;
       end;
       3:
       begin // Bottom to Top
          SwapX := True;
          SwapY := True;
-         SwapZ := True;
+         SwapZ := False;
       end;
       4:
       begin // Back to Front
