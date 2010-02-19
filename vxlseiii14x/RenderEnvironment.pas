@@ -3,10 +3,10 @@ unit RenderEnvironment;
 interface
 
 uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
-   Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate;
+   Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS;
 
 {$INCLUDE Global_Conditionals.inc}
-   
+
 type
    PRenderEnvironment = ^TRenderEnvironment;
    TRenderEnvironment = class
@@ -23,6 +23,7 @@ type
          procedure ScreenShotTGA(const _Filename : string);
          procedure ScreenShotBMP(const _Filename : string);
          procedure ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
+         procedure ScreenShotDDS(const _Filename : string);
       public
          Next : PRenderEnvironment;
          ActorList: PActor;
@@ -737,6 +738,25 @@ begin
   PNGImage.Free;
 end;
 
+procedure TRenderEnvironment.ScreenShotDDS(const _Filename : string);
+var
+  Filename : string;
+  DDSImage : TDDSImage;
+begin
+   // Get filename.
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,'.dds');
+
+   if Filename = '' then
+      exit;
+
+  DDSImage := TDDSImage.Create;
+  DDSImage.SaveToFile(Filename,ScreenTexture);
+  FUpdateWorld := true;    // this is temporarily, because the DDS save function swaps the y.
+  // Line below was commented out, because it is crashing.
+//  DDSImage.Free;
+end;
+
 procedure TRenderEnvironment.ScreenShotTGA(const _Filename : string);
 var
    Filename : string;
@@ -888,6 +908,10 @@ begin
       begin
          ScreenShotPNG(ScreenFilename,ScreenshotCompression);
       end;
+      stDDS:
+      begin
+         ScreenShotDDS(ScreenFilename);
+      end;
    end;
 end;
 
@@ -913,6 +937,10 @@ begin
       stPng:
       begin
          ScreenShotPNG(ScreenFilename,ScreenshotCompression);
+      end;
+      stDDS:
+      begin
+         ScreenShotDDS(ScreenFilename);
       end;
    end;
    AnimFrameMax := 0;

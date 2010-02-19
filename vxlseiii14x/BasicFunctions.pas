@@ -108,7 +108,7 @@ function GetPow2Size(Size : Cardinal) : Cardinal;
 begin
    Result := 1;
    while (Result < Size) and (Result < 4096) do
-      Result := Result shl 2;
+      Result := Result shl 1;
    if Result > 4096 then
       Result := 4096;
 end;

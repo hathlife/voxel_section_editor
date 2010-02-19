@@ -18,6 +18,8 @@ type
       Emission: TVector4f;
       ShaderID: integer;
    end;
+   PMeshMaterial = ^TMeshMaterial;
+   TAMeshMaterial = array of TMeshMaterial;
 
    TRenderProc = procedure of object;
    TDistanceFunc = function (_Distance: single): single of object;
@@ -85,6 +87,7 @@ type
          Faces : auint32;
          TextCoords : TAVector2f;
          FaceNormals : TAVector3f;
+         Materials : TAMeshMaterial;
          // Graphical and colision
          BoundingBox : TRectangle3f;
          Scale : TVector3f;

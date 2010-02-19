@@ -113,6 +113,8 @@ type
     ColourFXConvertFacetoVertex: TMenuItem;
     FaceFXOptimizeMeshCustom: TMenuItem;
     ModelFXSquaredSmooth: TMenuItem;
+    akeScreenshotDDS1: TMenuItem;
+    procedure akeScreenshotDDS1Click(Sender: TObject);
     procedure ModelFXSquaredSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshCustomClick(Sender: TObject);
     procedure ColourFXConvertFacetoVertexClick(Sender: TObject);
@@ -590,6 +592,11 @@ end;
 procedure TFrm3DModelizer.akeScreenshotBMP1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stBMP);
+end;
+
+procedure TFrm3DModelizer.akeScreenshotDDS1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stDDS);
 end;
 
 procedure TFrm3DModelizer.akeScreenshotJPG1Click(Sender: TObject);

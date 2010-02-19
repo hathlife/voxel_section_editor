@@ -13,7 +13,10 @@ type
       MinBounds, MaxBounds: TVector2f;
       TransformMatrix : TMatrix;
    end;
-   TSeedTree = array of integer;
+   TSeedTreeItem = record
+      Left, Right: integer;
+   end;
+   TSeedTree = array of TSeedTreeItem;
    TSeedSet = array of TTextureSeed;
    TTexCompareFunction = function (const _Seed1, _Seed2 : TTextureSeed): real of object;
    T2DFrameBuffer = array of array of TVector4f;
@@ -49,6 +52,7 @@ type
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
+         procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
          function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
@@ -253,6 +257,7 @@ var
    UMerge,VMerge,PushValue: real;
    Seeds: TSeedSet;
    SeedTree : TSeedTree;
+   List : CIntegerList;
 begin
    // Get the neighbours of each face.
    FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
@@ -317,8 +322,13 @@ begin
    SetLength(SeedTree,High(Seeds)+1);
    for i := Low(SeedTree) to High(SeedTree) do
    begin
-      SeedTree[i] := -1;
+      SeedTree[i].Left := -1;
+      SeedTree[i].Right := -1;
    end;
+
+   // Setup seed tree detection list
+   List := CIntegerList.Create;
+   List.UseSmartMemoryManagement(true);
 
    // We'll now start the main loop. We merge the smaller seeds into bigger seeds until we only have on seed left.
    while High(VOrder) > 0 do
@@ -339,20 +349,26 @@ begin
          Seeds[High(Seeds)].MaxBounds.U := max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U));
          Seeds[High(Seeds)].MaxBounds.V := (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V);
          // Insert the last two elements from VOrder at the new seed tree element.
-         SeedTree[High(SeedTree)] := VOrder[High(VOrder)];
+         SeedTree[High(SeedTree)].Left := VOrder[High(VOrder)-1];
+         SeedTree[High(SeedTree)].Right := VOrder[High(VOrder)];
          // Now we translate the bounds of the element in the 'right' down, where it
          // belongs, and do it recursively.
          i := VOrder[High(VOrder)];
          PushValue := (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE;
-         while i <> -1 do
+         List.Add(SeedTree[High(SeedTree)].Right);
+         while List.GetValue(i) do
          begin
             Seeds[i].MinBounds.V := Seeds[i].MinBounds.V + PushValue;
             Seeds[i].MaxBounds.V := Seeds[i].MaxBounds.V + PushValue;
-            i := SeedTree[i];
+            if SeedTree[i].Left <> -1 then
+               List.Add(SeedTree[i].Left);
+            if SeedTree[i].Right <> -1 then
+               List.Add(SeedTree[i].Right);
          end;
          // Remove the last two elements of VOrder from UOrder and add the new seed.
          i := 0;
          x := 0;
+
          while i < (High(UOrder)-1) do
          begin
             if (UOrder[i] = VOrder[High(VOrder)]) or (UOrder[i] = VOrder[High(VOrder)-1]) then
@@ -382,7 +398,7 @@ begin
             dec(i);
          end;
          VOrder[Previous+1] := High(SeedTree);
-         
+
       end
       else  // UMerge <= VMerge
       begin
@@ -392,16 +408,21 @@ begin
          Seeds[High(Seeds)].MaxBounds.U := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U);
          Seeds[High(Seeds)].MaxBounds.V := max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
          // Insert the last two elements from UOrder at the new seed tree element.
-         SeedTree[High(SeedTree)] := VOrder[High(UOrder)];
-         // Now we translate the bounds of the element in the 'right' to the right, 
+         SeedTree[High(SeedTree)].Left := VOrder[High(UOrder)-1];
+         SeedTree[High(SeedTree)].Right := VOrder[High(UOrder)];
+         // Now we translate the bounds of the element in the 'right' to the right,
          // where it belongs, and do it recursively.
          i := VOrder[High(UOrder)];
          PushValue := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE;
-         while i <> -1 do
+         List.Add(SeedTree[High(SeedTree)].Right);
+         while List.GetValue(i) do
          begin
             Seeds[i].MinBounds.U := Seeds[i].MinBounds.U + PushValue;
             Seeds[i].MaxBounds.U := Seeds[i].MaxBounds.U + PushValue;
-            i := SeedTree[i];
+            if SeedTree[i].Left <> -1 then
+               List.Add(SeedTree[i].Left);
+            if SeedTree[i].Right <> -1 then
+               List.Add(SeedTree[i].Right);
          end;
 
          // Remove the last two elements of UOrder from VOrder and add the new seed.
@@ -473,6 +494,7 @@ begin
    SetLength(VertsSeed,0);
    SetLength(UOrder,0);
    SetLength(VOrder,0);
+   List.Free;
    FaceNeighbors.Free;
 end;
 
@@ -764,7 +786,7 @@ begin
 		db3 :=(_C3.Z - _C2.Z) / (_P3.V - _P2.V);
 		da3 :=(_C3.W - _C2.W) / (_P3.V - _P2.V);
 	end
-   else 
+   else
    begin 
 		dx3 := 0;
       dr3 := 0;
@@ -799,7 +821,7 @@ begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr; 
 				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.Z := PC.Z + dg;
 				PC.W := PC.W + da; 
             PP.U := PP.U + 1;
 			end;
@@ -869,7 +891,7 @@ begin
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 				da := (EC.W - SC.W) / (EP.U - SP.U);
 			end
-         else 
+         else
          begin 
 				dr := 0;
             dg := 0;
@@ -1289,6 +1311,19 @@ begin
    end;
 end;
 
+procedure CTextureGenerator.DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
+var
+   x,y : integer;
+begin
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      SetLength(_Buffer[x],0);
+      SetLength(_WeightBuffer[x],0);
+   end;
+   SetLength(_Buffer,0);
+   SetLength(_WeightBuffer,0);
+end;
+
 function CTextureGenerator.GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
 var
    x,y : integer;
@@ -1375,6 +1410,7 @@ begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
    Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer);
+   DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;
 
 function CTextureGenerator.GenerateNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
@@ -1391,6 +1427,7 @@ begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsNormals[_Faces[(i * _VerticesPerFace)]],_VertsNormals[_Faces[(i * _VerticesPerFace)+1]],_VertsNormals[_Faces[(i * _VerticesPerFace)+2]]);
    end;
    Result := GetPositionedBitmapFromFrameBuffer(Buffer,WeightBuffer);
+   DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;
 
 function CTextureGenerator.GenerateNormalWithHeightMapTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
@@ -1421,6 +1458,7 @@ begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],D1,D2,D3);
    end;
    Result := GetHeightPositionedBitmapFromFrameBuffer(Buffer,WeightBuffer);
+   DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;
 
 

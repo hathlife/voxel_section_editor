@@ -14,15 +14,20 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+// The DDS Image class was written by Banshee for Voxel Section Editor III, to
+// cover its needs of loading saving textures with mipmaps. It uses the loading
+// code from Martin Waldegger, who adapted Jon Watte's code to load DDS files.
+// All functions, constants declarations and types used by LoadDDS function were
+// written by them, except for the TDDSImage class. You can use it on your own
+// project as long as you credit all authors mentioned above somewhere or simply
+// keeping this copyright intact. Do the changes that you feel necessary to fit
+// your project.
+
 unit DDS;
 
 interface
 
-uses Classes, dglOpenGL, Windows;
-
-function LoadDDS(Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
-
-implementation
+uses Classes, dglOpenGL, Windows, SysUtils;
 
 const
 //  little-endian, of course
@@ -108,73 +113,7 @@ type
          Data: array[0..127] of byte;
       );
    end;
-
-function PF_IS_DXT1(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
-             (pf.dwFourCC = D3DFMT_DXT1));
-end;
-
-function PF_IS_DXT3(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
-             (pf.dwFourCC = D3DFMT_DXT3));
-end;
-
-function PF_IS_DXT5(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
-             (pf.dwFourCC = D3DFMT_DXT5));
-end;
-
-function PF_IS_BGRA8(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_RGB)<>0) and
-             ((pf.dwFlags and DDPF_ALPHAPIXELS)<>0) and
-             (pf.dwRGBBitCount = 32) and
-             (pf.dwRBitMask = $ff0000) and
-             (pf.dwGBitMask = $ff00) and
-             (pf.dwBBitMask = $ff) and
-             (pf.dwAlphaBitMask = $ff000000));
-end;
-
-function PF_IS_BGR8(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_RGB)<>0) and
-             ((pf.dwFlags and DDPF_ALPHAPIXELS)=0) and
-             (pf.dwRGBBitCount = 24) and
-             (pf.dwRBitMask = $ff0000) and
-             (pf.dwGBitMask = $ff00) and
-             (pf.dwBBitMask = $ff));
-end;
-
-function PF_IS_BGR5A1(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_RGB)<>0) and
-             ((pf.dwFlags and DDPF_ALPHAPIXELS)<>0) and
-             (pf.dwRGBBitCount = 16) and
-             (pf.dwRBitMask = $00007c00) and
-             (pf.dwGBitMask = $000003e0) and
-             (pf.dwBBitMask = $0000001f) and
-             (pf.dwAlphaBitMask = $00008000));
-end;
-
-function PF_IS_BGR565(var pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_RGB)<>0) and
-             ((pf.dwFlags and DDPF_ALPHAPIXELS)=0) and
-             (pf.dwRGBBitCount = 16) and
-             (pf.dwRBitMask = $0000f800) and
-             (pf.dwGBitMask = $000007e0) and
-             (pf.dwBBitMask = $0000001f));
-end;
-
-function PF_IS_INDEX8(const pf: TDDSPixelFormat): boolean;
-begin
-   result := (((pf.dwFlags and DDPF_INDEXED)<>0) and (pf.dwRGBBitCount = 8));
-end;
-
-type
+
    TDDSLoadInfo = record
       compressed: boolean;
       swap: boolean;
@@ -186,39 +125,115 @@ type
       typ: GLenum;
    end;
 
+   TBytes = array[0..9999] of Byte;
+   PBytes = ^TBytes;
+   TGLuints = array[0..9999] of Cardinal;
+   PGLuints = ^TGLuints;
 
-const
-   GL_COMPRESSED_RGB_S3TC_DXT1                    = $83F0;
-   GL_COMPRESSED_RGBA_S3TC_DXT1                   = $83F1;
-   GL_COMPRESSED_RGBA_S3TC_DXT3                   = $83F2;
-   GL_COMPRESSED_RGBA_S3TC_DXT5                   = $83F3;
+   TDDSImage = class
+      private
+         function PF_IS_DXT1(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_DXT3(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_DXT5(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_BGRA8(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_BGR8(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_BGR5A1(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_BGR565(var pf: TDDSPixelFormat): boolean;
+         function PF_IS_INDEX8(const pf: TDDSPixelFormat): boolean;
+         function max(v1,v2: Cardinal): Cardinal;
+         Procedure SwapY(Pixels: pBytes; xSize, ySize: Integer);
+      public
+         destructor Destroy; override;
+         // I/O
+         function LoadDDS(var Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
+         function SaveDDS(var Stream: TStream; Var Texture : Cardinal): boolean;
+         function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean;
+   end;
 
 var
-   loadInfoDXT1 : TDDSLoadInfo =
-   (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 8; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1);
+   loadInfoDXT1 : TDDSLoadInfo = (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 8; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT);
+   loadInfoDXT3 : TDDSLoadInfo = (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 16; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3_EXT);
+   loadInfoDXT5 : TDDSLoadInfo = (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 16; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5_EXT);
+   loadInfoBGRA8 : TDDSLoadInfo = (compressed: false; swap: false; palette: false; divsize: 1; blockBytes: 4; internalFormat: GL_RGBA8; externalFormat: GL_BGRA; typ: GL_UNSIGNED_BYTE);
+   loadInfoBGR8 : TDDSLoadInfo = (compressed: false; swap: false; palette: false; divsize: 1; blockBytes: 3; internalFormat: GL_RGB8; externalFormat: GL_BGR; typ: GL_UNSIGNED_BYTE);
+   loadInfoBGR5A1 : TDDSLoadInfo = (compressed: false; swap: true; palette: false; divsize: 1; blockBytes: 2; internalFormat: GL_RGB5_A1; externalFormat: GL_BGRA; typ: GL_UNSIGNED_SHORT_1_5_5_5_REV);
+   loadInfoBGR565 : TDDSLoadInfo = (compressed: false; swap: true; palette: false; divsize: 1; blockBytes: 2; internalFormat: GL_RGB5; externalFormat: GL_BGR; typ: GL_UNSIGNED_SHORT_5_6_5);
+   loadInfoIndex8 : TDDSLoadInfo = (compressed: false; swap: false; palette: true; divsize: 1; blockBytes: 1; internalFormat: GL_RGB8; externalFormat: GL_BGRA; typ: GL_UNSIGNED_BYTE);
 
-   loadInfoDXT3 : TDDSLoadInfo =
-   (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 16; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT3);
 
-   loadInfoDXT5 : TDDSLoadInfo =
-   (compressed: true; swap: false; palette: false; divsize: 4; blockBytes: 16; internalFormat: GL_COMPRESSED_RGBA_S3TC_DXT5);
+implementation
 
-   loadInfoBGRA8 : TDDSLoadInfo =
-   (compressed: false; swap: false; palette: false; divsize: 1; blockBytes: 4; internalFormat: GL_RGBA8; externalFormat: GL_BGRA; typ: GL_UNSIGNED_BYTE);
+destructor TDDSImage.Destroy;
+begin
+   inherited Destroy;
+end;
 
-   loadInfoBGR8 : TDDSLoadInfo =
-   (compressed: false; swap: false; palette: false; divsize: 1; blockBytes: 3; internalFormat: GL_RGB8; externalFormat: GL_BGR; typ: GL_UNSIGNED_BYTE);
+function TDDSImage.PF_IS_DXT1(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
+             (pf.dwFourCC = D3DFMT_DXT1));
+end;
 
-   loadInfoBGR5A1 : TDDSLoadInfo =
-   (compressed: false; swap: true; palette: false; divsize: 1; blockBytes: 2; internalFormat: GL_RGB5_A1; externalFormat: GL_BGRA; typ: GL_UNSIGNED_SHORT_1_5_5_5_REV);
+function TDDSImage.PF_IS_DXT3(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
+             (pf.dwFourCC = D3DFMT_DXT3));
+end;
 
-   loadInfoBGR565 : TDDSLoadInfo =
-   (compressed: false; swap: true; palette: false; divsize: 1; blockBytes: 2; internalFormat: GL_RGB5; externalFormat: GL_BGR; typ: GL_UNSIGNED_SHORT_5_6_5);
+function TDDSImage.PF_IS_DXT5(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_FOURCC)<>0) and
+             (pf.dwFourCC = D3DFMT_DXT5));
+end;
 
-   loadInfoIndex8 : TDDSLoadInfo =
-   (compressed: false; swap: false; palette: true; divsize: 1; blockBytes: 1; internalFormat: GL_RGB8; externalFormat: GL_BGRA; typ: GL_UNSIGNED_BYTE);
+function TDDSImage.PF_IS_BGRA8(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_RGB)<>0) and
+             ((pf.dwFlags and DDPF_ALPHAPIXELS)<>0) and
+             (pf.dwRGBBitCount = 32) and
+             (pf.dwRBitMask = $ff0000) and
+             (pf.dwGBitMask = $ff00) and
+             (pf.dwBBitMask = $ff) and
+             (pf.dwAlphaBitMask = $ff000000));
+end;
 
-function max(v1,v2: Cardinal): Cardinal;
+function TDDSImage.PF_IS_BGR8(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_RGB)<>0) and
+             ((pf.dwFlags and DDPF_ALPHAPIXELS)=0) and
+             (pf.dwRGBBitCount = 24) and
+             (pf.dwRBitMask = $ff0000) and
+             (pf.dwGBitMask = $ff00) and
+             (pf.dwBBitMask = $ff));
+end;
+
+function TDDSImage.PF_IS_BGR5A1(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_RGB)<>0) and
+             ((pf.dwFlags and DDPF_ALPHAPIXELS)<>0) and
+             (pf.dwRGBBitCount = 16) and
+             (pf.dwRBitMask = $00007c00) and
+             (pf.dwGBitMask = $000003e0) and
+             (pf.dwBBitMask = $0000001f) and
+             (pf.dwAlphaBitMask = $00008000));
+end;
+
+function TDDSImage.PF_IS_BGR565(var pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_RGB)<>0) and
+             ((pf.dwFlags and DDPF_ALPHAPIXELS)=0) and
+             (pf.dwRGBBitCount = 16) and
+             (pf.dwRBitMask = $0000f800) and
+             (pf.dwGBitMask = $000007e0) and
+             (pf.dwBBitMask = $0000001f));
+end;
+
+function TDDSImage.PF_IS_INDEX8(const pf: TDDSPixelFormat): boolean;
+begin
+   result := (((pf.dwFlags and DDPF_INDEXED)<>0) and (pf.dwRGBBitCount = 8));
+end;
+
+function TDDSImage.max(v1,v2: Cardinal): Cardinal;
 begin
    if v2>v1 then
       result:=v2
@@ -226,13 +241,7 @@ begin
       result:=v1;
 end;
 
-type
-   TBytes = array[0..9999] of Byte;
-   PBytes = ^TBytes;
-   TGLuints = array[0..9999] of Cardinal;
-   PGLuints = ^TGLuints;
-
-Procedure SwapY(Pixels: pBytes; xSize, ySize: Integer); 
+Procedure TDDSImage.SwapY(Pixels: pBytes; xSize, ySize: Integer);
 var
    x, y: integer;
    P1, P2: ^Cardinal;
@@ -249,8 +258,7 @@ begin
       end;
 end;
 
-
-function LoadDDS(Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
+function TDDSImage.LoadDDS(var Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
 var
    hdr: TDDSHeader;
    mipMapCount, x, y, xSize, ySize: Cardinal;
@@ -384,26 +392,172 @@ begin
    result := true;
 end;
 
-function SaveDDS(Stream: TStream; Var Texture : Cardinal): boolean;
+// This is written by Banshee and it ignores volumes, cube maps and any non-RGBA or RGB texture.
+function TDDSImage.SaveDDS(var Stream: TStream; Var Texture : Cardinal): boolean;
 var
    hdr: TDDSHeader;
-   mipMapCount, x, y, xSize, ySize: Cardinal;
-   li: ^TDDSLoadInfo;
-   data,pixels: PBytes;
-   unpacked: PGLuints;
-   size, ix, zz: Cardinal;
+   Border,x, y, xSize, ySize, i, Size: Cardinal;
+   pixels: PBytes;
+   tempi : PGLInt;
+   IsRGBA: boolean;
 begin
    result := false;
    //  DDS is so simple to write, too
    hdr.dwMagic := DDS_MAGIC;
    hdr.dwSize := 124;
+   glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D,Texture);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,tempi);
+   x := tempi^;
+   glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_BASE_LEVEL,tempi);
+   x := x - tempi^;
+   // Note, we'll only save compressed textures.
+   if (x > 0) and (x <> 1000) then
+   begin
+      hdr.dwMipMapCount := x+1;
+      hdr.dwFlags := $A1007;
+      hdr.Caps.dwCaps1 := $401008;
+   end
+   else
+   begin
+      hdr.dwMipMapCount := 1;
+      hdr.dwFlags := $81007;
+      hdr.Caps.dwCaps1 := $1000;
+   end;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_BORDER,tempi);
+   Border := tempi^;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_HEIGHT,tempi);
+   hdr.dwHeight := tempi^ - Border;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_WIDTH,tempi);
+   hdr.dwWidth := tempi^ - Border;
+   hdr.dwDepth := 0;    // volume maps are ignored.
+   hdr.Caps.dwCaps2 := 0; // volume and cube maps are ignored.
+   hdr.Caps.dwDDSX := 0;
+   hdr.Caps.dwReserved := 0;
+   hdr.PixelFormat.dwSize := 32;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_INTERNAL_FORMAT,tempi);
+   hdr.PixelFormat.dwFlags := 0;
+   hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_RGB;
+   hdr.PixelFormat.dwRBitMask := $ff0000;
+   hdr.PixelFormat.dwGBitMask := $ff00;
+   hdr.PixelFormat.dwBBitMask := $ff;
+   hdr.PixelFormat.dwRGBBitCount := 24;
+   IsRGBA := false;
+   if tempi^ = GL_ALPHA then
+   begin
+      hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_ALPHAPIXELS;
+      hdr.PixelFormat.dwAlphaBitMask := $ff000000;
+      hdr.PixelFormat.dwRGBBitCount := 32;
+      IsRGBA := true;
+   end;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_ALPHA_SIZE,tempi);
+   if tempi^ > 0 then
+   begin
+      hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_ALPHAPIXELS;
+      hdr.PixelFormat.dwAlphaBitMask := $ff000000;
+      hdr.PixelFormat.dwRGBBitCount := 32;
+      IsRGBA := true;
+   end;
+   // Force compression of level 0 texture for linear size.
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_COMPRESSED,tempi);
+   if tempi^ = 0 then
+   begin
+      if IsRGBA then
+      begin
+         GetMem(pixels, hdr.dwWidth*hdr.dwHeight*4);
+         glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+      end
+      else
+      begin
+         GetMem(pixels, hdr.dwWidth*hdr.dwHeight*3);
+         glGetTexImage(GL_TEXTURE_2D,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+      end;
+      FreeMem(pixels);
+   end;
+   if isRGBA then
+   begin
+      hdr.PixelFormat.dwFourCC := D3DFMT_DXT5;
+   end
+   else
+   begin
+      hdr.PixelFormat.dwFourCC := D3DFMT_DXT1;
+   end;
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_COMPRESSED_IMAGE_SIZE,tempi);
+   hdr.dwPitchOrLinearSize := tempi^;
 
+   // Write reserved.
+   for i := 0 to 10 do
+      hdr.dwReserved[i] := 0;
+
+   // Write header.
    Stream.Write(hdr, sizeof(hdr));
-   if (hdr.dwMagic<>DDS_MAGIC) or (hdr.dwSize<>124) or ((hdr.dwFlags and DDSD_PIXELFORMAT)=0) or ((hdr.dwFlags and DDSD_CAPS)=0) then
-      exit;
+   // Write first texture.
+   GetMem(pixels, hdr.dwPitchOrLinearSize);
+   glGetCompressedTexImage(GL_TEXTURE_2D,0,pixels);
+   Stream.Write(pixels^,hdr.dwPitchOrLinearSize);
+   FreeMem(pixels);
 
+   // Does it have mipmaps? Write them as well.
+   i := 1;
+   while i < hdr.dwMipMapCount do
+   begin
+      // Get the dimensions of the mipmap
+      glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_WIDTH,tempi);
+      xSize := tempi^;
+      glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_HEIGHT,tempi);
+      ySize := tempi^;
+      // Is the current mipmap compressed?
+      glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED,tempi);
+      if tempi^ = 0 then
+      begin
+         // It is not, then compress the texture first.
+         if IsRGBA then
+         begin
+            GetMem(pixels, xSize*ySize*4);
+            glGetTexImage(GL_TEXTURE_2D,i,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+            SwapY(pixels,xSize,ySize);
+            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+         end
+         else
+         begin
+            GetMem(pixels, xSize*ySize*3);
+            glGetTexImage(GL_TEXTURE_2D,i,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+            SwapY(pixels,xSize,ySize);
+            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,xSize,ySize,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+         end;
+         FreeMem(pixels);
+      end;
+      // Now we get the compressed size.
+      glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED_IMAGE_SIZE,tempi);
+      Size := tempi^;
 
+      // Write the texture.
+      GetMem(pixels, Size);
+      glGetCompressedTexImage(GL_TEXTURE_2D,i,pixels);
+      Stream.Write(pixels^,Size);
+      FreeMem(pixels);
+
+      // go to next mipmap level.
+      inc(i);
+   end;
+   glDisable(GL_TEXTURE_2D);
 end;
+
+function TDDSImage.SaveToFile(const _Filename: string; _Texture: Cardinal): boolean;
+var
+   MyFile: TStream;
+begin
+   Result := false;
+   MyFile := TFileStream.Create(_Filename,fmCreate);
+   SaveDDS(MyFile,_Texture);
+   MyFile.Free;
+   Result := true;
+end;
+
 
 end.

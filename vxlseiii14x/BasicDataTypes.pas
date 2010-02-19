@@ -126,7 +126,7 @@ type
    AInt32 = array of integer;
    AUInt32 = array of longword;
    ABool = array of boolean;
-   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng);
+   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
 
 
 implementation
