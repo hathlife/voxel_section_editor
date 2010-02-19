@@ -147,8 +147,9 @@ type
          // I/O
          function LoadFile(const _Filename: string; var _Texture: Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
          function LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
-         function SaveDDS(var _Stream: TStream; Var _Texture : Cardinal): boolean;
-         function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean;
+         function SaveDDS(var _Stream: TStream; Var _Texture : Cardinal; _Compression : GLINT = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): boolean;
+         function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean; overload;
+         function SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean; overload;
    end;
 
 var
@@ -405,7 +406,7 @@ end;
 
 
 // This is written by Banshee and it ignores volumes, cube maps and any non-RGBA or RGB texture.
-function TDDSImage.SaveDDS(var _Stream: TStream; Var _Texture : Cardinal): boolean;
+function TDDSImage.SaveDDS(var _Stream: TStream; Var _Texture : Cardinal; _Compression : GLINT = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): boolean;
 var
    hdr: TDDSHeader;
    Border,x, y, xSize, ySize, i, Size: Cardinal;
@@ -461,7 +462,7 @@ begin
    GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_INTERNAL_FORMAT,tempi);
    hdr.PixelFormat.dwFlags := 0;
-   hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_RGB;
+   hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_RGB or DDPF_FOURCC;
    hdr.PixelFormat.dwRBitMask := $ff0000;
    hdr.PixelFormat.dwGBitMask := $ff00;
    hdr.PixelFormat.dwBBitMask := $ff;
@@ -497,7 +498,7 @@ begin
          GetMem(pixels, hdr.dwWidth*hdr.dwHeight*4);
          glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
-         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+         glTexImage2D(GL_TEXTURE_2D,0,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
       end
       else
       begin
@@ -538,7 +539,7 @@ begin
       SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
       if IsRGBA then
       begin
-         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+         glTexImage2D(GL_TEXTURE_2D,0,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
       end
       else
       begin
@@ -573,7 +574,7 @@ begin
             GetMem(pixels, xSize*ySize*4);
             glGetTexImage(GL_TEXTURE_2D,i,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
             SwapY(pixels,xSize,ySize);
-            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+            glTexImage2D(GL_TEXTURE_2D,i,_Compression,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          end
          else
          begin
@@ -601,7 +602,7 @@ begin
          SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
          if IsRGBA then
          begin
-            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+            glTexImage2D(GL_TEXTURE_2D,i,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          end
          else
          begin
@@ -625,6 +626,31 @@ begin
    SaveDDS(MyFile,_Texture);
    MyFile.Free;
    Result := true;
+end;
+
+function TDDSImage.SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean;
+var
+   Compression : TGLInt;
+begin
+   case _Compression of
+      D3DFMT_DXT1:
+      begin
+         Compression := GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+      end;
+      D3DFMT_DXT3:
+      begin
+         Compression := GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+      end;
+      D3DFMT_DXT5:
+      begin
+         Compression := GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+      end
+      else
+      begin
+         Compression := GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+      end;
+   end;
+   SaveToFile(_Filename,_Texture,Compression);
 end;
 
 
