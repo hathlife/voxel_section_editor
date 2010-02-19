@@ -145,8 +145,9 @@ type
       public
          destructor Destroy; override;
          // I/O
-         function LoadDDS(var Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
-         function SaveDDS(var Stream: TStream; Var Texture : Cardinal): boolean;
+         function LoadFile(const _Filename: string; var _Texture: Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+         function LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+         function SaveDDS(var _Stream: TStream; Var _Texture : Cardinal): boolean;
          function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean;
    end;
 
@@ -258,7 +259,7 @@ begin
       end;
 end;
 
-function TDDSImage.LoadDDS(var Stream: TStream; Var Texture : Cardinal; Const NoPicMip : Boolean; Var Width,Height : Integer): boolean;
+function TDDSImage.LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
 var
    hdr: TDDSHeader;
    mipMapCount, x, y, xSize, ySize: Cardinal;
@@ -270,7 +271,7 @@ var
 begin
    result := false;
    //  DDS is so simple to read, too
-   Stream.Read(hdr, sizeof(hdr));
+   _Stream.Read(hdr, sizeof(hdr));
    if (hdr.dwMagic<>DDS_MAGIC) or (hdr.dwSize<>124) or ((hdr.dwFlags and DDSD_PIXELFORMAT)=0) or ((hdr.dwFlags and DDSD_CAPS)=0) then
       exit;
 
@@ -292,14 +293,14 @@ begin
 
    x := xSize;
    y := ySize;
-   Width := x;
-   Height := y;
+   _Width := x;
+   _Height := y;
    GetMem(pixels, xSize*ySize*4);
 
-   glGenTextures(1, @Texture);
-   glBindTexture(GL_TEXTURE_2D, Texture);
+   glGenTextures(1, @_Texture);
+   glBindTexture(GL_TEXTURE_2D, _Texture);
    glEnable(GL_TEXTURE_2D);
-   if NoPicMip then
+   if _NoPicMip then
    begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    end
@@ -322,7 +323,7 @@ begin
       GetMem(data, size);
       for ix:=0 to mipMapCount-1 do
       begin
-         Stream.Read(data^, size);
+         _Stream.Read(data^, size);
          glCompressedTexImage2D(GL_TEXTURE_2D, ix, li.internalFormat, x, y, 0, size, data);
          glGetTexImage(GL_TEXTURE_2D, ix, GL_RGBA, GL_BYTE, pixels);
          SwapY(pixels,xSize,ySize);
@@ -338,10 +339,10 @@ begin
       size := hdr.dwPitchOrLinearSize * ySize;
       GetMem(data, size);
       GetMem(unpacked, size * sizeof(cardinal));
-      Stream.Read(palette, 1024);
+      _Stream.Read(palette, 1024);
       for ix:=0 to mipMapCount-1 do
       begin
-         Stream.Read(data^, size);
+         _Stream.Read(data^, size);
          for zz:=0 to size-1 do
             unpacked[zz] := palette[data[zz]];
          glPixelStorei(GL_UNPACK_ROW_LENGTH, y);
@@ -365,7 +366,7 @@ begin
       GetMem(data, size);
       for ix:=0 to mipMapCount-1 do
       begin
-         Stream.Read(data^, size);
+         _Stream.Read(data^, size);
          glPixelStorei(GL_UNPACK_ROW_LENGTH, y);
          glTexImage2D(GL_TEXTURE_2D, ix, li.internalFormat, x, y, 0, li.externalFormat, li.typ, data);
          glGetTexImage(GL_TEXTURE_2D, ix, GL_RGBA, GL_BYTE, pixels);
@@ -382,31 +383,42 @@ begin
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipMapCount-1);
    FreeMem(pixels);
 
-   GetMem(data, Width*Height*4);
+   GetMem(data, _Width*_Height*4);
    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   gluBuild2DMipmaps(GL_TEXTURE_2D, 4, Width,Height, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+   gluBuild2DMipmaps(GL_TEXTURE_2D, 4, _Width,_Height, GL_RGBA, GL_UNSIGNED_BYTE, Data);
    FreeMem(data);
 
    result := true;
 end;
 
+function TDDSImage.LoadFile(const _Filename: string; var _Texture: Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+var
+   MyFile: TStream;
+begin
+   Result := false;
+   MyFile := TFileStream.Create(_Filename,fmOpenRead);
+   Result := LoadDDS(MyFile,_Texture,_NoPicMip,_Width,_Height);
+   MyFile.Free;
+end;
+
+
 // This is written by Banshee and it ignores volumes, cube maps and any non-RGBA or RGB texture.
-function TDDSImage.SaveDDS(var Stream: TStream; Var Texture : Cardinal): boolean;
+function TDDSImage.SaveDDS(var _Stream: TStream; Var _Texture : Cardinal): boolean;
 var
    hdr: TDDSHeader;
    Border,x, y, xSize, ySize, i, Size: Cardinal;
-   pixels: PBytes;
+   data,pixels: PBytes;
    tempi : PGLInt;
-   IsRGBA: boolean;
+   IsRGBA, IsCompressed: boolean;
 begin
    result := false;
    //  DDS is so simple to write, too
    hdr.dwMagic := DDS_MAGIC;
    hdr.dwSize := 124;
    glEnable(GL_TEXTURE_2D);
-   glBindTexture(GL_TEXTURE_2D,Texture);
+   glBindTexture(GL_TEXTURE_2D,_Texture);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    GetMem(tempi,4);
    glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,tempi);
@@ -475,8 +487,11 @@ begin
    // Force compression of level 0 texture for linear size.
    GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_COMPRESSED,tempi);
-   if tempi^ = 0 then
+   IsCompressed := tempi^ > 0;
+   FreeMem(tempi);
+   if not IsCompressed then
    begin
+      // Compress the texture. Note that we need to flip the texture in the y axis.
       if IsRGBA then
       begin
          GetMem(pixels, hdr.dwWidth*hdr.dwHeight*4);
@@ -491,9 +506,7 @@ begin
          SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
          glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
       end;
-      FreeMem(pixels);
    end;
-   FreeMem(tempi);
    if isRGBA then
    begin
       hdr.PixelFormat.dwFourCC := D3DFMT_DXT5;
@@ -512,12 +525,27 @@ begin
       hdr.dwReserved[i] := 0;
 
    // Write header.
-   Stream.Write(hdr, sizeof(hdr));
+   _Stream.Write(hdr, sizeof(hdr));
    // Write first texture.
-   GetMem(pixels, hdr.dwPitchOrLinearSize);
-   glGetCompressedTexImage(GL_TEXTURE_2D,0,pixels);
-   Stream.Write(pixels^,hdr.dwPitchOrLinearSize);
-   FreeMem(pixels);
+   GetMem(data, hdr.dwPitchOrLinearSize);
+   glGetCompressedTexImage(GL_TEXTURE_2D,0,data);
+   _Stream.Write(data^,hdr.dwPitchOrLinearSize);
+   FreeMem(data);
+
+   // Here we unflip the texture in the Y axis.
+   if not IsCompressed then
+   begin
+      SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+      if IsRGBA then
+      begin
+         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+      end
+      else
+      begin
+         glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+      end;
+      FreeMem(pixels);
+   end;
 
    // Does it have mipmaps? Write them as well.
    i := 1;
@@ -535,7 +563,9 @@ begin
       // Is the current mipmap compressed?
       GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED,tempi);
-      if tempi^ = 0 then
+      IsCompressed := tempi^ > 0;
+      FreeMem(tempi);
+      if not IsCompressed then
       begin
          // It is not, then compress the texture first.
          if IsRGBA then
@@ -552,9 +582,7 @@ begin
             SwapY(pixels,xSize,ySize);
             glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,xSize,ySize,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
          end;
-         FreeMem(pixels);
       end;
-      FreeMem(tempi);
       // Now we get the compressed size.
       GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED_IMAGE_SIZE,tempi);
@@ -562,10 +590,25 @@ begin
       FreeMem(tempi);
 
       // Write the texture.
-      GetMem(pixels, Size);
-      glGetCompressedTexImage(GL_TEXTURE_2D,i,pixels);
-      Stream.Write(pixels^,Size);
-      FreeMem(pixels);
+      GetMem(data, Size);
+      glGetCompressedTexImage(GL_TEXTURE_2D,i,data);
+      _Stream.Write(data^,Size);
+      FreeMem(data);
+
+      // Here we unflip the texture in the Y axis.
+      if not IsCompressed then
+      begin
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         if IsRGBA then
+         begin
+            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+         end
+         else
+         begin
+            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+         end;
+         FreeMem(pixels);
+      end;
 
       // go to next mipmap level.
       inc(i);

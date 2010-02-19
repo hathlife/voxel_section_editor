@@ -750,10 +750,9 @@ begin
    if Filename = '' then
       exit;
 
-  DDSImage := TDDSImage.Create;
-  DDSImage.SaveToFile(Filename,ScreenTexture);
-  FUpdateWorld := true;    // this is temporarily, because the DDS save function swaps the y.
-  DDSImage.Free;
+   DDSImage := TDDSImage.Create;
+   DDSImage.SaveToFile(Filename,ScreenTexture);
+   DDSImage.Free;
 end;
 
 procedure TRenderEnvironment.ScreenShotTGA(const _Filename : string);
