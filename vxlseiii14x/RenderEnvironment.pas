@@ -753,8 +753,7 @@ begin
   DDSImage := TDDSImage.Create;
   DDSImage.SaveToFile(Filename,ScreenTexture);
   FUpdateWorld := true;    // this is temporarily, because the DDS save function swaps the y.
-  // Line below was commented out, because it is crashing.
-//  DDSImage.Free;
+  DDSImage.Free;
 end;
 
 procedure TRenderEnvironment.ScreenShotTGA(const _Filename : string);

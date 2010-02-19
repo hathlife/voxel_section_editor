@@ -408,10 +408,14 @@ begin
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D,Texture);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   GetMem(tempi,4);
    glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,tempi);
    x := tempi^;
+   FreeMem(tempi);
+   GetMem(tempi,4);
    glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_BASE_LEVEL,tempi);
    x := x - tempi^;
+   FreeMem(tempi);
    // Note, we'll only save compressed textures.
    if (x > 0) and (x <> 1000) then
    begin
@@ -425,17 +429,24 @@ begin
       hdr.dwFlags := $81007;
       hdr.Caps.dwCaps1 := $1000;
    end;
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_BORDER,tempi);
    Border := tempi^;
+   FreeMem(tempi);
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_HEIGHT,tempi);
    hdr.dwHeight := tempi^ - Border;
+   FreeMem(tempi);
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_WIDTH,tempi);
    hdr.dwWidth := tempi^ - Border;
+   FreeMem(tempi);
    hdr.dwDepth := 0;    // volume maps are ignored.
    hdr.Caps.dwCaps2 := 0; // volume and cube maps are ignored.
    hdr.Caps.dwDDSX := 0;
    hdr.Caps.dwReserved := 0;
    hdr.PixelFormat.dwSize := 32;
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_INTERNAL_FORMAT,tempi);
    hdr.PixelFormat.dwFlags := 0;
    hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_RGB;
@@ -451,6 +462,7 @@ begin
       hdr.PixelFormat.dwRGBBitCount := 32;
       IsRGBA := true;
    end;
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_ALPHA_SIZE,tempi);
    if tempi^ > 0 then
    begin
@@ -459,7 +471,9 @@ begin
       hdr.PixelFormat.dwRGBBitCount := 32;
       IsRGBA := true;
    end;
+   FreeMem(tempi);
    // Force compression of level 0 texture for linear size.
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_COMPRESSED,tempi);
    if tempi^ = 0 then
    begin
@@ -479,6 +493,7 @@ begin
       end;
       FreeMem(pixels);
    end;
+   FreeMem(tempi);
    if isRGBA then
    begin
       hdr.PixelFormat.dwFourCC := D3DFMT_DXT5;
@@ -487,8 +502,10 @@ begin
    begin
       hdr.PixelFormat.dwFourCC := D3DFMT_DXT1;
    end;
+   GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_COMPRESSED_IMAGE_SIZE,tempi);
    hdr.dwPitchOrLinearSize := tempi^;
+   FreeMem(tempi);
 
    // Write reserved.
    for i := 0 to 10 do
@@ -507,11 +524,16 @@ begin
    while i < hdr.dwMipMapCount do
    begin
       // Get the dimensions of the mipmap
+      GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_WIDTH,tempi);
       xSize := tempi^;
+      FreeMem(tempi);
+      GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_HEIGHT,tempi);
       ySize := tempi^;
+      FreeMem(tempi);
       // Is the current mipmap compressed?
+      GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED,tempi);
       if tempi^ = 0 then
       begin
@@ -532,9 +554,12 @@ begin
          end;
          FreeMem(pixels);
       end;
+      FreeMem(tempi);
       // Now we get the compressed size.
+      GetMem(tempi,4);
       glGetTexLevelParameteriv(GL_TEXTURE_2D,i,GL_TEXTURE_COMPRESSED_IMAGE_SIZE,tempi);
       Size := tempi^;
+      FreeMem(tempi);
 
       // Write the texture.
       GetMem(pixels, Size);
