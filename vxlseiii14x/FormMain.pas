@@ -8,15 +8,15 @@ uses
   ToolWin, ImgList, Math, palette, Spin, Buttons, FTGifAnimate, undo_engine,
   ShellAPI,Constants,cls_Config,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
-  ModelBank, VoxelDocument, VoxelDocumentBank, Render, RenderEnvironment, Actor,
-  Camera, BasicFunctions, GlConstants, Form3dModelizer, Normals, CustomScheme,
-  INIFiles;
+  ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
+  RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
+  Normals, CustomScheme, INIFiles;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.69';
+   APPLICATION_VER = '1.39.70';
 
 type
   TFrmMain = class(TForm)
@@ -661,6 +661,7 @@ begin
    GlobalVars.VoxelBank := TVoxelBank.Create;
    GlobalVars.HVABank := THVABank.Create;
    GlobalVars.ModelBank := TModelBank.Create;
+   GlobalVars.TextureBank := TTextureBank.Create;
    Document := (Documents.AddNew)^;
 
    for i := 0 to 2 do
@@ -1104,6 +1105,7 @@ begin
    GlobalVars.VoxelBank.Free;
    GlobalVars.HVABank.Free;
    GlobalVars.ModelBank.Free;
+   GlobalVars.TextureBank.Free;
    DeactivateRenderingContext;
    UpdateHistoryMenu;
    Config.SaveSettings;

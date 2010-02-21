@@ -18,7 +18,7 @@
 // cover its needs of loading saving textures with mipmaps. It uses the loading
 // code from Martin Waldegger, who adapted Jon Watte's code to load DDS files.
 // All functions, constants declarations and types used by LoadDDS function were
-// written by them, except for the TDDSImage class. You can use it on your own
+// written by them, except the TDDSImage class. You can use it on your own
 // project as long as you credit all authors mentioned above somewhere or simply
 // keeping this copyright intact. Do the changes that you feel necessary to fit
 // your project.
@@ -145,8 +145,8 @@ type
       public
          destructor Destroy; override;
          // I/O
-         function LoadFile(const _Filename: string; var _Texture: Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
-         function LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+         function LoadFromFile(const _Filename: string; var _Texture: Cardinal; _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+         function LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
          function SaveDDS(var _Stream: TStream; Var _Texture : Cardinal; _Compression : GLINT = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): boolean;
          function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean; overload;
          function SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean; overload;
@@ -260,7 +260,7 @@ begin
       end;
 end;
 
-function TDDSImage.LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+function TDDSImage.LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
 var
    hdr: TDDSHeader;
    mipMapCount, x, y, xSize, ySize: Cardinal;
@@ -394,14 +394,17 @@ begin
    result := true;
 end;
 
-function TDDSImage.LoadFile(const _Filename: string; var _Texture: Cardinal; Const _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
+function TDDSImage.LoadFromFile(const _Filename: string; var _Texture: Cardinal; _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
 var
    MyFile: TStream;
 begin
    Result := false;
-   MyFile := TFileStream.Create(_Filename,fmOpenRead);
-   Result := LoadDDS(MyFile,_Texture,_NoPicMip,_Width,_Height);
-   MyFile.Free;
+   if FileExists(_Filename) then
+   begin
+      MyFile := TFileStream.Create(_Filename,fmOpenRead);
+      Result := LoadDDS(MyFile,_Texture,_NoPicMip,_Width,_Height);
+      MyFile.Free;
+   end;
 end;
 
 
@@ -461,8 +464,7 @@ begin
    hdr.PixelFormat.dwSize := 32;
    GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_INTERNAL_FORMAT,tempi);
-   hdr.PixelFormat.dwFlags := 0;
-   hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_RGB or DDPF_FOURCC;
+   hdr.PixelFormat.dwFlags := DDPF_RGB or DDPF_FOURCC;
    hdr.PixelFormat.dwRBitMask := $ff0000;
    hdr.PixelFormat.dwGBitMask := $ff00;
    hdr.PixelFormat.dwBBitMask := $ff;

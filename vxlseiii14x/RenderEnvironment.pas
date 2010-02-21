@@ -717,9 +717,9 @@ end;
 
 procedure TRenderEnvironment.ScreenShotPNG(const _Filename : string; _Compression: integer);
 var
-  Filename : string;
-  PNGImage: TPNGObject;
-  Bitmap : TBitmap;
+   Filename : string;
+   PNGImage: TPNGObject;
+   Bitmap : TBitmap;
 begin
    // Get filename.
    Filename := CopyString(_Filename);
@@ -728,20 +728,20 @@ begin
    if Filename = '' then
       exit;
 
-  Bitmap := GetScreenShot;
-  PNGImage := TPNGObject.Create;
-  PNGImage.Assign(Bitmap);
+   Bitmap := GetScreenShot;
+   PNGImage := TPNGObject.Create;
+   PNGImage.Assign(Bitmap);
   // The next line is commented out, since it causes infinite loop.
-//  PNGImage.CompressionLevel := _Compression;
-  PNGImage.SaveToFile(Filename);
-  Bitmap.Free;
-  PNGImage.Free;
+//   PNGImage.CompressionLevel := _Compression;
+   PNGImage.SaveToFile(Filename);
+   Bitmap.Free;
+   PNGImage.Free;
 end;
 
 procedure TRenderEnvironment.ScreenShotDDS(const _Filename : string);
 var
-  Filename : string;
-  DDSImage : TDDSImage;
+   Filename : string;
+   DDSImage : TDDSImage;
 begin
    // Get filename.
    Filename := CopyString(_Filename);

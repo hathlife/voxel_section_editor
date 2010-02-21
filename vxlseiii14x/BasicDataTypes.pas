@@ -123,9 +123,11 @@ type
    T3DSingleGrid = array of array of array of single;
    P3DSingleGrid = ^T3DSingleGrid;
 
+   PByte = ^Byte;
    AInt32 = array of integer;
    AUInt32 = array of longword;
    ABool = array of boolean;
+   TABitmap = array of TBitmap;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
 
 

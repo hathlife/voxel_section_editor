@@ -3,7 +3,7 @@ unit GlobalVars;
 interface
 
 uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank, Render, Debug,
-   SysUtils;
+   SysUtils, TextureBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -12,6 +12,7 @@ var
    HVABank : THVABank;
    ModelBank : TModelBank;
    Documents : TVoxelDocumentBank;
+   TextureBank : TTextureBank;
    Render : TRender;
    {$ifdef SPEED_TEST}
    SpeedFile: TDebugFile;

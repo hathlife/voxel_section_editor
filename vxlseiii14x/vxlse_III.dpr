@@ -81,7 +81,9 @@ uses
   FormOptimizeMesh in 'FormOptimizeMesh.pas' {FrmOptimizeMesh},
   ClassStopWatch in 'ClassStopWatch.pas',
   CustomScheme in 'CustomScheme.pas',
-  DDS in 'DDS.pas';
+  DDS in 'DDS.pas',
+  TextureBank in 'TextureBank.pas',
+  TextureBankItem in 'TextureBankItem.pas';
 
 {$R *.res}
 
