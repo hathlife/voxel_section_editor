@@ -2,20 +2,21 @@ unit Render;
 
 interface
 
-uses Windows, dglOpenGL, RenderEnvironment;
+uses Windows, dglOpenGL, RenderEnvironment, BasicFunctions;
 
 type
    TRender = class
       private
          FPSCap : longword;
          FirstRC : HGLRC;
+         ShaderDirectory: string;
          // Misc
          procedure ForceFPS;
       public
          Environment: PRenderEnvironment;
 
          // Constructors;
-         constructor Create;
+         constructor Create(const _ShaderDirectory: string);
          destructor Destroy; override;
          procedure ClearAllEnvironments;
          // Render
@@ -30,10 +31,11 @@ type
 implementation
 
 
-constructor TRender.Create;
+constructor TRender.Create(const _ShaderDirectory: string);
 begin
    InitOpenGL;
    FirstRC := 0;
+   ShaderDirectory := CopyString(_ShaderDirectory);
    Environment := nil;
 end;
 
@@ -56,7 +58,7 @@ var
    NewEnvironment,CurrentEnvironment : PRenderEnvironment;
 begin
    new(NewEnvironment);
-   NewEnvironment^ := TRenderEnvironment.Create(_Handle,FirstRC,_width,_height);
+   NewEnvironment^ := TRenderEnvironment.Create(_Handle,FirstRC,_width,_height,ShaderDirectory);
    if Environment = nil then
    begin
       Environment := NewEnvironment;

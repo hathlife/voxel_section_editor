@@ -3,7 +3,7 @@ unit GlobalVars;
 interface
 
 uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank, Render, Debug,
-   SysUtils, TextureBank;
+   SysUtils, TextureBank, ShaderBank;
 
 {$INCLUDE Global_Conditionals.inc}
 

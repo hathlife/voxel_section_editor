@@ -3,7 +3,7 @@ unit Model;
 interface
 
 uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
-   SysUtils, Graphics, GlConstants;
+   SysUtils, Graphics, GlConstants, ShaderBank;
 
 type
    PModel = ^TModel;
@@ -27,10 +27,12 @@ type
       Quality: integer;
       // GUI
       IsSelected : boolean;
+      // Others
+      ShaderBank : PShaderBank;
       // constructors and destructors
-      constructor Create(const _Filename: string); overload;
-      constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _Quality : integer); overload;
-      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _Quality : integer); overload;
+      constructor Create(const _Filename: string; _ShaderBank : PShaderBank); overload;
+      constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _ShaderBank : PShaderBank; _Quality : integer); overload;
+      constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _ShaderBank : PShaderBank; _Quality : integer); overload;
       constructor Create(const _Model: TModel); overload;
       destructor Destroy; override;
       procedure CommonCreationProcedures;
@@ -109,9 +111,10 @@ implementation
 
 uses GlobalVars;
 
-constructor TModel.Create(const _Filename: string);
+constructor TModel.Create(const _Filename: string; _ShaderBank : PShaderBank);
 begin
    Filename := CopyString(_Filename);
+   ShaderBank := _ShaderBank;
    Voxel := nil;
    VoxelSection := nil;
    Quality := C_QUALITY_MAX;
@@ -121,9 +124,10 @@ begin
    CommonCreationProcedures;
 end;
 
-constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; const _HVA: PHVA; _Quality : integer);
+constructor TModel.Create(const _Voxel: PVoxel; const _Palette: PPalette; const _HVA: PHVA; _ShaderBank : PShaderBank; _Quality : integer);
 begin
    Filename := '';
+   ShaderBank := _ShaderBank;
    Voxel := VoxelBank.Add(_Voxel);
    HVA := HVABank.Add(_HVA);
    VoxelSection := nil;
@@ -133,9 +137,10 @@ begin
    CommonCreationProcedures;
 end;
 
-constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _Quality : integer);
+constructor TModel.Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _ShaderBank : PShaderBank; _Quality : integer);
 begin
    Filename := '';
+   ShaderBank := _ShaderBank;
    Voxel := nil;
    VoxelSection := _VoxelSection;
    Quality := _Quality;
@@ -233,7 +238,7 @@ begin
    SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
    for i := 0 to (Voxel^.Header.NumSections-1) do
    begin
-      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,Quality);
+      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,ShaderBank,Quality);
       LOD[0].Mesh[i].Next := i+1;
    end;
    LOD[0].Mesh[High(LOD[0].Mesh)].Next := -1;
@@ -247,7 +252,7 @@ begin
    SetLength(LOD,1);
    LOD[0] := TLOD.Create;
    SetLength(LOD[0].Mesh,1);
-   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,Quality);
+   LOD[0].Mesh[0] := TMesh.CreateFromVoxel(0,_VoxelSection^,Palette^,ShaderBank,Quality);
    CurrentLOD := 0;
    HVA := HVABank.LoadNew(nil);
    Opened := true;
@@ -280,7 +285,7 @@ begin
          SetLength(LOD[i].Mesh,Voxel^.Header.NumSections);
          for j := start to Voxel^.Header.NumSections - 1 do
          begin
-            LOD[i].Mesh[j] := TMesh.CreateFromVoxel(j,Voxel^.Section[j],Palette^,Quality);
+            LOD[i].Mesh[j] := TMesh.CreateFromVoxel(j,Voxel^.Section[j],Palette^,ShaderBank,Quality);
             LOD[i].Mesh[j].Next := j+1;
          end;
       end;
@@ -551,6 +556,7 @@ var
    i : integer;
 begin
    New(Palette);
+   ShaderBank := _Model.ShaderBank;
    Palette^ := TPalette.Create(_Model.Palette^);
    IsVisible := _Model.IsVisible;
    HVA := _Model.HVA;

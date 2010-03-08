@@ -66,17 +66,15 @@ implementation
 // This one starts a blank texture.
 constructor TTextureBankItem.Create;
 begin
-   glEnable(GL_TEXTURE_2D);
    glGenTextures(1, @ID);
    Counter := 1;
    Filename := '';
-   glDisable(GL_TEXTURE_2D);
 end;
 
 constructor TTextureBankItem.Create(const _Filename: string);
 begin
-   glEnable(GL_TEXTURE_2D);
    glGenTextures(1, @ID);
+   glEnable(GL_TEXTURE_2D);
    LoadTexture(_Filename);
    Counter := 1;
    glDisable(GL_TEXTURE_2D);

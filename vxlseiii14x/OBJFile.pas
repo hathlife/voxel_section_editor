@@ -311,7 +311,7 @@ begin
    while MyMesh <> nil do
    begin
       MyMesh^.TextureStart := TextureCount + 1;
-      WriteMeshTexture(_File,MyMesh^.Mesh^.TextCoords);
+      WriteMeshTexture(_File,MyMesh^.Mesh^.TexCoords);
       MyMesh := MyMesh^.Next;
    end;
    Writeln(_File,'# ' + IntToStr(TextureCount) + ' texture coordinates.');
@@ -365,7 +365,7 @@ begin
    MyMesh := Meshes;
    while MyMesh <> nil do
    begin
-      if High(MyMesh^.Mesh^.TextCoords) < 0 then
+      if High(MyMesh^.Mesh^.TexCoords) < 0 then
       begin
          Result := false;
          exit;

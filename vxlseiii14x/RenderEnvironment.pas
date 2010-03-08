@@ -3,7 +3,8 @@ unit RenderEnvironment;
 interface
 
 uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
-   Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS;
+   Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS,
+   ShaderBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -63,8 +64,10 @@ type
          // Ambient Lighting
          LightAmb : TVector4f;
          LightDif: TVector4f;
+         // Shaders
+         ShaderBank : TShaderBank;
          // Constructors;
-         constructor Create(_Handle : THandle; _FirstRC: HGLRC; _width, _height : longword);
+         constructor Create(_Handle : THandle; _FirstRC: HGLRC; _width, _height : longword; const _ShaderDirectory: string);
          destructor Destroy; override;
 
          // Renders and Related
@@ -107,7 +110,7 @@ uses FormMain;
 {$endif}
 
 // Constructors;
-constructor TRenderEnvironment.Create(_Handle: Cardinal; _FirstRC: HGLRC; _width, _height : longword);
+constructor TRenderEnvironment.Create(_Handle: Cardinal; _FirstRC: HGLRC; _width, _height : longword; const _ShaderDirectory: string);
 begin
    // The basics, to avoid memory issues.
    Next := nil;
@@ -122,8 +125,11 @@ begin
    if _FirstRC <> 0 then
       wglShareLists(_FirstRC,RC);
    ActivateRenderingContext(DC, RC);
+   // Load shaders
+   wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
+   ShaderBank := TShaderBank.Create(_ShaderDirectory);
    // Setup GL settings
-   glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
+//   glEnable(GL_TEXTURE_2D);                     // Enable Texture Mapping
    glClearColor(BackGroundColour.X, BackGroundColour.Y, BackGroundColour.Z, 1.0);
    glShadeModel(GL_SMOOTH);                 // Enables Smooth Color Shading
    glClearDepth(1.0);                       // Depth Buffer Setup
@@ -171,6 +177,7 @@ begin
    KillFont;
    CleanUpActors;
    CleanUpCameras;
+   ShaderBank.Free;
    DeactivateRenderingContext;
    wglDeleteContext(rc);
    ReleaseDC(Handle, DC);
@@ -255,6 +262,7 @@ begin
    glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);
    glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);
    glEnable(GL_LIGHTING);
+   glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
    glEnable(GL_COLOR_MATERIAL);
 
    if FUpdateWorld then
@@ -400,6 +408,7 @@ end;
 
 procedure TRenderEnvironment.Resize(_width, _height: longword);
 begin
+   wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
    Width := _Width;
    Height := _Height;
    if Height = 0 then                // prevent divide by zero exception
@@ -478,7 +487,7 @@ var
    NewActor,PreviousActor : PActor;
 begin
    new(NewActor);
-   NewActor^ := TActor.Create;
+   NewActor^ := TActor.Create(Addr(ShaderBank));
    if ActorList = nil then
    begin
       ActorList := NewActor;

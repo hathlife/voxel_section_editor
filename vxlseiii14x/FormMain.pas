@@ -10,13 +10,15 @@ uses
   Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
   ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
-  Normals, CustomScheme, INIFiles;
+  Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
+  IdTCPConnection, IdTCPClient, IdHTTP;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.70';
+   APPLICATION_VER = '1.39.80';
+   APPLICATION_BETA = true;
 
 type
   TFrmMain = class(TForm)
@@ -349,6 +351,8 @@ type
     OpenDialog3ds2vxl: TOpenDialog;
     Importfromamodelusing3ds2vxl1: TMenuItem;
     CropSection1: TMenuItem;
+    AutoUpdate1: TMenuItem;
+    procedure AutoUpdate1Click(Sender: TObject);
     procedure CropSection1Click(Sender: TObject);
     procedure Importfromamodelusing3ds2vxl1Click(Sender: TObject);
     procedure UpdateSchemes1Click(Sender: TObject);
@@ -656,7 +660,7 @@ begin
    BuildReopenMenu;
    Height := 768;
 
-   GlobalVars.Render := TRender.Create;
+   GlobalVars.Render := TRender.Create(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'shaders');
    GlobalVars.Documents := TVoxelDocumentBank.Create;
    GlobalVars.VoxelBank := TVoxelBank.Create;
    GlobalVars.HVABank := THVABank.Create;
@@ -3453,6 +3457,11 @@ begin
    RefreshAll;
 end;
 
+
+procedure TFrmMain.AutoUpdate1Click(Sender: TObject);
+begin
+   // We'll test it later.
+end;
 
 Procedure TFrmMain.LoadPalettes;
 const

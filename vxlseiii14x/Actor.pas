@@ -3,7 +3,7 @@ unit Actor;
 interface
 
 uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette, Graphics, Windows, GLConstants;
+   Palette, Graphics, Windows, GLConstants, ShaderBank;
 
 type
    PActor = ^TActor;
@@ -31,8 +31,10 @@ type
       IsSelected : boolean;
       ColoursType : byte;
       FactionColour: TColor;
+      // Others
+      ShaderBank : PShaderBank;
       // Constructors
-      constructor Create;
+      constructor Create(_ShaderBank : PShaderBank);
       destructor Destroy; override;
       procedure Clear;
       procedure Reset;
@@ -129,9 +131,10 @@ implementation
 
 uses GlobalVars;
 
-constructor TActor.Create;
+constructor TActor.Create(_ShaderBank : PShaderBank);
 begin
    Next := nil;
+   ShaderBank := _ShaderBank;
    IsSelected := false;
    SetLength(Models,0);
    RequestUpdateWorld := false;
@@ -444,7 +447,7 @@ end;
 procedure TActor.Add(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_filename);
+   Models[High(Models)] := ModelBank.Add(_filename,ShaderBank);
    CommonAddActions;
 end;
 
@@ -458,21 +461,21 @@ end;
 procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.Add(_Voxel,_HVA,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 
 procedure TActor.Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.AddReadOnly(_filename);
+   Models[High(Models)] := ModelBank.AddReadOnly(_filename,ShaderBank);
    CommonAddActions;
 end;
 
@@ -486,21 +489,21 @@ end;
 procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.AddReadOnly(_Voxel,_HVA,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 
 procedure TActor.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 
 procedure TActor.Clone(const _filename: string);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Clone(_filename);
+   Models[High(Models)] := ModelBank.Clone(_filename,ShaderBank);
    CommonAddActions;
 end;
 
@@ -514,14 +517,14 @@ end;
 procedure TActor.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Clone(_Voxel,_HVA,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.Clone(_Voxel,_HVA,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 
 procedure TActor.Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
-   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,_Quality);
+   Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
 

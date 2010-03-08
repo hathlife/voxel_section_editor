@@ -83,7 +83,10 @@ uses
   CustomScheme in 'CustomScheme.pas',
   DDS in 'DDS.pas',
   TextureBank in 'TextureBank.pas',
-  TextureBankItem in 'TextureBankItem.pas';
+  TextureBankItem in 'TextureBankItem.pas',
+  ShaderBank in 'ShaderBank.pas',
+  ShaderBankItem in 'ShaderBankItem.pas',
+  FormRepairAssistant in 'FormRepairAssistant.pas' {FrmRepairAssistant};
 
 {$R *.res}
 

@@ -20,6 +20,7 @@ Function TVector3fToTColor(Vector3f : TVector3f) : TColor;
 Function TColorToTVector3f(Color : TColor) : TVector3f;
 function Subtract3i(_V1,_V2: TVector3i): TVector3i;
 function RGBA(r, g, b, a: Byte): COLORREF;
+function CopyVector4f(_V: TVector4f): TVector4f;
 
 // Program related
 function RunAProgram (const theProgram, itsParameters, defaultDirectory : string): integer;
@@ -138,6 +139,14 @@ begin
    Result.X := _V1.X - _V2.X;
    Result.Y := _V1.Y - _V2.Y;
    Result.Z := _V1.Z - _V2.Z;
+end;
+
+function CopyVector4f(_V: TVector4f): TVector4f;
+begin
+   Result.X := _V.X;
+   Result.Y := _V.Y;
+   Result.Z := _V.Z;
+   Result.W := _V.W;
 end;
 
 function RGBA(r, g, b, a: Byte): COLORREF;

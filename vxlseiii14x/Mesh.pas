@@ -5,18 +5,19 @@ interface
 uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
       VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
-      ClassIntegerList, ClassStopWatch;
+      ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
+      TextureBankItem;
 
 {$INCLUDE Global_Conditionals.inc}
 type
    TMeshMaterial = record
-      TextureID: GLINT;
+      Texture: array of PTextureBankItem;
       Ambient: TVector4f;
       Diffuse: TVector4f;
       Specular: TVector4f;
-      Shininess: TVector4f;
+      Shininess: Single;
       Emission: TVector4f;
-      ShaderID: integer;
+      Shader: PShaderBankItem;
    end;
    PMeshMaterial = ^TMeshMaterial;
    TAMeshMaterial = array of TMeshMaterial;
@@ -29,6 +30,10 @@ type
          ColourGenStructure : byte;
          TransparencyLevel : single;
          Opened : boolean;
+         // For multi-texture rendering purposes
+         CurrentPass : integer;
+         // Connect to the correct shader bank
+         ShaderBank : PShaderBank;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -66,6 +71,12 @@ type
          function GetEuler1DDistance(_Distance : single): single;
          function GetEulerSquared1DDistance(_Distance : single): single;
          function GetSincInfinite1DDistance(_Distance : single): single;
+         // Materials
+         procedure AddMaterial;
+         procedure DeleteMaterial(_ID: integer);
+         procedure ClearMaterials;
+         procedure ApplyMaterialColour;
+         procedure StopMaterialColour;
          // Misc
          procedure OverrideTransparency;
          function FindMeshCenter: TVector3f;
@@ -85,7 +96,7 @@ type
          Normals : TAVector3f;
          Colours : TAVector4f;
          Faces : auint32;
-         TextCoords : TAVector2f;
+         TexCoords : TAVector2f;
          FaceNormals : TAVector3f;
          Materials : TAMeshMaterial;
          // Graphical and colision
@@ -99,9 +110,9 @@ type
          // GUI
          IsSelected : boolean;
          // Constructors And Destructors
-         constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
+         constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank); overload;
          constructor Create(const _Mesh : TMesh); overload;
-         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
+         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED);
          destructor Destroy; override;
          procedure Clear;
          // I/O
@@ -159,6 +170,9 @@ type
          procedure RenderWithoutNormalsAndWithFaceColours;
          procedure RenderWithVertexNormalsAndFaceColours;
          procedure RenderWithFaceNormalsAndColours;
+         procedure RenderWithoutNormalsAndWithTexture;
+         procedure RenderWithVertexNormalsAndWithTexture;
+         procedure RenderWithFaceNormalsAndWithTexture;
          procedure ForceRefresh;
 
          // Copies
@@ -184,9 +198,10 @@ implementation
 
 uses GlobalVars;
 
-constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte);
+constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank);
 begin
    // Set basic variables:
+   ShaderBank := _ShaderBank;
    List := C_LIST_NONE;
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
@@ -202,7 +217,7 @@ begin
    // Let's set the array sizes.
    SetLength(Vertices,_NumVertices);
    SetLength(Faces,_NumFaces);
-   SetLength(TextCoords,_NumVertices);
+   SetLength(TexCoords,_NumVertices);
    if (NormalsType and C_NORMALS_PER_VERTEX) <> 0 then
       SetLength(Normals,_NumVertices)
    else
@@ -228,6 +243,7 @@ begin
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    TransparencyLevel := 0;
+   AddMaterial;
    Opened := false;
    IsSelected := false;
    Next := -1;
@@ -240,10 +256,11 @@ begin
    Assign(_Mesh);
 end;
 
-constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
+constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _ShaderBank: PShaderBank; _Quality: integer = C_QUALITY_CUBED);
 var
    c : integer;
 begin
+   ShaderBank := _ShaderBank;
    List := C_LIST_NONE;
    Clear;
    ColoursType := C_COLOURS_PER_FACE;
@@ -306,7 +323,8 @@ begin
    SetLength(Colours,0);
    SetLength(Normals,0);
    SetLength(FaceNormals,0);
-   SetLength(TextCoords,0);
+   SetLength(TexCoords,0);
+   ClearMaterials;
 end;
 
 
@@ -440,7 +458,7 @@ begin
       SetLength(Faces,0);
       SetLength(Normals,0);
       SetLength(FaceNormals,0);
-      SetLength(TextCoords,0);
+      SetLength(TexCoords,0);
       SetLength(Colours,0);
       CommonVoxelLoadingActions(_Voxel);
       exit;
@@ -528,7 +546,7 @@ begin
    SetLength(Faces,NumFaces * VerticesPerFace);
    SetLength(Normals,0);
    SetLength(FaceNormals,NumFaces);
-   SetLength(TextCoords,0);
+   SetLength(TexCoords,0);
    SetLength(Colours,NumFaces);
    for i := Low(Vertices) to High(Vertices) do
    begin
@@ -771,7 +789,7 @@ begin
       SetLength(Faces,0);
       SetLength(Normals,0);
       SetLength(FaceNormals,0);
-      SetLength(TextCoords,0);
+      SetLength(TexCoords,0);
       SetLength(Colours,0);
       CommonVoxelLoadingActions(_Voxel);
       exit;
@@ -859,7 +877,7 @@ begin
    SetLength(Faces,NumFaces * VerticesPerFace);
    SetLength(Normals,0);
    SetLength(FaceNormals,NumFaces);
-   SetLength(TextCoords,0);
+   SetLength(TexCoords,0);
    SetLength(Colours,NumFaces);
    SetLength(VertexTransformation,High(Vertices)+1);
    for i := Low(Vertices) to High(Vertices) do
@@ -1049,7 +1067,7 @@ begin
    FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
-   SetLength(TextCoords,0);
+   SetLength(TexCoords,0);
    SetLength(Normals,0);
    // Voxel classification stage
    VoxelMap := TVoxelMap.Create(_Voxel,1);
@@ -1094,6 +1112,7 @@ begin
    Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
    Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
+   AddMaterial;
    Opened := true;
 end;
 
@@ -1102,7 +1121,7 @@ procedure TMesh.MeshSmooth;
 var
    HitCounter: array of integer;
    OriginalVertexes : array of TVector3f;
-   i,j,f,v,v1,v2 : integer;
+   i,v,v1 : integer;
    NeighborDetector : TNeighborDetector;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
@@ -2449,6 +2468,10 @@ begin
             begin
                RenderingProcedure := RenderWithoutNormalsAndWithFaceColours;
             end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := RenderWithoutNormalsAndWithTexture;
+            end;
          end;
       end;
       C_NORMALS_PER_VERTEX:
@@ -2466,6 +2489,10 @@ begin
             begin
                RenderingProcedure := RenderWithVertexNormalsAndFaceColours;
             end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := RenderWithVertexNormalsAndWithTexture;
+            end;
          end;
       end;
       C_NORMALS_PER_FACE:
@@ -2482,6 +2509,10 @@ begin
             C_COLOURS_PER_FACE:
             begin
                RenderingProcedure := RenderWithFaceNormalsAndColours;
+            end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := RenderWithFaceNormalsAndWithTexture;
             end;
          end;
       end;
@@ -2536,12 +2567,26 @@ begin
          begin
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-            RenderingProcedure();
+            CurrentPass := Low(Materials);
+            while CurrentPass <= High(Materials) do
+            begin
+               ApplyMaterialColour;
+               RenderingProcedure();
+               StopMaterialColour;
+               inc(CurrentPass);
+            end;
             glDisable(GL_BLEND);
          end
          else
          begin
-            RenderingProcedure();
+            CurrentPass := Low(Materials);
+            while CurrentPass <= High(Materials) do
+            begin
+               ApplyMaterialColour;
+               RenderingProcedure();
+               StopMaterialColour;
+               inc(CurrentPass);
+            end;
          end;
          glEndList;
       end;
@@ -2549,6 +2594,29 @@ begin
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
       glCallList(List);
    end;
+end;
+
+procedure TMesh.ApplyMaterialColour;
+begin
+   glEnable(GL_LIGHTING);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@Materials[CurrentPass].Ambient);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,@Materials[CurrentPass].Diffuse);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@Materials[CurrentPass].Specular);
+   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,@Materials[CurrentPass].Emission);
+   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Materials[CurrentPass].Shininess);
+   if Materials[CurrentPass].Shader <> nil then
+   begin
+      Materials[CurrentPass].Shader^.UseProgram;
+   end;
+end;
+
+procedure TMesh.StopMaterialColour;
+begin
+   if Materials[CurrentPass].Shader <> nil then
+   begin
+      Materials[CurrentPass].Shader^.DeactivateProgram;
+   end;
+   glDisable(GL_LIGHTING);
 end;
 
 procedure TMesh.RenderWithoutNormalsAndColours;
@@ -2689,6 +2757,141 @@ begin
    glEnd();
 end;
 
+procedure TMesh.RenderWithoutNormalsAndWithTexture;
+var
+   i,f,v,tex : longword;
+begin
+   f := 0;
+   glNormal3f(0,0,0);
+   glColor4f(1,1,1,1);
+   i := 0;
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glEnable(GL_TEXTURE_2D);
+      end;
+   end;
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+            begin
+               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+            end;
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+         inc(i);
+      end;
+   glEnd();
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glDisable(GL_TEXTURE_2D);
+      end;
+   end;
+end;
+
+procedure TMesh.RenderWithVertexNormalsAndWithTexture;
+var
+   i,f,v,tex : longword;
+begin
+   f := 0;
+   i := 0;
+   glColor4f(1,1,1,1);
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glEnable(GL_TEXTURE_2D);
+      end;
+   end;
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
+         v := 0;
+         while (v < VerticesPerFace) do
+         begin
+            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+            begin
+               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+            end;
+            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+         inc(i);
+      end;
+   glEnd();
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glDisable(GL_TEXTURE_2D);
+      end;
+   end;
+end;
+
+procedure TMesh.RenderWithFaceNormalsAndWithTexture;
+var
+   i,f,v,tex : longword;
+begin
+   f := 0;
+   i := 0;
+   glColor4f(1,1,1,1);
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glEnable(GL_TEXTURE_2D);
+      end;
+   end;
+   glBegin(FaceType);
+      while i < NumFaces do
+      begin
+         v := 0;
+         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
+         while (v < VerticesPerFace) do
+         begin
+            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+            begin
+               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+            end;
+            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
+            inc(v);
+            inc(f);
+         end;
+         inc(i);
+      end;
+   glEnd();
+   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
+   begin
+      if Materials[CurrentPass].Texture[tex] <> nil then
+      begin
+         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glDisable(GL_TEXTURE_2D);
+      end;
+   end;
+end;
+
 procedure TMesh.RenderWithoutNormalsAndWithFaceColours;
 var
    i,f,v : longword;
@@ -2773,6 +2976,7 @@ procedure TMesh.Assign(const _Mesh : TMesh);
 var
    i : integer;
 begin
+   ShaderBank := _Mesh.ShaderBank;
    NormalsType := _Mesh.NormalsType;
    ColoursType := _Mesh.ColoursType;
    TransparencyLevel := _Mesh.TransparencyLevel;
@@ -2828,11 +3032,11 @@ begin
       Colours[i].Z := _Mesh.Colours[i].Z;
       Colours[i].W := _Mesh.Colours[i].W;
    end;
-   SetLength(TextCoords,High(_Mesh.TextCoords)+1);
-   for i := Low(TextCoords) to High(TextCoords) do
+   SetLength(TexCoords,High(_Mesh.TexCoords)+1);
+   for i := Low(TexCoords) to High(TexCoords) do
    begin
-      TextCoords[i].U := _Mesh.TextCoords[i].U;
-      TextCoords[i].V := _Mesh.TextCoords[i].V;
+      TexCoords[i].U := _Mesh.TexCoords[i].U;
+      TexCoords[i].V := _Mesh.TexCoords[i].V;
    end;
    Next := _Mesh.Next;
 end;
@@ -2871,6 +3075,67 @@ begin
    end;
 end;
 
+// Materials
+procedure TMesh.AddMaterial;
+var
+   i : integer;
+begin
+   SetLength(Materials,High(Materials)+2);
+   i := High(Materials);
+   SetLength(Materials[i].Texture,0);
+   Materials[i].Ambient := SetVector4f(0.2,0.2,0.2,1.0);
+   Materials[i].Diffuse := SetVector4f(0.8,0.8,0.8,1.0);
+   Materials[i].Shininess := 0;
+   Materials[i].Specular := SetVector4f(0,0,0,1);
+   Materials[i].Emission := SetVector4f(0,0,0,1);
+   Materials[i].Shader := ShaderBank^.Get(C_SHD_PHONG);
+end;
+
+procedure TMesh.DeleteMaterial(_ID: integer);
+var
+   i,j : integer;
+begin
+   for i := Low(Materials[_ID].Texture) to High(Materials[_ID].Texture) do
+   begin
+      if Materials[i].Texture <> nil then
+      begin
+         GlobalVars.TextureBank.Delete(Materials[_ID].Texture[i]^.GetID);
+         Materials[_ID].Texture[i] := nil;
+      end;
+   end;
+
+   i := _ID;
+   while i < High(Materials) do
+   begin
+      SetLength(Materials[i].Texture,High(Materials[i+1].Texture)+1);
+      for j := Low(Materials[i].Texture) to High(Materials[i].Texture) do
+      begin
+         Materials[i].Texture[j] := Materials[i+1].Texture[j];
+      end;
+      Materials[i].Ambient := CopyVector4f(Materials[i+1].Ambient);
+      Materials[i].Diffuse := CopyVector4f(Materials[i+1].Diffuse);
+      Materials[i].Shininess := Materials[i+1].Shininess;
+      Materials[i].Specular := CopyVector4f(Materials[i+1].Specular);
+      Materials[i].Emission := CopyVector4f(Materials[i+1].Emission);
+      Materials[i].Shader := Materials[i+1].Shader;
+      inc(i);
+   end;
+   SetLength(Materials,High(Materials));
+end;
+
+procedure TMesh.ClearMaterials;
+var
+   i, j: integer;
+begin
+   for i := Low(Materials) to High(Materials) do
+   begin
+      for j := Low(Materials[i].Texture) to High(Materials[i].Texture) do
+      begin
+         GlobalVars.TextureBank.Delete(Materials[i].Texture[j]^.GetID);
+      end;
+   end;
+   SetLength(Materials,0);
+end;
 
 // Miscelaneous
 procedure TMesh.OverrideTransparency;

@@ -13,6 +13,7 @@ const
    C_COLOURS_DISABLED = 0;
    C_COLOURS_PER_VERTEX = 1;
    C_COLOURS_PER_FACE = 2;
+   C_COLOURS_FROM_TEXTURE = 3;
 
    // For Voxel Faces
    C_VOXEL_FACE_SIDE = 0;
