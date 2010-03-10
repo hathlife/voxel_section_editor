@@ -31,6 +31,8 @@ type
 
 implementation
 
+uses FormMain;
+
 // Constructors and Destructors
 constructor TShaderBank.Create(const _ShaderDirectory: string);
 var
@@ -42,12 +44,16 @@ begin
    begin
       // Add Phong Shader.
       VertexFilename := IncludeTrailingPathDelimiter(_ShaderDirectory) + 'phong_vertexshader.txt';
+      if not FileExists(VertexFilename) then
+         FrmMain.AutoRepair(VertexFilename);
       FragmentFilename := IncludeTrailingPathDelimiter(_ShaderDirectory) + 'phong_fragmentshader.txt';
+      if not FileExists(FragmentFilename) then
+         FrmMain.AutoRepair(FragmentFilename);
       Load(VertexFilename,FragmentFilename);
    end
    else
    begin
-      ShowMessage('Warning: Your hardware does not support GLSL. Models that uses shader effects will not be previewed correctly with this program.');
+      ShowMessage('Warning: Your hardware does not support GLSL. Models that uses shader effects will not be previewed correctly in this machine.');
    end;
 end;
 

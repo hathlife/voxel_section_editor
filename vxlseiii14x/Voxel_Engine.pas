@@ -91,7 +91,7 @@ Function GetPaletteColourFromVoxel(x,y, WndIndex : integer) : integer;
 procedure ActivateView(Idx: Integer);
 procedure SyncViews;
 procedure RefreshViews;
-procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; var last,first : TVector3i; v: TVoxelUnpacked);
+procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; last,first : TVector3i; v: TVoxelUnpacked);
 procedure AddTempLine(x1,y1,x2,y2,width : integer; colour : TColor);
 procedure VXLRectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; Fill: Boolean; v : TVoxelUnpacked);
 Function ApplyNormalsToVXL(var VXL : TVoxelSection) : integer;
@@ -1209,7 +1209,7 @@ begin
       result := (first.Y-last.Y) / (first.X-last.X);
 end;
 
-procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; var last,first : TVector3i; v: TVoxelUnpacked);
+procedure drawstraightline(const a : TVoxelSection; var tempview : Ttempview; last,first : TVector3i; v: TVoxelUnpacked);
 var
    x,y,ss : integer;
    gradient,c : single;
@@ -1221,15 +1221,17 @@ begin
    if (a.View[0].getOrient = oriX) then
    begin
       ss := last.x;
-      last.X := last.Z;
       first.X := first.Z;
+      last.X := last.Z;
       o := 1;
    end
    else if (a.View[0].getOrient = oriY) then
    begin
       ss := last.y;
-      last.Y := last.Z;
-      first.Y := first.Z;
+      first.Y := first.X;
+      last.Y := last.X;
+      first.X := first.Z;
+      last.X := last.Z;
       o := 2;
    end
    else if (a.View[0].getOrient = oriZ) then
@@ -1251,8 +1253,8 @@ begin
          setlength(tempview.Data,tempview.Data_no+1);
          if o = 1 then
          begin
-            tempview.Data[tempview.Data_no].X := y;
-            tempview.Data[tempview.Data_no].Y := first.X;
+            tempview.Data[tempview.Data_no].X := first.X;
+            tempview.Data[tempview.Data_no].Y := y;
             tempview.Data[tempview.Data_no].VU := true;
             tempview.Data[tempview.Data_no].VC.X :=ss;
             tempview.Data[tempview.Data_no].VC.Y :=y;
@@ -1264,9 +1266,9 @@ begin
             tempview.Data[tempview.Data_no].X := first.X;
             tempview.Data[tempview.Data_no].Y := y;
             tempview.Data[tempview.Data_no].VU := true;
-            tempview.Data[tempview.Data_no].VC.X :=first.X;
+            tempview.Data[tempview.Data_no].VC.X :=y;
             tempview.Data[tempview.Data_no].VC.Y :=ss;
-            tempview.Data[tempview.Data_no].VC.Z :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=first.X;
             tempview.Data[tempview.Data_no].V := V;
          end
          else
@@ -1287,8 +1289,8 @@ begin
          setlength(tempview.Data,tempview.Data_no+1);
          if o = 1 then
          begin
-            tempview.Data[tempview.Data_no].X := first.Y;
-            tempview.Data[tempview.Data_no].Y := x;
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := first.Y;
             tempview.Data[tempview.Data_no].VU := true;
             tempview.Data[tempview.Data_no].VC.X :=ss;
             tempview.Data[tempview.Data_no].VC.Y :=first.y;
@@ -1300,9 +1302,9 @@ begin
             tempview.Data[tempview.Data_no].X := x;
             tempview.Data[tempview.Data_no].Y := first.Y;
             tempview.Data[tempview.Data_no].VU := true;
-            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.X :=first.y;
             tempview.Data[tempview.Data_no].VC.Y :=ss;
-            tempview.Data[tempview.Data_no].VC.Z :=first.y;
+            tempview.Data[tempview.Data_no].VC.Z :=x;
             tempview.Data[tempview.Data_no].V := V;
          end
          else
@@ -1324,8 +1326,8 @@ begin
          setlength(tempview.Data,tempview.Data_no+1);
          if o = 1 then
          begin
-            tempview.Data[tempview.Data_no].X := round((gradient*x)+c);
-            tempview.Data[tempview.Data_no].Y := x;
+            tempview.Data[tempview.Data_no].X := x;
+            tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
             tempview.Data[tempview.Data_no].VU := true;
             tempview.Data[tempview.Data_no].VC.X :=ss;
             tempview.Data[tempview.Data_no].VC.Y :=round((gradient*x)+c);
@@ -1337,9 +1339,9 @@ begin
             tempview.Data[tempview.Data_no].X := x;
             tempview.Data[tempview.Data_no].Y := round((gradient*x)+c);
             tempview.Data[tempview.Data_no].VU := true;
-            tempview.Data[tempview.Data_no].VC.X :=x;
+            tempview.Data[tempview.Data_no].VC.X :=round((gradient*x)+c);
             tempview.Data[tempview.Data_no].VC.Y :=ss;
-            tempview.Data[tempview.Data_no].VC.Z :=round((gradient*x)+c);
+            tempview.Data[tempview.Data_no].VC.Z :=x;
             tempview.Data[tempview.Data_no].V := V;
          end
          else
@@ -1359,8 +1361,8 @@ begin
          setlength(tempview.Data,tempview.Data_no+1);
          if o = 1 then
          begin
-            tempview.Data[tempview.Data_no].X := y;
-            tempview.Data[tempview.Data_no].Y := round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].Y := y;
             tempview.Data[tempview.Data_no].VU := true;
             tempview.Data[tempview.Data_no].VC.X :=ss;
             tempview.Data[tempview.Data_no].VC.Y :=y;
@@ -1372,9 +1374,9 @@ begin
             tempview.Data[tempview.Data_no].X := round((y-c)/ gradient);
             tempview.Data[tempview.Data_no].Y := y;
             tempview.Data[tempview.Data_no].VU := true;
-            tempview.Data[tempview.Data_no].VC.X :=round((y-c)/ gradient);
+            tempview.Data[tempview.Data_no].VC.X :=y;
             tempview.Data[tempview.Data_no].VC.Y :=ss;
-            tempview.Data[tempview.Data_no].VC.Z :=y;
+            tempview.Data[tempview.Data_no].VC.Z :=round((y-c)/ gradient);
             tempview.Data[tempview.Data_no].V := V;
          end
          else
@@ -1479,13 +1481,13 @@ begin
                   setlength(tempview.Data,tempview.Data_no +1);
                   if O = oriX then
                   begin
-                     tempview.Data[tempview.Data_no].X := j;
-                     tempview.Data[tempview.Data_no].Y := k;
+                     tempview.Data[tempview.Data_no].X := k;
+                     tempview.Data[tempview.Data_no].Y := j;
                   end
                   else if O = oriY then
                   begin
-                     tempview.Data[tempview.Data_no].X := i;
-                     tempview.Data[tempview.Data_no].Y := k;
+                     tempview.Data[tempview.Data_no].X := k;
+                     tempview.Data[tempview.Data_no].Y := i;
                   end
                   else if O = oriZ then
                   begin
@@ -1508,13 +1510,13 @@ begin
                   setlength(tempview.Data,tempview.Data_no +1);
                   if O = oriX then
                   begin
-                     tempview.Data[tempview.Data_no].X := j;
-                     tempview.Data[tempview.Data_no].Y := k;
+                     tempview.Data[tempview.Data_no].X := k;
+                     tempview.Data[tempview.Data_no].Y := j;
                   end
                   else if O = oriY then
                   begin
-                     tempview.Data[tempview.Data_no].X := i;
-                     tempview.Data[tempview.Data_no].Y := k;
+                     tempview.Data[tempview.Data_no].X := k;
+                     tempview.Data[tempview.Data_no].Y := i;
                   end
                   else if O = oriZ then
                   begin
@@ -1648,22 +1650,22 @@ begin
                oriX:
                Begin
                   tempview.Data[tempview.Data_no].VC.X := Xc;
-                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+i,VXL.Tailer.YSize-1),0);
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Y;
-                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Y;
 
                   //VXL.SetVoxel(Xc,Max(Min(Yc+i,VXL.Tailer.YSize-1),0),Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
                oriY:
                Begin
-                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
                   tempview.Data[tempview.Data_no].VC.Y := Yc;
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].X := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].Y := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Yc,Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
@@ -1781,22 +1783,22 @@ begin
                oriX:
                Begin
                   tempview.Data[tempview.Data_no].VC.X := Xc;
-                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+i,VXL.Tailer.YSize-1),0);
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Y;
-                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Y;
 
                   //VXL.SetVoxel(Xc,Max(Min(Yc+i,VXL.Tailer.YSize-1),0),Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
                oriY:
                Begin
-                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
                   tempview.Data[tempview.Data_no].VC.Y := Yc;
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].X := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].Y := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Yc,Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
@@ -2099,13 +2101,13 @@ begin
    case O of
       oriX:
       begin
-         tempview.Data[tempview.Data_no].X := Y;
-         tempview.Data[tempview.Data_no].Y := Z;
+         tempview.Data[tempview.Data_no].X := Z;
+         tempview.Data[tempview.Data_no].Y := Y;
       end;
       oriY:
       begin
-         tempview.Data[tempview.Data_no].X := X;
-         tempview.Data[tempview.Data_no].Y := Z;
+         tempview.Data[tempview.Data_no].X := Z;
+         tempview.Data[tempview.Data_no].Y := X;
       end;
       oriZ:
       begin
@@ -2637,20 +2639,20 @@ begin
                oriX:
                Begin
                   tempview.Data[tempview.Data_no].VC.X := Xc;
-                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+i,VXL.Tailer.YSize-1),0);
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Y;
-                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Y;
                end;
                oriY:
                Begin
-                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.X := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
                   tempview.Data[tempview.Data_no].VC.Y := Yc;
-                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Zc+j,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].X := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
+                  tempview.Data[tempview.Data_no].Y := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
                end;
                oriZ:
                Begin
@@ -2711,12 +2713,7 @@ begin
    SpectrumMode := ModeColours;
    ViewMode := ModeEmphasiseDepth;
 
-   if not LoadMouseCursors then
-   begin
-      messagebox(0,'Files Missing Load Aborted','Files Missing',0);
-      Application.Terminate;
-      exit;
-   end;
+   LoadMouseCursors; //if the files are missing, it will download them or close the program.
 
    if TestBuild then
       messagebox(0,'Voxel Section Editor III' + #13#13 + 'Version: TB '+testbuildversion+ #13#13#13 + 'THIS IS NOT TO BE DISTRIBUTED','Test Build Message',0);

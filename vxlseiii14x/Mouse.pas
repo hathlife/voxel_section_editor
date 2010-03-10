@@ -24,6 +24,8 @@ Var
 
 implementation
 
+uses FormMain;
+
 function LoadMouseCursors : boolean;
 var
    temp : integer;
@@ -51,11 +53,11 @@ begin
    filename := pchar(ExtractFileDir(ParamStr(0)) + '\cursors\'+inttostr(Number)+'.cur');
    if Not fileexists(filename) then
    begin
-      Result := -1;
-      MessageBox(0,pchar('Error Cursor Missing < ' + extractfilename(filename) + ' >'),'Cursor Error',0);
-   end
-   else
-      Screen.Cursors[Number] := LoadCursorFromFile(filename);
+      //Result := -1;
+      //MessageBox(0,pchar('Error Cursor Missing < ' + extractfilename(filename) + ' >'),'Cursor Error',0);
+      FrmMain.AutoRepair(filename);
+   end;
+   Screen.Cursors[Number] := LoadCursorFromFile(filename);
 end;
 
 end.

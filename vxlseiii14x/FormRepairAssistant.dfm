@@ -12,6 +12,7 @@ object FrmRepairAssistant: TFrmRepairAssistant
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnShow = FormShow
   DesignSize = (
     437
     213)
@@ -20,15 +21,15 @@ object FrmRepairAssistant: TFrmRepairAssistant
   object Label1: TLabel
     Left = 8
     Top = 16
-    Width = 105
+    Width = 65
     Height = 13
     AutoSize = False
     Caption = 'Current File:'
   end
   object LbFilename: TLabel
-    Left = 136
+    Left = 88
     Top = 16
-    Width = 293
+    Width = 341
     Height = 13
     AutoSize = False
   end
@@ -38,8 +39,11 @@ object FrmRepairAssistant: TFrmRepairAssistant
     Width = 421
     Height = 166
     Anchors = [akLeft, akRight, akBottom]
+    ReadOnly = True
+    ScrollBars = ssVertical
     TabOrder = 0
-    ExplicitTop = 64
+    WantReturns = False
+    OnChange = MmReportChange
   end
   object IdHTTP: TIdHTTP
     AllowCookies = True
@@ -56,9 +60,11 @@ object FrmRepairAssistant: TFrmRepairAssistant
     Left = 32
     Top = 40
   end
-  object XMLDocument: TXMLDocument
+  object Timer: TTimer
+    Enabled = False
+    Interval = 300
+    OnTimer = TimerTimer
     Left = 64
     Top = 40
-    DOMVendorDesc = 'MSXML'
   end
 end

@@ -11,13 +11,13 @@ uses
   ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP;
+  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.80';
+   APPLICATION_VER = '1.39.81';
    APPLICATION_BETA = true;
 
 type
@@ -352,6 +352,8 @@ type
     Importfromamodelusing3ds2vxl1: TMenuItem;
     CropSection1: TMenuItem;
     AutoUpdate1: TMenuItem;
+    RepairProgram1: TMenuItem;
+    procedure RepairProgram1Click(Sender: TObject);
     procedure AutoUpdate1Click(Sender: TObject);
     procedure CropSection1Click(Sender: TObject);
     procedure Importfromamodelusing3ds2vxl1Click(Sender: TObject);
@@ -590,6 +592,7 @@ type
     procedure CubedAutoNormals1Click(Sender: TObject);
     procedure SpeedButton13Click(Sender: TObject);
     procedure UpdatePositionStatus(x,y,z : integer);
+    procedure AutoRepair(const _Filename: string; _ForceRepair: boolean = false);
   private
     { Private declarations }
     RemapColour : TVector3f;
@@ -659,6 +662,19 @@ begin
    mnuReopen := @ReOpen1;
    BuildReopenMenu;
    Height := 768;
+
+   if not FileExists(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'palettes\TS\unittem.pal') then
+   begin
+      AutoRepair(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'palettes\TS\unittem.pal');
+   end;
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp')) then
+   begin
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp');
+   end;
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/images/play.bmp')) then
+   begin
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+   end;
 
    GlobalVars.Render := TRender.Create(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'shaders');
    GlobalVars.Documents := TVoxelDocumentBank.Create;
@@ -2130,7 +2146,7 @@ begin
       DebugFile.Add('FrmMain: CnvView0MouseMove');
       {$endif}
       TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z);
-      StatusBar1.Panels[2].Text := 'X: ' + inttostr(LastClick[0].Y) + ', Y: ' + inttostr(LastClick[0].Z) + ', Z: ' + inttostr(LastClick[0].X);
+      StatusBar1.Panels[2].Text := 'X: ' + inttostr(LastClick[0].X) + ', Y: ' + inttostr(LastClick[0].Y) + ', Z: ' + inttostr(LastClick[0].Z);
       StatusBar1.Refresh;
 
       MousePos.X := X;
@@ -4519,6 +4535,40 @@ begin
    VXLChanged := true;
 end;
 
+procedure TFrmMain.AutoRepair(const _Filename: string; _ForceRepair: boolean);
+var
+   Frm : TFrmRepairAssistant;
+begin
+   Frm := TFrmRepairAssistant.Create(self);
+   if Frm.RequestAuthorization(_Filename) then
+   begin
+      Frm.ForceRepair := _ForceRepair;
+      Frm.ShowModal;
+      if not Frm.RepairDone then
+      begin
+         Application.Terminate;
+      end;
+      Frm.Close;
+   end;
+   Frm.Release;
+end;
+
+procedure TFrmMain.RepairProgram1Click(Sender: TObject);
+var
+   Frm : TFrmRepairAssistant;
+begin
+   Frm := TFrmRepairAssistant.Create(self);
+   Frm.ForceRepair := true;
+   Frm.ShowModal;
+   if not Frm.RepairDone then
+   begin
+      ShowMessage('Warning: Auto Repair could not finish its job.');
+   end;
+   Frm.Close;
+   Frm.Release;
+end;
+
+
 procedure TFrmMain.FormActivate(Sender: TObject);
 begin
    // Activate the view.
@@ -4552,6 +4602,5 @@ procedure TFrmMain.FormDeactivate(Sender: TObject);
 begin
    Application.OnIdle := nil;
 end;
-
 
 end.

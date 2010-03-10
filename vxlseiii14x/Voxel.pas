@@ -1628,11 +1628,11 @@ procedure TVoxelView.TranslateClick(i, j: Integer; var X, Y, Z: Integer);
       if SwapZ then
          Z := Width - 1 - i
       else
-         Z := j;
+         Z := i;
       if SwapY then
          Y := Height - 1 - j
       else
-         Y := i;
+         Y := j;
    end;
    procedure TranslateY;
    begin
@@ -1758,7 +1758,7 @@ begin
       end;
       2:
       begin // Top to Bottom
-         SwapX := False;
+         SwapX := True;
          SwapY := True;
          SwapZ := False;
       end;
@@ -1766,7 +1766,7 @@ begin
       begin // Bottom to Top
          SwapX := True;
          SwapY := True;
-         SwapZ := False;
+         SwapZ := True;
       end;
       4:
       begin // Back to Front

@@ -1593,9 +1593,8 @@ object FrmMain: TFrmMain
         OnMouseMove = CnvView0MouseMove
         OnMouseUp = CnvView0MouseUp
         OnPaint = CnvView0Paint
-        ExplicitLeft = 157
-        ExplicitTop = 0
-        ExplicitHeight = 745
+        ExplicitLeft = 0
+        ExplicitTop = 8
       end
       object TopBarImageHolder: TImage
         Left = 0
@@ -5330,6 +5329,10 @@ object FrmMain: TFrmMain
       object ProjectSVN1: TMenuItem
         Caption = 'Project SVN'
         OnClick = ProjectSVN1Click
+      end
+      object RepairProgram1: TMenuItem
+        Caption = 'Repair Program'
+        OnClick = RepairProgram1Click
       end
       object AutoUpdate1: TMenuItem
         Caption = 'Update Program'
