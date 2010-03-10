@@ -40,7 +40,7 @@ var
 begin
    SetLength(Items,0);
    // Check if GLSL is supported by the hardware (requires OpenGL 2.0)
-   if (gl_ARB_vertex_shader) and (gl_ARB_fragment_shader) then
+   if (gl_ARB_vertex_shader) and ((gl_ARB_fragment_shader) or (GL_ATI_fragment_shader)) then
    begin
       // Add Phong Shader.
       VertexFilename := IncludeTrailingPathDelimiter(_ShaderDirectory) + 'phong_vertexshader.txt';
@@ -53,7 +53,7 @@ begin
    end
    else
    begin
-      ShowMessage('Warning: Your hardware does not support GLSL. Models that uses shader effects will not be previewed correctly in this machine.');
+      ShowMessage('Warning: Your hardware does not support GLSL. Models that use shader effects will not be previewed correctly on this machine.');
    end;
 end;
 

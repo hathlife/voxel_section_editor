@@ -3088,7 +3088,10 @@ begin
    Materials[i].Shininess := 0;
    Materials[i].Specular := SetVector4f(0,0,0,1);
    Materials[i].Emission := SetVector4f(0,0,0,1);
-   Materials[i].Shader := ShaderBank^.Get(C_SHD_PHONG);
+   if ShaderBank <> nil then
+      Materials[i].Shader := ShaderBank^.Get(C_SHD_PHONG)
+   else
+      Materials[i].Shader := nil;
 end;
 
 procedure TMesh.DeleteMaterial(_ID: integer);
