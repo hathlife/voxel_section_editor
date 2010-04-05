@@ -114,6 +114,12 @@ type
     FaceFXOptimizeMeshCustom: TMenuItem;
     ModelFXSquaredSmooth: TMenuItem;
     akeScreenshotDDS1: TMenuItem;
+    TextureEffects1: TMenuItem;
+    TextureFXDiffuse: TMenuItem;
+    N5: TMenuItem;
+    TextureFSExport: TMenuItem;
+    procedure TextureFSExportClick(Sender: TObject);
+    procedure TextureFXDiffuseClick(Sender: TObject);
     procedure akeScreenshotDDS1Click(Sender: TObject);
     procedure ModelFXSquaredSmoothClick(Sender: TObject);
     procedure FaceFXOptimizeMeshCustomClick(Sender: TObject);
@@ -329,6 +335,12 @@ begin
    Close;
 end;
 
+procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
+begin
+   // Export every single texture...
+   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),'jpg');
+end;
+
 procedure TFrm3DModelizer.BackgroundColour1Click(Sender: TObject);
 begin
    ColorDialog1.Color := TVector3fToTColor(Env.BackgroundColour);
@@ -430,6 +442,12 @@ begin
    Env.ForceRefresh;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+end;
+
+procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
+begin
+   Actor.GenerateDiffuseTexture;
+   TextureFSExport.Enabled := true;
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmoothClick(Sender: TObject);
@@ -1012,6 +1030,7 @@ end;
 
 procedure TFrm3DModelizer.UpdateQualityUI;
 begin
+   TextureFSExport.Enabled := false;
    if RenderModel.checked then
    begin
       RenderModelClick(nil);

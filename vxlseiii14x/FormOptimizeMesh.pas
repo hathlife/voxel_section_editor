@@ -38,14 +38,15 @@ end;
 procedure TFrmOptimizeMesh.BtOKClick(Sender: TObject);
 begin
    Threshold := StrToFloatDef(EdThreshold.Text,-1);
-   if Threshold >= 0 then
+   if (Threshold >= 0) and (Threshold <= 180) then
    begin
+      Threshold := cos((Threshold * Pi) / 180);
       Apply := true;
       Close;
    end
    else
    begin
-      ShowMessage('Please, insert a threshold between 0 and 1.4.');
+      ShowMessage('Please, insert an angle between 0 and 180.');
    end;
 end;
 

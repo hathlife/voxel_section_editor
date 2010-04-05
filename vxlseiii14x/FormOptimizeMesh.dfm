@@ -20,9 +20,9 @@ object FrmOptimizeMesh: TFrmOptimizeMesh
   object LbThreshold: TLabel
     Left = 16
     Top = 16
-    Width = 92
+    Width = 95
     Height = 13
-    Caption = 'Normals Threshold:'
+    Caption = 'Normals Max Angle:'
   end
   object BvlBottomLine: TBevel
     Left = 0
@@ -42,10 +42,9 @@ object FrmOptimizeMesh: TFrmOptimizeMesh
     Anchors = [akLeft, akRight, akBottom]
     Caption = 
       'Optimize Mesh reduces the amount of vertexes and faces in a 3D g' +
-      'eometry. The threshold determines how much the mesh can be defor' +
-      'med in this operation and its value ranges between 0 and 1.'
+      'eometry. The angle determines the maximum angle where a face can' +
+      ' be merged. Use angles between  0 and 180.'
     WordWrap = True
-    ExplicitTop = 111
   end
   object BtOK: TButton
     Left = 262
@@ -56,8 +55,6 @@ object FrmOptimizeMesh: TFrmOptimizeMesh
     Caption = 'OK'
     TabOrder = 0
     OnClick = BtOKClick
-    ExplicitLeft = 278
-    ExplicitTop = 70
   end
   object BtCancel: TButton
     Left = 181
@@ -68,8 +65,6 @@ object FrmOptimizeMesh: TFrmOptimizeMesh
     Caption = 'Cancel'
     TabOrder = 1
     OnClick = BtCancelClick
-    ExplicitLeft = 197
-    ExplicitTop = 70
   end
   object cbIgnoreColours: TCheckBox
     Left = 16

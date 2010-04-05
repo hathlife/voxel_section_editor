@@ -2,12 +2,12 @@ unit TextureBank;
 
 interface
 
-uses BasicDataTypes, dglOpengl, TextureBankItem, SysUtils;
+uses BasicDataTypes, dglOpengl, TextureBankItem, SysUtils, Windows, Graphics;
 
 type
    TTextureBank = class
       private
-         Items : array of TTextureBankItem;
+         Items : array of PTextureBankItem;
          // Constructors and Destructors
          procedure Clear;
          // Adds
@@ -27,10 +27,14 @@ type
          // Adds
          function Add(const _filename: string): PTextureBankItem; overload;
          function Add(const _ID: GLInt): PTextureBankItem; overload;
+         function Add(const _Bitmap: TBitmap): PTextureBankItem; overload;
+         function Add(const _Bitmaps: TABitmap): PTextureBankItem; overload;
          function AddReadOnly(const _filename: string): PTextureBankItem; overload;
          function AddReadOnly(const _ID: GLInt): PTextureBankItem; overload;
          function Clone(const _filename: string): PTextureBankItem; overload;
          function Clone(const _ID: GLInt): PTextureBankItem; overload;
+         function Clone(const _Bitmap: TBitmap): PTextureBankItem; overload;
+         function Clone(const _Bitmaps: TABitmap): PTextureBankItem; overload;
          function CloneEditable(const _ID: GLInt): PTextureBankItem; overload;
          // Deletes
          procedure Delete(const _ID : GLInt);
@@ -58,7 +62,7 @@ var
 begin
    for i := Low(Items) to High(Items) do
    begin
-      Items[i].Free;
+      Items[i]^.Free;
    end;
 end;
 
@@ -74,52 +78,57 @@ begin
       if Items[i].GetCount = 0 then
       begin
          try
-            Items[i].Free;
-            Items[i] := TTextureBankItem.Create(_Filename);
-            Result := Addr(Items[i]);
+            Items[i]^.Free;
+            dispose(Items[i]);
+            new(Items[i]);
+            Items[i]^ := TTextureBankItem.Create(_Filename);
+            Result := Items[i];
          except
             Result := nil;
             exit;
          end;
-         Items[i].SetEditable(true);
+         Items[i]^.SetEditable(true);
       end
       else
       begin
          SetLength(Items,High(Items)+2);
          try
-            Items[High(Items)] := TTextureBankItem.Create(_Filename);
+            new(Items[High(Items)]);
+            Items[High(Items)]^ := TTextureBankItem.Create(_Filename);
          except
-            Items[High(Items)].Free;
+            Items[High(Items)]^.Free;
             SetLength(Items,High(Items));
             Result := nil;
             exit;
          end;
-         Items[High(Items)].SetEditable(true);
-         Result := Addr(Items[High(Items)]);
+         Items[High(Items)]^.SetEditable(true);
+         Result := Items[High(Items)];
       end;
    end
    else
    begin
       SetLength(Items,High(Items)+2);
       try
-         Items[High(Items)] := TTextureBankItem.Create(_Filename);
+         new(Items[High(Items)]);
+         Items[High(Items)]^ := TTextureBankItem.Create(_Filename);
       except
-         Items[High(Items)].Free;
+         Items[High(Items)]^.Free;
          SetLength(Items,High(Items));
          Result := nil;
          exit;
       end;
-      Items[High(Items)].SetEditable(true);
-      Result := Addr(Items[High(Items)]);
+      Items[High(Items)]^.SetEditable(true);
+      Result := Items[High(Items)];
    end;
 end;
 
 function TTextureBank.LoadNew: PTextureBankItem;
 begin
    SetLength(Items,High(Items)+2);
-   Items[High(Items)] := TTextureBankItem.Create;
-   Items[High(Items)].SetEditable(true);
-   Result := Addr(Items[High(Items)]);
+   new(Items[High(Items)]);
+   Items[High(Items)]^ := TTextureBankItem.Create;
+   Items[High(Items)]^.SetEditable(true);
+   Result := Items[High(Items)];
 end;
 
 
@@ -131,8 +140,8 @@ begin
    i := Search(_ID);
    if i <> -1 then
    begin
-      ID := Items[i].GetID;
-      Items[i].SaveTexture(_Filename);
+      ID := Items[i]^.GetID;
+      Items[i]^.SaveTexture(_Filename);
       Result := true;
    end
    else
@@ -153,7 +162,7 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if CompareStr(_Filename,Items[i].GetFilename) = 0 then
+      if CompareStr(_Filename,Items[i]^.GetFilename) = 0 then
       begin
          Result := i;
          exit;
@@ -172,7 +181,7 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if _ID = Items[i].GetID then
+      if _ID = Items[i]^.GetID then
       begin
          Result := i;
          exit;
@@ -191,9 +200,9 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if not Items[i].GetEditable then
+      if not Items[i]^.GetEditable then
       begin
-         if CompareStr(_Filename,Items[i].GetFilename) = 0 then
+         if CompareStr(_Filename,Items[i]^.GetFilename) = 0 then
          begin
             Result := i;
             exit;
@@ -213,9 +222,9 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if not Items[i].GetEditable then
+      if not Items[i]^.GetEditable then
       begin
-         if _ID = Items[i].GetID then
+         if _ID = Items[i]^.GetID then
          begin
             Result := i;
             exit;
@@ -235,9 +244,9 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if Items[i].GetEditable then
+      if Items[i]^.GetEditable then
       begin
-         if _ID = Items[i].GetID then
+         if _ID = Items[i]^.GetID then
          begin
             Result := i;
             exit;
@@ -256,21 +265,23 @@ begin
    i := Search(_Filename);
    if i <> -1 then
    begin
-      Items[i].IncCounter;
-      Result := Addr(Items[i]);
+      Items[i]^.IncCounter;
+      Result := Items[i];
    end
    else
    begin
       SetLength(Items,High(Items)+2);
       try
-         Items[High(Items)] := TTextureBankItem.Create(_Filename);
+         new(Items[High(Items)]);
+         Items[High(Items)]^ := TTextureBankItem.Create(_Filename);
       except
-         Items[High(Items)].Free;
+         Items[High(Items)]^.Free;
+         dispose(Items[High(Items)]);
          SetLength(Items,High(Items));
          Result := nil;
          exit;
       end;
-      Result := Addr(Items[High(Items)]);
+      Result := Items[High(Items)];
    end;
 end;
 
@@ -281,22 +292,34 @@ begin
    i := Search(_ID);
    if i <> -1 then
    begin
-      Items[i].IncCounter;
-      Result := Addr(Items[i]);
+      Items[i]^.IncCounter;
+      Result := Items[i];
    end
    else
    begin
       SetLength(Items,High(Items)+2);
       try
-         Items[High(Items)] := TTextureBankItem.Create(_ID);
+         new(Items[High(Items)]);
+         Items[High(Items)]^ := TTextureBankItem.Create(_ID);
       except
-         Items[High(Items)].Free;
+         Items[High(Items)]^.Free;
+         Dispose(Items[High(Items)]);
          SetLength(Items,High(Items));
          Result := nil;
          exit;
       end;
-      Result := Addr(Items[High(Items)]);
+      Result := Items[High(Items)];
    end;
+end;
+
+function TTextureBank.Add(const _Bitmap: TBitmap): PTextureBankItem;
+begin
+   Result := Clone(_Bitmap);
+end;
+
+function TTextureBank.Add(const _Bitmaps: TABitmap): PTextureBankItem;
+begin
+   Result := Clone(_Bitmaps);
 end;
 
 function TTextureBank.AddReadOnly(const _filename: string): PTextureBankItem;
@@ -306,21 +329,23 @@ begin
    i := SearchReadOnly(_Filename);
    if i <> -1 then
    begin
-      Items[i].IncCounter;
-      Result := Addr(Items[i]);
+      Items[i]^.IncCounter;
+      Result := Items[i];
    end
    else
    begin
       SetLength(Items,High(Items)+2);
       try
-         Items[High(Items)] := TTextureBankItem.Create(_Filename);
+         new(Items[High(Items)]);
+         Items[High(Items)]^ := TTextureBankItem.Create(_Filename);
       except
-         Items[High(Items)].Free;
+         Items[High(Items)]^.Free;
+         Dispose(Items[High(Items)]);
          SetLength(Items,High(Items));
          Result := nil;
          exit;
       end;
-      Result := Addr(Items[High(Items)]);
+      Result := Items[High(Items)];
    end;
 end;
 
@@ -331,21 +356,23 @@ begin
    i := SearchReadOnly(_ID);
    if i <> -1 then
    begin
-      Items[i].IncCounter;
-      Result := Addr(Items[i]);
+      Items[i]^.IncCounter;
+      Result := Items[i];
    end
    else
    begin
       SetLength(Items,High(Items)+2);
       try
-         Items[High(Items)] := TTextureBankItem.Create(_ID);
+         new(Items[High(Items)]);
+         Items[High(Items)]^ := TTextureBankItem.Create(_ID);
       except
-         Items[High(Items)].Free;
+         Items[High(Items)]^.Free;
+         Dispose(Items[High(Items)]);
          SetLength(Items,High(Items));
          Result := nil;
          exit;
       end;
-      Result := Addr(Items[High(Items)]);
+      Result := Items[High(Items)];
    end;
 end;
 
@@ -353,43 +380,81 @@ function TTextureBank.Clone(const _filename: string): PTextureBankItem;
 begin
    SetLength(Items,High(Items)+2);
    try
-      Items[High(Items)] := TTextureBankItem.Create(_Filename);
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Filename);
    except
-      Items[High(Items)].Free;
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
       SetLength(Items,High(Items));
       Result := nil;
       exit;
    end;
-   Result := Addr(Items[High(Items)]);
+   Result := Items[High(Items)];
 end;
 
 function TTextureBank.Clone(const _ID: GLInt): PTextureBankItem;
 begin
    SetLength(Items,High(Items)+2);
    try
-      Items[High(Items)] := TTextureBankItem.Create(_ID);
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_ID);
    except
-      Items[High(Items)].Free;
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
       SetLength(Items,High(Items));
       Result := nil;
       exit;
    end;
-   Result := Addr(Items[High(Items)]);
+   Result := Items[High(Items)];
+end;
+
+function TTextureBank.Clone(const _Bitmap: TBitmap): PTextureBankItem;
+begin
+   SetLength(Items,High(Items)+2);
+   try
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Bitmap);
+   except
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
+   Result := Items[High(Items)];
+end;
+
+function TTextureBank.Clone(const _Bitmaps: TABitmap): PTextureBankItem;
+begin
+   SetLength(Items,High(Items)+2);
+   try
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Bitmaps);
+   except
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
+   Result := Items[High(Items)];
 end;
 
 function TTextureBank.CloneEditable(const _ID: GLInt): PTextureBankItem;
 begin
    SetLength(Items,High(Items)+2);
    try
-      Items[High(Items)] := TTextureBankItem.Create(_ID);
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_ID);
    except
-      Items[High(Items)].Free;
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
       SetLength(Items,High(Items));
       Result := nil;
       exit;
    end;
-   Items[High(Items)].SetEditable(true);
-   Result := Addr(Items[High(Items)]);
+   Items[High(Items)]^.SetEditable(true);
+   Result := Items[High(Items)];
 end;
 
 
@@ -401,10 +466,10 @@ begin
    i := Search(_ID);
    if i <> -1 then
    begin
-      Items[i].DecCounter;
-      if Items[i].GetCount = 0 then
+      Items[i]^.DecCounter;
+      if Items[i]^.GetCount = 0 then
       begin
-         Items[i].Free;
+         Items[i]^.Free;
          while i < High(Items) do
          begin
             Items[i] := Items[i+1];

@@ -3,10 +3,10 @@ unit ClassTextureGenerator;
 interface
 
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
-   ClassIntegerList, Math, Windows, Graphics, BasicFunctions;
+   ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs;
 
 const
-   C_SEED_SEPARATOR_SPACE = 1;
+   C_SEED_SEPARATOR_SPACE = 0;
 
 type
    TTextureSeed = record
@@ -29,7 +29,7 @@ type
          // Transform Matrix Operations
          function GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
          function GetTransformMatrix(_AngX, _AngY, _AngZ: single): TMatrix;
-         function GetUVCoordinates(const _Normal: TVector3f; _TransformMatrix: TMatrix): TVector2f;
+         function GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
          // Angle Detector
          function GetRotationX(const _Vector: TVector3f): single;
          function GetRotationY(const _Vector: TVector3f): single;
@@ -43,6 +43,7 @@ type
          function CompareU(const _Seed1, _Seed2 : TTextureSeed): real;
          function CompareV(const _Seed1, _Seed2 : TTextureSeed): real;
          procedure QuickSortSeeds(_min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction);
+         procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
          // Painting procedures
          procedure PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector4f); overload;
@@ -105,7 +106,7 @@ end;
 function CTextureGenerator.GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
 const
    C_ANG_X = 0;
-   C_ANG_Y = 1.5 * pi;
+   C_ANG_Y = 0;
    C_ANG_Z = C_ANGLE_NONE;
 var
    AngX,AngY,AngZ : single;
@@ -115,9 +116,12 @@ begin
    AngY := GetRotationY(_Normal);
    AngZ := GetRotationZ(_Normal);
    // Get the angles of the plane aiming at the user minus normal vector
-   AngX := SubtractAngles(AngX,C_ANG_X);
-   AngY := SubtractAngles(AngY,C_ANG_Y);
+//   AngX := SubtractAngles(AngX,C_ANG_X);
+//   AngY := SubtractAngles(AngY,C_ANG_Y);
 //   AngZ := SubtractAngles(AngZ,C_ANG_Z);
+   AngX := CleanAngleRadians(-AngX);
+   AngY := CleanAngleRadians(-AngY);
+   AngZ := CleanAngleRadians(-AngZ);
    // Now we get the transform matrix
    Result := GetTransformMatrix(AngX,AngY,AngZ);
 end;
@@ -139,11 +143,11 @@ begin
    end;
 end;
 
-function CTextureGenerator.GetUVCoordinates(const _Normal: TVector3f; _TransformMatrix: TMatrix): TVector2f;
+function CTextureGenerator.GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
 var
    TempVector: TVector3f;
 begin
-   TempVector := VectorTransform(_Normal,_TransformMatrix);
+   TempVector := VectorTransform(_Position,_TransformMatrix);
    Result.U := TempVector.X;
    Result.V := TempVector.Y;
 end;
@@ -157,7 +161,7 @@ begin
    Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.Z * _Vector.Z));
    if Distance > 0 then
    begin
-      Result := CleanAngleRadians(arccos(_Vector.Z / Distance));
+      Result := CleanAngleRadians(arccos(_Vector.Y / Distance));
    end
    else
    begin
@@ -187,7 +191,7 @@ begin
    Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.X * _Vector.X));
    if Distance > 0 then
    begin
-      Result := CleanAngleRadians(arccos(_Vector.Y / Distance));
+      Result := CleanAngleRadians(arccos(_Vector.X / Distance));
    end
    else
    begin
@@ -210,7 +214,7 @@ begin
    end
    else
    begin
-      Result := CleanAngle(_Ang2 - _Ang1);
+      Result := CleanAngleRadians(_Ang2 - _Ang1);
    end;
 end;
 
@@ -238,13 +242,7 @@ function CTextureGenerator.GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
 var
    V1, V2: TAffineVector;
 begin
-   V1[0] := _Vec1.X;
-   V1[1] := _Vec1.Y;
-   V1[2] := _Vec1.Z;
-   V2[0] := _Vec2.X;
-   V2[1] := _Vec2.Y;
-   V2[2] := _Vec2.Z;
-   Result := VectorAngle(V1,V2); // check Geometry.pas
+   Result := sqrt((_Vec1.X * _Vec2.X) + (_Vec1.Y * _Vec2.Y) + (_Vec1.Z * _Vec2.Z));
 end;
 
 // Executes
@@ -252,7 +250,8 @@ function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var
 var
    i, x, MaxVerts, Current, Previous: integer;
    FaceSeed,VertsSeed : aint32;
-   UOrder,VOrder : auint32;
+   FacePriority: AFloat;
+   FaceOrder,UOrder,VOrder : auint32;
    FaceNeighbors: TNeighborDetector;
    UMerge,VMerge,PushValue: real;
    Seeds: TSeedSet;
@@ -262,12 +261,18 @@ begin
    // Get the neighbours of each face.
    FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
    FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
-   // Setup FaceSeed.
+   // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,(High(_Faces)+1) div _VerticesPerFace);
+   SetLength(FaceOrder,High(FaceSeed)+1);
+   SetLength(FacePriority,High(FaceSeed)+1);
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
       FaceSeed[i] := -1;
+      FaceOrder[i] := i;
+      FacePriority[i] := Max(Max(abs(_FaceNormals[i].X),abs(_FaceNormals[i].Y)),abs(_FaceNormals[i].Z));
    end;
+   QuickSortPriority(Low(FaceOrder),High(FaceOrder),FaceOrder,FacePriority);
+
    // Setup VertsSeed.
    MaxVerts := High(_Vertices)+1;
    SetLength(VertsSeed,MaxVerts);
@@ -283,11 +288,11 @@ begin
    // Let's build the seeds.
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
-      if FaceSeed[i] = -1 then
+      if FaceSeed[FaceOrder[i]] = -1 then
       begin
          // Make new seed.
          SetLength(Seeds,High(Seeds)+2);
-         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),i,_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts);
+         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts);
       end;
    end;
 
@@ -353,8 +358,7 @@ begin
          SeedTree[High(SeedTree)].Right := VOrder[High(VOrder)];
          // Now we translate the bounds of the element in the 'right' down, where it
          // belongs, and do it recursively.
-         i := VOrder[High(VOrder)];
-         PushValue := (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE;
+         PushValue := (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) + C_SEED_SEPARATOR_SPACE;
          List.Add(SeedTree[High(SeedTree)].Right);
          while List.GetValue(i) do
          begin
@@ -369,15 +373,16 @@ begin
          i := 0;
          x := 0;
 
-         while i < (High(UOrder)-1) do
+         while i <= High(UOrder) do
          begin
             if (UOrder[i] = VOrder[High(VOrder)]) or (UOrder[i] = VOrder[High(VOrder)-1]) then
-               inc(x);
-            UOrder[i] := UOrder[i + x];
+               inc(x)
+            else
+               UOrder[i - x] := UOrder[i];
             inc(i);
          end;
          SetLength(UOrder,High(UOrder));
-         Current := (High(UOrder)+1) div 2;
+         Current := High(UOrder) div 2;
          SeedBinarySearch(High(SeedTree),0,High(UOrder)-1,UOrder,Seeds,CompareU,Current,Previous);
          i := High(UOrder);
          while i > (Previous+1) do
@@ -389,7 +394,7 @@ begin
 
          // Now we remove the last two elements from VOrder and add the new seed.
          SetLength(VOrder,High(VOrder));
-         Current := (High(VOrder)+1) div 2;
+         Current := High(VOrder) div 2;
          SeedBinarySearch(High(SeedTree),0,High(VOrder)-1,VOrder,Seeds,CompareV,Current,Previous);
          i := High(VOrder);
          while i > (Previous+1) do
@@ -408,12 +413,11 @@ begin
          Seeds[High(Seeds)].MaxBounds.U := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U);
          Seeds[High(Seeds)].MaxBounds.V := max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
          // Insert the last two elements from UOrder at the new seed tree element.
-         SeedTree[High(SeedTree)].Left := VOrder[High(UOrder)-1];
-         SeedTree[High(SeedTree)].Right := VOrder[High(UOrder)];
+         SeedTree[High(SeedTree)].Left := UOrder[High(UOrder)-1];
+         SeedTree[High(SeedTree)].Right := UOrder[High(UOrder)];
          // Now we translate the bounds of the element in the 'right' to the right,
          // where it belongs, and do it recursively.
-         i := VOrder[High(UOrder)];
-         PushValue := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE;
+         PushValue := (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) + C_SEED_SEPARATOR_SPACE;
          List.Add(SeedTree[High(SeedTree)].Right);
          while List.GetValue(i) do
          begin
@@ -428,15 +432,16 @@ begin
          // Remove the last two elements of UOrder from VOrder and add the new seed.
          i := 0;
          x := 0;
-         while i < (High(VOrder)-1) do
+         while i <= High(VOrder) do
          begin
             if (VOrder[i] = UOrder[High(UOrder)]) or (VOrder[i] = UOrder[High(UOrder)-1]) then
-               inc(x);
-            VOrder[i] := VOrder[i + x];
+               inc(x)
+            else
+               VOrder[i - x] := VOrder[i];
             inc(i);
          end;
          SetLength(VOrder,High(VOrder));
-         Current := (High(VOrder)+1) div 2;
+         Current := High(VOrder) div 2;
          SeedBinarySearch(High(SeedTree),0,High(VOrder)-1,VOrder,Seeds,CompareV,Current,Previous);
          i := High(VOrder);
          while i > (Previous+1) do
@@ -448,7 +453,7 @@ begin
 
          // Now we remove the last two elements from UOrder and add the new seed.
          SetLength(UOrder,High(UOrder));
-         Current := (High(UOrder)+1) div 2;
+         Current := High(UOrder) div 2;
          SeedBinarySearch(High(SeedTree),0,High(UOrder)-1,UOrder,Seeds,CompareU,Current,Previous);
          i := High(UOrder);
          while i > (Previous+1) do
@@ -464,29 +469,30 @@ begin
    if (Seeds[High(Seeds)].MaxBounds.U > Seeds[High(Seeds)].MaxBounds.V) then
    begin
       PushValue := (Seeds[High(Seeds)].MaxBounds.U - Seeds[High(Seeds)].MaxBounds.V) / 2;
-      for i := Low(Seeds) to High(Seeds) do
+      for i := Low(Seeds) to (High(Seeds)-1) do
       begin
          Seeds[i].MinBounds.V := Seeds[i].MinBounds.V + PushValue;
          Seeds[i].MaxBounds.V := Seeds[i].MaxBounds.V + PushValue;
       end;
+      Seeds[High(Seeds)].MaxBounds.V := Seeds[High(Seeds)].MaxBounds.U;
    end
    else if (Seeds[High(Seeds)].MaxBounds.U < Seeds[High(Seeds)].MaxBounds.V) then
    begin
       PushValue := (Seeds[High(Seeds)].MaxBounds.V - Seeds[High(Seeds)].MaxBounds.U) / 2;
-      for i := Low(Seeds) to High(Seeds) do
+      for i := Low(Seeds) to (High(Seeds)-1) do
       begin
          Seeds[i].MinBounds.U := Seeds[i].MinBounds.U + PushValue;
          Seeds[i].MaxBounds.U := Seeds[i].MaxBounds.U + PushValue;
       end;
+      Seeds[High(Seeds)].MaxBounds.U := Seeds[High(Seeds)].MaxBounds.V;
    end;
-   
    // Let's get the final texture coordinates for each vertex now.
    for i := Low(Result) to High(Result) do
    begin
       Result[i].U := (Seeds[VertsSeed[i]].MinBounds.U + Result[i].U) / Seeds[High(Seeds)].MaxBounds.U;
       Result[i].V := (Seeds[VertsSeed[i]].MinBounds.V + Result[i].V) / Seeds[High(Seeds)].MaxBounds.V;
    end;
-   
+
    // Clean up memory.
    SetLength(SeedTree,0);
    SetLength(Seeds,0);
@@ -500,11 +506,13 @@ end;
 
 function CTextureGenerator.MakeNewSeed(_ID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
 const
-   C_MIN_ANGLE = Pi / 4; // 45'
+   C_MIN_ANGLE = 0.707; // approximately cos 45'
 var
    v,f,Value,vertex : integer;
    List : CIntegerList;
    VertsLocation : aint32;
+   CheckFace : abool;
+   Angle: single;
 begin
    // Setup neighbor detection list
    List := CIntegerList.Create;
@@ -515,9 +523,14 @@ begin
    begin
       VertsLocation[v] := -1;
    end;
+   // Avoid unlimmited loop
+   SetLength(CheckFace,High(_Faces)+1);
+   for f := Low(CheckFace) to High(CheckFace) do
+      CheckFace[f] := false;
 
    // Add starting face
    List.Add(_StartingFace);
+   CheckFace[_StartingFace] := true;
    Result.TransformMatrix := GetSeedTransformMatrix(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;
@@ -532,7 +545,7 @@ begin
       _FaceSeeds[Value] := _ID;
       for v := 0 to _VerticesPerFace - 1 do
       begin
-         vertex := _Faces[(f * _VerticesPerFace)+v];
+         vertex := _Faces[(Value * _VerticesPerFace)+v];
          if _VertsSeed[vertex] <> -1 then
          begin
             if VertsLocation[vertex] = -1 then
@@ -542,7 +555,7 @@ begin
                SetLength(_VertsSeed,High(_Vertices)+1);
                _VertsSeed[High(_VertsSeed)] := _ID;
                VertsLocation[vertex] := High(_Vertices);
-               _Faces[(f * _VerticesPerFace)+v] := VertsLocation[vertex];
+               _Faces[(Value * _VerticesPerFace)+v] := VertsLocation[vertex];
                _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
                _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
                _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
@@ -571,7 +584,7 @@ begin
             else
             begin
                // This vertex is already used by this seed.
-               _Faces[(f * _VerticesPerFace)+v] := VertsLocation[vertex];
+               _Faces[(Value * _VerticesPerFace)+v] := VertsLocation[vertex];
             end;
          end
          else
@@ -579,7 +592,7 @@ begin
             // This seed is the first seed to use this vertex.
             _VertsSeed[vertex] := _ID;
             VertsLocation[vertex] := vertex;
-            // Get temporarily texture coordinates.
+            // Get temporary texture coordinates.
             _TextCoords[vertex] := GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
             // Now update the bounds of the seed.
             if _TextCoords[vertex].U < Result.MinBounds.U then
@@ -599,14 +612,20 @@ begin
       while f <> -1 do
       begin
          // do some verification here
-         if _FaceSeeds[f] = -1 then
+         if (_FaceSeeds[f] = -1) and (not CheckFace[f]) then
          begin
             // check if angle is 45'
-            if GetVectorAngle(_FaceNormals[_StartingFace],_FaceNormals[f]) <= C_MIN_ANGLE then
+            Angle := GetVectorAngle(_FaceNormals[_StartingFace],_FaceNormals[f]);
+            if Angle >= C_MIN_ANGLE then
             begin
                List.Add(f);
+            end
+            else
+            begin
+//               ShowMessage('Starting Face: (' + FloatToStr(_FaceNormals[_StartingFace].X) + ', ' + FloatToStr(_FaceNormals[_StartingFace].Y) + ', ' + FloatToStr(_FaceNormals[_StartingFace].Z) + ') and Current Face is (' + FloatToStr(_FaceNormals[f].X) + ', ' + FloatToStr(_FaceNormals[f].Y) + ', ' + FloatToStr(_FaceNormals[f].Z) + ') and the angle is ' + FloatToStr(Angle));
             end;
          end;
+         CheckFace[f] := true;
          f := _FaceNeighbors.GetNextNeighbor;
       end;
    end;
@@ -616,12 +635,12 @@ end;
 // Sort
 function CTextureGenerator.CompareU(const _Seed1, _Seed2 : TTextureSeed): real;
 begin
-   Result := (_Seed2.MaxBounds.U - _Seed2.MinBounds.U) - (_Seed1.MaxBounds.U - _Seed1.MinBounds.U);
+   Result := (_Seed1.MaxBounds.U - _Seed1.MinBounds.U) - (_Seed2.MaxBounds.U - _Seed2.MinBounds.U);
 end;
 
 function CTextureGenerator.CompareV(const _Seed1, _Seed2 : TTextureSeed): real;
 begin
-   Result := (_Seed2.MaxBounds.V - _Seed2.MinBounds.V) - (_Seed1.MaxBounds.V - _Seed1.MinBounds.V);
+   Result := (_Seed1.MaxBounds.V - _Seed1.MinBounds.V) - (_Seed2.MaxBounds.V - _Seed2.MinBounds.V);
 end;
 
 // Adapted from OMC Manager
@@ -633,25 +652,54 @@ begin
    Hi := _max;
    Mid := (Lo + Hi) div 2;
    repeat
-      while _CompareFunction(_Seeds[_OrderedList[Lo]],_Seeds[_OrderedList[Mid]]) < 0 do Inc(Lo);
-         while _CompareFunction(_Seeds[_OrderedList[Hi]],_Seeds[_OrderedList[Mid]]) > 0 do Dec(Hi);
-            if Lo <= Hi then
-            begin
-               T := _OrderedList[Lo];
-               _OrderedList[Lo] := _OrderedList[Hi];
-               _OrderedList[Hi] := T;
-               if (Lo = Mid) and (Hi <> Mid) then
-                  Mid := Hi
-               else if (Hi = Mid) and (Lo <> Mid) then
-                  Mid := Lo;
-               Inc(Lo);
-               Dec(Hi);
-            end;
+      while _CompareFunction(_Seeds[_OrderedList[Lo]],_Seeds[_OrderedList[Mid]]) > 0 do Inc(Lo);
+      while _CompareFunction(_Seeds[_OrderedList[Hi]],_Seeds[_OrderedList[Mid]]) < 0 do Dec(Hi);
+      if Lo <= Hi then
+      begin
+         T := _OrderedList[Lo];
+         _OrderedList[Lo] := _OrderedList[Hi];
+         _OrderedList[Hi] := T;
+         if (Lo = Mid) and (Hi <> Mid) then
+            Mid := Hi
+         else if (Hi = Mid) and (Lo <> Mid) then
+            Mid := Lo;
+         Inc(Lo);
+         Dec(Hi);
+      end;
    until Lo > Hi;
    if Hi > _min then
       QuickSortSeeds(_min, Hi, _OrderedList, _Seeds, _CompareFunction);
    if Lo < _max then
       QuickSortSeeds(Lo, _max, _OrderedList, _Seeds, _CompareFunction);
+end;
+
+procedure CTextureGenerator.QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
+var
+   Lo, Hi, Mid, T: Integer;
+begin
+   Lo := _min;
+   Hi := _max;
+   Mid := (Lo + Hi) div 2;
+   repeat
+      while (_FacePriority[_FaceOrder[Lo]] - _FacePriority[_FaceOrder[Mid]]) > 0 do Inc(Lo);
+      while (_FacePriority[_FaceOrder[Hi]] - _FacePriority[_FaceOrder[Mid]]) < 0 do Dec(Hi);
+      if Lo <= Hi then
+      begin
+         T := _FaceOrder[Lo];
+         _FaceOrder[Lo] := _FaceOrder[Hi];
+         _FaceOrder[Hi] := T;
+         if (Lo = Mid) and (Hi <> Mid) then
+            Mid := Hi
+         else if (Hi = Mid) and (Lo <> Mid) then
+            Mid := Lo;
+         Inc(Lo);
+         Dec(Hi);
+      end;
+   until Lo > Hi;
+   if Hi > _min then
+      QuickSortPriority(_min, Hi, _FaceOrder, _FacePriority);
+   if Lo < _max then
+      QuickSortPriority(Lo, _max, _FaceOrder, _FacePriority);
 end;
 
 // binary search with decrescent order (borrowed from OS BIG Editor)
@@ -706,6 +754,10 @@ begin
    Size := High(_Buffer)+1;
    PosX := Round(_Point.U);
    PosY := Round(_Point.V);
+   if (PosY > Size) or (PosX > Size) or (PosX < 0) or (PosY < 0) then
+   begin
+      ShowMessage('Incoming access violation with PosX = ' + IntToStr(PosX) + ' and ' + ' PosY = ' + IntToStr(PosY));
+   end;
    _Buffer[PosX,PosY].X := _Buffer[PosX,PosY].X + _Colour.X;
    _Buffer[PosX,PosY].Y := _Buffer[PosX,PosY].Y + _Colour.Y;
    _Buffer[PosX,PosY].Z := _Buffer[PosX,PosY].Z + _Colour.Z;
@@ -719,8 +771,8 @@ var
    PosX, PosY : integer;
 begin
    Size := High(_Buffer)+1;
-   PosX := Trunc(_Point.U);
-   PosY := Trunc(_Point.V);
+   PosX := Round(_Point.U);
+   PosY := Round(_Point.V);
    _Buffer[PosX,PosY].X := _Buffer[PosX,PosY].X + _Colour.X;
    _Buffer[PosX,PosY].Y := _Buffer[PosX,PosY].Y + _Colour.Y;
    _Buffer[PosX,PosY].Z := _Buffer[PosX,PosY].Z + _Colour.Z;
@@ -753,12 +805,12 @@ begin
 		da1 := (_C2.W - _C1.W) / (_P2.V - _P1.V);
 	end
    else
-   begin 
-		dx1 := 0;
-      dr1 := 0;
-      dg1 := 0;
-      db1 := 0;
-      da1 := 0;
+   begin
+		dx1 := (_P2.U - _P1.U);
+      dr1 := (_C2.X - _C1.X);
+      dg1 := (_C2.Y - _C1.Y);
+      db1 := (_C2.Z - _C1.Z);
+      da1 := (_C2.W - _C1.W);
    end;
 
 	if (_P3.V - _P1.V > 0) then
@@ -769,37 +821,37 @@ begin
 		db2 := (_C3.Z - _C1.Z) / (_P3.V - _P1.V);
 		da2 := (_C3.W - _C1.W) / (_P3.V - _P1.V);
 	end
-   else 
-   begin 
-		dx2 := 0;
-      dr2 := 0;
-      dg2 := 0;
-      db2 := 0;
-      da2 := 0;
+   else
+   begin
+		dx2 := (_P3.U - _P1.U);
+      dr2 := (_C3.X - _C1.X);
+      dg2 := (_C3.Y - _C1.Y);
+      db2 := (_C3.Z - _C1.Z);
+      da2 := (_C3.W - _C1.W);
    end;
 
 	if (_P3.V - _P2.V > 0) then
    begin
-		dx3 :=(_P2.U - _P2.U) / (_P3.V - _P2.V);
+		dx3 :=(_P3.U - _P2.U) / (_P3.V - _P2.V);
 		dr3 :=(_C3.X - _C2.X) / (_P3.V - _P2.V);
 		dg3 :=(_C3.Y - _C2.Y) / (_P3.V - _P2.V);
 		db3 :=(_C3.Z - _C2.Z) / (_P3.V - _P2.V);
 		da3 :=(_C3.W - _C2.W) / (_P3.V - _P2.V);
 	end
    else
-   begin 
-		dx3 := 0;
-      dr3 := 0;
-      dg3 := 0;
-      db3 := 0;
-      da3 := 0;
+   begin
+		dx3 := (_P3.U - _P2.U);
+      dr3 := (_C3.X - _C2.X);
+      dg3 := (_C3.Y - _C2.Y);
+      db3 := (_C3.Z - _C2.Z);
+      da3 := (_C3.W - _C2.W);
    end;
 
    AssignPointColour(SP,SC,_P1,_C1);
    AssignPointColour(EP,EC,_P1,_C1);
 	if (dx1 > dx2) then
    begin
-		while (SP.U <= _P2.V) do
+		while (SP.V <= _P2.V) do
       begin
 			if(EP.U - SP.U > 0) then
          begin
@@ -819,10 +871,10 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + db;
 				PC.Z := PC.Z + dg;
-				PC.W := PC.W + da; 
+				PC.W := PC.W + da;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx2;
@@ -849,8 +901,8 @@ begin
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 				da := (EC.W - SC.W) / (EP.U - SP.U);
 			end
-         else 
-         begin 
+         else
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
@@ -860,9 +912,9 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + db;
+				PC.Z := PC.Z + dg;
 				PC.W := PC.W + da;
             PP.U := PP.U + 1;
 			end;
@@ -880,7 +932,7 @@ begin
          EP.V := EP.V + 1;
 		end;
 	end
-   else 
+   else
    begin
 		while (SP.V <= _P2.V) do
       begin
@@ -892,7 +944,7 @@ begin
 				da := (EC.W - SC.W) / (EP.U - SP.U);
 			end
          else
-         begin 
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
@@ -903,10 +955,10 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
-				PC.W := PC.W + da; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + db;
+				PC.Z := PC.Z + dg;
+				PC.W := PC.W + da;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx1;
@@ -934,7 +986,7 @@ begin
 				da := (EC.W - SC.W) / (EP.U - SP.U);
 			end
          else
-         begin 
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
@@ -945,10 +997,10 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
-				PC.W := PC.W + da; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + db;
+				PC.Z := PC.Z + dg;
+				PC.W := PC.W + da;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx3;
@@ -978,7 +1030,7 @@ procedure CTextureGenerator.PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; va
       _DestColour.Z := _SourceColour.Z;
    end;
 var
-   dx1, dx2, dx3, dr, dr1, dr2, dr3, dg, dg1, dg2, dg3, db, db1, db2, db3 : real;
+   dx1, dx2, dx3, dr, dr1, dr2, dr3, dg, dg1, dg2, dg3, db, db1, db2, db3 : single;
    SP, EP, PP : TVector2f;
    SC, EC, PC : TVector3f;
 begin
@@ -1014,7 +1066,7 @@ begin
 
 	if (_P3.V - _P2.V > 0) then
    begin
-		dx3 :=(_P2.U - _P2.U) / (_P3.V - _P2.V);
+		dx3 :=(_P3.U - _P2.U) / (_P3.V - _P2.V);
 		dr3 :=(_C3.X - _C2.X) / (_P3.V - _P2.V);
 		dg3 :=(_C3.Y - _C2.Y) / (_P3.V - _P2.V);
 		db3 :=(_C3.Z - _C2.Z) / (_P3.V - _P2.V);
@@ -1031,7 +1083,7 @@ begin
    AssignPointColour(EP,EC,_P1,_C1);
 	if (dx1 > dx2) then
    begin
-		while (SP.U <= _P2.V) do
+		while (SP.V <= _P2.V) do
       begin
 			if(EP.U - SP.U > 0) then
          begin
@@ -1049,7 +1101,7 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
+				PC.X := PC.X + dr;
 				PC.Y := PC.Y + db; 
 				PC.Z := PC.Z + dg; 
             PP.U := PP.U + 1;
@@ -1149,7 +1201,7 @@ begin
 				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 			end
-         else 
+         else
          begin 
 				dr := 0;
             dg := 0;
@@ -1181,6 +1233,29 @@ begin
 end;
 
 procedure CTextureGenerator.PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
+   function IsP1HigherThanP2(_P1, _P2 : TVector2f): boolean;
+   begin
+      if _P1.V > _P2.V then
+      begin
+         Result := true;
+      end
+      else if _P1.V = _P2.V then
+      begin
+         if _P1.U > _P2.U then
+         begin
+            Result := true;
+         end
+         else
+         begin
+            Result := false;
+         end;
+      end
+      else
+      begin
+         Result := false;
+      end;
+   end;
+
 var
    P1, P2, P3 : TVector2f;
    Size : integer;
@@ -1192,46 +1267,46 @@ begin
    P2.V := _P2.V * Size;
    P3.U := _P3.U * Size;
    P3.V := _P3.V * Size;
-   if _P1.V > _P2.V then
+   if IsP1HigherThanP2(P1,P2) then
    begin
-      if _P2.V > _P3.V then
+      if IsP1HigherThanP2(P2,P3) then
       begin
-         // _P1, _P2, _P3
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,_P1,_P2,_P3,_C1,_C2,_C3);
+         // P1, P2, P3
+         PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_C3,_C2,_C1);
       end
       else
       begin
-         if _P1.V > _P3.V then
+         if IsP1HigherThanP2(P1,P3) then
          begin
-            // _P1, _P3, _P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P1,_P3,_P2,_C1,_C3,_C2);
+            // P1, P3, P2
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_C2,_C3,_C1);
          end
          else
          begin
-            // _P3, _P1, _P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P3,_P1,_P2,_C3,_C1,_C2);
+            // P3, P1, P2
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_C2,_C1,_C3);
          end;
       end;
    end
    else
    begin
-      if _P2.V > _P3.V then
+      if IsP1HigherThanP2(P2,P3) then
       begin
-         if _P1.V > _P3.V then
+         if IsP1HigherThanP2(P1,P3) then
          begin
-            // _P2, _P1, _P3
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P2,_P1,_P3,_C2,_C1,_C3);
+            // P2, P1, P3
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_C3,_C1,_C2);
          end
          else
          begin
-            // _P3, _P2, _P1
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P3,_P2,_P1,_C3,_C2,_C1);
+            // P2, P3, P1
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_C1,_C3,_C2);
          end;
       end
       else
       begin
-         // _P2, _P3, _P1
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,_P2,_P3,_P1,_C2,_C3,_C1);
+         // P3, P2, P1
+         PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_C1,_C2,_C3);
       end;
    end;
 end;
@@ -1248,46 +1323,46 @@ begin
    P2.V := _P2.V * Size;
    P3.U := _P3.U * Size;
    P3.V := _P3.V * Size;
-   if _P1.V > _P2.V then
+   if P1.V > P2.V then
    begin
-      if _P2.V > _P3.V then
+      if P2.V > P3.V then
       begin
-         // _P1, _P2, _P3
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,_P1,_P2,_P3,_N1,_N2,_N3);
+         // P1, P2, P3
+         PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_N3,_N2,_N1);
       end
       else
       begin
-         if _P1.V > _P3.V then
+         if P1.V > P3.V then
          begin
-            // _P1, _P3, _P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P1,_P3,_P2,_N1,_N3,_N2);
+            // P1, P3, P2
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_N2,_N3,_N1);
          end
          else
          begin
-            // _P3, _P1, _P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P3,_P1,_P2,_N3,_N1,_N2);
+            // P3, P1, P2
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_N2,_N1,_N3);
          end;
       end;
    end
    else
    begin
-      if _P2.V > _P3.V then
+      if P2.V > P3.V then
       begin
-         if _P1.V > _P3.V then
+         if P1.V > P3.V then
          begin
-            // _P2, _P1, _P3
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P2,_P1,_P3,_N2,_N1,_N3);
+            // P2, P1, P3
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_N3,_N1,_N2);
          end
          else
          begin
-            // _P3, _P2, _P1
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,_P3,_P2,_P1,_N3,_N2,_N1);
+            // P2, P3, P1
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_N1,_N3,_N2);
          end;
       end
       else
       begin
-         // _P2, _P3, _P1
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,_P2,_P3,_P1,_N2,_N3,_N1);
+         // P3, P2, P1
+         PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_N1,_N2,_N3);
       end;
    end;
 end;
@@ -1338,11 +1413,11 @@ begin
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,y] := RGBA(Trunc((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255));
+            Result.Canvas.Pixels[x,Result.Height - y] := RGBA(Round((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255));
          end
          else
          begin
-            Result.Canvas.Pixels[x,y] := 0;
+            Result.Canvas.Pixels[x,Result.Height - y] := 0;
          end;
       end;
    end;
@@ -1362,11 +1437,11 @@ begin
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,y] := RGB(Trunc((1 + (_Buffer[x,y].X / _WeightBuffer[x,y])) * 127.5),Trunc((1 + (_Buffer[x,y].Y / _WeightBuffer[x,y])) * 127.5),Trunc((1 + (_Buffer[x,y].Z / _WeightBuffer[x,y])) * 127.5));
+            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + (_Buffer[x,y].X / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Y / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Z / _WeightBuffer[x,y])) * 127.5));
          end
          else
          begin
-            Result.Canvas.Pixels[x,y] := 0;
+            Result.Canvas.Pixels[x,Result.Height - y] := 0;
          end;
       end;
    end;
@@ -1386,11 +1461,11 @@ begin
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,y] := RGBA(Trunc((1 + (_Buffer[x,y].X / _WeightBuffer[x,y])) * 127.5),Trunc((1 + (_Buffer[x,y].Y / _WeightBuffer[x,y])) * 127.5),Trunc((1 + (_Buffer[x,y].Z / _WeightBuffer[x,y])) * 127.5),Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255));
+            Result.Canvas.Pixels[x,Result.Height - y] := RGBA(Round((1 + (_Buffer[x,y].X / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Y / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Z / _WeightBuffer[x,y])) * 127.5),Round((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255));
          end
          else
          begin
-            Result.Canvas.Pixels[x,y] := 0;
+            Result.Canvas.Pixels[x,Result.Height - y] := 0;
          end;
       end;
    end;
@@ -1410,6 +1485,7 @@ begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
    Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer);
+   Result.SaveToFile('c:\test.bmp');
    DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;
 

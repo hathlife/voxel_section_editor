@@ -65,6 +65,9 @@ type
       procedure NormalLinearSmoothLOD;
       procedure NormalCubicSmoothLOD;
       procedure NormalLanczosSmoothLOD;
+      // Textures
+      procedure GenerateDiffuseTexture;
+      procedure ExportTextures(const _BaseDir, _Ext : string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -466,6 +469,27 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].NormalLanczosSmooth;
+   end;
+end;
+
+// Textures
+procedure TLOD.GenerateDiffuseTexture;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].GenerateDiffuseTexture;
+   end;
+end;
+
+procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].ExportTextures(_BaseDir,_Ext);
    end;
 end;
 

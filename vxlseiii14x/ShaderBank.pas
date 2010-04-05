@@ -6,13 +6,17 @@ uses BasicDataTypes, dglOpengl, ShaderBankItem, SysUtils, Dialogs;
 
 const
    C_SHD_PHONG = 0;
+   C_SHD_PHONG_1TEX = 1;
 
 type
    TShaderBank = class
       private
          Items : array of TShaderBankItem;
+         ShaderDirectory : string;
          // Constructors and Destructors
          procedure Clear;
+         // I/O
+         procedure Load(const _ProgramName: string); overload;
          // Adds
          function Search(const _Shader: PShaderBankItem): integer; overload;
       public
@@ -20,7 +24,7 @@ type
          constructor Create(const _ShaderDirectory: string);
          destructor Destroy; override;
          // I/O
-         function Load(const _VertexFilename, _FragmentFilename: string): PShaderBankItem;
+         function Load(const _VertexFilename, _FragmentFilename: string): PShaderBankItem; overload;
          // Gets
          function Get(_Type: integer): PShaderBankItem;
          // Deletes
@@ -35,21 +39,15 @@ uses FormMain;
 
 // Constructors and Destructors
 constructor TShaderBank.Create(const _ShaderDirectory: string);
-var
-   VertexFilename,FragmentFilename: string;
 begin
    SetLength(Items,0);
+   ShaderDirectory := IncludeTrailingPathDelimiter(_ShaderDirectory);
    // Check if GLSL is supported by the hardware (requires OpenGL 2.0)
    if (gl_ARB_vertex_shader) and ((gl_ARB_fragment_shader) or (GL_ATI_fragment_shader)) then
    begin
-      // Add Phong Shader.
-      VertexFilename := IncludeTrailingPathDelimiter(_ShaderDirectory) + 'phong_vertexshader.txt';
-      if not FileExists(VertexFilename) then
-         FrmMain.AutoRepair(VertexFilename);
-      FragmentFilename := IncludeTrailingPathDelimiter(_ShaderDirectory) + 'phong_fragmentshader.txt';
-      if not FileExists(FragmentFilename) then
-         FrmMain.AutoRepair(FragmentFilename);
-      Load(VertexFilename,FragmentFilename);
+      // Add Phong Shaders.
+      Load('phong');
+      Load('phong_1tex');
    end
    else
    begin
@@ -75,6 +73,19 @@ begin
 end;
 
 // I/O
+procedure TShaderBank.Load(const _ProgramName: string);
+var
+   VertexFilename,FragmentFilename: string;
+begin
+   VertexFilename := ShaderDirectory + _ProgramName + '_vertexshader.txt';
+   if not FileExists(VertexFilename) then
+      FrmMain.AutoRepair(VertexFilename);
+   FragmentFilename := ShaderDirectory + _ProgramName + '_fragmentshader.txt';
+   if not FileExists(FragmentFilename) then
+      FrmMain.AutoRepair(FragmentFilename);
+   Load(VertexFilename,FragmentFilename);
+end;
+
 function TShaderBank.Load(const _VertexFilename,_FragmentFilename: string): PShaderBankItem;
 var
    i : integer;

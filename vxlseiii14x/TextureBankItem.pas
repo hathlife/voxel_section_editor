@@ -35,6 +35,8 @@ type
          constructor Create; overload;
          constructor Create(const _Filename: string); overload;
          constructor Create(const _Texture: GLInt); overload;
+         constructor Create(const _Bitmap : TBitmap); overload;
+         constructor Create(const _Bitmaps : TABitmap); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;
@@ -91,6 +93,25 @@ begin
    Clone(_Texture);
    Counter := 1;
    Filename := '';
+   glDisable(GL_TEXTURE_2D);
+end;
+
+constructor TTextureBankItem.Create(const _Bitmap : TBitmap);
+begin
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   LoadTexture(_Bitmap,0);
+   Counter := 1;
+   SetNumMipmaps(1);
+   glDisable(GL_TEXTURE_2D);
+end;
+
+constructor TTextureBankItem.Create(const _Bitmaps : TABitmap);
+begin
+   glGenTextures(1, @ID);
+   glEnable(GL_TEXTURE_2D);
+   LoadTexture(_Bitmaps);
+   Counter := 1;
    glDisable(GL_TEXTURE_2D);
 end;
 

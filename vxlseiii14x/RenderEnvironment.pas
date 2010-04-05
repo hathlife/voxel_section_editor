@@ -63,7 +63,7 @@ type
          NonScreenCamera : PCamera;
          // Ambient Lighting
          LightAmb : TVector4f;
-         LightDif: TVector4f;
+         LightDif : TVector4f;
          // Shaders
          ShaderBank : TShaderBank;
          // Constructors;
@@ -261,9 +261,6 @@ begin
    glEnable(GL_LIGHT0);
    glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);
    glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);
-   glEnable(GL_LIGHTING);
-   glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
-   glEnable(GL_COLOR_MATERIAL);
 
    if FUpdateWorld then
    begin

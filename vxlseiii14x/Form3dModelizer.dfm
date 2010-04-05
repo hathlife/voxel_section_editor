@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 536
+  ClientHeight = 555
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 510
+    Height = 529
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -636,6 +636,20 @@ object Frm3DModelizer: TFrm3DModelizer
       object NormalsFXLanczosSmoothNormals: TMenuItem
         Caption = 'Lanczos Smooth Normals'
         OnClick = NormalsFXLanczosSmoothNormalsClick
+      end
+    end
+    object TextureEffects1: TMenuItem
+      Caption = 'Texture Effects'
+      object TextureFXDiffuse: TMenuItem
+        Caption = 'Generate Diffuse Texture'
+        OnClick = TextureFXDiffuseClick
+      end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object TextureFSExport: TMenuItem
+        Caption = 'Export All Textures (DDS)'
+        OnClick = TextureFSExportClick
       end
     end
   end

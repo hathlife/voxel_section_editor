@@ -127,6 +127,7 @@ type
    AInt32 = array of integer;
    AUInt32 = array of longword;
    ABool = array of boolean;
+   AFloat = array of single;
    TABitmap = array of TBitmap;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
 
