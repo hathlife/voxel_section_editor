@@ -247,13 +247,32 @@ end;
 
 // Executes
 function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
+   function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
+   begin
+      if _VMax < _UMax then
+      begin
+         Result := true;
+      end
+      else if _VMax > _UMax then
+      begin
+         Result := false;
+      end
+      else if _VMerge < _UMerge then
+      begin
+         Result := true;
+      end
+      else
+      begin
+         Result := false;
+      end;
+   end;
 var
    i, x, MaxVerts, Current, Previous: integer;
    FaceSeed,VertsSeed : aint32;
    FacePriority: AFloat;
    FaceOrder,UOrder,VOrder : auint32;
    FaceNeighbors: TNeighborDetector;
-   UMerge,VMerge,PushValue: real;
+   UMerge,VMerge,UMax,VMax,PushValue: real;
    Seeds: TSeedSet;
    SeedTree : TSeedTree;
    List : CIntegerList;
@@ -342,11 +361,13 @@ begin
       // uses less space.
       UMerge := ( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ) * max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
       VMerge := ( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ) * max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U));
+      UMax := max(( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ),max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V)));
+      VMax := max(( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ),max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U)));
       SetLength(Seeds,High(Seeds)+2);
       Seeds[High(Seeds)].MinBounds.U := 0;
       Seeds[High(Seeds)].MinBounds.V := 0;
       SetLength(SeedTree,High(Seeds)+1);
-      if VMerge < UMerge then
+      if IsVLower(UMerge,VMerge,UMax,VMax) then
       begin
          // So, we'll merge the last two elements of VOrder into a new sector.
         // -----------------------
@@ -1501,7 +1522,7 @@ begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
    Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer);
-   Result.SaveToFile('c:\test.bmp');
+   Result.SaveToFile('test.bmp');
    DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;
 
