@@ -747,36 +747,52 @@ end;
 
 // Painting procedures
 procedure CTextureGenerator.PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector4f);
+   procedure PaintPixel(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size, _PosX, _PosY : integer; _Colour: TVector4f; _Weight : single);
+   begin
+      if (_PosY < _Size) or (_PosX < _Size) or (_PosX >= 0) or (_PosY >= 0) then
+      begin
+         _Buffer[_PosX,_PosY].X := _Buffer[_PosX,_PosY].X + (_Colour.X * _Weight);
+         _Buffer[_PosX,_PosY].Y := _Buffer[_PosX,_PosY].Y + (_Colour.Y * _Weight);
+         _Buffer[_PosX,_PosY].Z := _Buffer[_PosX,_PosY].Z + (_Colour.Z * _Weight);
+         _Buffer[_PosX,_PosY].W := _Buffer[_PosX,_PosY].W + (_Colour.W * _Weight);
+         _WeightBuffer[_PosX,_PosY] := _WeightBuffer[_PosX,_PosY] + _Weight;
+      end;
+   end;
 var
    Size : integer;
    PosX, PosY : integer;
 begin
    Size := High(_Buffer)+1;
-   PosX := Round(_Point.U);
-   PosY := Round(_Point.V);
-   if (PosY > Size) or (PosX > Size) or (PosX < 0) or (PosY < 0) then
-   begin
-      ShowMessage('Incoming access violation with PosX = ' + IntToStr(PosX) + ' and ' + ' PosY = ' + IntToStr(PosY));
-   end;
-   _Buffer[PosX,PosY].X := _Buffer[PosX,PosY].X + _Colour.X;
-   _Buffer[PosX,PosY].Y := _Buffer[PosX,PosY].Y + _Colour.Y;
-   _Buffer[PosX,PosY].Z := _Buffer[PosX,PosY].Z + _Colour.Z;
-   _Buffer[PosX,PosY].W := _Buffer[PosX,PosY].W + _Colour.W;
-   _WeightBuffer[PosX,PosY] := _WeightBuffer[PosX,PosY] + 1;
+   PosX := Trunc(_Point.U);
+   PosY := Trunc(_Point.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, ((PosX+1)-_Point.U) * ((PosY+1)-_Point.V));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, (_Point.U - PosX) * ((PosY+1)-_Point.V));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, ((PosX+1)-_Point.U) * (_Point.V - PosY));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, (_Point.U - PosX) * (_Point.V - PosY));
 end;
 
 procedure CTextureGenerator.PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector3f);
+   procedure PaintPixel(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size, _PosX, _PosY : integer; _Colour: TVector3f; _Weight : single);
+   begin
+      if (_PosY < _Size) or (_PosX < _Size) or (_PosX >= 0) or (_PosY >= 0) then
+      begin
+         _Buffer[_PosX,_PosY].X := _Buffer[_PosX,_PosY].X + (_Colour.X * _Weight);
+         _Buffer[_PosX,_PosY].Y := _Buffer[_PosX,_PosY].Y + (_Colour.Y * _Weight);
+         _Buffer[_PosX,_PosY].Z := _Buffer[_PosX,_PosY].Z + (_Colour.Z * _Weight);
+         _WeightBuffer[_PosX,_PosY] := _WeightBuffer[_PosX,_PosY] + _Weight;
+      end;
+   end;
 var
    Size : integer;
    PosX, PosY : integer;
 begin
    Size := High(_Buffer)+1;
-   PosX := Round(_Point.U);
-   PosY := Round(_Point.V);
-   _Buffer[PosX,PosY].X := _Buffer[PosX,PosY].X + _Colour.X;
-   _Buffer[PosX,PosY].Y := _Buffer[PosX,PosY].Y + _Colour.Y;
-   _Buffer[PosX,PosY].Z := _Buffer[PosX,PosY].Z + _Colour.Z;
-   _WeightBuffer[PosX,PosY] := _WeightBuffer[PosX,PosY] + 1;
+   PosX := Trunc(_Point.U);
+   PosY := Trunc(_Point.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, ((PosX+1)-_Point.U) * ((PosY+1)-_Point.V));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, (_Point.U - PosX) * ((PosY+1)-_Point.V));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, ((PosX+1)-_Point.U) * (_Point.V - PosY));
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, (_Point.U - PosX) * (_Point.V - PosY));
 end;
 
 
