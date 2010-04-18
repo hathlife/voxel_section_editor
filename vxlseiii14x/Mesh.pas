@@ -3476,7 +3476,7 @@ begin
          Value := FaceNeighbors.GetNeighborFromID(v);
          while Value <> -1 do
          begin
-            Angle := sqrt((Normals[v].X * FaceNormals[Value].X) + (Normals[v].Y * FaceNormals[Value].Y) + (Normals[v].Z * FaceNormals[Value].Z));
+            Angle := (Normals[v].X * FaceNormals[Value].X) + (Normals[v].Y * FaceNormals[Value].Y) + (Normals[v].Z * FaceNormals[Value].Z);
             if Angle >= _Angle then
             begin
                VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
@@ -3513,7 +3513,7 @@ begin
             begin
                if VertexTransformation[Value] = -1 then
                begin
-                  Angle := sqrt((Normals[v].X * Normals[Value].X) + (Normals[v].Y * Normals[Value].Y) + (Normals[v].Z * Normals[Value].Z));
+                  Angle := (Normals[v].X * Normals[Value].X) + (Normals[v].Y * Normals[Value].Y) + (Normals[v].Z * Normals[Value].Z);
                   if Angle >= _Angle then
                   begin
                      Position.X := Position.X + Vertices[Value].X;
@@ -3806,7 +3806,7 @@ begin
       Value := FaceNeighbors.GetNeighborFromID(v);
       while Value <> -1 do
       begin
-         Angle := sqrt((Normals[v].X * FaceNormals[Value].X) + (Normals[v].Y * FaceNormals[Value].Y) + (Normals[v].Z * FaceNormals[Value].Z));
+         Angle := (Normals[v].X * FaceNormals[Value].X) + (Normals[v].Y * FaceNormals[Value].Y) + (Normals[v].Z * FaceNormals[Value].Z);
          if Angle >= _Angle then
          begin
             VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
@@ -3842,7 +3842,7 @@ begin
             begin
                if VertexTransformation[Value] = -1 then
                begin
-                  Angle := sqrt((Normals[v].X * Normals[Value].X) + (Normals[v].Y * Normals[Value].Y) + (Normals[v].Z * Normals[Value].Z));
+                  Angle := (Normals[v].X * Normals[Value].X) + (Normals[v].Y * Normals[Value].Y) + (Normals[v].Z * Normals[Value].Z);
                   if Angle >= _Angle then
                   begin
                      Position.X := Position.X + Vertices[Value].X;

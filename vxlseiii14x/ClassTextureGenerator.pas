@@ -1080,10 +1080,10 @@ begin
 	end
    else
    begin 
-		dx1 := 0;
-      dr1 := 0;
-      dg1 := 0;
-      db1 := 0;
+		dx1 := (_P2.U - _P1.U);
+		dr1 := (_C2.X - _C1.X);
+		dg1 := (_C2.Y - _C1.Y);
+		db1 := (_C2.Z - _C1.Z);
    end;
 
 	if (_P3.V - _P1.V > 0) then
@@ -1093,12 +1093,12 @@ begin
 		dg2 := (_C3.Y - _C1.Y) / (_P3.V - _P1.V);
 		db2 := (_C3.Z - _C1.Z) / (_P3.V - _P1.V);
 	end
-   else 
-   begin 
-		dx2 := 0;
-      dr2 := 0;
-      dg2 := 0;
-      db2 := 0;
+   else
+   begin
+		dx2 := (_P3.U - _P1.U);
+		dr2 := (_C3.X - _C1.X);
+		dg2 := (_C3.Y - _C1.Y);
+		db2 := (_C3.Z - _C1.Z);
    end;
 
 	if (_P3.V - _P2.V > 0) then
@@ -1108,12 +1108,12 @@ begin
 		dg3 :=(_C3.Y - _C2.Y) / (_P3.V - _P2.V);
 		db3 :=(_C3.Z - _C2.Z) / (_P3.V - _P2.V);
 	end
-   else 
-   begin 
-		dx3 := 0;
-      dr3 := 0;
-      dg3 := 0;
-      db3 := 0;
+   else
+   begin
+		dx3 :=(_P3.U - _P2.U);
+		dr3 :=(_C3.X - _C2.X);
+		dg3 :=(_C3.Y - _C2.Y);
+		db3 :=(_C3.Z - _C2.Z);
    end;
 
    AssignPointColour(SP,SC,_P1,_C1);
@@ -1129,7 +1129,7 @@ begin
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 			end
          else
-         begin 
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
