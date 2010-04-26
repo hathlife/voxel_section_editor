@@ -28,16 +28,15 @@ type
          function MakeNewSeed(_ID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
          // Transform Matrix Operations
          function GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
-         function GetTransformMatrix(_AngX, _AngY, _AngZ: single): TMatrix;
+         function GetTransformMatrix(_AngX, _AngY: single): TMatrix;
          function GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
          // Angle Detector
          function GetRotationX(const _Vector: TVector3f): single;
          function GetRotationY(const _Vector: TVector3f): single;
-         function GetRotationZ(const _Vector: TVector3f): single;
          // Angle Operators
-         function SubtractAngles(_Ang1, _Ang2: single): single;
          function CleanAngle(Angle: single): single;
          function CleanAngleRadians(Angle: single): single;
+         function CleanAngle90Radians(Angle: single): single;
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
          // Sort related functions
          function CompareU(const _Seed1, _Seed2 : TTextureSeed): real;
@@ -107,39 +106,29 @@ function CTextureGenerator.GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
 const
    C_ANG_X = 0;
    C_ANG_Y = 0;
-   C_ANG_Z = C_ANGLE_NONE;
 var
-   AngX,AngY,AngZ : single;
+   AngX,AngY : single;
 begin
    // Get the angles from the normal vector.
    AngX := GetRotationX(_Normal);
    AngY := GetRotationY(_Normal);
-   AngZ := GetRotationZ(_Normal);
    // Get the angles of the plane aiming at the user minus normal vector
-//   AngX := SubtractAngles(AngX,C_ANG_X);
-//   AngY := SubtractAngles(AngY,C_ANG_Y);
-//   AngZ := SubtractAngles(AngZ,C_ANG_Z);
    AngX := CleanAngleRadians(-AngX);
    AngY := CleanAngleRadians(-AngY);
-   AngZ := CleanAngleRadians(-AngZ);
    // Now we get the transform matrix
-   Result := GetTransformMatrix(AngX,AngY,AngZ);
+   Result := GetTransformMatrix(AngX,AngY);
 end;
 
-function CTextureGenerator.GetTransformMatrix(_AngX, _AngY, _AngZ: single): TMatrix;
+function CTextureGenerator.GetTransformMatrix(_AngX, _AngY: single): TMatrix;
 begin
    Result := IdentityMatrix;
-   if _AngX <> C_ANGLE_NONE then
-   begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixX(sin(_AngX),cos(_AngX)));
-   end;
    if _AngY <> C_ANGLE_NONE then
    begin
       Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngY),cos(_AngY)));
    end;
-   if _AngZ <> C_ANGLE_NONE then
+   if _AngX <> C_ANGLE_NONE then
    begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixZ(sin(_AngZ),cos(_AngZ)));
+      Result := MatrixMultiply(Result,CreateRotationMatrixX(sin(_AngX),cos(_AngX)));
    end;
 end;
 
@@ -161,7 +150,14 @@ begin
    Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.Z * _Vector.Z));
    if Distance > 0 then
    begin
-      Result := CleanAngleRadians(arccos(_Vector.Y / Distance));
+      if (_Vector.Y <> 0) then
+      begin
+         Result := CleanAngle90Radians((_Vector.Y / (Abs(_Vector.Y))) * arccos(_Vector.Z / Distance));
+      end
+      else
+      begin
+         Result := CleanAngle90Radians(arccos(_Vector.Z / Distance));
+      end;
    end
    else
    begin
@@ -176,22 +172,14 @@ begin
    Distance := sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z));
    if Distance > 0 then
    begin
-      Result := CleanAngleRadians(arccos(_Vector.Z / Distance));
-   end
-   else
-   begin
-      Result := C_ANGLE_NONE;
-   end;
-end;
-
-function CTextureGenerator.GetRotationZ(const _Vector: TVector3f): single;
-var
-   Distance: single;
-begin
-   Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.X * _Vector.X));
-   if Distance > 0 then
-   begin
-      Result := CleanAngleRadians(arccos(_Vector.X / Distance));
+      if (_Vector.X <> 0) then
+      begin
+         Result := CleanAngleRadians((_Vector.X / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
+      end
+      else
+      begin
+         Result := CleanAngleRadians(arccos(_Vector.Z / Distance));
+      end;
    end
    else
    begin
@@ -200,23 +188,6 @@ begin
 end;
 
 // Angle Operators
-
-// _Ang2 - _Ang1
-function CTextureGenerator.SubtractAngles(_Ang1, _Ang2: single): single;
-begin
-   if _Ang1 = C_ANGLE_NONE then
-   begin
-      Result := _Ang2;
-   end
-   else if _Ang2 = C_ANGLE_NONE then
-   begin
-      Result := _Ang1;
-   end
-   else
-   begin
-      Result := CleanAngleRadians(_Ang2 - _Ang1);
-   end;
-end;
 
 function CTextureGenerator.CleanAngle(Angle: single): single;
 begin
@@ -236,6 +207,25 @@ begin
       Result := Result + Pi;
    if Result > C_2Pi then
       Result := Result - C_2Pi;
+end;
+
+function CTextureGenerator.CleanAngle90Radians(Angle: single): single;
+const
+   C_2PI = 2 * Pi;
+   C_PIDiv2 = Pi / 2;
+   C_3PIDiv2 = 1.5 * Pi;
+begin
+   Result := Angle;
+   // Ensure that it is between 0 and 2Pi.
+   if Result < 0 then
+      Result := Result + Pi;
+   if Result > C_2Pi then
+      Result := Result - C_2Pi;
+   // Now we ensure that it will be either between 3Pi/2 and Pi/2.
+   if (Result > C_PIDiv2) and (Result <= Pi) then
+      Result := Pi - Result
+   else if (Result > Pi) and (Result < C_3PIDiv2) then
+      Result := C_2Pi - (Result - Pi);
 end;
 
 function CTextureGenerator.GetVectorAngle(_Vec1, _Vec2: TVector3f): single;

@@ -43,6 +43,7 @@ type
          procedure SetRenderingProcedure;
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+         procedure LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          // Normals
          procedure ReNormalizeQuads;
          procedure ReNormalizeTriangles;
@@ -60,6 +61,7 @@ type
          // Distance Functions
          function GetIgnoredDistance(_Distance : single): single;
          function GetLinearDistance(_Distance : single): single;
+         function GetLinear1DDistance(_Distance : single): single;
          function GetCubicDistance(_Distance : single): single;
          function GetCubic1DDistance(_Distance : single): single;
          function GetQuadric1DDistance(_Distance : single): single;
@@ -1188,7 +1190,7 @@ end;
 
 procedure TMesh.MeshQuadricSmooth;
 begin
-   MeshSmoothOperation(GetQuadric1DDistance);
+   LimitedMeshSmoothOperation(GetQuadric1DDistance);
 end;
 
 procedure TMesh.MeshCubicSmooth;
@@ -1198,7 +1200,7 @@ end;
 
 procedure TMesh.MeshLanczosSmooth;
 begin
-   MeshSmoothOperation(GetLanczos1DACDistance);
+   LimitedMeshSmoothOperation(GetLanczos1DACDistance);
 end;
 
 procedure TMesh.MeshSincSmooth;
@@ -1279,6 +1281,89 @@ begin
          Vertices[v].X := OriginalVertexes[v].X + _DistanceFunction((Vertices[v].X) / HitCounter[v]);
          Vertices[v].Y := OriginalVertexes[v].Y + _DistanceFunction((Vertices[v].Y) / HitCounter[v]);
          Vertices[v].Z := OriginalVertexes[v].Z + _DistanceFunction((Vertices[v].Z) / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   // Free memory
+   SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   ForceRefresh;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Smooth Operation for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TMesh.LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+var
+   HitCounter: array of single;
+   OriginalVertexes : array of TVector3f;
+   v,v1 : integer;
+   x,y,z : single;
+   Distance: single;
+   NeighborDetector : TNeighborDetector;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   // Reset values.
+   for v := Low(HitCounter) to High(HitCounter) do
+   begin
+      HitCounter[v] := 0;
+      OriginalVertexes[v].X := Vertices[v].X;
+      OriginalVertexes[v].Y := Vertices[v].Y;
+      OriginalVertexes[v].Z := Vertices[v].Z;
+      Vertices[v].X := 0;
+      Vertices[v].Y := 0;
+      Vertices[v].Z := 0;
+   end;
+   // Sum up vertices with its neighbours, using the desired distance formula.
+   NeighborDetector := TNeighborDetector.Create;
+   NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      v1 := NeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
+      begin
+         x := (OriginalVertexes[v1].X - OriginalVertexes[v].X);
+         y := (OriginalVertexes[v1].Y - OriginalVertexes[v].Y);
+         z := (OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
+         Distance := Sqrt((x * x) + (y * y) + (z * z));
+         if Distance > 0 then
+         begin
+            Vertices[v].X := Vertices[v].X + (x/distance);
+            Vertices[v].Y := Vertices[v].Y + (y/distance);
+            Vertices[v].Z := Vertices[v].Z + (z/distance);
+
+            HitCounter[v] := HitCounter[v] + 1;
+         end;
+         v1 := NeighborDetector.GetNextNeighbor;
+      end;
+   end;
+   NeighborDetector.Free;
+
+   // Finally, we do an average for all vertices.
+   for v := Low(Vertices) to High(Vertices) do
+   begin
+      {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Mesh Value (' + FloatToStr(Vertices[v].X) + ', ' + FloatToStr(Vertices[v].Y) + ', ' +FloatToStr(Vertices[v].Z) + ') with ' + FloatToStr(HitCounter[v]) + ' neighbours. Expected frequencies: (' + FloatToStr(Vertices[v].X / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Y / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Z / HitCounter[v]) + ')');
+      {$endif}
+      if HitCounter[v] > 0 then
+      begin
+         Vertices[v].X := OriginalVertexes[v].X + _DistanceFunction((Vertices[v].X / HitCounter[v]));
+         Vertices[v].Y := OriginalVertexes[v].Y + _DistanceFunction((Vertices[v].Y / HitCounter[v]));
+         Vertices[v].Z := OriginalVertexes[v].Z + _DistanceFunction((Vertices[v].Z / HitCounter[v]));
       end
       else
       begin
@@ -1791,6 +1876,11 @@ begin
       Result := Result * -1;
 end;
 
+function TMesh.GetLinear1DDistance(_Distance : single): single;
+begin
+   Result := _Distance;
+end;
+
 function TMesh.GetCubic1DDistance(_Distance : single): single;
 const
    FREQ_NORMALIZER = 1.5;
@@ -1836,7 +1926,7 @@ var
    Distance: single;
 begin
    Result := 0;
-   Distance := _Distance * C_FREQ_NORMALIZER;
+   Distance := _Distance * 1.5; //C_FREQ_NORMALIZER;
    if _Distance <> 0 then
      Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
    if _Distance < 0 then
@@ -3450,6 +3540,10 @@ begin
    FaceNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
 
    SetLength(VertexTransformation,High(Vertices)+1);
+   if (NormalsType = C_NORMALS_PER_FACE) then
+   begin
+      ConvertFaceToVertexNormals;
+   end;
    RebuildFaceNormals;
    // Step 1: check vertexes that can be removed.
    for v := Low(Vertices) to High(Vertices) do
@@ -3796,6 +3890,10 @@ begin
    FaceNeighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
 
    SetLength(VertexTransformation,High(Vertices)+1);
+   if (NormalsType = C_NORMALS_PER_FACE) then
+   begin
+      ConvertFaceToVertexNormals;
+   end;
    RebuildFaceNormals;
    // Step 1: check vertexes that can be removed.
    for v := Low(Vertices) to High(Vertices) do

@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 555
+  ClientHeight = 574
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 529
+    Height = 548
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -539,23 +539,23 @@ object Frm3DModelizer: TFrm3DModelizer
         OnClick = ModelFXHeavySmoothClick
       end
       object ModelFXLanczos: TMenuItem
-        Caption = 'Lanczos Erosion'
+        Caption = 'Lanczos Smooth'
         OnClick = ModelFXLanczosClick
       end
       object ModelFXSincErosion: TMenuItem
-        Caption = 'Sinc Erosion'
+        Caption = 'Sinc Smooth'
         OnClick = ModelFXSincErosionClick
       end
       object ModelFXEulerErosion: TMenuItem
-        Caption = 'Euler Erosion'
+        Caption = 'Euler Smooth'
         OnClick = ModelFXEulerErosionClick
       end
       object ModelFXHeavyEulerErosion: TMenuItem
-        Caption = 'Heavy Euler Erosion'
+        Caption = 'Heavy Euler Smooth'
         OnClick = ModelFXHeavyEulerErosionClick
       end
       object ModelFXSincInfiniteErosion: TMenuItem
-        Caption = 'Sinc Infinite Erosion'
+        Caption = 'Sinc Infinite Smooth'
         OnClick = ModelFXSincInfiniteErosionClick
       end
       object ModelFXGaussianSmooth: TMenuItem
