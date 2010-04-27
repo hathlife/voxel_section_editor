@@ -113,8 +113,8 @@ begin
    AngX := GetRotationX(_Normal);
    AngY := GetRotationY(_Normal);
    // Get the angles of the plane aiming at the user minus normal vector
-   AngX := CleanAngleRadians(-AngX);
-   AngY := CleanAngleRadians(-AngY);
+//   AngX := CleanAngleRadians(-AngX);
+//   AngY := CleanAngleRadians(-AngY);
    // Now we get the transform matrix
    Result := GetTransformMatrix(AngX,AngY);
 end;
@@ -152,11 +152,11 @@ begin
    begin
       if (_Vector.Y <> 0) then
       begin
-         Result := CleanAngle90Radians((_Vector.Y / (Abs(_Vector.Y))) * arccos(_Vector.Z / Distance));
+         Result := CleanAngle90Radians(((-1 * _Vector.Y) / (Abs(_Vector.Y))) *  arccos(abs(_Vector.Z) / Distance));
       end
       else
       begin
-         Result := CleanAngle90Radians(arccos(_Vector.Z / Distance));
+         Result := CleanAngle90Radians(-1 * arccos(abs(_Vector.Z) / Distance));
       end;
    end
    else
@@ -174,11 +174,11 @@ begin
    begin
       if (_Vector.X <> 0) then
       begin
-         Result := CleanAngleRadians((_Vector.X / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
+         Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
       end
       else
       begin
-         Result := CleanAngleRadians(arccos(_Vector.Z / Distance));
+         Result := CleanAngleRadians(-1 * arccos(_Vector.Z / Distance));
       end;
    end
    else
@@ -232,7 +232,7 @@ function CTextureGenerator.GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
 var
    V1, V2: TAffineVector;
 begin
-   Result := sqrt((_Vec1.X * _Vec2.X) + (_Vec1.Y * _Vec2.Y) + (_Vec1.Z * _Vec2.Z));
+   Result := (_Vec1.X * _Vec2.X) + (_Vec1.Y * _Vec2.Y) + (_Vec1.Z * _Vec2.Z);
 end;
 
 // Executes
