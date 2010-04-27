@@ -874,7 +874,7 @@ begin
    CurrentCamera^.SetPositionSpeed(0,0,0);
    CurrentCamera^.SetPositionAcceleration(0,0,0);
    CurrentCamera^.SetRotation(NonScreenCamera^.Rotation);
-   CurrentCamera^.SetRotationSpeed(0,0,(360.0 / _NumFrames));
+   CurrentCamera^.SetRotationSpeed(0,(360.0 / _NumFrames),0);
    CurrentCamera^.SetRotationAcceleration(0,0,0);
    ScreenType := _type;
    StartAnimation;
