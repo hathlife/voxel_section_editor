@@ -889,13 +889,13 @@ begin
 			end
          else
          begin
-				dr := 0;
-            dg := 0;
-            db := 0;
-            da := 0;
+				dr := (EC.X - SC.X);
+            dg := (EC.Y - SC.Y);
+            db := (EC.Z - SC.Z);
+            da := (EC.W - SC.W);
          end;
          AssignPointColour(PP,PC,SP,SC);
-			while (PP.U < EP.U) do
+			while (PP.U <= EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr;
@@ -930,13 +930,13 @@ begin
 			end
          else
          begin
-				dr := 0;
-            dg := 0;
-            db := 0;
-            da := 0;
+				dr := (EC.X - SC.X);
+            dg := (EC.Y - SC.Y);
+            db := (EC.Z - SC.Z);
+            da := (EC.W - SC.W);
          end;
          AssignPointColour(PP,PC,SP,SC);
-			while (PP.U < EP.U) do
+			while (PP.U <= EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr;
@@ -972,14 +972,14 @@ begin
 			end
          else
          begin
-				dr := 0;
-            dg := 0;
-            db := 0;
-            da := 0;
+				dr := (EC.X - SC.X);
+            dg := (EC.Y - SC.Y);
+            db := (EC.Z - SC.Z);
+            da := (EC.W - SC.W);
          end;
 
          AssignPointColour(PP,PC,SP,SC);
-			while (PP.U < EP.U) do
+			while (PP.U <= EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr;
@@ -1014,14 +1014,14 @@ begin
 			end
          else
          begin
-				dr := 0;
-            dg := 0;
-            db := 0;
-            da := 0;
+				dr := (EC.X - SC.X);
+            dg := (EC.Y - SC.Y);
+            db := (EC.Z - SC.Z);
+            da := (EC.W - SC.W);
          end;
 
          AssignPointColour(PP,PC,SP,SC);
-			while (PP.U < EP.U) do
+			while (PP.U <= EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr;
@@ -1285,6 +1285,7 @@ procedure CTextureGenerator.PaintTriangle(var _Buffer: T2DFrameBuffer; var _Weig
 
 var
    P1, P2, P3 : TVector2f;
+   CX : TVector4f;
    Size : integer;
 begin
    Size := High(_Buffer[0])+1;
@@ -1294,46 +1295,58 @@ begin
    P2.V := _P2.V * Size;
    P3.U := _P3.U * Size;
    P3.V := _P3.V * Size;
-   if IsP1HigherThanP2(P1,P2) then
+   if (P1.U = P2.U) and (P1.U = P3.U) and (P1.V = P2.V) and (P1.V = P3.V) then
    begin
-      if IsP1HigherThanP2(P2,P3) then
-      begin
-         // P1, P2, P3
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_C3,_C2,_C1);
-      end
-      else
-      begin
-         if IsP1HigherThanP2(P1,P3) then
-         begin
-            // P1, P3, P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_C2,_C3,_C1);
-         end
-         else
-         begin
-            // P3, P1, P2
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_C2,_C1,_C3);
-         end;
-      end;
+      // Paint a single pixel.
+      CX.X := (_C1.X + _C2.X + _C3.X) / 3;
+      CX.Y := (_C1.Y + _C2.Y + _C3.Y) / 3;
+      CX.Z := (_C1.Z + _C2.Z + _C3.Z) / 3;
+      CX.W := (_C1.W + _C2.W + _C3.W) / 3;
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P1, CX);
    end
    else
    begin
-      if IsP1HigherThanP2(P2,P3) then
+      if IsP1HigherThanP2(P1,P2) then
       begin
-         if IsP1HigherThanP2(P1,P3) then
+         if IsP1HigherThanP2(P2,P3) then
          begin
-            // P2, P1, P3
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_C3,_C1,_C2);
+            // P1, P2, P3
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_C3,_C2,_C1);
          end
          else
          begin
-            // P2, P3, P1
-            PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_C1,_C3,_C2);
+            if IsP1HigherThanP2(P1,P3) then
+            begin
+               // P1, P3, P2
+               PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_C2,_C3,_C1);
+            end
+            else
+            begin
+               // P3, P1, P2
+               PaintGouraudTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_C2,_C1,_C3);
+            end;
          end;
       end
       else
       begin
-         // P3, P2, P1
-         PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_C1,_C2,_C3);
+         if IsP1HigherThanP2(P2,P3) then
+         begin
+            if IsP1HigherThanP2(P1,P3) then
+            begin
+               // P2, P1, P3
+               PaintGouraudTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_C3,_C1,_C2);
+            end
+            else
+            begin
+               // P2, P3, P1
+               PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_C1,_C3,_C2);
+            end;
+         end
+         else
+         begin
+            // P3, P2, P1
+            PaintGouraudTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_C1,_C2,_C3);
+         end;
       end;
    end;
 end;
