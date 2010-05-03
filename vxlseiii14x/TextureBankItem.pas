@@ -37,11 +37,15 @@ type
          constructor Create(const _Texture: GLInt); overload;
          constructor Create(const _Bitmap : TBitmap); overload;
          constructor Create(const _Bitmaps : TABitmap); overload;
+         constructor Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap); overload;
+         constructor Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;
          procedure LoadTexture(const _Bitmaps : TABitmap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; _Level: integer); overload;
+         procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
+         procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
          procedure SaveTexture(const _Filename: string);
          // Sets
          procedure SetEditable(_value: boolean);
@@ -115,6 +119,25 @@ begin
    glDisable(GL_TEXTURE_2D);
 end;
 
+constructor TTextureBankItem.Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap);
+begin
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   LoadTexture(_Bitmap,_AlphaMap,0);
+   Counter := 1;
+   SetNumMipmaps(1);
+   glDisable(GL_TEXTURE_2D);
+end;
+
+constructor TTextureBankItem.Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap);
+begin
+   glGenTextures(1, @ID);
+   glEnable(GL_TEXTURE_2D);
+   LoadTexture(_Bitmaps,_AlphaMaps);
+   Counter := 1;
+   glDisable(GL_TEXTURE_2D);
+end;
+
 destructor TTextureBankItem.Destroy;
 begin
    if (ID <> 0) and (ID <> -1) then
@@ -177,6 +200,40 @@ begin
    for i := Low(_Bitmaps) to High(_Bitmaps) do
    begin
       LoadTexture(_Bitmaps[i],i);
+   end;
+end;
+
+// Code adapted from Jan Horn's Texture.pas from http://www.sulaco.co.za
+procedure TTextureBankItem.LoadTexture(const _Bitmap : TBitmap; const _AlphaMap : TByteMap; _Level: integer);
+var
+   Data : Array of LongWord;
+   W, H : Integer;
+   Line : ^LongWord;
+begin
+   SetLength(Data, _Bitmap.Width * _Bitmap.Height);
+
+   For H:= 0 to _Bitmap.Height-1 do
+   begin
+      Line := _Bitmap.ScanLine[_Bitmap.Height-H-1];   // flip bitmap
+      For W:= 0 to _Bitmap.Width-1 do
+      begin
+         // Switch ABGR to ARGB
+         Data[W+(H*_Bitmap.Width)] :=((Line^ and $FF) shl 16) + ((Line^ and $FF0000) shr 16) + (Line^ and $00FF00) + (_AlphaMap[W,_Bitmap.Height-H-1] shl 24);
+         inc(Line);
+      end;
+   end;
+   UploadTexture(Addr(Data[0]),GL_RGBA,_Bitmap.Height,_Bitmap.Width,_Level);
+   SetLength(Data,0);
+end;
+
+procedure TTextureBankItem.LoadTexture(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap);
+var
+   i : integer;
+begin
+   SetNumMipmaps(High(_Bitmaps)+1);
+   for i := Low(_Bitmaps) to High(_Bitmaps) do
+   begin
+      LoadTexture(_Bitmaps[i],_AlphaMaps[i],i);
    end;
 end;
 
@@ -499,7 +556,8 @@ begin
          buffer[13] := Width shr 8;
          buffer[14] := Height and $ff;
          buffer[15] := Height shr 8;
-         buffer[16] := 24; //pixel size
+         buffer[16] := 32; //pixel size
+         buffer[17] := 8;
 
          glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,Pointer(Cardinal(buffer) + 18));
 
@@ -512,9 +570,11 @@ begin
          c := 18;
          for i := 0 to (Width * Height)-1 do
          begin
+            buffer[c+3] := 255 - buffer[c+3]; // invert alpha. 
             BlockWrite(f, buffer[c+2], sizeof(byte) , temp);
             BlockWrite(f, buffer[c+1], sizeof(byte) , temp);
             BlockWrite(f, buffer[c], sizeof(byte) , temp);
+            BlockWrite(f, buffer[c+3], sizeof(byte) , temp);
             inc(c,4);
          end;
          closefile(f);

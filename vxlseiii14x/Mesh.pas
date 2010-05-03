@@ -2548,6 +2548,7 @@ procedure TMesh.GenerateDiffuseTexture;
 var
    TexGenerator: CTextureGenerator;
    Bitmap : TBitmap;
+   AlphaMap : TByteMap;
 begin
    RebuildFaceNormals;
    TexGenerator := CTextureGenerator.Create;
@@ -2556,8 +2557,9 @@ begin
    AddMaterial;
    SetLength(Materials[0].Texture,1);
    glActiveTextureARB(GL_TEXTURE0_ARB);
-   Bitmap := TexGenerator.GenerateDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,1024);
-   Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap);
+   Bitmap := TexGenerator.GenerateDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,1024,AlphaMap);
+   Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   SetLength(AlphaMap,0,0);
    Bitmap.Free;
    if ShaderBank <> nil then
       Materials[0].Shader := ShaderBank^.Get(C_SHD_PHONG_1TEX)
@@ -2734,7 +2736,6 @@ end;
 
 procedure TMesh.ApplyMaterialColour;
 begin
-//   glEnable(GL_LIGHTING);
    glEnable(GL_COLOR_MATERIAL);
    glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@(Materials[CurrentPass].Ambient));
@@ -2754,7 +2755,6 @@ begin
    begin
       Materials[CurrentPass].Shader^.DeactivateProgram;
    end;
-//   glDisable(GL_LIGHTING);
 end;
 
 procedure TMesh.RenderWithoutNormalsAndColours;

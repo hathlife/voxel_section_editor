@@ -29,12 +29,16 @@ type
          function Add(const _ID: GLInt): PTextureBankItem; overload;
          function Add(const _Bitmap: TBitmap): PTextureBankItem; overload;
          function Add(const _Bitmaps: TABitmap): PTextureBankItem; overload;
+         function Add(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem; overload;
+         function Add(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem; overload;
          function AddReadOnly(const _filename: string): PTextureBankItem; overload;
          function AddReadOnly(const _ID: GLInt): PTextureBankItem; overload;
          function Clone(const _filename: string): PTextureBankItem; overload;
          function Clone(const _ID: GLInt): PTextureBankItem; overload;
          function Clone(const _Bitmap: TBitmap): PTextureBankItem; overload;
          function Clone(const _Bitmaps: TABitmap): PTextureBankItem; overload;
+         function Clone(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem; overload;
+         function Clone(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem; overload;
          function CloneEditable(const _ID: GLInt): PTextureBankItem; overload;
          // Deletes
          procedure Delete(const _ID : GLInt);
@@ -322,6 +326,16 @@ begin
    Result := Clone(_Bitmaps);
 end;
 
+function TTextureBank.Add(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem;
+begin
+   Result := Clone(_Bitmap,_AlphaMap);
+end;
+
+function TTextureBank.Add(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem;
+begin
+   Result := Clone(_Bitmaps,_AlphaMaps);
+end;
+
 function TTextureBank.AddReadOnly(const _filename: string): PTextureBankItem;
 var
    i : integer;
@@ -430,6 +444,38 @@ begin
    try
       new(Items[High(Items)]);
       Items[High(Items)]^ := TTextureBankItem.Create(_Bitmaps);
+   except
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
+   Result := Items[High(Items)];
+end;
+
+function TTextureBank.Clone(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem;
+begin
+   SetLength(Items,High(Items)+2);
+   try
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Bitmap,_AlphaMap);
+   except
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
+   Result := Items[High(Items)];
+end;
+
+function TTextureBank.Clone(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem;
+begin
+   SetLength(Items,High(Items)+2);
+   try
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Bitmaps,_AlphaMaps);
    except
       Items[High(Items)]^.Free;
       Dispose(Items[High(Items)]);

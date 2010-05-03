@@ -338,7 +338,7 @@ end;
 procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
 begin
    // Export every single texture...
-   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),'jpg');
+   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),'tga');
 end;
 
 procedure TFrm3DModelizer.BackgroundColour1Click(Sender: TObject);

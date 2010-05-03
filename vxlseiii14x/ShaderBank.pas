@@ -48,12 +48,6 @@ begin
       // Add Phong Shaders.
       Load('phong');
       Load('phong_1tex');
-{
-   end
-   else
-   begin
-      ShowMessage('Warning: Your hardware does not support GLSL. Models that use shader effects will not be previewed correctly on this machine.');
-}
    end;
 end;
 

@@ -51,9 +51,10 @@ type
          procedure PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
+         procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
-         function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
+         function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
       public
@@ -66,7 +67,7 @@ type
          // Executes
          function GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
          // Generate Textures
-         function GenerateDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
+         function GenerateDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer; var _AlphaMap: TByteMap): TBitmap;
          function GenerateNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
          function GenerateNormalWithHeightMapTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
    end;
@@ -517,7 +518,7 @@ end;
 
 function CTextureGenerator.MakeNewSeed(_ID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
 const
-   C_MIN_ANGLE = 0.707; // approximately cos 45'
+   C_MIN_ANGLE = 0.05; // approximately cos 90'
 var
    v,f,Value,vertex : integer;
    List : CIntegerList;
@@ -819,9 +820,9 @@ procedure CTextureGenerator.PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; va
       _DestColour.W := _SourceColour.W;
    end;
 var
-   dx1, dx2, dx3, dr, dr1, dr2, dr3, dg, dg1, dg2, dg3, db, db1, db2, db3, da, da1, da2, da3 : real;
-   SP, EP, PP : TVector2f;
-   SC, EC, PC : TVector4f;
+   dx1, dx2, dx3, dr1, dr2, dr3, dg1, dg2, dg3, db1, db2, db3, da1, da2, da3 : real;
+   SP, EP : TVector2f;
+   SC, EC : TVector4f;
 begin
    if (_P2.V - _P1.V > 0) then
    begin
@@ -880,30 +881,7 @@ begin
    begin
 		while (SP.V <= _P2.V) do
       begin
-			if(EP.U - SP.U > 0) then
-         begin
-				dr := (EC.X - SC.X) / (EP.U - SP.U);
-				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
-				db := (EC.Z - SC.Z) / (EP.U - SP.U);
-				da := (EC.W - SC.W) / (EP.U - SP.U);
-			end
-         else
-         begin
-				dr := (EC.X - SC.X);
-            dg := (EC.Y - SC.Y);
-            db := (EC.Z - SC.Z);
-            da := (EC.W - SC.W);
-         end;
-         AssignPointColour(PP,PC,SP,SC);
-			while (PP.U <= EP.U) do
-         begin
-				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr;
-				PC.Y := PC.Y + db;
-				PC.Z := PC.Z + dg;
-				PC.W := PC.W + da;
-            PP.U := PP.U + 1;
-			end;
+         PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
          SC.Y := SC.Y + db2;
@@ -921,30 +899,7 @@ begin
       AssignPointColour(EP,EC,_P2,_C2);
 		while (SP.V <= _P3.V) do
       begin
-			if (EP.U - SP.U > 0) then
-         begin
-				dr := (EC.X - SC.X) / (EP.U - SP.U);
-				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
-				db := (EC.Z - SC.Z) / (EP.U - SP.U);
-				da := (EC.W - SC.W) / (EP.U - SP.U);
-			end
-         else
-         begin
-				dr := (EC.X - SC.X);
-            dg := (EC.Y - SC.Y);
-            db := (EC.Z - SC.Z);
-            da := (EC.W - SC.W);
-         end;
-         AssignPointColour(PP,PC,SP,SC);
-			while (PP.U <= EP.U) do
-         begin
-				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr;
-				PC.Y := PC.Y + db;
-				PC.Z := PC.Z + dg;
-				PC.W := PC.W + da;
-            PP.U := PP.U + 1;
-			end;
+         PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
          SC.Y := SC.Y + db2;
@@ -963,31 +918,7 @@ begin
    begin
 		while (SP.V <= _P2.V) do
       begin
-			if (EP.U - SP.U > 0) then
-         begin
-				dr := (EC.X - SC.X) / (EP.U - SP.U);
-				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
-				db := (EC.Z - SC.Z) / (EP.U - SP.U);
-				da := (EC.W - SC.W) / (EP.U - SP.U);
-			end
-         else
-         begin
-				dr := (EC.X - SC.X);
-            dg := (EC.Y - SC.Y);
-            db := (EC.Z - SC.Z);
-            da := (EC.W - SC.W);
-         end;
-
-         AssignPointColour(PP,PC,SP,SC);
-			while (PP.U <= EP.U) do
-         begin
-				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr;
-				PC.Y := PC.Y + db;
-				PC.Z := PC.Z + dg;
-				PC.W := PC.W + da;
-            PP.U := PP.U + 1;
-			end;
+         PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx1;
          SC.X := SC.X + dr1;
          SC.Y := SC.Y + db1;
@@ -1005,31 +936,7 @@ begin
       AssignPointColour(SP,SC,_P2,_C2);
 		while (SP.V <= _P3.V) do
       begin
-			if (EP.U - SP.U > 0) then
-         begin
-				dr := (EC.X - SC.X) / (EP.U - SP.U);
-				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
-				db := (EC.Z - SC.Z) / (EP.U - SP.U);
-				da := (EC.W - SC.W) / (EP.U - SP.U);
-			end
-         else
-         begin
-				dr := (EC.X - SC.X);
-            dg := (EC.Y - SC.Y);
-            db := (EC.Z - SC.Z);
-            da := (EC.W - SC.W);
-         end;
-
-         AssignPointColour(PP,PC,SP,SC);
-			while (PP.U <= EP.U) do
-         begin
-				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr;
-				PC.Y := PC.Y + db;
-				PC.Z := PC.Z + dg;
-				PC.W := PC.W + da;
-            PP.U := PP.U + 1;
-			end;
+         PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx3;
          SC.X := SC.X + dr3;
          SC.Y := SC.Y + db3;
@@ -1283,6 +1190,18 @@ procedure CTextureGenerator.PaintTriangle(var _Buffer: T2DFrameBuffer; var _Weig
       end;
    end;
 
+   procedure PaintPixel(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P : TVector2f; _C1, _C2, _C3: TVector4f);
+   var
+      CX : TVector4f;
+   begin
+      // Paint a single pixel.
+      CX.X := (_C1.X + _C2.X + _C3.X) / 3;
+      CX.Y := (_C1.Y + _C2.Y + _C3.Y) / 3;
+      CX.Z := (_C1.Z + _C2.Z + _C3.Z) / 3;
+      CX.W := (_C1.W + _C2.W + _C3.W) / 3;
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, _P, CX);
+   end;
+
 var
    P1, P2, P3 : TVector2f;
    CX : TVector4f;
@@ -1295,16 +1214,82 @@ begin
    P2.V := _P2.V * Size;
    P3.U := _P3.U * Size;
    P3.V := _P3.V * Size;
-   if (P1.U = P2.U) and (P1.U = P3.U) and (P1.V = P2.V) and (P1.V = P3.V) then
+   // check if the triangle is just a line or pixel.
+   if (P1.V = P2.V) and (P1.V = P3.V) then
    begin
-      // Paint a single pixel.
-      CX.X := (_C1.X + _C2.X + _C3.X) / 3;
-      CX.Y := (_C1.Y + _C2.Y + _C3.Y) / 3;
-      CX.Z := (_C1.Z + _C2.Z + _C3.Z) / 3;
-      CX.W := (_C1.W + _C2.W + _C3.W) / 3;
-      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P1, CX);
+      if (P1.U = P2.U) then
+      begin
+         if (P1.U = P3.U) then
+         begin
+            PaintPixel(_Buffer,_WeightBuffer,P1,_C1,_C2,_C3);
+         end
+         else
+         begin
+            CX.X := (_C1.X + _C2.X) / 2;
+            CX.Y := (_C1.Y + _C2.Y) / 2;
+            CX.Z := (_C1.Z + _C2.Z) / 2;
+            CX.W := (_C1.W + _C2.W) / 2;
+            PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P3.U,P1.V,CX,_C3);
+         end;
+      end
+      else
+      begin
+         if (P1.U = P3.U) then
+         begin
+            CX.X := (_C1.X + _C3.X) / 2;
+            CX.Y := (_C1.Y + _C3.Y) / 2;
+            CX.Z := (_C1.Z + _C3.Z) / 2;
+            CX.W := (_C1.W + _C3.W) / 2;
+            PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P2.U,P1.V,CX,_C2);
+         end
+         else  // paint two lines linking P1, P2 and P3.
+         begin
+            if P1.U > P2.U then
+            begin
+               if P2.U > P3.U then
+               begin
+                  PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P3.U,P2.U,P1.V,_C3,_C2);
+                  PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P2.U,P1.U,P1.V,_C2,_C1);
+               end
+               else
+               begin
+                  if P1.U > P3.U then
+                  begin
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P2.U,P3.U,P1.V,_C2,_C3);
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P3.U,P1.U,P1.V,_C3,_C1);
+                  end
+                  else
+                  begin
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P2.U,P1.U,P1.V,_C2,_C1);
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P3.U,P1.V,_C1,_C3);
+                  end;
+               end;
+            end
+            else
+            begin
+               if P2.U > P3.U then
+               begin
+                  if P1.U > P3.U then
+                  begin
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P3.U,P1.U,P1.V,_C3,_C1);
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P2.U,P1.V,_C1,_C2);
+                  end
+                  else
+                  begin
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P3.U,P1.V,_C1,_C3);
+                     PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P3.U,P2.U,P1.V,_C3,_C2);
+                  end;
+               end
+               else
+               begin
+                  PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P1.U,P2.U,P1.V,_C1,_C2);
+                  PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,P2.U,P3.U,P1.V,_C2,_C3);
+               end;
+            end;
+         end;
+      end;
    end
-   else
+   else // it is really a triangle.
    begin
       if IsP1HigherThanP2(P1,P2) then
       begin
@@ -1407,6 +1392,70 @@ begin
    end;
 end;
 
+procedure CTextureGenerator.PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
+   procedure AssignColour(var _DestColour: TVector4f; const _SourceColour: TVector4f);
+   begin
+      _DestColour.X := _SourceColour.X;
+      _DestColour.Y := _SourceColour.Y;
+      _DestColour.Z := _SourceColour.Z;
+      _DestColour.W := _SourceColour.W;
+   end;
+var
+   dr, dg, db, da : real;
+   x2, x1 : single;
+   C1, C2, PC : TVector4f;
+   PP : TVector2f;
+begin
+   // First we make sure x1 will be smaller than x2.
+   if (_X1 > _X2) then
+   begin
+      x1 := _X2;
+      x2 := _X1;
+      AssignColour(C1,_C2);
+      AssignColour(C2,_C1);
+   end
+   else if _X1 = _X2 then
+   begin
+      PP.U := _X1;
+      PP.V := _Y;
+      PC.X := (_C1.X + _C2.X) /2;
+      PC.Y := (_C1.Y + _C2.Y) /2;
+      PC.Z := (_C1.Z + _C2.Z) /2;
+      PC.W := (_C1.W + _C2.W) /2;
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      exit;
+   end
+   else
+   begin
+      x1 := _X1;
+      x2 := _X2;
+      AssignColour(C1,_C1);
+      AssignColour(C2,_C2);
+   end;
+
+   // get the gradients for each colour channel
+ 	dr := (C2.X - C1.X) / (x2 - x1);
+   dg := (C2.Y - C1.Y) / (x2 - x1);
+   db := (C2.Z - C1.Z) / (x2 - x1);
+   da := (C2.W - C1.W) / (x2 - x1);
+
+   //  Now, let's start the painting procedure:
+   PP.U := x1;
+   PP.V := _Y;
+   AssignColour(PC,C1);
+   while PP.U <= x2 do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PC.X := PC.X + dr;
+      PC.Y := PC.Y + dg;
+      PC.Z := PC.Z + db;
+      PC.W := PC.W + da;
+      PP.U := PP.U + 1;
+   end;
+end;
+
+
+
 procedure CTextureGenerator.SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
 var
    x,y : integer;
@@ -1439,25 +1488,29 @@ begin
    SetLength(_WeightBuffer,0);
 end;
 
-function CTextureGenerator.GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
+function CTextureGenerator.GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
 var
    x,y : integer;
 begin
    Result := TBitmap.Create;
    Result.PixelFormat := pf32Bit;
+   Result.Transparent := false;
    Result.Width := High(_Buffer)+1;
    Result.Height := High(_Buffer)+1;
+   SetLength(_AlphaMap,Result.Width,Result.Width);
    for x := Low(_Buffer) to High(_Buffer) do
    begin
       for y := Low(_Buffer[x]) to High(_Buffer[x]) do
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,Result.Height - y] := RGBA(Round((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255));
+            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255));
+            _AlphaMap[x,Result.Height - y] := Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255);
          end
          else
          begin
-            Result.Canvas.Pixels[x,Result.Height - y] := 0;
+            Result.Canvas.Pixels[x,Result.Height - y] := $888888;
+            _AlphaMap[x,Result.Height - y] := $FF;
          end;
       end;
    end;
@@ -1511,7 +1564,7 @@ begin
    end;
 end;
 
-function CTextureGenerator.GenerateDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
+function CTextureGenerator.GenerateDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer; var _AlphaMap: TByteMap): TBitmap;
 var
    Buffer: T2DFrameBuffer;
    WeightBuffer: TWeightBuffer;
@@ -1524,7 +1577,7 @@ begin
    begin
       PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
-   Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer);
+   Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,_AlphaMap);
    Result.SaveToFile('test.bmp');
    DisposeFrameBuffer(Buffer,WeightBuffer,Size);
 end;

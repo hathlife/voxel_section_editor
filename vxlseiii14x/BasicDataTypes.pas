@@ -128,6 +128,8 @@ type
    AUInt32 = array of longword;
    ABool = array of boolean;
    AFloat = array of single;
+   TByteMap = array of array of byte;
+   TAByteMap = array of TByteMap;
    TABitmap = array of TBitmap;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
 
