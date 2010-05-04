@@ -2717,6 +2717,8 @@ begin
          end
          else
          begin
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
             CurrentPass := Low(Materials);
             while CurrentPass <= High(Materials) do
             begin
@@ -2725,6 +2727,7 @@ begin
                StopMaterialColour;
                inc(CurrentPass);
             end;
+            glDisable(GL_BLEND);
          end;
          glEndList;
       end;
