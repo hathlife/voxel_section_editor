@@ -518,7 +518,7 @@ end;
 
 function CTextureGenerator.MakeNewSeed(_ID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
 const
-   C_MIN_ANGLE = 0.05; // approximately cos 90'
+   C_MIN_ANGLE = 0.0001; // approximately cos 90'
 var
    v,f,Value,vertex : integer;
    List : CIntegerList;
@@ -773,14 +773,21 @@ procedure CTextureGenerator.PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer;
 var
    Size : integer;
    PosX, PosY : integer;
+   Point,FractionLow,FractionHigh : TVector2f;
 begin
    Size := High(_Buffer)+1;
-   PosX := Trunc(_Point.U);
-   PosY := Trunc(_Point.V);
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, ((PosX+1)-_Point.U) * ((PosY+1)-_Point.V));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, (_Point.U - PosX) * ((PosY+1)-_Point.V));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, ((PosX+1)-_Point.U) * (_Point.V - PosY));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, (_Point.U - PosX) * (_Point.V - PosY));
+   Point.U := _Point.U;// - 0.5;
+   Point.V := _Point.V;// - 0.5;
+   PosX := Trunc(Point.U);
+   PosY := Trunc(Point.V);
+   FractionHigh.U := Point.U - PosX;
+   FractionHigh.V := Point.V - PosY;
+   FractionLow.U := 1 - FractionHigh.U;
+   FractionLow.V := 1 - FractionHigh.V;
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, FractionLow.U * FractionLow.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, FractionHigh.U * FractionLow.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, FractionLow.U * FractionHigh.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, FractionHigh.U * FractionHigh.V);
 end;
 
 procedure CTextureGenerator.PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector3f);
@@ -797,14 +804,21 @@ procedure CTextureGenerator.PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer;
 var
    Size : integer;
    PosX, PosY : integer;
+   Point,FractionLow,FractionHigh : TVector2f;
 begin
    Size := High(_Buffer)+1;
-   PosX := Trunc(_Point.U);
-   PosY := Trunc(_Point.V);
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, ((PosX+1)-_Point.U) * ((PosY+1)-_Point.V));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, (_Point.U - PosX) * ((PosY+1)-_Point.V));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, ((PosX+1)-_Point.U) * (_Point.V - PosY));
-   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, (_Point.U - PosX) * (_Point.V - PosY));
+   Point.U := _Point.U;// - 0.5;
+   Point.V := _Point.V;// - 0.5;
+   PosX := Trunc(Point.U);
+   PosY := Trunc(Point.V);
+   FractionHigh.U := Point.U - PosX;
+   FractionHigh.V := Point.V - PosY;
+   FractionLow.U := 1 - FractionHigh.U;
+   FractionLow.V := 1 - FractionHigh.V;
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY, _Colour, FractionLow.U * FractionLow.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY, _Colour, FractionHigh.U * FractionLow.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX, PosY+1, _Colour, FractionLow.U * FractionHigh.V);
+   PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, FractionHigh.U * FractionHigh.V);
 end;
 
 
@@ -824,7 +838,7 @@ var
    SP, EP : TVector2f;
    SC, EC : TVector4f;
 begin
-   if (_P2.V - _P1.V > 0) then
+   if (_P2.V - _P1.V <> 0) then
    begin
 		dx1 := (_P2.U - _P1.U) / (_P2.V - _P1.V);
 		dr1 := (_C2.X - _C1.X) / (_P2.V - _P1.V);
@@ -834,14 +848,14 @@ begin
 	end
    else
    begin
-		dx1 := (_P2.U - _P1.U);
-      dr1 := (_C2.X - _C1.X);
-      dg1 := (_C2.Y - _C1.Y);
-      db1 := (_C2.Z - _C1.Z);
-      da1 := (_C2.W - _C1.W);
+		dx1 := 0;//(_P2.U - _P1.U);
+      dr1 := 0;//(_C2.X - _C1.X);
+      dg1 := 0;//(_C2.Y - _C1.Y);
+      db1 := 0;//(_C2.Z - _C1.Z);
+      da1 := 0;//(_C2.W - _C1.W);
    end;
 
-	if (_P3.V - _P1.V > 0) then
+	if (_P3.V - _P1.V <> 0) then
    begin
 		dx2 := (_P3.U - _P1.U) / (_P3.V - _P1.V);
 		dr2 := (_C3.X - _C1.X) / (_P3.V - _P1.V);
@@ -851,14 +865,14 @@ begin
 	end
    else
    begin
-		dx2 := (_P3.U - _P1.U);
-      dr2 := (_C3.X - _C1.X);
-      dg2 := (_C3.Y - _C1.Y);
-      db2 := (_C3.Z - _C1.Z);
-      da2 := (_C3.W - _C1.W);
+		dx2 := 0;//(_P3.U - _P1.U);
+      dr2 := 0;//(_C3.X - _C1.X);
+      dg2 := 0;//(_C3.Y - _C1.Y);
+      db2 := 0;//(_C3.Z - _C1.Z);
+      da2 := 0;//(_C3.W - _C1.W);
    end;
 
-	if (_P3.V - _P2.V > 0) then
+	if (_P3.V - _P2.V <> 0) then
    begin
 		dx3 :=(_P3.U - _P2.U) / (_P3.V - _P2.V);
 		dr3 :=(_C3.X - _C2.X) / (_P3.V - _P2.V);
@@ -868,29 +882,29 @@ begin
 	end
    else
    begin
-		dx3 := (_P3.U - _P2.U);
-      dr3 := (_C3.X - _C2.X);
-      dg3 := (_C3.Y - _C2.Y);
-      db3 := (_C3.Z - _C2.Z);
-      da3 := (_C3.W - _C2.W);
+		dx3 := 0;//(_P3.U - _P2.U);
+      dr3 := 0;//(_C3.X - _C2.X);
+      dg3 := 0;//(_C3.Y - _C2.Y);
+      db3 := 0;//(_C3.Z - _C2.Z);
+      da3 := 0;//(_C3.W - _C2.W);
    end;
 
    AssignPointColour(SP,SC,_P1,_C1);
    AssignPointColour(EP,EC,_P1,_C1);
 	if (dx1 > dx2) then
    begin
-		while (SP.V <= _P2.V) do
+		while (SP.V < _P2.V) do
       begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
-         SC.Y := SC.Y + db2;
-         SC.Z := SC.Z + dg2;
+         SC.Y := SC.Y + dg2;
+         SC.Z := SC.Z + db2;
          SC.W := SC.W + da2;
          EP.U := EP.U + dx1;
          EC.X := EC.X + dr1;
-         EC.Y := EC.Y + db1;
-         EC.Z := EC.Z + dg1;
+         EC.Y := EC.Y + dg1;
+         EC.Z := EC.Z + db1;
          EC.W := EC.W + da1;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
@@ -902,13 +916,13 @@ begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
-         SC.Y := SC.Y + db2;
-         SC.Z := SC.Z + dg2;
+         SC.Y := SC.Y + dg2;
+         SC.Z := SC.Z + db2;
          SC.W := SC.W + da2;
          EP.U := EP.U + dx3;
          EC.X := EC.X + dr3;
-         EC.Y := EC.Y + db3;
-         EC.Z := EC.Z + dg3;
+         EC.Y := EC.Y + dg3;
+         EC.Z := EC.Z + db3;
          EC.W := EC.W + da3;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
@@ -916,18 +930,18 @@ begin
 	end
    else
    begin
-		while (SP.V <= _P2.V) do
+		while (SP.V < _P2.V) do
       begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx1;
          SC.X := SC.X + dr1;
-         SC.Y := SC.Y + db1;
-         SC.Z := SC.Z + dg1;
+         SC.Y := SC.Y + dg1;
+         SC.Z := SC.Z + db1;
          SC.W := SC.W + da1;
          EP.U := EP.U + dx2;
          EC.X := EC.X + dr2;
-         EC.Y := EC.Y + db2;
-         EC.Z := EC.Z + dg2;
+         EC.Y := EC.Y + dg2;
+         EC.Z := EC.Z + db2;
          EC.W := EC.W + da2;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
@@ -939,13 +953,13 @@ begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,SP.U,EP.U,SP.V,SC,EC);
          SP.U := SP.U + dx3;
          SC.X := SC.X + dr3;
-         SC.Y := SC.Y + db3;
-         SC.Z := SC.Z + dg3;
+         SC.Y := SC.Y + dg3;
+         SC.Z := SC.Z + db3;
          SC.W := SC.W + da3;
          EP.U := EP.U + dx2;
          EC.X := EC.X + dr2;
-         EC.Y := EC.Y + db2;
-         EC.Z := EC.Z + dg2;
+         EC.Y := EC.Y + dg2;
+         EC.Z := EC.Z + db2;
          EC.W := EC.W + da2;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
@@ -1036,18 +1050,18 @@ begin
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
 				PC.X := PC.X + dr;
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.Y := PC.Y + dg;
+				PC.Z := PC.Z + db;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
-         SC.Y := SC.Y + db2;
-         SC.Z := SC.Z + dg2;
+         SC.Y := SC.Y + dg2;
+         SC.Z := SC.Z + db2;
          EP.U := EP.U + dx1;
          EC.X := EC.X + dr1;
-         EC.Y := EC.Y + db1;
-         EC.Z := EC.Z + dg1;
+         EC.Y := EC.Y + dg1;
+         EC.Z := EC.Z + db1;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
 		end;
@@ -1061,7 +1075,7 @@ begin
 				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 			end
-         else 
+         else
          begin
 				dr := 0;
             dg := 0;
@@ -1071,24 +1085,24 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + dg;
+				PC.Z := PC.Z + db;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx2;
          SC.X := SC.X + dr2;
-         SC.Y := SC.Y + db2;
-         SC.Z := SC.Z + dg2;
+         SC.Y := SC.Y + dg2;
+         SC.Z := SC.Z + db2;
          EP.U := EP.U + dx3;
          EC.X := EC.X + dr3;
-         EC.Y := EC.Y + db3;
-         EC.Z := EC.Z + dg3;
+         EC.Y := EC.Y + dg3;
+         EC.Z := EC.Z + db3;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
 		end;
 	end
-   else 
+   else
    begin
 		while (SP.V <= _P2.V) do
       begin
@@ -1098,8 +1112,8 @@ begin
 				dg := (EC.Y - SC.Y) / (EP.U - SP.U);
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 			end
-         else 
-         begin 
+         else
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
@@ -1109,19 +1123,19 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + dg;
+				PC.Z := PC.Z + db;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx1;
          SC.X := SC.X + dr1;
-         SC.Y := SC.Y + db1;
-         SC.Z := SC.Z + dg1;
+         SC.Y := SC.Y + dg1;
+         SC.Z := SC.Z + db1;
          EP.U := EP.U + dx2;
          EC.X := EC.X + dr2;
-         EC.Y := EC.Y + db2;
-         EC.Z := EC.Z + dg2;
+         EC.Y := EC.Y + dg2;
+         EC.Z := EC.Z + db2;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
 		end;
@@ -1136,7 +1150,7 @@ begin
 				db := (EC.Z - SC.Z) / (EP.U - SP.U);
 			end
          else
-         begin 
+         begin
 				dr := 0;
             dg := 0;
             db := 0;
@@ -1146,19 +1160,19 @@ begin
 			while (PP.U < EP.U) do
          begin
 				PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-				PC.X := PC.X + dr; 
-				PC.Y := PC.Y + db; 
-				PC.Z := PC.Z + dg; 
+				PC.X := PC.X + dr;
+				PC.Y := PC.Y + dg;
+				PC.Z := PC.Z + db;
             PP.U := PP.U + 1;
 			end;
          SP.U := SP.U + dx3;
          SC.X := SC.X + dr3;
-         SC.Y := SC.Y + db3;
-         SC.Z := SC.Z + dg3;
+         SC.Y := SC.Y + dg3;
+         SC.Z := SC.Z + db3;
          EP.U := EP.U + dx2;
          EC.X := EC.X + dr2;
-         EC.Y := EC.Y + db2;
-         EC.Z := EC.Z + dg2;
+         EC.Y := EC.Y + dg2;
+         EC.Z := EC.Z + db2;
          SP.V := SP.V + 1;
          EP.V := EP.V + 1;
 		end;
