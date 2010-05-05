@@ -1919,16 +1919,17 @@ end;
 
 function TMesh.GetLanczos1DACDistance(_Distance : single): single;
 const
-   CONST_A = 15;
+   CONST_A = 3;//15;
    NORMALIZER = 2 * Pi;
    PIDIVA = Pi / CONST_A;
 var
    Distance: single;
 begin
    Result := 0;
-   Distance := _Distance * 1.5; //C_FREQ_NORMALIZER;
+   Distance := _Distance * C_FREQ_NORMALIZER;
    if _Distance <> 0 then
-     Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
+//     Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
+     Result := (1 - ((CONST_A * sin(Pi * Distance) * sin(PIDIVA * Distance)) / Power(Pi * Distance,2)));
    if _Distance < 0 then
      Result := Result * -1;
 end;

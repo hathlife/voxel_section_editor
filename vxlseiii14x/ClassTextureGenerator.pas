@@ -157,7 +157,7 @@ begin
       end
       else
       begin
-         Result := CleanAngle90Radians(-1 * arccos(abs(_Vector.Z) / Distance));
+         Result := C_ANGLE_NONE;//CleanAngle90Radians(-1 * arccos(abs(_Vector.Z) / Distance));
       end;
    end
    else
@@ -1504,7 +1504,24 @@ begin
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Round((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255));
+            if ((_Buffer[x,y].X  / _WeightBuffer[x,y]) < 0) then
+               _Buffer[x,y].X := _Buffer[x,y].X * -1;
+            if (abs(_Buffer[x,y].X  / _WeightBuffer[x,y]) > 1) then
+               _Buffer[x,y].X := _WeightBuffer[x,y];
+            if ((_Buffer[x,y].Y  / _WeightBuffer[x,y]) < 0) then
+               _Buffer[x,y].Y := _Buffer[x,y].Y * -1;
+            if (abs(_Buffer[x,y].Y  / _WeightBuffer[x,y]) > 1) then
+               _Buffer[x,y].Y := _WeightBuffer[x,y];
+            if ((_Buffer[x,y].Z  / _WeightBuffer[x,y]) < 0) then
+               _Buffer[x,y].Z := _Buffer[x,y].Z * -1;
+            if (abs(_Buffer[x,y].Z  / _WeightBuffer[x,y]) > 1) then
+               _Buffer[x,y].Z := _WeightBuffer[x,y];
+            if ((_Buffer[x,y].W  / _WeightBuffer[x,y]) < 0) then
+               _Buffer[x,y].W := _Buffer[x,y].W * -1;
+            if (abs(_Buffer[x,y].W  / _WeightBuffer[x,y]) > 1) then
+               _Buffer[x,y].W := _WeightBuffer[x,y];
+
+            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Trunc((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255));
             _AlphaMap[x,Result.Height - y] := Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255);
          end
          else
