@@ -2550,7 +2550,13 @@ var
    TexGenerator: CTextureGenerator;
    Bitmap : TBitmap;
    AlphaMap : TByteMap;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
    RebuildFaceNormals;
    TexGenerator := CTextureGenerator.Create;
    TexCoords := TexGenerator.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace);
@@ -2569,6 +2575,11 @@ begin
    SetColoursType(C_COLOURS_FROM_TEXTURE);
    SetLength(FaceNormals,0);
    TexGenerator.Free;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Texture atlas extraction for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string);

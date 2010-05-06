@@ -5,9 +5,6 @@ interface
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
    ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs;
 
-const
-   C_SEED_SEPARATOR_SPACE = 0;
-
 type
    TTextureSeed = record
       MinBounds, MaxBounds: TVector2f;
@@ -267,6 +264,7 @@ var
    Seeds: TSeedSet;
    SeedTree : TSeedTree;
    List : CIntegerList;
+   SeedSeparatorSpace: single;
 begin
    // Get the neighbours of each face.
    FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
@@ -332,6 +330,10 @@ begin
    QuickSortSeeds(Low(UOrder),High(UOrder),UOrder,Seeds,CompareU);
    QuickSortSeeds(Low(VOrder),High(VOrder),VOrder,Seeds,CompareV);
 
+   // Let's calculate the required space to separate one seed from others.
+   // Get the smallest dimension of the smallest partitions.
+   SeedSeparatorSpace := 0.03 * max(Seeds[VOrder[Low(VOrder)]].MaxBounds.V - Seeds[VOrder[Low(VOrder)]].MinBounds.V,Seeds[UOrder[Low(UOrder)]].MaxBounds.U - Seeds[UOrder[Low(UOrder)]].MinBounds.U); 
+
    // Then, we start a SeedTree, which we'll use to ajust the bounds from seeds
    // inside bigger seeds.
    SetLength(SeedTree,High(Seeds)+1);
@@ -350,10 +352,10 @@ begin
    begin
       // Select the last two seeds from UOrder and VOrder and check which merge
       // uses less space.
-      UMerge := ( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ) * max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
-      VMerge := ( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ) * max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U));
-      UMax := max(( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ),max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V)));
-      VMax := max(( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ),max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U)));
+      UMerge := ( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + SeedSeparatorSpace + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ) * max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
+      VMerge := ( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + SeedSeparatorSpace + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ) * max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U));
+      UMax := max(( (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + SeedSeparatorSpace + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) ),max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V)));
+      VMax := max(( (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + SeedSeparatorSpace + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) ),max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U)));
       SetLength(Seeds,High(Seeds)+2);
       Seeds[High(Seeds)].MinBounds.U := 0;
       Seeds[High(Seeds)].MinBounds.V := 0;
@@ -364,13 +366,13 @@ begin
         // -----------------------
          // Finish the creation of the new seed.
          Seeds[High(Seeds)].MaxBounds.U := max((Seeds[VOrder[High(VOrder)]].MaxBounds.U - Seeds[VOrder[High(VOrder)]].MinBounds.U),(Seeds[VOrder[High(VOrder)-1]].MaxBounds.U - Seeds[VOrder[High(VOrder)-1]].MinBounds.U));
-         Seeds[High(Seeds)].MaxBounds.V := (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + C_SEED_SEPARATOR_SPACE + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V);
+         Seeds[High(Seeds)].MaxBounds.V := (Seeds[VOrder[High(VOrder)]].MaxBounds.V - Seeds[VOrder[High(VOrder)]].MinBounds.V) + SeedSeparatorSpace + (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V);
          // Insert the last two elements from VOrder at the new seed tree element.
          SeedTree[High(SeedTree)].Left := VOrder[High(VOrder)-1];
          SeedTree[High(SeedTree)].Right := VOrder[High(VOrder)];
          // Now we translate the bounds of the element in the 'right' down, where it
          // belongs, and do it recursively.
-         PushValue := (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) + C_SEED_SEPARATOR_SPACE;
+         PushValue := (Seeds[VOrder[High(VOrder)-1]].MaxBounds.V - Seeds[VOrder[High(VOrder)-1]].MinBounds.V) + SeedSeparatorSpace;
          List.Add(SeedTree[High(SeedTree)].Right);
          while List.GetValue(i) do
          begin
@@ -422,14 +424,14 @@ begin
          // So, we'll merge the last two elements of UOrder into a new sector.
         // -----------------------
          // Finish the creation of the new seed.
-         Seeds[High(Seeds)].MaxBounds.U := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + C_SEED_SEPARATOR_SPACE + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U);
+         Seeds[High(Seeds)].MaxBounds.U := (Seeds[UOrder[High(UOrder)]].MaxBounds.U - Seeds[UOrder[High(UOrder)]].MinBounds.U) + SeedSeparatorSpace + (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U);
          Seeds[High(Seeds)].MaxBounds.V := max((Seeds[UOrder[High(UOrder)]].MaxBounds.V - Seeds[UOrder[High(UOrder)]].MinBounds.V),(Seeds[UOrder[High(UOrder)-1]].MaxBounds.V - Seeds[UOrder[High(UOrder)-1]].MinBounds.V));
          // Insert the last two elements from UOrder at the new seed tree element.
          SeedTree[High(SeedTree)].Left := UOrder[High(UOrder)-1];
          SeedTree[High(SeedTree)].Right := UOrder[High(UOrder)];
          // Now we translate the bounds of the element in the 'right' to the right,
          // where it belongs, and do it recursively.
-         PushValue := (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) + C_SEED_SEPARATOR_SPACE;
+         PushValue := (Seeds[UOrder[High(UOrder)-1]].MaxBounds.U - Seeds[UOrder[High(UOrder)-1]].MinBounds.U) + SeedSeparatorSpace;
          List.Add(SeedTree[High(SeedTree)].Right);
          while List.GetValue(i) do
          begin
