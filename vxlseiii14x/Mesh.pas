@@ -2566,6 +2566,7 @@ begin
    glActiveTextureARB(GL_TEXTURE0_ARB);
    Bitmap := TexGenerator.GenerateDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,1024,AlphaMap);
    Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   Materials[0].Texture[0]^.TextureType := C_TTP_DIFFUSE;
    SetLength(AlphaMap,0,0);
    Bitmap.Free;
    if ShaderBank <> nil then

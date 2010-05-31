@@ -2,7 +2,7 @@ unit OBJFile;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants;
+uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;
@@ -33,6 +33,7 @@ type
          procedure WriteNormals(var _File: System.Text);
          procedure WriteTextures(var _File: System.Text);
          procedure WriteMeshVertexes(var _File: System.Text; const _Vertexes: TAVector3f);
+         procedure WriteMaterial(var _File: System.Text; const _Material: TMeshMaterial; const _GroupName: string);
          procedure WriteMeshNormals(var _File: System.Text; const _Normals: TAVector3f);
          procedure WriteMeshTexture(var _File: System.Text; const _Texture: TAVector2f);
          // Gets
@@ -88,34 +89,43 @@ end;
 // I/O
 procedure TObjFile.SaveToFile(const _Filename: string);
 var
-   F: System.Text;
+   OBJFIle,MTLFile: System.Text;
    MyMesh : PObjMeshUnit;
+   MTLFilename: string;
 begin
-   AssignFile(F,_Filename);
-   Rewrite(F);
-   Writeln(F,'# OBJ Wavefront exported with Voxel Section Editor III.');
-   Writeln(F);
-   WriteVertexes(F);
+   AssignFile(OBJFIle,_Filename);
+   MTLFilename := copy(_Filename,1,Length(_Filename)-4)+'.mtl';
+   AssignFile(MTLFile,MTLFilename);
+   Rewrite(OBJFIle);
+   Writeln(OBJFIle,'# OBJ Wavefront exported with Voxel Section Editor III.');
+   Writeln(OBJFIle);
+   Writeln(OBJFIle,'mtllib ./' + MTLFilename);
+   Writeln(OBJFIle);
+   Rewrite(MTLFIle);
+   Writeln(MTLFIle,'# OBJ Wavefront Material exported with Voxel Section Editor III.');
+   Writeln(MTLFIle);
+   WriteVertexes(OBJFIle);
    UseTexture := CheckTexture;
    if UseTexture then
    begin
-      WriteTextures(F);
+      WriteTextures(OBJFIle);
    end;
-   WriteNormals(F);
+   WriteNormals(OBJFIle);
    MyMesh := Meshes;
    while MyMesh <> nil do
    begin
       if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
       begin
-         WriteGroupVN(F,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+         WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
       end
       else
       begin
-         WriteGroup(F,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+         WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
       end;
       MyMesh := MyMesh^.Next;
    end;
-   CloseFile(F);
+   CloseFile(OBJFIle);
+   CloseFile(MTLFIle);
 end;
 
 
@@ -203,7 +213,7 @@ begin
       Write(_File,'f ');
       for v := 0 to (_VertsPerFace-1) do
       begin
-         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(f + _TextureStart) + '/' + IntToStr(f + _NormalsStart) + ' ');
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _TextureStart) + '/' + IntToStr(f + _NormalsStart) + ' ');
       end;
       Writeln(_File);
    end;
@@ -236,7 +246,7 @@ begin
       Write(_File,'f ');
       for v := 0 to (_VertsPerFace-1) do
       begin
-         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(f + _TextureStart) + '/' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _NormalsStart) + ' ');
+         Write(_File,IntToStr(_Faces[(f*_VertsPerFace) + v] + _VertexStart) + '/' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _TextureStart) + '/' + IntToStr(_Faces[(f*_VertsPerFace) + v] + _NormalsStart) + ' ');
       end;
       Writeln(_File);
    end;
@@ -328,6 +338,49 @@ begin
       Writeln(_File,'vt ' + FloatToStr(_Texture[t].U) + ' ' + FloatToStr(_Texture[t].V));
    end;
    inc(TextureCount,High(_Texture)+1);
+end;
+
+procedure TObjFile.WriteMaterial(var _File: System.Text; const _Material: TMeshMaterial; const _GroupName: string);
+var
+   tex: integer;//PTextureBankItem;
+begin
+   Writeln('newmtl ' + _GroupName);
+   Writeln('   Ka ' + FloatToStr(_Material.Ambient.X) + ' ' + FloatToStr(_Material.Ambient.Y) + ' ' + FloatToStr(_Material.Ambient.Z));
+   Writeln('   Kd ' + FloatToStr(_Material.Diffuse.X) + ' ' + FloatToStr(_Material.Diffuse.Y) + ' ' + FloatToStr(_Material.Diffuse.Z));
+   Writeln('   Ks ' + FloatToStr(_Material.Specular.X) + ' ' + FloatToStr(_Material.Specular.Y) + ' ' + FloatToStr(_Material.Specular.Z));
+   Writeln('   Ns ' + FloatToStr(_Material.Shininess));
+   Writeln('   illum 2');
+   if High(_Material.Texture) >= 0 then
+   begin
+      for tex := Low(_Material.Texture) to High(_Material.Texture) do
+      begin
+         if _Material.Texture[tex] <> nil then
+         begin
+            case _Material.Texture[tex]^.TextureType of
+               C_TTP_DIFFUSE:
+               begin
+               
+               end;
+               C_TTP_NORMAL:
+               begin
+
+               end;
+               C_TTP_SPECULAR:
+               begin
+
+               end;
+               C_TTP_ALPHA:
+               begin
+
+               end;
+               C_TTP_AMBIENT:
+               begin
+
+               end;
+            end;
+         end;
+      end;
+   end;
 end;
 
 // Adds

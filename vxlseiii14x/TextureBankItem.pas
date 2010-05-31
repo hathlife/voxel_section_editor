@@ -2,7 +2,7 @@ unit TextureBankItem;
 
 interface
 
-uses BasicDataTypes, dglOpenGL, BasicFunctions, Windows, Graphics, JPEG,
+uses dglOpenGL, BasicDataTypes, BasicFunctions, Windows, Graphics, JPEG,
    PNGImage, DDS, SysUtils;
 
 type
@@ -31,6 +31,7 @@ type
          procedure UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
          function DownloadTexture(_Level : integer): TBitmap;
       public
+         TextureType : integer;
          // Constructor and Destructor
          constructor Create; overload;
          constructor Create(const _Filename: string); overload;
@@ -661,6 +662,7 @@ end;
 procedure TTextureBankItem.SetNumMipmaps(_Value: integer);
 var
    BaseLevel,MaxLevel: TGLInt;
+   BorderColor: TVector4f;
 begin
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, ID);
@@ -680,6 +682,14 @@ begin
    glTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_BASE_LEVEL,@BaseLevel);
    MaxLevel := MipMapCount - 1;
    glTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,@MaxLevel);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+   BorderColor.X := 0;
+   BorderColor.Y := 0;
+   BorderColor.Z := 0;
+   BorderColor.W := 1;
+   glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, @BorderColor);
+   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
    glDisable(GL_TEXTURE_2D);
 end;
 

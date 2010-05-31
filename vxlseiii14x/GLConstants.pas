@@ -34,6 +34,15 @@ const
    // Frequency normalization
    C_FREQ_NORMALIZER = 4/3;
 
+   // Texture Type
+   C_TTP_DIFFUSE = 0;
+   C_TTP_NORMAL = 1;
+   C_TTP_HEIGHT = 2;
+   C_TTP_SPECULAR = 3;
+   C_TTP_ALPHA = 4;
+   C_TTP_AMBIENT = 5;
+   C_TTP_ENVIRONMENT = 6;
+
    // Angle Detection
    C_ANGLE_NONE = -99999;
 
