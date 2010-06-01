@@ -46,6 +46,10 @@ const
    // Angle Detection
    C_ANGLE_NONE = -99999;
 
+   // Shader Types
+   C_SHD_PHONG = 0;
+   C_SHD_PHONG_1TEX = 1;
+
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (

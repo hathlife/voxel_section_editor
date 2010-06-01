@@ -129,6 +129,7 @@ type
    ABool = array of boolean;
    AFloat = array of single;
    TByteMap = array of array of byte;
+   TInt32Map = array of AInt32;
    TAByteMap = array of TByteMap;
    TABitmap = array of TBitmap;
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);

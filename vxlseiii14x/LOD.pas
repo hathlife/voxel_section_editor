@@ -7,8 +7,10 @@ unit LOD;
 interface
 
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
-   SysUtils;
+   SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem;
 
+{$INCLUDE Global_Conditionals.inc}
+   
 type
    TLOD = class
    private
@@ -85,6 +87,8 @@ type
    end;
 
 implementation
+
+uses GlobalVars;
 
 // Constructors and Destructors
 constructor TLOD.Create;
@@ -476,11 +480,78 @@ end;
 procedure TLOD.GenerateDiffuseTexture;
 var
    i : integer;
+   Seeds: TSeedSet;
+   VertsSeed : TInt32Map;
+   TexGenerator: CTextureGenerator;
+   Buffer: T2DFrameBuffer;
+   WeightBuffer: TWeightBuffer;
+   Bitmap : TBitmap;
+   AlphaMap : TByteMap;
+   DiffuseTexture : PTextureBankItem;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
 begin
+// Here's the old code
+{
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].GenerateDiffuseTexture;
    end;
+}
+// Now, the new code.
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   // First, we'll build the texture atlas.
+   SetLength(VertsSeed,High(Mesh)+1);
+   SetLength(Seeds,0);
+   TexGenerator := CTextureGenerator.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],TexGenerator);
+   end;
+   TexGenerator.MergeSeeds(Seeds);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexGenerator);
+   end;
+   // Now we build the diffuse texture.
+   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,1024);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].PaintMeshDiffuseTexture(Buffer,WeightBuffer,TexGenerator);
+   end;
+   Bitmap := TexGenerator.GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
+   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   // Now we generate a texture that will be used by all meshes.
+   glActiveTextureARB(GL_TEXTURE0_ARB);
+   DiffuseTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   // Now we add this diffuse texture to all meshes.
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].AddTextureToMesh(0,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
+   end;
+   // Free memory.
+   GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
+   for i := Low(AlphaMap) to High(AlphaMap) do
+   begin
+      SetLength(AlphaMap[i],0);
+   end;
+   SetLength(AlphaMap,0);
+   Bitmap.Free;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+   end;
+   SetLength(VertsSeed,0);
+   TexGenerator.Free;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
 end;
 
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);

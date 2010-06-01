@@ -163,6 +163,10 @@ type
 
          // Texture related.
          procedure GenerateDiffuseTexture;
+         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+         procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string);
 
          // Rendering methods
@@ -2581,6 +2585,43 @@ begin
    GlobalVars.SpeedFile.Add('Texture atlas extraction for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
+end;
+
+// This function gets a temporary set of coordinates that might become real texture coordinates later on.
+procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+begin
+   RebuildFaceNormals;
+   TexCoords := _TexGenerator.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed);
+   SetLength(FaceNormals,0);
+end;
+
+// This one really acquires the final texture coordinates values.
+procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+begin
+   _TexGenerator.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
+end;
+
+procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+begin
+   _TexGenerator.PaintMeshDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+end;
+
+procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
+var
+   i : integer;
+begin
+   while High(Materials) < _MaterialID do
+   begin
+      AddMaterial;
+   end;
+   SetLength(Materials[_MaterialID].Texture,High(Materials[_MaterialID].Texture)+2);
+   Materials[_MaterialID].Texture[High(Materials[_MaterialID].Texture)] := GlobalVars.TextureBank.Add(_Texture^.GetID);
+   Materials[_MaterialID].Texture[High(Materials[_MaterialID].Texture)]^.TextureType := _TextureType;
+   if ShaderBank <> nil then
+      Materials[_MaterialID].Shader := ShaderBank^.Get(_ShaderID)
+   else
+      Materials[_MaterialID].Shader := nil;
+   SetColoursType(C_COLOURS_FROM_TEXTURE);
 end;
 
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string);

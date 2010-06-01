@@ -2,11 +2,7 @@ unit ShaderBank;
 
 interface
 
-uses BasicDataTypes, dglOpengl, ShaderBankItem, SysUtils, Dialogs;
-
-const
-   C_SHD_PHONG = 0;
-   C_SHD_PHONG_1TEX = 1;
+uses BasicDataTypes, dglOpengl, ShaderBankItem, SysUtils, Dialogs, GLConstants;
 
 type
    TShaderBank = class
