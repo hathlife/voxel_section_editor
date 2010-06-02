@@ -2627,7 +2627,10 @@ end;
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string);
 var
    mat, tex: integer;
+   List : CIntegerList;
 begin
+   List := CIntegerList.Create;
+   List.UseSmartMemoryManagement(false);
    for mat := Low(Materials) to High(Materials) do
    begin
       for tex := Low(Materials[mat].Texture) to High(Materials[mat].Texture) do
@@ -2639,6 +2642,7 @@ begin
          end;
       end;
    end;
+   List.Free;
 end;
 
 // Sets

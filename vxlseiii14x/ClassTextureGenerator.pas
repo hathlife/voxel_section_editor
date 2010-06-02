@@ -917,7 +917,7 @@ begin
          begin
             if (_FaceSeeds[f] = -1) then
             begin
-               // check if angle is 45'
+               // check if angle is less than 90'
                Angle := GetVectorAngle(_FaceNormals[_StartingFace],_FaceNormals[f]);
                if Angle >= C_MIN_ANGLE then
                begin

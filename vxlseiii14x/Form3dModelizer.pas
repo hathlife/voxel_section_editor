@@ -496,12 +496,12 @@ end;
 
 procedure TFrm3DModelizer.Front1Click(Sender: TObject);
 begin
-   Camera.SetRotation(-90,0,-90);
+   Camera.SetRotation(0,0,0);
 end;
 
 procedure TFrm3DModelizer.Back1Click(Sender: TObject);
 begin
-   Camera.SetRotation(-90,0,90);
+   Camera.SetRotation(0,180,0);
 end;
 
 procedure TFrm3DModelizer.ModelFXLanczosClick(Sender: TObject);
@@ -516,27 +516,27 @@ end;
 
 procedure TFrm3DModelizer.LEft1Click(Sender: TObject);
 begin
-   Camera.SetRotation(-90,0,0);
+   Camera.SetRotation(0,-90,0);
 end;
 
 procedure TFrm3DModelizer.Right1Click(Sender: TObject);
 begin
-   Camera.SetRotation(-90,0,-180);
+   Camera.SetRotation(0,90,0);
 end;
 
 procedure TFrm3DModelizer.Bottom1Click(Sender: TObject);
 begin
-   Camera.SetRotation(180,0,180);
+   Camera.SetRotation(90,-90,180);
 end;
 
 procedure TFrm3DModelizer.op1Click(Sender: TObject);
 begin
-   Camera.SetRotation(0,0,180);
+   Camera.SetRotation(-90,90,180);
 end;
 
 procedure TFrm3DModelizer.Cameo1Click(Sender: TObject);
 begin
-   Camera.SetRotation(287,0,225);
+   Camera.SetRotation(17,315,0);
 end;
 
 procedure TFrm3DModelizer.SpeedButton1MouseUp(Sender: TObject;
@@ -547,17 +547,17 @@ end;
 
 procedure TFrm3DModelizer.Cameo21Click(Sender: TObject);
 begin
-   Camera.SetRotation(287,0,315);
+   Camera.SetRotation(17,45,0);
 end;
 
 procedure TFrm3DModelizer.Cameo31Click(Sender: TObject);
 begin
-   Camera.SetRotation(287,0,255);
+   Camera.SetRotation(17,345,0);
 end;
 
 procedure TFrm3DModelizer.Cameo41Click(Sender: TObject);
 begin
-   Camera.SetRotation(287,0,285);
+   Camera.SetRotation(17,15,0);
 end;
 
 procedure TFrm3DModelizer.ake360DegScreenshots1Click(Sender: TObject);
