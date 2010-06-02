@@ -3230,10 +3230,10 @@ begin
       begin
          //left and right
          case Document.ActiveSection^.View[0].GetViewNameIdx of
-            0: NR[1]:=-1;
-            1: NR[1]:=1;
-            2: NR[0]:=-1;
-            3: NR[0]:=1;
+            0: NR[2]:=-1;
+            1: NR[2]:=1;
+            2: NR[2]:=-1;
+            3: NR[2]:=1;
             4: NR[0]:=-1;
             5: NR[0]:=1;
          end;
@@ -3249,10 +3249,10 @@ begin
       begin
          //up and down
          case Document.ActiveSection^.View[0].GetViewNameIdx of
-            0: NR[2]:=-1;
-            1: NR[2]:=-1;
-            2: NR[2]:=-1;
-            3: NR[2]:=-1;
+            0: NR[1]:=-1;
+            1: NR[1]:=-1;
+            2: NR[0]:=-1;
+            3: NR[0]:=-1;
             4: NR[1]:=-1;
             5: NR[1]:=-1;
          end;
