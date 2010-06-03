@@ -86,7 +86,8 @@ uses
   TextureBankItem in 'TextureBankItem.pas',
   ShaderBank in 'ShaderBank.pas',
   ShaderBankItem in 'ShaderBankItem.pas',
-  FormRepairAssistant in 'FormRepairAssistant.pas' {FrmRepairAssistant};
+  FormRepairAssistant in 'FormRepairAssistant.pas' {FrmRepairAssistant},
+  ClassIntegerSet in 'ClassIntegerSet.pas';
 
 {$R *.res}
 

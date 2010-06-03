@@ -2,7 +2,8 @@ unit OBJFile;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem;
+uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem,
+ClassIntegerSet;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;
@@ -17,6 +18,7 @@ type
          Meshes : PObjMeshUnit;
          VertexCount,TextureCount,NormalsCount: longword;
          UseTexture: boolean;
+         BaseName,ObjectName : string;
          // Constructor
          procedure Initialize;
          procedure Clear;
@@ -92,14 +94,17 @@ var
    OBJFIle,MTLFile: System.Text;
    MyMesh : PObjMeshUnit;
    MTLFilename: string;
+   Material : integer;
 begin
    AssignFile(OBJFIle,_Filename);
-   MTLFilename := copy(_Filename,1,Length(_Filename)-4)+'.mtl';
+   BaseName := copy(_Filename,1,Length(_Filename)-4);
+   ObjectName := ExtractFilename(BaseName);
+   MTLFilename := BaseName+'.mtl';
    AssignFile(MTLFile,MTLFilename);
    Rewrite(OBJFIle);
    Writeln(OBJFIle,'# OBJ Wavefront exported with Voxel Section Editor III.');
    Writeln(OBJFIle);
-   Writeln(OBJFIle,'mtllib ./' + MTLFilename);
+   Writeln(OBJFIle,'mtllib ' + ObjectName + '.mtl');
    Writeln(OBJFIle);
    Rewrite(MTLFIle);
    Writeln(MTLFIle,'# OBJ Wavefront Material exported with Voxel Section Editor III.');
@@ -114,13 +119,17 @@ begin
    MyMesh := Meshes;
    while MyMesh <> nil do
    begin
-      if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
+      for Material := Low(MyMesh^.Mesh^.Materials) to High(MyMesh^.Mesh^.Materials) do
       begin
-         WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
-      end
-      else
-      begin
-         WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+         WriteMaterial(MTLFile,MyMesh^.Mesh^.Materials[Material],MyMesh^.Mesh^.Name);
+         if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
+         begin
+            WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+         end
+         else
+         begin
+            WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+         end;
       end;
       MyMesh := MyMesh^.Next;
    end;
@@ -155,6 +164,7 @@ end;
 procedure TObjFile.WriteGroupVN(var _File: System.Text; const _GroupName: string; _VertexStart, _TextureStart, _NormalsStart,_VertsPerFace: longword; const _Faces: auint32);
 begin
    WriteGroupName(_File,_GroupName);
+   Writeln(_File,'usemtl ' + _GroupName + '_mat');
    // usemtl stuff goes here.
    if UseTexture then
    begin
@@ -343,44 +353,58 @@ end;
 procedure TObjFile.WriteMaterial(var _File: System.Text; const _Material: TMeshMaterial; const _GroupName: string);
 var
    tex: integer;//PTextureBankItem;
+   UsedTextures: CIntegerSet;
 begin
-   Writeln('newmtl ' + _GroupName);
-   Writeln('   Ka ' + FloatToStr(_Material.Ambient.X) + ' ' + FloatToStr(_Material.Ambient.Y) + ' ' + FloatToStr(_Material.Ambient.Z));
-   Writeln('   Kd ' + FloatToStr(_Material.Diffuse.X) + ' ' + FloatToStr(_Material.Diffuse.Y) + ' ' + FloatToStr(_Material.Diffuse.Z));
-   Writeln('   Ks ' + FloatToStr(_Material.Specular.X) + ' ' + FloatToStr(_Material.Specular.Y) + ' ' + FloatToStr(_Material.Specular.Z));
-   Writeln('   Ns ' + FloatToStr(_Material.Shininess));
-   Writeln('   illum 2');
+   UsedTextures := CIntegerSet.Create;
+   Writeln(_File);
+   Writeln(_File,'newmtl ' + _GroupName + '_mat');
+   Writeln(_File,'Ka ' + FloatToStr(_Material.Ambient.X) + ' ' + FloatToStr(_Material.Ambient.Y) + ' ' + FloatToStr(_Material.Ambient.Z));
+   Writeln(_File,'Kd ' + FloatToStr(_Material.Diffuse.X) + ' ' + FloatToStr(_Material.Diffuse.Y) + ' ' + FloatToStr(_Material.Diffuse.Z));
+   Writeln(_File,'Ks ' + FloatToStr(_Material.Specular.X) + ' ' + FloatToStr(_Material.Specular.Y) + ' ' + FloatToStr(_Material.Specular.Z));
+   Writeln(_File,'Ns ' + FloatToStr(_Material.Shininess));
+   Writeln(_File,'d 1.0');
+   Writeln(_File,'Tr 1.0');
+   Writeln(_File,'illum 2');
    if High(_Material.Texture) >= 0 then
    begin
       for tex := Low(_Material.Texture) to High(_Material.Texture) do
       begin
          if _Material.Texture[tex] <> nil then
          begin
-            case _Material.Texture[tex]^.TextureType of
-               C_TTP_DIFFUSE:
-               begin
-               
-               end;
-               C_TTP_NORMAL:
-               begin
-
-               end;
-               C_TTP_SPECULAR:
-               begin
-
-               end;
-               C_TTP_ALPHA:
-               begin
-
-               end;
-               C_TTP_AMBIENT:
-               begin
-
+            if UsedTextures.Add(_Material.Texture[tex]^.GetID) then
+            begin
+               case _Material.Texture[tex]^.TextureType of
+                  C_TTP_DIFFUSE:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '.tga');
+                     Writeln(_File,'map_Kd ' + ObjectName + '.tga');
+                  end;
+                  C_TTP_NORMAL:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_normal.tga');
+                     Writeln(_File,'bump ' + ObjectName + '_normal.tga');
+                  end;
+                  C_TTP_SPECULAR:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_spec.tga');
+                     Writeln(_File,'map_Ks ' + ObjectName + '_spec.tga');
+                  end;
+                  C_TTP_ALPHA:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_alpha.tga');
+                     Writeln(_File,'map_d ' + ObjectName + '_alpha.tga');
+                  end;
+                  C_TTP_AMBIENT:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_amb.tga');
+                     Writeln(_File,'map_Ka ' + ObjectName + '_amb.tga');
+                  end;
                end;
             end;
          end;
       end;
    end;
+   UsedTextures.Free;
 end;
 
 // Adds

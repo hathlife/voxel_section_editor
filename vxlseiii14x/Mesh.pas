@@ -6,7 +6,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
       VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
-      TextureBankItem, ClassTextureGenerator;
+      TextureBankItem, ClassTextureGenerator, ClassIntegerSet;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -2627,22 +2627,24 @@ end;
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string);
 var
    mat, tex: integer;
-   List : CIntegerList;
+   UsedTextures : CIntegerSet;
 begin
-   List := CIntegerList.Create;
-   List.UseSmartMemoryManagement(false);
+   UsedTextures := CIntegerSet.Create;
    for mat := Low(Materials) to High(Materials) do
    begin
       for tex := Low(Materials[mat].Texture) to High(Materials[mat].Texture) do
       begin
          if Materials[mat].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
-            Materials[mat].Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
+            if UsedTextures.Add(Materials[mat].Texture[tex]^.GetID) then
+            begin
+               glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+               Materials[mat].Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
+            end;
          end;
       end;
    end;
-   List.Free;
+   UsedTextures.Free;
 end;
 
 // Sets
