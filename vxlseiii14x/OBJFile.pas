@@ -361,9 +361,12 @@ begin
    Writeln(_File,'Ka ' + FloatToStr(_Material.Ambient.X) + ' ' + FloatToStr(_Material.Ambient.Y) + ' ' + FloatToStr(_Material.Ambient.Z));
    Writeln(_File,'Kd ' + FloatToStr(_Material.Diffuse.X) + ' ' + FloatToStr(_Material.Diffuse.Y) + ' ' + FloatToStr(_Material.Diffuse.Z));
    Writeln(_File,'Ks ' + FloatToStr(_Material.Specular.X) + ' ' + FloatToStr(_Material.Specular.Y) + ' ' + FloatToStr(_Material.Specular.Z));
+   Writeln(_File,'Ke 0.0 0.0 0.0');
    Writeln(_File,'Ns ' + FloatToStr(_Material.Shininess));
+   Writeln(_File,'Ni 1.5');
    Writeln(_File,'d 1.0');
-   Writeln(_File,'Tr 1.0');
+   Writeln(_File,'Tr 0.0');
+   Writeln(_File,'Tf 1.0 1.0 1.0');
    Writeln(_File,'illum 2');
    if High(_Material.Texture) >= 0 then
    begin
@@ -398,6 +401,16 @@ begin
                   begin
                      _Material.Texture[tex]^.SaveTexture(BaseName + '_amb.tga');
                      Writeln(_File,'map_Ka ' + ObjectName + '_amb.tga');
+                  end;
+                  C_TTP_DECAL:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_decal.tga');
+                     Writeln(_File,'decal ' + ObjectName + '_decal.tga');
+                  end;
+                  C_TTP_DISPLACEMENT:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_disp.tga');
+                     Writeln(_File,'disp ' + ObjectName + '_disp.tga');
                   end;
                end;
             end;

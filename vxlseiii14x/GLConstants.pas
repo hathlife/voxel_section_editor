@@ -42,6 +42,8 @@ const
    C_TTP_ALPHA = 4;
    C_TTP_AMBIENT = 5;
    C_TTP_ENVIRONMENT = 6;
+   C_TTP_DECAL = 7;
+   C_TTP_DISPLACEMENT = 8;
 
    // Angle Detection
    C_ANGLE_NONE = -99999;
