@@ -457,20 +457,24 @@ var
    List : CIntegerList;
    v, Value,HitCounter : integer;
    Angle : single;
-   Position: TVector3f;
+   Position,Normal: TVector3f;
    TexCoordinate: TVector2f;
-   VerticesBackup: TAVector3f;
+   VerticesBackup,NormalsBackup: TAVector3f;
    TexturesBackup: TAVector2f;
 begin
    List := CIntegerList.Create;
    List.UseSmartMemoryManagement(true);
    SetLength(VerticesBackup,High(_Vertices)+1);
+   SetLength(NormalsBackup,High(_Vertices)+1);
    SetLength(TexturesBackup,High(_Vertices)+1);
    for v := Low(_Vertices) to High(_Vertices) do
    begin
       VerticesBackup[v].X := _Vertices[v].X;
       VerticesBackup[v].Y := _Vertices[v].Y;
       VerticesBackup[v].Z := _Vertices[v].Z;
+      NormalsBackup[v].X := _Normals[v].X;
+      NormalsBackup[v].Y := _Normals[v].Y;
+      NormalsBackup[v].Z := _Normals[v].Z;
       TexturesBackup[v].U := _TexCoords[v].U;
       TexturesBackup[v].V := _TexCoords[v].V;
    end;
@@ -483,6 +487,9 @@ begin
          Position.X := VerticesBackup[v].X;
          Position.Y := VerticesBackup[v].Y;
          Position.Z := VerticesBackup[v].Z;
+         Normal.X := NormalsBackup[v].X;
+         Normal.Y := NormalsBackup[v].Y;
+         Normal.Z := NormalsBackup[v].Z;
          TexCoordinate.U := TexturesBackup[v].U;
          TexCoordinate.V := TexturesBackup[v].V;
          HitCounter := 1;
@@ -495,12 +502,15 @@ begin
             begin
                if _VertexTransformation[Value] = -1 then
                begin
-                  Angle := (_Normals[v].X * _Normals[Value].X) + (_Normals[v].Y * _Normals[Value].Y) + (_Normals[v].Z * _Normals[Value].Z);
+                  Angle := (NormalsBackup[v].X * NormalsBackup[Value].X) + (NormalsBackup[v].Y * NormalsBackup[Value].Y) + (NormalsBackup[v].Z * NormalsBackup[Value].Z);
                   if Angle >= FAngle then
                   begin
                      Position.X := Position.X + VerticesBackup[Value].X;
                      Position.Y := Position.Y + VerticesBackup[Value].Y;
                      Position.Z := Position.Z + VerticesBackup[Value].Z;
+                     Normal.X := Normal.X + NormalsBackup[Value].X;
+                     Normal.Y := Normal.Y + NormalsBackup[Value].Y;
+                     Normal.Z := Normal.Z + NormalsBackup[Value].Z;
                      TexCoordinate.U := TexCoordinate.U + TexturesBackup[Value].U;
                      TexCoordinate.V := TexCoordinate.V + TexturesBackup[Value].V;
                      inc(HitCounter);
@@ -515,11 +525,15 @@ begin
          _Vertices[v].X := Position.X / HitCounter;
          _Vertices[v].Y := Position.Y / HitCounter;
          _Vertices[v].Z := Position.Z / HitCounter;
+         _Normals[v].X := Normal.X / HitCounter;
+         _Normals[v].Y := Normal.Y / HitCounter;
+         _Normals[v].Z := Normal.Z / HitCounter;
          _TexCoords[v].U := TexCoordinate.U / HitCounter;
          _TexCoords[v].V := TexCoordinate.V / HitCounter;
       end;
    end;
    SetLength(VerticesBackup,0);
+   SetLength(NormalsBackup,0);
    SetLength(TexturesBackup,0);
    List.Free;
 end;

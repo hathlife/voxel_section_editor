@@ -3598,6 +3598,7 @@ begin
    OptimizationTool.Execute(Vertices,Normals,FaceNormals,Colours,TexCoords,Faces,VerticesPerFace,ColoursType,NormalsType,NumFaces);
    OptimizationTool.Free;
 
+   SetLength(FaceNormals,0);
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
