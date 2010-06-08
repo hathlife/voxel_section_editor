@@ -380,6 +380,7 @@ begin
                   C_TTP_DIFFUSE:
                   begin
                      _Material.Texture[tex]^.SaveTexture(BaseName + '.tga');
+                     Writeln(_File,'map_Ka ' + ObjectName + '.tga');
                      Writeln(_File,'map_Kd ' + ObjectName + '.tga');
                   end;
                   C_TTP_NORMAL:
@@ -399,8 +400,9 @@ begin
                   end;
                   C_TTP_AMBIENT:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_amb.tga');
-                     Writeln(_File,'map_Ka ' + ObjectName + '_amb.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '.tga');
+                     Writeln(_File,'map_Ka ' + ObjectName + '.tga');
+                     Writeln(_File,'map_Kd ' + ObjectName + '.tga');
                   end;
                   C_TTP_DECAL:
                   begin

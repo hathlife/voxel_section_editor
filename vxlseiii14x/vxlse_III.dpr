@@ -87,7 +87,9 @@ uses
   ShaderBank in 'ShaderBank.pas',
   ShaderBankItem in 'ShaderBankItem.pas',
   FormRepairAssistant in 'FormRepairAssistant.pas' {FrmRepairAssistant},
-  ClassIntegerSet in 'ClassIntegerSet.pas';
+  ClassIntegerSet in 'ClassIntegerSet.pas',
+  ColladaFile in 'ColladaFile.pas',
+  ClassMeshOptimizationTool in 'ClassMeshOptimizationTool.pas';
 
 {$R *.res}
 

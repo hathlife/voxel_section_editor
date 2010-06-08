@@ -664,7 +664,7 @@ begin
    begin
       for i := Low(Mesh) to High(Mesh) do
       begin
-         Mesh[i].MeshOptimization(_QualityLoss);
+         Mesh[i].MeshOptimization(false,_QualityLoss);
       end;
    end;
 end;
