@@ -17,7 +17,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.96D';
+   APPLICATION_VER = '1.39.96';
    APPLICATION_BETA = true;
 
 type
