@@ -7,7 +7,8 @@ unit LOD;
 interface
 
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
-   SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem;
+   SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
+   ClassIntegerSet, ClassStopWatch;
 
 {$INCLUDE Global_Conditionals.inc}
    
@@ -557,11 +558,14 @@ end;
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);
 var
    i : integer;
+   UsedTextures : CIntegerSet;
 begin
+   UsedTextures := CIntegerSet.Create;
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].ExportTextures(_BaseDir,_Ext);
+      Mesh[i].ExportTextures(_BaseDir,_Ext,UsedTextures);
    end;
+   UsedTextures.Free;
 end;
 
 // Transparency methods
@@ -590,7 +594,7 @@ begin
       if i <> _MeshID then
          Mesh[i].ForceTransparencyLevel(_Level)
       else
-         Mesh[i].ForceTransparencyLevel(0);
+         Mesh[i].ForceTransparencyLevel(C_TRP_OPAQUE);
    end;
 end;
 

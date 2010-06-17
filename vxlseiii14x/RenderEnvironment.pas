@@ -318,7 +318,7 @@ begin
          // Are we screenshoting?
          if AnimFrameMax = 0 then
          begin
-            glColor4f(FontColour.X, FontColour.Y, FontColour.Z,0);
+            glColor4f(FontColour.X, FontColour.Y, FontColour.Z,1);
             // No, we are not screenshoting, so show normal stats.
             glRasterPos2i(1, 2);
             glPrint(PChar('Faces: ' + IntToStr(PolyCount) + ' - Voxels: ' + IntToStr(VoxelCount)));

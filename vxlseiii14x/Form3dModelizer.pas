@@ -984,11 +984,11 @@ procedure TFrm3DModelizer.SetActorModelTransparency;
 begin
    if WholeVoxel1.Checked then
    begin
-      Actor.ForceTransparency(0);
+      Actor.ForceTransparency(C_TRP_OPAQUE);
    end
    else
    begin
-      Actor.ForceTransparencyExceptOnAMesh(0.95,0,FrmMain.Document.ActiveSection^.Header.Number);
+      Actor.ForceTransparencyExceptOnAMesh(C_TRP_GHOST,0,FrmMain.Document.ActiveSection^.Header.Number);
    end;
 end;
 

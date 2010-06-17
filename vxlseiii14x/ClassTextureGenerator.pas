@@ -1830,12 +1830,12 @@ begin
                _Buffer[x,y].W := _WeightBuffer[x,y];
 
             Result.Canvas.Pixels[x,Result.Height - y] := RGB(Trunc((_Buffer[x,y].X / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Y / _WeightBuffer[x,y]) * 255),Trunc((_Buffer[x,y].Z / _WeightBuffer[x,y]) * 255));
-            _AlphaMap[x,Result.Height - y] := Trunc((_Buffer[x,y].W / _WeightBuffer[x,y]) * 255);
+            _AlphaMap[x,Result.Height - y] := Trunc(((_Buffer[x,y].W / _WeightBuffer[x,y])) * 255);
          end
          else
          begin
             Result.Canvas.Pixels[x,Result.Height - y] := 0;//$888888;
-            _AlphaMap[x,Result.Height - y] := $FF;
+            _AlphaMap[x,Result.Height - y] := C_TRP_INVISIBLE;
          end;
       end;
    end;
@@ -1977,7 +1977,7 @@ begin
    begin
       for y := Low(_AlphaMap[x]) to High(_AlphaMap[x]) do
       begin
-         if _AlphaMap[x,y] = $FF then
+         if _AlphaMap[x,y] = C_TRP_INVISIBLE then
          begin
             mini := x - 1;
             if mini < 0 then
@@ -1999,7 +1999,7 @@ begin
             for i := mini to maxi do
                for k := mink to maxk do
                begin
-                  if _AlphaMap[i,k] <> $FF then
+                  if _AlphaMap[i,k] <> C_TRP_INVISIBLE then
                   begin
                      ri := GetRValue(_Bitmap.Canvas.Pixels[i,k]);
                      gi := GetGValue(_Bitmap.Canvas.Pixels[i,k]);

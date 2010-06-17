@@ -39,12 +39,14 @@ begin
    SetLength(Items,0);
    ShaderDirectory := IncludeTrailingPathDelimiter(_ShaderDirectory);
    // Check if GLSL is supported by the hardware (requires OpenGL 2.0)
+{
    if (gl_ARB_vertex_shader) and ((gl_ARB_fragment_shader) or (GL_ATI_fragment_shader)) then
    begin
       // Add Phong Shaders.
       Load('phong');
       Load('phong_1tex');
    end;
+}
 end;
 
 destructor TShaderBank.Destroy;

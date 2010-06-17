@@ -571,7 +571,7 @@ begin
          c := 18;
          for i := 0 to (Width * Height)-1 do
          begin
-            buffer[c+3] := 255 - buffer[c+3]; // invert alpha. 
+//            buffer[c+3] := 255 - buffer[c+3]; // invert alpha. 
             BlockWrite(f, buffer[c+2], sizeof(byte) , temp);
             BlockWrite(f, buffer[c+1], sizeof(byte) , temp);
             BlockWrite(f, buffer[c], sizeof(byte) , temp);

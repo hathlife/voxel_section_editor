@@ -168,7 +168,7 @@ type
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
-         procedure ExportTextures(const _BaseDir, _Ext : string);
+         procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -253,7 +253,7 @@ begin
    Scale := SetVector(1,1,1);
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
-   TransparencyLevel := 0;
+   TransparencyLevel := C_TRP_OPAQUE;
    AddMaterial;
    Opened := false;
    IsSelected := false;
@@ -277,7 +277,7 @@ begin
    ColoursType := C_COLOURS_PER_FACE;
    ColourGenStructure := C_COLOURS_PER_FACE;
    ID := _ID;
-   TransparencyLevel := 0;
+   TransparencyLevel := C_TRP_OPAQUE;
    NumVoxels := 0;
    c := 1;
    while (c <= 16) and (_Voxel.Header.Name[c] <> #0) do
@@ -2625,19 +2625,17 @@ begin
    SetColoursType(C_COLOURS_FROM_TEXTURE);
 end;
 
-procedure TMesh.ExportTextures(const _BaseDir, _Ext : string);
+procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
 var
    mat, tex: integer;
-   UsedTextures : CIntegerSet;
 begin
-   UsedTextures := CIntegerSet.Create;
    for mat := Low(Materials) to High(Materials) do
    begin
       for tex := Low(Materials[mat].Texture) to High(Materials[mat].Texture) do
       begin
          if Materials[mat].Texture[tex] <> nil then
          begin
-            if UsedTextures.Add(Materials[mat].Texture[tex]^.GetID) then
+            if _UsedTextures.Add(Materials[mat].Texture[tex]^.GetID) then
             begin
                glActiveTextureARB(GL_TEXTURE0_ARB + tex);
                Materials[mat].Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
@@ -2645,7 +2643,6 @@ begin
          end;
       end;
    end;
-   UsedTextures.Free;
 end;
 
 // Sets
@@ -2762,34 +2759,17 @@ begin
       begin
          List := glGenLists(1);
          glNewList(List, GL_COMPILE);
-         if TransparencyLevel <> 0 then
+         glEnable(GL_BLEND);
+         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+         CurrentPass := Low(Materials);
+         while CurrentPass <= High(Materials) do
          begin
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-            CurrentPass := Low(Materials);
-            while CurrentPass <= High(Materials) do
-            begin
-               ApplyMaterialColour;
-               RenderingProcedure();
-               StopMaterialColour;
-               inc(CurrentPass);
-            end;
-            glDisable(GL_BLEND);
-         end
-         else
-         begin
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-            CurrentPass := Low(Materials);
-            while CurrentPass <= High(Materials) do
-            begin
-               ApplyMaterialColour;
-               RenderingProcedure();
-               StopMaterialColour;
-               inc(CurrentPass);
-            end;
-            glDisable(GL_BLEND);
+            ApplyMaterialColour;
+            RenderingProcedure();
+            StopMaterialColour;
+            inc(CurrentPass);
          end;
+         glDisable(GL_BLEND);
          glEndList;
       end;
       // Move accordingly to the bounding box position.
@@ -2826,7 +2806,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor4f(0.5,0.5,0.5,0);
+   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
    glNormal3f(0,0,0);
    i := 0;
    glBegin(FaceType);
@@ -2849,7 +2829,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor4f(0.5,0.5,0.5,0);
+   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
    i := 0;
    glBegin(FaceType);
       while i < NumFaces do
@@ -2872,7 +2852,7 @@ var
    i,f,v : longword;
 begin
    f := 0;
-   glColor4f(0.5,0.5,0.5,0);
+   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
    i := 0;
    glBegin(FaceType);
       while i < NumFaces do

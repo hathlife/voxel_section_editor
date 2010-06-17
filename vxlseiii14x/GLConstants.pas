@@ -52,6 +52,11 @@ const
    C_SHD_PHONG = 0;
    C_SHD_PHONG_1TEX = 1;
 
+   // Transparency
+   C_TRP_OPAQUE = 1;
+   C_TRP_GHOST = 0.05;
+   C_TRP_INVISIBLE = 0;
+
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (
