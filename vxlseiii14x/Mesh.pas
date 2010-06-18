@@ -7,22 +7,10 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
-      ClassMeshOptimizationTool;
+      ClassMeshOptimizationTool, Material;
 
 {$INCLUDE Global_Conditionals.inc}
 type
-   TMeshMaterial = record
-      Texture: array of PTextureBankItem;
-      Ambient: TVector4f;
-      Diffuse: TVector4f;
-      Specular: TVector4f;
-      Shininess: Single;
-      Emission: TVector4f;
-      Shader: PShaderBankItem;
-   end;
-   PMeshMaterial = ^TMeshMaterial;
-   TAMeshMaterial = array of TMeshMaterial;
-
    TRenderProc = procedure of object;
    TDistanceFunc = function (_Distance: single): single of object;
    TMesh = class
@@ -78,8 +66,6 @@ type
          procedure AddMaterial;
          procedure DeleteMaterial(_ID: integer);
          procedure ClearMaterials;
-         procedure ApplyMaterialColour;
-         procedure StopMaterialColour;
          // Misc
          procedure OverrideTransparency;
          function FindMeshCenter: TVector3f;
@@ -2550,6 +2536,7 @@ begin
 end;
 
 // Texture related.
+// -- DEPRECATED (still works, but avoid using it). Check LOD.pas instead.
 procedure TMesh.GenerateDiffuseTexture;
 var
    TexGenerator: CTextureGenerator;
@@ -2615,9 +2602,7 @@ begin
    begin
       AddMaterial;
    end;
-   SetLength(Materials[_MaterialID].Texture,High(Materials[_MaterialID].Texture)+2);
-   Materials[_MaterialID].Texture[High(Materials[_MaterialID].Texture)] := GlobalVars.TextureBank.Add(_Texture^.GetID);
-   Materials[_MaterialID].Texture[High(Materials[_MaterialID].Texture)]^.TextureType := _TextureType;
+   Materials[_MaterialID].AddTexture(_TextureType,_Texture);
    if ShaderBank <> nil then
       Materials[_MaterialID].Shader := ShaderBank^.Get(_ShaderID)
    else
@@ -2631,17 +2616,7 @@ var
 begin
    for mat := Low(Materials) to High(Materials) do
    begin
-      for tex := Low(Materials[mat].Texture) to High(Materials[mat].Texture) do
-      begin
-         if Materials[mat].Texture[tex] <> nil then
-         begin
-            if _UsedTextures.Add(Materials[mat].Texture[tex]^.GetID) then
-            begin
-               glActiveTextureARB(GL_TEXTURE0_ARB + tex);
-               Materials[mat].Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
-            end;
-         end;
-      end;
+      Materials[mat].ExportTextures(_BaseDir,Name + '_' + IntToStr(ID) + '_' + IntToStr(mat),_Ext,_UsedTextures);
    end;
 end;
 
@@ -2759,45 +2734,19 @@ begin
       begin
          List := glGenLists(1);
          glNewList(List, GL_COMPILE);
-         glEnable(GL_BLEND);
-         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
          CurrentPass := Low(Materials);
          while CurrentPass <= High(Materials) do
          begin
-            ApplyMaterialColour;
+            Materials[CurrentPass].Enable;
             RenderingProcedure();
-            StopMaterialColour;
+            Materials[CurrentPass].Disable;
             inc(CurrentPass);
          end;
-         glDisable(GL_BLEND);
          glEndList;
       end;
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
       glCallList(List);
-   end;
-end;
-
-procedure TMesh.ApplyMaterialColour;
-begin
-   glEnable(GL_COLOR_MATERIAL);
-   glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
-   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@(Materials[CurrentPass].Ambient));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,@(Materials[CurrentPass].Diffuse));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@(Materials[CurrentPass].Specular));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,@(Materials[CurrentPass].Emission));
-   glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Materials[CurrentPass].Shininess);
-   if Materials[CurrentPass].Shader <> nil then
-   begin
-      Materials[CurrentPass].Shader^.UseProgram;
-   end;
-end;
-
-procedure TMesh.StopMaterialColour;
-begin
-   if Materials[CurrentPass].Shader <> nil then
-   begin
-      Materials[CurrentPass].Shader^.DeactivateProgram;
    end;
 end;
 
@@ -3261,52 +3210,22 @@ end;
 
 // Materials
 procedure TMesh.AddMaterial;
-var
-   i : integer;
 begin
    SetLength(Materials,High(Materials)+2);
-   i := High(Materials);
-   SetLength(Materials[i].Texture,0);
-   Materials[i].Ambient := SetVector4f(0.2,0.2,0.2,1.0);
-   Materials[i].Diffuse := SetVector4f(0.8,0.8,0.8,1.0);
-   Materials[i].Shininess := 0;
-   Materials[i].Specular := SetVector4f(0,0,0,1);
-   Materials[i].Emission := SetVector4f(0,0,0,1);
-   if ShaderBank <> nil then
-      Materials[i].Shader := ShaderBank^.Get(C_SHD_PHONG)
-   else
-      Materials[i].Shader := nil;
+   Materials[High(Materials)] := TMeshMaterial.Create(ShaderBank);
 end;
 
 procedure TMesh.DeleteMaterial(_ID: integer);
 var
    i,j : integer;
 begin
-   for i := Low(Materials[_ID].Texture) to High(Materials[_ID].Texture) do
-   begin
-      if Materials[i].Texture <> nil then
-      begin
-         GlobalVars.TextureBank.Delete(Materials[_ID].Texture[i]^.GetID);
-         Materials[_ID].Texture[i] := nil;
-      end;
-   end;
-
    i := _ID;
    while i < High(Materials) do
    begin
-      SetLength(Materials[i].Texture,High(Materials[i+1].Texture)+1);
-      for j := Low(Materials[i].Texture) to High(Materials[i].Texture) do
-      begin
-         Materials[i].Texture[j] := Materials[i+1].Texture[j];
-      end;
-      Materials[i].Ambient := CopyVector4f(Materials[i+1].Ambient);
-      Materials[i].Diffuse := CopyVector4f(Materials[i+1].Diffuse);
-      Materials[i].Shininess := Materials[i+1].Shininess;
-      Materials[i].Specular := CopyVector4f(Materials[i+1].Specular);
-      Materials[i].Emission := CopyVector4f(Materials[i+1].Emission);
-      Materials[i].Shader := Materials[i+1].Shader;
+      Materials[i].Assign(Materials[i+1]);
       inc(i);
    end;
+   Materials[High(Materials)].Free;
    SetLength(Materials,High(Materials));
 end;
 
@@ -3316,13 +3235,7 @@ var
 begin
    for i := Low(Materials) to High(Materials) do
    begin
-      for j := Low(Materials[i].Texture) to High(Materials[i].Texture) do
-      begin
-         if Materials[i].Texture[j] <> nil then
-         begin
-            GlobalVars.TextureBank.Delete(Materials[i].Texture[j]^.GetID);
-         end;
-      end;
+      Materials[i].Free;
    end;
    SetLength(Materials,0);
 end;

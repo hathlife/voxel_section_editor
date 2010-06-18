@@ -89,7 +89,8 @@ uses
   FormRepairAssistant in 'FormRepairAssistant.pas' {FrmRepairAssistant},
   ClassIntegerSet in 'ClassIntegerSet.pas',
   ColladaFile in 'ColladaFile.pas',
-  ClassMeshOptimizationTool in 'ClassMeshOptimizationTool.pas';
+  ClassMeshOptimizationTool in 'ClassMeshOptimizationTool.pas',
+  Material in 'Material.pas';
 
 {$R *.res}
 

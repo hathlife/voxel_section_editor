@@ -3,7 +3,7 @@ unit OBJFile;
 interface
 
 uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem,
-ClassIntegerSet;
+ClassIntegerSet, Material;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;
