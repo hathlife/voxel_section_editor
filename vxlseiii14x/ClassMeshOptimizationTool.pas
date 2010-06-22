@@ -361,22 +361,17 @@ begin
          Value := FaceNeighbors.GetNeighborFromID(v);
          while Value <> -1 do
          begin
-            if BorderVertexes[v] = BorderVertexes[Value] then
+            Angle := (_Normals[v].X * _FaceNormals[Value].X) + (_Normals[v].Y * _FaceNormals[Value].Y) + (_Normals[v].Z * _FaceNormals[Value].Z);
+            if Angle >= MaxAngle then
             begin
-               Angle := (_Normals[v].X * _FaceNormals[Value].X) + (_Normals[v].Y * _FaceNormals[Value].Y) + (_Normals[v].Z * _FaceNormals[Value].Z);
-               if Angle >= MaxAngle then
-               begin
-                  _VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
-                  Value := FaceNeighbors.GetNextNeighbor;
-               end
-               else
-               begin
-                  _VertexTransformation[v] := v; // It won't be removed.
-                  Value := -1;
-               end;
+               _VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
+               Value := FaceNeighbors.GetNextNeighbor;
             end
             else
-               Value := VertexNeighbors.GetNextNeighbor;
+            begin
+               _VertexTransformation[v] := v; // It won't be removed.
+               Value := -1;
+            end;
          end;
       end;
    end;
@@ -402,7 +397,7 @@ begin
          Angle := (_Normals[v].X * _FaceNormals[Value].X) + (_Normals[v].Y * _FaceNormals[Value].Y) + (_Normals[v].Z * _FaceNormals[Value].Z);
          if Angle >= MaxAngle then
          begin
-            _VertexTransformation[v] := -1; // Mark for removal. Note that it can be canceled if the colour is different.
+            _VertexTransformation[v] := -1; // Mark for removal.
             Value := FaceNeighbors.GetNextNeighbor;
          end
          else
@@ -436,7 +431,9 @@ begin
          List.Add(v);
          _VertexTransformation[v] := v;
          if BorderVertexes[v] then
-            MaxAngle := FAngleBorder
+         begin
+            MaxAngle := FAngleBorder;
+         end
          else
             MaxAngle := FAngle;
          while List.GetValue(Value) do
@@ -472,8 +469,8 @@ end;
 procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32);
 var
    List : CIntegerList;
-   v, Value,HitCounter : integer;
-   Angle, MaxAngle : single;
+   v, Value,HitCounter,Vertex : integer;
+   Angle, MaxAngle, Size : single;
    Position,Normal: TVector3f;
    TexCoordinate: TVector2f;
    VerticesBackup,NormalsBackup: TAVector3f;
@@ -513,7 +510,9 @@ begin
          List.Add(v);
          _VertexTransformation[v] := v;
          if BorderVertexes[v] then
-            MaxAngle := FAngleBorder
+         begin
+            MaxAngle := FAngleBorder;
+         end
          else
             MaxAngle := FAngle;
          while List.GetValue(Value) do

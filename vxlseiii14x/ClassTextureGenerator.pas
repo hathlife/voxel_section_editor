@@ -238,6 +238,8 @@ begin
 end;
 
 
+
+
 // Executes
 function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
 var
@@ -1972,12 +1974,21 @@ end;
 procedure CTextureGenerator.FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
 var
    x,y,i,k,mini,maxi,mink,maxk,r,g,b,ri,gi,bi,sum : integer;
+   AlphaMapBackup: TByteMap;
 begin
+   SetLength(AlphaMapBackup,High(_AlphaMap)+1,High(_AlphaMap)+1);
    for x := Low(_AlphaMap) to High(_AlphaMap) do
    begin
       for y := Low(_AlphaMap[x]) to High(_AlphaMap[x]) do
       begin
-         if _AlphaMap[x,y] = C_TRP_INVISIBLE then
+         AlphaMapBackup[x,y] := _AlphaMap[x,y];
+      end;
+   end;
+   for x := Low(_AlphaMap) to High(_AlphaMap) do
+   begin
+      for y := Low(_AlphaMap[x]) to High(_AlphaMap[x]) do
+      begin
+         if AlphaMapBackup[x,y] = C_TRP_RGB_INVISIBLE then
          begin
             mini := x - 1;
             if mini < 0 then
@@ -1999,7 +2010,7 @@ begin
             for i := mini to maxi do
                for k := mink to maxk do
                begin
-                  if _AlphaMap[i,k] <> C_TRP_INVISIBLE then
+                  if AlphaMapBackup[i,k] <> C_TRP_RGB_INVISIBLE then
                   begin
                      ri := GetRValue(_Bitmap.Canvas.Pixels[i,k]);
                      gi := GetGValue(_Bitmap.Canvas.Pixels[i,k]);
@@ -2010,11 +2021,63 @@ begin
                      inc(sum);
                   end;
                end;
+            if (r + g + b) > 0 then
+               _AlphaMap[x,y] := C_TRP_RGB_OPAQUE;
             if sum > 0 then
                _Bitmap.Canvas.Pixels[x,y] := RGB(r div sum, g div sum, b div sum);
          end;
       end;
    end;
+{
+   // Now, the double fix:
+   for x := Low(_AlphaMap) to High(_AlphaMap) do
+   begin
+      for y := Low(_AlphaMap[x]) to High(_AlphaMap[x]) do
+      begin
+         if (_AlphaMap[x,y] = C_TRP_INVISIBLE) then
+         begin
+            mini := x - 1;
+            if mini < 0 then
+               mini := 0;
+            maxi := x + 1;
+            if maxi > High(_AlphaMap) then
+               maxi := High(_AlphaMap);
+            mink := y - 1;
+            if mink < 0 then
+               mink := 0;
+            maxk := y + 1;
+            if maxk > High(_AlphaMap) then
+               maxk := High(_AlphaMap);
+
+            r := 0;
+            g := 0;
+            b := 0;
+            sum := 0;
+            for i := mini to maxi do
+               for k := mink to maxk do
+               begin
+                  ri := GetRValue(_Bitmap.Canvas.Pixels[i,k]);
+                  gi := GetGValue(_Bitmap.Canvas.Pixels[i,k]);
+                  bi := GetBValue(_Bitmap.Canvas.Pixels[i,k]);
+                  r := r + ri;
+                  g := g + gi;
+                  b := b + bi;
+                  inc(sum);
+               end;
+            if (r + g + b) > 0 then
+               _AlphaMap[x,y] := $FF;
+            if sum > 0 then
+               _Bitmap.Canvas.Pixels[x,y] := RGB(r div sum, g div sum, b div sum);
+         end;
+      end;
+   end;
+}
+   // Free memory
+   for i := Low(_AlphaMap) to High(_AlphaMap) do
+   begin
+      SetLength(AlphaMapBackup[i],0);
+   end;
+   SetLength(AlphaMapBackup,0);
 end;
 
 

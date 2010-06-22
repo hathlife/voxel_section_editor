@@ -26,6 +26,7 @@ type
          function GetValueTraditional (var _Value : integer): boolean;
          function GetValueWithDeletion (var _Value : integer): boolean;
          // Misc
+         procedure GoToFirstElement;
          procedure GoToNextElement;
    end;
 
@@ -109,6 +110,7 @@ begin
       Active := Active^.Next;
       dispose(Garbage);
    end;
+   Reset;
 end;
 
 // Sets
@@ -159,6 +161,11 @@ begin
    begin
       Active := Active^.Next;
    end
+end;
+
+procedure CIntegerList.GoToFirstElement;
+begin
+   Active := Start;
 end;
 
 end.

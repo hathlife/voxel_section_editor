@@ -56,6 +56,9 @@ const
    C_TRP_OPAQUE = 1;
    C_TRP_GHOST = 0.05;
    C_TRP_INVISIBLE = 0;
+   C_TRP_RGB_OPAQUE = 255;
+   C_TRP_RGB_GHOST = 2;
+   C_TRP_RGB_INVISIBLE = 0;
 
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
