@@ -2,7 +2,7 @@ unit BZK2_File;
 
 interface
 
-uses  Windows, SysUtils, Voxel, BasicDataTypes, Voxel_Engine, BZK2_Sector,
+uses  Windows, SysUtils, Voxel, BasicDataTypes, BasicFunctions, BZK2_Sector,
       BZK2_Camera, BZK2_Actor, Palette, Normals;
 
 type

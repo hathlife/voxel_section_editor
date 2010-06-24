@@ -2,7 +2,7 @@ unit BZK2_Sector;
 
 interface
 
-uses SysUtils,BasicDataTypes, Voxel_Engine;
+uses SysUtils,BasicDataTypes, BasicFunctions;
 
 type
    TBZKFacesDirection = (bfdNorth,bfdEast,bfdSouth,bfdWest,bfdFloor,bfdCeiling);

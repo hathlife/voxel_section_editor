@@ -8,7 +8,7 @@ unit ThreeDMap;
 interface
 
 uses BasicDataTypes, Class3DPointList, Normals, BasicConstants, Voxel_Engine,
-   Math, Dialogs, SysUtils;
+   Math, Dialogs, SysUtils, BasicFunctions;
 
 type
    T3DMap = class

@@ -18,7 +18,7 @@ unit Voxel_Tools;
 interface
 
 Uses BasicDataTypes,Voxel,normals,Voxel_Engine,math,math3d,Dialogs,Sysutils,
-   VoxelMap;
+   VoxelMap, BasicFunctions;
 
 type
    TApplyNormalsResult = record

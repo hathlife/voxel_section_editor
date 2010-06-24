@@ -114,10 +114,6 @@ Procedure SmoothVXLNormals(var Vxl : TVoxelSection);
 
 procedure VXLSmoothBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
 
-function SetVector(x, y, z : single) : TVector3f;
-function SetVectorI(x, y, z : integer) : TVector3i;
-function CopyVector(const _vector : TVector3f): TVector3f;
-
 Procedure SetVoxelFileDefaults;
 Function IsVoxelValid : Boolean;
 Function HasNormalsBug : Boolean;
@@ -126,27 +122,6 @@ Procedure SetNormals(Normal : Integer);
 implementation
 
 uses Voxel_Tools,undo_engine, Controls, FormMain, GlobalVars;
-
-function SetVector(x, y, z : single) : TVector3f;
-begin
-   result.x := x;
-   result.y := y;
-   result.z := z;
-end;
-
-function SetVectorI(x, y, z : integer) : TVector3i;
-begin
-   result.x := x;
-   result.y := y;
-   result.z := z;
-end;
-
-function CopyVector(const _vector : TVector3f): TVector3f;
-begin
-   result.x := _vector.x;
-   result.y := _vector.y;
-   result.z := _vector.z;
-end;
 
 Function HasNormalsBug : Boolean;
 var

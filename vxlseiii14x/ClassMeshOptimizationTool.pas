@@ -3,7 +3,7 @@ unit ClassMeshOptimizationTool;
 interface
 
 uses BasicDataTypes, ClassNeighborDetector, ClassStopWatch, ClassIntegerList,
-GLConstants;
+GLConstants, Dialogs, SysUtils, BasicFunctions;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -17,7 +17,7 @@ type
          FAngleBorder : single;
          // Removable Vertexes Detection
          procedure DetectUselessVertexes(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _Colours : TAVector4f; var _VertexTransformation: aint32);
-         procedure DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _VertexTransformation: aint32);
+         procedure DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
          // Merge Vertexes
          procedure MergeVertexes(var _Vertices, _Normals: TAVector3f; var _VertexTransformation: aint32);
          procedure MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32);
@@ -40,7 +40,7 @@ begin
    SetLength(BorderVertexes,0);
    FIgnoreColours := _IgnoreColors;
    FAngle := _Angle;
-   FAngleBorder := 1;
+   FAngleBorder := _Angle;
 end;
 
 destructor TMeshOptimizationTool.Destroy;
@@ -53,12 +53,15 @@ end;
 
 procedure TMeshOptimizationTool.Execute(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _Colours : TAVector4f; var _TexCoords : TAVector2f; var _Faces : auint32; _VerticesPerFace,_ColoursType,_NormalsType : integer; var _NumFaces: longword);
 var
-   VertexTransformation,FaceTransformation : aint32;
+   VertexTransformation : aint32;
    v, Value,HitCounter : integer;
    VertexBackup,NormalsBackup: TAVector3f;
    ColoursBackup: TAVector4f;
    TextureBackup: TAVector2f;
    FacesBackup: aint32;
+   {$ifdef OPTIMIZATION_INFO}
+   OriginalVertexCount,RemovableVertexCount, BorderVertexCount, BorderRemovable: integer;
+   {$endif}
 begin
    VertexNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
    FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
@@ -79,12 +82,34 @@ begin
    // Step 1: check vertexes that can be removed.
    if FIgnoreColours then
    begin
-      DetectUselessVertexesIgnoringColours(_Vertices,_Normals,_FaceNormals,VertexTransformation);
+      DetectUselessVertexesIgnoringColours(_Vertices,_Normals,_FaceNormals,_TexCoords,VertexTransformation);
    end
    else
    begin
       DetectUselessVertexes(_Vertices,_Normals,_FaceNormals,_Colours,VertexTransformation);
    end;
+   {$ifdef OPTIMIZATION_INFO}
+   RemovableVertexCount := 0;
+   BorderVertexCount := 0;
+   BorderRemovable := 0;
+   for v := Low(_Vertices) to High(_Vertices) do
+   begin
+      if BorderVertexes[v] then
+      begin
+         inc(BorderVertexCount);
+      end;
+      if VertexTransformation[v] = -1 then
+      begin
+         inc(RemovableVertexCount);
+         if BorderVertexes[v] then
+         begin
+            inc(BorderRemovable);
+         end;
+      end;
+   end;
+   OriginalVertexCount := High(_Vertices)+1;
+   ShowMessage('This mesh originally has ' + IntToStr(OriginalVertexCount) + ' vertexes and ' + IntToStr(High(_FaceNormals)+1) + ' faces. From the vertexes, ' + IntToStr(BorderVertexCount) + ' of them are at the border of partitions and ' + IntToStr(High(_Vertices)+1-BorderVertexCount) + ' are not. We have found ' + IntToStr(RemovableVertexCount) + ' that could be potentially eliminated. From them, ' + IntToStr(BorderRemovable) + ' are border vertexes while ' + IntToStr(RemovableVertexCount - BorderRemovable) + ' are not.');
+   {$endif}
    // Step 2: Find edges from potentialy removed vertexes.
    if High(_TexCoords) < 0 then
    begin
@@ -315,6 +340,9 @@ begin
       end;
       inc(v,_VerticesPerFace);
    end;
+   {$ifdef OPTIMIZATION_INFO}
+   ShowMessage('Efficience Analysis: Faces: ' + IntToStr(HitCounter div _VerticesPerFace) + '/' + IntToStr(_NumFaces) + ' (' + FloatToStr(((HitCounter div _VerticesPerFace) * 100) / _NumFaces) + '%) and Vertexes: ' + IntToStr(High(_Vertices)+1) + '/' + IntToStr(OriginalVertexCount-RemovableVertexCount) +  ' (' + FloatToStr(((High(_Vertices)+1)*100) / (OriginalVertexCount - RemovableVertexCount)) + '%)');
+   {$endif}
    _NumFaces := HitCounter div _VerticesPerFace;
    SetLength(_Faces,HitCounter);
    SetLength(FacesBackup,0);
@@ -377,33 +405,65 @@ begin
    end;
 end;
 
-procedure TMeshOptimizationTool.DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _VertexTransformation: aint32);
+procedure TMeshOptimizationTool.DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
 var
-   v, Value : integer;
-   Angle,MaxAngle : single;
+   v, Value,BorderNeighborCount : integer;
+   Angle,MaxAngle,Size : single;
+   Direction: TVector2f;
 begin
    for v := Low(_Vertices) to High(_Vertices) do
    begin
       _VertexTransformation[v] := v;
       // Here we check if every neighbor has the same colour and normal is
       // close to the vertex (v) being evaluated.
+{
       if BorderVertexes[v] then
          MaxAngle := FAngleBorder
       else
          MaxAngle := FAngle;
-      Value := FaceNeighbors.GetNeighborFromID(v);
-      while Value <> -1 do
+}
+      if BorderVertexes[v] then
       begin
-         Angle := (_Normals[v].X * _FaceNormals[Value].X) + (_Normals[v].Y * _FaceNormals[Value].Y) + (_Normals[v].Z * _FaceNormals[Value].Z);
-         if Angle >= MaxAngle then
+         BorderNeighborCount := 0;
+         Direction.U := 0;
+         Direction.V := 0;
+         Value := VertexNeighbors.GetNeighborFromID(v);
+         while Value <> -1 do
+         begin
+            if BorderVertexes[Value] then
+            begin
+               Size := sqrt(((_Textures[v].U - _Textures[Value].U) * (_Textures[v].U - _Textures[Value].U)) + ((_Textures[v].V - _Textures[Value].V) * (_Textures[v].V - _Textures[Value].V)));
+               Direction.U := Direction.U + ((_Textures[v].U - _Textures[Value].U) / Size);
+               Direction.V := Direction.V + ((_Textures[v].V - _Textures[Value].V) / Size);
+               inc(BorderNeighborCount);
+            end;
+            Value := VertexNeighbors.GetNextNeighbor;
+         end;
+         if (BorderNeighborCount = 2) and (Direction.U = 0) and (Direction.V = 0) then
          begin
             _VertexTransformation[v] := -1; // Mark for removal.
-            Value := FaceNeighbors.GetNextNeighbor;
          end
          else
          begin
             _VertexTransformation[v] := v; // It won't be removed.
-            Value := -1;
+         end;
+      end
+      else
+      begin
+         Value := FaceNeighbors.GetNeighborFromID(v);
+         while Value <> -1 do
+         begin
+            Angle := (_Normals[v].X * _FaceNormals[Value].X) + (_Normals[v].Y * _FaceNormals[Value].Y) + (_Normals[v].Z * _FaceNormals[Value].Z);
+            if Angle >= FAngle then
+            begin
+               _VertexTransformation[v] := -1; // Mark for removal.
+               Value := FaceNeighbors.GetNextNeighbor;
+            end
+            else
+            begin
+               _VertexTransformation[v] := v; // It won't be removed.
+               Value := -1;
+            end;
          end;
       end;
    end;

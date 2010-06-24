@@ -5,7 +5,7 @@ unit normals;
 
 interface
 
-uses BasicDataTypes, NormalsConstants;
+uses BasicDataTypes, NormalsConstants, BasicFunctions;
 
 const
    C_RES_INFINITE = -1;

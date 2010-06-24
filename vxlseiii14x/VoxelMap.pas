@@ -7,7 +7,8 @@ unit VoxelMap;
 
 interface
 
-uses BasicDataTypes, Class3DPointList, Voxel, Voxel_Engine, Normals, BasicConstants;
+uses BasicDataTypes, Class3DPointList, Voxel, Normals, BasicConstants,
+   BasicFunctions;
 
 type
    TVoxelMap = class
