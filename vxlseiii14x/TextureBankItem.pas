@@ -29,7 +29,8 @@ type
          procedure SaveTGATexture(const _Filename : string);
          procedure SaveDDSTexture(const _Filename : string);
          procedure UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
-         function DownloadTexture(_Level : integer): TBitmap;
+         function DownloadTexture(_Level : integer): TBitmap; overload;
+         function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
       public
          TextureType : integer;
          // Constructor and Destructor
@@ -640,12 +641,59 @@ begin
    for y := 0 to maxy do
       for x := 0 to maxx do
       begin
-         Result.Canvas.Pixels[x,maxy-y] := RGBA(Pixel.rgbBlue,Pixel.rgbGreen,Pixel.rgbRed,Pixel.rgbReserved);
+         Result.Canvas.Pixels[x,maxy-y] := RGB(Pixel.rgbBlue,Pixel.rgbGreen,Pixel.rgbRed);
          inc(Pixel);
       end;
 
    FreeMem(RGBBits);
 end;
+
+function TTextureBankItem.DownloadTexture(var _AlphaMap: TByteMap; _Level : integer) : TBitmap;
+var
+   RGBBits : PRGBQuad;
+   Pixel : PRGBQuad;
+   x,y : Integer;
+   Width, Height, maxx, maxy : cardinal;
+   Tempi : PGLInt;
+begin
+   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D,ID);
+
+   GetMem(Tempi,4);
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,_Level,GL_TEXTURE_WIDTH,tempi);
+   Width := tempi^;
+   FreeMem(tempi);
+   GetMem(tempi,4);
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,_Level,GL_TEXTURE_HEIGHT,tempi);
+   Height := tempi^;
+   FreeMem(tempi);
+
+   GetMem(RGBBits, Width * Height * 4);
+   glGetTexImage(GL_TEXTURE_2D,_Level,GL_RGBA,GL_UNSIGNED_BYTE, RGBBits);
+
+   glDisable(GL_TEXTURE_2D);
+
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32Bit;
+   Result.Width       := Width;
+   Result.Height      := Height;
+   SetLength(_AlphaMap,Width,Height);
+
+   Pixel := RGBBits;
+   maxy := Height-1;
+   maxx := Width-1;
+
+   for y := 0 to maxy do
+      for x := 0 to maxx do
+      begin
+         Result.Canvas.Pixels[x,maxy-y] := RGB(Pixel.rgbBlue,Pixel.rgbGreen,Pixel.rgbRed);
+         _AlphaMap[x,maxy-y] := Pixel.rgbReserved;
+         inc(Pixel);
+      end;
+
+   FreeMem(RGBBits);
+end;
+
 
 
 // Sets
