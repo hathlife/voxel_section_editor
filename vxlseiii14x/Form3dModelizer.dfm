@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 593
+  ClientHeight = 612
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 567
+    Height = 586
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,6 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
+    ExplicitHeight = 567
   end
   object Panel1: TPanel
     Left = 0
@@ -648,8 +649,31 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = '-'
       end
       object TextureFSExport: TMenuItem
-        Caption = 'Export All Textures (TGA)'
+        Caption = 'Export All Textures'
         OnClick = TextureFSExportClick
+      end
+      object N6: TMenuItem
+        Caption = '-'
+      end
+      object extureFileType1: TMenuItem
+        Caption = 'Texture File Type'
+        object TextureFSFTDDS: TMenuItem
+          Caption = 'Direct Draw Surface (DDS)'
+          Checked = True
+          OnClick = TextureFSFTDDSClick
+        end
+        object TextureFSFTTGA: TMenuItem
+          Caption = 'TARGA (TGA)'
+          OnClick = TextureFSFTTGAClick
+        end
+        object TextureFSFTJPG: TMenuItem
+          Caption = 'JPEG (JPG)'
+          OnClick = TextureFSFTJPGClick
+        end
+        object TextureFSFTBMP: TMenuItem
+          Caption = 'Bitmap (BMP)'
+          OnClick = TextureFSFTBMPClick
+        end
       end
     end
   end

@@ -24,7 +24,7 @@ type
          destructor Destroy; override;
          // I/O
          function Load(var _Model: PModel; const _Filename: string; _ShaderBank : PShaderBank): PModel;
-         function Save(var _Model: PModel; const _Filename: string): boolean;
+         function Save(var _Model: PModel; const _Filename,_TexExt: string): boolean;
          // Adds
          function Add(const _filename: string; _ShaderBank : PShaderBank): PModel; overload;
          function Add(const _Model: PModel): PModel; overload;
@@ -102,7 +102,7 @@ begin
    end;
 end;
 
-function TModelBank.Save(var _Model: PModel; const _Filename: string): boolean;
+function TModelBank.Save(var _Model: PModel; const _Filename, _TexExt: string): boolean;
 var
    i : integer;
    Model : PModel;
@@ -111,7 +111,7 @@ begin
    if i <> -1 then
    begin
       Model := Items[i].GetModel;
-      Model^.SaveLODToFile(_Filename);
+      Model^.SaveLODToFile(_Filename, _TexExt);
       Items[i].SetFilename(_Filename);
       Result := true;
    end

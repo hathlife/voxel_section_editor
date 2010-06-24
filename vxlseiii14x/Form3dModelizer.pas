@@ -118,6 +118,16 @@ type
     TextureFXDiffuse: TMenuItem;
     N5: TMenuItem;
     TextureFSExport: TMenuItem;
+    N6: TMenuItem;
+    extureFileType1: TMenuItem;
+    TextureFSFTDDS: TMenuItem;
+    TextureFSFTTGA: TMenuItem;
+    TextureFSFTJPG: TMenuItem;
+    TextureFSFTBMP: TMenuItem;
+    procedure TextureFSFTBMPClick(Sender: TObject);
+    procedure TextureFSFTJPGClick(Sender: TObject);
+    procedure TextureFSFTTGAClick(Sender: TObject);
+    procedure TextureFSFTDDSClick(Sender: TObject);
     procedure TextureFSExportClick(Sender: TObject);
     procedure TextureFXDiffuseClick(Sender: TObject);
     procedure akeScreenshotDDS1Click(Sender: TObject);
@@ -226,6 +236,7 @@ type
     Env : TRenderEnvironment;
     Actor : TActor;
     Camera : TCamera;
+    TextureFileExt: string;
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
     Procedure Reset3DView;
@@ -262,6 +273,7 @@ begin
    Actor.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
    Actor.Models[0].MakeVoxelHVAIndependent;
    SetActorModelTransparency;
+   TextureFSFTDDSClick(sender);
 end;
 
 
@@ -338,7 +350,43 @@ end;
 procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
 begin
    // Export every single texture...
-   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),'tga');
+   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt);
+end;
+
+procedure TFrm3DModelizer.TextureFSFTBMPClick(Sender: TObject);
+begin
+   TextureFSFTDDS.Checked := false;
+   TextureFSFTTGA.Checked := false;
+   TextureFSFTJPG.Checked := false;
+   TextureFSFTBMP.Checked := true;
+   TextureFileExt := 'bmp';
+end;
+
+procedure TFrm3DModelizer.TextureFSFTDDSClick(Sender: TObject);
+begin
+   TextureFSFTDDS.Checked := true;
+   TextureFSFTTGA.Checked := false;
+   TextureFSFTJPG.Checked := false;
+   TextureFSFTBMP.Checked := false;
+   TextureFileExt := 'dds';
+end;
+
+procedure TFrm3DModelizer.TextureFSFTJPGClick(Sender: TObject);
+begin
+   TextureFSFTDDS.Checked := false;
+   TextureFSFTTGA.Checked := false;
+   TextureFSFTJPG.Checked := true;
+   TextureFSFTBMP.Checked := false;
+   TextureFileExt := 'jpg';
+end;
+
+procedure TFrm3DModelizer.TextureFSFTTGAClick(Sender: TObject);
+begin
+   TextureFSFTDDS.Checked := false;
+   TextureFSFTTGA.Checked := true;
+   TextureFSFTJPG.Checked := false;
+   TextureFSFTBMP.Checked := false;
+   TextureFileExt := 'tga';
 end;
 
 procedure TFrm3DModelizer.BackgroundColour1Click(Sender: TObject);
@@ -976,7 +1024,7 @@ begin
    SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
    if SaveModelDialog.Execute then
    begin
-      Actor.SaveToFile(SaveModelDialog.FileName,0);
+      Actor.SaveToFile(SaveModelDialog.FileName,TextureFileExt,0);
    end;
 end;
 

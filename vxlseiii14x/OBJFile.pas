@@ -18,7 +18,7 @@ type
          Meshes : PObjMeshUnit;
          VertexCount,TextureCount,NormalsCount: longword;
          UseTexture: boolean;
-         BaseName,ObjectName : string;
+         BaseName,ObjectName,TexExtension : string;
          // Constructor
          procedure Initialize;
          procedure Clear;
@@ -45,7 +45,7 @@ type
          constructor Create;
          destructor Destroy; override;
          // I/O
-         procedure SaveToFile(const _Filename: string);
+         procedure SaveToFile(const _Filename,_TexExt: string);
          // Adds
          procedure AddMesh(const _Mesh: PMesh);
    end;
@@ -89,7 +89,7 @@ begin
 end;
 
 // I/O
-procedure TObjFile.SaveToFile(const _Filename: string);
+procedure TObjFile.SaveToFile(const _Filename, _TexExt: string);
 var
    OBJFIle,MTLFile: System.Text;
    MyMesh : PObjMeshUnit;
@@ -100,6 +100,7 @@ begin
    BaseName := copy(_Filename,1,Length(_Filename)-4);
    ObjectName := ExtractFilename(BaseName);
    MTLFilename := BaseName+'.mtl';
+   TexExtension := CopyString(_TexExt);
    AssignFile(MTLFile,MTLFilename);
    Rewrite(OBJFIle);
    Writeln(OBJFIle,'# OBJ Wavefront exported with Voxel Section Editor III.');
@@ -379,40 +380,40 @@ begin
                case _Material.Texture[tex]^.TextureType of
                   C_TTP_DIFFUSE:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '.tga');
-                     Writeln(_File,'map_Ka ' + ObjectName + '.tga');
-                     Writeln(_File,'map_Kd ' + ObjectName + '.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '.' + TexExtension);
+                     Writeln(_File,'map_Ka ' + ObjectName + '.' + TexExtension);
+                     Writeln(_File,'map_Kd ' + ObjectName + '.' + TexExtension);
                   end;
                   C_TTP_NORMAL:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_normal.tga');
-                     Writeln(_File,'bump ' + ObjectName + '_normal.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_normal.' + TexExtension);
+                     Writeln(_File,'bump ' + ObjectName + '_normal.' + TexExtension);
                   end;
                   C_TTP_SPECULAR:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_spec.tga');
-                     Writeln(_File,'map_Ks ' + ObjectName + '_spec.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_spec.' + TexExtension);
+                     Writeln(_File,'map_Ks ' + ObjectName + '_spec.' + TexExtension);
                   end;
                   C_TTP_ALPHA:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_alpha.tga');
-                     Writeln(_File,'map_d ' + ObjectName + '_alpha.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_alpha.' + TexExtension);
+                     Writeln(_File,'map_d ' + ObjectName + '_alpha.' + TexExtension);
                   end;
                   C_TTP_AMBIENT:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '.tga');
-                     Writeln(_File,'map_Ka ' + ObjectName + '.tga');
-                     Writeln(_File,'map_Kd ' + ObjectName + '.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '.' + TexExtension);
+                     Writeln(_File,'map_Ka ' + ObjectName + '.' + TexExtension);
+                     Writeln(_File,'map_Kd ' + ObjectName + '.' + TexExtension);
                   end;
                   C_TTP_DECAL:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_decal.tga');
-                     Writeln(_File,'decal ' + ObjectName + '_decal.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_decal.' + TexExtension);
+                     Writeln(_File,'decal ' + ObjectName + '_decal.' + TexExtension);
                   end;
                   C_TTP_DISPLACEMENT:
                   begin
-                     _Material.Texture[tex]^.SaveTexture(BaseName + '_disp.tga');
-                     Writeln(_File,'disp ' + ObjectName + '_disp.tga');
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_disp.' + TexExtension);
+                     Writeln(_File,'disp ' + ObjectName + '_disp.' + TexExtension);
                   end;
                end;
             end;

@@ -734,7 +734,7 @@ begin
    SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
    if SaveModelDialog.Execute then
    begin
-      Actor.SaveToFile(SaveModelDialog.FileName,0);
+      Actor.SaveToFile(SaveModelDialog.FileName,'dds',0);
    end;
 end;
 

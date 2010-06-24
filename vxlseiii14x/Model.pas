@@ -44,7 +44,7 @@ type
       procedure RebuildModel;
       procedure RebuildLOD(i: integer);
       procedure RebuildCurrentLOD;
-      procedure SaveLODToFile(const _Filename: string);
+      procedure SaveLODToFile(const _Filename, _TexExt: string);
       // Gets
       function GetNumLODs: longword;
       function IsOpened : boolean;
@@ -261,9 +261,9 @@ begin
    Opened := true;
 end;
 
-procedure TModel.SaveLODToFile(const _Filename: string);
+procedure TModel.SaveLODToFile(const _Filename, _TexExt: string);
 begin
-   LOD[CurrentLOD].SaveToFile(_Filename);
+   LOD[CurrentLOD].SaveToFile(_Filename,_TexExt);
 end;
 
 procedure TModel.RebuildModel;

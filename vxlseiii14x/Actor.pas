@@ -39,7 +39,7 @@ type
       procedure Clear;
       procedure Reset;
       // I/O
-      procedure SaveToFile(const _Filename: string; _ModelID: integer);
+      procedure SaveToFile(const _Filename,_TexExt: string; _ModelID: integer);
        // Execution
       procedure Render(var _PolyCount,_VoxelCount: longword);
       procedure RotateActor;
@@ -183,9 +183,9 @@ begin
 end;
 
 // I/O
-procedure TActor.SaveToFile(const _Filename: string; _ModelID: integer);
+procedure TActor.SaveToFile(const _Filename,_TexExt: string; _ModelID: integer);
 begin
-   ModelBank.Save(Models[_ModelID],_Filename);
+   ModelBank.Save(Models[_ModelID],_Filename, _TexExt);
 end;
 
 procedure TActor.Render(var _PolyCount,_VoxelCount: longword);

@@ -16,7 +16,7 @@ type
    TLOD = class
    private
       // I/O
-      procedure SaveToOBJFile(const _Filename: string);
+      procedure SaveToOBJFile(const _Filename,_TexExt: string);
       // Rendering Methods
       procedure RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
    public
@@ -29,7 +29,7 @@ type
       destructor Destroy; override;
       procedure Clear;
       // I/O
-      procedure SaveToFile(const _Filename: string);
+      procedure SaveToFile(const _Filename,_TexExt: string);
       // Gets
       function GetNumMeshes: longword;
       // Rendering Methods
@@ -124,18 +124,18 @@ begin
 end;
 
 // I/O
-procedure TLOD.SaveToFile(const _Filename: string);
+procedure TLOD.SaveToFile(const _Filename,_TexExt: string);
 var
    ext : string;
 begin
    ext := Lowercase(ExtractFileExt(_Filename));
    if CompareStr(ext,'.obj') = 0 then
    begin
-      SaveToOBJFile(_Filename);
+      SaveToOBJFile(_Filename,_TexExt);
    end;
 end;
 
-procedure TLOD.SaveToOBJFile(const _Filename: string);
+procedure TLOD.SaveToOBJFile(const _Filename, _TexExt: string);
 var
    Obj : TObjFile;
    i : integer;
@@ -145,7 +145,7 @@ begin
    begin
       Obj.AddMesh(Addr(Mesh[i]));
    end;
-   Obj.SaveToFile(_Filename);
+   Obj.SaveToFile(_Filename,_TexExt);
    Obj.Free;
 end;
 
