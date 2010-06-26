@@ -509,7 +509,7 @@ end;
 // Textures
 procedure TModel.GenerateDiffuseTexture;
 begin
-   LOD[CurrentLOD].GenerateDiffuseTexture;
+   LOD[CurrentLOD].ExtractTextureAtlas;
 end;
 
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string);

@@ -2,7 +2,7 @@
 (* defines that are defined here will usable in all modules, as these all include this file!                           *)
 (***********************************************************************************************************************)
 
-{// $DEFINE DEBUG_NORMALS} // disabled for now
+//{$DEFINE DEBUG_NORMALS} // disabled for now
 //{$DEFINE DEBUG_FILE}
 //{$DEFINE SPEED_TEST}       // to check speed for UFF's final graduation project
 //{$DEFINE MESH_TEST}       // to mesh values for UFF's final graduation project

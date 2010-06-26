@@ -408,8 +408,9 @@ end;
 procedure TMeshOptimizationTool.DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
 var
    v, Value,BorderNeighborCount : integer;
-   Angle,MaxAngle,Size : single;
+   Angle,MaxAngle,Size,x,y,z : single;
    Direction: TVector2f;
+   Baricentre : TVector3f;
 begin
    for v := Low(_Vertices) to High(_Vertices) do
    begin
@@ -465,6 +466,42 @@ begin
                Value := -1;
             end;
          end;
+         // Let's check if the exclusion of this vertex expands or contracts the mesh.
+{
+         if _VertexTransformation[v] = -1 then
+         begin
+            Baricentre := SetVector(0,0,0);
+            Value := VertexNeighbors.GetNeighborFromID(v);
+            // Get the baricentre.
+            while Value <> -1 do
+            begin
+               x := (_Vertices[Value].X - _Vertices[v].X);
+               y := (_Vertices[Value].Y - _Vertices[v].Y);
+               z := (_Vertices[Value].Z - _Vertices[v].Z);
+               Baricentre.X := Baricentre.X + x;
+               Baricentre.Y := Baricentre.Y + y;
+               Baricentre.Z := Baricentre.Z + z;
+               Value := VertexNeighbors.GetNextNeighbor;
+            end;
+            // Get the direction (normal) of the baricentre.
+            Size := Sqrt((Baricentre.X * Baricentre.X) + (Baricentre.Y * Baricentre.Y) + (Baricentre.Z * Baricentre.Z));
+            if Size > 0 then
+            begin
+               Baricentre.X := Baricentre.X / Size;
+               Baricentre.Y := Baricentre.Y / Size;
+               Baricentre.Z := Baricentre.Z / Size;
+
+               // If the direction of the baricentre and normal of the vertex
+               // are less than 90', then it will expand the mesh and we'll have
+               // to cancel the elimination of this vertex.
+               Angle := (_Normals[v].X * Baricentre.X) + (_Normals[v].Y * Baricentre.Y) + (_Normals[v].Z * Baricentre.Z);
+               if Angle > 0 then
+               begin
+                  _VertexTransformation[v] := v; // It won't be removed.
+               end;
+            end;
+         end;
+         }
       end;
    end;
 end;

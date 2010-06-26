@@ -69,7 +69,8 @@ type
       procedure NormalCubicSmoothLOD;
       procedure NormalLanczosSmoothLOD;
       // Textures
-      procedure GenerateDiffuseTexture;
+      procedure ExtractTextureAtlas;
+      procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
       procedure ExportTextures(const _BaseDir, _Ext : string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -478,7 +479,7 @@ begin
 end;
 
 // Textures
-procedure TLOD.GenerateDiffuseTexture;
+procedure TLOD.ExtractTextureAtlas;
 var
    i : integer;
    Seeds: TSeedSet;
@@ -519,29 +520,8 @@ begin
       Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexGenerator);
    end;
    // Now we build the diffuse texture.
-   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,1024);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].PaintMeshDiffuseTexture(Buffer,WeightBuffer,TexGenerator);
-   end;
-   Bitmap := TexGenerator.GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
-   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
-   // Now we generate a texture that will be used by all meshes.
-   glActiveTextureARB(GL_TEXTURE0_ARB);
-   DiffuseTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].AddTextureToMesh(0,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
-   end;
+   GenerateDiffuseTexture(1024,0,0);
    // Free memory.
-   GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
-   for i := Low(AlphaMap) to High(AlphaMap) do
-   begin
-      SetLength(AlphaMap[i],0);
-   end;
-   SetLength(AlphaMap,0);
-   Bitmap.Free;
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);
@@ -553,6 +533,41 @@ begin
    GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
+end;
+
+procedure TLOD.GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
+var
+   i : integer;
+   TexGenerator: CTextureGenerator;
+   Buffer: T2DFrameBuffer;
+   WeightBuffer: TWeightBuffer;
+   Bitmap : TBitmap;
+   AlphaMap : TByteMap;
+   DiffuseTexture : PTextureBankItem;
+begin
+   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].PaintMeshDiffuseTexture(Buffer,WeightBuffer,TexGenerator);
+   end;
+   Bitmap := TexGenerator.GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
+   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   // Now we generate a texture that will be used by all meshes.
+   glActiveTextureARB(GL_TEXTURE0_ARB + _TextureID);
+   DiffuseTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   // Now we add this diffuse texture to all meshes.
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
+   end;
+   // Free memory.
+   GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
+   for i := Low(AlphaMap) to High(AlphaMap) do
+   begin
+      SetLength(AlphaMap[i],0);
+   end;
+   SetLength(AlphaMap,0);
+   Bitmap.Free;
 end;
 
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);

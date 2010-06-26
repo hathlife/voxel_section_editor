@@ -178,53 +178,68 @@ end;
 procedure TNeighborDetector.OrganizeVertexVertexLowMemory(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, i : integer;
+   SearchArray : array of array of integer;
 begin
    // Setup Neighbors.
    InitializeNeighbors(_NumVertexes);
+   SetLength(SearchArray,(_VertexesPerFace-1)*_VertexesPerFace,2);
+   f := 0;
+   for v := 0 to _VertexesPerFace - 1 do
+      for i := 0 to _VertexesPerFace -1 do
+      begin
+         if i <> v then
+         begin
+            SearchArray[f,0] := v;
+            SearchArray[f,1] := i;
+            inc(f);
+         end;
+      end;
 
    // Main loop goes here.
    f := 0;
    while f < High(_Faces) do
    begin
-      // check each vertex of the face.
-      for v := 0 to _VertexesPerFace - 1 do
+      // check all neighbors each vertex of the face.
+      for i := Low(SearchArray) to High(SearchArray) do
       begin
-         // for each vertex, try to add all its neighbors.
-         for i := 0 to _VertexesPerFace - 1 do
-         begin
-            // Here we add the element to FNeighbors[f+v]
-            if (_Faces[f+i] <> _Faces[f+v]) then
-               AddElementAtTargetLowMemory(_Faces[f+i],_Faces[f+v]);
-         end;
+         AddElementAtTargetLowMemory(_Faces[f+SearchArray[i,0]],_Faces[f+SearchArray[i,1]]);
       end;
       inc(f,_VertexesPerFace);
    end;
+
+   for i := Low(SearchArray) to High(SearchArray) do
+   begin
+      SetLength(SearchArray,i,0);
+   end;
+   SetLength(SearchArray,0);
 end;
 
 procedure TNeighborDetector.OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
-   f, v : integer;
+   f,face, v : integer;
 begin
    // Setup Neighbors.
    InitializeNeighbors(_NumVertexes);
 
    // Main loop goes here.
    f := 0;
+   face := 0;
    while f < High(_Faces) do
    begin
       // check each vertex of the face.
       for v := 0 to _VertexesPerFace - 1 do
       begin
          // Here we add the element to FNeighbors[f+v]
-         AddElementAtTarget(f div _VertexesPerFace,_Faces[f+v]);
+         AddElementAtTarget(face,_Faces[f+v]);
       end;
       inc(f,_VertexesPerFace);
+      inc(face);
    end;
 end;
 
 procedure TNeighborDetector.OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
-   f, v, NumFaces, Value : integer;
+   f, face, v, NumFaces, Value : integer;
    TempDetector : TNeighborDetector;
 begin
    // Setup Neighbors.
@@ -236,6 +251,7 @@ begin
 
    // Main loop goes here.
    f := 0;
+   face := 0;
    while f < High(_Faces) do
    begin
       // check each vertex of the face.
@@ -245,11 +261,12 @@ begin
          while Value <> -1 do
          begin
             // Here we add the element to the face
-            AddElementAtTargetLowMemory(Value,f div _VertexesPerFace);
+            AddElementAtTargetLowMemory(Value,face);
             Value := TempDetector.GetNextNeighbor;
          end;
       end;
       inc(f,_VertexesPerFace);
+      inc(face);
    end;
 
    // Clean up memory
@@ -258,7 +275,7 @@ end;
 
 procedure TNeighborDetector.OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
-   f, v, NumFaces, Value : integer;
+   f, face, v, NumFaces, Value : integer;
    TempDetector : TNeighborDetector;
 begin
    // Setup Neighbors.
@@ -270,6 +287,7 @@ begin
 
    // Main loop goes here.
    f := 0;
+   face := 0;
    while f < High(_Faces) do
    begin
       // check each vertex of the face.
@@ -279,11 +297,12 @@ begin
          while Value <> -1 do
          begin
             // Here we add the element to the face
-            AddElementAtTargetLowMemory(Value,f div _VertexesPerFace);
+            AddElementAtTargetLowMemory(Value,face);
             Value := TempDetector.GetNextNeighbor;
          end;
       end;
       inc(f,_VertexesPerFace);
+      inc(face);
    end;
 
    // Clean up memory
