@@ -90,7 +90,10 @@ uses
   ClassIntegerSet in 'ClassIntegerSet.pas',
   ColladaFile in 'ColladaFile.pas',
   ClassMeshOptimizationTool in 'ClassMeshOptimizationTool.pas',
-  Material in 'Material.pas';
+  Material in 'Material.pas',
+  ClassVoxelView in 'ClassVoxelView.pas',
+  UI2DEditView in 'UI2DEditView.pas',
+  ClassVertexTransformationUtils in 'ClassVertexTransformationUtils.pas';
 
 {$R *.res}
 

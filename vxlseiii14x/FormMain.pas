@@ -11,13 +11,13 @@ uses
   ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant;
+  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.97';
+   APPLICATION_VER = '1.39.98';
    APPLICATION_BETA = true;
 
 type
@@ -3053,7 +3053,7 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
+   Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3064,7 +3064,7 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
+   Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3075,7 +3075,7 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
 
-   Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
+   Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
    RefreshAll;
    VXLChanged := true;
 end;

@@ -3,7 +3,8 @@ unit ClassTextureGenerator;
 interface
 
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
-   ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs;
+   ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs,
+   ClassVertexTransformationUtils;
 
 type
    TTextureSeed = record
@@ -25,17 +26,7 @@ type
          // Seeds
          function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
-         // Transform Matrix Operations
-         function GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
-         function GetTransformMatrix(_AngX, _AngY: single): TMatrix;
-         function GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
-         // Angle Detector
-         function GetRotationX(const _Vector: TVector3f): single;
-         function GetRotationY(const _Vector: TVector3f): single;
-         // Angle Operators
-         function CleanAngle(Angle: single): single;
-         function CleanAngleRadians(Angle: single): single;
-         function CleanAngle90Radians(Angle: single): single;
+         // Angle stuff
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
          // Sort related functions
          function CompareU(const _Seed1, _Seed2 : TTextureSeed): real;
@@ -108,137 +99,11 @@ begin
    Initialize;
 end;
 
-// Transform Matrix Operations
-function CTextureGenerator.GetSeedTransformMatrix(_Normal: TVector3f): TMatrix;
-const
-   C_ANG_X = 0;
-   C_ANG_Y = 0;
-var
-   AngX,AngY : single;
-begin
-   // Get the angles from the normal vector.
-   AngX := GetRotationX(_Normal);
-   AngY := GetRotationY(_Normal);
-   // Now we get the transform matrix
-   Result := GetTransformMatrix(AngX,AngY);
-end;
-
-function CTextureGenerator.GetTransformMatrix(_AngX, _AngY: single): TMatrix;
-begin
-   Result := IdentityMatrix;
-   if _AngY <> C_ANGLE_NONE then
-   begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngY),cos(_AngY)));
-   end;
-   if _AngX <> C_ANGLE_NONE then
-   begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixX(sin(_AngX),cos(_AngX)));
-   end;
-end;
-
-function CTextureGenerator.GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
-var
-   TempVector: TVector3f;
-begin
-   TempVector := VectorTransform(_Position,_TransformMatrix);
-   Result.U := TempVector.X;
-   Result.V := TempVector.Y;
-end;
-
-
-// Angle Detector
-function CTextureGenerator.GetRotationX(const _Vector: TVector3f): single;
-var
-   Distance: single;
-begin
-   Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.Z * _Vector.Z));
-   if Distance > 0 then
-   begin
-      if (_Vector.Y <> 0) then
-      begin
-         Result := CleanAngle90Radians(((-1 * _Vector.Y) / (Abs(_Vector.Y))) *  arccos(abs(_Vector.Z) / Distance));
-      end
-      else
-      begin
-         Result := C_ANGLE_NONE;//CleanAngle90Radians(-1 * arccos(abs(_Vector.Z) / Distance));
-      end;
-   end
-   else
-   begin
-      Result := C_ANGLE_NONE;
-   end;
-end;
-
-function CTextureGenerator.GetRotationY(const _Vector: TVector3f): single;
-var
-   Distance: single;
-begin
-   Distance := sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z));
-   if Distance > 0 then
-   begin
-      if (_Vector.X <> 0) then
-      begin
-         Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
-      end
-      else
-      begin
-         Result := CleanAngleRadians(-1 * arccos(_Vector.Z / Distance));
-      end;
-   end
-   else
-   begin
-      Result := C_ANGLE_NONE;
-   end;
-end;
-
-// Angle Operators
-
-function CTextureGenerator.CleanAngle(Angle: single): single;
-begin
-   Result := Angle;
-   if Result < 0 then
-      Result := Result + 360;
-   if Result > 360 then
-      Result := Result - 360;
-end;
-
-function CTextureGenerator.CleanAngleRadians(Angle: single): single;
-const
-   C_2PI = 2 * Pi;
-begin
-   Result := Angle;
-   if Result < 0 then
-      Result := Result + Pi;
-   if Result > C_2Pi then
-      Result := Result - C_2Pi;
-end;
-
-function CTextureGenerator.CleanAngle90Radians(Angle: single): single;
-const
-   C_2PI = 2 * Pi;
-   C_PIDiv2 = Pi / 2;
-   C_3PIDiv2 = 1.5 * Pi;
-begin
-   Result := Angle;
-   // Ensure that it is between 0 and 2Pi.
-   if Result < 0 then
-      Result := Result + Pi;
-   if Result > C_2Pi then
-      Result := Result - C_2Pi;
-   // Now we ensure that it will be either between 3Pi/2 and Pi/2.
-   if (Result > C_PIDiv2) and (Result <= Pi) then
-      Result := Pi - Result
-   else if (Result > Pi) and (Result < C_3PIDiv2) then
-      Result := C_2Pi - (Result - Pi);
-end;
-
+// Angle operations
 function CTextureGenerator.GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
 begin
    Result := (_Vec1.X * _Vec2.X) + (_Vec1.Y * _Vec2.Y) + (_Vec1.Z * _Vec2.Z);
 end;
-
-
-
 
 // Executes
 function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
@@ -807,14 +672,16 @@ end;
 
 function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
 const
-   C_MIN_ANGLE = 0.0001; // approximately cos 90'
+   C_MIN_ANGLE = 0.7; // approximately cos 90'
 var
    v,f,Value,vertex,FaceIndex : integer;
    List : CIntegerList;
    VertsLocation : aint32;
    CheckFace : abool;
    Angle: single;
+   VertexUtil : TVertexTransformationUtils;
 begin
+   VertexUtil := TVertexTransformationUtils.Create;
    // Setup neighbor detection list
    List := CIntegerList.Create;
    List.UseSmartMemoryManagement(true);
@@ -832,7 +699,7 @@ begin
    // Add starting face
    List.Add(_StartingFace);
    CheckFace[_StartingFace] := true;
-   Result.TransformMatrix := GetSeedTransformMatrix(_FaceNormals[_StartingFace]);
+   Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;
    Result.MinBounds.V := 999999;
@@ -873,7 +740,7 @@ begin
                _VertsColours[High(_Vertices)].W := _VertsColours[vertex].W;
                // Get temporarily texture coordinates.
                SetLength(_TextCoords,High(_Vertices)+1);
-               _TextCoords[High(_Vertices)] := GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+               _TextCoords[High(_Vertices)] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
                // Now update the bounds of the seed.
                if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
                   Result.MinBounds.U := _TextCoords[High(_Vertices)].U;
@@ -896,7 +763,7 @@ begin
             _VertsSeed[vertex] := _ID;
             VertsLocation[vertex] := vertex;
             // Get temporary texture coordinates.
-            _TextCoords[vertex] := GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+            _TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
             // Now update the bounds of the seed.
             if _TextCoords[vertex].U < Result.MinBounds.U then
                Result.MinBounds.U := _TextCoords[vertex].U;
@@ -938,6 +805,7 @@ begin
    List.Free;
    SetLength(CheckFace,0);
    SetLength(VertsLocation,0);
+   VertexUtil.Free;
 end;
 
 // Sort

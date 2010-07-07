@@ -3,7 +3,8 @@ unit Voxel_Engine;
 interface
 
 uses Windows,BasicDataTypes,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,
-   cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel, VoxelDocument;
+   cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel, VoxelDocument,
+   BasicConstants;
 
 {$INCLUDE Global_Conditionals.inc}
 Var
@@ -44,29 +45,6 @@ Var
 Const
    TestBuild = false;
    TestBuildVersion = '5';
-   DefaultZoom = 7;
-   VIEWBGCOLOR = -1;
-
-   VXLTool_Brush = 0;
-   VXLTool_Line = 1;
-   VXLTool_Erase = 2;
-   VXLTool_FloodFill = 3;
-   VXLTool_Dropper = 4;
-   VXLTool_Rectangle = 5;
-   VXLTool_FilledRectangle = 6;
-   VXLTool_Darken = 7;
-   VXLTool_Lighten = 8;
-   VXLTool_SmoothNormal = 9;
-   VXLTool_FloodFillErase = 10;
-   VXLTool_Measure = 11;
-
-   ViewName: array[0..5] of string = (
-      ' Right',
-      ' Left',
-      ' Top',
-      ' Bottom',
-      ' Back',
-      ' Front');
 
 Function LoadVoxel(var Document: TVoxelDocument; Filename : String) : boolean;
 Function NewVoxel(var Document: TVoxelDocument; Game,x,y,z : integer) : boolean;
@@ -1077,14 +1055,6 @@ begin
 
       View[WndIndex].TranslateClick(p,q,lx,ly,lz);
    end;
-   //I want range checks - on lx,ly and lz
-   //Range checks are already performed somewhere else, but where?!
-   //They are flawed!
-   //the only reason the program doesn't crash with X is because it can write in
-   //other parts of the file!!!
-{   if not (lx in [0..ActiveSection.Tailer.XSize-1]) then ShowMessage('X range error');
-   if not (ly in [0..ActiveSection.Tailer.YSize-1]) then ShowMessage('Y range error');
-   if not (lz in [0..ActiveSection.Tailer.ZSize-1]) then ShowMessage('Z range error');}
 end;
 
 procedure MoveCursor(lx, ly, lz: Integer; Repaint : boolean);
@@ -1639,8 +1609,8 @@ begin
                   tempview.Data[tempview.Data_no].VC.Y := Yc;
                   tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.X;
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Yc,Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
@@ -1650,8 +1620,8 @@ begin
                   tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
                   tempview.Data[tempview.Data_no].VC.Z := Zc;
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.X;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Y;
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Max(Min(Yc+j,VXL.Tailer.YSize-1),0),Zc,v);
                end;

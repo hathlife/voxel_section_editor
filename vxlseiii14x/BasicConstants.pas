@@ -3,6 +3,35 @@ unit BasicConstants;
 interface
 
 const
+   // Voxel Section Editor Basic constants (originally at Voxel_Engine.pas)
+   DefaultZoom = 7;
+   VIEWBGCOLOR = -1;
+
+   VXLTool_Brush = 0;
+   VXLTool_Line = 1;
+   VXLTool_Erase = 2;
+   VXLTool_FloodFill = 3;
+   VXLTool_Dropper = 4;
+   VXLTool_Rectangle = 5;
+   VXLTool_FilledRectangle = 6;
+   VXLTool_Darken = 7;
+   VXLTool_Lighten = 8;
+   VXLTool_SmoothNormal = 9;
+   VXLTool_FloodFillErase = 10;
+   VXLTool_Measure = 11;
+   ViewName: array[0..5] of string = (
+      ' Right',
+      ' Left',
+      ' Top',
+      ' Bottom',
+      ' Back',
+      ' Front');
+
+   // From Voxel.pas
+   VTRANSPARENT = 256;
+   MAXNORM_TIBERIAN_SUN = 36;
+   MAXNORM_RED_ALERT2 = 244;
+
    // Voxel Map Fill Mode
    C_MODE_NONE = 0;
    C_MODE_ALL = 1;

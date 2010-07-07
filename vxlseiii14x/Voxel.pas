@@ -3,14 +3,9 @@ unit Voxel;
 interface
 
 uses
-   Classes, dglOpenGL, Normals, BasicDataTypes, BasicFunctions;
+   Classes, dglOpenGL, Normals, BasicDataTypes, BasicFunctions, BasicConstants;
 
 {$INCLUDE Global_Conditionals.inc}
-
-const
-   VTRANSPARENT = 256;
-   MAXNORM_TIBERIAN_SUN = 36;
-   MAXNORM_RED_ALERT2 = 244;
 
 type
    TVoxelHeader = packed record
@@ -48,7 +43,6 @@ type
 
    TVoxelSection = class
    private
-      spectrum: ESpectrumMode;
       // for storing / accessing the stored data
       procedure InitViews;
       procedure SetDataSize(XSize,YSize,ZSize: Integer);
@@ -56,6 +50,7 @@ type
       function PackVoxel(Unpacked: TVoxelUnpacked): TVoxelPacked;
       procedure UnpackVoxel(PackedVoxel: TVoxelPacked; var dest: TVoxelUnpacked);
    public
+      spectrum: ESpectrumMode;
       Data: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
       Normals : TNormals; // Normals palette.
       MaxNormal, // the highest normal value
@@ -1524,7 +1519,7 @@ procedure TVoxelView.Refresh;
       Foreground := Voxel.Z;
       if SwapX then
       begin
-         iFactor := Width - 1;
+         iFactor := Width -1;
          iOp := -1;
       end
       else
@@ -1732,13 +1727,6 @@ begin
    spectrum := newspectrum;
 end;
 
-procedure TVoxel.setSpectrum(newspectrum: ESpectrumMode);
-var i: integer;
-begin
-   for i := Low(Section) to High(Section) do
-      Section[i].setSpectrum(newspectrum);
-end;
-
 procedure TVoxelView.CalcSwapXYZ;
 var idx: integer;
 begin
@@ -1770,13 +1758,13 @@ begin
       end;
       4:
       begin // Back to Front
-         SwapX := False;
+         SwapX := True;
          SwapY := True;
          SwapZ := False;
       end;
       5:
       begin // Front to Back
-         SwapX := True;
+         SwapX := False;
          SwapY := True;
          SwapZ := False;
       end;
@@ -2582,6 +2570,13 @@ begin
       SetLength(TempData[x],0);
    end;
    SetLength(TempData,0);
+end;
+
+procedure TVoxel.setSpectrum(newspectrum: ESpectrumMode);
+var i: integer;
+begin
+   for i := Low(Section) to High(Section) do
+      Section[i].setSpectrum(newspectrum);
 end;
 
 end.
