@@ -53,7 +53,7 @@ type
     scaleZmax: TEdit;
     scale: TEdit;
     Label23: TLabel;
-    SpeedButton1: TSpeedButton;
+    SpCalculate: TSpeedButton;
     Label17: TLabel;
     BtnApply: TButton;
     Label24: TLabel;
@@ -75,7 +75,7 @@ type
     procedure txtChange(Sender: TObject);
     procedure grdTransSetEditText(Sender: TObject; ACol, ARow: Integer;
       const Value: String);
-    procedure SpeedButton1Click(Sender: TObject);
+    procedure SpCalculateClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure BtCloseClick(Sender: TObject);
   private
@@ -281,23 +281,23 @@ begin
    end;
 end;
 
-procedure TFrmHeader.SpeedButton1Click(Sender: TObject);
+procedure TFrmHeader.SpCalculateClick(Sender: TObject);
 begin
    with p^.Section[cmbSection.ItemIndex] do
    begin
       scaleXmax.text := floattostr((Tailer.XSize /2));
-      scaleYmax.text := floattostr((Tailer.YSize /2));
+      scaleZmax.text := floattostr((Tailer.ZSize /2));
       scaleXmin.text := floattostr(0 - (Tailer.XSize /2));
-      scaleYmin.text := floattostr(0 - (Tailer.YSize /2));
+      scaleZmin.text := floattostr(0 - (Tailer.ZSize /2));
       if rbAir.Checked then
       begin
-         scaleZmax.text := floattostr((Tailer.ZSize /2));
-         scaleZmin.text := floattostr(0 - (Tailer.ZSize /2));
+         scaleYmax.text := floattostr((Tailer.YSize /2));
+         scaleYmin.text := floattostr(0 - (Tailer.YSize /2));
       end
       else
       begin
-         scaleZmax.text := floattostr(Tailer.ZSize);
-         scaleZmin.text := floattostr(0);
+         scaleYmax.text := floattostr(Tailer.YSize);
+         scaleYmin.text := floattostr(0);
       end;
    end;
 end;
