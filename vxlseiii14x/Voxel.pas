@@ -1519,7 +1519,7 @@ procedure TVoxelView.Refresh;
       Foreground := Voxel.Z;
       if SwapX then
       begin
-         iFactor := Width -1;
+         iFactor := Width - 1;
          iOp := -1;
       end
       else

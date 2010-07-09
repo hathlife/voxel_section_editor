@@ -2162,7 +2162,7 @@ begin
       begin
          OldMousePos.X := X;
          OldMousePos.Y := Y;
-         TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
+         //TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
          with Document.ActiveSection^.Tailer do
             if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) or (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then
             begin

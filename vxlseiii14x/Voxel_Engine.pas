@@ -487,7 +487,7 @@ begin
       begin
          for xx := 1 to tempview.Data_no do
          begin
-            if (View.getViewNameIdx = 1) or (View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
+            if (View.getViewNameIdx = 1) or (View.getViewNameIdx = 3) or (View.getViewNameIdx = 4) then
                x := View.Width - 1-tempview.data[xx].X
             else
                x := tempview.data[xx].X;
@@ -723,7 +723,7 @@ begin
       begin
          for xx := 1 to tempview.Data_no do
          begin
-            if (View.getViewNameIdx = 1) or(View.getViewNameIdx = 3) or (View.getViewNameIdx = 5) then
+            if (View.getViewNameIdx = 1) or(View.getViewNameIdx = 3) or (View.getViewNameIdx = 4) then
                x := View.Width - 1-tempview.data[xx].X
             else
                x := tempview.data[xx].X;
@@ -1742,8 +1742,8 @@ begin
                   tempview.Data[tempview.Data_no].VC.Y := Yc;
                   tempview.Data[tempview.Data_no].VC.Z := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Zc+i,VXL.Tailer.ZSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Xc+j,VXL.Tailer.XSize-1),0);
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.Z;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.X;
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Yc,Max(Min(Zc+j,VXL.Tailer.ZSize-1),0),v);
                end;
@@ -1753,8 +1753,8 @@ begin
                   tempview.Data[tempview.Data_no].VC.Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
                   tempview.Data[tempview.Data_no].VC.Z := Zc;
 
-                  tempview.Data[tempview.Data_no].X := Max(Min(Xc+i,VXL.Tailer.XSize-1),0);
-                  tempview.Data[tempview.Data_no].Y := Max(Min(Yc+j,VXL.Tailer.YSize-1),0);
+                  tempview.Data[tempview.Data_no].X := tempview.Data[tempview.Data_no].VC.X;
+                  tempview.Data[tempview.Data_no].Y := tempview.Data[tempview.Data_no].VC.Y;
 
                   //VXL.SetVoxel(Max(Min(Xc+i,VXL.Tailer.XSize-1),0),Max(Min(Yc+j,VXL.Tailer.YSize-1),0),Zc,v);
                end;
@@ -2098,78 +2098,78 @@ begin
       if Vxl.View[0].GetOrient = oriX then
       begin
          for z := 0 to Vxl.Tailer.ZSize-1 do
-         for y := 0 to Vxl.Tailer.YSize-1 do
-         begin
-            // Get current voxel block data
-            Vxl.GetVoxel(Vxl.X,y,z,v);
+            for y := 0 to Vxl.Tailer.YSize-1 do
+            begin
+               // Get current voxel block data
+               Vxl.GetVoxel(Vxl.X,y,z,v);
 
-            // Check if voxel is used
-            if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
-               v.Used := true
-            else
-               v.Used := false;
+               // Check if voxel is used
+               if image.Canvas.Pixels[z,y] <> GetVXLPaletteColor(-1) then
+                  v.Used := true
+               else
+                  v.Used := false;
 
-            // Verify the colour/normal
-            If SpectrumMode = ModeColours then
-               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[z,y])
-            else
-               v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
+               // Verify the colour/normal
+               If SpectrumMode = ModeColours then
+                  v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[z,y])
+               else
+                  v.Normal := GetRValue(Image.Canvas.Pixels[z,y]);
 
-            // Update voxel
-            Vxl.SetVoxel(Vxl.X,y,z,v);
-         end;
+               // Update voxel
+               Vxl.SetVoxel(Vxl.X,y,z,v);
+            end;
       end;
 
       // Check if it's oriented to axis y
       if Vxl.View[0].GetOrient = oriY then
       begin
          for x := 0 to Vxl.Tailer.XSize-1 do
-         for z := 0 to Vxl.Tailer.ZSize-1 do
-         begin
-            // Get current voxel block data
-            Vxl.GetVoxel(x,Vxl.y,z,v);
+            for z := 0 to Vxl.Tailer.ZSize-1 do
+            begin
+               // Get current voxel block data
+               Vxl.GetVoxel(x,Vxl.y,z,v);
 
-            // Check if voxel is used
-            if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
-               v.Used := true
-            else
-               v.Used := false;
+               // Check if voxel is used
+               if image.Canvas.Pixels[x,z] <> GetVXLPaletteColor(-1) then
+                  v.Used := true
+               else
+                  v.Used := false;
 
-            // Verify the colour/normal
-            If SpectrumMode = ModeColours then
-               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,z])
-            else
-               v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
+               // Verify the colour/normal
+               If SpectrumMode = ModeColours then
+                  v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,z])
+               else
+                  v.Normal := GetRValue(Image.Canvas.Pixels[x,z]);
 
-            // Update voxel
-            Vxl.SetVoxel(x,Vxl.y,z,v);
-         end;
+               // Update voxel
+               Vxl.SetVoxel(x,Vxl.y,z,v);
+            end;
       end;
 
       // Check if it's oriented to axis z
       if Vxl.View[0].GetOrient = oriZ then
       begin
          for x := 0 to Vxl.Tailer.XSize-1 do
-         for y := 0 to Vxl.Tailer.YSize-1 do
-         begin
-            // Get current voxel block data
-            Vxl.GetVoxel(x,y,Vxl.z,v);
+            for y := 0 to Vxl.Tailer.YSize-1 do
+            begin
+               // Get current voxel block data
+               Vxl.GetVoxel(x,y,Vxl.z,v);
 
-            // Check if voxel is used
-            if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
-               v.Used := true
-            else
-               v.Used := false;
+               // Check if voxel is used
+               if image.Canvas.Pixels[x,y] <> GetVXLPaletteColor(-1) then
+                  v.Used := true
+               else
+                  v.Used := false;
 
-            // Verify the colour/normal
-            If SpectrumMode = ModeColours then
-               v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,y])
-            else
-               v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
+               // Verify the colour/normal
+               If SpectrumMode = ModeColours then
+                  v.Colour := FrmMain.Document.Palette^.GetColourFromPalette(Image.Canvas.Pixels[x,y])
+               else
+                  v.Normal := GetRValue(Image.Canvas.Pixels[x,y]);
 
-            // Update voxel
-            Vxl.SetVoxel(x,y,Vxl.z,v);
-         end;
+               // Update voxel
+               Vxl.SetVoxel(x,y,Vxl.z,v);
+            end;
       end;
    end;
 end;
