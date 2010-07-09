@@ -3234,8 +3234,8 @@ begin
             1: NR[2]:=1;
             2: NR[2]:=-1;
             3: NR[2]:=1;
-            4: NR[0]:=-1;
-            5: NR[0]:=1;
+            4: NR[0]:=1;
+            5: NR[0]:=-1;
          end;
          if CompareStr((Sender as TMenuItem).Name,'Nudge1Right1')=0 then
          begin
