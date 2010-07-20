@@ -4,7 +4,7 @@ interface
 
 uses Geometry, BasicDataTypes, ClassNeighborDetector, ClassStopWatch, ClassIntegerList,
 GLConstants, Dialogs, SysUtils, BasicFunctions, ClassVertexTransformationUtils,
-ClassIntegerSet;
+ClassIntegerSet, ClassTriangleNeighbourSet;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -21,12 +21,14 @@ type
          procedure DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
          // Merge Vertexes
          procedure MergeVertexes(var _Vertices, _Normals: TAVector3f; var _VertexTransformation: aint32);
-         procedure MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32);
+         procedure MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
          // Merge Vertex Utils
-         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V1,_V2,_Normal: TVector3f; var _NeighbourList,_BorderList: CIntegerSet): boolean; overload;
+         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet): boolean; overload;
          function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V1,_V2,_V3,_Normal: TVector3f; var _BorderList: CIntegerSet): boolean; overload;
          function IsPointInsideTriangle(const _V1,_V2,_V3,_P : TVector2f): boolean;
          function Dot2D(const _V1,_V2: TVector2f): single;
+         procedure AddBordersNeighborsFromVertex(_vertex: integer; var _BorderList: CIntegerSet);
+         procedure AddNeighbourFaces(_Vertex: integer; var _FaceList: CTriangleNeighbourSet; var _VisitedFaces: CIntegerSet; const _Faces: auint32; _VerticesPerFace: integer);
          // Miscellaneous
          function GetBorderVertexList(const _Vertices: TAVector3f; const _Faces : auint32; _VerticesPerFace : integer): abool;
       public
@@ -123,7 +125,7 @@ begin
    end
    else
    begin
-      MergeVertexesWithTextures(_Vertices,_Normals,_TexCoords,VertexTransformation);
+      MergeVertexesWithTextures(_Vertices,_Normals,_TexCoords,VertexTransformation,_Faces,_VerticesPerFace);
    end;
    // Step 3: Convert the vertexes from the faces to the new values.
    for v := Low(_Faces) to High(_Faces) do
@@ -446,14 +448,14 @@ begin
             end;
             Value := VertexNeighbors.GetNextNeighbor;
          end;
-         //if (BorderNeighborCount = 2) and (Direction.U = 0) and (Direction.V = 0) then
-         //begin
-         //   _VertexTransformation[v] := -1; // Mark for removal.
-         //end
-         //else
-         //begin
+         if (BorderNeighborCount = 2) and (Direction.U = 0) and (Direction.V = 0) then
+         begin
+            _VertexTransformation[v] := -1; // Mark for removal.
+         end
+         else
+         begin
             _VertexTransformation[v] := v; // It won't be removed.
-         //end;
+         end;
       end
       else
       begin
@@ -568,6 +570,185 @@ begin
    end;
    List.Free;
 end;
+
+procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
+var
+   List : CIntegerList;
+   v, Value,HitCounter,Vertex : integer;
+   Angle, MaxAngle, Size : single;
+   Position,Normal,EstimatedPosition,EstimatedNormal: TVector3f;
+   TexCoordinate: TVector2f;
+   VerticesBackup,NormalsBackup: TAVector3f;
+   TexturesBackup: TAVector2f;
+   BorderList,BlacklistedFaces: CIntegerSet;
+   SavedBorderList,SavedBlackListedFaces: CIntegerSet;
+   FaceList,SavedFaceList: CTriangleNeighbourSet;
+   State: PIntegerItem;
+begin
+   List := CIntegerList.Create;
+   List.UseSmartMemoryManagement(true);
+   BorderList := CIntegerSet.Create;
+   BlackListedFaces := CIntegerSet.Create;
+   FaceList := CTriangleNeighbourSet.Create;
+   SavedBorderList := CIntegerSet.Create;
+   SavedBlackListedFaces := CIntegerSet.Create;
+   SavedFaceList := CTriangleNeighbourSet.Create;
+   SetLength(VerticesBackup,High(_Vertices)+1);
+   SetLength(NormalsBackup,High(_Vertices)+1);
+   SetLength(TexturesBackup,High(_Vertices)+1);
+   for v := Low(_Vertices) to High(_Vertices) do
+   begin
+      VerticesBackup[v].X := _Vertices[v].X;
+      VerticesBackup[v].Y := _Vertices[v].Y;
+      VerticesBackup[v].Z := _Vertices[v].Z;
+      NormalsBackup[v].X := _Normals[v].X;
+      NormalsBackup[v].Y := _Normals[v].Y;
+      NormalsBackup[v].Z := _Normals[v].Z;
+      TexturesBackup[v].U := _TexCoords[v].U;
+      TexturesBackup[v].V := _TexCoords[v].V;
+   end;
+   for v := Low(_Vertices) to High(_Vertices) do
+   begin
+      if _VertexTransformation[v] = -1 then
+      begin
+         // Here we look out for all neighbors that are also in -1 and merge
+         // them into one vertex.
+         Position.X := VerticesBackup[v].X;
+         Position.Y := VerticesBackup[v].Y;
+         Position.Z := VerticesBackup[v].Z;
+         Normal.X := NormalsBackup[v].X;
+         Normal.Y := NormalsBackup[v].Y;
+         Normal.Z := NormalsBackup[v].Z;
+         TexCoordinate.U := TexturesBackup[v].U;
+         TexCoordinate.V := TexturesBackup[v].V;
+         HitCounter := 1;
+         List.Add(v);
+         _VertexTransformation[v] := v;
+         if BorderVertexes[v] then
+         begin
+            MaxAngle := FAngleBorder;
+            while List.GetValue(Value) do
+            begin
+               Value := VertexNeighbors.GetNeighborFromID(Value);
+               while Value <> -1 do
+               begin
+                  if (_VertexTransformation[Value] = -1) and (BorderVertexes[v] = BorderVertexes[Value]) then
+                  begin
+                     Angle := (NormalsBackup[v].X * NormalsBackup[Value].X) + (NormalsBackup[v].Y * NormalsBackup[Value].Y) + (NormalsBackup[v].Z * NormalsBackup[Value].Z);
+                     if Angle >= MaxAngle then
+                     begin
+                        Position.X := Position.X + VerticesBackup[Value].X;
+                        Position.Y := Position.Y + VerticesBackup[Value].Y;
+                        Position.Z := Position.Z + VerticesBackup[Value].Z;
+                        Normal.X := Normal.X + NormalsBackup[Value].X;
+                        Normal.Y := Normal.Y + NormalsBackup[Value].Y;
+                        Normal.Z := Normal.Z + NormalsBackup[Value].Z;
+                        TexCoordinate.U := TexCoordinate.U + TexturesBackup[Value].U;
+                        TexCoordinate.V := TexCoordinate.V + TexturesBackup[Value].V;
+                        inc(HitCounter);
+                        _VertexTransformation[Value] := v;
+                        List.Add(Value);
+                     end;
+                  end;
+                  Value := VertexNeighbors.GetNextNeighbor;
+               end;
+            end;
+         end
+         else
+         begin
+            // Reset variables here.
+            MaxAngle := FAngle;
+            BorderList.Reset;
+            FaceList.Reset;
+            BlackListedFaces.Reset;
+            // Collect border neighbours and faces where the vertex is located.
+            AddBordersNeighborsFromVertex(v,BorderList);
+            AddNeighbourFaces(v,FaceList,BlackListedFaces,_Faces,_VerticesPerFace);
+            // Update backups.
+            SavedBorderList.Assign(BorderList);
+            SavedFaceList.Assign(FaceList);
+            SavedBlackListedFaces.Assign(BlackListedFaces);
+            // Now we process the non-border vertexes only.
+            while List.GetValue(Value) do
+            begin
+               Value := VertexNeighbors.GetNeighborFromID(Value);
+               while Value <> -1 do
+               begin
+                  if (_VertexTransformation[Value] = -1) and (not BorderVertexes[Value]) then
+                  begin
+                     Angle := (NormalsBackup[v].X * NormalsBackup[Value].X) + (NormalsBackup[v].Y * NormalsBackup[Value].Y) + (NormalsBackup[v].Z * NormalsBackup[Value].Z);
+                     if Angle >= MaxAngle then
+                     begin
+                        State := VertexNeighbors.SaveState;
+                        AddBordersNeighborsFromVertex(Value,BorderList);
+                        VertexNeighbors.LoadState(State);
+                        AddNeighbourFaces(Value,FaceList,BlackListedFaces,_Faces,_VerticesPerFace);
+                        EstimatedPosition.X := (Position.X + VerticesBackup[Value].X) / HitCounter;
+                        EstimatedPosition.Y := (Position.Y + VerticesBackup[Value].Y) / HitCounter;
+                        EstimatedPosition.Z := (Position.Z + VerticesBackup[Value].Z) / HitCounter;
+                        EstimatedNormal.X := (Normal.X + NormalsBackup[Value].X) / HitCounter;
+                        EstimatedNormal.Y := (Normal.Y + NormalsBackup[Value].Y) / HitCounter;
+                        EstimatedNormal.Z := (Normal.Z + NormalsBackup[Value].Z) / HitCounter;
+                        if not areBorderVertexesHiddenByTriangle(_Vertices,EstimatedPosition,EstimatedNormal,FaceList,BorderList) then
+                        begin
+                           // DO
+                           SavedBorderList.Assign(BorderList);
+                           SavedFaceList.Assign(FaceList);
+                           SavedBlackListedFaces.Assign(BlackListedFaces);
+                           // Merge Vertex: Update Position, Normal, Texture
+                           // and check its neighbours
+                           Position.X := Position.X + VerticesBackup[Value].X;
+                           Position.Y := Position.Y + VerticesBackup[Value].Y;
+                           Position.Z := Position.Z + VerticesBackup[Value].Z;
+                           Normal.X := Normal.X + NormalsBackup[Value].X;
+                           Normal.Y := Normal.Y + NormalsBackup[Value].Y;
+                           Normal.Z := Normal.Z + NormalsBackup[Value].Z;
+                           TexCoordinate.U := TexCoordinate.U + TexturesBackup[Value].U;
+                           TexCoordinate.V := TexCoordinate.V + TexturesBackup[Value].V;
+                           inc(HitCounter);
+                           _VertexTransformation[Value] := v;
+                           List.Add(Value);
+                        end
+                        else
+                        begin
+                           // UNDO
+                           // Cancel merge
+                           BorderList.Assign(SavedBorderList);
+                           FaceList.Assign(SavedFaceList);
+                           BlackListedFaces.Assign(SavedBlackListedFaces);
+                        end;
+                     end;
+                  end;
+                  Value := VertexNeighbors.GetNextNeighbor;
+               end;
+            end;
+
+
+
+         end;
+         // Now we effectively find the vertex's new position.
+         _Vertices[v].X := Position.X / HitCounter;
+         _Vertices[v].Y := Position.Y / HitCounter;
+         _Vertices[v].Z := Position.Z / HitCounter;
+         _Normals[v].X := Normal.X / HitCounter;
+         _Normals[v].Y := Normal.Y / HitCounter;
+         _Normals[v].Z := Normal.Z / HitCounter;
+         _TexCoords[v].U := TexCoordinate.U / HitCounter;
+         _TexCoords[v].V := TexCoordinate.V / HitCounter;
+      end;
+   end;
+   SetLength(VerticesBackup,0);
+   SetLength(NormalsBackup,0);
+   SetLength(TexturesBackup,0);
+   List.Free;
+   BorderList.Free;
+   FaceList.Free;
+   BlackListedFaces.Free;
+   SavedBorderList.Free;
+   SavedFaceList.Free;
+   SavedBlackListedFaces.Free;
+end;
+
 {
 procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32);
 var
@@ -616,6 +797,10 @@ begin
          if BorderVertexes[v] then
          begin
             MaxAngle := FAngleBorder;
+         end
+         else
+         begin
+            MaxAngle := FAngle;
             while List.GetValue(Value) do
             begin
                Value := VertexNeighbors.GetNeighborFromID(Value);
@@ -641,70 +826,6 @@ begin
                   end;
                   Value := VertexNeighbors.GetNextNeighbor;
                end;
-            end;
-         end
-         else
-         begin
-            MaxAngle := FAngle;
-            BorderList.Clear;
-            NeighbourList.Clear;
-            AddedNeighbours.Clear;
-            while List.GetValue(Value) do
-            begin
-               // First we update the list of border vertexes.
-               Value := VertexNeighbors.GetNeighborFromID(Value);
-               while Value <> -1 do
-               begin
-                  if BorderVertexes[Value] then
-                  begin
-                     BorderList.Add(Value);
-                  end
-                  else
-                  begin
-                     if AddedNeighbours.Add(Value) then
-                     begin
-                        NeighbourList.Add(Value);
-                     end;
-                  end;
-                  Value := VertexNeighbors.GetNextNeighbor;
-               end;
-               // Now we process the non-border vertexes only.
-               Value := VertexNeighbors.GetNeighborFromID(Value);
-               while Value <> -1 do
-               begin
-                  if (_VertexTransformation[Value] = -1) and (not BorderVertexes[Value]) then
-                  begin
-                     Angle := (NormalsBackup[v].X * NormalsBackup[Value].X) + (NormalsBackup[v].Y * NormalsBackup[Value].Y) + (NormalsBackup[v].Z * NormalsBackup[Value].Z);
-                     if Angle >= MaxAngle then
-                     begin
-                        EstimatedPosition.X := (Position.X + VerticesBackup[Value].X) / HitCounter;
-                        EstimatedPosition.Y := (Position.Y + VerticesBackup[Value].Y) / HitCounter;
-                        EstimatedPosition.Z := (Position.Z + VerticesBackup[Value].Z) / HitCounter;
-                        EstimatedNormal.X := (Normal.X + NormalsBackup[Value].X) / HitCounter;
-                        EstimatedNormal.Y := (Normal.Y + NormalsBackup[Value].Y) / HitCounter;
-                        EstimatedNormal.Z := (Normal.Z + NormalsBackup[Value].Z) / HitCounter;
-
-
-
-
-                        Position.X := Position.X + VerticesBackup[Value].X;
-                        Position.Y := Position.Y + VerticesBackup[Value].Y;
-                        Position.Z := Position.Z + VerticesBackup[Value].Z;
-                        Normal.X := Normal.X + NormalsBackup[Value].X;
-                        Normal.Y := Normal.Y + NormalsBackup[Value].Y;
-                        Normal.Z := Normal.Z + NormalsBackup[Value].Z;
-                        TexCoordinate.U := TexCoordinate.U + TexturesBackup[Value].U;
-                        TexCoordinate.V := TexCoordinate.V + TexturesBackup[Value].V;
-                        inc(HitCounter);
-                        _VertexTransformation[Value] := v;
-                        List.Add(Value);
-                     end;
-                  end;
-                  Value := VertexNeighbors.GetNextNeighbor;
-               end;
-
-
-
             end;
          end;
          // Now we effectively find the vertex's new position.
@@ -725,131 +846,39 @@ begin
 end;
 }
 
-procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32);
-var
-   List : CIntegerList;
-   v, Value,HitCounter,Vertex : integer;
-   Angle, MaxAngle, Size : single;
-   Position,Normal,EstimatedPosition,EstimatedNormal: TVector3f;
-   TexCoordinate: TVector2f;
-   VerticesBackup,NormalsBackup: TAVector3f;
-   TexturesBackup: TAVector2f;
-   BorderList,NeighbourList,AddedNeighbours: CIntegerSet;
-begin
-   List := CIntegerList.Create;
-   List.UseSmartMemoryManagement(true);
-   SetLength(VerticesBackup,High(_Vertices)+1);
-   SetLength(NormalsBackup,High(_Vertices)+1);
-   SetLength(TexturesBackup,High(_Vertices)+1);
-   for v := Low(_Vertices) to High(_Vertices) do
-   begin
-      VerticesBackup[v].X := _Vertices[v].X;
-      VerticesBackup[v].Y := _Vertices[v].Y;
-      VerticesBackup[v].Z := _Vertices[v].Z;
-      NormalsBackup[v].X := _Normals[v].X;
-      NormalsBackup[v].Y := _Normals[v].Y;
-      NormalsBackup[v].Z := _Normals[v].Z;
-      TexturesBackup[v].U := _TexCoords[v].U;
-      TexturesBackup[v].V := _TexCoords[v].V;
-   end;
-   for v := Low(_Vertices) to High(_Vertices) do
-   begin
-      if _VertexTransformation[v] = -1 then
-      begin
-         // Here we look out for all neighbors that are also in -1 and merge
-         // them into one vertex.
-         Position.X := VerticesBackup[v].X;
-         Position.Y := VerticesBackup[v].Y;
-         Position.Z := VerticesBackup[v].Z;
-         Normal.X := NormalsBackup[v].X;
-         Normal.Y := NormalsBackup[v].Y;
-         Normal.Z := NormalsBackup[v].Z;
-         TexCoordinate.U := TexturesBackup[v].U;
-         TexCoordinate.V := TexturesBackup[v].V;
-         HitCounter := 1;
-         List.Add(v);
-         _VertexTransformation[v] := v;
-         if BorderVertexes[v] then
-         begin
-            MaxAngle := FAngleBorder;
-         end
-         else
-         begin
-            MaxAngle := FAngle;
-            while List.GetValue(Value) do
-            begin
-               Value := VertexNeighbors.GetNeighborFromID(Value);
-               while Value <> -1 do
-               begin
-                  if (_VertexTransformation[Value] = -1) and (BorderVertexes[v] = BorderVertexes[Value]) then
-                  begin
-                     Angle := (NormalsBackup[v].X * NormalsBackup[Value].X) + (NormalsBackup[v].Y * NormalsBackup[Value].Y) + (NormalsBackup[v].Z * NormalsBackup[Value].Z);
-                     if Angle >= MaxAngle then
-                     begin
-                        Position.X := Position.X + VerticesBackup[Value].X;
-                        Position.Y := Position.Y + VerticesBackup[Value].Y;
-                        Position.Z := Position.Z + VerticesBackup[Value].Z;
-                        Normal.X := Normal.X + NormalsBackup[Value].X;
-                        Normal.Y := Normal.Y + NormalsBackup[Value].Y;
-                        Normal.Z := Normal.Z + NormalsBackup[Value].Z;
-                        TexCoordinate.U := TexCoordinate.U + TexturesBackup[Value].U;
-                        TexCoordinate.V := TexCoordinate.V + TexturesBackup[Value].V;
-                        inc(HitCounter);
-                        _VertexTransformation[Value] := v;
-                        List.Add(Value);
-                     end;
-                  end;
-                  Value := VertexNeighbors.GetNextNeighbor;
-               end;
-            end;
-         end;
-         // Now we effectively find the vertex's new position.
-         _Vertices[v].X := Position.X / HitCounter;
-         _Vertices[v].Y := Position.Y / HitCounter;
-         _Vertices[v].Z := Position.Z / HitCounter;
-         _Normals[v].X := Normal.X / HitCounter;
-         _Normals[v].Y := Normal.Y / HitCounter;
-         _Normals[v].Z := Normal.Z / HitCounter;
-         _TexCoords[v].U := TexCoordinate.U / HitCounter;
-         _TexCoords[v].V := TexCoordinate.V / HitCounter;
-      end;
-   end;
-   SetLength(VerticesBackup,0);
-   SetLength(NormalsBackup,0);
-   SetLength(TexturesBackup,0);
-   List.Free;
-end;
-
 // Merge Vertex Utils
-function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V1,_V2,_Normal: TVector3f; var _NeighbourList,_BorderList: CIntegerSet): boolean;
+function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet): boolean;
 var
    Matrix: TMatrix;
    VertexUtils : TVertexTransformationUtils;
    V1,V2,V3,P: TVector2f;
-   BorderVert,NeighbourVert: integer;
+   BorderVert: integer;
+   NeighbourInfo: PTriangleNeighbourItem;
 begin
    // Initialize basic stuff.
    Result := false;
    VertexUtils := TVertexTransformationUtils.Create;
    // Here we grab the matrix from the normal vector of the triangle.
    Matrix := VertexUtils.GetTransformMatrixFromVector(_Normal);
-   // Now, we get the 2D positions of all vertexes.
-   V1 := VertexUtils.GetUVCoordinates(_V1,Matrix);
-   V2 := VertexUtils.GetUVCoordinates(_V2,Matrix);
+   // Now, we get the 2D positions of the vertexes.
+   V1 := VertexUtils.GetUVCoordinates(_V,Matrix);
    _BorderList.GoToFirstElement;
    while _BorderList.GetValue(BorderVert) do
    begin
       _NeighbourList.GoToFirstElement;
-      while _NeighbourList.GetValue(NeighbourVert) do
+      while _NeighbourList.GetData(Pointer(NeighbourInfo)) do
       begin
-         V3 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourVert],Matrix);
+         V2 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V1],Matrix);
+         V3 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V2],Matrix);
          P := VertexUtils.GetUVCoordinates(_Vertices[BorderVert],Matrix);
          // The border vertex will be hidden by the triangle if P is inside the
          // triangle generated by V1, V2 and V3.
          Result := IsPointInsideTriangle(V1,V2,V3,P);
          if Result then
             exit;
+         _NeighbourList.GoToNextElement;
       end;
+      _BorderList.GoToNextElement;
    end;
 
    // Free memory
@@ -919,6 +948,60 @@ begin
 
    // Check if point is in triangle
    Result := ((u > 0) and (v > 0) and (u + v < 1));
+end;
+
+procedure TMeshOptimizationTool.AddBordersNeighborsFromVertex(_vertex: integer; var _BorderList: CIntegerSet);
+var
+   Value: integer;
+begin
+   Value := VertexNeighbors.GetNeighborFromID(_Vertex);
+   while Value <> -1 do
+   begin
+      if BorderVertexes[Value] then
+      begin
+         _BorderList.Add(Value);
+      end;
+      Value := VertexNeighbors.GetNextNeighbor;
+   end;
+end;
+
+procedure TMeshOptimizationTool.AddNeighbourFaces(_Vertex: integer; var _FaceList: CTriangleNeighbourSet; var _VisitedFaces: CIntegerSet; const _Faces: auint32; _VerticesPerFace: integer);
+var
+   Value: integer;
+   Item: PTriangleNeighbourItem;
+   Vertexes: array[0..1] of PInteger;
+   i,v,vmax : integer;
+begin
+   Value := FaceNeighbors.GetNeighborFromID(_Vertex);
+   while Value <> -1 do
+   begin
+      if not _VisitedFaces.IsValueInList(Value) then
+      begin
+         Item := new(PTriangleNeighbourItem);
+         Item^.ID := Value;
+         Vertexes[0] := Addr(Item^.V1);
+         Vertexes[1] := Addr(Item^.V2);
+         i := 0;
+         v := Value * _VerticesPerFace;
+         vmax := v + _VerticesPerFace;
+         while v < vmax do
+         begin
+            if _Faces[v] <> _Vertex then
+            begin
+               Vertexes[i]^ := _Faces[v];
+               inc(i);
+            end;
+            inc(v);
+         end;
+         if not _FaceList.Add(Item) then
+         begin
+            _FaceList.Remove(Item);
+            _VisitedFaces.Add(Value);
+         end;
+         Dispose(Item);
+      end;
+      Value := FaceNeighbors.GetNextNeighbor;
+   end;
 end;
 
 

@@ -93,7 +93,9 @@ uses
   Material in 'Material.pas',
   ClassVoxelView in 'ClassVoxelView.pas',
   UI2DEditView in 'UI2DEditView.pas',
-  ClassVertexTransformationUtils in 'ClassVertexTransformationUtils.pas';
+  ClassVertexTransformationUtils in 'ClassVertexTransformationUtils.pas',
+  ClassBaseSet in 'ClassBaseSet.pas',
+  ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas';
 
 {$R *.res}
 

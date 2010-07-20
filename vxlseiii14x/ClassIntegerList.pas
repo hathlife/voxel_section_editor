@@ -15,6 +15,9 @@ type
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
+         // I/O
+         procedure LoadState(_State: PIntegerItem);
+         function SaveState:PIntegerItem;
          // Add
          procedure Add (_Value : integer);
          procedure Delete;
@@ -50,6 +53,18 @@ begin
    Last := nil;
    Active := nil;
 end;
+
+// I/O
+procedure CIntegerList.LoadState(_State: PIntegerItem);
+begin
+   Active := _State;
+end;
+
+function CIntegerList.SaveState:PIntegerItem;
+begin
+   Result := Active;
+end;
+
 
 // Add
 procedure CIntegerList.Add (_Value : integer);

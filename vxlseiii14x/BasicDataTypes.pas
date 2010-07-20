@@ -116,6 +116,12 @@ type
       Next : PIntegerItem;
    end;
 
+   TTriangleNeighbourItem = record
+      ID: integer;
+      V1,V2: integer;
+   end;
+   PTriangleNeighbourItem = ^TTriangleNeighbourItem;
+
    TGLMatrixf4 = array[0..3, 0..3] of Single;
 
    T3DIntGrid = array of array of array of integer;
@@ -124,6 +130,7 @@ type
    P3DSingleGrid = ^T3DSingleGrid;
 
    PByte = ^Byte;
+   PInteger = ^Integer;
    AInt32 = array of integer;
    AUInt32 = array of longword;
    ABool = array of boolean;

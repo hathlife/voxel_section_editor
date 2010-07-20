@@ -38,6 +38,9 @@ type
          constructor Create(_Type : byte); overload;
          destructor Destroy; override;
          procedure Clear;
+         // I/O
+         procedure LoadState(_State: PIntegerItem);
+         function SaveState:PIntegerItem;
          // Executes
          procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          // Requests
@@ -94,6 +97,17 @@ begin
    begin
       FNeighbors[i] := nil;
    end;
+end;
+
+// I/O
+procedure TNeighborDetector.LoadState(_State: PIntegerItem);
+begin
+   FRequest := _State;
+end;
+
+function TNeighborDetector.SaveState:PIntegerItem;
+begin
+   Result := FRequest;
 end;
 
 

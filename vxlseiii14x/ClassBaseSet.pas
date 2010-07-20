@@ -1,4 +1,4 @@
-unit ClassIntegerSet;
+unit ClassBaseSet;
 
 interface
 
@@ -6,30 +6,40 @@ uses BasicDataTypes;
 
 type
    TGetValueFunction = function (var _Value : integer): boolean of object;
-   CIntegerSet = class
+   PPointerItem = ^TPointerItem;
+   TPointerItem = record
+      Data: pointer;
+      Next: PPointerItem;
+   end;
+   CBaseSet = class
       private
-         Start,Last,Active : PIntegerItem;
+         Start,Last,Active : PPointerItem;
          // Constructors and Destructors
          procedure Initialize;
          // Add
-         procedure AddBlindly(_Value : integer);
+         procedure AddBlindly(_Data : pointer);
+      protected
+         // Sets
+         function SetData(const _Data: Pointer):Pointer; virtual;
+         // Misc
+         function CompareData(const _Data1,_Data2: Pointer):boolean; virtual;
+         procedure DisposeData(var _Data:Pointer); virtual;
       public
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
          procedure Reset;
          // Add
-         function Add (_Value : integer): boolean;
+         function Add (_Data : pointer): boolean;
          // Delete
          procedure Delete;
-         function Remove(_Value: integer): Boolean;
+         function Remove(_Data: Pointer): Boolean;
          procedure Clear;
-         // Sets
          // Gets
-         function GetValue (var _Value : integer): boolean;
-         function IsValueInList (_Value : integer): boolean;
+         function GetData (var _Data : pointer): boolean;
+         function IsDataInList (_Data : pointer): boolean;
          // Copies
-         procedure Assign(const _List: CIntegerSet);
+         procedure Assign(const _List: CBaseSet); virtual;
          // Misc
          procedure GoToNextElement;
          procedure GoToFirstElement;
@@ -37,39 +47,39 @@ type
 
 implementation
 
-constructor CIntegerSet.Create;
+constructor CBaseSet.Create;
 begin
    Initialize;
 end;
 
-destructor CIntegerSet.Destroy;
+destructor CBaseSet.Destroy;
 begin
    Clear;
    inherited Destroy;
 end;
 
-procedure CIntegerSet.Initialize;
+procedure CBaseSet.Initialize;
 begin
    Start := nil;
    Last := nil;
    Active := nil;
 end;
 
-procedure CIntegerSet.Reset;
+procedure CBaseSet.Reset;
 begin
    Clear;
    Initialize;
 end;
 
 // Add
-procedure CIntegerSet.AddBlindly (_Value : integer);
+procedure CBaseSet.AddBlindly (_Data : pointer);
 var
-   NewPosition,Position : PIntegerItem;
+   NewPosition,Position : PPointerItem;
    Found : boolean;
 begin
    // Now, we add the value.
    New(NewPosition);
-   NewPosition^.Value := _Value;
+   NewPosition^.Data := SetData(_Data);
    NewPosition^.Next := nil;
    if Start <> nil then
    begin
@@ -83,16 +93,16 @@ begin
    Last := NewPosition;
 end;
 
-function CIntegerSet.Add (_Value : integer): boolean;
+function CBaseSet.Add (_Data : pointer): boolean;
 var
-   NewPosition,Position : PIntegerItem;
+   NewPosition,Position : PPointerItem;
    Found : boolean;
 begin
    // First, we check it if we should add this value or not.
-   if not IsValueInList(_Value) then
+   if not IsDataInList(_Data) then
    begin
       // Now, we add the value.
-      AddBlindly(_Value);
+      AddBlindly(_Data);
       Result := true;
    end
    else
@@ -102,9 +112,9 @@ begin
 end;
 
 // Delete
-procedure CIntegerSet.Delete;
+procedure CBaseSet.Delete;
 var
-   Previous : PIntegerItem;
+   Previous : PPointerItem;
 begin
    if Active <> nil then
    begin
@@ -129,9 +139,9 @@ begin
    end;
 end;
 
-function CIntegerSet.Remove(_Value: integer): Boolean;
+function CBaseSet.Remove(_Data: Pointer): Boolean;
 var
-   Garbage,NextActive : PIntegerItem;
+   Garbage,NextActive : PPointerItem;
    Found: boolean;
 begin
    Garbage := Start;
@@ -141,7 +151,7 @@ begin
    begin
       if Garbage <> nil then
       begin
-         if Garbage^.Value = _Value then
+         if CompareData(Garbage^.Data,_Data) then
          begin
             Found := true;
             if Active <> Garbage then
@@ -165,29 +175,40 @@ begin
    end;
 end;
 
-procedure CIntegerSet.Clear;
+procedure CBaseSet.Clear;
 var
-   Garbage : PIntegerItem;
+   Garbage : PPointerItem;
 begin
    Active := Start;
    while Active <> nil do
    begin
       Garbage := Active;
       Active := Active^.Next;
-      dispose(Garbage);
+      DisposeData(Pointer(Garbage));
    end;
+   Start := nil;
    Last := nil;
 end;
 
+procedure CBaseSet.DisposeData(var _Data:Pointer);
+begin
+   // Do nothing
+end;
+
+
 // Sets
+function CBaseSet.SetData(const _Data: Pointer):Pointer;
+begin
+   Result := _Data;
+end;
 
 
 // Gets
-function CIntegerSet.GetValue (var _Value : integer): boolean;
+function CBaseSet.GetData (var _Data : pointer): boolean;
 begin
    if Active <> nil then
    begin
-      _Value := Active^.Value;
+      _Data := SetData(Active^.Data);
       Result := true;
    end
    else
@@ -196,16 +217,16 @@ begin
    end;
 end;
 
-function CIntegerSet.IsValueInList (_Value : integer): boolean;
+function CBaseSet.IsDataInList (_Data : pointer): boolean;
 var
-   Position : PIntegerItem;
+   Position : PPointerItem;
 begin
    // First, we check it if we should add this value or not.
    Position := Start;
    Result := false;
    while (Position <> nil) and (not Result) do
    begin
-      if Position^.Value <> _Value then
+      if not CompareData(Position^.Data,_Data) then
       begin
          Position := Position^.Next;
       end
@@ -217,26 +238,25 @@ begin
 end;
 
 // Copies
-procedure CIntegerSet.Assign(const _List: CIntegerSet);
+procedure CBaseSet.Assign(const _List: CBaseSet);
 var
-   Position : PIntegerItem;
+   Position : PPointerItem;
 begin
    Reset;
    Position := _List.Start;
    while Position <> nil do
    begin
-      AddBlindly(Position^.Value);
+      AddBlindly(Position^.Data);
       if _List.Active = Position then
       begin
          Active := Last;
       end;
       Position := Position^.Next;
-   end;                           
+   end;
 end;
 
-
 // Misc
-procedure CIntegerSet.GoToNextElement;
+procedure CBaseSet.GoToNextElement;
 begin
    if Active <> nil then
    begin
@@ -244,10 +264,16 @@ begin
    end
 end;
 
-procedure CIntegerSet.GoToFirstElement;
+procedure CBaseSet.GoToFirstElement;
 begin
    Active := Start;
 end;
+
+function CBaseSet.CompareData(const _Data1,_Data2: Pointer):boolean;
+begin
+   Result := _Data1 = _Data2;
+end;
+
 
 
 end.
