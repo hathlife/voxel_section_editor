@@ -2180,6 +2180,7 @@ begin
          FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / 2;
          FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / 2;
          FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / 2;
+         Normalize(FaceNormals[f]);
       end;
    end
    else if High(Normals) >= 0 then
@@ -2288,6 +2289,7 @@ begin
          Normals[v].X := Normals[v].X / HitCounter[v];
          Normals[v].Y := Normals[v].Y / HitCounter[v];
          Normals[v].Z := Normals[v].Z / HitCounter[v];
+         Normalize(Normals[v]);
       end;
    end;
    // Free memory
@@ -2320,6 +2322,7 @@ begin
             FaceNormals[f].X := (FaceNormals[f].X + Temp.X) / 2;
             FaceNormals[f].Y := (FaceNormals[f].Y + Temp.Y) / 2;
             FaceNormals[f].Z := (FaceNormals[f].Z + Temp.Z) / 2;
+            Normalize(FaceNormals[f]);
          end;
       end;
    end;
@@ -2370,6 +2373,7 @@ begin
          Normals[v].X := Normals[v].X / HitCounter[v];
          Normals[v].Y := Normals[v].Y / HitCounter[v];
          Normals[v].Z := Normals[v].Z / HitCounter[v];
+         Normalize(Normals[v]);
       end;
    end;
    // Free memory

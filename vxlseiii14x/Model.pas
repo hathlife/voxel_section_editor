@@ -87,7 +87,8 @@ type
       procedure NormalCubicSmoothModel;
       procedure NormalLanczosSmoothModel;
       // Textures
-      procedure GenerateDiffuseTexture;
+      procedure ExtractTextureAtlas; overload;
+      procedure ExtractTextureAtlas(_Angle: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -507,9 +508,14 @@ begin
 end;
 
 // Textures
-procedure TModel.GenerateDiffuseTexture;
+procedure TModel.ExtractTextureAtlas;
 begin
    LOD[CurrentLOD].ExtractTextureAtlas;
+end;
+
+procedure TModel.ExtractTextureAtlas(_Angle: single);
+begin
+   LOD[CurrentLOD].ExtractTextureAtlas(_Angle);
 end;
 
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string);

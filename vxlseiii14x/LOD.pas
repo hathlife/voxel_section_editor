@@ -69,7 +69,8 @@ type
       procedure NormalCubicSmoothLOD;
       procedure NormalLanczosSmoothLOD;
       // Textures
-      procedure ExtractTextureAtlas;
+      procedure ExtractTextureAtlas; overload;
+      procedure ExtractTextureAtlas(_Angle: single); overload;
       procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
       procedure ExportTextures(const _BaseDir, _Ext : string);
       // Transparency methods
@@ -480,6 +481,11 @@ end;
 
 // Textures
 procedure TLOD.ExtractTextureAtlas;
+begin
+   ExtractTextureAtlas(C_TEX_MIN_ANGLE);
+end;
+
+procedure TLOD.ExtractTextureAtlas(_Angle: single);
 var
    i : integer;
    Seeds: TSeedSet;
@@ -508,7 +514,7 @@ begin
    // First, we'll build the texture atlas.
    SetLength(VertsSeed,High(Mesh)+1);
    SetLength(Seeds,0);
-   TexGenerator := CTextureGenerator.Create;
+   TexGenerator := CTextureGenerator.Create(_Angle);
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);

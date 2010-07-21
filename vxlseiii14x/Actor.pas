@@ -116,7 +116,8 @@ type
       procedure NormalCubicSmoothModel;
       procedure NormalLanczosSmoothModel;
       // Textures
-      procedure GenerateDiffuseTexture;
+      procedure GenerateDiffuseTexture; overload;
+      procedure GenerateDiffuseTexture(_Angle: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -999,7 +1000,21 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.GenerateDiffuseTexture;
+         Models[i]^.ExtractTextureAtlas;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GenerateDiffuseTexture(_Angle: single);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ExtractTextureAtlas(_Angle);
       end;
    end;
    RequestUpdateWorld := true;

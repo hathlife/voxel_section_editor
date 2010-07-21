@@ -95,7 +95,8 @@ uses
   UI2DEditView in 'UI2DEditView.pas',
   ClassVertexTransformationUtils in 'ClassVertexTransformationUtils.pas',
   ClassBaseSet in 'ClassBaseSet.pas',
-  ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas';
+  ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas',
+  FormGenerateDiffuseTexture in 'FormGenerateDiffuseTexture.pas' {FrmGenerateDiffuseTexture};
 
 {$R *.res}
 

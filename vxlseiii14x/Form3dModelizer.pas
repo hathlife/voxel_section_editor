@@ -7,7 +7,7 @@ uses
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
   HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions, FormOptimizeMesh;
+  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture;
 
 type
   PFrm3DModelizer = ^TFrm3DModelizer;
@@ -124,6 +124,8 @@ type
     TextureFSFTTGA: TMenuItem;
     TextureFSFTJPG: TMenuItem;
     TextureFSFTBMP: TMenuItem;
+    TextureFXDiffuseCustom: TMenuItem;
+    procedure TextureFXDiffuseCustomClick(Sender: TObject);
     procedure TextureFSFTBMPClick(Sender: TObject);
     procedure TextureFSFTJPGClick(Sender: TObject);
     procedure TextureFSFTTGAClick(Sender: TObject);
@@ -496,6 +498,20 @@ procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
 begin
    Actor.GenerateDiffuseTexture;
    TextureFSExport.Enabled := true;
+end;
+
+procedure TFrm3DModelizer.TextureFXDiffuseCustomClick(Sender: TObject);
+var
+   Frm : TFrmGenerateDiffuseTexture;
+begin
+   Frm := TFrmGenerateDiffuseTexture.Create(self);
+   Frm.ShowModal;
+   if Frm.Apply then
+   begin
+      Actor.GenerateDiffuseTexture(Frm.Threshold);
+      TextureFSExport.Enabled := true;
+   end;
+   Frm.Release;
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmoothClick(Sender: TObject);

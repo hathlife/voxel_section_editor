@@ -23,6 +23,7 @@ type
 
    CTextureGenerator = class
       private
+         FTextureAngle: single;
          // Seeds
          function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
@@ -47,7 +48,8 @@ type
          procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
       public
          // Constructors and Destructors
-         constructor Create;
+         constructor Create; overload;
+         constructor Create(_TextureAngle: single); overload;
          destructor Destroy; override;
          procedure Initialize;
          procedure Reset;
@@ -74,6 +76,13 @@ implementation
 
 constructor CTextureGenerator.Create;
 begin
+   FTextureAngle := C_TEX_MIN_ANGLE;
+   Initialize;
+end;
+
+constructor CTextureGenerator.Create(_TextureAngle : single);
+begin
+   FTextureAngle := _TextureAngle;
    Initialize;
 end;
 
@@ -672,7 +681,7 @@ end;
 
 function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
 const
-   C_MIN_ANGLE = 0.7; // approximately cos 90'
+   C_MIN_ANGLE = 0.001; // approximately cos 90'
 var
    v,f,Value,vertex,FaceIndex : integer;
    List : CIntegerList;
@@ -788,7 +797,7 @@ begin
             begin
                // check if angle is less than 90'
                Angle := GetVectorAngle(_FaceNormals[_StartingFace],_FaceNormals[f]);
-               if Angle >= C_MIN_ANGLE then
+               if Angle >= FTextureAngle then
                begin
                   List.Add(f);
 //             end
