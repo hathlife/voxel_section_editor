@@ -99,8 +99,6 @@ end;
 
 // Angle Detector
 function TVertexTransformationUtils.GetRotationX(const _Vector: TVector3f): single;
-var
-   Distance: single;
 begin
    if _Vector.Y <> 0 then
    begin
@@ -113,13 +111,10 @@ begin
 end;
 
 function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): single;
-var
-   Distance: single;
 begin
    if (_Vector.X <> 0) then
    begin
-      Distance := sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z));
-      Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
+      Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin
