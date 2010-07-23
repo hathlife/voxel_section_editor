@@ -102,17 +102,9 @@ function TVertexTransformationUtils.GetRotationX(const _Vector: TVector3f): sing
 var
    Distance: single;
 begin
-   Distance := sqrt((_Vector.Y * _Vector.Y) + (_Vector.Z * _Vector.Z));
-   if Distance > 0 then
+   if _Vector.Y <> 0 then
    begin
-      if (_Vector.Y <> 0) then
-      begin
-         Result := CleanAngle90Radians(((-1 * _Vector.Y) / (Abs(_Vector.Y))) *  arccos(abs(_Vector.Z) / Distance));
-      end
-      else
-      begin
-         Result := C_ANGLE_NONE;//CleanAngle90Radians(-1 * arccos(abs(_Vector.Z) / Distance));
-      end;
+      Result := CleanAngleRadians(((-1 * _Vector.Y) / (Abs(_Vector.Y))) *  arccos(sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin
@@ -149,7 +141,7 @@ begin
    Result := Angle;
    if Result < 0 then
       Result := Result + 360;
-   if Result > 360 then
+   if Result >= 360 then
       Result := Result - 360;
 end;
 
@@ -159,8 +151,8 @@ const
 begin
    Result := Angle;
    if Result < 0 then
-      Result := Result + Pi;
-   if Result > C_2Pi then
+      Result := Result + C_2Pi;
+   if Result >= C_2Pi then
       Result := Result - C_2Pi;
 end;
 
@@ -173,10 +165,10 @@ begin
    Result := Angle;
    // Ensure that it is between 0 and 2Pi.
    if Result < 0 then
-      Result := Result + Pi;
+      Result := Result + C_2Pi;
    if Result > C_2Pi then
       Result := Result - C_2Pi;
-   // Now we ensure that it will be either between 3Pi/2 and Pi/2.
+   // Now we ensure that it will be either between (0, Pi/2) and (3Pi/2 and 2Pi).
    if (Result > C_PIDiv2) and (Result <= Pi) then
       Result := Pi - Result
    else if (Result > Pi) and (Result < C_3PIDiv2) then
