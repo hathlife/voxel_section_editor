@@ -116,17 +116,10 @@ function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): sing
 var
    Distance: single;
 begin
-   Distance := sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z));
-   if Distance > 0 then
+   if (_Vector.X <> 0) then
    begin
-      if (_Vector.X <> 0) then
-      begin
-         Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
-      end
-      else
-      begin
-         Result := CleanAngleRadians(-1 * arccos(_Vector.Z / Distance));
-      end;
+      Distance := sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z));
+      Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / Distance));
    end
    else
    begin
