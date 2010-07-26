@@ -15,7 +15,8 @@ void main (void)
 
    //calculate Diffuse Term:  
    vec4 Idiff = color * gl_FrontMaterial.diffuse * gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);    
-   
+   Idiff.a = color.a;
+	
 	// calculate Specular Term:
 	vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);
 	if (gl_FrontMaterial.shininess > 0.0)

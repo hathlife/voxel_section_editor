@@ -102,7 +102,7 @@ function TVertexTransformationUtils.GetRotationX(const _Vector: TVector3f): sing
 begin
    if _Vector.Y <> 0 then
    begin
-      Result := CleanAngleRadians(((-1 * _Vector.Y) / (Abs(_Vector.Y))) *  arccos(sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians(((_Vector.Y) / (Abs(_Vector.Y))) *  arccos(sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin
@@ -114,7 +114,7 @@ function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): sing
 begin
    if (_Vector.X <> 0) then
    begin
-      Result := CleanAngleRadians(((-1 * _Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin

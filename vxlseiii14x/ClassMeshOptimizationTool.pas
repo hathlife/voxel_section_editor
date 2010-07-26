@@ -9,6 +9,7 @@ ClassIntegerSet, ClassTriangleNeighbourSet, math3d;
 {$INCLUDE Global_Conditionals.inc}
 
 type
+   TAMatrix = array of TMatrix;
    TMeshOptimizationTool = class
       private
          VertexNeighbors,FaceNeighbors: TNeighborDetector;
@@ -21,9 +22,9 @@ type
          procedure DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
          // Merge Vertexes
          procedure MergeVertexes(var _Vertices, _Normals: TAVector3f; var _VertexTransformation: aint32);
-         procedure MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
+         procedure MergeVertexesWithTextures(var _Vertices, _Normals,_FaceNormals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
          // Merge Vertex Utils
-         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet): boolean; overload;
+         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
          function IsPointInsideTriangle(const _V1,_V2,_V3,_P : TVector2f): boolean;
          function Dot2D(const _V1,_V2: TVector2f): single;
          procedure AddBordersNeighborsFromVertex(_vertex: integer; var _BorderList: CIntegerSet);
@@ -124,7 +125,7 @@ begin
    end
    else
    begin
-      MergeVertexesWithTextures(_Vertices,_Normals,_TexCoords,VertexTransformation,_Faces,_VerticesPerFace);
+      MergeVertexesWithTextures(_Vertices,_Normals,_FaceNormals,_TexCoords,VertexTransformation,_Faces,_VerticesPerFace);
    end;
    // Step 3: Convert the vertexes from the faces to the new values.
    for v := Low(_Faces) to High(_Faces) do
@@ -570,7 +571,7 @@ begin
    List.Free;
 end;
 
-procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
+procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals,_FaceNormals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
 var
    List : CIntegerList;
    v, Value,HitCounter,Vertex : integer;
@@ -583,6 +584,8 @@ var
    SavedBorderList,SavedBlackListedFaces: CIntegerSet;
    FaceList,SavedFaceList: CTriangleNeighbourSet;
    State: PIntegerItem;
+   MatrixList: TAMatrix;
+   VertexUtils: TVertexTransformationUtils;
 begin
    List := CIntegerList.Create;
    List.UseSmartMemoryManagement(true);
@@ -595,6 +598,8 @@ begin
    SetLength(VerticesBackup,High(_Vertices)+1);
    SetLength(NormalsBackup,High(_Vertices)+1);
    SetLength(TexturesBackup,High(_Vertices)+1);
+   SetLength(MatrixList,High(_FaceNormals)+1);
+
    for v := Low(_Vertices) to High(_Vertices) do
    begin
       VerticesBackup[v].X := _Vertices[v].X;
@@ -606,6 +611,12 @@ begin
       TexturesBackup[v].U := _TexCoords[v].U;
       TexturesBackup[v].V := _TexCoords[v].V;
    end;
+   VertexUtils := TVertexTransformationUtils.Create;
+   for v := Low(_FaceNormals) to High(_FaceNormals) do
+   begin
+      MatrixList[v] := VertexUtils.GetTransformMatrixFromVector(_FaceNormals[v]);
+   end;
+   VertexUtils.Free;
    for v := Low(_Vertices) to High(_Vertices) do
    begin
       if _VertexTransformation[v] = -1 then
@@ -691,7 +702,7 @@ begin
                         EstimatedNormal.Y := (Normal.Y + NormalsBackup[Value].Y) / HitCounter;
                         EstimatedNormal.Z := (Normal.Z + NormalsBackup[Value].Z) / HitCounter;
                         Normalize(EstimatedNormal);
-                        if not areBorderVertexesHiddenByTriangle(VerticesBackup,EstimatedPosition,EstimatedNormal,FaceList,BorderList) then
+                        if not areBorderVertexesHiddenByTriangle(VerticesBackup,EstimatedPosition,EstimatedNormal,FaceList,BorderList,MatrixList) then
                         begin
                            // DO
                            SavedBorderList.Assign(BorderList);
@@ -850,9 +861,8 @@ end;
 }
 
 // Merge Vertex Utils
-function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet): boolean;
+function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
 var
-   Matrix: TMatrix;
    VertexUtils : TVertexTransformationUtils;
    V1,V2,V3,P: TVector2f;
    BorderVert: integer;
@@ -861,30 +871,28 @@ begin
    // Initialize basic stuff.
    Result := false;
    VertexUtils := TVertexTransformationUtils.Create;
-   // Here we grab the matrix from the normal vector of the triangle.
-   Matrix := VertexUtils.GetTransformMatrixFromVector(_Normal);
-   // Now, we get the 2D positions of the vertexes.
-   V1 := VertexUtils.GetUVCoordinates(_V,Matrix);
-   _BorderList.GoToFirstElement;
-   while _BorderList.GetValue(BorderVert) do
+   _NeighbourList.GoToFirstElement;
+   while _NeighbourList.GetData(Pointer(NeighbourInfo)) do
    begin
-      _NeighbourList.GoToFirstElement;
-      while _NeighbourList.GetData(Pointer(NeighbourInfo)) do
+      // Now, we get the 2D positions of the vertexes.
+      V1 := VertexUtils.GetUVCoordinates(_V,_NormalMatrix[NeighbourInfo^.ID]);
+      V2 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V1],_NormalMatrix[NeighbourInfo^.ID]);
+      V3 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V2],_NormalMatrix[NeighbourInfo^.ID]);
+      _BorderList.GoToFirstElement;
+      while _BorderList.GetValue(BorderVert) do
       begin
          if (BorderVert <> NeighbourInfo^.V1) and (BorderVert <> NeighbourInfo^.V2) then
          begin
-            V2 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V1],Matrix);
-            V3 := VertexUtils.GetUVCoordinates(_Vertices[NeighbourInfo^.V2],Matrix);
-            P := VertexUtils.GetUVCoordinates(_Vertices[BorderVert],Matrix);
+            P := VertexUtils.GetUVCoordinates(_Vertices[BorderVert],_NormalMatrix[NeighbourInfo^.ID]);
             // The border vertex will be hidden by the triangle if P is inside the
             // triangle generated by V1, V2 and V3.
             Result := IsPointInsideTriangle(V1,V2,V3,P);
             if Result then
                exit;
          end;
-         _NeighbourList.GoToNextElement;
+         _BorderList.GoToNextElement;
       end;
-      _BorderList.GoToNextElement;
+      _NeighbourList.GoToNextElement;
    end;
 
    // Free memory

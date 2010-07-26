@@ -14,6 +14,7 @@ void main (void)
    //calculate Diffuse Term:  
 //   vec4 Idiff = color * gl_FrontMaterial.diffuse * gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);    
 	vec4 Idiff = color * vec4(0.8, 0.8, 0.8, 1) * max(dot(N,L), 0.0);   
+	Idiff.a = color.a;
 	
 	// calculate Specular Term:
 	vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);

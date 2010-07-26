@@ -44,7 +44,7 @@ uses GlobalVars;
 constructor TMeshMaterial.Create(_ShaderBank: PShaderBank);
 begin
    SetLength(Texture,0);
-   Ambient := SetVector4f(0.2,0.2,0.2,1.0);
+   Ambient := SetVector4f(0.2,0.2,0.2,0.0);
    Diffuse := SetVector4f(0.8,0.8,0.8,1.0);
    Shininess := 0;
    Specular := SetVector4f(0,0,0,1);
