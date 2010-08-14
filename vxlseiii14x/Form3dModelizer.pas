@@ -125,6 +125,9 @@ type
     TextureFSFTJPG: TMenuItem;
     TextureFSFTBMP: TMenuItem;
     TextureFXDiffuseCustom: TMenuItem;
+    N7: TMenuItem;
+    CameraRotationAngles1: TMenuItem;
+    procedure CameraRotationAngles1Click(Sender: TObject);
     procedure TextureFXDiffuseCustomClick(Sender: TObject);
     procedure TextureFSFTBMPClick(Sender: TObject);
     procedure TextureFSFTJPGClick(Sender: TObject);
@@ -1000,6 +1003,12 @@ begin
    RemapColour.Y := RemapColourMap[8].G /255;
    RemapColour.Z := RemapColourMap[8].B /255;
    Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
+end;
+
+procedure TFrm3DModelizer.CameraRotationAngles1Click(Sender: TObject);
+begin
+   CameraRotationAngles1.Checked := not CameraRotationAngles1.Checked;
+   Env.ShowRotations := CameraRotationAngles1.Checked;
 end;
 
 procedure TFrm3DModelizer.SpeedButton2Click(Sender: TObject);

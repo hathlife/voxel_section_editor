@@ -338,7 +338,7 @@ begin
             if ShowRotations then
             begin
                glRasterPos2i(1, Height - 19);
-               glPrint(PChar('DEBUG -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Y) + ' ZRot:' + floattostr(CurrentCamera^.Rotation.Z)));
+               glPrint(PChar('Camera -  XRot:' + floattostr(CurrentCamera^.Rotation.X) + ' YRot:' + floattostr(CurrentCamera^.Rotation.Y) + ' ZRot:' + floattostr(CurrentCamera^.Rotation.Z)));
             end;
          end
          else // We are screenshoting!
@@ -583,6 +583,7 @@ var
    font: HFONT;                	                // Windows Font ID
 begin
    FontListBase := glGenLists(256);       	                // Storage For 96 Characters
+   glColor3f(FontColour.X,FontColour.Y,FontColour.Z);
    font := CreateFont(9, 0,0,0, FW_NORMAL, 0, 0, 0, OEM_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY	, FF_DONTCARE + DEFAULT_PITCH, 'Terminal');
    SelectObject(DC, font);
    wglUseFontBitmaps(DC, 0, 127, FontListBase);
@@ -595,13 +596,14 @@ end;
 
 procedure TRenderEnvironment.glPrint(_text : pchar);	                // Custom GL "Print" Routine
 begin
-  if (_Text = '') then   			        // If There's No Text
-          Exit;					        // Do Nothing
+   if (_Text = '') then   			        // If There's No Text
+      Exit;					        // Do Nothing
 
-  glPushAttrib(GL_LIST_BIT);				// Pushes The Display List Bits
-  glListBase(FontListBase);					// Sets The Base Character
-  glCallLists(length(_Text), GL_UNSIGNED_BYTE, _Text);	// Draws The Display List Text
-  glPopAttrib();								// Pops The Display List Bits
+   glPushAttrib(GL_LIST_BIT);				// Pushes The Display List Bits
+   glListBase(FontListBase);					// Sets The Base Character
+   glColor3f(FontColour.X,FontColour.Y,FontColour.Z);
+   glCallLists(length(_Text), GL_UNSIGNED_BYTE, _Text);	// Draws The Display List Text
+   glPopAttrib();								// Pops The Display List Bits
 end;
 
 procedure TRenderEnvironment.SetBackgroundColour(const _Colour: TVector3f);
@@ -621,6 +623,13 @@ begin
    FontColour.X := _Colour.X;
    FontColour.Y := _Colour.Y;
    FontColour.Z := _Colour.Z;
+   KillFont;
+   BuildFont;
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
 end;
 
 

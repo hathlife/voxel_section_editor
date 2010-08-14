@@ -430,6 +430,13 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'Whole Voxel'
         OnClick = CurrentSectionOnly1Click
       end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object CameraRotationAngles1: TMenuItem
+        Caption = 'Camera Rotation Angles'
+        OnClick = CameraRotationAngles1Click
+      end
     end
     object RenderQuality1: TMenuItem
       Caption = 'Model Quality'

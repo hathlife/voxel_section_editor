@@ -89,12 +89,9 @@ begin
 end;
 
 function TVertexTransformationUtils.GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
-var
-   TempVector: TVector3f;
 begin
-   TempVector := VectorTransform(_Position,_TransformMatrix);
-   Result.U := TempVector.X;
-   Result.V := TempVector.Y;
+   Result.U := (_Position.X * _TransformMatrix[0,0]) + (_Position.Y * _TransformMatrix[0,1]) + (_Position.Z * _TransformMatrix[0,2]);
+   Result.V := (_Position.X * _TransformMatrix[1,0]) + (_Position.Y * _TransformMatrix[1,1]) + (_Position.Z * _TransformMatrix[1,2]);
 end;
 
 // Angle Detector
@@ -102,7 +99,7 @@ function TVertexTransformationUtils.GetRotationX(const _Vector: TVector3f): sing
 begin
    if _Vector.Y <> 0 then
    begin
-      Result := CleanAngleRadians(((_Vector.Y) / (Abs(_Vector.Y))) *  arccos(sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians((-1 * (_Vector.Y) / (Abs(_Vector.Y))) *  arccos(sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin
@@ -114,7 +111,7 @@ function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): sing
 begin
    if (_Vector.X <> 0) then
    begin
-      Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians((-1 * (_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else
    begin

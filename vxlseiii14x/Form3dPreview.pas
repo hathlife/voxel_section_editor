@@ -81,6 +81,9 @@ type
     SaveModelDialog: TSaveDialog;
     RenderQuads: TMenuItem;
     RenderTriangles: TMenuItem;
+    N5: TMenuItem;
+    CameraRotationAngles1: TMenuItem;
+    procedure CameraRotationAngles1Click(Sender: TObject);
     procedure RenderTrianglesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
     procedure SaveModelAsClick(Sender: TObject);
@@ -468,6 +471,12 @@ end;
 procedure TFrm3DPReview.Cameo41Click(Sender: TObject);
 begin
    Camera.SetRotation(17,15,0);
+end;
+
+procedure TFrm3DPReview.CameraRotationAngles1Click(Sender: TObject);
+begin
+   CameraRotationAngles1.Checked := not CameraRotationAngles1.Checked;
+   Env.ShowRotations := CameraRotationAngles1.Checked;
 end;
 
 procedure TFrm3DPReview.ake360DegScreenshots1Click(Sender: TObject);

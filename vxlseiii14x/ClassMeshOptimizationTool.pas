@@ -24,7 +24,7 @@ type
          procedure MergeVertexes(var _Vertices, _Normals: TAVector3f; var _VertexTransformation: aint32);
          procedure MergeVertexesWithTextures(var _Vertices, _Normals,_FaceNormals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
          // Merge Vertex Utils
-         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
+         function areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
          function IsPointInsideTriangle(const _V1,_V2,_V3,_P : TVector2f): boolean;
          function Dot2D(const _V1,_V2: TVector2f): single;
          procedure AddBordersNeighborsFromVertex(_vertex: integer; var _BorderList: CIntegerSet);
@@ -698,11 +698,7 @@ begin
                         EstimatedPosition.X := (Position.X + VerticesBackup[Value].X) / HitCounter;
                         EstimatedPosition.Y := (Position.Y + VerticesBackup[Value].Y) / HitCounter;
                         EstimatedPosition.Z := (Position.Z + VerticesBackup[Value].Z) / HitCounter;
-                        EstimatedNormal.X := (Normal.X + NormalsBackup[Value].X) / HitCounter;
-                        EstimatedNormal.Y := (Normal.Y + NormalsBackup[Value].Y) / HitCounter;
-                        EstimatedNormal.Z := (Normal.Z + NormalsBackup[Value].Z) / HitCounter;
-                        Normalize(EstimatedNormal);
-                        if not areBorderVertexesHiddenByTriangle(VerticesBackup,EstimatedPosition,EstimatedNormal,FaceList,BorderList,MatrixList) then
+                        if not areBorderVertexesHiddenByTriangle(VerticesBackup,EstimatedPosition,FaceList,BorderList,MatrixList) then
                         begin
                            // DO
                            SavedBorderList.Assign(BorderList);
@@ -861,7 +857,7 @@ end;
 }
 
 // Merge Vertex Utils
-function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V,_Normal: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
+function TMeshOptimizationTool.areBorderVertexesHiddenByTriangle(var _Vertices: TAVector3f; _V: TVector3f; var _NeighbourList: CTriangleNeighbourSet; var _BorderList: CIntegerSet; const _NormalMatrix : TAMatrix): boolean;
 var
    VertexUtils : TVertexTransformationUtils;
    V1,V2,V3,P: TVector2f;
@@ -925,12 +921,12 @@ begin
    dot12 := dot2D(v1, v2);
 
    // Compute barycentric coordinates
-   invDenom := 1 / (dot00 * dot11 - dot01 * dot01);
-   u := (dot11 * dot02 - dot01 * dot12) * invDenom;
-   v := (dot00 * dot12 - dot01 * dot02) * invDenom;
+   invDenom := 1 / ((dot00 * dot11) - (dot01 * dot01));
+   u := ((dot11 * dot02) - (dot01 * dot12)) * invDenom;
+   v := ((dot00 * dot12) - (dot01 * dot02)) * invDenom;
 
    // Check if point is in triangle
-   Result := ((u > 0) and (v > 0) and (u + v < 1));
+   Result := ((u > 0) and (v > 0) and ((u + v) < 1));
 end;
 
 procedure TMeshOptimizationTool.AddBordersNeighborsFromVertex(_vertex: integer; var _BorderList: CIntegerSet);

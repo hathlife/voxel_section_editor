@@ -17,7 +17,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.100';
+   APPLICATION_VER = '1.39.101';
    APPLICATION_BETA = true;
 
 type
@@ -353,6 +353,7 @@ type
     CropSection1: TMenuItem;
     AutoUpdate1: TMenuItem;
     RepairProgram1: TMenuItem;
+    Display1: TMenuItem;
     procedure RepairProgram1Click(Sender: TObject);
     procedure AutoUpdate1Click(Sender: TObject);
     procedure CropSection1Click(Sender: TObject);

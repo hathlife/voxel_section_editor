@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 631
+  ClientHeight = 650
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 605
+    Height = 624
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 586
+    ExplicitHeight = 605
   end
   object Panel1: TPanel
     Left = 0
@@ -434,6 +434,13 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Whole Voxel'
         Checked = True
         OnClick = CurrentSectionOnly1Click
+      end
+      object N7: TMenuItem
+        Caption = '-'
+      end
+      object CameraRotationAngles1: TMenuItem
+        Caption = 'Camera Rotation Angles'
+        OnClick = CameraRotationAngles1Click
       end
     end
     object RenderQuality1: TMenuItem

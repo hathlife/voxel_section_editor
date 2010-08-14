@@ -6878,6 +6878,13 @@ object FrmMain: TFrmMain
         OnClick = Cameo41Click
       end
     end
+    object Display1: TMenuItem
+      Caption = 'Display'
+      object DebugMode1: TMenuItem
+        Caption = 'Show Camera Rotation'
+        OnClick = DebugMode1Click
+      end
+    end
     object RemapColour1: TMenuItem
       Caption = 'Remap Colour'
       object Gold1: TMenuItem
@@ -6924,10 +6931,6 @@ object FrmMain: TFrmMain
     end
     object Options2: TMenuItem
       Caption = 'Options'
-      object DebugMode1: TMenuItem
-        Caption = 'Debug Mode'
-        OnClick = DebugMode1Click
-      end
       object Disable3dView1: TMenuItem
         Caption = 'Disable 3d View'
         OnClick = Display3dView1Click
