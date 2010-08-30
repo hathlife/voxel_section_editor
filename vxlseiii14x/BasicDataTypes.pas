@@ -128,6 +128,8 @@ type
    P3DIntGrid = ^T3DIntGrid;
    T3DSingleGrid = array of array of array of single;
    P3DSingleGrid = ^T3DSingleGrid;
+   T4DIntGrid = array of array of array of array of integer;
+   P4DIntGrid = ^T4DIntGrid;
 
    PByte = ^Byte;
    PInteger = ^Integer;

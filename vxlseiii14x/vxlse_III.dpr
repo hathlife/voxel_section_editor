@@ -96,7 +96,8 @@ uses
   ClassVertexTransformationUtils in 'ClassVertexTransformationUtils.pas',
   ClassBaseSet in 'ClassBaseSet.pas',
   ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas',
-  FormGenerateDiffuseTexture in 'FormGenerateDiffuseTexture.pas' {FrmGenerateDiffuseTexture};
+  FormGenerateDiffuseTexture in 'FormGenerateDiffuseTexture.pas' {FrmGenerateDiffuseTexture},
+  VoxelMeshGenerator in 'VoxelMeshGenerator.pas';
 
 {$R *.res}
 
