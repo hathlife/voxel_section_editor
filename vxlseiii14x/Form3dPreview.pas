@@ -83,6 +83,7 @@ type
     RenderTriangles: TMenuItem;
     N5: TMenuItem;
     CameraRotationAngles1: TMenuItem;
+    Render4Triangles: TMenuItem;
     procedure CameraRotationAngles1Click(Sender: TObject);
     procedure RenderTrianglesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
@@ -149,6 +150,7 @@ type
     procedure Gold1Click(Sender: TObject);
     procedure DarkSky1Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
+    procedure Render4TrianglesClick(Sender: TObject);
   private
     { Private declarations }
     RemapColour : TVector3f;
@@ -564,11 +566,22 @@ begin
    Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
 end;
 
+procedure TFrm3DPReview.Render4TrianglesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   Render4Triangles.Checked := true;
+   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+end;
+
 procedure TFrm3DPReview.RenderCubesClick(Sender: TObject);
 begin
    RenderCubes.Checked := true;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
@@ -578,6 +591,7 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := true;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
@@ -587,6 +601,7 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := true;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
@@ -596,6 +611,7 @@ begin
    RenderCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
 end;
@@ -780,6 +796,10 @@ begin
    else if RenderQuads.Checked then
    begin
       Result := C_QUALITY_LANCZOS_QUADS;
+   end
+   else if Render4Triangles.Checked then
+   begin
+      Result := C_QUALITY_2LANCZOS_4TRIS;
    end
    else if RenderTriangles.Checked then
    begin

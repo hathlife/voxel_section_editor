@@ -449,6 +449,10 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
       end
+      object Render4Triangles: TMenuItem
+        Caption = 'High Poly 3D Model (Medium)'
+        OnClick = Render4TrianglesClick
+      end
       object RenderTriangles: TMenuItem
         Caption = 'Triangle Smoothed 3D Model (Medium)'
         OnClick = RenderTrianglesClick

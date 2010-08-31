@@ -127,6 +127,7 @@ type
     TextureFXDiffuseCustom: TMenuItem;
     N7: TMenuItem;
     CameraRotationAngles1: TMenuItem;
+    Render4Triangles: TMenuItem;
     procedure CameraRotationAngles1Click(Sender: TObject);
     procedure TextureFXDiffuseCustomClick(Sender: TObject);
     procedure TextureFSFTBMPClick(Sender: TObject);
@@ -226,6 +227,7 @@ type
     procedure Gold1Click(Sender: TObject);
     procedure DarkSky1Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
+    procedure Render4TrianglesClick(Sender: TObject);
   private
     { Private declarations }
     RemapColour : TVector3f;
@@ -758,12 +760,25 @@ begin
    Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
 end;
 
+procedure TFrm3DModelizer.Render4TrianglesClick(Sender: TObject);
+begin
+   RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   Render4Triangles.Checked := true;
+   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(true);
+end;
+
 procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
 begin
    RenderCubes.Checked := true;
    RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
@@ -775,6 +790,7 @@ begin
    RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := true;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
@@ -786,6 +802,7 @@ begin
    RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := true;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
@@ -797,6 +814,7 @@ begin
    RenderVisibleCubes.Checked := false;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(true);
@@ -808,6 +826,7 @@ begin
    RenderVisibleCubes.Checked := true;
    RenderQuads.Checked := false;
    RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
@@ -1087,6 +1106,10 @@ begin
    begin
       Result := C_QUALITY_LANCZOS_QUADS;
    end
+   else if Render4Triangles.Checked then
+   begin
+      Result := C_QUALITY_2LANCZOS_4TRIS;
+   end
    else if RenderTriangles.Checked then
    begin
       Result := C_QUALITY_LANCZOS_TRIS;
@@ -1111,6 +1134,10 @@ begin
    else if RenderQuads.Checked then
    begin
       RenderQuadsClick(nil);
+   end
+   else if Render4Triangles.Checked then
+   begin
+      Render4TrianglesClick(nil);
    end
    else if RenderTriangles.Checked then
    begin

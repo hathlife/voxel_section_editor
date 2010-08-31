@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 650
+  ClientHeight = 669
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 624
+    Height = 643
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 605
+    ExplicitHeight = 624
   end
   object Panel1: TPanel
     Left = 0
@@ -456,6 +456,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object RenderQuads: TMenuItem
         Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
+      end
+      object Render4Triangles: TMenuItem
+        Caption = 'High Poly 3D Model (Medium)'
+        OnClick = Render4TrianglesClick
       end
       object RenderTriangles: TMenuItem
         Caption = 'Triangle Smoothed 3D Model (Medium)'

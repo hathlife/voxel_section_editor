@@ -26,6 +26,7 @@ type
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
+         procedure LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Sets
@@ -285,6 +286,16 @@ begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
       end;
+      C_QUALITY_2LANCZOS_4TRIS:
+      begin
+         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+         MeshLanczosSmooth;
+         MeshLanczosSmooth;
+         ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
+         ColourLanczosSmooth;
+         ColourLanczosSmooth;
+      end;
       C_QUALITY_LANCZOS_TRIS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
@@ -347,6 +358,16 @@ begin
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
+      end;
+      C_QUALITY_2LANCZOS_4TRIS:
+      begin
+         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+         MeshLanczosSmooth;
+         MeshLanczosSmooth;
+         ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
+         ColourLanczosSmooth;
+         ColourLanczosSmooth;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
@@ -424,6 +445,42 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('LoadFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TMesh.LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
+var
+   MeshGen: TVoxelMeshGenerator;
+   NumVertices,HitCounter : longword;
+   VoxelMap: TVoxelMap;
+   VertexMap : array of array of array of integer;
+   FaceMap : array of array of array of array of integer;
+   VertexTransformation: aint32;
+   x, y, z, i : longword;
+   V : TVoxelUnpacked;
+   v1, v2 : boolean;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   VerticesPerFace := 3;
+   FaceType := GL_TRIANGLES;
+   SetNormalsType(C_NORMALS_PER_FACE);
+
+   // This is the complex part of the thing. We'll map all vertices and faces
+   // and make a model out of it.
+   MeshGen := TVoxelMeshGenerator.Create;
+   MeshGen.LoadTrianglesFromVisibleVoxels(_Voxel,_Palette,Vertices,Faces,Colours,Normals,FaceNormals,TexCoords,NumVoxels,NumFaces,VerticesPerFace);
+   MeshGen.Free;
+
+   CommonVoxelLoadingActions(_Voxel);
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('LoadTrisFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;
@@ -2766,7 +2823,7 @@ var
    OldFaceNormals: TAVector3f;
    OldColours: TAVector4f;
    OldNumFaces : integer;
-   i : integer;
+   i,j,k : integer;
 begin
    if VerticesPerFace <> 3 then
    begin
@@ -2781,14 +2838,23 @@ begin
          OldFaces[i] := Faces[i];
       // Now we transform each quad in two tris.
       SetLength(Faces,Round((High(Faces)+1)*1.5));
-      for i := 0 to OldNumFaces - 1 do
+      i := 0;
+      j := 0;
+      while i <= High(Faces) do
       begin
-         Faces[i*6] := OldFaces[i*4];
-         Faces[(i*6)+1] := OldFaces[(i*4)+1];
-         Faces[(i*6)+2] := OldFaces[(i*4)+2];
-         Faces[(i*6)+3] := OldFaces[(i*4)+2];
-         Faces[(i*6)+4] := OldFaces[(i*4)+3];
-         Faces[(i*6)+5] := OldFaces[(i*4)];
+         Faces[i] := OldFaces[j];
+         inc(i);
+         Faces[i] := OldFaces[j+1];
+         inc(i);
+         Faces[i] := OldFaces[j+2];
+         inc(i);
+         Faces[i] := OldFaces[j+2];
+         inc(i);
+         Faces[i] := OldFaces[j+3];
+         inc(i);
+         Faces[i] := OldFaces[j];
+         inc(i);
+         inc(j,4);
       end;
       SetLength(OldFaces,0);
       // Go with Colour conversion.
@@ -2805,16 +2871,21 @@ begin
          end;
          // Duplicate the colours.
          SetLength(Colours,NumFaces);
-         for i := 0 to OldNumFaces - 1 do
+         i := 0;
+         j := 0;
+         while j < OldNumFaces do
          begin
-            Colours[i*2].X := OldColours[i].X;
-            Colours[i*2].Y := OldColours[i].Y;
-            Colours[i*2].Z := OldColours[i].Z;
-            Colours[i*2].W := OldColours[i].W;
-            Colours[(i*2)+1].X := OldColours[i].X;
-            Colours[(i*2)+1].Y := OldColours[i].Y;
-            Colours[(i*2)+1].Z := OldColours[i].Z;
-            Colours[(i*2)+1].W := OldColours[i].W;
+            Colours[i].X := OldColours[j].X;
+            Colours[i].Y := OldColours[j].Y;
+            Colours[i].Z := OldColours[j].Z;
+            Colours[i].W := OldColours[j].W;
+            inc(i);
+            Colours[i].X := OldColours[j].X;
+            Colours[i].Y := OldColours[j].Y;
+            Colours[i].Z := OldColours[j].Z;
+            Colours[i].W := OldColours[j].W;
+            inc(i);
+            inc(j);
          end;
          SetLength(OldColours,0);
       end;

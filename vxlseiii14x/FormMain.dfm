@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 990
+  ClientHeight = 766
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,7 +29,7 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 971
+    Height = 747
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
@@ -37,7 +37,7 @@ object FrmMain: TFrmMain
       Left = 1
       Top = 26
       Width = 152
-      Height = 944
+      Height = 720
       Align = alLeft
       TabOrder = 0
       object lblSection: TLabel
@@ -1262,7 +1262,7 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 944
+      Height = 720
       Align = alRight
       TabOrder = 1
       object CnvView2: TPaintBox
@@ -1561,7 +1561,7 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 503
-      Height = 944
+      Height = 720
       Align = alClient
       TabOrder = 2
       object lblView0: TLabel
@@ -1586,7 +1586,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 485
-        Height = 913
+        Height = 689
         Align = alClient
         PopupMenu = MainViewPopup
         OnMouseDown = CnvView0MouseDown
@@ -1595,6 +1595,7 @@ object FrmMain: TFrmMain
         OnPaint = CnvView0Paint
         ExplicitLeft = 0
         ExplicitTop = 8
+        ExplicitHeight = 913
       end
       object TopBarImageHolder: TImage
         Left = 0
@@ -4279,7 +4280,7 @@ object FrmMain: TFrmMain
         Left = 486
         Top = 14
         Width = 16
-        Height = 913
+        Height = 689
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4291,7 +4292,7 @@ object FrmMain: TFrmMain
       end
       object Panel5: TPanel
         Left = 1
-        Top = 927
+        Top = 703
         Width = 501
         Height = 16
         Align = alBottom
@@ -4499,7 +4500,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 971
+    Top = 747
     Width = 862
     Height = 19
     Panels = <
