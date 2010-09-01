@@ -129,6 +129,8 @@ type
     CameraRotationAngles1: TMenuItem;
     Render4Triangles: TMenuItem;
     EnableShaders1: TMenuItem;
+    RenderVisibleTriangles: TMenuItem;
+    procedure RenderVisibleTrianglesClick(Sender: TObject);
     procedure EnableShaders1Click(Sender: TObject);
     procedure CameraRotationAngles1Click(Sender: TObject);
     procedure TextureFXDiffuseCustomClick(Sender: TObject);
@@ -238,6 +240,7 @@ type
     // These are for Take 360 Animation
     btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
     procedure ClearRemapClicks;
+    procedure UncheckModelQuality;
   public
     { Public declarations }
     AnimationState : boolean;
@@ -771,59 +774,39 @@ end;
 
 procedure TFrm3DModelizer.Render4TrianglesClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderVisibleCubes.Checked := false;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
+   UncheckModelQuality;
    Render4Triangles.Checked := true;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(true);
 end;
 
 procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
 begin
+   UncheckModelQuality;
    RenderCubes.Checked := true;
-   RenderVisibleCubes.Checked := false;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderVisibleCubes.Checked := false;
-   RenderQuads.Checked := false;
+   UncheckModelQuality;
    RenderModel.Checked := true;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderVisibleCubes.Checked := false;
+   UncheckModelQuality;
    RenderQuads.Checked := true;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
 end;
 
 procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderVisibleCubes.Checked := false;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
+   UncheckModelQuality;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(true);
@@ -831,12 +814,16 @@ end;
 
 procedure TFrm3DModelizer.RenderVisibleCubesClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
+   UncheckModelQuality;
    RenderVisibleCubes.Checked := true;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
+   Actor.SetQuality(GetQualityModel);
+   SetColourPerVertex(false);
+end;
+
+procedure TFrm3DModelizer.RenderVisibleTrianglesClick(Sender: TObject);
+begin
+   UncheckModelQuality;
+   RenderVisibleTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
    SetColourPerVertex(false);
 end;
@@ -1111,6 +1098,10 @@ begin
    begin
       Result := C_QUALITY_HIGH;
    end
+   else if RenderVisibleTriangles.Checked then
+   begin
+      Result := C_QUALITY_VISIBLE_TRIS;
+   end
    else if RenderQuads.Checked then
    begin
       Result := C_QUALITY_LANCZOS_QUADS;
@@ -1139,6 +1130,10 @@ begin
    if RenderModel.checked then
    begin
       RenderModelClick(nil);
+   end
+   else if RenderVisibleTriangles.Checked then
+   begin
+      RenderVisibleTrianglesClick(nil);
    end
    else if RenderQuads.Checked then
    begin
@@ -1170,6 +1165,17 @@ begin
    ColourFXConvertFaceToVertexHS.Enabled := not _value;
    ColourFXConvertFaceToVertexLS.Enabled := not _value;
    ColourFXConvertVertexToFace.Enabled := _value;
+end;
+
+procedure TFrm3DModelizer.UncheckModelQuality;
+begin
+   RenderCubes.Checked := false;
+   RenderVisibleCubes.Checked := false;
+   RenderVisibleTriangles.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
+   RenderTriangles.Checked := false;
 end;
 
 end.

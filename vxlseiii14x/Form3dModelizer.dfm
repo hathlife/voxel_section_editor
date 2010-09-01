@@ -457,6 +457,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Visible Cubes (Very Low)'
         OnClick = RenderVisibleCubesClick
       end
+      object RenderVisibleTriangles: TMenuItem
+        Caption = 'Visible Triangle Cubes (Low)'
+        OnClick = RenderVisibleTrianglesClick
+      end
       object RenderQuads: TMenuItem
         Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
