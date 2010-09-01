@@ -12,6 +12,7 @@ type
    TVector4f = record
       X, Y, Z, W : single;
    end;
+   PVector4f = ^TVector4f;
 
    TAVector4f = array of TVector4f;
    PAVector4f = ^TAVector4f;
@@ -19,6 +20,7 @@ type
    TVector3f = record
       X, Y, Z : single;
    end;
+   PVector3f = ^TVector3f;
 
    TAVector3f = array of TVector3f;
    PAVector3f = ^TAVector3f;

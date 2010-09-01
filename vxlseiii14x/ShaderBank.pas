@@ -9,6 +9,8 @@ type
       private
          Items : array of TShaderBankItem;
          ShaderDirectory : string;
+         ActivateShaders: boolean;
+         ShaderSupport: boolean;
          // Constructors and Destructors
          procedure Clear;
          // I/O
@@ -23,6 +25,9 @@ type
          function Load(const _VertexFilename, _FragmentFilename: string): PShaderBankItem; overload;
          // Gets
          function Get(_Type: integer): PShaderBankItem;
+         function isShaderEnabled: boolean;
+         // Set
+         procedure EnableShaders(_value: boolean);
          // Deletes
          procedure Delete(const _Shader : PShaderBankItem);
    end;
@@ -44,6 +49,13 @@ begin
       // Add Phong Shaders.
       Load('phong');
       Load('phong_1tex');
+      ActivateShaders := true;
+      ShaderSupport := true;
+   end
+   else
+   begin
+      ActivateShaders := false;
+      ShaderSupport := false;
    end;
 end;
 
@@ -99,6 +111,24 @@ begin
    if _Type <= High(Items) then
    begin
       Result := @Items[_Type];
+   end;
+end;
+
+function TShaderBank.isShaderEnabled: boolean;
+begin
+   Result := ActivateShaders;
+end;
+
+// Sets
+procedure TShaderBank.EnableShaders(_value: boolean);
+var
+   i : integer;
+   value: boolean;
+begin
+   ActivateShaders := _value and ShaderSupport;
+   for i := Low(Items) to High(Items) do
+   begin
+      Items[i].SetAuthorization(ActivateShaders);
    end;
 end;
 

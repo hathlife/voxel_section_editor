@@ -47,6 +47,7 @@ type
       procedure ProcessNextFrame;
       procedure RebuildActor;
       procedure RebuildCurrentMeshes;
+      procedure Refresh;
       // Gets
       function GetRequestUpdateWorld: boolean;
       // Sets
@@ -284,6 +285,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.RebuildCurrentLOD;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.Refresh;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.RefreshModel;
       end;
    end;
    RequestUpdateWorld := true;

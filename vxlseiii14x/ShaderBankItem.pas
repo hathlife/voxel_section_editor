@@ -8,7 +8,7 @@ type
    TShaderBankItem = class
       private
          Counter: longword;
-         IsVertexCompiled,IsFragmentCompiled,IsLinked, IsRunning : boolean;
+         IsAuthorized,IsVertexCompiled,IsFragmentCompiled,IsLinked, IsRunning : boolean;
          ProgramID, VertexID, FragmentID : GLUInt;
       public
          // Constructor and Destructor
@@ -19,6 +19,8 @@ type
          function IsProgramLinked: boolean;
          function IsVertexShaderCompiled: boolean;
          function IsFragmentShaderCompiled: boolean;
+         // Sets
+         procedure SetAuthorization(_value: boolean);
          // Uses
          procedure UseProgram;
          procedure DeactivateProgram;
@@ -47,6 +49,7 @@ begin
    IsFragmentCompiled := false;
    IsLinked := false;
    IsRunning := false;
+   IsAuthorized := false;
    VertexID := 0;
    FragmentID := 0;
    ProgramID := 0;
@@ -138,6 +141,7 @@ begin
       GetMem(Compiled,4);
       glGetProgramiv(ProgramID,GL_LINK_STATUS,Compiled);
       IsLinked := Compiled^ <> 0;
+      IsAuthorized := IsLinked;
       FreeMem(Compiled);
       if not IsLinked then
       begin
@@ -211,10 +215,16 @@ begin
    Result := IsFragmentCompiled;
 end;
 
+// Sets
+procedure TShaderBankItem.SetAuthorization(_value: boolean);
+begin
+   isAuthorized := _value;
+end;
+
 // Uses
 procedure TShaderBankItem.UseProgram;
 begin
-   if IsLinked and (not IsRunning) then
+   if IsLinked and (not IsRunning) and (isAuthorized) then
    begin
       glUseProgram(ProgramID);
       IsRunning := true;

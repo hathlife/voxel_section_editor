@@ -77,6 +77,7 @@ type
          procedure RenderNormals;
          procedure RenderColours;
          procedure ForceRefresh;
+         procedure ForceRefreshActors;
          procedure SetIsEnabled(_value: boolean);
 
          // Adds
@@ -84,6 +85,10 @@ type
          function AddActor: PActor;
          procedure RemoveCamera(var _Camera : PCamera);
          procedure RemoveActor(var _Actor : PActor);
+
+         // Shader related
+         function IsShaderEnabled: boolean;
+         procedure EnableShaders(_value: boolean);
 
          // Miscelaneuos Text Related
          procedure BuildFont;
@@ -449,6 +454,19 @@ begin
    FUpdateWorld := true;
 end;
 
+procedure TRenderEnvironment.ForceRefreshActors;
+var
+   Actor : PActor;
+begin
+   Actor := ActorList;
+   while Actor <> nil do
+   begin
+      Actor^.Refresh;
+      Actor := Actor^.Next;
+   end;
+   FUpdateWorld := true;
+end;
+
 procedure TRenderEnvironment.SetIsEnabled(_value: boolean);
 begin
    IsEnabled := _value;
@@ -628,6 +646,23 @@ begin
    // Due to texture caching, the background colour will only update in the second
    // render.
    FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
+end;
+
+// Shaders related
+function TRenderEnvironment.IsShaderEnabled: boolean;
+begin
+   Result := ShaderBank.isShaderEnabled;
+end;
+
+
+procedure TRenderEnvironment.EnableShaders(_value: boolean);
+begin
+   ShaderBank.EnableShaders(_value);
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   ForceRefreshActors;
    Render;
    FUpdateWorld := true;
 end;

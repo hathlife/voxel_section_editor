@@ -128,6 +128,8 @@ type
     N7: TMenuItem;
     CameraRotationAngles1: TMenuItem;
     Render4Triangles: TMenuItem;
+    EnableShaders1: TMenuItem;
+    procedure EnableShaders1Click(Sender: TObject);
     procedure CameraRotationAngles1Click(Sender: TObject);
     procedure TextureFXDiffuseCustomClick(Sender: TObject);
     procedure TextureFSFTBMPClick(Sender: TObject);
@@ -267,6 +269,7 @@ begin
    Env.BackgroundColour := SetVector(140/255,170/255,235/255);
    Env.FontColour := SetVector(1,1,1);
    Camera := Env.CurrentCamera^;
+   EnableShaders1.Checked := Env.IsShaderEnabled;
 
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
@@ -347,6 +350,12 @@ procedure TFrm3DModelizer.Panel2MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
    MouseButton :=0;
+end;
+
+procedure TFrm3DModelizer.EnableShaders1Click(Sender: TObject);
+begin
+   Env.EnableShaders(not EnableShaders1.Checked);
+   EnableShaders1.Checked := Env.IsShaderEnabled;
 end;
 
 procedure TFrm3DModelizer.Exit1Click(Sender: TObject);

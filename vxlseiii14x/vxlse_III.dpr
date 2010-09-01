@@ -97,7 +97,8 @@ uses
   ClassBaseSet in 'ClassBaseSet.pas',
   ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas',
   FormGenerateDiffuseTexture in 'FormGenerateDiffuseTexture.pas' {FrmGenerateDiffuseTexture},
-  VoxelMeshGenerator in 'VoxelMeshGenerator.pas';
+  VoxelMeshGenerator in 'VoxelMeshGenerator.pas',
+  ClassVector3fSet in 'ClassVector3fSet.pas';
 
 {$R *.res}
 

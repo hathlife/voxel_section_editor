@@ -38,6 +38,7 @@ type
          // Gets
          function GetData (var _Data : pointer): boolean;
          function IsDataInList (_Data : pointer): boolean;
+         function isEmpty: boolean;
          // Copies
          procedure Assign(const _List: CBaseSet); virtual;
          // Misc
@@ -216,6 +217,12 @@ begin
       Result := false;
    end;
 end;
+
+function CBaseSet.isEmpty: boolean;
+begin
+   Result := Start = nil;
+end;
+
 
 function CBaseSet.IsDataInList (_Data : pointer): boolean;
 var

@@ -17,7 +17,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.102';
+   APPLICATION_VER = '1.39.103';
    APPLICATION_BETA = true;
 
 type
@@ -696,6 +696,7 @@ begin
    Actor := Env.AddActor;
    Camera := Env.CurrentCamera^;
    GlobalVars.Render.SetFPS(Config.FPSCap);
+   Env.EnableShaders(false);
    SetIsEditable(False);
    //FrmMain.DoubleBuffered := true;
    //MainPaintPanel.DoubleBuffered := true;

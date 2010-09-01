@@ -7,7 +7,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
-      ClassMeshOptimizationTool, Material, VoxelMeshGenerator;
+      ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -281,6 +281,10 @@ begin
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
       end;
+      C_QUALITY_VISIBLE_TRIS:
+      begin
+         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+      end;
       C_QUALITY_LANCZOS_QUADS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
@@ -353,6 +357,10 @@ begin
       C_QUALITY_VISIBLE_CUBED:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
+      end;
+      C_QUALITY_VISIBLE_TRIS:
+      begin
+         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
       end;
       C_QUALITY_LANCZOS_QUADS:
       begin
@@ -1664,17 +1672,18 @@ end;
 
 procedure TMesh.ReNormalizePerVertex;
 var
-   HitCounter: array of integer;
+   DifferentNormalsList: array of CVector3fSet;
    i,f,v,v1 : integer;
    MaxVerticePerFace: integer;
    Normals1,Normals2 : TVector3f;
+   Normal : PVector3f;
 begin
-   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(DifferentNormalsList,High(Vertices)+1);
    SetLength(Normals,High(Vertices)+1);
    // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
+   for i := Low(DifferentNormalsList) to High(DifferentNormalsList) do
    begin
-      HitCounter[i] := 0;
+      DifferentNormalsList[i] := CVector3fSet.Create;
       Normals[i].X := 0;
       Normals[i].Y := 0;
       Normals[i].Z := 0;
@@ -1686,15 +1695,18 @@ begin
    begin
       for f := 0 to NumFaces-1 do
       begin
-         Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+         Normal := new (PVector3f);
+         Normal^ := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
 
          // check all vertexes from the face.
          for v := 0 to MaxVerticePerFace do
          begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + Normals1.X;
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + Normals1.Y;
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + Normals1.Z;
-            inc(HitCounter[Faces[v1+v]]);
+            if DifferentNormalsList[Faces[v1+v]].Add(Normal) then
+            begin
+               Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + Normal^.X;
+               Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + Normal^.Y;
+               Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + Normal^.Z;
+            end;
          end;
          inc(v1,VerticesPerFace);
       end;
@@ -1705,14 +1717,19 @@ begin
       begin
          Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
          Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
-
+         Normal := new (PVector3f);
+         Normal^.X := ((Normals1.X + Normals2.X) / 2);
+         Normal^.Y := ((Normals1.Y + Normals2.Y) / 2);
+         Normal^.Z := ((Normals1.Z + Normals2.Z) / 2);
          // check all vertexes from the face.
          for v := 0 to MaxVerticePerFace do
          begin
-            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + ((Normals1.X + Normals2.X) / 2);
-            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + ((Normals1.Y + Normals2.Y) / 2);
-            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + ((Normals1.Z + Normals2.Z) / 2);
-            inc(HitCounter[Faces[v1+v]]);
+            if DifferentNormalsList[Faces[v1+v]].Add(Normal) then
+            begin
+               Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + Normal^.X;
+               Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + Normal^.Y;
+               Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + Normal^.Z;
+            end;
          end;
          inc(v1,VerticesPerFace);
       end;
@@ -1720,13 +1737,14 @@ begin
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      if HitCounter[v] > 0 then
+      if not DifferentNormalsList[v].isEmpty then
       begin
          Normalize(Normals[v]);
       end;
+      DifferentNormalsList[v].Free;
    end;
    // Free memory
-   SetLength(HitCounter,0);
+   SetLength(DifferentNormalsList,0);
 end;
 
 procedure TMesh.ReNormalizeFaces;
@@ -1767,16 +1785,17 @@ end;
 
 procedure TMesh.TransformFaceToVertexNormals;
 var
-   HitCounter: array of integer;
+   DifferentNormalsList: array of CVector3fSet;
    i,f,v,v1 : integer;
    MaxVerticePerFace: integer;
+   Normal : PVector3f;
 begin
-   SetLength(HitCounter,High(Vertices)+1);
+   SetLength(DifferentNormalsList,High(Vertices)+1);
    SetLength(Normals,High(Vertices)+1);
    // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
+   for i := Low(DifferentNormalsList) to High(DifferentNormalsList) do
    begin
-      HitCounter[i] := 0;
+      DifferentNormalsList[i] := CVector3fSet.Create;
       Normals[i].X := 0;
       Normals[i].Y := 0;
       Normals[i].Z := 0;
@@ -1786,26 +1805,33 @@ begin
    v1 := 0;
    for f := 0 to NumFaces-1 do
    begin
+      Normal := new(PVector3f);
+      Normal^.X := FaceNormals[f].X;
+      Normal^.Y := FaceNormals[f].Y;
+      Normal^.Z := FaceNormals[f].Z;
       // check all vertexes from the face.
       for v := 0 to MaxVerticePerFace do
       begin
-         Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + FaceNormals[f].X;
-         Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + FaceNormals[f].Y;
-         Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + FaceNormals[f].Z;
-         inc(HitCounter[Faces[v1+v]]);
+         if DifferentNormalsList[Faces[v1+v]].Add(Normal) then
+         begin
+            Normals[Faces[v1+v]].X := Normals[Faces[v1+v]].X + Normal^.X;
+            Normals[Faces[v1+v]].Y := Normals[Faces[v1+v]].Y + Normal^.Y;
+            Normals[Faces[v1+v]].Z := Normals[Faces[v1+v]].Z + Normal^.Z;
+         end;
       end;
       inc(v1,VerticesPerFace);
    end;
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
-      if HitCounter[v] > 0 then
+      if not DifferentNormalsList[v].isEmpty then
       begin
          Normalize(Normals[v]);
       end;
+      DifferentNormalsList[v].Free;
    end;
    // Free memory
-   SetLength(HitCounter,0);
+   SetLength(DifferentNormalsList,0);
 end;
 
 procedure TMesh.ConvertFaceToVertexNormals;
