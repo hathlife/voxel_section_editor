@@ -437,6 +437,22 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'Camera Rotation Angles'
         OnClick = CameraRotationAngles1Click
       end
+      object FillMode1: TMenuItem
+        Caption = 'Fill Mode'
+        object DisplayFMSolid: TMenuItem
+          Caption = 'Solid'
+          Checked = True
+          OnClick = DisplayFMSolidClick
+        end
+        object DisplayFMWireframe: TMenuItem
+          Caption = 'Wireframe'
+          OnClick = DisplayFMWireframeClick
+        end
+        object DisplayFMPointCloud: TMenuItem
+          Caption = 'Point Cloud'
+          OnClick = DisplayFMPointCloudClick
+        end
+      end
     end
     object RenderQuality1: TMenuItem
       Caption = 'Model Quality'

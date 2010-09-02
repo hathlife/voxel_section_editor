@@ -6885,6 +6885,22 @@ object FrmMain: TFrmMain
         Caption = 'Show Camera Rotation'
         OnClick = DebugMode1Click
       end
+      object FillMode1: TMenuItem
+        Caption = 'Fill Mode'
+        object DisplayFMSolid: TMenuItem
+          Caption = 'Solid'
+          Checked = True
+          OnClick = DisplayFMSolidClick
+        end
+        object DisplayFMWireframe: TMenuItem
+          Caption = 'Wireframe'
+          OnClick = DisplayFMWireframeClick
+        end
+        object DisplayFMPointCloud: TMenuItem
+          Caption = 'Point Cloud'
+          OnClick = DisplayFMPointCloudClick
+        end
+      end
     end
     object RemapColour1: TMenuItem
       Caption = 'Remap Colour'

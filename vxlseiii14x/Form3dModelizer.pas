@@ -130,6 +130,13 @@ type
     Render4Triangles: TMenuItem;
     EnableShaders1: TMenuItem;
     RenderVisibleTriangles: TMenuItem;
+    FillMode1: TMenuItem;
+    DisplayFMSolid: TMenuItem;
+    DisplayFMWireframe: TMenuItem;
+    DisplayFMPointCloud: TMenuItem;
+    procedure DisplayFMPointCloudClick(Sender: TObject);
+    procedure DisplayFMWireframeClick(Sender: TObject);
+    procedure DisplayFMSolidClick(Sender: TObject);
     procedure RenderVisibleTrianglesClick(Sender: TObject);
     procedure EnableShaders1Click(Sender: TObject);
     procedure CameraRotationAngles1Click(Sender: TObject);
@@ -241,6 +248,7 @@ type
     btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
     procedure ClearRemapClicks;
     procedure UncheckModelQuality;
+    procedure UncheckFillMode;
   public
     { Public declarations }
     AnimationState : boolean;
@@ -1020,6 +1028,27 @@ begin
    Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
 end;
 
+procedure TFrm3DModelizer.DisplayFMPointCloudClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMPointCloud.Checked := true;
+   Env.SetPolygonMode(GL_POINT);
+end;
+
+procedure TFrm3DModelizer.DisplayFMSolidClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMSolid.Checked := true;
+   Env.SetPolygonMode(GL_FILL);
+end;
+
+procedure TFrm3DModelizer.DisplayFMWireframeClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMWireframe.Checked := true;
+   Env.SetPolygonMode(GL_LINE);
+end;
+
 procedure TFrm3DModelizer.CameraRotationAngles1Click(Sender: TObject);
 begin
    CameraRotationAngles1.Checked := not CameraRotationAngles1.Checked;
@@ -1177,5 +1206,13 @@ begin
    Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
 end;
+
+procedure TFrm3DModelizer.UncheckFillMode;
+begin
+   DisplayFMSolid.Checked := false;
+   DisplayFMWireframe.Checked := false;
+   DisplayFMPointCloud.Checked := false;
+end;
+
 
 end.

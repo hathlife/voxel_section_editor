@@ -84,6 +84,13 @@ type
     N5: TMenuItem;
     CameraRotationAngles1: TMenuItem;
     Render4Triangles: TMenuItem;
+    FillMode1: TMenuItem;
+    DisplayFMSolid: TMenuItem;
+    DisplayFMWireframe: TMenuItem;
+    DisplayFMPointCloud: TMenuItem;
+    procedure DisplayFMSolidClick(Sender: TObject);
+    procedure DisplayFMWireframeClick(Sender: TObject);
+    procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure CameraRotationAngles1Click(Sender: TObject);
     procedure RenderTrianglesClick(Sender: TObject);
     procedure RenderQuadsClick(Sender: TObject);
@@ -159,6 +166,8 @@ type
     // These are for Take 360 Animation
     btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
     procedure ClearRemapClicks;
+    procedure UncheckModelQuality;
+    procedure UncheckFillMode;
   public
     { Public declarations }
     AnimationState : boolean;
@@ -569,50 +578,35 @@ end;
 
 procedure TFrm3DPReview.Render4TrianglesClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
+   UncheckModelQuality;
    Render4Triangles.Checked := true;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderCubesClick(Sender: TObject);
 begin
+   UncheckModelQuality;
    RenderCubes.Checked := true;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderModelClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderQuads.Checked := false;
+   UncheckModelQuality;
    RenderModel.Checked := true;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderQuadsClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
+   UncheckModelQuality;
    RenderQuads.Checked := true;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
-   RenderTriangles.Checked := false;
    Actor.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderTrianglesClick(Sender: TObject);
 begin
-   RenderCubes.Checked := false;
-   RenderQuads.Checked := false;
-   RenderModel.Checked := false;
-   Render4Triangles.Checked := false;
+   UncheckModelQuality;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
 end;
@@ -722,6 +716,27 @@ begin
    Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
 end;
 
+procedure TFrm3DPReview.DisplayFMPointCloudClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMPointCloud.Checked := true;
+   Env.SetPolygonMode(GL_POINT);
+end;
+
+procedure TFrm3DPReview.DisplayFMSolidClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMSolid.Checked := true;
+   Env.SetPolygonMode(GL_FILL);
+end;
+
+procedure TFrm3DPReview.DisplayFMWireframeClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMWireframe.Checked := true;
+   Env.SetPolygonMode(GL_LINE);
+end;
+
 procedure TFrm3DPReview.SpeedButton2Click(Sender: TObject);
 begin
    Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-150);
@@ -810,6 +825,22 @@ begin
    begin
       Result := C_QUALITY_CUBED;
    end;
+end;
+
+procedure TFrm3DPReview.UncheckModelQuality;
+begin
+   RenderCubes.Checked := false;
+   RenderQuads.Checked := false;
+   RenderModel.Checked := false;
+   Render4Triangles.Checked := false;
+   RenderTriangles.Checked := false;
+end;
+
+procedure TFrm3DPReview.UncheckFillMode;
+begin
+   DisplayFMSolid.Checked := false;
+   DisplayFMWireframe.Checked := false;
+   DisplayFMPointCloud.Checked := false;
 end;
 
 

@@ -17,7 +17,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.103';
+   APPLICATION_VER = '1.39.104';
    APPLICATION_BETA = true;
 
 type
@@ -354,6 +354,13 @@ type
     AutoUpdate1: TMenuItem;
     RepairProgram1: TMenuItem;
     Display1: TMenuItem;
+    FillMode1: TMenuItem;
+    DisplayFMSolid: TMenuItem;
+    DisplayFMWireframe: TMenuItem;
+    DisplayFMPointCloud: TMenuItem;
+    procedure DisplayFMPointCloudClick(Sender: TObject);
+    procedure DisplayFMWireframeClick(Sender: TObject);
+    procedure DisplayFMSolidClick(Sender: TObject);
     procedure RepairProgram1Click(Sender: TObject);
     procedure AutoUpdate1Click(Sender: TObject);
     procedure CropSection1Click(Sender: TObject);
@@ -604,6 +611,7 @@ type
     procedure BuildUsedColoursArray;
     function CharToStr: string;
     procedure ApplyPalette(const _Filename: string);
+    procedure UncheckFillMode;
   public
     { Public declarations }
     {IsEditable,}IsVXLLoading : boolean;
@@ -4512,6 +4520,34 @@ begin
       if @Application.OnIdle = nil then
          Application.OnIdle := Idle;
    end;
+end;
+
+procedure TFrmMain.DisplayFMPointCloudClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMPointCloud.Checked := true;
+   Env.SetPolygonMode(GL_POINT);
+end;
+
+procedure TFrmMain.DisplayFMSolidClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMSolid.Checked := true;
+   Env.SetPolygonMode(GL_FILL);
+end;
+
+procedure TFrmMain.DisplayFMWireframeClick(Sender: TObject);
+begin
+   UncheckFillMode;
+   DisplayFMWireframe.Checked := true;
+   Env.SetPolygonMode(GL_LINE);
+end;
+
+procedure TFrmMain.UncheckFillMode;
+begin
+   DisplayFMSolid.Checked := false;
+   DisplayFMWireframe.Checked := false;
+   DisplayFMPointCloud.Checked := false;
 end;
 
 procedure TFrmMain.NewAutoNormals1Click(Sender: TObject);

@@ -52,6 +52,7 @@ type
          // Debug related.
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
          IsEnabled : boolean;
+         PolygonMode: integer;
          // Screenshot & Animation related.
          ScreenTexture : cardinal;
          ScreenType : TScreenshotType;
@@ -96,6 +97,7 @@ type
          procedure glPrint(_text : pchar);
          procedure SetBackgroundColour(const _Colour: TVector3f);
          procedure SetFontColour(const _Colour: TVector3f);
+         procedure SetPolygonMode(const _value: integer);
 
          // Screenshot related
          function GetScreenShot : TBitmap;
@@ -141,6 +143,7 @@ begin
    glEnable(GL_DEPTH_TEST);                 // Enable Depth Buffer
    glDepthFunc(GL_LESS);		           // The Type Of Depth Test To Do
    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);   //Realy Nice perspective calculations
+   PolygonMode := GL_FILL;
    // Build font
    BuildFont;
    // Enable lighting
@@ -269,6 +272,8 @@ begin
 
    if FUpdateWorld then
    begin
+      glPolygonMode(GL_FRONT_AND_BACK,PolygonMode);
+
       FUpdateWorld := false;
       CurrentCamera^.MoveCamera;
       CurrentCamera^.RotateCamera;
@@ -315,6 +320,7 @@ begin
       glPushMatrix;
          glLoadIdentity;
          // Draw texture caching.
+         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
          glEnable(GL_TEXTURE_2D);
          glColor4f(1,1,1,0);
          DrawCacheTexture(ScreenTexture,0,0,Width,Height,GetPow2Size(Width),GetPow2Size(Height));
@@ -649,6 +655,17 @@ begin
    Render;
    FUpdateWorld := true;
 end;
+
+procedure TRenderEnvironment.SetPolygonMode(const _value: integer);
+begin
+   PolygonMode := _Value;
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
+end;
+
 
 // Shaders related
 function TRenderEnvironment.IsShaderEnabled: boolean;
