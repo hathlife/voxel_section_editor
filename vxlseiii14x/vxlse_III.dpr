@@ -98,7 +98,10 @@ uses
   ClassTriangleNeighbourSet in 'ClassTriangleNeighbourSet.pas',
   FormGenerateDiffuseTexture in 'FormGenerateDiffuseTexture.pas' {FrmGenerateDiffuseTexture},
   VoxelMeshGenerator in 'VoxelMeshGenerator.pas',
-  ClassVector3fSet in 'ClassVector3fSet.pas';
+  ClassVector3fSet in 'ClassVector3fSet.pas',
+  MeshPluginBase in 'MeshPluginBase.pas',
+  NormalsMeshPlugin in 'NormalsMeshPlugin.pas',
+  RenderingMachine in 'RenderingMachine.pas';
 
 {$R *.res}
 

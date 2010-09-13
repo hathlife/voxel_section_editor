@@ -137,6 +137,7 @@ type
    PInteger = ^Integer;
    AInt32 = array of integer;
    AUInt32 = array of longword;
+   PAUint32 = ^AUInt32;
    ABool = array of boolean;
    AFloat = array of single;
    TByteMap = array of array of byte;
