@@ -11,6 +11,7 @@ type
          AllowUpdate: boolean;
          AllowRender: boolean;
          // Constructors and destructors
+         destructor Destroy; override;
          procedure Initialize(); virtual;
          procedure Clear(); virtual;
          procedure Reset();
@@ -22,6 +23,12 @@ type
 implementation
 
 // Constructors and destructors
+destructor TMeshPluginBase.Destroy;
+begin
+   Clear;
+   inherited Destroy;
+end;
+
 procedure TMeshPluginBase.Initialize;
 begin
    AllowUpdate := true;

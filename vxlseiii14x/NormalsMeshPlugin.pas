@@ -3,7 +3,7 @@ unit NormalsMeshPlugin;
 interface
 
 uses MeshPluginBase, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
-   dglOpenGL;
+   dglOpenGL, RenderingMachine;
 
 type
    TNormalsMeshPlugin = class (TMeshPluginBase)
@@ -18,6 +18,7 @@ type
          Vertices: TAVector3f;
          Faces: auint32;
          Colours: TAVector4f;
+         Render: TRenderingMachine;
          // Mesh related
          procedure BuildMesh();
          procedure BuildNormalsLine(_ID: integer);
@@ -28,6 +29,7 @@ type
       public
          constructor Create(_NormalsType,_VerticesPerFace: byte; const _Vertices, _Normals: TAVector3f; const _Faces: AUint32);
          procedure Initialize; override;
+         procedure Clear; override;
    end;
 
 
@@ -49,12 +51,22 @@ end;
 procedure TNormalsMeshPlugin.Initialize;
 begin
    inherited Initialize;
+   Render := TRenderingMachine.Create;
    DoUpdate;
+end;
+
+procedure TNormalsMeshPlugin.Clear;
+begin
+   Render.Free;
+   SetLength(Colours,0);
+   SetLength(Vertices,0);
+   SetLength(Faces,0);
 end;
 
 procedure TNormalsMeshPlugin.DoUpdate;
 begin
    BuildMesh;
+   Render.ForceRefresh;
 end;
 
 // Rendering related.
@@ -129,6 +141,9 @@ end;
 procedure TNormalsMeshPlugin.DoRender;
 begin
    // do nothing
+   Render.StartRender;
+   Render.RenderWithoutNormalsAndWithColoursPerVertex(Vertices,Colours,Faces,FaceType,2,NumNormals);
+   Render.FinishRender(SetVector(0,0,0));
 end;
 
 end.

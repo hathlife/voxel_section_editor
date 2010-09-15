@@ -9,9 +9,13 @@ type
       public
          List : integer;
          IsGeneratingList: boolean;
+         // constructors and destructors.
+         constructor Create;
+         destructor Destroy; override;
          // Render basics
          procedure StartRender();
          procedure FinishRender(const _TranslatePosition: TVector3f);
+         procedure ForceRefresh;
          // Rendering modes
          procedure RenderWithoutNormalsAndColours(const _Vertices: TAVector3f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
          procedure RenderWithVertexNormalsAndNoColours(const _Vertices, _Normals: TAVector3f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
@@ -29,6 +33,19 @@ type
 
 implementation
 
+// constructors and destructors.
+constructor TRenderingMachine.Create;
+begin
+   List := C_LIST_NONE;
+end;
+
+destructor TRenderingMachine.Destroy;
+begin
+   ForceRefresh;
+   inherited Destroy;
+end;
+
+// Render basics
 procedure TRenderingMachine.StartRender();
 begin
    if List = C_LIST_NONE then
@@ -48,6 +65,7 @@ begin
    // Move accordingly to the bounding box position.
    glTranslatef(_TranslatePosition.X, _TranslatePosition.Y, _TranslatePosition.Z);
    glCallList(List);
+   isGeneratingList := false;
 end;
 
 procedure TRenderingMachine.RenderWithoutNormalsAndColours(const _Vertices: TAVector3f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
@@ -428,6 +446,15 @@ begin
          end;
       glEnd();
    end;
+end;
+
+procedure TRenderingMachine.ForceRefresh;
+begin
+   if List > C_LIST_NONE then
+   begin
+      glDeleteLists(List,1);
+   end;
+   List := C_LIST_NONE;
 end;
 
 
