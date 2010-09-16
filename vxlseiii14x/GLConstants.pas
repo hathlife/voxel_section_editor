@@ -65,6 +65,10 @@ const
    // Texture minimum angle
    C_TEX_MIN_ANGLE = 0.7; // approximately cos 45'
 
+   // Mesh Plugins
+   C_MPL_BASE = 0;
+   C_MPL_NORMALS = 1;
+
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (

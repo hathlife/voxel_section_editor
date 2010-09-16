@@ -7,7 +7,8 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       VoxelModelizer, BasicConstants, Math, ClassNeighborDetector,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
-      ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet;
+      ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
+      MeshPluginBase, NormalsMeshPlugin;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -99,6 +100,8 @@ type
          List : Integer;
          // GUI
          IsSelected : boolean;
+         // Additional Features
+         Plugins: TAMeshPluginBase;
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank); overload;
          constructor Create(const _Mesh : TMesh); overload;
@@ -187,6 +190,11 @@ type
          procedure MeshOptimizationIgnoreColours(_Angle : single);
          procedure ConvertQuadsToTris;
 
+         // Plugins
+         procedure AddNormalsPlugin;
+         procedure RemoveNormalsPlugin;
+         procedure ClearPlugins;
+
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
    end;
@@ -246,6 +254,7 @@ begin
    IsSelected := false;
    Next := -1;
    Son := -1;
+   SetLength(Plugins,0);
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
@@ -337,6 +346,7 @@ begin
    SetLength(FaceNormals,0);
    SetLength(TexCoords,0);
    ClearMaterials;
+   ClearPlugins;
 end;
 
 
@@ -557,6 +567,7 @@ begin
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    AddMaterial;
    Opened := true;
+   SetLength(Plugins,0);
 end;
 
 // Mesh Effects.
@@ -2183,6 +2194,8 @@ end;
 
 // Rendering methods.
 procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
+var
+   p : integer;
 begin
    if IsVisible and Opened then
    begin
@@ -2205,6 +2218,10 @@ begin
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
       glCallList(List);
+      for p := Low(Plugins) to High(Plugins) do
+      begin
+         Plugins[p].Render;
+      end;
    end;
 end;
 
@@ -2554,12 +2571,18 @@ end;
 
 // Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
 procedure TMesh.ForceRefresh;
+var
+   p : integer;
 begin
    if List > C_LIST_NONE then
    begin
       glDeleteLists(List,1);
    end;
    List := C_LIST_NONE;
+   for p := Low(Plugins) to High(Plugins) do
+   begin
+      Plugins[p].Update;
+   end;
 end;
 
 // Copies
@@ -2696,6 +2719,38 @@ begin
       Materials[i].Free;
    end;
    SetLength(Materials,0);
+end;
+
+// Plugins
+procedure TMesh.AddNormalsPlugin;
+begin
+   SetLength(Plugins,High(Plugins)+2);
+   Plugins[High(Plugins)] := TNormalsMeshPlugin.Create(Addr(NormalsType),Addr(VerticesPerFace),Vertices,Normals,Faces);
+end;
+
+procedure TMesh.RemoveNormalsPlugin;
+var
+   p: integer;
+begin
+   for p := Low(Plugins) to High(Plugins) do
+   begin
+      if Plugins[p].PluginType = C_MPL_NORMALS then
+      begin
+         Plugins[p].Free;
+
+      end;
+   end;
+end;
+
+procedure TMesh.ClearPlugins;
+var
+   p: integer;
+begin
+   for p := Low(Plugins) to High(Plugins) do
+   begin
+      Plugins[p].Free;
+   end;
+   SetLength(Plugins,0);
 end;
 
 // Miscelaneous

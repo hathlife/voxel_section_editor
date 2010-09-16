@@ -8,8 +8,8 @@ uses MeshPluginBase, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions
 type
    TNormalsMeshPlugin = class (TMeshPluginBase)
       private
-         MeshNormalsType: byte;
-         MeshVerticesPerFace: byte;
+         MeshNormalsType: pbyte;
+         MeshVerticesPerFace: pbyte;
          MeshVertices: PAVector3f;
          MeshFaces: PAUInt32;
          MeshNormals: PAVector3f;
@@ -27,7 +27,7 @@ type
          procedure DoRender(); override;
          procedure DoUpdate(); override;
       public
-         constructor Create(_NormalsType,_VerticesPerFace: byte; const _Vertices, _Normals: TAVector3f; const _Faces: AUint32);
+         constructor Create(_NormalsType,_VerticesPerFace: pbyte; const _Vertices, _Normals: TAVector3f; const _Faces: AUint32);
          procedure Initialize; override;
          procedure Clear; override;
    end;
@@ -36,8 +36,9 @@ type
 
 implementation
 
-constructor TNormalsMeshPlugin.Create(_NormalsType,_VerticesPerFace: byte; const _Vertices, _Normals: TAVector3f; const _Faces: AUint32);
+constructor TNormalsMeshPlugin.Create(_NormalsType,_VerticesPerFace: pbyte; const _Vertices, _Normals: TAVector3f; const _Faces: AUint32);
 begin
+   FPluginType := C_MPL_NORMALS;
    MeshNormalsType := _NormalsType;
    MeshVerticesPerFace := _VerticesPerFace;
    MeshVertices := PAVector3f(Addr(_Vertices));
@@ -99,17 +100,17 @@ var
    BasePosition: TVector3f;
    i,maxi : integer;
 begin
-   if MeshNormalsType = C_NORMALS_PER_VERTEX then
+   if MeshNormalsType^ = C_NORMALS_PER_VERTEX then
    begin
       BasePosition.X := (MeshVertices^)[_ID].X + (MeshNormals^)[_ID].X;
       BasePosition.Y := (MeshVertices^)[_ID].Y + (MeshNormals^)[_ID].Y;
       BasePosition.Z := (MeshVertices^)[_ID].Z + (MeshNormals^)[_ID].Z;
    end
-   else if MeshNormalsType = C_NORMALS_PER_FACE then
+   else if MeshNormalsType^ = C_NORMALS_PER_FACE then
    begin
       BasePosition := SetVector(0,0,0);
-      i := _ID * MeshVerticesPerFace;
-      maxi := i + MeshVerticesPerFace - 1;
+      i := _ID * MeshVerticesPerFace^;
+      maxi := i + MeshVerticesPerFace^ - 1;
       while i <= maxi do
       begin
          BasePosition.X := BasePosition.X + (MeshVertices^)[i].X;
