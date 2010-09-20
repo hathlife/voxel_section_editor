@@ -101,7 +101,7 @@ type
          // GUI
          IsSelected : boolean;
          // Additional Features
-         Plugins: TAMeshPluginBase;
+         Plugins: PMeshPluginBase;
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank); overload;
          constructor Create(const _Mesh : TMesh); overload;
@@ -254,7 +254,7 @@ begin
    IsSelected := false;
    Next := -1;
    Son := -1;
-   SetLength(Plugins,0);
+   Plugins := nil;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
@@ -567,7 +567,7 @@ begin
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    AddMaterial;
    Opened := true;
-   SetLength(Plugins,0);
+   Plugins := nil;
 end;
 
 // Mesh Effects.
@@ -2195,7 +2195,7 @@ end;
 // Rendering methods.
 procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
 var
-   p : integer;
+   Plugin: PMeshPluginBase;
 begin
    if IsVisible and Opened then
    begin
@@ -2218,9 +2218,11 @@ begin
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
       glCallList(List);
-      for p := Low(Plugins) to High(Plugins) do
+      Plugin := Plugins;
+      while Plugin <> nil do
       begin
-         Plugins[p].Render;
+         Plugin^.Render;
+         Plugin := Plugin^.Next;
       end;
    end;
 end;
@@ -2572,16 +2574,18 @@ end;
 // Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
 procedure TMesh.ForceRefresh;
 var
-   p : integer;
+   Plugin: PMeshPluginBase;
 begin
    if List > C_LIST_NONE then
    begin
       glDeleteLists(List,1);
    end;
    List := C_LIST_NONE;
-   for p := Low(Plugins) to High(Plugins) do
+   Plugin := Plugins;
+   while Plugin <> nil do
    begin
-      Plugins[p].Update;
+      Plugin^.Update(Addr(self));
+      Plugin := Plugin^.Next;
    end;
 end;
 
@@ -2723,34 +2727,60 @@ end;
 
 // Plugins
 procedure TMesh.AddNormalsPlugin;
+var
+   NewPlugin,Plugin : PMeshPluginBase;
 begin
-   SetLength(Plugins,High(Plugins)+2);
-   Plugins[High(Plugins)] := TNormalsMeshPlugin.Create(Addr(NormalsType),Addr(VerticesPerFace),Vertices,Normals,Faces);
+   new(NewPlugin);
+   NewPlugin^ := TNormalsMeshPlugin.Create();
+   Plugin := Plugins;
+   if Plugin <> nil then
+   begin
+      while Plugin^.Next <> nil do
+      begin
+         Plugin := Plugin^.Next;
+      end;
+      Plugin^.Next := NewPlugin;
+   end
+   else
+   begin
+      Plugins := NewPlugin;
+   end;
+   ForceRefresh;
 end;
 
 procedure TMesh.RemoveNormalsPlugin;
 var
    p: integer;
+   Plugin,DisposedPlugin : PMeshPluginBase;
 begin
-   for p := Low(Plugins) to High(Plugins) do
+   Plugin := Plugins;
+   while Plugin <> nil do
    begin
-      if Plugins[p].PluginType = C_MPL_NORMALS then
+      DisposedPlugin := Plugin;
+      Plugin := Plugin^.Next;
+      if DisposedPlugin^.PluginType = C_MPL_NORMALS then
       begin
-         Plugins[p].Free;
-
+         if DisposedPlugin = Plugins then
+            Plugins := Plugin;
+         DisposedPlugin^.Free;
+         DisposedPlugin := nil;
       end;
    end;
+   ForceRefresh;
 end;
 
 procedure TMesh.ClearPlugins;
 var
-   p: integer;
+   Plugin,DisposedPlugin : PMeshPluginBase;
 begin
-   for p := Low(Plugins) to High(Plugins) do
+   Plugin := Plugins;
+   while Plugin <> nil do
    begin
-      Plugins[p].Free;
+      DisposedPlugin := Plugin;
+      Plugin := Plugin^.Next;
+      DisposedPlugin^.Free;
+      DisposedPlugin := nil;
    end;
-   SetLength(Plugins,0);
 end;
 
 // Miscelaneous

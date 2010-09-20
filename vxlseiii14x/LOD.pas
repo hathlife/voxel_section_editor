@@ -87,6 +87,10 @@ type
       procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
+
+      // Mesh Plugins
+      procedure AddNormalsPlugin;
+      procedure RemoveNormalsPlugin;
    end;
 
 implementation
@@ -702,6 +706,27 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].ConvertQuadsToTris;
+   end;
+end;
+
+// Mesh Plugins
+procedure TLOD.AddNormalsPlugin;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].AddNormalsPlugin;
+   end;
+end;
+
+procedure TLOD.RemoveNormalsPlugin;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].RemoveNormalsPlugin;
    end;
 end;
 

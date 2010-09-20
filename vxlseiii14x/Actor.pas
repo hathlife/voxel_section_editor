@@ -130,6 +130,9 @@ type
       procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
+      // Mesh Plugins
+      procedure AddNormalsPlugin;
+      procedure RemoveNormalsPlugin;
    end;
 
 implementation
@@ -1148,6 +1151,36 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ConvertQuadsToTris;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+// Mesh Plugins
+
+procedure TActor.AddNormalsPlugin;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.AddNormalsPlugin;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.RemoveNormalsPlugin;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.RemoveNormalsPlugin;
       end;
    end;
    RequestUpdateWorld := true;

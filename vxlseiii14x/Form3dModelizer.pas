@@ -134,6 +134,8 @@ type
     DisplayFMSolid: TMenuItem;
     DisplayFMWireframe: TMenuItem;
     DisplayFMPointCloud: TMenuItem;
+    DisplayNormalVectors1: TMenuItem;
+    procedure DisplayNormalVectors1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
     procedure DisplayFMSolidClick(Sender: TObject);
@@ -1047,6 +1049,19 @@ begin
    UncheckFillMode;
    DisplayFMWireframe.Checked := true;
    Env.SetPolygonMode(GL_LINE);
+end;
+
+procedure TFrm3DModelizer.DisplayNormalVectors1Click(Sender: TObject);
+begin
+   DisplayNormalVectors1.Checked := not DisplayNormalVectors1.Checked;
+   if DisplayNormalVectors1.Checked then
+   begin
+      Actor.AddNormalsPlugin;
+   end
+   else
+   begin
+      Actor.RemoveNormalsPlugin;
+   end;
 end;
 
 procedure TFrm3DModelizer.CameraRotationAngles1Click(Sender: TObject);

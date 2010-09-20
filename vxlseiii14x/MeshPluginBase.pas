@@ -5,15 +5,17 @@ interface
 uses GlConstants;
 
 type
+   PMeshPluginBase = ^TMeshPluginBase;
    TMeshPluginBase = class
       protected
          FPluginType : integer;
          procedure DoRender(); virtual;
-         procedure DoUpdate(); virtual;
+         procedure DoUpdate(_MeshAddress: Pointer); virtual;
          function GetPluginType: integer;
       public
          AllowUpdate: boolean;
          AllowRender: boolean;
+         Next: PMeshPluginBase;
          // Constructors and destructors
          constructor Create;
          destructor Destroy; override;
@@ -22,11 +24,10 @@ type
          procedure Reset();
          // Rendering functions
          procedure Render();
-         procedure Update();
+         procedure Update(_MeshAddress: Pointer);
          // properties
          property PluginType: integer read GetPluginType;
    end;
-   PMeshPluginBase = ^TMeshPluginBase;
    TAMeshPluginBase = array of TMeshPluginBase;
    PAMeshPluginBase = ^TAMeshPluginBase;
 
@@ -75,15 +76,15 @@ begin
    // do nothing
 end;
 
-procedure TMeshPluginBase.Update;
+procedure TMeshPluginBase.Update(_MeshAddress: Pointer);
 begin
    if AllowUpdate then
    begin
-      DoUpdate;
+      DoUpdate(_MeshAddress);
    end;
 end;
 
-procedure TMeshPluginBase.DoUpdate;
+procedure TMeshPluginBase.DoUpdate(_MeshAddress: Pointer);
 begin
    // do nothing
 end;
