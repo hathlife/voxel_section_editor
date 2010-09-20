@@ -121,9 +121,9 @@ var
 begin
    if MeshNormalsType = C_NORMALS_PER_VERTEX then
    begin
-      BasePosition.X := (MeshVertices^)[_ID].X + (MeshNormals^)[_ID].X;
-      BasePosition.Y := (MeshVertices^)[_ID].Y + (MeshNormals^)[_ID].Y;
-      BasePosition.Z := (MeshVertices^)[_ID].Z + (MeshNormals^)[_ID].Z;
+      BasePosition.X := (MeshVertices^)[_ID].X;
+      BasePosition.Y := (MeshVertices^)[_ID].Y;
+      BasePosition.Z := (MeshVertices^)[_ID].Z;
    end
    else if MeshNormalsType = C_NORMALS_PER_FACE then
    begin
@@ -137,9 +137,9 @@ begin
          BasePosition.Z := BasePosition.Z + (MeshVertices^)[i].Z;
          inc(i);
       end;
-      BasePosition.X := (BasePosition.X / MeshVerticesPerFace) + (MeshNormals^)[_ID].X;
-      BasePosition.Y := (BasePosition.Y / MeshVerticesPerFace) + (MeshNormals^)[_ID].Y;
-      BasePosition.Z := (BasePosition.Z / MeshVerticesPerFace) + (MeshNormals^)[_ID].Z;
+      BasePosition.X := (BasePosition.X / MeshVerticesPerFace);
+      BasePosition.Y := (BasePosition.Y / MeshVerticesPerFace);
+      BasePosition.Z := (BasePosition.Z / MeshVerticesPerFace);
    end;
    BuildNormalsLineFromVector(_ID,BasePosition);
 end;
