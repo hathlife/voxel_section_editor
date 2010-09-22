@@ -25,7 +25,7 @@ type
       private
          FTextureAngle: single;
          // Seeds
-         function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
+         function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
          // Angle stuff
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
@@ -118,9 +118,10 @@ end;
 function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
 var
    i, x, MaxVerts, Current, Previous: integer;
-   FaceSeed,VertsSeed : aint32;
+   VertsLocation,FaceSeed,VertsSeed : aint32;
    FacePriority: AFloat;
    FaceOrder,UOrder,VOrder : auint32;
+   CheckFace: abool;
    FaceNeighbors: TNeighborDetector;
    UMerge,VMerge,UMax,VMax,PushValue: real;
    HiO,HiS: integer;
@@ -136,6 +137,8 @@ begin
    SetLength(FaceSeed,High(_FaceNormals)+1);
    SetLength(FaceOrder,High(FaceSeed)+1);
    SetLength(FacePriority,High(FaceSeed)+1);
+   SetLength(VertsLocation,High(_Vertices)+1);
+   SetLength(CheckFace,High(_FaceNormals)+1);
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
       FaceSeed[i] := -1;
@@ -163,7 +166,7 @@ begin
       begin
          // Make new seed.
          SetLength(Seeds,High(Seeds)+2);
-         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),0,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts);
+         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),0,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
       end;
    end;
 
@@ -379,6 +382,8 @@ begin
    SetLength(VOrder,0);
    SetLength(FacePriority,0);
    SetLength(FaceOrder,0);
+   SetLength(CheckFace,0);
+   SetLength(VertsLocation,0);
    List.Free;
    FaceNeighbors.Free;
 end;
@@ -386,9 +391,10 @@ end;
 function CTextureGenerator.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32): TAVector2f;
 var
    i, MaxVerts: integer;
-   FaceSeed : aint32;
+   VertsLocation,FaceSeed : aint32;
    FacePriority: AFloat;
    FaceOrder : auint32;
+   CheckFace: abool;
    FaceNeighbors: TNeighborDetector;
 begin
    // Get the neighbours of each face.
@@ -398,6 +404,8 @@ begin
    SetLength(FaceSeed,High(_FaceNormals)+1);
    SetLength(FaceOrder,High(FaceSeed)+1);
    SetLength(FacePriority,High(FaceSeed)+1);
+   SetLength(VertsLocation,High(_Vertices)+1);
+   SetLength(CheckFace,High(_FaceNormals)+1);
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
       FaceSeed[i] := -1;
@@ -423,7 +431,7 @@ begin
       begin
          // Make new seed.
          SetLength(_Seeds,High(_Seeds)+2);
-         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts);
+         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
       end;
    end;
 
@@ -445,6 +453,8 @@ begin
    FaceNeighbors.Free;
    SetLength(FacePriority,0);
    SetLength(FaceOrder,0);
+   SetLength(CheckFace,0);
+   SetLength(VertsLocation,0);
 end;
 
 procedure CTextureGenerator.MergeSeeds(var _Seeds: TSeedSet);
@@ -679,14 +689,12 @@ begin
    end;
 end;
 
-function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer): TTextureSeed;
+function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
 const
    C_MIN_ANGLE = 0.001; // approximately cos 90'
 var
    v,f,Value,vertex,FaceIndex : integer;
    List : CIntegerList;
-   VertsLocation : aint32;
-   CheckFace : abool;
    Angle: single;
    VertexUtil : TVertexTransformationUtils;
 begin
@@ -695,19 +703,17 @@ begin
    List := CIntegerList.Create;
    List.UseSmartMemoryManagement(true);
    // Setup VertsLocation
-   SetLength(VertsLocation,_MaxVerts);
-   for v := Low(VertsLocation) to High(VertsLocation) do
+   for v := Low(_VertsLocation) to High(_VertsLocation) do
    begin
-      VertsLocation[v] := -1;
+      _VertsLocation[v] := -1;
    end;
    // Avoid unlimmited loop
-   SetLength(CheckFace,High(_FaceNormals)+1);
-   for f := Low(CheckFace) to High(CheckFace) do
-      CheckFace[f] := false;
+   for f := Low(_CheckFace) to High(_CheckFace) do
+      _CheckFace[f] := false;
 
    // Add starting face
    List.Add(_StartingFace);
-   CheckFace[_StartingFace] := true;
+   _CheckFace[_StartingFace] := true;
    Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;
@@ -727,14 +733,14 @@ begin
          vertex := _Faces[FaceIndex+v];
          if _VertsSeed[vertex] <> -1 then
          begin
-            if VertsLocation[vertex] = -1 then
+            if _VertsLocation[vertex] = -1 then
             begin
                // this vertex was used by a previous seed, therefore, we'll clone it
                SetLength(_Vertices,High(_Vertices)+2);
                SetLength(_VertsSeed,High(_Vertices)+1);
                _VertsSeed[High(_VertsSeed)] := _ID;
-               VertsLocation[vertex] := High(_Vertices);
-               _Faces[FaceIndex+v] := VertsLocation[vertex];
+               _VertsLocation[vertex] := High(_Vertices);
+               _Faces[FaceIndex+v] := _VertsLocation[vertex];
                _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
                _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
                _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
@@ -763,14 +769,14 @@ begin
             else
             begin
                // This vertex is already used by this seed.
-               _Faces[FaceIndex+v] := VertsLocation[vertex];
+               _Faces[FaceIndex+v] := _VertsLocation[vertex];
             end;
          end
          else
          begin
             // This seed is the first seed to use this vertex.
             _VertsSeed[vertex] := _ID;
-            VertsLocation[vertex] := vertex;
+            _VertsLocation[vertex] := vertex;
             // Get temporary texture coordinates.
             _TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
             // Now update the bounds of the seed.
@@ -791,7 +797,7 @@ begin
       while f <> -1 do
       begin
          // do some verification here
-         if not CheckFace[f] then
+         if not _CheckFace[f] then
          begin
             if (_FaceSeeds[f] = -1) then
             begin
@@ -806,14 +812,12 @@ begin
 //                ShowMessage('Starting Face: (' + FloatToStr(_FaceNormals[_StartingFace].X) + ', ' + FloatToStr(_FaceNormals[_StartingFace].Y) + ', ' + FloatToStr(_FaceNormals[_StartingFace].Z) + ') and Current Face is (' + FloatToStr(_FaceNormals[f].X) + ', ' + FloatToStr(_FaceNormals[f].Y) + ', ' + FloatToStr(_FaceNormals[f].Z) + ') and the angle is ' + FloatToStr(Angle));
                end;
             end;
-            CheckFace[f] := true;
+            _CheckFace[f] := true;
          end;
          f := _FaceNeighbors.GetNextNeighbor;
       end;
    end;
    List.Free;
-   SetLength(CheckFace,0);
-   SetLength(VertsLocation,0);
    VertexUtil.Free;
 end;
 
