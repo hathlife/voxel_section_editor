@@ -46,6 +46,7 @@ type
          procedure GenerateVolumeMap;
          procedure GenerateInfluenceMap;
          procedure GenerateSurfaceMap;
+         procedure GenerateExternalSurfaceMap;
          procedure GenerateInfluenceMapOnly;
          procedure GenerateFullMap;
          // Copies
@@ -57,6 +58,7 @@ type
          procedure MapInfluences;
          procedure MapSurfaces(_Value: single);
          procedure MapSurfacesOnly(_Value: single);
+         procedure MapExternalSurfaces(_Value: single);
          procedure MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
@@ -351,6 +353,18 @@ begin
    MergeMapData(FilledMap,1);
    FilledMap.Free;
    MapSurfaces(1);
+end;
+
+procedure TVoxelMap.GenerateExternalSurfaceMap;
+var
+   FilledMap : TVoxelMap;
+begin
+   FillMap(C_MODE_USED,GenerateFilledDataParam(C_INSIDE_VOLUME,C_OUTSIDE_VOLUME));
+   FilledMap := TVoxelMap.Create(FSection,FBias,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,C_INSIDE_VOLUME));
+   FilledMap.FloodFill(SetVectorI(0,0,0),C_OUTSIDE_VOLUME);
+   MergeMapData(FilledMap,C_INSIDE_VOLUME);
+   FilledMap.Free;
+   MapExternalSurfaces(C_OUTSIDE_VOLUME);
 end;
 
 procedure TVoxelMap.GenerateInfluenceMapOnly;
@@ -688,7 +702,47 @@ begin
                   while i <= maxi do
                   begin
                      CurrentNormal := Cube[i];
-                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Value) then
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) <= _Value) then
+                     begin
+                        inc(i);
+                     end
+                     else
+                     begin
+                        // surface
+                        i := maxi * 2;
+                     end;
+                  end;
+                  if i = (maxi * 2) then
+                  begin
+                     FMap[x,y,z] := C_SURFACE;
+                  end;
+               end;
+            end;
+   end;
+   Cube.Free;
+end;
+
+procedure TVoxelMap.MapExternalSurfaces(_Value: single);
+var
+   Cube : TNormals;
+   CurrentNormal : TVector3f;
+   x, y, z, i, maxi : integer;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      for x := Low(FMap) to High(FMap) do
+         for y := Low(FMap[0]) to High(FMap[0]) do
+            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+            begin
+               if FMap[x,y,z] = _Value then
+               begin
+                  i := 0;
+                  while i <= maxi do
+                  begin
+                     CurrentNormal := Cube[i];
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) <= _Value) then
                      begin
                         inc(i);
                      end

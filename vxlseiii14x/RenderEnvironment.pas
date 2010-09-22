@@ -53,6 +53,7 @@ type
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
          IsEnabled : boolean;
          PolygonMode: integer;
+         IsBackFaceCullingEnabled: boolean;
          // Screenshot & Animation related.
          ScreenTexture : cardinal;
          ScreenType : TScreenshotType;
@@ -80,6 +81,7 @@ type
          procedure ForceRefresh;
          procedure ForceRefreshActors;
          procedure SetIsEnabled(_value: boolean);
+         procedure EnableBackFaceCulling(_value: boolean);
 
          // Adds
          function AddCamera: PCamera;
@@ -150,6 +152,8 @@ begin
    glEnable(GL_LIGHT0);
    glEnable(GL_LIGHTING);
    glEnable(GL_COLOR_MATERIAL);
+   glCullFace(GL_BACK);
+   IsBackFaceCullingEnabled := false;
    // Setup camera.
    CameraList := nil;
    AddCamera;
@@ -253,6 +257,14 @@ begin
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
    glClearColor(BackGroundColour.X, BackGroundColour.Y, BackGroundColour.Z, 1.0);
 
+   if IsBackFaceCullingEnabled then
+   begin
+      glEnable(GL_CULL_FACE);
+   end
+   else
+   begin
+      glDisable(GL_CULL_FACE);
+   end;
    // Process Camera
    CurrentCamera^.ProcessNextFrame;
    FUpdateWorld := FUpdateWorld or CurrentCamera^.GetRequestUpdateWorld;
@@ -479,6 +491,15 @@ begin
    FUpdateWorld := true;
 end;
 
+procedure TRenderEnvironment.EnableBackFaceCulling(_value: boolean);
+begin
+   IsBackFaceCullingEnabled := _value;
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
+end;
 
 // Adds
 function TRenderEnvironment.AddCamera: PCamera;

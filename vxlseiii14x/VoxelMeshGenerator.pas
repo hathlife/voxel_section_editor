@@ -8,6 +8,7 @@ type
    TVoxelMeshGenerator = class
       private
          procedure BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
+         procedure BuildModelFromVoxelMapWithExternalData(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
          procedure BuildModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
          procedure BuildModelFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
 
@@ -17,12 +18,14 @@ type
          procedure SetupFaceMap(var _FaceMap: T4DIntGrid; const _XSize, _YSize, _ZSize: integer);
          procedure BuildFaceMap(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword); overload;
          procedure BuildFaceMap(var _FaceMap: T4DIntGrid; const _Voxel : TVoxelSection; const _Vertices: TAVector3f; var _NumFaces: longword); overload;
+         procedure BuildFaceMapExternal(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword);
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DIntGrid; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DIntGrid; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DIntGrid; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
          procedure LoadFromVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
+         procedure LoadFromExternalVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
          procedure LoadTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
     end;
@@ -188,6 +191,69 @@ begin
       // this face splits are actually used.
       v2 := false;
       if _VoxelMap.MapSafe[x+1,y+1,z] > C_OUTSIDE_VOLUME then
+         v2 := true;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         _FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] := _NumFaces;
+         inc(_NumFaces);
+      end;
+   end;
+end;
+
+procedure TVoxelMeshGenerator.BuildFaceMapExternal(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword);
+var
+   x,y,z,i: integer;
+   v1, v2 : boolean;
+begin
+      // Now we give the faces an ID and count them.
+   _NumFaces := 0;
+   for i := Low(_Vertices) to High(_Vertices) do
+   begin
+      x := Round(_Vertices[i].X);
+      y := Round(_Vertices[i].Y);
+      z := Round(_Vertices[i].Z);
+
+      // Checking for the side face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (x and x-1) that
+      // this face splits are actually used.
+      v1 := false;
+      if _VoxelMap.MapSafe[x+1,y+1,z+1] > C_SURFACE then
+         v1 := true;
+      v2 := false;
+      if _VoxelMap.MapSafe[x,y+1,z+1] > C_SURFACE then
+         v2 := true;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         _FaceMap[x,y,z,C_VOXEL_FACE_SIDE] := _NumFaces;
+         inc(_NumFaces);
+      end;
+
+      // Checking for the height face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (y and y-1) that
+      // this face splits are actually used.
+      v2 := false;
+      if _VoxelMap.MapSafe[x+1,y,z+1] > C_SURFACE then
+         v2 := true;
+      // We'll only make a face if exactly one of them is used.
+      if (v1 xor v2) then
+      begin
+         // Then, we add the Face
+         _FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] := _NumFaces;
+         inc(_NumFaces);
+      end;
+
+      // Checking for the depth face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (z and z-1) that
+      // this face splits are actually used.
+      v2 := false;
+      if _VoxelMap.MapSafe[x+1,y+1,z] > C_SURFACE then
          v2 := true;
       // We'll only make a face if exactly one of them is used.
       if (v1 xor v2) then
@@ -906,6 +972,78 @@ begin
    SetLength(FaceMap,0);
 end;
 
+procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithExternalData(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
+var
+   NumVertices : longword;
+   HitCounter : integer;
+   VertexMap : T3DIntGrid;
+   FaceMap : T4DIntGrid;
+   VertexTransformation: aint32;
+   x, y, z, i : longword;
+begin
+   // This is the complex part of the thing. We'll map all vertices and faces
+   // and make a model out of it.
+
+   // Let's map the vertices.
+   SetupVertexMap(VertexMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
+   // Now we give the vertices an ID and count them.
+   BuildVertexMap(VertexMap,_Voxel,NumVertices,_NumVoxels);
+   // vertex map is done. If there is no vertex, quit.
+   if NumVertices = 0 then
+   begin
+      _NumFaces := 0;
+      SetLength(_Faces,0);
+      SetLength(_Normals,0);
+      SetLength(_FaceNormals,0);
+      SetLength(_TexCoords,0);
+      SetLength(_Colours,0);
+      exit;
+   end;
+   // let's fill the vertices array
+   FillVerticesArray(_Vertices,VertexMap,NumVertices);
+   // Now, we'll look for the faces.
+   SetupFaceMap(FaceMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
+   // Now we give the faces an ID and count them.
+   BuildFaceMapExternal(FaceMap,_VoxelMap,_Vertices,_NumFaces);
+   // face map is done.
+   // let's fill the faces array, normals, colours, etc.
+   SetLength(_Faces,_NumFaces * _VerticesPerFace);
+   SetLength(_Normals,0);
+   SetLength(_FaceNormals,_NumFaces);
+   SetLength(_TexCoords,0);
+   SetLength(_Colours,_NumFaces);
+   SetLength(VertexTransformation,High(_Vertices)+1);
+   FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Faces,_Colours,_Normals,_FaceNormals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_VerticesPerFace);
+
+   // Get the positions of the vertexes in the new vertex list, so we can eliminate
+   // the unused ones.
+   EliminateUselessVertices(VertexTransformation,_Vertices,_Faces,NumVertices);
+   // Free memory
+   SetLength(VertexTransformation,0);
+   for x := Low(VertexMap) to High(VertexMap) do
+   begin
+      for y := Low(VertexMap[x]) to High(VertexMap[x]) do
+      begin
+         SetLength(VertexMap[x,y],0);
+      end;
+      SetLength(VertexMap[x],0);
+   end;
+   SetLength(VertexMap,0);
+   for x := Low(FaceMap) to High(FaceMap) do
+   begin
+      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
+      begin
+         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
+         begin
+            SetLength(FaceMap[x,y,z],0);
+         end;
+         SetLength(FaceMap[x,y],0);
+      end;
+      SetLength(FaceMap[x],0);
+   end;
+   SetLength(FaceMap,0);
+end;
+
 procedure TVoxelMeshGenerator.BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
 var
    NumVertices : longword;
@@ -995,6 +1133,19 @@ begin
    VoxelMap.GenerateSurfaceMap;
 
    BuildModelFromVoxelMap(_Voxel,_Palette,_Vertices,_Faces,_Colours,_Normals,_FaceNormals,_TexCoords,_NumVoxels,_NumFaces,_VerticesPerFace,VoxelMap);
+
+   VoxelMap.Free;
+end;
+
+procedure TVoxelMeshGenerator.LoadFromExternalVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
+var
+   VoxelMap: TVoxelMap;
+begin
+   // Let's map our voxels.
+   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap.GenerateExternalSurfaceMap;
+
+   BuildModelFromVoxelMapWithExternalData(_Voxel,_Palette,_Vertices,_Faces,_Colours,_Normals,_FaceNormals,_TexCoords,_NumVoxels,_NumFaces,_VerticesPerFace,VoxelMap);
 
    VoxelMap.Free;
 end;
