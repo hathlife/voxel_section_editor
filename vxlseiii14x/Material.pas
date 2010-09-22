@@ -86,7 +86,8 @@ begin
    glEnable(GL_BLEND);
    glBlendFunc(SrcAlphaBlend, DstAlphaBlend);
    glEnable(GL_COLOR_MATERIAL);
-   glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
+   glEnable(GL_LIGHTING);
+   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@(Ambient));
    glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,@(Diffuse));
    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@(Specular));
