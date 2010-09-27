@@ -148,10 +148,6 @@ begin
    PolygonMode := GL_FILL;
    // Build font
    BuildFont;
-   // Enable lighting
-   glEnable(GL_LIGHT0);
-   glEnable(GL_LIGHTING);
-   glEnable(GL_COLOR_MATERIAL);
    glCullFace(GL_BACK);
    IsBackFaceCullingEnabled := false;
    // Setup camera.
@@ -325,6 +321,7 @@ begin
    glDisable(GL_COLOR_MATERIAL);
    glDisable(GL_DEPTH_TEST);
    glMatrixMode(GL_PROJECTION);
+   glDisable(GL_CULL_FACE);
    glPushMatrix;
       glLoadIdentity;
       glOrtho(0, Width, 0, Height, -1, 1);

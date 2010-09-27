@@ -105,6 +105,8 @@ begin
    begin
       Shader^.DeactivateProgram;
    end;
+   glDisable(GL_LIGHTING);
+   glDisable(GL_COLOR_MATERIAL);
    glDisable(GL_BLEND);
 end;
 

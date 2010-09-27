@@ -495,11 +495,6 @@ var
    Seeds: TSeedSet;
    VertsSeed : TInt32Map;
    TexGenerator: CTextureGenerator;
-   Buffer: T2DFrameBuffer;
-   WeightBuffer: TWeightBuffer;
-   Bitmap : TBitmap;
-   AlphaMap : TByteMap;
-   DiffuseTexture : PTextureBankItem;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}

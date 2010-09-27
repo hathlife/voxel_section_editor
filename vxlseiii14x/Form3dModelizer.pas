@@ -135,6 +135,8 @@ type
     DisplayFMWireframe: TMenuItem;
     DisplayFMPointCloud: TMenuItem;
     DisplayNormalVectors1: TMenuItem;
+    EnableBackFaceCuling1: TMenuItem;
+    procedure EnableBackFaceCuling1Click(Sender: TObject);
     procedure DisplayNormalVectors1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
@@ -363,6 +365,12 @@ procedure TFrm3DModelizer.Panel2MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
    MouseButton :=0;
+end;
+
+procedure TFrm3DModelizer.EnableBackFaceCuling1Click(Sender: TObject);
+begin
+   EnableBackFaceCuling1.Checked := not EnableBackFaceCuling1.Checked;
+   Env.EnableBackFaceCulling(EnableBackFaceCuling1.Checked);
 end;
 
 procedure TFrm3DModelizer.EnableShaders1Click(Sender: TObject);
