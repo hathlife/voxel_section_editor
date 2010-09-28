@@ -88,10 +88,10 @@ begin
    glEnable(GL_COLOR_MATERIAL);
    glEnable(GL_LIGHTING);
    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
-   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@(Ambient));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,@(Diffuse));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@(Specular));
-   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,@(Emission));
+   glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,PGLFloat(@(Ambient)));
+   glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,PGLFloat(@(Diffuse)));
+   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,PGLFloat(@(Specular)));
+   glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,PGLFloat(@(Emission)));
    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,Shininess);
    if Shader <> nil then
    begin

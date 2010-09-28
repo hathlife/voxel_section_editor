@@ -9,7 +9,8 @@ void main (void)
    vec3 R = normalize(reflect(-L,N));  
  
    //calculate Ambient Term:  
-   vec4 Iamb = gl_FrontLightProduct[0].ambient + gl_FrontLightModelProduct.sceneColor;    
+//   vec4 Iamb = gl_FrontLightProduct[0].ambient + gl_FrontLightModelProduct.sceneColor;    
+   vec4 Iamb = gl_LightSource[0].ambient + gl_FrontMaterial.emission + gl_LightModel.ambient;    
 
    //calculate Diffuse Term:  
 //	vec4 Idiff = gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);   
