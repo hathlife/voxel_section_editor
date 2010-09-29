@@ -194,6 +194,7 @@ type
          procedure AddNormalsPlugin;
          procedure RemoveNormalsPlugin;
          procedure ClearPlugins;
+         function IsNormalsPluginEnabled: boolean;
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
@@ -352,7 +353,10 @@ end;
 
 // I/O;
 procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
+var
+   HasNormalsMeshPlugin: boolean;
 begin
+   HasNormalsMeshPlugin := IsNormalsPluginEnabled;
    Clear;
    ColourGenStructure := C_COLOURS_PER_FACE;
    if ColoursType <> C_COLOURS_PER_FACE then
@@ -399,6 +403,10 @@ begin
       begin
          ModelizeFromVoxel(_Voxel,_Palette);
       end;
+   end;
+   if HasNormalsMeshPlugin then
+   begin
+      AddNormalsPlugin;
    end;
    OverrideTransparency;
 end;
@@ -2750,7 +2758,6 @@ end;
 
 procedure TMesh.RemoveNormalsPlugin;
 var
-   p: integer;
    Plugin,DisposedPlugin : PMeshPluginBase;
 begin
    Plugin := Plugins;
@@ -2780,6 +2787,23 @@ begin
       Plugin := Plugin^.Next;
       DisposedPlugin^.Free;
       DisposedPlugin := nil;
+   end;
+end;
+
+function TMesh.IsNormalsPluginEnabled: boolean;
+var
+   Plugin : PMeshPluginBase;
+begin
+   Result := false;
+   Plugin := Plugins;
+   while Plugin <> nil do
+   begin
+      if Plugin^.PluginType = C_MPL_NORMALS then
+      begin
+         Result := true;
+         exit;
+      end;
+      Plugin := Plugin^.Next;
    end;
 end;
 
