@@ -132,9 +132,9 @@ begin
       maxi := i + MeshVerticesPerFace;
       while i < maxi do
       begin
-         BasePosition.X := BasePosition.X + (MeshVertices^)[i].X;
-         BasePosition.Y := BasePosition.Y + (MeshVertices^)[i].Y;
-         BasePosition.Z := BasePosition.Z + (MeshVertices^)[i].Z;
+         BasePosition.X := BasePosition.X + (MeshVertices^)[(MeshFaces^)[i]].X;
+         BasePosition.Y := BasePosition.Y + (MeshVertices^)[(MeshFaces^)[i]].Y;
+         BasePosition.Z := BasePosition.Z + (MeshVertices^)[(MeshFaces^)[i]].Z;
          inc(i);
       end;
       BasePosition.X := (BasePosition.X / MeshVerticesPerFace);
