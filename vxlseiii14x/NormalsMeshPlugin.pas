@@ -169,7 +169,7 @@ begin
    glGetIntegerv(GL_POLYGON_MODE,PolygonMode);
    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
    Material.Enable;
-   Render.RenderWithoutNormalsAndWithColoursPerVertex(Vertices,Colours,Faces,FaceType,2,NumNormals);
+   Render.RenderWithoutNormalsAndWithColoursPerVertex(Vertices,Colours,Faces,FaceType,3,NumNormals);
    Material.Disable;
    Render.FinishRender(SetVector(0,0,0));
    glPolygonMode(GL_FRONT_AND_BACK,PolygonMode^);
