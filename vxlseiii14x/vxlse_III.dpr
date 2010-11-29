@@ -101,7 +101,8 @@ uses
   ClassVector3fSet in 'ClassVector3fSet.pas',
   MeshPluginBase in 'MeshPluginBase.pas',
   NormalsMeshPlugin in 'NormalsMeshPlugin.pas',
-  RenderingMachine in 'RenderingMachine.pas';
+  RenderingMachine in 'RenderingMachine.pas',
+  NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas';
 
 {$R *.res}
 

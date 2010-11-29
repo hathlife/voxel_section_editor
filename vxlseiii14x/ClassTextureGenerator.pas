@@ -4,7 +4,7 @@ interface
 
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
    ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs,
-   ClassVertexTransformationUtils;
+   ClassVertexTransformationUtils, Math3d;
 
 type
    TTextureSeed = record
@@ -43,7 +43,8 @@ type
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
-         function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
+         function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap; overload;
+         function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
       public
@@ -1728,6 +1729,7 @@ end;
 function CTextureGenerator.GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
 var
    x,y : integer;
+   Normal: TVector3f;
 begin
    Result := TBitmap.Create;
    Result.PixelFormat := pf32Bit;
@@ -1739,11 +1741,47 @@ begin
       begin
          if _WeightBuffer[x,y] > 0 then
          begin
-            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + (_Buffer[x,y].X / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Y / _WeightBuffer[x,y])) * 127.5),Round((1 + (_Buffer[x,y].Z / _WeightBuffer[x,y])) * 127.5));
+            Normal.X := _Buffer[x,y].X / _WeightBuffer[x,y];
+            Normal.Y := _Buffer[x,y].Y / _WeightBuffer[x,y];
+            Normal.Z := _Buffer[x,y].Z / _WeightBuffer[x,y];
+            Normalize(Normal);
+            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
          end
          else
          begin
             Result.Canvas.Pixels[x,Result.Height - y] := 0;
+         end;
+      end;
+   end;
+end;
+
+function CTextureGenerator.GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
+var
+   x,y : integer;
+   Normal: TVector3f;
+begin
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32Bit;
+   Result.Width := High(_Buffer)+1;
+   Result.Height := High(_Buffer)+1;
+   SetLength(_AlphaMap,Result.Width,Result.Width);
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      for y := Low(_Buffer[x]) to High(_Buffer[x]) do
+      begin
+         if _WeightBuffer[x,y] > 0 then
+         begin
+            Normal.X := _Buffer[x,y].X / _WeightBuffer[x,y];
+            Normal.Y := _Buffer[x,y].Y / _WeightBuffer[x,y];
+            Normal.Z := _Buffer[x,y].Z / _WeightBuffer[x,y];
+            Normalize(Normal);
+            Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
+            _AlphaMap[x,Result.Height - y] := C_TRP_OPAQUE;
+         end
+         else
+         begin
+            Result.Canvas.Pixels[x,Result.Height - y] := 0;
+            _AlphaMap[x,Result.Height - y] := C_TRP_INVISIBLE;
          end;
       end;
    end;

@@ -11,6 +11,7 @@ const
    C_NEIGHBTYPE_FACE_FACE = 3;         // face neighbors of faces.
 
 type
+   PNeighborDetector = ^TNeighborDetector;
    TNeighborDetector = class
       private
          FNeighbors: array of PIntegerItem;
@@ -32,7 +33,10 @@ type
          // Memory Usage
          function IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
       public
+         VertexVertexNeighbors: PNeighborDetector;
+         VertexFaceNeighbors: PNeighborDetector;
          NeighborType : byte;
+         IsValid: boolean;
          // Constructors and Destructors
          constructor Create; overload;
          constructor Create(_Type : byte); overload;
@@ -72,6 +76,9 @@ end;
 procedure TNeighborDetector.Initialize;
 begin
    FRequest := nil;
+   VertexVertexNeighbors := nil;
+   VertexFaceNeighbors := nil;
+   IsValid := false;
    SetLength(FNeighbors,0);
 end;
 
@@ -133,6 +140,7 @@ begin
          OrganizeFaceFace(_Faces,_VertexesPerFace,_NumVertexes);
       end;
    end;
+   IsValid := true;
 end;
 
 // Deprecated: Low memory version "flies" compared to this one.
@@ -260,8 +268,15 @@ begin
    NumFaces := (High(_Faces)+1) div _VertexesPerFace;
    InitializeNeighbors(NumFaces);
    // Get Vertex neighbors from vertexes.
-   TempDetector := TNeighborDetector.Create;
-   TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
+   if VertexVertexNeighbors = nil then
+   begin
+      TempDetector := TNeighborDetector.Create;
+      TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
+   end
+   else
+   begin
+      TempDetector := VertexVertexNeighbors^;
+   end;
 
    // Main loop goes here.
    f := 0;
@@ -284,7 +299,8 @@ begin
    end;
 
    // Clean up memory
-   TempDetector.Free;
+   if VertexVertexNeighbors = nil then
+      TempDetector.Free;
 end;
 
 procedure TNeighborDetector.OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
@@ -296,8 +312,15 @@ begin
    NumFaces := (High(_Faces)+1) div _VertexesPerFace;
    InitializeNeighbors(NumFaces);
    // Get face neighbors from vertexes.
-   TempDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-   TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
+   if VertexFaceNeighbors = nil then
+   begin
+      TempDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+      TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
+   end
+   else
+   begin
+      TempDetector := VertexFaceNeighbors^;
+   end;
 
    // Main loop goes here.
    f := 0;
@@ -320,7 +343,8 @@ begin
    end;
 
    // Clean up memory
-   TempDetector.Free;
+   if VertexFaceNeighbors = nil then
+      TempDetector.Free;
 end;
 
 // Adds
