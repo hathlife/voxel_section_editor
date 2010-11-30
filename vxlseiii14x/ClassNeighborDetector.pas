@@ -204,27 +204,25 @@ var
 begin
    // Setup Neighbors.
    InitializeNeighbors(_NumVertexes);
-   SetLength(SearchArray,(_VertexesPerFace-1)*_VertexesPerFace,2);
+   SetLength(SearchArray,((_VertexesPerFace-1)*_VertexesPerFace) shr 2,2);
    f := 0;
-   for v := 0 to _VertexesPerFace - 1 do
-      for i := 0 to _VertexesPerFace -1 do
+   for v := 0 to _VertexesPerFace - 2 do
+      for i := v+1 to _VertexesPerFace -1 do
       begin
-         if i <> v then
-         begin
-            SearchArray[f,0] := v;
-            SearchArray[f,1] := i;
-            inc(f);
-         end;
+         SearchArray[f,0] := v;
+         SearchArray[f,1] := i;
+         inc(f);
       end;
 
    // Main loop goes here.
    f := 0;
    while f < High(_Faces) do
    begin
-      // check all neighbors each vertex of the face.
+      // check all neighbors of each vertex of the face.
       for i := Low(SearchArray) to High(SearchArray) do
       begin
          AddElementAtTargetLowMemory(_Faces[f+SearchArray[i,0]],_Faces[f+SearchArray[i,1]]);
+         AddElementAtTargetLowMemory(_Faces[f+SearchArray[i,1]],_Faces[f+SearchArray[i,0]]);
       end;
       inc(f,_VertexesPerFace);
    end;
