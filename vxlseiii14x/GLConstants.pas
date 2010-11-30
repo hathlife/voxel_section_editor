@@ -53,6 +53,7 @@ const
    // Shader Types
    C_SHD_PHONG = 0;
    C_SHD_PHONG_1TEX = 1;
+   C_SHD_PHONG_2TEX = 1;
 
    // Transparency
    C_TRP_OPAQUE = 1;

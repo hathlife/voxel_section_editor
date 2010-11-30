@@ -49,6 +49,7 @@ begin
       // Add Phong Shaders.
       Load('phong');
       Load('phong_1tex');
+//      Load('phong_2tex');
       ActivateShaders := true;
       ShaderSupport := true;
    end

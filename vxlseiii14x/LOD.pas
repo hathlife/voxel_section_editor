@@ -11,7 +11,7 @@ uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    ClassIntegerSet, ClassStopWatch;
 
 {$INCLUDE Global_Conditionals.inc}
-   
+
 type
    TLOD = class
    private
@@ -72,6 +72,7 @@ type
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single); overload;
       procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
+      procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer);
       procedure ExportTextures(const _BaseDir, _Ext : string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -550,6 +551,7 @@ var
    AlphaMap : TByteMap;
    DiffuseTexture : PTextureBankItem;
 begin
+   TexGenerator := CTextureGenerator.Create;
    TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -573,7 +575,46 @@ begin
    end;
    SetLength(AlphaMap,0);
    Bitmap.Free;
+   TexGenerator.Free;
 end;
+
+procedure TLOD.GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer);
+var
+   i : integer;
+   TexGenerator: CTextureGenerator;
+   Buffer: T2DFrameBuffer;
+   WeightBuffer: TWeightBuffer;
+   Bitmap : TBitmap;
+   AlphaMap : TByteMap;
+   NormalTexture : PTextureBankItem;
+begin
+   TexGenerator := CTextureGenerator.Create;
+   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].PaintMeshNormalMapTexture(Buffer,WeightBuffer,TexGenerator);
+   end;
+   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
+   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   // Now we generate a texture that will be used by all meshes.
+   glActiveTextureARB(GL_TEXTURE0_ARB + _TextureID);
+   NormalTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   // Now we add this diffuse texture to all meshes.
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_2TEX,NormalTexture);
+   end;
+   // Free memory.
+   GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
+   for i := Low(AlphaMap) to High(AlphaMap) do
+   begin
+      SetLength(AlphaMap[i],0);
+   end;
+   SetLength(AlphaMap,0);
+   Bitmap.Free;
+   TexGenerator.Free;
+end;
+
 
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);
 var

@@ -10,7 +10,7 @@ type
          VertexNeighbors: TNeighborDetector;
          FaceNeighbors: TNeighborDetector;
          QuadFaces: auint32;
-         QuadFaceNormals: TVector3f;
+         QuadFaceNormals: TAVector3f;
          QuadFaceNeighbors: TNeighborDetector;
          VertexEquivalences: auint32;
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer);
