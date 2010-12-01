@@ -136,7 +136,7 @@ function CrossProduct(const V1, V2: TVector3f): TVector3f;
 begin
    Result.X:=V1.Y * V2.z - V1.z * V2.y;
    Result.Y:=V1.z * V2.x - V1.x * V2.z;
-   Result.Z:=V1.x * V2.y - V1.x * V2.x;
+   Result.Z:=V1.x * V2.y - V1.y * V2.x;
 end;
 
 function planeDistance(point, PlaneNormal : TVector3f; PlaneDistance : single) : single;

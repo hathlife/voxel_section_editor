@@ -9,6 +9,7 @@ const
    C_NEIGHBTYPE_VERTEX_FACE = 1;       // face neighbors of vertexes.
    C_NEIGHBTYPE_FACE_VERTEX = 2;       // vertex neighbors of faces.
    C_NEIGHBTYPE_FACE_FACE = 3;         // face neighbors of faces.
+   C_NEIGHBTYPE_MAX = C_NEIGHBTYPE_FACE_FACE;
 
 type
    PNeighborDetector = ^TNeighborDetector;
@@ -45,6 +46,8 @@ type
          // I/O
          procedure LoadState(_State: PIntegerItem);
          function SaveState:PIntegerItem;
+         // Sets
+         procedure SetType(_Type: byte);
          // Executes
          procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          // Requests
@@ -115,6 +118,15 @@ end;
 function TNeighborDetector.SaveState:PIntegerItem;
 begin
    Result := FRequest;
+end;
+
+// Sets
+procedure TNeighborDetector.SetType(_Type: byte);
+begin
+   if (not IsValid) and (_type <= C_NEIGHBTYPE_MAX) then
+   begin
+      NeighborType := _Type;
+   end;
 end;
 
 
