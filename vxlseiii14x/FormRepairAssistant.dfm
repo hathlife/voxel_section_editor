@@ -1,7 +1,7 @@
 object FrmRepairAssistant: TFrmRepairAssistant
   Left = 0
   Top = 0
-  Caption = 'VXLSE Filesystem Repair Assistant'
+  Caption = 'Voxel Section Editor III Online Installation Wizard'
   ClientHeight = 213
   ClientWidth = 437
   Color = clBtnFace

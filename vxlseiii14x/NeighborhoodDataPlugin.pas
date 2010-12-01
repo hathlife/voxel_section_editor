@@ -9,10 +9,12 @@ type
       public
          VertexNeighbors: TNeighborDetector;
          FaceNeighbors: TNeighborDetector;
+         FaceFaceNeighbors: TNeighborDetector;
          QuadFaces: auint32;
          QuadFaceNormals: TAVector3f;
          QuadFaceNeighbors: TNeighborDetector;
          VertexEquivalences: auint32;
+         // Constructors and Destructors
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer);
          destructor Destroy; override;
    end;
@@ -29,6 +31,10 @@ implementation
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       FaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
+      FaceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
+      FaceFaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
+      FaceFaceNeighbors.VertexFaceNeighbors := PNeighborDetector(Addr(FaceNeighbors));
+      FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
       QuadFaceNeighbors := TNeighborDetector.Create;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
@@ -43,6 +49,11 @@ implementation
    begin
       VertexNeighbors.Free;
       FaceNeighbors.Free;
+      FaceFaceNeighbors.Free;
+      QuadFaceNeighbors.Free;
+      SetLength(QuadFaces,0);
+      SetLength(QuadFaceNormals,0);
+      SetLength(VertexEquivalences,0);
       inherited Destroy;
    end;
 
