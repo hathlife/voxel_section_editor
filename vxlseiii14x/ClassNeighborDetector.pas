@@ -204,7 +204,7 @@ var
 begin
    // Setup Neighbors.
    InitializeNeighbors(_NumVertexes);
-   SetLength(SearchArray,((_VertexesPerFace-1)*_VertexesPerFace) shr 2,2);
+   SetLength(SearchArray,((_VertexesPerFace-1)*_VertexesPerFace) shr 1,2);
    f := 0;
    for v := 0 to _VertexesPerFace - 2 do
       for i := v+1 to _VertexesPerFace -1 do
@@ -303,8 +303,10 @@ end;
 
 procedure TNeighborDetector.OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
-   f, face, v, NumFaces, Value : integer;
+   f, face, v, vi, vn, fn, NumFaces, Value : integer;
    TempDetector : TNeighborDetector;
+label
+   FinishedVertex;
 begin
    // Setup Neighbors.
    NumFaces := (High(_Faces)+1) div _VertexesPerFace;
@@ -326,13 +328,29 @@ begin
    while f < High(_Faces) do
    begin
       // check each vertex of the face.
-      for v := 0 to _VertexesPerFace - 1 do
+      for v := 0 to _VertexesPerFace - 2 do
       begin
          Value := TempDetector.GetNeighborFromID(_Faces[f+v]);
          while Value <> -1 do
          begin
-            // Here we add the element to the face
-            AddElementAtTargetLowMemory(Value,face);
+            // Here we check if an edge belongs to both faces.
+            fn := Value * _VertexesPerFace;
+            if (f <> fn) then
+            begin
+               for vi := (v + 1) to (_VertexesPerFace - 1) do
+               begin
+                  for vn := 0 to _VertexesPerFace - 1 do
+                  begin
+                     if _Faces[f+vi] = _Faces[fn+vn] then
+                     begin
+                        // Here we add the element to the face
+                        AddElementAtTargetLowMemory(Value,face);
+                        goto FinishedVertex;
+                     end;
+                  end;
+               end;
+            end;
+            FinishedVertex:
             Value := TempDetector.GetNextNeighbor;
          end;
       end;
