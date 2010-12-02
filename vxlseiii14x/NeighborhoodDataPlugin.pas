@@ -140,8 +140,8 @@ implementation
    procedure TNeighborhoodDataPlugin.DeactivateQuadFaces;
    begin
       UseQuadFaces := false;
-      QuadFaceNeighbors.Free;
-      QuadFaceNeighbors := TNeighborDetector.Create;
+//      QuadFaceNeighbors.Free;
+//      QuadFaceNeighbors := TNeighborDetector.Create;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
    end;

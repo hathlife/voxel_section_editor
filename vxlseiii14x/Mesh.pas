@@ -635,7 +635,10 @@ begin
          v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
-   NeighborDetector.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
    begin
@@ -746,7 +749,10 @@ begin
          v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
-   NeighborDetector.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
 
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
@@ -838,7 +844,10 @@ begin
          v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
-   NeighborDetector.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
 
    // Finally, we do an average for all vertices.
    for v := Low(Vertices) to High(Vertices) do
@@ -960,7 +969,10 @@ begin
             Vertices[v].Z := OriginalVertexes[v].Z - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
       end;
    end;
-   NeighborDetector.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
    // Free memory
    SetLength(OriginalVertexes,0);
    ForceRefresh;
@@ -1029,7 +1041,6 @@ begin
          v1 := NeighborDetector.GetNextNeighbor;
       end;
    end;
-   NeighborDetector.Free;
    // Finally, we do the unsharp masking effect here.
    for v := Low(Vertices) to High(Vertices) do
    begin
@@ -1052,6 +1063,10 @@ begin
    // Free memory
    SetLength(HitCounter,0);
    SetLength(OriginalVertexes,0);
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -1853,6 +1868,10 @@ begin
    end;
    // Free memory
    SetLength(DifferentNormalsList,0);
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
 end;
 
 procedure TMesh.ReNormalizeFaces;
@@ -2143,6 +2162,7 @@ var
    TexGenerator: CTextureGenerator;
    Bitmap : TBitmap;
    AlphaMap : TByteMap;
+   NeighborhoodPlugin: PMeshPluginBase;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -2152,7 +2172,12 @@ begin
    {$endif}
    RebuildFaceNormals;
    TexGenerator := CTextureGenerator.Create;
-   TexCoords := TexGenerator.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace);
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   TexCoords := TexGenerator.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,NeighborhoodPlugin,VerticesPerFace);
+   if NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+   end;
    ClearMaterials;
    AddMaterial;
    SetLength(Materials[0].Texture,1);
@@ -2178,9 +2203,16 @@ end;
 
 // This function gets a temporary set of coordinates that might become real texture coordinates later on.
 procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+var
+   NeighborhoodPlugin: PMeshPluginBase;
 begin
    RebuildFaceNormals;
-   TexCoords := _TexGenerator.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed);
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   TexCoords := _TexGenerator.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   if NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+   end;
    SetLength(FaceNormals,0);
 end;
 

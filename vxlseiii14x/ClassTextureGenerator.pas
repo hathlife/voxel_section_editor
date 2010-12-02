@@ -4,7 +4,7 @@ interface
 
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
    ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs,
-   ClassVertexTransformationUtils, Math3d;
+   ClassVertexTransformationUtils, Math3d, NeighborhoodDataPlugin, MeshPluginBase;
 
 type
    TTextureSeed = record
@@ -25,7 +25,7 @@ type
       private
          FTextureAngle: single;
          // Seeds
-         function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+         function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
          // Angle stuff
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
@@ -54,9 +54,9 @@ type
          procedure Reset;
          procedure Clear;
          // Executes
-         function GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
+         function GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace: integer): TAVector2f;
          // Texture atlas buildup: step by step.
-         function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32): TAVector2f;
+         function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
          procedure MergeSeeds(var _Seeds: TSeedSet);
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexCoords: TAVector2f);
          // Generate Textures
@@ -117,7 +117,7 @@ begin
 end;
 
 // Executes
-function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer): TAVector2f;
+function CTextureGenerator.GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace: integer): TAVector2f;
 var
    i, x, MaxVerts, Current, Previous: integer;
    VertsLocation,FaceSeed,VertsSeed : aint32;
@@ -133,8 +133,15 @@ var
    SeedSeparatorSpace: single;
 begin
    // Get the neighbours of each face.
-   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
-   FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
+   if _NeighborhoodPlugin <> nil then
+   begin
+      FaceNeighbors := TNeighborhoodDataPlugin(_NeighborhoodPlugin^).FaceFaceNeighbors;
+   end
+   else
+   begin
+      FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
+      FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
+   end;
    // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,High(_FaceNormals)+1);
    SetLength(FaceOrder,High(FaceSeed)+1);
@@ -168,7 +175,7 @@ begin
       begin
          // Make new seed.
          SetLength(Seeds,High(Seeds)+2);
-         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),0,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
+         Seeds[High(Seeds)] := MakeNewSeed(High(Seeds),0,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
       end;
    end;
 
@@ -199,7 +206,7 @@ begin
    QuickSortSeeds(Low(UOrder),HiO,UOrder,Seeds,CompareU);
    QuickSortSeeds(Low(VOrder),HiO,VOrder,Seeds,CompareV);
    HiS := HiO;   // That's the index for the last useful seed and seed tree item.
-   SetLength(Seeds,(2*HiS)+1); 
+   SetLength(Seeds,(2*HiS)+1);
 
    // Let's calculate the required space to separate one seed from others.
    // Get the smallest dimension of the smallest partitions.
@@ -387,10 +394,11 @@ begin
    SetLength(CheckFace,0);
    SetLength(VertsLocation,0);
    List.Free;
-   FaceNeighbors.Free;
+   if _NeighborhoodPlugin = nil then
+      FaceNeighbors.Free;
 end;
 
-function CTextureGenerator.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32): TAVector2f;
+function CTextureGenerator.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
 var
    i, MaxVerts: integer;
    VertsLocation,FaceSeed : aint32;
@@ -400,8 +408,15 @@ var
    FaceNeighbors: TNeighborDetector;
 begin
    // Get the neighbours of each face.
-   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
-   FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
+//   if _NeighborhoodPlugin <> nil then
+//   begin
+//      FaceNeighbors := TNeighborhoodDataPlugin(_NeighborhoodPlugin^).FaceFaceNeighbors;
+//   end
+//   else
+//   begin
+      FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
+      FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
+//   end;
    // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,High(_FaceNormals)+1);
    SetLength(FaceOrder,High(FaceSeed)+1);
@@ -433,7 +448,7 @@ begin
       begin
          // Make new seed.
          SetLength(_Seeds,High(_Seeds)+2);
-         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
+         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
       end;
    end;
 
@@ -452,7 +467,10 @@ begin
       _Seeds[i].MinBounds.V := 0;
    end;
 
-   FaceNeighbors.Free;
+   if _NeighborhoodPlugin = nil then
+   begin
+      FaceNeighbors.Free;
+   end;
    SetLength(FacePriority,0);
    SetLength(FaceOrder,0);
    SetLength(CheckFace,0);
@@ -691,7 +709,7 @@ begin
    end;
 end;
 
-function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+function CTextureGenerator.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
 const
    C_MIN_ANGLE = 0.001; // approximately cos 90'
 var
@@ -818,6 +836,11 @@ begin
          end;
          f := _FaceNeighbors.GetNextNeighbor;
       end;
+   end;
+
+   if _NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalences(_VertsLocation);
    end;
    List.Free;
    VertexUtil.Free;

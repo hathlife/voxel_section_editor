@@ -90,11 +90,18 @@ end;
 procedure TNeighborDetector.Clear;
 var
    i : integer;
+   Element, DisposedElement: PIntegerItem;
 begin
    for i := Low(FNeighbors) to High(FNeighbors) do
    begin
       // clear each element.
-      ClearElement(FNeighbors[i]);
+      Element := FNeighbors[i];
+      while Element <> nil do
+      begin
+         DisposedElement := Element;
+         Element := Element^.Next;
+         Dispose(DisposedElement);
+      end;
       FNeighbors[i] := nil;
    end;
    Initialize;
