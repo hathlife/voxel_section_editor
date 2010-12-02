@@ -90,21 +90,21 @@ implementation
       while vf < High(_Faces) do
       begin
          // 0 -> 1 -> 2
-         QuadFaces[vf] := _Faces[vq];
-         QuadFaces[vf+1] := _Faces[vq+1];
-         QuadFaces[vf+2] := _Faces[vq+2];
+         QuadFaces[vq] := _Faces[vf];
+         QuadFaces[vq+1] := _Faces[vf+1];
+         QuadFaces[vq+2] := _Faces[vf+2];
          // 2 -> 3 -> 0
-         QuadFaces[vf+3] := _Faces[vq+3];
-         QuadFaces[vf+4] := _Faces[vq+4];
-         QuadFaces[vf+5] := _Faces[vq+5];
+         QuadFaces[vq+3] := _Faces[vf+3];
+         QuadFaces[vq+4] := _Faces[vf+4];
+         QuadFaces[vq+5] := _Faces[vf+5];
          // 1 -> 2 -> 3
-         QuadFaces[vf+6] := _Faces[vq+1];
-         QuadFaces[vf+7] := _Faces[vq+2];
-         QuadFaces[vf+8] := _Faces[vq+3];
+         QuadFaces[vq+6] := _Faces[vf+1];
+         QuadFaces[vq+7] := _Faces[vf+2];
+         QuadFaces[vq+8] := _Faces[vf+3];
          // 1 -> 3 -> 0
-         QuadFaces[vf+9] := _Faces[vq+1];
-         QuadFaces[vf+10] := _Faces[vq+3];
-         QuadFaces[vf+11] := _Faces[vq];
+         QuadFaces[vq+9] := _Faces[vf+1];
+         QuadFaces[vq+10] := _Faces[vf+3];
+         QuadFaces[vq+11] := _Faces[vf];
 
          inc(vf,incf);
          inc(vq,incq);

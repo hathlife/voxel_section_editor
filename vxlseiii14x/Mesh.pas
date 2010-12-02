@@ -579,7 +579,7 @@ begin
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    AddMaterial;
    Opened := true;
-   Plugins := nil;
+//   Plugins := nil;
 end;
 
 // Mesh Effects.
@@ -613,14 +613,7 @@ begin
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-      end;
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
    end
    else
    begin
@@ -732,14 +725,7 @@ begin
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-      end;
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
    end
    else
    begin
@@ -825,14 +811,7 @@ begin
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-      end;
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
    end
    else
    begin
@@ -1782,6 +1761,7 @@ var
    Normal : PVector3f;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin: PMeshPluginBase;
+   MyFaces: auint32;
 begin
    SetLength(DifferentNormalsList,High(Vertices)+1);
    SetLength(Normals,High(Vertices)+1);
@@ -1791,16 +1771,19 @@ begin
       if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+         MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
       end
       else
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+         MyFaces := Faces;
       end;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      MyFaces := Faces;
    end;
 
    // Reset values.
@@ -1823,7 +1806,7 @@ begin
          begin
             v1 := Value * 3;
             Normal := new (PVector3f);
-            Normal^ := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
+            Normal^ := GetNormalsValue(Vertices[MyFaces[v1]],Vertices[MyFaces[v1+1]],Vertices[MyFaces[v1+2]]);
             if DifferentNormalsList[v].Add(Normal) then
             begin
                Normals[v].X := Normals[v].X + Normal^.X;
@@ -1847,8 +1830,8 @@ begin
          while Value <> -1 do
          begin
             v1 := Value * 4;
-            Normals1 := GetNormalsValue(Vertices[Faces[v1]],Vertices[Faces[v1+1]],Vertices[Faces[v1+2]]);
-            Normals2 := GetNormalsValue(Vertices[Faces[v1+2]],Vertices[Faces[v1+3]],Vertices[Faces[v1]]);
+            Normals1 := GetNormalsValue(Vertices[MyFaces[v1]],Vertices[MyFaces[v1+1]],Vertices[MyFaces[v1+2]]);
+            Normals2 := GetNormalsValue(Vertices[MyFaces[v1+2]],Vertices[MyFaces[v1+3]],Vertices[MyFaces[v1]]);
             Normal := new (PVector3f);
             Normal^.X := ((Normals1.X + Normals2.X) / 2);
             Normal^.Y := ((Normals1.Y + Normals2.Y) / 2);
@@ -1917,6 +1900,7 @@ var
    Normal : PVector3f;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
+   MyNormals : TAVector3f;
 begin
    SetLength(DifferentNormalsList,High(Vertices)+1);
    SetLength(Normals,High(Vertices)+1);
@@ -1934,16 +1918,19 @@ begin
       if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+         MyNormals := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNormals;
       end
       else
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+         MyNormals := FaceNormals;
       end;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      MyNormals := FaceNormals;
    end;
    // Now, let's check each vertex.
    for v := Low(Vertices) to High(Vertices) do
@@ -1952,9 +1939,9 @@ begin
       while Value <> -1 do
       begin
          Normal := new(PVector3f);
-         Normal^.X := FaceNormals[Value].X;
-         Normal^.Y := FaceNormals[Value].Y;
-         Normal^.Z := FaceNormals[Value].Z;
+         Normal^.X := MyNormals[Value].X;
+         Normal^.Y := MyNormals[Value].Y;
+         Normal^.Z := MyNormals[Value].Z;
          if DifferentNormalsList[v].Add(Normal) then
          begin
             Normals[v].X := Normals[v].X + Normal^.X;
@@ -2028,26 +2015,17 @@ begin
    {$endif}
    // Setup Neighbors.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   if NeighborhoodPlugin <> nil then
+   if (NormalsType and C_NORMALS_PER_FACE) = 0 then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
+      if NeighborhoodPlugin <> nil then
       begin
-         Neighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+         Neighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
       end
       else
       begin
-         Neighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+         Neighbors := TNeighborDetector.Create;
+         Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       end;
-   end
-   else
-   begin
-      Neighbors := TNeighborDetector.Create;
-      Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-   end;
-   if (NormalsType and C_NORMALS_PER_FACE) = 0 then
-   begin
-      // Get neighbor vertexes from vertexes.
-      Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       // Setup Normals Handicap and Hit Counter.
       SetLength(NormalsHandicap,High(Normals)+1);
       SetLength(HitCounter,High(Normals)+1);
@@ -2091,6 +2069,15 @@ begin
    end
    else
    begin
+      if NeighborhoodPlugin <> nil then
+      begin
+         Neighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+      end
+      else
+      begin
+         Neighbors := TNeighborDetector.Create;
+         Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      end;
       // Get neighbor faces from faces.
       Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE_FROM_EDGE;
       Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
@@ -2952,6 +2939,7 @@ begin
       DisposedPlugin^.Free;
       DisposedPlugin := nil;
    end;
+   Plugins := nil;
 end;
 
 function TMesh.IsPluginEnabled(_PluginType: integer): boolean;
