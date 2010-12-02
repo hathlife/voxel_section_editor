@@ -762,7 +762,7 @@ var
 begin
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].RemoveNormalsPlugin;
+      Mesh[i].RemovePlugin(C_MPL_NORMALS);
    end;
 end;
 

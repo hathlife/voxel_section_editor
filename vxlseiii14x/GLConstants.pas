@@ -69,6 +69,7 @@ const
    // Mesh Plugins
    C_MPL_BASE = 0;
    C_MPL_NORMALS = 1;
+   C_MPL_NEIGHBOOR = 2;
 
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =

@@ -2,7 +2,7 @@ unit NeighborhoodDataPlugin;
 
 interface
 
-uses BasicDataTypes, MeshPluginBase, ClassNeighborDetector, Math3d;
+uses BasicDataTypes, MeshPluginBase, ClassNeighborDetector, Math3d, GLConstants;
 
 type
    TNeighborhoodDataPlugin = class (TMeshPluginBase)
@@ -36,6 +36,9 @@ implementation
    var
       i : integer;
    begin
+      FPluginType := C_MPL_NEIGHBOOR;
+      AllowRender := false;
+      AllowUpdate := false;
       VertexNeighbors := TNeighborDetector.Create;
       VertexNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
