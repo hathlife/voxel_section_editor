@@ -8,8 +8,9 @@ const
    C_NEIGHBTYPE_VERTEX_VERTEX = 0;     // vertex neighbors of vertexes.
    C_NEIGHBTYPE_VERTEX_FACE = 1;       // face neighbors of vertexes.
    C_NEIGHBTYPE_FACE_VERTEX = 2;       // vertex neighbors of faces.
-   C_NEIGHBTYPE_FACE_FACE = 3;         // face neighbors of faces.
-   C_NEIGHBTYPE_MAX = C_NEIGHBTYPE_FACE_FACE;
+   C_NEIGHBTYPE_FACE_FACE_FROM_EDGE = 3;         // face neighbors of faces, with common edges.
+   C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX = 4;         // face neighbors of faces, with common vertexes.
+   C_NEIGHBTYPE_MAX = C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX;
 
 type
    PNeighborDetector = ^TNeighborDetector;
@@ -26,6 +27,7 @@ type
          procedure OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+         procedure OrganizeFaceFaceFromVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          // Adds
          procedure AddElementAtTarget(_Value: integer; _Target: integer);
          procedure AddElementAtTargetLowMemory(_Value: integer; _Target: integer);
@@ -147,9 +149,13 @@ begin
       begin
          OrganizeFaceVertex(_Faces,_VertexesPerFace,_NumVertexes);
       end;
-      C_NEIGHBTYPE_FACE_FACE:         // face neighbors of faces.
+      C_NEIGHBTYPE_FACE_FACE_FROM_EDGE:         // face neighbors of faces with common edges.
       begin
          OrganizeFaceFace(_Faces,_VertexesPerFace,_NumVertexes);
+      end;
+      C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX:         // face neighbors of faces with common vertexes.
+      begin
+         OrganizeFaceFaceFromVertex(_Faces,_VertexesPerFace,_NumVertexes);
       end;
    end;
    IsValid := true;
@@ -363,6 +369,55 @@ begin
                end;
             end;
             FinishedVertex:
+            Value := TempDetector.GetNextNeighbor;
+         end;
+      end;
+      inc(f,_VertexesPerFace);
+      inc(face);
+   end;
+
+   // Clean up memory
+   if VertexFaceNeighbors = nil then
+      TempDetector.Free;
+end;
+
+// Another approach for Face neighbors of Faces, where each neighbor needs to have at least one common vertex instead of edge.
+procedure TNeighborDetector.OrganizeFaceFaceFromVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+var
+   f, face, v, NumFaces, Value : integer;
+   TempDetector : TNeighborDetector;
+begin
+   // Setup Neighbors.
+   NumFaces := (High(_Faces)+1) div _VertexesPerFace;
+   InitializeNeighbors(NumFaces);
+   // Get face neighbors from vertexes.
+   if VertexFaceNeighbors = nil then
+   begin
+      TempDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+      TempDetector.BuildUpData(_Faces,_VertexesPerFace,_NumVertexes);
+   end
+   else
+   begin
+      TempDetector := VertexFaceNeighbors^;
+   end;
+
+   // Main loop goes here.
+   f := 0;
+   face := 0;
+   while f < High(_Faces) do
+   begin
+      // check each vertex of the face.
+      for v := 0 to _VertexesPerFace - 2 do
+      begin
+         Value := TempDetector.GetNeighborFromID(_Faces[f+v]);
+         while Value <> -1 do
+         begin
+            // Here we check if an edge belongs to both faces.
+            if (face <> Value) then
+            begin
+               // Here we add the element to the face
+               AddElementAtTargetLowMemory(Value,face);
+            end;
             Value := TempDetector.GetNextNeighbor;
          end;
       end;

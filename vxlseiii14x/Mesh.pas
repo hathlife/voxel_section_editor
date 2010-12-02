@@ -1956,7 +1956,7 @@ begin
    else
    begin
       // Get neighbor faces from faces.
-      Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE;
+      Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE_FROM_EDGE;
       Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       // Setup Normals Handicap.
       SetLength(NormalsHandicap,High(FaceNormals)+1);

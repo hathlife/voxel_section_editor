@@ -133,7 +133,7 @@ var
    SeedSeparatorSpace: single;
 begin
    // Get the neighbours of each face.
-   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
+   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
    FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
    // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,High(_FaceNormals)+1);
@@ -400,7 +400,7 @@ var
    FaceNeighbors: TNeighborDetector;
 begin
    // Get the neighbours of each face.
-   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
+   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
    FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
    // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,High(_FaceNormals)+1);

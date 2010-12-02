@@ -16,12 +16,15 @@ type
          QuadFaceNeighbors: TNeighborDetector;
          VertexEquivalences: auint32;
          EquivalenceFaceNeighbors: TNeighborDetector;
+         EquivalenceFaceFromVertexNeighbors: TNeighborDetector;
          UseEquivalenceFaces: boolean;
          // Constructors and Destructors
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer);
          destructor Destroy; override;
          // Updates
          procedure UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
+         procedure DeactivateQuadFaces;
+         procedure UpdateEquivalences(const _VertsLocation: aint32);
          procedure ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
    end;
 
@@ -38,7 +41,7 @@ implementation
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       FaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
-      FaceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
+      FaceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
       FaceFaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
       FaceFaceNeighbors.VertexFaceNeighbors := PNeighborDetector(Addr(FaceNeighbors));
       FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
@@ -48,7 +51,8 @@ implementation
       SetLength(QuadFaceNormals,0);
       SetLength(VertexEquivalences,_NumVertices);
       UseEquivalenceFaces := false;
-      EquivalenceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE);
+      EquivalenceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
+      EquivalenceFaceFromVertexNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX);
       for i := Low(VertexEquivalences) to High(VertexEquivalences) do
       begin
          VertexEquivalences[i] := i;
@@ -130,6 +134,30 @@ implementation
       UseQuadFaces := true;
    end;
 
+   procedure TNeighborhoodDataPlugin.DeactivateQuadFaces;
+   begin
+      UseQuadFaces := false;
+      QuadFaceNeighbors.Free;
+      QuadFaceNeighbors := TNeighborDetector.Create;
+      SetLength(QuadFaces,0);
+      SetLength(QuadFaceNormals,0);
+   end;
+
+   procedure TNeighborhoodDataPlugin.UpdateEquivalences(const _VertsLocation: aint32);
+   var
+      v : integer;
+   begin
+      SetLength(VertexEquivalences,High(_VertsLocation)+1);
+      for v  := Low(_VertsLocation) to High(_VertsLocation) do
+      begin
+         if _VertsLocation[v] > v then
+         begin
+            VertexEquivalences[_VertsLocation[v]] := VertexEquivalences[v];
+            VertexEquivalences[v] := _VertsLocation[v];
+         end;
+      end;
+   end;
+
    procedure TNeighborhoodDataPlugin.ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
    var
       EFaces : auint32;
@@ -149,7 +177,8 @@ implementation
       end;
       EquivalenceFaceNeighbors.VertexVertexNeighbors := FaceNeighbors.VertexVertexNeighbors;
       EquivalenceFaceNeighbors.BuildUpData(EFaces,_VerticesPerFace,_NumVertices);
+      EquivalenceFaceFromVertexNeighbors.VertexVertexNeighbors := FaceNeighbors.VertexVertexNeighbors;
+      EquivalenceFaceFromVertexNeighbors.BuildUpData(EFaces,_VerticesPerFace,_NumVertices);
       UseEquivalenceFaces := true;
    end;
-
 end.
