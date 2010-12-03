@@ -23,8 +23,10 @@ type
          destructor Destroy; override;
          // Gets
          function GetTexture(_Type: integer):TBitmap;
+         function GetTextureID(_Type: integer):integer;
          function GetLastTextureID: integer;
          function GetNextTextureID: integer;
+         function GetTextureSize(_TextureID: integer): integer;
          // Sets
          // Render
          procedure Enable;
@@ -84,6 +86,24 @@ begin
    end;
 end;
 
+function TMeshMaterial.GetTextureID(_Type: integer):integer;
+var
+   tex: integer;
+begin
+   Result := -1;
+   for tex := Low(Texture) to High(Texture) do
+   begin
+      if Texture[tex] <> nil then
+      begin
+         if Texture[tex].TextureType = _Type then
+         begin
+            Result := tex;
+            exit;
+         end;
+      end;
+   end;
+end;
+
 function TMeshMaterial.GetLastTextureID: integer;
 begin
    Result := High(Texture);
@@ -92,6 +112,19 @@ end;
 function TMeshMaterial.GetNextTextureID: integer;
 begin
    Result := High(Texture)+1;
+end;
+
+function TMeshMaterial.GetTextureSize(_TextureID: integer): integer;
+begin
+   if (_TextureID >= 0) and (_TextureID <= High(Texture)) then
+   begin
+      Result := Texture[_TextureID]^.Size;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+
 end;
 
 procedure TMeshMaterial.ClearTextures;

@@ -120,6 +120,8 @@ type
       procedure GenerateDiffuseTexture; overload;
       procedure GenerateDiffuseTexture(_Angle: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string);
+      procedure GenerateNormalMapTexture;
+      procedure GenerateBumpMapTexture;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -1019,6 +1021,34 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ExtractTextureAtlas;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GenerateNormalMapTexture;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.GenerateNormalMapTexture;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GenerateBumpMapTexture;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.GenerateBumpMapTexture;
       end;
    end;
    RequestUpdateWorld := true;

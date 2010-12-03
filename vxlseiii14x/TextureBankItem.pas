@@ -13,8 +13,10 @@ type
          ID : GLInt;
          Filename: string;
          MipmapCount : integer;
+         TextureSize : integer;
          // Gets
          function GetMipmapCount: integer;
+         function GetSize: integer;
          // Sets
          procedure SetNumMipmaps(_Value: integer);
          // I/O
@@ -64,6 +66,7 @@ type
          procedure DecCounter;
          // Properties
          property NumMipmaps: integer read GetMipmapCount write SetNumMipmaps;
+         property Size: integer read GetSize;
 
    end;
    PTextureBankItem = ^TTextureBankItem;
@@ -597,6 +600,7 @@ end;
 
 procedure TTextureBankItem.UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
 begin
+   TextureSize := _Width;
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, ID);
    glTexImage2D(GL_TEXTURE_2D, _Level, GL_RGBA, _Width, _Height, 0, _Format, GL_UNSIGNED_BYTE, _Data);
@@ -763,6 +767,10 @@ begin
    Result := MipMapCount;
 end;
 
+function TTextureBankItem.GetSize: integer;
+begin
+   Result := TextureSize;
+end;
 
 // Copies
 procedure TTextureBankItem.Clone(_Texture: Integer);

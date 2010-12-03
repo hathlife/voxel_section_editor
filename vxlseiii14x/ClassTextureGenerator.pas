@@ -1683,18 +1683,22 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
       _DestPoint.V := _SourcePoint.V;
    end;
 
-   procedure SetBumpValue(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X, _Y : single);
+   procedure SetBumpValue(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X, _Y : single; _Size: integer);
    const
       FaceSequence : array [0..7,0..3] of integer = ((-1,-1,0,-1),(0,-1,1,-1),(1,-1,1,0),(1,0,1,1),(1,1,0,1),(0,1,-1,1),(-1,1,-1,0),(-1,0,-1,-1));
    var
       DifferentNormalsList: CVector3fSet;
-      i : integer;
+      i,x,y : integer;
       CurrentNormal : PVector3f;
       V1, V2, Normal: TVector3f;
    begin
-      if not _VisitedMap[Round(_X),Round(_Y)] then
+      x := Round(_X);
+      y := Round(_Y);
+      if (X < 0) or (Y < 0) or (X >= _Size) or (Y >= _Size) then exit;
+
+      if not _VisitedMap[X,Y] then
       begin
-         _VisitedMap[Round(_X),Round(_Y)] := true;
+         _VisitedMap[X,Y] := true;
          DifferentNormalsList := CVector3fSet.Create;
          Normal.X := 0;
          Normal.Y := 0;
@@ -1723,14 +1727,14 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
          begin
             Normalize(Normal);
          end;
-         _Buffer[Round(_X),Round(_Y)].X := Normal.X;
-         _Buffer[Round(_X),Round(_Y)].Y := Normal.Y;
-         _Buffer[Round(_X),Round(_Y)].Z := Normal.Z;
+         _Buffer[X,Y].X := Normal.X;
+         _Buffer[X,Y].Y := Normal.Y;
+         _Buffer[X,Y].Z := Normal.Z;
          DifferentNormalsList.Free;
       end;
    end;
 
-   procedure HorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X1, _X2, _Y : single);
+   procedure HorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X1, _X2, _Y : single; _Size: integer);
    var
       x2, x1 : single;
       PP : TVector2f;
@@ -1745,7 +1749,7 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
       begin
          PP.U := _X1;
          PP.V := _Y;
-         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V);
+         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V,_Size);
          exit;
       end
       else
@@ -1759,7 +1763,7 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
       PP.V := _Y;
       while PP.U <= x2 do
       begin
-         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V);
+         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V,_Size);
          PP.U := PP.U + 1;
       end;
    end;
@@ -1800,7 +1804,7 @@ begin
    begin
       while S.V <= P2.V do
       begin
-   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V);
+   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V,Size);
          S.U := S.U + dx2;
          S.V := S.V + 1;
          E.U := E.U + dx1;
@@ -1809,7 +1813,7 @@ begin
 		AssignPoint(E,P2);
       while S.V <= P3.V do
       begin
-   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V);
+   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V,Size);
          S.U := S.U + dx2;
          S.V := S.V + 1;
          E.U := E.U + dx3;
@@ -1820,7 +1824,7 @@ begin
    begin
       while S.V <= P2.V do
       begin
-   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V);
+   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V,Size);
          S.U := S.U + dx1;
          S.V := S.V + 1;
          E.U := E.U + dx2;
@@ -1829,7 +1833,7 @@ begin
 		AssignPoint(S,P2);
       while S.V <= P3.V do
       begin
-   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V);
+   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V,Size);
          S.U := S.U + dx3;
          S.V := S.V + 1;
          E.U := E.U + dx2;
@@ -1964,6 +1968,8 @@ begin
             Normal.X := _Buffer[x,y].X / _WeightBuffer[x,y];
             Normal.Y := _Buffer[x,y].Y / _WeightBuffer[x,y];
             Normal.Z := _Buffer[x,y].Z / _WeightBuffer[x,y];
+            if abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0 then
+               Normal.Z := 1;
             Normalize(Normal);
             Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
          end
@@ -1994,6 +2000,8 @@ begin
             Normal.X := _Buffer[x,y].X / _WeightBuffer[x,y];
             Normal.Y := _Buffer[x,y].Y / _WeightBuffer[x,y];
             Normal.Z := _Buffer[x,y].Z / _WeightBuffer[x,y];
+            if abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0 then
+               Normal.Z := 1;
             Normalize(Normal);
             Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
             _AlphaMap[x,Result.Height - y] := C_TRP_OPAQUE;
@@ -2024,6 +2032,8 @@ begin
          Normal.X := _Buffer[x,y].X;
          Normal.Y := _Buffer[x,y].Y;
          Normal.Z := _Buffer[x,y].Z;
+         if abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0 then
+            Normal.Z := 1;
          Normalize(Normal);
          Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
          _AlphaMap[x,Result.Height - y] := C_TRP_OPAQUE;

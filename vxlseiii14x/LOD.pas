@@ -72,8 +72,10 @@ type
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single); overload;
       procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
-      procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer);
-      procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer);
+      procedure GenerateNormalMapTexture; overload;
+      procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
+      procedure GenerateBumpMapTexture; overload;
+      procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext : string);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -579,6 +581,18 @@ begin
    TexGenerator.Free;
 end;
 
+procedure TLOD.GenerateNormalMapTexture;
+var
+   Size,TextureID: integer;
+begin
+   if High(Mesh) >= 0 then
+   begin
+      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
+      TextureID := Mesh[0].GetNextTextureID(0);
+      GenerateNormalMapTexture(Size,0,TextureID);
+   end;
+end;
+
 procedure TLOD.GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer);
 var
    i : integer;
@@ -615,6 +629,19 @@ begin
    Bitmap.Free;
    TexGenerator.Free;
 end;
+
+procedure TLOD.GenerateBumpMapTexture;
+var
+   Size,TextureID: integer;
+begin
+   if High(Mesh) >= 0 then
+   begin
+      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
+      TextureID := Mesh[0].GetNextTextureID(0);
+      GenerateBumpMapTexture(Size,0,TextureID);
+   end;
+end;
+
 
 procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer);
 var

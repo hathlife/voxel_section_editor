@@ -1,13 +1,14 @@
 uniform sampler2D colorMap;
-uniform sampler2D normalMap;
+uniform sampler2D bumpMap;
 
-varying mat3 normalMatrix;
 varying vec3 v;    
+varying mat3 tangentMatrix;
 
 void main (void)  
 {  
    vec3 N = texture2D(bumpMap, gl_TexCoord[1].st).xyz * 2.0 - 1.0;
-   N = normalize(N * normalMatrix));
+   N.z *= -1.0;
+   N = (N * tangentMatrix).xyz;
    vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
    vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
    vec3 R = normalize(reflect(-L,N));  

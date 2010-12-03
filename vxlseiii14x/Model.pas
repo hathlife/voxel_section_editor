@@ -90,6 +90,8 @@ type
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string);
+      procedure GenerateNormalMapTexture;
+      procedure GenerateBumpMapTexture;
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -525,6 +527,17 @@ procedure TModel.ExportTextures(const _BaseDir, _Ext: string);
 begin
    LOD[CurrentLOD].ExportTextures(_BaseDir,_Ext);
 end;
+
+procedure TModel.GenerateNormalMapTexture;
+begin
+   LOD[CurrentLOD].GenerateNormalMapTexture;
+end;
+
+procedure TModel.GenerateBumpMapTexture;
+begin
+   LOD[CurrentLOD].GenerateBumpMapTexture;
+end;
+
 
 // Transparency methods
 procedure TModel.ForceTransparency(_level: single);

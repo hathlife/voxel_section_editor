@@ -1,14 +1,20 @@
 uniform sampler2D colorMap;
 uniform sampler2D normalMap;
 
-varying mat3 normalMatrix;
+attribute vec3 tangent;
+attribute vec3 bitangent;
+
 varying vec3 v;
 varying vec4 color;
+varying mat3 tangentMatrix;
 
 void main(void)
 {
    v = vec3(gl_ModelViewMatrix * gl_Vertex);       
-   normalMatrix = gl_NormalMatrix;
+   tangentMatrix[0] = normalize((gl_NormalMatrix * tangent));
+   tangentMatrix[1] = normalize((gl_NormalMatrix * bitangent))
+   tangentMatrix[2] = normalize((gl_NormalMatrix * gl_Normal));
+
    gl_TexCoord[0] = gl_MultiTexCoord0;
    gl_TexCoord[1] = gl_MultiTexCoord1;
    

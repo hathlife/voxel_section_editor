@@ -195,6 +195,7 @@ type
          // Materials
          function GetLastTextureID(_MaterialID: integer): integer;
          function GetNextTextureID(_MaterialID: integer): integer;
+         function GetTextureSize(_MaterialID,_TextureID: integer): integer;
 
          // Plugins
          procedure AddNormalsPlugin;
@@ -2947,6 +2948,18 @@ begin
    if (_MaterialID >= 0) and (_MaterialID <= High(Materials)) then
    begin
       Result := Materials[_MaterialID].GetNextTextureID;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
+function TMesh.GetTextureSize(_MaterialID,_TextureID: integer): integer;
+begin
+   if (_MaterialID >= 0) and (_MaterialID <= High(Materials)) then
+   begin
+      Result := Materials[_MaterialID].GetTextureSize(_TextureID);
    end
    else
    begin
