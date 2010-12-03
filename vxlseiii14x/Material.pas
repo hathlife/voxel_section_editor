@@ -3,7 +3,7 @@ unit Material;
 interface
 
 uses dglOpenGL, BasicDataTypes, TextureBank, TextureBankItem, ShaderBank, ShaderBankItem,
-   BasicFunctions, GlConstants, ClassIntegerSet, SysUtils;
+   BasicFunctions, GlConstants, ClassIntegerSet, SysUtils, Windows, Graphics;
 
 type
    TMeshMaterial = class
@@ -22,6 +22,9 @@ type
          constructor Create(_ShaderBank: PShaderBank);
          destructor Destroy; override;
          // Gets
+         function GetTexture(_Type: integer):TBitmap;
+         function GetLastTextureID: integer;
+         function GetNextTextureID: integer;
          // Sets
          // Render
          procedure Enable;
@@ -61,6 +64,34 @@ destructor TMeshMaterial.Destroy;
 begin
    ClearTextures;
    inherited Destroy;
+end;
+
+// Gets
+function TMeshMaterial.GetTexture(_Type: integer):TBitmap;
+var
+   tex: integer;
+begin
+   for tex := Low(Texture) to High(Texture) do
+   begin
+      if Texture[tex] <> nil then
+      begin
+         if Texture[tex].TextureType = _Type then
+         begin
+            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            Result := Texture[tex]^.DownloadTexture(0);
+         end;
+      end;
+   end;
+end;
+
+function TMeshMaterial.GetLastTextureID: integer;
+begin
+   Result := High(Texture);
+end;
+
+function TMeshMaterial.GetNextTextureID: integer;
+begin
+   Result := High(Texture)+1;
 end;
 
 procedure TMeshMaterial.ClearTextures;

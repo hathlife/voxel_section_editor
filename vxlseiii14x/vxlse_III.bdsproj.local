@@ -58,5 +58,6 @@
     <Transaction>2010/09/11 18:13:50.720.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\NormalsMeshPlugin.pas</Transaction>
     <Transaction>2010/09/12 21:00:05.954.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RenderingMachine.pas</Transaction>
     <Transaction>2010/10/21 00:08:12.108.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\NeighborhoodDataPlugin.pas</Transaction>
+    <Transaction>2010/12/03 05:06:22.800.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\BumpMapDataPlugin.pas</Transaction>
   </Transactions>
 </BorlandProject>

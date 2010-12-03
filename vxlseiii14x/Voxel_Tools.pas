@@ -31,27 +31,12 @@ type
      V : TVoxelUnpacked;
    end;
 
-   TDistanceUnit = record
-      x,
-      y,
-      z,
-      Distance : single;
-   end;
-
-
 const
    // 1.2 Cubed Normals Constants:
    DIST2 = 0.707106781186547524400844362104849; // sqrt(2)/2
    DIST3 = 0.577350269189625764509148780501957; // sqrt(3)/3
    LIMZERO = 0.0000000000001;
    TIP = 1;
-
-type
-   TBinaryMap = array of array of array of single; //byte;
-   TBooleanMap = array of array of array of boolean;
-   TVector3fMap = array of array of array of TVector3f;
-   TDistanceArray = array of array of array of TDistanceUnit; //single;
-
 
 //applies normals
 function ApplyNormals(Voxel : TVoxelSection) : TApplyNormalsResult;

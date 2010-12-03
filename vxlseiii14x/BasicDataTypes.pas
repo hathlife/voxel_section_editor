@@ -141,10 +141,23 @@ type
    ABool = array of boolean;
    AFloat = array of single;
    TByteMap = array of array of byte;
+   T2DBooleanMap = array of array of Boolean;
    TInt32Map = array of AInt32;
    TAByteMap = array of TByteMap;
    TABitmap = array of TBitmap;
+
+   TDistanceUnit = record
+      x,
+      y,
+      z,
+      Distance : single;
+   end;
+   
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
+   TBinaryMap = array of array of array of single; //byte;
+   T3DBooleanMap = array of array of array of boolean;
+   TVector3fMap = array of array of array of TVector3f;
+   TDistanceArray = array of array of array of TDistanceUnit; //single;
 
 
 implementation

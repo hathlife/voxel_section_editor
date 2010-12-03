@@ -66,20 +66,20 @@ function AplicarFiltroNoMapa(var Voxel : TVoxelSection; const Mapa : TVoxelMap; 
 procedure AplicarFiltro(var Voxel : TVoxelSection; const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; var V : TVoxelUnpacked; Alcance,_x,_y,_z : integer; TratarDescontinuidades : boolean = false);
 
 // 1.38: Funções de detecção de superfícies.
-procedure DetectarSuperficieContinua(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
-procedure DetectarSuperficieEsferica(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
+procedure DetectarSuperficieContinua(var MapaDaSuperficie: T3DBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
+procedure DetectarSuperficieEsferica(var MapaDaSuperficie: T3DBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
 
 
 // Plano Tangente
-procedure AcharPlanoTangenteEmXY(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
-procedure AcharPlanoTangenteEmYZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
-procedure AcharPlanoTangenteEmXZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmXY(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmYZ(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmXZ(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio: TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 
 
 // Outras funções
 function PontoValido (const x,y,z,maxx,maxy,maxz : integer) : boolean;
 function PegarValorDoPonto(const Mapa : TVoxelMap; var Ultimo : TVector3i; const Ponto : TVector3f; var EstaNoVazio : boolean): single;
-procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : TBooleanMap);
+procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : T3DBooleanMap);
 
 
 implementation
@@ -243,7 +243,7 @@ var
 {$endif}
    PararRaioDaFrente,PararRaioOposto : boolean;
    Posicao,PosicaoOposta,Centro : TVector3f;
-   MapaDaSuperficie : TBooleanMap;
+   MapaDaSuperficie : T3DBooleanMap;
    UltimoVisitado,UltimoOpostoVisitado : TVector3i;
 begin
    // Esse é o ponto do Mapa equivalente ao ponto do voxel a ser avaliado.
@@ -523,7 +523,7 @@ end;
 ///////////////////////////
 /////////////////
 ///////
-procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : TBooleanMap);
+procedure AdicionaNaListaSuperficie(const Mapa: TVoxelMap; const Filtro : TFiltroDistancia; x,y,z,xdir,ydir,zdir,XFiltro,YFiltro,ZFiltro: integer; var Lista,Direcao : C3DPointList; var LimiteMin,LimiteMax : TVector3i; var MapaDeVisitas,MapaDeSuperficie : T3DBooleanMap);
 begin
    if Mapa.IsPointOK(x,y,z) then
    begin
@@ -571,13 +571,13 @@ begin
    end;
 end;
 
-procedure DetectarSuperficieContinua(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
+procedure DetectarSuperficieContinua(var MapaDaSuperficie: T3DBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; x,y,z : integer; const PontoMin,PontoMax : TVector3i; var LimiteMin,LimiteMax : TVector3i);
 var
    xx,yy,zz : integer;
    xdir,ydir,zdir : integer;
    Ponto : TVector3i;
    Lista,Direcao : C3DPointList;
-   MapaDeVisitas : TBooleanMap;
+   MapaDeVisitas : T3DBooleanMap;
    Meio : integer;
 begin
    // Reseta elementos
@@ -763,7 +763,7 @@ begin
 end;
 
 
-procedure DetectarSuperficieEsferica(var MapaDaSuperficie: TBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
+procedure DetectarSuperficieEsferica(var MapaDaSuperficie: T3DBooleanMap; const Mapa : TVoxelMap; const Filtro : TFiltroDistancia; const PontoMin,PontoMax: TVector3i; var LimiteMin,LimiteMax : TVector3i);
 var
    xx,yy,zz : integer;
    Ponto : TVector3i;
@@ -821,7 +821,7 @@ end;
 ////////////////
 ///////
 
-procedure AcharPlanoTangenteEmXY(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmXY(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
    xx,yy,zz : integer;
 begin
@@ -889,7 +889,7 @@ begin
          end;
 end;
 
-procedure AcharPlanoTangenteEmYZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmYZ(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
    xx,yy,zz : integer;
 begin
@@ -956,7 +956,7 @@ begin
          end;
 end;
 
-procedure AcharPlanoTangenteEmXZ(const Mapa : TBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
+procedure AcharPlanoTangenteEmXZ(const Mapa : T3DBooleanMap; const Filtro : TFiltroDistancia; Alcance : integer; Meio : TVector3i; var PontoSudoeste,PontoNoroeste,PontoSudeste,PontoNordeste : TVector3f; const LimiteMin, LimiteMax : TVector3i);
 var
    xx,yy,zz : integer;
 begin

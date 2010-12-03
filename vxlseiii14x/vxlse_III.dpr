@@ -102,7 +102,8 @@ uses
   MeshPluginBase in 'MeshPluginBase.pas',
   NormalsMeshPlugin in 'NormalsMeshPlugin.pas',
   RenderingMachine in 'RenderingMachine.pas',
-  NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas';
+  NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas',
+  BumpMapDataPlugin in 'BumpMapDataPlugin.pas';
 
 {$R *.res}
 

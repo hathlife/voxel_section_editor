@@ -46,6 +46,7 @@ const
    C_TTP_ENVIRONMENT = 6;
    C_TTP_DECAL = 7;
    C_TTP_DISPLACEMENT = 8;
+   C_TTP_DOT3BUMP = 9;
 
    // Angle Detection
    C_ANGLE_NONE = -99999;
@@ -53,7 +54,8 @@ const
    // Shader Types
    C_SHD_PHONG = 0;
    C_SHD_PHONG_1TEX = 1;
-   C_SHD_PHONG_2TEX = 1;
+   C_SHD_PHONG_2TEX = 2;
+   C_SHD_PHONG_DOT3TEX = 3;
 
    // Transparency
    C_TRP_OPAQUE = 1;
@@ -70,6 +72,7 @@ const
    C_MPL_BASE = 0;
    C_MPL_NORMALS = 1;
    C_MPL_NEIGHBOOR = 2;
+   C_MPL_BUMPMAPDATA = 3;
 
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =

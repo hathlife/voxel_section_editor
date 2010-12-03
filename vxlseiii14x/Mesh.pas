@@ -8,7 +8,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
-      MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin;
+      MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -158,7 +158,7 @@ type
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
-         procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
 
@@ -192,9 +192,14 @@ type
          procedure MeshOptimizationIgnoreColours(_Angle : single);
          procedure ConvertQuadsToTris;
 
+         // Materials
+         function GetLastTextureID(_MaterialID: integer): integer;
+         function GetNextTextureID(_MaterialID: integer): integer;
+
          // Plugins
          procedure AddNormalsPlugin;
          procedure AddNeighborhoodPlugin;
+         procedure AddBumpMapDataPlugin;
          procedure RemovePlugin(_PluginType: integer);
          procedure ClearPlugins;
          function IsPluginEnabled(_PluginType: integer): boolean;
@@ -2252,9 +2257,15 @@ begin
    _TexGenerator.PaintMeshNormalMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
 end;
 
-procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
+var
+   DiffuseBitmap: TBitmap;
+   Mat: integer;
 begin
-   //_TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+   DiffuseBitmap := Materials[0].GetTexture(C_TTP_DIFFUSE);
+   _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseBitmap);
+   DiffuseBitmap.Free;
+   AddBumpMapDataPlugin;
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
@@ -2919,6 +2930,31 @@ begin
    SetLength(Materials,0);
 end;
 
+function TMesh.GetLastTextureID(_MaterialID: integer): integer;
+begin
+   if (_MaterialID >= 0) and (_MaterialID <= High(Materials)) then
+   begin
+      Result := Materials[_MaterialID].GetLastTextureID;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function TMesh.GetNextTextureID(_MaterialID: integer): integer;
+begin
+   if (_MaterialID >= 0) and (_MaterialID <= High(Materials)) then
+   begin
+      Result := Materials[_MaterialID].GetNextTextureID;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
+
 // Plugins
 procedure TMesh.AddNormalsPlugin;
 var
@@ -2963,6 +2999,29 @@ begin
    end;
    ForceRefresh;
 end;
+
+procedure TMesh.AddBumpMapDataPlugin;
+var
+   NewPlugin,Plugin : PMeshPluginBase;
+begin
+   new(NewPlugin);
+   NewPlugin^ := TBumpMapDataPlugin.Create(Vertices,Normals,TexCoords,Faces,VerticesPerFace);
+   Plugin := Plugins;
+   if Plugin <> nil then
+   begin
+      while Plugin^.Next <> nil do
+      begin
+         Plugin := Plugin^.Next;
+      end;
+      Plugin^.Next := NewPlugin;
+   end
+   else
+   begin
+      Plugins := NewPlugin;
+   end;
+   ForceRefresh;
+end;
+
 
 procedure TMesh.RemovePlugin(_PluginType: integer);
 var

@@ -29,8 +29,6 @@ type
          procedure SaveTGATexture(const _Filename : string);
          procedure SaveDDSTexture(const _Filename : string);
          procedure UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
-         function DownloadTexture(_Level : integer): TBitmap; overload;
-         function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
       public
          TextureType : integer;
          // Constructor and Destructor
@@ -49,6 +47,8 @@ type
          procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
          procedure SaveTexture(const _Filename: string);
+         function DownloadTexture(_Level : integer): TBitmap; overload;
+         function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
          // Sets
          procedure SetEditable(_value: boolean);
          procedure SetFilename(_value: string);

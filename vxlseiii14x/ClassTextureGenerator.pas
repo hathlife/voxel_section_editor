@@ -4,7 +4,8 @@ interface
 
 uses GLConstants, Geometry, BasicDataTypes, Voxel_Engine, ClassNeighborDetector,
    ClassIntegerList, Math, Windows, Graphics, BasicFunctions, SysUtils, Dialogs,
-   ClassVertexTransformationUtils, Math3d, NeighborhoodDataPlugin, MeshPluginBase;
+   ClassVertexTransformationUtils, Math3d, NeighborhoodDataPlugin, MeshPluginBase,
+   ClassVector3fSet;
 
 type
    TTextureSeed = record
@@ -43,6 +44,7 @@ type
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
+         procedure PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
       public
@@ -64,14 +66,17 @@ type
          function GenerateNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
          function GenerateNormalWithHeightMapTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
          // Generate Textures step by step
-         procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
-         procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
-         procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
-         procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; const _DiffuseMap: TBitmap);
-         procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+         procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer); overload;
+         procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; _Size: integer); overload;
+         procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+         procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+         procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; const _DiffuseMap: TBitmap);
+         procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer); overload;
+         procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer); overload;
          function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
+         function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
    end;
 
 
@@ -1671,6 +1676,168 @@ begin
    end;
 end;
 
+procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
+   procedure AssignPoint(var _DestPoint: TVector2f; const _SourcePoint: TVector2f);
+   begin
+      _DestPoint.U := _SourcePoint.U;
+      _DestPoint.V := _SourcePoint.V;
+   end;
+
+   procedure SetBumpValue(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X, _Y : single);
+   const
+      FaceSequence : array [0..7,0..3] of integer = ((-1,-1,0,-1),(0,-1,1,-1),(1,-1,1,0),(1,0,1,1),(1,1,0,1),(0,1,-1,1),(-1,1,-1,0),(-1,0,-1,-1));
+   var
+      DifferentNormalsList: CVector3fSet;
+      i : integer;
+      CurrentNormal : PVector3f;
+      V1, V2, Normal: TVector3f;
+   begin
+      if not _VisitedMap[Round(_X),Round(_Y)] then
+      begin
+         _VisitedMap[Round(_X),Round(_Y)] := true;
+         DifferentNormalsList := CVector3fSet.Create;
+         Normal.X := 0;
+         Normal.Y := 0;
+         Normal.Z := 0;
+         for i := 0 to 7 do
+         begin
+            CurrentNormal := new(PVector3f);
+
+            V1.X := FaceSequence[i,2];
+            V1.Y := FaceSequence[i,3];
+            V1.Z := _HeightMap[Round(_X) + FaceSequence[i,2], Round(_X) + FaceSequence[i,3]];
+
+            V2.X := FaceSequence[i,0];
+            V2.Y := FaceSequence[i,1];
+            V2.Z := _HeightMap[Round(_X) + FaceSequence[i,0], Round(_X) + FaceSequence[i,1]];
+
+            CurrentNormal^ := CrossProduct(V1,V2);
+            if DifferentNormalsList.Add(CurrentNormal) then
+            begin
+               Normal.X := Normal.X + CurrentNormal^.X;
+               Normal.Y := Normal.Y + CurrentNormal^.Y;
+               Normal.Z := Normal.Z + CurrentNormal^.Z;
+            end;
+         end;
+         if not DifferentNormalsList.isEmpty then
+         begin
+            Normalize(Normal);
+         end;
+         _Buffer[Round(_X),Round(_Y)].X := Normal.X;
+         _Buffer[Round(_X),Round(_Y)].Y := Normal.Y;
+         _Buffer[Round(_X),Round(_Y)].Z := Normal.Z;
+         DifferentNormalsList.Free;
+      end;
+   end;
+
+   procedure HorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X1, _X2, _Y : single);
+   var
+      x2, x1 : single;
+      PP : TVector2f;
+   begin
+      // First we make sure x1 will be smaller than x2.
+      if (_X1 > _X2) then
+      begin
+         x1 := _X2;
+         x2 := _X1;
+      end
+      else if _X1 = _X2 then
+      begin
+         PP.U := _X1;
+         PP.V := _Y;
+         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V);
+         exit;
+      end
+      else
+      begin
+         x1 := _X1;
+         x2 := _X2;
+      end;
+
+      //  Now, let's start the painting procedure:
+      PP.U := x1;
+      PP.V := _Y;
+      while PP.U <= x2 do
+      begin
+         SetBumpValue(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V);
+         PP.U := PP.U + 1;
+      end;
+   end;
+
+var
+   P1, P2, P3 : TVector2f;
+   dx1, dx2, dx3 : single;
+   Size : integer;
+   S, E : TVector2f;
+begin
+   Size := High(_Buffer[0])+1;
+   P1.U := _P1.U * Size;
+   P1.V := _P1.V * Size;
+   P2.U := _P2.U * Size;
+   P2.V := _P2.V * Size;
+   P3.U := _P3.U * Size;
+   P3.V := _P3.V * Size;
+
+	if (P2.V - P1.V > 0) then
+      dx1 := (_P2.U - _P1.U) / (_P2.V - _P1.V)
+   else
+      dx1 := 0;
+
+	if (P3.V - P1.V > 0) then
+      dx2 := (_P3.U - _P1.U) / (_P2.V - _P1.V)
+   else
+      dx2 := 0;
+
+	if (P3.V - P2.V > 0) then
+      dx3 := (_P3.U - _P2.U) / (_P3.V - _P2.V)
+   else
+      dx3 := 0;
+
+   AssignPoint(E,P1);
+   AssignPoint(S,P1);
+
+	if (dx1 > dx2) then
+   begin
+      while S.V <= P2.V do
+      begin
+   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V);
+         S.U := S.U + dx2;
+         S.V := S.V + 1;
+         E.U := E.U + dx1;
+         E.V := E.V + 1;
+      end;
+		AssignPoint(E,P2);
+      while S.V <= P3.V do
+      begin
+   	   HorizontalLine(_Buffer, _HeightMap, _VisitedMap,S.U,E.U,S.V);
+         S.U := S.U + dx2;
+         S.V := S.V + 1;
+         E.U := E.U + dx3;
+         E.V := E.V + 1;
+      end;
+	end
+   else
+   begin
+      while S.V <= P2.V do
+      begin
+   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V);
+         S.U := S.U + dx1;
+         S.V := S.V + 1;
+         E.U := E.U + dx2;
+         E.V := E.V + 1;
+      end;
+		AssignPoint(S,P2);
+      while S.V <= P3.V do
+      begin
+   	   HorizontalLine(_Buffer,_HeightMap, _VisitedMap,S.U,E.U,S.V);
+         S.U := S.U + dx3;
+         S.V := S.V + 1;
+         E.U := E.U + dx2;
+         E.V := E.V + 1;
+      end;
+	end;
+end;
+
 
 
 procedure CTextureGenerator.SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
@@ -1692,6 +1859,23 @@ begin
    end;
 end;
 
+procedure CTextureGenerator.SetupFrameBuffer(var _Buffer: T2DFrameBuffer; _Size: integer);
+var
+   x,y : integer;
+begin
+   SetLength(_Buffer,_Size,_Size);
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      for y := Low(_Buffer) to High(_Buffer) do
+      begin
+         _Buffer[x,y].X := 0;
+         _Buffer[x,y].Y := 0;
+         _Buffer[x,y].Z := 0;
+         _Buffer[x,y].W := 0;
+      end;
+   end;
+end;
+
 procedure CTextureGenerator.DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
 var
    x : integer;
@@ -1703,6 +1887,17 @@ begin
    end;
    SetLength(_Buffer,0);
    SetLength(_WeightBuffer,0);
+end;
+
+procedure CTextureGenerator.DisposeFrameBuffer(var _Buffer: T2DFrameBuffer);
+var
+   x : integer;
+begin
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      SetLength(_Buffer[x],0);
+   end;
+   SetLength(_Buffer,0);
 end;
 
 function CTextureGenerator.GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
@@ -1812,6 +2007,30 @@ begin
    end;
 end;
 
+function CTextureGenerator.GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap;
+var
+   x,y : integer;
+   Normal: TVector3f;
+begin
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32Bit;
+   Result.Width := High(_Buffer)+1;
+   Result.Height := High(_Buffer)+1;
+   SetLength(_AlphaMap,Result.Width,Result.Width);
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      for y := Low(_Buffer[x]) to High(_Buffer[x]) do
+      begin
+         Normal.X := _Buffer[x,y].X;
+         Normal.Y := _Buffer[x,y].Y;
+         Normal.Z := _Buffer[x,y].Z;
+         Normalize(Normal);
+         Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
+         _AlphaMap[x,Result.Height - y] := C_TRP_OPAQUE;
+      end;
+   end;
+end;
+
 function CTextureGenerator.GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
 var
    x,y : integer;
@@ -1902,37 +2121,39 @@ begin
    DisposeFrameBuffer(Buffer,WeightBuffer);
 end;
 
-procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
 var
    i,LastFace : cardinal;
 begin
    LastFace := ((High(_Faces)+1) div _VerticesPerFace) - 1;
    for i := 0 to LastFace do
    begin
-      PaintTriangle(_Buffer,_WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
+      PaintTriangle(_Buffer,_WeightBuffer,_TexCoords[_Faces[(i * _VerticesPerFace)]],_TexCoords[_Faces[(i * _VerticesPerFace)+1]],_TexCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
 end;
 
-procedure CTextureGenerator.PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+procedure CTextureGenerator.PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
 var
    i,LastFace : cardinal;
 begin
    LastFace := ((High(_Faces)+1) div _VerticesPerFace) - 1;
    for i := 0 to LastFace do
    begin
-      PaintTriangle(_Buffer,_WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsNormals[_Faces[(i * _VerticesPerFace)]],_VertsNormals[_Faces[(i * _VerticesPerFace)+1]],_VertsNormals[_Faces[(i * _VerticesPerFace)+2]]);
+      PaintTriangle(_Buffer,_WeightBuffer,_TexCoords[_Faces[(i * _VerticesPerFace)]],_TexCoords[_Faces[(i * _VerticesPerFace)+1]],_TexCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsNormals[_Faces[(i * _VerticesPerFace)]],_VertsNormals[_Faces[(i * _VerticesPerFace)+1]],_VertsNormals[_Faces[(i * _VerticesPerFace)+2]]);
    end;
 end;
 
-procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; const _DiffuseMap: TBitmap);
+procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; const _DiffuseMap: TBitmap);
 var
-   HeightMap : TByteMap;
+   HeightMap,PixelMap : TByteMap;
    x,y,Size,Face : integer;
    r,g,b: real;
+   VisitedMap : T2DBooleanMap;
 begin
-   // Build height map
+   // Build height map and visited map
    Size := High(_Buffer)+1;
    SetLength(HeightMap,Size,Size);
+   SetLength(VisitedMap,Size,Size);
    for x := Low(HeightMap) to High(HeightMap) do
    begin
       for y := Low(HeightMap[x]) to High(HeightMap[x]) do
@@ -1942,6 +2163,7 @@ begin
          b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          // Convert to YIQ
          HeightMap[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         VisitedMap[x,y] := false;
       end;
    end;
    // Now, we'll check each face.
@@ -1949,6 +2171,7 @@ begin
    while Face < High(_Faces) do
    begin
       // Paint the face here.
+      PaintFlatTriangleFromHeightMap(_Buffer,HeightMap,VisitedMap,_TexCoords[_Faces[Face]],_TexCoords[_Faces[Face+1]],_TexCoords[_Faces[Face+2]]);
 
       // Go to next face.
       inc(Face,_VerticesPerFace);

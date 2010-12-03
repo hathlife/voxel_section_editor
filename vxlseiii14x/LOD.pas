@@ -621,26 +621,25 @@ var
    i : integer;
    TexGenerator: CTextureGenerator;
    Buffer: T2DFrameBuffer;
-   WeightBuffer: TWeightBuffer;
    Bitmap : TBitmap;
    AlphaMap : TByteMap;
    NormalTexture : PTextureBankItem;
 begin
    TexGenerator := CTextureGenerator.Create;
-   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
+   TexGenerator.SetupFrameBuffer(Buffer,_Size);
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].PaintMeshNormalMapTexture(Buffer,WeightBuffer,TexGenerator);
+      Mesh[i].PaintMeshBumpMapTexture(Buffer,TexGenerator);
    end;
-   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
-   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer,AlphaMap);
+   TexGenerator.DisposeFrameBuffer(Buffer);
    // Now we generate a texture that will be used by all meshes.
    glActiveTextureARB(GL_TEXTURE0_ARB + _TextureID);
    NormalTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_2TEX,NormalTexture);
+      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DOT3BUMP,C_SHD_PHONG_DOT3TEX,NormalTexture);
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
