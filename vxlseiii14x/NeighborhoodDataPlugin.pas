@@ -18,6 +18,7 @@ type
          EquivalenceFaceNeighbors: TNeighborDetector;
          EquivalenceFaceFromVertexNeighbors: TNeighborDetector;
          UseEquivalenceFaces: boolean;
+         InitialVertexCount: integer;
          // Constructors and Destructors
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer);
          destructor Destroy; override;
@@ -26,6 +27,8 @@ type
          procedure DeactivateQuadFaces;
          procedure UpdateEquivalences(const _VertsLocation: aint32);
          procedure ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
+         // Gets
+         function GetEquivalentVertex(_VertexID: integer): integer;
    end;
 
 
@@ -56,6 +59,7 @@ implementation
       UseEquivalenceFaces := false;
       EquivalenceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
       EquivalenceFaceFromVertexNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX);
+      InitialVertexCount := _NumVertices;
       for i := Low(VertexEquivalences) to High(VertexEquivalences) do
       begin
          VertexEquivalences[i] := i;
@@ -67,7 +71,7 @@ implementation
       VertexNeighbors.Free;
       FaceNeighbors.Free;
       FaceFaceNeighbors.Free;
-      QuadFaceNeighbors.Free;
+//      QuadFaceNeighbors.Free;
       EquivalenceFaceNeighbors.Free;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
@@ -139,11 +143,11 @@ implementation
 
    procedure TNeighborhoodDataPlugin.DeactivateQuadFaces;
    begin
-      UseQuadFaces := false;
+//      UseQuadFaces := false;
 //      QuadFaceNeighbors.Free;
 //      QuadFaceNeighbors := TNeighborDetector.Create;
-      SetLength(QuadFaces,0);
-      SetLength(QuadFaceNormals,0);
+//      SetLength(QuadFaces,0);
+//      SetLength(QuadFaceNormals,0);
    end;
 
    procedure TNeighborhoodDataPlugin.UpdateEquivalences(const _VertsLocation: aint32);
@@ -184,4 +188,15 @@ implementation
       EquivalenceFaceFromVertexNeighbors.BuildUpData(EFaces,_VerticesPerFace,_NumVertices);
       UseEquivalenceFaces := true;
    end;
+
+   // Gets
+   function TNeighborhoodDataPlugin.GetEquivalentVertex(_VertexID: integer): integer;
+   begin
+      Result := _VertexID;
+      while Result > InitialVertexCount do
+      begin
+         Result := VertexEquivalences[Result];
+      end;
+   end;
+
 end.

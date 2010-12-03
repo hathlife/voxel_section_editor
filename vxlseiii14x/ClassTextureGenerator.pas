@@ -67,6 +67,7 @@ type
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer);
          procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
          procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+         procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; const _DiffuseMap: TBitmap);
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
          function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap; overload;
@@ -1920,6 +1921,37 @@ begin
    for i := 0 to LastFace do
    begin
       PaintTriangle(_Buffer,_WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsNormals[_Faces[(i * _VerticesPerFace)]],_VertsNormals[_Faces[(i * _VerticesPerFace)+1]],_VertsNormals[_Faces[(i * _VerticesPerFace)+2]]);
+   end;
+end;
+
+procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; const _DiffuseMap: TBitmap);
+var
+   HeightMap : TByteMap;
+   x,y,Size,Face : integer;
+   r,g,b: real;
+begin
+   // Build height map
+   Size := High(_Buffer)+1;
+   SetLength(HeightMap,Size,Size);
+   for x := Low(HeightMap) to High(HeightMap) do
+   begin
+      for y := Low(HeightMap[x]) to High(HeightMap[x]) do
+      begin
+         r := GetRValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         // Convert to YIQ
+         HeightMap[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+      end;
+   end;
+   // Now, we'll check each face.
+   Face := 0;
+   while Face < High(_Faces) do
+   begin
+      // Paint the face here.
+
+      // Go to next face.
+      inc(Face,_VerticesPerFace);
    end;
 end;
 

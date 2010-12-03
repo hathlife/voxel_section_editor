@@ -158,6 +158,7 @@ type
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
 
@@ -1770,13 +1771,14 @@ end;
 procedure TMesh.ReNormalizePerVertex;
 var
    DifferentNormalsList: array of CVector3fSet;
-   i,f,v,v1,Value : integer;
+   i,f,v,Vertex,v1,Value : integer;
    MaxVerticePerFace: integer;
    Normals1,Normals2 : TVector3f;
    Normal : PVector3f;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin: PMeshPluginBase;
    MyFaces: auint32;
+   MaxNeighbors: integer;
 begin
    SetLength(DifferentNormalsList,High(Vertices)+1);
    SetLength(Normals,High(Vertices)+1);
@@ -1787,11 +1789,13 @@ begin
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
          MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
+         MaxNeighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount - 1;
       end
       else
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
          MyFaces := Faces;
+         MaxNeighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount - 1;
       end;
    end
    else
@@ -1799,6 +1803,7 @@ begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       MyFaces := Faces;
+      MaxNeighbors := High(Vertices);
    end;
 
    // Reset values.
@@ -1814,7 +1819,7 @@ begin
    // Now, let's check each vertex and calculate the normals with the neighborhood.
    if MaxVerticePerFace = 2 then
    begin
-      for v := Low(Vertices) to High(Vertices) do
+      for v := Low(Vertices) to MaxNeighbors do
       begin
          Value := NeighborDetector.GetNeighborFromID(v);
          while Value <> -1 do
@@ -1836,12 +1841,27 @@ begin
          end;
          DifferentNormalsList[v].Free;
       end;
+      for v := MaxNeighbors + 1 to High(Vertices) do
+      begin
+         Vertex := TNeighborhoodDataPlugin(NeighborhoodPlugin^).GetEquivalentVertex(v);
+         Normals[v].X := Normals[Vertex].X;
+         Normals[v].Y := Normals[Vertex].Y;
+         Normals[v].Z := Normals[Vertex].Z;
+      end;
    end
    else
    begin
       for v := Low(Vertices) to High(Vertices) do
       begin
-         Value := NeighborDetector.GetNeighborFromID(v);
+         if v  > MaxNeighbors then
+         begin
+            Vertex := TNeighborhoodDataPlugin(NeighborhoodPlugin^).GetEquivalentVertex(v);
+         end
+         else
+         begin
+            Vertex := v;
+         end;
+         Value := NeighborDetector.GetNeighborFromID(Vertex);
          while Value <> -1 do
          begin
             v1 := Value * 4;
@@ -2230,6 +2250,11 @@ end;
 procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
 begin
    _TexGenerator.PaintMeshNormalMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+end;
+
+procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+begin
+   //_TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
