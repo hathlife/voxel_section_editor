@@ -8,12 +8,13 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       ClassIntegerList, ClassStopWatch, ShaderBank, ShaderBankItem, TextureBank,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
-      MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin;
+      MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
+      ClassMeshNormalsTool;
 
 {$INCLUDE Global_Conditionals.inc}
 type
    TRenderProc = procedure of object;
-   TDistanceFunc = function (_Distance: single): single of object;
+   TSetShaderAttributesFunc = procedure (_VertexID: integer; const _PPlugin: PMeshPluginBase) of object;
    TMesh = class
       private
          ColoursType : byte;
@@ -24,6 +25,8 @@ type
          CurrentPass : integer;
          // Connect to the correct shader bank
          ShaderBank : PShaderBank;
+         // SetShaderAttributes procedure for rendering bump maps
+         SetShaderAttributes : TSetShaderAttributesFunc;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -36,10 +39,6 @@ type
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          procedure LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          // Normals
-         procedure ReNormalizeQuads;
-         procedure ReNormalizeTriangles;
-         procedure ReNormalizePerVertex;
-         procedure ReNormalizeFaces;
          procedure RebuildFaceNormals;
          procedure TransformFaceToVertexNormals;
          procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
@@ -161,6 +160,7 @@ type
          procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
+         procedure AddBumpMappingVertexAttributes(_ShaderID: integer);
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -177,6 +177,10 @@ type
          procedure RenderWithVertexNormalsAndWithTexture;
          procedure RenderWithFaceNormalsAndWithTexture;
          procedure ForceRefresh;
+
+         // Redering methods related to bump mapping.
+         procedure SetAtributeShaderDoNothing(_VertexID: integer; const _PPlugin: PMeshPluginBase);
+         procedure SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
 
          // Copies
          procedure Assign(const _Mesh : TMesh);
@@ -1703,41 +1707,59 @@ begin
 end;
 
 procedure TMesh.ReNormalizeMesh;
-begin
-   if FaceType = GL_QUADS then
-      ReNormalizeQuads
-   else
-      ReNormalizeTriangles;
-end;
-
-procedure TMesh.ReNormalizeQuads;
 var
-   f : integer;
-   temp : TVector3f;
+   Tool: TMeshNormalsTool;
+   NeighborDetector : TNeighborDetector;
+   NeighborhoodPlugin: PMeshPluginBase;
+   VertexEquivalences: auint32;
+   MyNormals: TAVector3f;
+   NumVertices: integer;
    {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
+   StopWatch: TStopWatch;
    {$endif}
 begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   if High(FaceNormals) >= 0 then
+   Tool := TMeshNormalsTool.Create;
+   Tool.RebuildFaceNormals(FaceNormals,VerticesPerFace,Vertices,Faces);
+   // If it uses vertex normals, it will normalize vertexes.
+   if (NormalsType and C_NORMALS_PER_VERTEX) <> 0 then
    begin
-      for f := Low(FaceNormals) to High(faceNormals) do
+      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+      if NeighborhoodPlugin <> nil then
       begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*4]],Vertices[Faces[(f*4)+1]],Vertices[Faces[(f*4)+2]]);
-         Temp := GetNormalsValue(Vertices[Faces[(f*4)+2]],Vertices[Faces[(f*4)+3]],Vertices[Faces[f*4]]);
-         FaceNormals[f].X := FaceNormals[f].X + Temp.X;
-         FaceNormals[f].Y := FaceNormals[f].Y + Temp.Y;
-         FaceNormals[f].Z := FaceNormals[f].Z + Temp.Z;
-         Normalize(FaceNormals[f]);
+         if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
+         begin
+            NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+            MyNormals := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNormals;
+         end
+         else
+         begin
+            NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+            MyNormals := FaceNormals;
+         end;
+         VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+         NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      end
+      else
+      begin
+         NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+         NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         MyNormals := FaceNormals;
+         VertexEquivalences := nil;
+         NumVertices := High(Vertices)+1;
       end;
-   end
-   else if High(Normals) >= 0 then
-   begin
-      ReNormalizePerVertex;
+      Tool.TransformFaceToVertexNormals(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
+      // Free Memory
+      if NeighborhoodPlugin = nil then
+      begin
+         NeighborDetector.Free;
+      end;
    end;
    ForceRefresh;
+   // Free memory
+   Tool.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('ReNormalize Quads for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
@@ -1745,218 +1767,26 @@ begin
    {$endif}
 end;
 
-procedure TMesh.ReNormalizeTriangles;
-var
-   f : integer;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   if High(FaceNormals) >= 0 then
-   begin
-      for f := Low(FaceNormals) to High(FaceNormals) do
-      begin
-         FaceNormals[f] := GetNormalsValue(Vertices[Faces[f*3]],Vertices[Faces[(f*3)+1]],Vertices[Faces[(f*3)+2]]);
-      end;
-   end
-   else if High(Normals) >= 0 then
-   begin
-      ReNormalizePerVertex;
-   end;
-   ForceRefresh;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('ReNormalize Triangles for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TMesh.ReNormalizePerVertex;
-var
-   DifferentNormalsList: array of CVector3fSet;
-   i,f,v,Vertex,v1,Value : integer;
-   MaxVerticePerFace: integer;
-   Normals1,Normals2 : TVector3f;
-   Normal : PVector3f;
-   NeighborDetector : TNeighborDetector;
-   NeighborhoodPlugin: PMeshPluginBase;
-   MyFaces: auint32;
-   MaxNeighbors: integer;
-begin
-   SetLength(DifferentNormalsList,High(Vertices)+1);
-   SetLength(Normals,High(Vertices)+1);
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   if NeighborhoodPlugin <> nil then
-   begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-         MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
-         MaxNeighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount - 1;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-         MyFaces := Faces;
-         MaxNeighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount - 1;
-      end;
-   end
-   else
-   begin
-      NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-      MyFaces := Faces;
-      MaxNeighbors := High(Vertices);
-   end;
-
-   // Reset values.
-   for i := Low(DifferentNormalsList) to High(DifferentNormalsList) do
-   begin
-      DifferentNormalsList[i] := CVector3fSet.Create;
-      Normals[i].X := 0;
-      Normals[i].Y := 0;
-      Normals[i].Z := 0;
-   end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   v1 := 0;
-   // Now, let's check each vertex and calculate the normals with the neighborhood.
-   if MaxVerticePerFace = 2 then
-   begin
-      for v := Low(Vertices) to MaxNeighbors do
-      begin
-         Value := NeighborDetector.GetNeighborFromID(v);
-         while Value <> -1 do
-         begin
-            v1 := Value * 3;
-            Normal := new (PVector3f);
-            Normal^ := GetNormalsValue(Vertices[MyFaces[v1]],Vertices[MyFaces[v1+1]],Vertices[MyFaces[v1+2]]);
-            if DifferentNormalsList[v].Add(Normal) then
-            begin
-               Normals[v].X := Normals[v].X + Normal^.X;
-               Normals[v].Y := Normals[v].Y + Normal^.Y;
-               Normals[v].Z := Normals[v].Z + Normal^.Z;
-            end;
-            Value := NeighborDetector.GetNextNeighbor;
-         end;
-         if not DifferentNormalsList[v].isEmpty then
-         begin
-            Normalize(Normals[v]);
-         end;
-         DifferentNormalsList[v].Free;
-      end;
-      for v := MaxNeighbors + 1 to High(Vertices) do
-      begin
-         Vertex := TNeighborhoodDataPlugin(NeighborhoodPlugin^).GetEquivalentVertex(v);
-         Normals[v].X := Normals[Vertex].X;
-         Normals[v].Y := Normals[Vertex].Y;
-         Normals[v].Z := Normals[Vertex].Z;
-      end;
-   end
-   else
-   begin
-      for v := Low(Vertices) to High(Vertices) do
-      begin
-         if v  > MaxNeighbors then
-         begin
-            Vertex := TNeighborhoodDataPlugin(NeighborhoodPlugin^).GetEquivalentVertex(v);
-         end
-         else
-         begin
-            Vertex := v;
-         end;
-         Value := NeighborDetector.GetNeighborFromID(Vertex);
-         while Value <> -1 do
-         begin
-            v1 := Value * 4;
-            Normals1 := GetNormalsValue(Vertices[MyFaces[v1]],Vertices[MyFaces[v1+1]],Vertices[MyFaces[v1+2]]);
-            Normals2 := GetNormalsValue(Vertices[MyFaces[v1+2]],Vertices[MyFaces[v1+3]],Vertices[MyFaces[v1]]);
-            Normal := new (PVector3f);
-            Normal^.X := ((Normals1.X + Normals2.X) / 2);
-            Normal^.Y := ((Normals1.Y + Normals2.Y) / 2);
-            Normal^.Z := ((Normals1.Z + Normals2.Z) / 2);
-            if DifferentNormalsList[v].Add(Normal) then
-            begin
-               Normals[v].X := Normals[v].X + Normal^.X;
-               Normals[v].Y := Normals[v].Y + Normal^.Y;
-               Normals[v].Z := Normals[v].Z + Normal^.Z;
-            end;
-            Value := NeighborDetector.GetNextNeighbor;
-         end;
-         if not DifferentNormalsList[v].isEmpty then
-         begin
-            Normalize(Normals[v]);
-         end;
-         DifferentNormalsList[v].Free;
-      end;
-   end;
-   // Free memory
-   SetLength(DifferentNormalsList,0);
-   if NeighborhoodPlugin = nil then
-   begin
-      NeighborDetector.Free;
-   end;
-end;
-
-procedure TMesh.ReNormalizeFaces;
-var
-   f,face : integer;
-   temp : TVector3f;
-begin
-   if High(FaceNormals) >= 0 then
-   begin
-      if VerticesPerFace = 3 then
-      begin
-         for f := Low(FaceNormals) to High(FaceNormals) do
-         begin
-            face := f * 3;
-            FaceNormals[f] := GetNormalsValue(Vertices[Faces[face]],Vertices[Faces[face+1]],Vertices[Faces[face+2]]);
-         end;
-      end
-      else if VerticesPerFace = 4 then
-      begin
-         for f := Low(FaceNormals) to High(faceNormals) do
-         begin
-            face := f * 4;
-            FaceNormals[f] := GetNormalsValue(Vertices[Faces[face]],Vertices[Faces[face+1]],Vertices[Faces[face+2]]);
-            Temp := GetNormalsValue(Vertices[Faces[face+2]],Vertices[Faces[face+3]],Vertices[Faces[face]]);
-            FaceNormals[f].X := FaceNormals[f].X + Temp.X;
-            FaceNormals[f].Y := FaceNormals[f].Y + Temp.Y;
-            FaceNormals[f].Z := FaceNormals[f].Z + Temp.Z;
-            Normalize(FaceNormals[f]);
-         end;
-      end;
-   end;
-end;
-
 procedure TMesh.RebuildFaceNormals;
+var
+   Tool : TMeshNormalsTool;
 begin
    SetLength(FaceNormals,NumFaces);
-   ReNormalizeFaces;
+   Tool := TMeshNormalsTool.Create;
+   Tool.RebuildFaceNormals(FaceNormals,VerticesPerFace,Vertices,Faces);
+   Tool.Free;
 end;
-
 
 procedure TMesh.TransformFaceToVertexNormals;
 var
-   DifferentNormalsList: array of CVector3fSet;
-   i,v,Value : integer;
-   Normal : PVector3f;
+   Tool : TMeshNormalsTool;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
    MyNormals : TAVector3f;
+   VertexEquivalences : auint32;
+   NumVertices: integer;
 begin
-   SetLength(DifferentNormalsList,High(Vertices)+1);
-   SetLength(Normals,High(Vertices)+1);
-   // Reset values.
-   for i := Low(DifferentNormalsList) to High(DifferentNormalsList) do
-   begin
-      DifferentNormalsList[i] := CVector3fSet.Create;
-      Normals[i].X := 0;
-      Normals[i].Y := 0;
-      Normals[i].Z := 0;
-   end;
+   Tool := TMeshNormalsTool.Create;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
@@ -1970,39 +1800,24 @@ begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
          MyNormals := FaceNormals;
       end;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       MyNormals := FaceNormals;
+      VertexEquivalences := nil;
+      NumVertices := High(Vertices)+1;
    end;
-   // Now, let's check each vertex.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      Value := NeighborDetector.GetNeighborFromID(v);
-      while Value <> -1 do
-      begin
-         Normal := new(PVector3f);
-         Normal^.X := MyNormals[Value].X;
-         Normal^.Y := MyNormals[Value].Y;
-         Normal^.Z := MyNormals[Value].Z;
-         if DifferentNormalsList[v].Add(Normal) then
-         begin
-            Normals[v].X := Normals[v].X + Normal^.X;
-            Normals[v].Y := Normals[v].Y + Normal^.Y;
-            Normals[v].Z := Normals[v].Z + Normal^.Z;
-         end;
-         Value := NeighborDetector.GetNextNeighbor;
-      end;
-      if not DifferentNormalsList[v].isEmpty then
-      begin
-         Normalize(Normals[v]);
-      end;
-      DifferentNormalsList[v].Free;
-   end;
+   Tool.TransformFaceToVertexNormals(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
    // Free memory
-   SetLength(DifferentNormalsList,0);
+   Tool.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
 end;
 
 procedure TMesh.ConvertFaceToVertexNormals;
@@ -2017,15 +1832,8 @@ begin
    if (NormalsType and C_NORMALS_PER_VERTEX) = 0 then
    begin
       NormalsType := C_NORMALS_PER_VERTEX;
-      if High(FaceNormals) >= 0 then
-      begin
-         TransformFaceToVertexNormals;
-         SetLength(FaceNormals,0);
-      end
-      else
-      begin
-         ReNormalizePerVertex;
-      end;
+      SetLength(Normals,High(Vertices)+1);
+      TransformFaceToVertexNormals;
       SetRenderingProcedure;
    end;
    {$ifdef SPEED_TEST}
@@ -2047,10 +1855,9 @@ procedure TMesh.SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
 var
    Neighbors : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
-   i,Value : integer;
-   NormalsHandicap : TAVector3f;
-   HitCounter : array of single;
-   Distance: single;
+   Tool : TMeshNormalsTool;
+   NumVertices : integer;
+   VertexEquivalences: auint32;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -2058,6 +1865,7 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
+   Tool := TMeshNormalsTool.Create;
    // Setup Neighbors.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if (NormalsType and C_NORMALS_PER_FACE) = 0 then
@@ -2065,52 +1873,24 @@ begin
       if NeighborhoodPlugin <> nil then
       begin
          Neighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+         NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+         if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseEquivalenceFaces then
+         begin
+            VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+         end
+         else
+         begin
+            VertexEquivalences := nil;
+         end;
       end
       else
       begin
          Neighbors := TNeighborDetector.Create;
          Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         NumVertices := High(Vertices)+1;
+         VertexEquivalences := nil;
       end;
-      // Setup Normals Handicap and Hit Counter.
-      SetLength(NormalsHandicap,High(Normals)+1);
-      SetLength(HitCounter,High(Normals)+1);
-      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
-      begin
-         NormalsHandicap[i].X := 0;
-         NormalsHandicap[i].Y := 0;
-         NormalsHandicap[i].Z := 0;
-         HitCounter[i] := 0;
-      end;
-      // Main loop goes here.
-      for i := Low(Vertices) to High(Vertices) do
-      begin
-         Value := Neighbors.GetNeighborFromID(i);
-         while Value <> -1 do
-         begin
-            Distance := Vertices[Value].X - Vertices[i].X;
-            if Distance <> 0 then
-               NormalsHandicap[i].X := NormalsHandicap[i].X + (Normals[Value].X * _DistanceFunction(Distance));
-            Distance := Vertices[Value].Y - Vertices[i].Y;
-            if Distance <> 0 then
-               NormalsHandicap[i].Y := NormalsHandicap[i].Y + (Normals[Value].Y * _DistanceFunction(Distance));
-            Distance := Vertices[Value].Z - Vertices[i].Z;
-            if Distance <> 0 then
-               NormalsHandicap[i].Z := NormalsHandicap[i].Z + (Normals[Value].Z * _DistanceFunction(Distance));
-            HitCounter[i] := HitCounter[i] + 1;
-            Value := Neighbors.GetNextNeighbor;
-         end;
-      end;
-      // Finally, we do an average for all vertices.
-      for i := Low(Vertices) to High(Vertices) do
-      begin
-         if HitCounter[i] > 0 then
-         begin
-            Normals[i].X := Normals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
-            Normals[i].Y := Normals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
-            Normals[i].Z := Normals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
-            Normalize(Normals[i]);
-         end;
-      end;
+      Tool.SmoothVertexNormalsOperation(Normals,Vertices,NumVertices,Neighbors,VertexEquivalences,_DistanceFunction);
    end
    else
    begin
@@ -2121,58 +1901,18 @@ begin
       else
       begin
          Neighbors := TNeighborDetector.Create;
+         Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE_FROM_EDGE;
          Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
       end;
-      // Get neighbor faces from faces.
-      Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE_FROM_EDGE;
-      Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-      // Setup Normals Handicap.
-      SetLength(NormalsHandicap,High(FaceNormals)+1);
-      SetLength(HitCounter,High(FaceNormals)+1);
-      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
-      begin
-         NormalsHandicap[i].X := 0;
-         NormalsHandicap[i].Y := 0;
-         NormalsHandicap[i].Z := 0;
-         HitCounter[i] := 0;
-      end;
-      // Main loop goes here.
-      for i := Low(NormalsHandicap) to High(NormalsHandicap) do
-      begin
-         Value := Neighbors.GetNeighborFromID(i);
-         while Value <> -1 do
-         begin
-            Distance := Vertices[Value].X - Vertices[i].X;
-            if Distance <> 0 then
-               NormalsHandicap[i].X := NormalsHandicap[i].X + (FaceNormals[Value].X * _DistanceFunction(Distance));
-            Distance := Vertices[Value].Y - Vertices[i].Y;
-            if Distance <> 0 then
-               NormalsHandicap[i].Y := NormalsHandicap[i].Y + (FaceNormals[Value].Y * _DistanceFunction(Distance));
-            Distance := Vertices[Value].Z - Vertices[i].Z;
-            if Distance <> 0 then
-               NormalsHandicap[i].Z := NormalsHandicap[i].Z + (FaceNormals[Value].Z * _DistanceFunction(Distance));
-            Distance := sqrt(Power(Vertices[Value].X - Vertices[i].X,2) + Power(Vertices[Value].Y - Vertices[i].Y,2) + Power(Vertices[Value].Z - Vertices[i].Z,2));
-            HitCounter[i] := HitCounter[i] + Distance;
-            Value := Neighbors.GetNextNeighbor;
-         end;
-      end;
-      // Finally, we do an average for all vertices.
-      for i := Low(FaceNormals) to High(FaceNormals) do
-      begin
-         if HitCounter[i] > 0 then
-         begin
-            FaceNormals[i].X := FaceNormals[i].X + (NormalsHandicap[i].X / HitCounter[i]);
-            FaceNormals[i].Y := FaceNormals[i].Y + (NormalsHandicap[i].Y / HitCounter[i]);
-            FaceNormals[i].Z := FaceNormals[i].Z + (NormalsHandicap[i].Z / HitCounter[i]);
-            Normalize(FaceNormals[i]);
-         end;
-      end;
+      Tool.SmoothFaceNormalsOperation(FaceNormals,Vertices,Neighbors,_DistanceFunction);
    end;
 
    // Free memory
-   SetLength(NormalsHandicap,0);
-   SetLength(HitCounter,0);
-   Neighbors.Free;
+   if NeighborhoodPlugin = nil then
+   begin
+      Neighbors.Free;
+   end;
+   Tool.Free;
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -2283,6 +2023,15 @@ begin
    else
       Materials[_MaterialID].Shader := nil;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
+end;
+
+procedure TMesh.AddBumpMappingVertexAttributes(_ShaderID: integer);
+var
+   Shader: PShaderBankItem;
+begin
+   Shader := ShaderBank^.Get(_ShaderID);
+   Shader^.AddAttribute('tangent');
+   Shader^.AddAttribute('bitangent');
 end;
 
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
@@ -2793,6 +2542,17 @@ begin
       Plugin^.Update(Addr(self));
       Plugin := Plugin^.Next;
    end;
+end;
+
+// Redering methods related to bump mapping.
+procedure TMesh.SetAtributeShaderDoNothing(_VertexID: integer; const _PPlugin: PMeshPluginBase);
+begin
+   // do nothing, really... it does nothing!
+end;
+
+procedure TMesh.SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
+begin
+
 end;
 
 // Copies

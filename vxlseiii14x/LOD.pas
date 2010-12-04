@@ -667,6 +667,7 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DOT3BUMP,C_SHD_PHONG_DOT3TEX,NormalTexture);
+      Mesh[i].AddBumpMappingVertexAttributes(C_SHD_PHONG_DOT3TEX);
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(NormalTexture^.GetID);

@@ -137,6 +137,7 @@ type
    PInteger = ^Integer;
    AInt32 = array of integer;
    AUInt32 = array of longword;
+   AString = array of string;
    PAUint32 = ^AUInt32;
    ABool = array of boolean;
    AFloat = array of single;
@@ -159,6 +160,8 @@ type
    TVector3fMap = array of array of array of TVector3f;
    TDistanceArray = array of array of array of TDistanceUnit; //single;
 
+   TDistanceFunc = function (_Distance: single): single of object;
+   
 
 implementation
 

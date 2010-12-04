@@ -2,7 +2,8 @@ unit NeighborhoodDataPlugin;
 
 interface
 
-uses BasicDataTypes, MeshPluginBase, ClassNeighborDetector, Math3d, GLConstants;
+uses BasicDataTypes, MeshPluginBase, ClassNeighborDetector, Math3d, GLConstants,
+   ClassMeshNormalsTool;
 
 type
    TNeighborhoodDataPlugin = class (TMeshPluginBase)
@@ -84,6 +85,7 @@ implementation
    var
       vf,vq,fq,incf,incq: integer;
       V1,V2: TVector3f;
+      Tool: TMeshNormalsTool;
    begin
       // Build QuadFaces from _Faces.
       SetLength(QuadFaces,2*(High(_Faces)+1));
@@ -98,16 +100,16 @@ implementation
          QuadFaces[vq+1] := _Faces[vf+1];
          QuadFaces[vq+2] := _Faces[vf+2];
          // 2 -> 3 -> 0
-         QuadFaces[vq+3] := _Faces[vf+3];
+         QuadFaces[vq+3] := _Faces[vf+2];
          QuadFaces[vq+4] := _Faces[vf+4];
-         QuadFaces[vq+5] := _Faces[vf+5];
+         QuadFaces[vq+5] := _Faces[vf];
          // 1 -> 2 -> 3
          QuadFaces[vq+6] := _Faces[vf+1];
          QuadFaces[vq+7] := _Faces[vf+2];
-         QuadFaces[vq+8] := _Faces[vf+3];
+         QuadFaces[vq+8] := _Faces[vf+4];
          // 1 -> 3 -> 0
          QuadFaces[vq+9] := _Faces[vf+1];
-         QuadFaces[vq+10] := _Faces[vf+3];
+         QuadFaces[vq+10] := _Faces[vf+4];
          QuadFaces[vq+11] := _Faces[vf];
 
          inc(vf,incf);
@@ -115,23 +117,9 @@ implementation
       end;
       // Now we detect the normal vectors from all these faces.
       SetLength(QuadFaceNormals,(High(QuadFaces)+1) div _VerticesPerFace);
-      vq := 0;
-      fq := 0;
-      while vq < High(QuadFaces) do
-      begin
-         V1.X := _Vertices[QuadFaces[vq+2]].X - _Vertices[QuadFaces[vq+1]].X;
-         V1.Y := _Vertices[QuadFaces[vq+2]].Y - _Vertices[QuadFaces[vq+1]].Y;
-         V1.Z := _Vertices[QuadFaces[vq+2]].Z - _Vertices[QuadFaces[vq+1]].Z;
-
-         V2.X := _Vertices[QuadFaces[vq]].X - _Vertices[QuadFaces[vq+1]].X;
-         V2.Y := _Vertices[QuadFaces[vq]].Y - _Vertices[QuadFaces[vq+1]].Y;
-         V2.Z := _Vertices[QuadFaces[vq]].Z - _Vertices[QuadFaces[vq+1]].Z;
-
-         QuadFaceNormals[fq] := CrossProduct(V1,V2);
-
-         inc(vq,_VerticesPerFace);
-         inc(fq);
-      end;
+      Tool := TMeshNormalsTool.Create;
+      Tool.RebuildFaceNormals(QuadFaceNormals,_VerticesPerFace,_Vertices,QuadFaces);
+      Tool.Free;
 
       // Now we setup QuadFaceNeighbors
       QuadFaceNeighbors.SetType(C_NEIGHBTYPE_VERTEX_FACE);

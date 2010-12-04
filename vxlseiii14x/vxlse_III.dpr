@@ -103,7 +103,8 @@ uses
   NormalsMeshPlugin in 'NormalsMeshPlugin.pas',
   RenderingMachine in 'RenderingMachine.pas',
   NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas',
-  BumpMapDataPlugin in 'BumpMapDataPlugin.pas';
+  BumpMapDataPlugin in 'BumpMapDataPlugin.pas',
+  ClassMeshNormalsTool in 'ClassMeshNormalsTool.pas';
 
 {$R *.res}
 

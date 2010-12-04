@@ -10,6 +10,7 @@ type
          Counter: longword;
          IsAuthorized,IsVertexCompiled,IsFragmentCompiled,IsLinked, IsRunning : boolean;
          ProgramID, VertexID, FragmentID : GLUInt;
+         Attributes: AString;
       public
          // Constructor and Destructor
          constructor Create(const _VertexFilename, _FragmentFilename: string); overload;
@@ -24,6 +25,8 @@ type
          // Uses
          procedure UseProgram;
          procedure DeactivateProgram;
+         // Adds
+         procedure AddAttribute(const _name: string);
          // Counter
          function GetCount : integer;
          procedure IncCounter;
@@ -53,6 +56,7 @@ begin
    VertexID := 0;
    FragmentID := 0;
    ProgramID := 0;
+   SetLength(Attributes,0);
    // Let's load the vertex shader first.
    if FileExists(_VertexFilename) then
    begin
@@ -190,7 +194,7 @@ begin
    begin
       glDeleteShader(FragmentID);
    end;
-
+   SetLength(Attributes,0);
    inherited Destroy;
 end;
 
@@ -223,11 +227,19 @@ end;
 
 // Uses
 procedure TShaderBankItem.UseProgram;
+var
+   i : integer;
 begin
    if IsLinked and (not IsRunning) and (isAuthorized) then
    begin
       glUseProgram(ProgramID);
       IsRunning := true;
+      i := 0;
+      while i <= High(Attributes) do
+      begin
+         glBindAttribLocation(ProgramID,i,PChar(Attributes[i]));
+         inc(i);
+      end;
    end;
 end;
 
@@ -238,6 +250,13 @@ begin
       glUseProgram(0);
       IsRunning := false;
    end;
+end;
+
+// Adds
+procedure TShaderBankItem.AddAttribute(const _name: string);
+begin
+   SetLength(Attributes,High(Attributes)+1);
+   Attributes[High(Attributes)] := copy(_name,1,Length(_name));
 end;
 
 // Counter
