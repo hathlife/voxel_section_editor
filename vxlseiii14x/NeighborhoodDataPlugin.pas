@@ -48,11 +48,11 @@ implementation
       VertexNeighbors := TNeighborDetector.Create;
       VertexNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-      FaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
+      FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
       FaceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
-      FaceFaceNeighbors.VertexVertexNeighbors := PNeighborDetector(Addr(VertexNeighbors));
-      FaceFaceNeighbors.VertexFaceNeighbors := PNeighborDetector(Addr(FaceNeighbors));
+      FaceFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+      FaceFaceNeighbors.VertexFaceNeighbors := FaceNeighbors;
       FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
       QuadFaceNeighbors := TNeighborDetector.Create;
       UseQuadFaces := false;
@@ -75,7 +75,7 @@ implementation
       VertexNeighbors.Free;
       FaceNeighbors.Free;
       FaceFaceNeighbors.Free;
-//      QuadFaceNeighbors.Free;
+      QuadFaceNeighbors.Free;
       EquivalenceFaceNeighbors.Free;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
@@ -104,7 +104,6 @@ implementation
          QuadFaces[vq] := _Faces[vf];
          QuadFaces[vq+1] := _Faces[vf+1];
          QuadFaces[vq+2] := _Faces[vf+2];
-//         QuadFaceColours[fq].X :=
          // 2 -> 3 -> 0
          QuadFaces[vq+3] := _Faces[vf+2];
          QuadFaces[vq+4] := _Faces[vf+4];
@@ -128,12 +127,13 @@ implementation
 
       // Now we setup QuadFaceNeighbors
       QuadFaceNeighbors.SetType(C_NEIGHBTYPE_VERTEX_FACE);
-      QuadFaceNeighbors.VertexVertexNeighbors := FaceNeighbors.VertexVertexNeighbors;
+      QuadFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
       QuadFaceNeighbors.BuildUpData(QuadFaces,_VerticesPerFace,_NumVertices);
 
       // Update FaceFaceNeighbors
-      FaceFaceNeighbors.Clear;
-      FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
+      FaceNeighbors.Clear;
+      FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+      FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
 
       UseQuadFaces := true;
    end;

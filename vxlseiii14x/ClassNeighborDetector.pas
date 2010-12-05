@@ -36,8 +36,8 @@ type
          // Memory Usage
          function IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
       public
-         VertexVertexNeighbors: PNeighborDetector;
-         VertexFaceNeighbors: PNeighborDetector;
+         VertexVertexNeighbors: TNeighborDetector;
+         VertexFaceNeighbors: TNeighborDetector;
          NeighborType : byte;
          IsValid: boolean;
          // Constructors and Destructors
@@ -298,7 +298,7 @@ begin
    end
    else
    begin
-      TempDetector := VertexVertexNeighbors^;
+      TempDetector := VertexVertexNeighbors;
    end;
 
    // Main loop goes here.
@@ -344,7 +344,7 @@ begin
    end
    else
    begin
-      TempDetector := VertexFaceNeighbors^;
+      TempDetector := VertexFaceNeighbors;
    end;
 
    // Main loop goes here.
@@ -405,7 +405,7 @@ begin
    end
    else
    begin
-      TempDetector := VertexFaceNeighbors^;
+      TempDetector := VertexFaceNeighbors;
    end;
 
    // Main loop goes here.
