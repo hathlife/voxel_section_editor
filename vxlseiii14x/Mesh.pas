@@ -9,7 +9,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
-      ClassMeshNormalsTool;
+      ClassMeshNormalsTool, ClassMeshColoursTool;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -44,9 +44,6 @@ type
          procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
          // Colours
          procedure ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
-         procedure FilterAndFixColours;
-         procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
-         procedure TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f);
          procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc); overload;
          // Distance Functions
          function GetIgnoredDistance(_Distance : single): single;
@@ -1184,8 +1181,13 @@ end;
 
 procedure TMesh.ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
 var
-   OriginalColours,VertColours,FaceColours : TAVector4f;
-   i : integer;
+   Tool : TMeshColoursTool;
+   NeighborhoodPlugin: PMeshPluginBase;
+   NeighborDetector: TNeighborDetector;
+   VertexEquivalences: auint32;
+   NumVertices,MyNumFaces: integer;
+   MyFaces: auint32;
+   MyFaceColours: TAVector4f;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -1193,50 +1195,50 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
+   Tool := TMeshColoursTool.Create;
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   if NeighborhoodPlugin <> nil then
+   begin
+      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
+      begin
+         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+         MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
+         MyNumFaces := (High(MyFaces)+1) div VerticesPerFace;
+         MyFaceColours := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceColours;
+      end
+      else
+      begin
+         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+         MyFaces := Faces;
+         MyNumFaces := NumFaces;
+         MyFaceColours := Colours;
+      end;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+   end
+   else
+   begin
+      NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      VertexEquivalences := nil;
+      NumVertices := High(Vertices)+1;
+      MyFaces := Faces;
+      MyNumFaces := NumFaces;
+      MyFaceColours := Colours;
+   end;
    if (ColoursType = C_COLOURS_PER_FACE) then
    begin
-      SetLength(OriginalColours,High(Colours)+1);
-      SetLength(VertColours,High(Vertices)+1);
-      // Reset values.
-      for i := Low(Colours) to High(Colours) do
-      begin
-         OriginalColours[i].X := Colours[i].X;
-         OriginalColours[i].Y := Colours[i].Y;
-         OriginalColours[i].Z := Colours[i].Z;
-         OriginalColours[i].W := Colours[i].W;
-         Colours[i].X := 0;
-         Colours[i].Y := 0;
-         Colours[i].Z := 0;
-         Colours[i].W := 0;
-      end;
-      TransformFaceToVertexColours(VertColours,OriginalColours,_DistanceFunction);
-      TransformVertexToFaceColours(VertColours,Colours);
-      // Free memory
-      SetLength(VertColours,0);
+      Tool.ApplyFaceColourSmooth(Colours,MyFaceColours,Vertices,NumVertices,MyFaces,VerticesPerFace,NeighborDetector,VertexEquivalences,_DistanceFunction);
    end
    else if (ColoursType = C_COLOURS_PER_VERTEX) then
    begin
-      SetLength(OriginalColours,High(Colours)+1);
-      SetLength(FaceColours,NumFaces);
-     // Reset values.
-      for i := Low(Colours) to High(Colours) do
-      begin
-         OriginalColours[i].X := Colours[i].X;
-         OriginalColours[i].Y := Colours[i].Y;
-         OriginalColours[i].Z := Colours[i].Z;
-         OriginalColours[i].W := Colours[i].W;
-         Colours[i].X := 0;
-         Colours[i].Y := 0;
-         Colours[i].Z := 0;
-         Colours[i].W := 0;
-      end;
-      TransformVertexToFaceColours(OriginalColours,FaceColours);
-      TransformFaceToVertexColours(Colours,FaceColours,_DistanceFunction);
-      // Free memory
-      SetLength(FaceColours,0);
+      Tool.ApplyVertexColourSmooth(Colours,Vertices,NumVertices,MyFaces,MyNumFaces,VerticesPerFace,NeighborDetector,VertexEquivalences,_DistanceFunction);
    end;
-   FilterAndFixColours;
-   SetLength(OriginalColours,0);
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
+   Tool.Free;
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -1247,8 +1249,14 @@ end;
 
 procedure TMesh.ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc);
 var
+   Tool : TMeshColoursTool;
    OriginalColours : TAVector4f;
-   i : integer;
+   NeighborhoodPlugin: PMeshPluginBase;
+   NeighborDetector: TNeighborDetector;
+   VertexEquivalences: auint32;
+   NumVertices: integer;
+   MyFaces: auint32;
+   MyFaceColours: TAVector4f;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -1258,30 +1266,48 @@ begin
    {$endif}
    if (ColoursType = C_COLOURS_PER_FACE) then
    begin
-      SetLength(OriginalColours,High(Colours)+1);
-      // Reset values.
-      for i := Low(Colours) to High(Colours) do
+      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+      if NeighborhoodPlugin <> nil then
       begin
-         OriginalColours[i].X := Colours[i].X;
-         OriginalColours[i].Y := Colours[i].Y;
-         OriginalColours[i].Z := Colours[i].Z;
-         OriginalColours[i].W := Colours[i].W;
+         if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
+         begin
+            NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+            MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
+            MyFaceColours := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceColours;
+         end
+         else
+         begin
+            NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+            MyFaces := Faces;
+            MyFaceColours := Colours;
+         end;
+         VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+         NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      end
+      else
+      begin
+         NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+         NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         VertexEquivalences := nil;
+         NumVertices := High(Vertices)+1;
+         MyFaces := Faces;
+         MyFaceColours := Colours;
       end;
+      SetLength(OriginalColours,High(MyFaceColours)+1);
+      Tool := TMeshColoursTool.Create;
+      Tool.BackupColourVector(MyFaceColours,OriginalColours);
       SetLength(Colours,High(Vertices)+1);
-      for i := Low(Colours) to High(Colours) do
+      Tool.TransformFaceToVertexColours(Colours,OriginalColours,Vertices,NumVertices,MyFaces,VerticesPerFace,NeighborDetector,VertexEquivalences,_DistanceFunction);
+      SetLength(OriginalColours,0);
+      ColourGenStructure := C_COLOURS_PER_VERTEX;
+      SetColoursType(C_COLOURS_PER_VERTEX);
+      ForceRefresh;
+      Tool.Free;
+      if NeighborhoodPlugin = nil then
       begin
-         Colours[i].X := 0;
-         Colours[i].Y := 0;
-         Colours[i].Z := 0;
-         Colours[i].W := 0;
+         NeighborDetector.Free;
       end;
-      TransformFaceToVertexColours(Colours,OriginalColours,_DistanceFunction);
    end;
-   FilterAndFixColours;
-   SetLength(OriginalColours,0);
-   ColourGenStructure := C_COLOURS_PER_VERTEX;
-   SetColoursType(C_COLOURS_PER_VERTEX);
-   ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Convert Face To Vertex Colours for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
@@ -1291,8 +1317,8 @@ end;
 
 procedure TMesh.ConvertVertexToFaceColours;
 var
+   Tool: TMeshColoursTool;
    OriginalColours : TAVector4f;
-   i : integer;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -1302,30 +1328,17 @@ begin
    {$endif}
    if (ColoursType = C_COLOURS_PER_VERTEX) then
    begin
+      Tool := TMeshColoursTool.Create;
       SetLength(OriginalColours,High(Colours)+1);
-     // Reset values.
-      for i := Low(Colours) to High(Colours) do
-      begin
-         OriginalColours[i].X := Colours[i].X;
-         OriginalColours[i].Y := Colours[i].Y;
-         OriginalColours[i].Z := Colours[i].Z;
-         OriginalColours[i].W := Colours[i].W;
-      end;
+      Tool.BackupColourVector(Colours,OriginalColours);
       SetLength(Colours,NumFaces);
-      for i := Low(Colours) to High(Colours) do
-      begin
-         Colours[i].X := 0;
-         Colours[i].Y := 0;
-         Colours[i].Z := 0;
-         Colours[i].W := 0;
-      end;
-      TransformVertexToFaceColours(OriginalColours,Colours);
+      Tool.TransformVertexToFaceColours(OriginalColours,Colours,Faces,VerticesPerFace);
+      SetLength(OriginalColours,0);
+      ColourGenStructure := C_COLOURS_PER_FACE;
+      SetColoursType(C_COLOURS_PER_FACE);
+      ForceRefresh;
+      Tool.Free;
    end;
-   FilterAndFixColours;
-   SetLength(OriginalColours,0);
-   ColourGenStructure := C_COLOURS_PER_FACE;
-   SetColoursType(C_COLOURS_PER_FACE);
-   ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Convert Vertex To Face Colours for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
@@ -1333,70 +1346,90 @@ begin
    {$endif}
 end;
 
-procedure TMesh.TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; _DistanceFunction : TDistanceFunc);
+procedure TMesh.ColourUnsharpMasking;
 var
-   HitCounter: array of single;
-   i,f,v,v1 : integer;
+   HitCounter: array of integer;
+   OriginalVertexes : array of TVector3f;
+   VertsHit: array of array of boolean;
+   i,j,f,v,v1,v2 : integer;
    MaxVerticePerFace: integer;
-   MidPoint : TVector3f;
-   Distance: single;
 begin
    SetLength(HitCounter,High(Vertices)+1);
+   SetLength(OriginalVertexes,High(Vertices)+1);
+   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
+   // Reset values.
    for i := Low(HitCounter) to High(HitCounter) do
    begin
       HitCounter[i] := 0;
-      _VertColours[i].X := 0;
-      _VertColours[i].Y := 0;
-      _VertColours[i].Z := 0;
-      _VertColours[i].W := 0;
+      OriginalVertexes[i].X := Vertices[i].X;
+      OriginalVertexes[i].Y := Vertices[i].Y;
+      OriginalVertexes[i].Z := Vertices[i].Z;
+      Vertices[i].X := 0;
+      Vertices[i].Y := 0;
+      Vertices[i].Z := 0;
+      for j := Low(HitCounter) to High(HitCounter) do
+      begin
+         VertsHit[i,j] := false;
+      end;
+      VertsHit[i,i] := true;
    end;
-
    MaxVerticePerFace := VerticesPerFace - 1;
    // Now, let's check each face.
    for f := 0 to NumFaces-1 do
    begin
-      // find central position of the face.
-      MidPoint.X := 0;
-      MidPoint.Y := 0;
-      MidPoint.Z := 0;
+      // check all vertexes from the face.
       for v := 0 to MaxVerticePerFace do
       begin
          v1 := (f * VerticesPerFace) + v;
-         MidPoint.X := MidPoint.X + Vertices[Faces[v1]].X;
-         MidPoint.Y := MidPoint.Y + Vertices[Faces[v1]].Y;
-         MidPoint.Z := MidPoint.Z + Vertices[Faces[v1]].Z;
-      end;
-      MidPoint.X := MidPoint.X / VerticesPerFace;
-      MidPoint.Y := MidPoint.Y / VerticesPerFace;
-      MidPoint.Z := MidPoint.Z / VerticesPerFace;
-
-      // check all colours from all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
-      begin
-         v1 := (f * VerticesPerFace) + v;
-         Distance := sqrt(Power(MidPoint.X - Vertices[Faces[v1]].X,2) + Power(MidPoint.Y - Vertices[Faces[v1]].Y,2) + Power(MidPoint.Z - Vertices[Faces[v1]].Z,2));
-         Distance := _DistanceFunction(Distance);
-         _VertColours[Faces[v1]].X := _VertColours[Faces[v1]].X + (_FaceColours[f].X * Distance);
-         _VertColours[Faces[v1]].Y := _VertColours[Faces[v1]].Y + (_FaceColours[f].Y * Distance);
-         _VertColours[Faces[v1]].Z := _VertColours[Faces[v1]].Z + (_FaceColours[f].Z * Distance);
-         _VertColours[Faces[v1]].W := _VertColours[Faces[v1]].W + (_FaceColours[f].W * Distance);
-         HitCounter[Faces[v1]] := HitCounter[Faces[v1]] + Distance;
+         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
+         j := 0;
+         // for each vertex, get the previous, the current and the next.
+         while j < 3 do
+         begin
+            v2 := v1 - v + i;
+            // if this connection wasn't summed, add it to the sum.
+            if not VertsHit[Faces[v1],Faces[v2]] then
+            begin
+               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
+               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
+               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
+               inc(HitCounter[Faces[v1]]);
+               VertsHit[Faces[v1],Faces[v2]] := true;
+            end;
+            // increment vertex.
+            i := (i + 1) mod VerticesPerFace;
+            inc(j);
+         end;
       end;
    end;
-   // Then, we do an average for each vertice.
-   for v := Low(_VertColours) to High(_VertColours) do
+   // Finally, we do the unsharp masking effect here.
+   for v := Low(Vertices) to High(Vertices) do
    begin
-      if HitCounter[v] > 0 then
+      if HItCounter[v] > 0 then
       begin
-         _VertColours[v].X := (_VertColours[v].X / HitCounter[v]);
-         _VertColours[v].Y := (_VertColours[v].Y / HitCounter[v]);
-         _VertColours[v].Z := (_VertColours[v].Z / HitCounter[v]);
-         _VertColours[v].W := (_VertColours[v].W / HitCounter[v]);
+         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
+         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
+         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
+      end
+      else
+      begin
+         Vertices[v].X := OriginalVertexes[v].X;
+         Vertices[v].Y := OriginalVertexes[v].Y;
+         Vertices[v].Z := OriginalVertexes[v].Z;
       end;
    end;
+   // Free memory
    SetLength(HitCounter,0);
+   SetLength(OriginalVertexes,0);
+   for i := Low(Vertices) to High(Vertices) do
+   begin
+      SetLength(VertsHit[i],0);
+   end;
+   SetLength(VertsHit,0);
+   ForceRefresh;
 end;
 
+// Distance Formulas
 function TMesh.GetIgnoredDistance(_Distance : single): single;
 begin
    Result := 1;
@@ -1548,141 +1581,6 @@ begin
    Result := 1 - Result;
    if _Distance < 0 then
       Result := -Result;
-end;
-
-
-procedure TMesh.TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f);
-var
-   f,v,v1,MaxVerticePerFace : integer;
-begin
-   // Define face colours.
-   MaxVerticePerFace := VerticesPerFace - 1;
-   for f := 0 to NumFaces-1 do
-   begin
-      // average all colours from all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
-      begin
-         v1 := (f * VerticesPerFace) + v;
-         _FaceColours[f].X := _FaceColours[f].X + _VertColours[Faces[v1]].X;
-         _FaceColours[f].Y := _FaceColours[f].Y + _VertColours[Faces[v1]].Y;
-         _FaceColours[f].Z := _FaceColours[f].Z + _VertColours[Faces[v1]].Z;
-         _FaceColours[f].W := _FaceColours[f].W + _VertColours[Faces[v1]].W;
-      end;
-      // Get result
-      _FaceColours[f].X := (_FaceColours[f].X / VerticesPerFace);
-      _FaceColours[f].Y := (_FaceColours[f].Y / VerticesPerFace);
-      _FaceColours[f].Z := (_FaceColours[f].Z / VerticesPerFace);
-      _FaceColours[f].W := (_FaceColours[f].W / VerticesPerFace);
-   end;
-end;
-
-procedure TMesh.FilterAndFixColours;
-var
-   i : integer;
-begin
-   for i := Low(Colours) to High(Colours) do
-   begin
-      // Avoid problematic colours:
-      if Colours[i].X < 0 then
-         Colours[i].X := 0
-      else if Colours[i].X > 1 then
-         Colours[i].X := 1;
-      if Colours[i].Y < 0 then
-         Colours[i].Y := 0
-      else if Colours[i].Y > 1 then
-         Colours[i].Y := 1;
-      if Colours[i].Z < 0 then
-         Colours[i].Z := 0
-      else if Colours[i].Z > 1 then
-         Colours[i].Z := 1;
-      if Colours[i].W < 0 then
-         Colours[i].W := 0
-      else if Colours[i].W > 1 then
-         Colours[i].W := 1;
-   end;
-end;
-
-procedure TMesh.ColourUnsharpMasking;
-var
-   HitCounter: array of integer;
-   OriginalVertexes : array of TVector3f;
-   VertsHit: array of array of boolean;
-   i,j,f,v,v1,v2 : integer;
-   MaxVerticePerFace: integer;
-begin
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   SetLength(VertsHit,High(Vertices)+1,High(Vertices)+1);
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      OriginalVertexes[i].X := Vertices[i].X;
-      OriginalVertexes[i].Y := Vertices[i].Y;
-      OriginalVertexes[i].Z := Vertices[i].Z;
-      Vertices[i].X := 0;
-      Vertices[i].Y := 0;
-      Vertices[i].Z := 0;
-      for j := Low(HitCounter) to High(HitCounter) do
-      begin
-         VertsHit[i,j] := false;
-      end;
-      VertsHit[i,i] := true;
-   end;
-   MaxVerticePerFace := VerticesPerFace - 1;
-   // Now, let's check each face.
-   for f := 0 to NumFaces-1 do
-   begin
-      // check all vertexes from the face.
-      for v := 0 to MaxVerticePerFace do
-      begin
-         v1 := (f * VerticesPerFace) + v;
-         i := (v + VerticesPerFace - 1) mod VerticesPerFace;
-         j := 0;
-         // for each vertex, get the previous, the current and the next.
-         while j < 3 do
-         begin
-            v2 := v1 - v + i;
-            // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
-            begin
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
-            end;
-            // increment vertex.
-            i := (i + 1) mod VerticesPerFace;
-            inc(j);
-         end;
-      end;
-   end;
-   // Finally, we do the unsharp masking effect here.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HItCounter[v] > 0 then
-      begin
-         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
-         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
-         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
-      end
-      else
-      begin
-         Vertices[v].X := OriginalVertexes[v].X;
-         Vertices[v].Y := OriginalVertexes[v].Y;
-         Vertices[v].Z := OriginalVertexes[v].Z;
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
-   for i := Low(Vertices) to High(Vertices) do
-   begin
-      SetLength(VertsHit[i],0);
-   end;
-   SetLength(VertsHit,0);
-   ForceRefresh;
 end;
 
 // Normals Effects
@@ -2622,6 +2520,11 @@ begin
       TexCoords[i].U := _Mesh.TexCoords[i].U;
       TexCoords[i].V := _Mesh.TexCoords[i].V;
    end;
+   SetLength(Materials,High(_Mesh.Materials)+1);
+   for i := Low(Materials) to High(Materials) do
+   begin
+      Materials[i].Assign(_Mesh.Materials[i]);
+   end;
    Next := _Mesh.Next;
 end;
 
@@ -3052,11 +2955,6 @@ begin
          inc(j,4);
       end;
       SetLength(OldFaces,0);
-      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-      if NeighborhoodPlugin <> nil then
-      begin
-         TNeighborhoodDataPlugin(NeighborhoodPlugin^).UpdateQuadsToTriangles(Faces,Vertices,High(Vertices)+1,VerticesPerFace);
-      end;
 
       // Go with Colour conversion.
       if (ColoursType = C_COLOURS_PER_FACE) then
@@ -3113,6 +3011,15 @@ begin
             FaceNormals[(i*2)+1].Z := OldFaceNormals[i].Z;
          end;
          SetLength(OldFaceNormals,0);
+      end;
+      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+      if NeighborhoodPlugin <> nil then
+      begin
+         TNeighborhoodDataPlugin(NeighborhoodPlugin^).UpdateQuadsToTriangles(Faces,Vertices,High(Vertices)+1,VerticesPerFace);
+         if (ColoursType = C_COLOURS_PER_FACE) then
+         begin
+            TNeighborhoodDataPlugin(NeighborhoodPlugin^).UpdateQuadsToTriangleColours(Colours);
+         end;
       end;
       ForceRefresh;
    end;

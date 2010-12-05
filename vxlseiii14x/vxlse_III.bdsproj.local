@@ -61,5 +61,6 @@
     <Transaction>2010/12/03 05:06:22.800.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\BumpMapDataPlugin.pas</Transaction>
     <Transaction>2010/12/04 14:07:29.186.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\MeshNormalsTool.pas</Transaction>
     <Transaction>2010/12/04 14:09:27.858.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\MeshNormalsTool.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshNormalsTool.pas</Transaction>
+    <Transaction>2010/12/04 18:51:19.968.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshColoursTool.pas</Transaction>
   </Transactions>
 </BorlandProject>

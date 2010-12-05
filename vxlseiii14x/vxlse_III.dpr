@@ -104,7 +104,8 @@ uses
   RenderingMachine in 'RenderingMachine.pas',
   NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas',
   BumpMapDataPlugin in 'BumpMapDataPlugin.pas',
-  ClassMeshNormalsTool in 'ClassMeshNormalsTool.pas';
+  ClassMeshNormalsTool in 'ClassMeshNormalsTool.pas',
+  ClassMeshColoursTool in 'ClassMeshColoursTool.pas';
 
 {$R *.res}
 

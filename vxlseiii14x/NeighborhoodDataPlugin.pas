@@ -14,6 +14,7 @@ type
          UseQuadFaces: boolean;
          QuadFaces: auint32;
          QuadFaceNormals: TAVector3f;
+         QuadFaceColours: TAVector4f;
          QuadFaceNeighbors: TNeighborDetector;
          VertexEquivalences: auint32;
          EquivalenceFaceNeighbors: TNeighborDetector;
@@ -25,6 +26,7 @@ type
          destructor Destroy; override;
          // Updates
          procedure UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
+         procedure UpdateQuadsToTriangleColours(const _Colours: TAVector4f);
          procedure DeactivateQuadFaces;
          procedure UpdateEquivalences(const _VertsLocation: aint32);
          procedure ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
@@ -56,6 +58,7 @@ implementation
       UseQuadFaces := false;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
+      SetLength(QuadFaceColours,0);
       SetLength(VertexEquivalences,_NumVertices);
       UseEquivalenceFaces := false;
       EquivalenceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
@@ -76,6 +79,7 @@ implementation
       EquivalenceFaceNeighbors.Free;
       SetLength(QuadFaces,0);
       SetLength(QuadFaceNormals,0);
+      SetLength(QuadFaceColours,0);
       SetLength(VertexEquivalences,0);
       inherited Destroy;
    end;
@@ -83,12 +87,13 @@ implementation
    // Updates
    procedure TNeighborhoodDataPlugin.UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
    var
-      vf,vq,fq,incf,incq: integer;
+      vf,vq,incf,incq: integer;
       V1,V2: TVector3f;
       Tool: TMeshNormalsTool;
    begin
       // Build QuadFaces from _Faces.
       SetLength(QuadFaces,2*(High(_Faces)+1));
+      SetLength(QuadFaceNormals,(High(QuadFaces)+1) div _VerticesPerFace);
       vf := 0;
       vq := 0;
       incf := 2 * _VerticesPerFace;
@@ -99,6 +104,7 @@ implementation
          QuadFaces[vq] := _Faces[vf];
          QuadFaces[vq+1] := _Faces[vf+1];
          QuadFaces[vq+2] := _Faces[vf+2];
+//         QuadFaceColours[fq].X :=
          // 2 -> 3 -> 0
          QuadFaces[vq+3] := _Faces[vf+2];
          QuadFaces[vq+4] := _Faces[vf+4];
@@ -116,7 +122,6 @@ implementation
          inc(vq,incq);
       end;
       // Now we detect the normal vectors from all these faces.
-      SetLength(QuadFaceNormals,(High(QuadFaces)+1) div _VerticesPerFace);
       Tool := TMeshNormalsTool.Create;
       Tool.RebuildFaceNormals(QuadFaceNormals,_VerticesPerFace,_Vertices,QuadFaces);
       Tool.Free;
@@ -129,6 +134,29 @@ implementation
       UseQuadFaces := true;
    end;
 
+   procedure TNeighborhoodDataPlugin.UpdateQuadsToTriangleColours(const _Colours: TAVector4f);
+   var
+      qf,f,i: integer;
+   begin
+      // Build QuadFaces from _Faces.
+      SetLength(QuadFaceColours,High(QuadFaceNormals)+1);
+      qf := 0;
+      f := 0;
+      while qf <= High(QuadFaceColours) do
+      begin
+         for i := 0 to 3 do
+         begin
+            QuadFaceColours[qf].X := _Colours[f].X;
+            QuadFaceColours[qf].Y := _Colours[f].Y;
+            QuadFaceColours[qf].Z := _Colours[f].Z;
+            QuadFaceColours[qf].W := _Colours[f].W;
+            inc(qf);
+         end;
+         inc(f,2);
+      end;
+   end;
+
+
    procedure TNeighborhoodDataPlugin.DeactivateQuadFaces;
    begin
 //      UseQuadFaces := false;
@@ -136,6 +164,7 @@ implementation
 //      QuadFaceNeighbors := TNeighborDetector.Create;
 //      SetLength(QuadFaces,0);
 //      SetLength(QuadFaceNormals,0);
+//      SetLength(QuadFaceColours,0);
    end;
 
    procedure TNeighborhoodDataPlugin.UpdateEquivalences(const _VertsLocation: aint32);
