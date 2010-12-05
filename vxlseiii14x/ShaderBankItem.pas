@@ -11,6 +11,7 @@ type
          IsAuthorized,IsVertexCompiled,IsFragmentCompiled,IsLinked, IsRunning : boolean;
          ProgramID, VertexID, FragmentID : GLUInt;
          Attributes: AString;
+         AttributeLocation: array of TGLInt;
       public
          // Constructor and Destructor
          constructor Create(const _VertexFilename, _FragmentFilename: string); overload;
@@ -255,8 +256,10 @@ end;
 // Adds
 procedure TShaderBankItem.AddAttribute(const _name: string);
 begin
-   SetLength(Attributes,High(Attributes)+1);
+   SetLength(Attributes,High(Attributes)+2);
+   SetLength(AttributeLocation,High(Attributes)+1);
    Attributes[High(Attributes)] := copy(_name,1,Length(_name));
+   AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,Attributes[High(Attributes)]);
 end;
 
 // Counter

@@ -9,7 +9,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
-      ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool, Formulas;
+      ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool;
 
 {$INCLUDE Global_Conditionals.inc}
 type
