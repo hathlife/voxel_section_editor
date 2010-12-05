@@ -74,6 +74,22 @@ const
    C_MPL_NEIGHBOOR = 2;
    C_MPL_BUMPMAPDATA = 3;
 
+   // Distance Functions
+   C_DSF_IGNORE = 0;
+   C_DSF_LINEAR = 1;
+   C_DSF_CUBIC = 2;
+   C_DSF_QUADRIC1D = 3;
+   C_DSF_LINEAR1D = 4;
+   C_DSF_CUBIC1D = 5;
+   C_DSF_LANCZOS = 6;
+   C_DSF_LANCZOS1DA1 = 7;
+   C_DSF_LANCZOS1DA3 = 8;
+   C_DSF_LANCZOS1DAC = 9;
+   C_DSF_SINC1D = 10;
+   C_DSF_EULER1D = 11;
+   C_DSF_EULERSQUARED1D = 12;
+   C_DSF_SINCINFINITE1D = 13;
+
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (

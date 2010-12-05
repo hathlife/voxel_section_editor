@@ -131,6 +131,10 @@ implementation
       QuadFaceNeighbors.VertexVertexNeighbors := FaceNeighbors.VertexVertexNeighbors;
       QuadFaceNeighbors.BuildUpData(QuadFaces,_VerticesPerFace,_NumVertices);
 
+      // Update FaceFaceNeighbors
+      FaceFaceNeighbors.Clear;
+      FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
+
       UseQuadFaces := true;
    end;
 

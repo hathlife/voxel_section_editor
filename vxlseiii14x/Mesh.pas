@@ -9,7 +9,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
-      ClassMeshNormalsTool, ClassMeshColoursTool;
+      ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool, Formulas;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -66,7 +66,6 @@ type
          procedure ClearMaterials;
          // Misc
          procedure OverrideTransparency;
-         function FindMeshCenter: TVector3f;
       public
          // These are the formal atributes
          Name : string;
@@ -453,14 +452,6 @@ end;
 procedure TMesh.LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
    MeshGen: TVoxelMeshGenerator;
-   NumVertices,HitCounter : longword;
-   VoxelMap: TVoxelMap;
-   VertexMap : array of array of array of integer;
-   FaceMap : array of array of array of array of integer;
-   VertexTransformation: aint32;
-   x, y, z, i : longword;
-   V : TVoxelUnpacked;
-   v1, v2 : boolean;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -490,14 +481,6 @@ end;
 procedure TMesh.LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
 var
    MeshGen: TVoxelMeshGenerator;
-   NumVertices,HitCounter : longword;
-   VoxelMap: TVoxelMap;
-   VertexMap : array of array of array of integer;
-   FaceMap : array of array of array of array of integer;
-   VertexTransformation: aint32;
-   x, y, z, i : longword;
-   V : TVoxelUnpacked;
-   v1, v2 : boolean;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -591,83 +574,6 @@ begin
 end;
 
 // Mesh Effects.
-procedure TMesh.MeshSmooth;
-var
-   HitCounter: array of integer;
-   OriginalVertexes : array of TVector3f;
-   i,v,v1 : integer;
-   NeighborDetector : TNeighborDetector;
-   NeighborhoodPlugin: PMeshPluginBase;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      OriginalVertexes[i].X := Vertices[i].X;
-      OriginalVertexes[i].Y := Vertices[i].Y;
-      OriginalVertexes[i].Z := Vertices[i].Z;
-      Vertices[i].X := 0;
-      Vertices[i].Y := 0;
-      Vertices[i].Z := 0;
-   end;
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   if NeighborhoodPlugin <> nil then
-   begin
-      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
-   end
-   else
-   begin
-      NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-   end;
-   // Now, let's check each face.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      v1 := NeighborDetector.GetNeighborFromID(v);
-      while v1 <> -1 do
-      begin
-         // add it to the sum.
-         Vertices[v].X := Vertices[v].X + OriginalVertexes[v1].X;
-         Vertices[v].Y := Vertices[v].Y + OriginalVertexes[v1].Y;
-         Vertices[v].Z := Vertices[v].Z + OriginalVertexes[v1].Z;
-         inc(HitCounter[v]);
-
-         v1 := NeighborDetector.GetNextNeighbor;
-      end;
-   end;
-   if NeighborhoodPlugin = nil then
-   begin
-      NeighborDetector.Free;
-   end;
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HitCounter[v] > 0 then
-      begin
-         Vertices[v].X := Vertices[v].X / HitCounter[v];
-         Vertices[v].Y := Vertices[v].Y / HitCounter[v];
-         Vertices[v].Z := Vertices[v].Z / HitCounter[v];
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
-   ForceRefresh;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Mesh Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
 procedure TMesh.MeshQuadricSmooth;
 begin
    LimitedMeshSmoothOperation(GetQuadric1DDistance);
@@ -703,15 +609,13 @@ begin
    MeshSmoothOperation(GetSincInfinite1DDistance);
 end;
 
-
-procedure TMesh.MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+procedure TMesh.MeshSmooth;
 var
-   HitCounter: array of single;
-   OriginalVertexes : array of TVector3f;
-   v,v1 : integer;
-   Distance: single;
+   Tool : TMeshProcessingTool;
    NeighborDetector : TNeighborDetector;
-   NeighborhoodPlugin : PMeshPluginBase;
+   NeighborhoodPlugin: PMeshPluginBase;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -719,72 +623,73 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   // Reset values.
-   for v := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[v] := 0;
-      OriginalVertexes[v].X := Vertices[v].X;
-      OriginalVertexes[v].Y := Vertices[v].Y;
-      OriginalVertexes[v].Z := Vertices[v].Z;
-      Vertices[v].X := 0;
-      Vertices[v].Y := 0;
-      Vertices[v].Z := 0;
-   end;
-   // Sum up vertices with its neighbours, using the desired distance formula.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
       NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
    end;
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      v1 := NeighborDetector.GetNeighborFromID(v);
-      while v1 <> -1 do
-      begin
-         Vertices[v].X := Vertices[v].X + (OriginalVertexes[v1].X - OriginalVertexes[v].X);
-         Vertices[v].Y := Vertices[v].Y + (OriginalVertexes[v1].Y - OriginalVertexes[v].Y);
-         Vertices[v].Z := Vertices[v].Z + (OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
-
-         HitCounter[v] := HitCounter[v] + 1;
-
-         v1 := NeighborDetector.GetNextNeighbor;
-      end;
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshSmooth(Vertices,NumVertices,NeighborDetector,VertexEquivalences);
+   // Free memory
    if NeighborhoodPlugin = nil then
    begin
       NeighborDetector.Free;
    end;
-
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      {$ifdef MESH_TEST}
-      GlobalVars.MeshFile.Add('Mesh Value (' + FloatToStr(Vertices[v].X) + ', ' + FloatToStr(Vertices[v].Y) + ', ' +FloatToStr(Vertices[v].Z) + ') with ' + FloatToStr(HitCounter[v]) + ' neighbours. Expected frequencies: (' + FloatToStr(Vertices[v].X / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Y / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Z / HitCounter[v]) + ')');
-      {$endif}
-      if HitCounter[v] > 0 then
-      begin
-         Vertices[v].X := OriginalVertexes[v].X + _DistanceFunction((Vertices[v].X) / HitCounter[v]);
-         Vertices[v].Y := OriginalVertexes[v].Y + _DistanceFunction((Vertices[v].Y) / HitCounter[v]);
-         Vertices[v].Z := OriginalVertexes[v].Z + _DistanceFunction((Vertices[v].Z) / HitCounter[v]);
-      end
-      else
-      begin
-         Vertices[v].X := OriginalVertexes[v].X;
-         Vertices[v].Y := OriginalVertexes[v].Y;
-         Vertices[v].Z := OriginalVertexes[v].Z;
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
    ForceRefresh;
+   Tool.Free;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TMesh.MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+var
+   Tool : TMeshProcessingTool;
+   NeighborDetector : TNeighborDetector;
+   NeighborhoodPlugin : PMeshPluginBase;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   if NeighborhoodPlugin <> nil then
+   begin
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+   end
+   else
+   begin
+      NeighborDetector := TNeighborDetector.Create;
+      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
+   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshSmoothOperation(Vertices,NumVertices,NeighborDetector,VertexEquivalences,_DistanceFunction);
+   // Free memory
+   if NeighborhoodPlugin = nil then
+   begin
+      NeighborDetector.Free;
+   end;
+   ForceRefresh;
+   Tool.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Mesh Smooth Operation for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
@@ -794,13 +699,11 @@ end;
 
 procedure TMesh.LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
 var
-   HitCounter: array of single;
-   OriginalVertexes : array of TVector3f;
-   v,v1 : integer;
-   x,y,z : single;
-   Distance: single;
+   Tool: TMeshProcessingTool;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -808,77 +711,28 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   // Reset values.
-   for v := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[v] := 0;
-      OriginalVertexes[v].X := Vertices[v].X;
-      OriginalVertexes[v].Y := Vertices[v].Y;
-      OriginalVertexes[v].Z := Vertices[v].Z;
-      Vertices[v].X := 0;
-      Vertices[v].Y := 0;
-      Vertices[v].Z := 0;
-   end;
-   // Sum up vertices with its neighbours, using the desired distance formula.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
       NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
    end;
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      v1 := NeighborDetector.GetNeighborFromID(v);
-      while v1 <> -1 do
-      begin
-         x := (OriginalVertexes[v1].X - OriginalVertexes[v].X);
-         y := (OriginalVertexes[v1].Y - OriginalVertexes[v].Y);
-         z := (OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
-         Distance := Sqrt((x * x) + (y * y) + (z * z));
-         if Distance > 0 then
-         begin
-            Vertices[v].X := Vertices[v].X + (x/distance);
-            Vertices[v].Y := Vertices[v].Y + (y/distance);
-            Vertices[v].Z := Vertices[v].Z + (z/distance);
-
-            HitCounter[v] := HitCounter[v] + 1;
-         end;
-         v1 := NeighborDetector.GetNextNeighbor;
-      end;
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.LimitedMeshSmoothOperation(Vertices,NumVertices,NeighborDetector,VertexEquivalences,_DistanceFunction);
+   // Free memory
    if NeighborhoodPlugin = nil then
    begin
       NeighborDetector.Free;
    end;
-
-   // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      {$ifdef MESH_TEST}
-      GlobalVars.MeshFile.Add('Mesh Value (' + FloatToStr(Vertices[v].X) + ', ' + FloatToStr(Vertices[v].Y) + ', ' +FloatToStr(Vertices[v].Z) + ') with ' + FloatToStr(HitCounter[v]) + ' neighbours. Expected frequencies: (' + FloatToStr(Vertices[v].X / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Y / HitCounter[v]) + ', ' + FloatToStr(Vertices[v].Z / HitCounter[v]) + ')');
-      {$endif}
-      if HitCounter[v] > 0 then
-      begin
-         Vertices[v].X := OriginalVertexes[v].X + _DistanceFunction((Vertices[v].X / HitCounter[v]));
-         Vertices[v].Y := OriginalVertexes[v].Y + _DistanceFunction((Vertices[v].Y / HitCounter[v]));
-         Vertices[v].Z := OriginalVertexes[v].Z + _DistanceFunction((Vertices[v].Z / HitCounter[v]));
-      end
-      else
-      begin
-         Vertices[v].X := OriginalVertexes[v].X;
-         Vertices[v].Y := OriginalVertexes[v].Y;
-         Vertices[v].Z := OriginalVertexes[v].Z;
-      end;
-   end;
-   // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
+   Tool.Free;
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -888,18 +742,12 @@ begin
 end;
 
 procedure TMesh.MeshGaussianSmooth;
-const
-   C_2PI = 2 * Pi;
-   C_E = 2.718281828;
 var
-   HitCounter: single;
-   OriginalVertexes : array of TVector3f;
-   VertexWeight : TVector3f;
-   v,v1 : integer;
-   Distance: single;
+   Tool: TMeshProcessingTool;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
-   Deviation: single;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -907,83 +755,29 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   SetLength(OriginalVertexes,High(Vertices)+1);
-   // Reset values.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      OriginalVertexes[v].X := Vertices[v].X;
-      OriginalVertexes[v].Y := Vertices[v].Y;
-      OriginalVertexes[v].Z := Vertices[v].Z;
-   end;
-   // Sum up vertices with its neighbours, using the desired distance formula.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-      end;
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
    end;
-
-   // Do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      // get the standard deviation.
-      Deviation := 0;
-      v1 := NeighborDetector.GetNeighborFromID(v);
-      HitCounter := 0;
-      VertexWeight.X := 0;
-      VertexWeight.Y := 0;
-      VertexWeight.Z := 0;
-      while v1 <> -1 do
-      begin
-         Deviation := Deviation + Power(OriginalVertexes[v1].X - OriginalVertexes[v].X,2) + Power(OriginalVertexes[v1].Y - OriginalVertexes[v].Y,2) + Power(OriginalVertexes[v1].Z - OriginalVertexes[v].Z,2);
-         HitCounter := HitCounter + 1;
-
-         VertexWeight.X := VertexWeight.X + (OriginalVertexes[v1].X - OriginalVertexes[v].X);
-         VertexWeight.Y := VertexWeight.Y + (OriginalVertexes[v1].Y - OriginalVertexes[v].Y);
-         VertexWeight.Z := VertexWeight.Z + (OriginalVertexes[v1].Z - OriginalVertexes[v].Z);
-
-         v1 := NeighborDetector.GetNextNeighbor;
-      end;
-      if HitCounter > 0 then
-         Deviation := Sqrt(Deviation / HitCounter);
-      // calculate the vertex position.
-      if (HitCounter > 0) and (Deviation <> 0) then
-      begin
-         Distance := ((C_FREQ_NORMALIZER * VertexWeight.X) / HitCounter);
-         if Distance > 0 then
-            Vertices[v].X := OriginalVertexes[v].X + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
-         else if Distance < 0 then
-            Vertices[v].X := OriginalVertexes[v].X - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
-         Distance := ((C_FREQ_NORMALIZER * VertexWeight.Y) / HitCounter);
-         if Distance > 0 then
-            Vertices[v].Y := OriginalVertexes[v].Y + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
-         else if Distance < 0 then
-            Vertices[v].Y := OriginalVertexes[v].Y - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
-         Distance := ((C_FREQ_NORMALIZER * VertexWeight.Z) / HitCounter);
-         if Distance > 0 then
-            Vertices[v].Z := OriginalVertexes[v].Z + (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation))
-         else if Distance < 0 then
-            Vertices[v].Z := OriginalVertexes[v].Z - (1 / (sqrt(C_2PI) * Deviation)) * Power(C_E,(Distance * Distance) / (-2 * Deviation * Deviation));
-      end;
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshGaussianSmooth(Vertices,NumVertices,NeighborDetector,VertexEquivalences);
+   ForceRefresh;
+   // Free memory
+   Tool.Free;
    if NeighborhoodPlugin = nil then
    begin
       NeighborDetector.Free;
    end;
-   // Free memory
-   SetLength(OriginalVertexes,0);
-   ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Mesh Gaussian Smooth for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
@@ -993,12 +787,11 @@ end;
 
 procedure TMesh.MeshUnsharpMasking;
 var
-   HitCounter: array of integer;
-   OriginalVertexes : array of TVector3f;
-   i,j,f,v,v1,v2 : integer;
-   MaxVerticePerFace: integer;
+   Tool: TMeshProcessingTool;
    NeighborDetector : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}
@@ -1006,75 +799,28 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   SetLength(HitCounter,High(Vertices)+1);
-   SetLength(OriginalVertexes,High(Vertices)+1);
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    if NeighborhoodPlugin <> nil then
    begin
-      if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
-      end
-      else
-      begin
-         NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-      end;
+      NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
    end
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
       NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
    end;
-   // Reset values.
-   for i := Low(HitCounter) to High(HitCounter) do
-   begin
-      HitCounter[i] := 0;
-      OriginalVertexes[i].X := Vertices[i].X;
-      OriginalVertexes[i].Y := Vertices[i].Y;
-      OriginalVertexes[i].Z := Vertices[i].Z;
-      Vertices[i].X := 0;
-      Vertices[i].Y := 0;
-      Vertices[i].Z := 0;
-   end;
-   // sum all values from neighbors
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      v1 := NeighborDetector.GetNeighborFromID(v);
-      while v1 <> -1 do
-      begin
-         Vertices[v].X := Vertices[v].X + OriginalVertexes[v1].X;
-         Vertices[v].Y := Vertices[v].Y + OriginalVertexes[v1].Y;
-         Vertices[v].Z := Vertices[v].Z + OriginalVertexes[v1].Z;
-         inc(HitCounter[v]);
-         v1 := NeighborDetector.GetNextNeighbor;
-      end;
-   end;
-   // Finally, we do the unsharp masking effect here.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      if HitCounter[v] > 0 then
-      begin
-//         Vertices[v].X := (2 * OriginalVertexes[v].X) - (Vertices[v].X / HitCounter[v]);
-//         Vertices[v].Y := (2 * OriginalVertexes[v].Y) - (Vertices[v].Y / HitCounter[v]);
-//         Vertices[v].Z := (2 * OriginalVertexes[v].Z) - (Vertices[v].Z / HitCounter[v]);
-         Vertices[v].X := ((HitCounter[v] + 1) * OriginalVertexes[v].X) - Vertices[v].X;
-         Vertices[v].Y := ((HitCounter[v] + 1) * OriginalVertexes[v].Y) - Vertices[v].Y;
-         Vertices[v].Z := ((HitCounter[v] + 1) * OriginalVertexes[v].Z) - Vertices[v].Z;
-      end
-      else
-      begin
-         Vertices[v].X := OriginalVertexes[v].X;
-         Vertices[v].Y := OriginalVertexes[v].Y;
-         Vertices[v].Z := OriginalVertexes[v].Z;
-      end;
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshUnsharpMasking(Vertices,NumVertices,NeighborDetector,VertexEquivalences);
    // Free memory
-   SetLength(HitCounter,0);
-   SetLength(OriginalVertexes,0);
    if NeighborhoodPlugin = nil then
    begin
       NeighborDetector.Free;
    end;
+   Tool.Free;
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -1085,61 +831,21 @@ end;
 
 procedure TMesh.MeshDeflate;
 var
-   v : integer;
-   CenterPoint: TVector3f;
-   Temp: single;
+   Tool : TMeshProcessingTool;
 begin
-   CenterPoint := FindMeshCenter;
-
-    // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      Temp := (CenterPoint.X - Vertices[v].X) * 0.1;
-      if Temp > 0 then
-         Vertices[v].X := Vertices[v].X  + Power(Temp,2)
-      else
-         Vertices[v].X := Vertices[v].X - Power(Temp,2);
-      Temp := (CenterPoint.Y - Vertices[v].Y) * 0.1;
-      if Temp > 0 then
-         Vertices[v].Y := Vertices[v].Y + Power(Temp,2)
-      else
-         Vertices[v].Y := Vertices[v].Y - Power(Temp,2);
-      Temp := (CenterPoint.Z - Vertices[v].Z) * 0.1;
-      if Temp > 0 then
-         Vertices[v].Z := Vertices[v].Z + Power(Temp,2)
-      else
-         Vertices[v].Z := Vertices[v].Z - Power(Temp,2);
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshDeflate(Vertices);
+   Tool.Free;
    ForceRefresh;
 end;
 
 procedure TMesh.MeshInflate;
 var
-   v : integer;
-   CenterPoint: TVector3f;
-   Temp: single;
+   Tool : TMeshProcessingTool;
 begin
-   CenterPoint := FindMeshCenter;
-
-    // Finally, we do an average for all vertices.
-   for v := Low(Vertices) to High(Vertices) do
-   begin
-      Temp := (CenterPoint.X - Vertices[v].X) * 0.1;
-      if Temp > 0 then
-         Vertices[v].X := Vertices[v].X - Power(Temp,2)
-      else
-         Vertices[v].X := Vertices[v].X + Power(Temp,2);
-      Temp := (CenterPoint.Y - Vertices[v].Y) * 0.1;
-      if Temp > 0 then
-         Vertices[v].Y := Vertices[v].Y - Power(Temp,2)
-      else
-         Vertices[v].Y := Vertices[v].Y + Power(Temp,2);
-      Temp := (CenterPoint.Z - Vertices[v].Z) * 0.1;
-      if Temp > 0 then
-         Vertices[v].Z := Vertices[v].Z - Power(Temp,2)
-      else
-         Vertices[v].Z := Vertices[v].Z + Power(Temp,2);
-   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.MeshInflate(Vertices);
+   Tool.Free;
    ForceRefresh;
 end;
 
@@ -1427,160 +1133,6 @@ begin
    end;
    SetLength(VertsHit,0);
    ForceRefresh;
-end;
-
-// Distance Formulas
-function TMesh.GetIgnoredDistance(_Distance : single): single;
-begin
-   Result := 1;
-end;
-
-function TMesh.GetLinearDistance(_Distance : single): single;
-begin
-   Result := 1 / (abs(_Distance) + 1);
-end;
-
-function TMesh.GetCubicDistance(_Distance : single): single;
-begin
-   Result := 1 / (1 + Power(_Distance,3));
-end;
-
-function TMesh.GetQuadric1DDistance(_Distance : single): single;
-const
-   FREQ_NORMALIZER = 4/3;
-begin
-   Result := Power(FREQ_NORMALIZER * _Distance,2);
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetLinear1DDistance(_Distance : single): single;
-begin
-   Result := _Distance;
-end;
-
-function TMesh.GetCubic1DDistance(_Distance : single): single;
-const
-   FREQ_NORMALIZER = 1.5;
-begin
-   Result := Power(FREQ_NORMALIZER * _Distance,3);
-end;
-
-function TMesh.GetLanczosDistance(_Distance : single): single;
-const
-   PIDIV3 = Pi / 3;
-begin
-   Result := ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
-begin
-   Result := 0;
-   if _Distance <> 0 then
-      Result := 1 - (Power(sin(Pi * _Distance),2) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DA3Distance(_Distance : single): single;
-const
-   PIDIV3 = Pi / 3;
-begin
-   Result := 0;
-   if _Distance <> 0 then
-     Result := 1 - ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-     Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DACDistance(_Distance : single): single;
-const
-   CONST_A = 3;//15;
-   NORMALIZER = 2 * Pi;
-   PIDIVA = Pi / CONST_A;
-var
-   Distance: single;
-begin
-   Result := 0;
-   Distance := _Distance * C_FREQ_NORMALIZER;
-   if _Distance <> 0 then
-//     Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
-     Result := (1 - ((CONST_A * sin(Pi * Distance) * sin(PIDIVA * Distance)) / Power(Pi * Distance,2)));
-   if _Distance < 0 then
-     Result := Result * -1;
-end;
-
-function TMesh.GetSinc1DDistance(_Distance : single): single;
-const
-   NORMALIZER = 2 * Pi; //6.307993515;
-var
-   Distance: single;
-begin
-   Result := 0;
-   Distance := _Distance * C_FREQ_NORMALIZER;
-   if _Distance <> 0 then
-      Result := NORMALIZER * (1 - (sin(Distance) / Distance));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetEuler1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-   Distance : single;
-begin
-   i := 2;
-   Result := 1;
-   c := 0;
-   Distance := abs(_Distance);
-   while c <= 30 do
-   begin
-      Result := Result * cos(Distance / i);
-      i := i * 2;
-      inc(c);
-   end;
-   if _Distance < 0 then
-      Result := -Result;
-end;
-
-function TMesh.GetEulerSquared1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-begin
-   i := 2;
-   Result := 1;
-   c := 0;
-   while c <= 30 do
-   begin
-      Result := Result * cos(_Distance / i);
-      i := i * 2;
-      inc(c);
-   end;
-   Result := Result * Result;
-   if _Distance < 0 then
-      Result := -Result;
-end;
-
-function TMesh.GetSincInfinite1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-   Distance2: single;
-begin
-   c := 0;
-   i := 1;
-   Distance2 := _Distance * _Distance;
-   Result := 1;
-   while c <= 100 do
-   begin
-      Result := Result * (1 - (Distance2 / (i * i)));
-      inc(c);
-      inc(i);
-   end;
-   Result := 1 - Result;
-   if _Distance < 0 then
-      Result := -Result;
 end;
 
 // Normals Effects
@@ -2787,59 +2339,6 @@ begin
    ForceRefresh;
 end;
 
-function TMesh.FindMeshCenter: TVector3f;
-var
-   v : integer;
-   MaxPoint,MinPoint: TVector3f;
-begin
-   if High(Vertices) >= 0 then
-   begin
-      MinPoint.X := Vertices[0].X;
-      MinPoint.Y := Vertices[0].Y;
-      MinPoint.Z := Vertices[0].Z;
-      MaxPoint.X := Vertices[0].X;
-      MaxPoint.Y := Vertices[0].Y;
-      MaxPoint.Z := Vertices[0].Z;
-      // Find mesh scope.
-      for v := Low(Vertices) to High(Vertices) do
-      begin
-         if (Vertices[v].X < MinPoint.X) and (Vertices[v].X <> -NAN) then
-         begin
-            MinPoint.X := Vertices[v].X;
-         end;
-         if Vertices[v].X > MaxPoint.X then
-         begin
-            MaxPoint.X := Vertices[v].X;
-         end;
-         if (Vertices[v].Y < MinPoint.Y) and (Vertices[v].Y <> -NAN) then
-         begin
-            MinPoint.Y := Vertices[v].Y;
-         end;
-         if Vertices[v].Y > MaxPoint.Y then
-         begin
-            MaxPoint.Y := Vertices[v].Y;
-         end;
-         if (Vertices[v].Z < MinPoint.Z) and (Vertices[v].Z <> -NAN) then
-         begin
-            MinPoint.Z := Vertices[v].Z;
-         end;
-         if Vertices[v].Z > MaxPoint.Z then
-         begin
-            MaxPoint.Z := Vertices[v].Z;
-         end;
-      end;
-      Result.X := (MinPoint.X + MaxPoint.X) / 2;
-      Result.Y := (MinPoint.Y + MaxPoint.Y) / 2;
-      Result.Z := (MinPoint.Z + MaxPoint.Z) / 2;
-   end
-   else
-   begin
-      Result.X := 0;
-      Result.Y := 0;
-      Result.Z := 0;
-   end;
-end;
-
 procedure TMesh.RemoveInvisibleFaces;
 var
    iRead,iWrite,v: integer;
@@ -3075,5 +2574,160 @@ procedure TMesh.OptimizeMeshLossLessIgnoreColours;
 begin
    MeshOptimizationIgnoreColours(1);
 end;
+
+// Distance Formulas
+function TMesh.GetIgnoredDistance(_Distance : single): single;
+begin
+   Result := 1;
+end;
+
+function TMesh.GetLinearDistance(_Distance : single): single;
+begin
+   Result := 1 / (abs(_Distance) + 1);
+end;
+
+function TMesh.GetCubicDistance(_Distance : single): single;
+begin
+   Result := 1 / (1 + Power(_Distance,3));
+end;
+
+function TMesh.GetQuadric1DDistance(_Distance : single): single;
+const
+   FREQ_NORMALIZER = 4/3;
+begin
+   Result := Power(FREQ_NORMALIZER * _Distance,2);
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetLinear1DDistance(_Distance : single): single;
+begin
+   Result := _Distance;
+end;
+
+function TMesh.GetCubic1DDistance(_Distance : single): single;
+const
+   FREQ_NORMALIZER = 1.5;
+begin
+   Result := Power(FREQ_NORMALIZER * _Distance,3);
+end;
+
+function TMesh.GetLanczosDistance(_Distance : single): single;
+const
+   PIDIV3 = Pi / 3;
+begin
+   Result := ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+      Result := 1 - (Power(sin(Pi * _Distance),2) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetLanczos1DA3Distance(_Distance : single): single;
+const
+   PIDIV3 = Pi / 3;
+begin
+   Result := 0;
+   if _Distance <> 0 then
+     Result := 1 - ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
+   if _Distance < 0 then
+     Result := Result * -1;
+end;
+
+function TMesh.GetLanczos1DACDistance(_Distance : single): single;
+const
+   CONST_A = 3;//15;
+   NORMALIZER = 2 * Pi;
+   PIDIVA = Pi / CONST_A;
+var
+   Distance: single;
+begin
+   Result := 0;
+   Distance := _Distance * C_FREQ_NORMALIZER;
+   if _Distance <> 0 then
+//     Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
+     Result := (1 - ((CONST_A * sin(Pi * Distance) * sin(PIDIVA * Distance)) / Power(Pi * Distance,2)));
+   if _Distance < 0 then
+     Result := Result * -1;
+end;
+
+function TMesh.GetSinc1DDistance(_Distance : single): single;
+const
+   NORMALIZER = 2 * Pi; //6.307993515;
+var
+   Distance: single;
+begin
+   Result := 0;
+   Distance := _Distance * C_FREQ_NORMALIZER;
+   if _Distance <> 0 then
+      Result := NORMALIZER * (1 - (sin(Distance) / Distance));
+   if _Distance < 0 then
+      Result := Result * -1;
+end;
+
+function TMesh.GetEuler1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+   Distance : single;
+begin
+   i := 2;
+   Result := 1;
+   c := 0;
+   Distance := abs(_Distance);
+   while c <= 30 do
+   begin
+      Result := Result * cos(Distance / i);
+      i := i * 2;
+      inc(c);
+   end;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
+function TMesh.GetEulerSquared1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+begin
+   i := 2;
+   Result := 1;
+   c := 0;
+   while c <= 30 do
+   begin
+      Result := Result * cos(_Distance / i);
+      i := i * 2;
+      inc(c);
+   end;
+   Result := Result * Result;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
+function TMesh.GetSincInfinite1DDistance(_Distance : single): single;
+var
+   i,c : integer;
+   Distance2: single;
+begin
+   c := 0;
+   i := 1;
+   Distance2 := _Distance * _Distance;
+   Result := 1;
+   while c <= 100 do
+   begin
+      Result := Result * (1 - (Distance2 / (i * i)));
+      inc(c);
+      inc(i);
+   end;
+   Result := 1 - Result;
+   if _Distance < 0 then
+      Result := -Result;
+end;
+
 
 end.

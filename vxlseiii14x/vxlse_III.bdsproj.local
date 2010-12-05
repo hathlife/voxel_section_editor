@@ -62,5 +62,8 @@
     <Transaction>2010/12/04 14:07:29.186.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\MeshNormalsTool.pas</Transaction>
     <Transaction>2010/12/04 14:09:27.858.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\MeshNormalsTool.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshNormalsTool.pas</Transaction>
     <Transaction>2010/12/04 18:51:19.968.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshColoursTool.pas</Transaction>
+    <Transaction>2010/12/05 00:08:29.092.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshProcessingTool.pas</Transaction>
+    <Transaction>2010/12/05 02:46:30.498.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Formulas.pas</Transaction>
+    <Transaction>2010/12/05 02:58:07.342.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Formulas.pas=</Transaction>
   </Transactions>
 </BorlandProject>

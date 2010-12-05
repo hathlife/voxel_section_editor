@@ -105,7 +105,8 @@ uses
   NeighborhoodDataPlugin in 'NeighborhoodDataPlugin.pas',
   BumpMapDataPlugin in 'BumpMapDataPlugin.pas',
   ClassMeshNormalsTool in 'ClassMeshNormalsTool.pas',
-  ClassMeshColoursTool in 'ClassMeshColoursTool.pas';
+  ClassMeshColoursTool in 'ClassMeshColoursTool.pas',
+  ClassMeshProcessingTool in 'ClassMeshProcessingTool.pas';
 
 {$R *.res}
 
