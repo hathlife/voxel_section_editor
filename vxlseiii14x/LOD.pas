@@ -613,6 +613,7 @@ begin
    TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
    // Now we generate a texture that will be used by all meshes.
    glActiveTextureARB(GL_TEXTURE0_ARB + _TextureID);
+   Bitmap.SaveToFile('last_normalmapping_texture.bmp');
    NormalTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
@@ -662,6 +663,7 @@ begin
    TexGenerator.DisposeFrameBuffer(Buffer);
    // Now we generate a texture that will be used by all meshes.
    glActiveTextureARB(GL_TEXTURE0_ARB + _TextureID);
+   Bitmap.SaveToFile('last_bumpmapping_texture.bmp');
    NormalTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
