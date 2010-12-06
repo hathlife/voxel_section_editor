@@ -32,6 +32,8 @@ type
          function GetCount : integer;
          procedure IncCounter;
          procedure DecCounter;
+         // OpenGL
+         procedure glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
    end;
    PShaderBankItem = ^TShaderBankItem;
 
@@ -260,6 +262,11 @@ begin
    SetLength(AttributeLocation,High(Attributes)+1);
    Attributes[High(Attributes)] := copy(_name,1,Length(_name));
    AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,Attributes[High(Attributes)]);
+end;
+
+procedure TShaderBankItem.glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
+begin
+   glVertexAttrib3f(AttributeLocation[_AttributeID], _Value.X, _Value.Y, _Value.Z);
 end;
 
 // Counter

@@ -10,7 +10,6 @@ type
       private
          procedure ClearTextures;
       public
-         Texture: array of PTextureBankItem;
          Ambient: TVector4f;
          Diffuse: TVector4f;
          Specular: TVector4f;
@@ -18,6 +17,7 @@ type
          Emission: TVector4f;
          Shader: PShaderBankItem;
          SrcAlphaBlend, DstAlphaBlend: GLINT;
+         Texture: array of PTextureBankItem;
          // Constructors & Destructors
          constructor Create(_ShaderBank: PShaderBank);
          destructor Destroy; override;
@@ -65,6 +65,7 @@ end;
 destructor TMeshMaterial.Destroy;
 begin
    ClearTextures;
+   Shader := nil;
    inherited Destroy;
 end;
 
@@ -139,9 +140,9 @@ begin
          Texture[i] := nil;
       end;
    end;
+   SetLength(Texture,0);
 end;
 
-// Gets
 // Sets
 
 // Render

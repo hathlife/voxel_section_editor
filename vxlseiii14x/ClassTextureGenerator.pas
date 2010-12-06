@@ -1688,7 +1688,7 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
       FaceSequence : array [0..7,0..3] of integer = ((-1,-1,0,-1),(0,-1,1,-1),(1,-1,1,0),(1,0,1,1),(1,1,0,1),(0,1,-1,1),(-1,1,-1,0),(-1,0,-1,-1));
    var
       DifferentNormalsList: CVector3fSet;
-      i,x,y : integer;
+      i,x,y,P1x,P1y,P2x,P2y : integer;
       CurrentNormal : PVector3f;
       V1, V2, Normal: TVector3f;
    begin
@@ -1705,22 +1705,30 @@ procedure CTextureGenerator.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrame
          Normal.Z := 0;
          for i := 0 to 7 do
          begin
-            CurrentNormal := new(PVector3f);
+            P1x := X + FaceSequence[i,2];
+            P1y := Y + FaceSequence[i,3];
+            P2x := X + FaceSequence[i,0];
+            P2y := Y + FaceSequence[i,1];
 
-            V1.X := FaceSequence[i,2];
-            V1.Y := FaceSequence[i,3];
-            V1.Z := _HeightMap[Round(_X) + FaceSequence[i,2], Round(_X) + FaceSequence[i,3]];
-
-            V2.X := FaceSequence[i,0];
-            V2.Y := FaceSequence[i,1];
-            V2.Z := _HeightMap[Round(_X) + FaceSequence[i,0], Round(_X) + FaceSequence[i,1]];
-
-            CurrentNormal^ := CrossProduct(V1,V2);
-            if DifferentNormalsList.Add(CurrentNormal) then
+            if (P1x >= 0) and (P1y >= 0) and (P1x < _Size) and (P1y < _Size) and (P2x >= 0) and (P2y >= 0) and (P2x < _Size) and (P2y < _Size) then
             begin
-               Normal.X := Normal.X + CurrentNormal^.X;
-               Normal.Y := Normal.Y + CurrentNormal^.Y;
-               Normal.Z := Normal.Z + CurrentNormal^.Z;
+               CurrentNormal := new(PVector3f);
+
+               V1.X := FaceSequence[i,2];
+               V1.Y := FaceSequence[i,3];
+               V1.Z := _HeightMap[P1x,P1y];
+
+               V2.X := FaceSequence[i,0];
+               V2.Y := FaceSequence[i,1];
+               V2.Z := _HeightMap[P2x,P2y];
+
+               CurrentNormal^ := CrossProduct(V1,V2);
+               if DifferentNormalsList.Add(CurrentNormal) then
+               begin
+                  Normal.X := Normal.X + CurrentNormal^.X;
+                  Normal.Y := Normal.Y + CurrentNormal^.Y;
+                  Normal.Z := Normal.Z + CurrentNormal^.Z;
+               end;
             end;
          end;
          if not DifferentNormalsList.isEmpty then
@@ -1788,7 +1796,7 @@ begin
       dx1 := 0;
 
 	if (P3.V - P1.V > 0) then
-      dx2 := (_P3.U - _P1.U) / (_P2.V - _P1.V)
+      dx2 := (_P3.U - _P1.U) / (_P3.V - _P1.V)
    else
       dx2 := 0;
 

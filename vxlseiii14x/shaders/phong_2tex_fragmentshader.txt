@@ -4,10 +4,10 @@ uniform sampler2D normalMap;
 varying mat3 normalMatrix;
 varying vec3 v;    
 
-void main (void)  
+void main(void)  
 {  
-   vec3 N = texture2D(bumpMap, gl_TexCoord[1].st).xyz * 2.0 - 1.0;
-   N = normalize(N * normalMatrix));
+   vec3 N = texture2D(normalMap, gl_TexCoord[1].st).xyz * 2.0 - 1.0;
+   N = normalize(N * normalMatrix);
    vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
    vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
    vec3 R = normalize(reflect(-L,N));  

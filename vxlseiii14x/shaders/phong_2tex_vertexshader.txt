@@ -3,7 +3,6 @@ uniform sampler2D normalMap;
 
 varying mat3 normalMatrix;
 varying vec3 v;
-varying vec4 color;
 
 void main(void)
 {

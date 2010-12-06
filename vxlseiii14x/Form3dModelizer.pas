@@ -136,6 +136,10 @@ type
     DisplayFMPointCloud: TMenuItem;
     DisplayNormalVectors1: TMenuItem;
     EnableBackFaceCuling1: TMenuItem;
+    TextureFXNormal: TMenuItem;
+    TextureFXBump: TMenuItem;
+    procedure TextureFXBumpClick(Sender: TObject);
+    procedure TextureFXNormalClick(Sender: TObject);
     procedure EnableBackFaceCuling1Click(Sender: TObject);
     procedure DisplayNormalVectors1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
@@ -261,12 +265,15 @@ type
     Actor : TActor;
     Camera : TCamera;
     TextureFileExt: string;
+    MeshMode,NormalsMode,ColoursMode: integer;
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
     Procedure Reset3DView;
     function GetQualityModel: integer;
     procedure UpdateQualityUI;
-    procedure SetColourPerVertex(_value: boolean);
+    procedure SetMeshMode(_MeshMode : integer);
+    procedure SetNormalsMode(_NormalsMode : integer);
+    procedure SetColoursMode(_ColoursMode : integer);
   end;
 
 implementation
@@ -299,6 +306,9 @@ begin
    Actor.Models[0].MakeVoxelHVAIndependent;
    SetActorModelTransparency;
    TextureFSFTDDSClick(sender);
+   SetMeshMode(1);
+   SetNormalsMode(1);
+   SetColoursMode(1);
 end;
 
 
@@ -532,7 +542,7 @@ end;
 procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
 begin
    Actor.GenerateDiffuseTexture;
-   TextureFSExport.Enabled := true;
+   SetColoursMode(2);
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseCustomClick(Sender: TObject);
@@ -544,7 +554,7 @@ begin
    if Frm.Apply then
    begin
       Actor.GenerateDiffuseTexture(Frm.Threshold);
-      TextureFSExport.Enabled := true;
+      SetColoursMode(2);
    end;
    Frm.Release;
 end;
@@ -743,31 +753,31 @@ procedure TFrm3DModelizer.ColourFXConvertFacetoVertexClick(
   Sender: TObject);
 begin
    Actor.ConvertFaceToVertexColours;
-   SetColourPerVertex(true);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexHSClick(Sender: TObject);
 begin
    Actor.ConvertFaceToVertexColoursCubic;
-   SetColourPerVertex(true);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexLSClick(Sender: TObject);
 begin
    Actor.ConvertFaceToVertexColoursLanczos;
-   SetColourPerVertex(true);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexSClick(Sender: TObject);
 begin
    Actor.ConvertFaceToVertexColoursLinear;
-   SetColourPerVertex(true);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertVertexToFaceClick(Sender: TObject);
 begin
    Actor.ConvertVertexToFaceColours;
-   SetColourPerVertex(false);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.ColourFXHeavySmoothClick(Sender: TObject);
@@ -795,7 +805,9 @@ begin
    UncheckModelQuality;
    Render4Triangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(true);
+   SetMeshMode(1);
+   SetNormalsMode(1);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
@@ -803,7 +815,9 @@ begin
    UncheckModelQuality;
    RenderCubes.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetMeshMode(0);
+   SetNormalsMode(0);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
@@ -811,7 +825,9 @@ begin
    UncheckModelQuality;
    RenderModel.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetMeshMode(1);
+   SetNormalsMode(0);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
@@ -819,7 +835,9 @@ begin
    UncheckModelQuality;
    RenderQuads.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetMeshMode(0);
+   SetNormalsMode(0);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
@@ -827,7 +845,9 @@ begin
    UncheckModelQuality;
    RenderTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(true);
+   SetMeshMode(1);
+   SetNormalsMode(1);
+   SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.RenderVisibleCubesClick(Sender: TObject);
@@ -835,7 +855,9 @@ begin
    UncheckModelQuality;
    RenderVisibleCubes.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetMeshMode(0);
+   SetNormalsMode(0);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.RenderVisibleTrianglesClick(Sender: TObject);
@@ -843,7 +865,9 @@ begin
    UncheckModelQuality;
    RenderVisibleTriangles.Checked := true;
    Actor.SetQuality(GetQualityModel);
-   SetColourPerVertex(false);
+   SetMeshMode(1);
+   SetNormalsMode(0);
+   SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.Blue1Click(Sender: TObject);
@@ -879,6 +903,7 @@ end;
 procedure TFrm3DModelizer.FaceFXOptimizeMeshClick(Sender: TObject);
 begin
    Actor.OptimizeMeshMaxQuality;
+   SetMeshMode(2);
 end;
 
 procedure TFrm3DModelizer.FaceFXOptimizeMeshCustomClick(Sender: TObject);
@@ -890,6 +915,7 @@ begin
    if FrmOptimizeMesh.Apply then
    begin
       Actor.OptimizeMesh(FrmOptimizeMesh.Threshold,FrmOptimizeMesh.cbIgnoreColours.Checked);
+      SetMeshMode(2);
    end;
    FrmOptimizeMesh.Release;
 end;
@@ -898,6 +924,7 @@ procedure TFrm3DModelizer.FaceFXOptimizeMeshIgnoringColoursClick(
   Sender: TObject);
 begin
    Actor.OptimizeMeshMaxQualityIgnoreColours;
+   SetMeshMode(2);
 end;
 
 procedure TFrm3DModelizer.Orange1Click(Sender: TObject);
@@ -944,6 +971,7 @@ procedure TFrm3DModelizer.NormalsFXConvertFaceToVertexNormalsClick(
   Sender: TObject);
 begin
    Actor.ConvertFaceToVertexNormals;
+   SetNormalsMode(1);
 end;
 
 procedure TFrm3DModelizer.NormalsFXCubicSmoothNormalsClick(Sender: TObject);
@@ -974,6 +1002,7 @@ end;
 procedure TFrm3DModelizer.FaceFXConvertQuadstoTrianglesClick(Sender: TObject);
 begin
    Actor.ConvertQuadsToTris;
+   SetMeshMode(1);
 end;
 
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);
@@ -1144,6 +1173,18 @@ begin
    AnimationTimer.Enabled := false;
 end;
 
+procedure TFrm3DModelizer.TextureFXBumpClick(Sender: TObject);
+begin
+   Actor.GenerateBumpMapTexture;
+   SetNormalsMode(2);
+end;
+
+procedure TFrm3DModelizer.TextureFXNormalClick(Sender: TObject);
+begin
+   Actor.GenerateNormalMapTexture;
+   SetNormalsMode(2);
+end;
+
 function TFrm3DModelizer.GetQualityModel: integer;
 begin
    if RenderModel.checked then
@@ -1209,16 +1250,6 @@ begin
    end;
 end;
 
-
-procedure TFrm3DModelizer.SetColourPerVertex(_value: boolean);
-begin
-   ColourFXConvertFaceToVertex.Enabled := not _value;
-   ColourFXConvertFaceToVertexS.Enabled := not _value;
-   ColourFXConvertFaceToVertexHS.Enabled := not _value;
-   ColourFXConvertFaceToVertexLS.Enabled := not _value;
-   ColourFXConvertVertexToFace.Enabled := _value;
-end;
-
 procedure TFrm3DModelizer.UncheckModelQuality;
 begin
    RenderCubes.Checked := false;
@@ -1235,6 +1266,211 @@ begin
    DisplayFMSolid.Checked := false;
    DisplayFMWireframe.Checked := false;
    DisplayFMPointCloud.Checked := false;
+end;
+
+procedure TFrm3DModelizer.SetMeshMode(_MeshMode : integer);
+begin
+   MeshMode := _MeshMode;
+   case MeshMode of
+      0: // Quads.
+      begin
+         ModelFXSmooth.Enabled := true;
+         ModelFXUnsharp.Enabled := true;
+         ModelFXHeavySmooth.Enabled := true;
+         ModelFXDeflate.Enabled := true;
+         ModelFXInflate.Enabled := true;
+         ModelFXLanczos.Enabled := true;
+         ModelFXSincErosion.Enabled := true;
+         ModelFXEulerErosion.Enabled := true;
+         ModelFXHeavyEulerErosion.Enabled := true;
+         ModelFXSincInfiniteErosion.Enabled := true;
+         ModelFXGaussianSmooth.Enabled := true;
+         ModelFXSquaredSmooth.Enabled := true;
+         FaceFXCleanupInvisibleFaces.Enabled := true;
+         FaceFXConvertQuadstoTriangles.Enabled := true;
+         FaceFXOptimizeMesh.Enabled := false;
+         FaceFXOptimizeMeshIgnoringColours.Enabled := false;
+         FaceFXOptimizeMeshCustom.Enabled := false;
+      end;
+      1: // Triangles
+      begin
+         ModelFXSmooth.Enabled := true;
+         ModelFXUnsharp.Enabled := true;
+         ModelFXHeavySmooth.Enabled := true;
+         ModelFXDeflate.Enabled := true;
+         ModelFXInflate.Enabled := true;
+         ModelFXLanczos.Enabled := true;
+         ModelFXSincErosion.Enabled := true;
+         ModelFXEulerErosion.Enabled := true;
+         ModelFXHeavyEulerErosion.Enabled := true;
+         ModelFXSincInfiniteErosion.Enabled := true;
+         ModelFXGaussianSmooth.Enabled := true;
+         ModelFXSquaredSmooth.Enabled := true;
+         FaceFXCleanupInvisibleFaces.Enabled := true;
+         FaceFXConvertQuadstoTriangles.Enabled := false;
+         FaceFXOptimizeMesh.Enabled := true;
+         FaceFXOptimizeMeshIgnoringColours.Enabled := true;
+         FaceFXOptimizeMeshCustom.Enabled := true;
+      end;
+      2: // Optimized triangles.
+      begin
+         ModelFXSmooth.Enabled := false;
+         ModelFXUnsharp.Enabled := false;
+         ModelFXHeavySmooth.Enabled := false;
+         ModelFXDeflate.Enabled := false;
+         ModelFXInflate.Enabled := false;
+         ModelFXLanczos.Enabled := false;
+         ModelFXSincErosion.Enabled := false;
+         ModelFXEulerErosion.Enabled := false;
+         ModelFXHeavyEulerErosion.Enabled := false;
+         ModelFXSincInfiniteErosion.Enabled := false;
+         ModelFXGaussianSmooth.Enabled := false;
+         ModelFXSquaredSmooth.Enabled := false;
+         FaceFXCleanupInvisibleFaces.Enabled := false;
+         FaceFXConvertQuadstoTriangles.Enabled := false;
+         FaceFXOptimizeMesh.Enabled := true;
+         FaceFXOptimizeMeshIgnoringColours.Enabled := true;
+         FaceFXOptimizeMeshCustom.Enabled := true;
+      end;
+      else
+      begin
+         ModelFXSmooth.Enabled := true;
+         ModelFXUnsharp.Enabled := true;
+         ModelFXHeavySmooth.Enabled := true;
+         ModelFXDeflate.Enabled := true;
+         ModelFXInflate.Enabled := true;
+         ModelFXLanczos.Enabled := true;
+         ModelFXSincErosion.Enabled := true;
+         ModelFXEulerErosion.Enabled := true;
+         ModelFXHeavyEulerErosion.Enabled := true;
+         ModelFXSincInfiniteErosion.Enabled := true;
+         ModelFXGaussianSmooth.Enabled := true;
+         ModelFXSquaredSmooth.Enabled := true;
+         FaceFXCleanupInvisibleFaces.Enabled := true;
+         FaceFXConvertQuadstoTriangles.Enabled := true;
+         FaceFXOptimizeMesh.Enabled := true;
+         FaceFXOptimizeMeshIgnoringColours.Enabled := true;
+         FaceFXOptimizeMeshCustom.Enabled := true;
+      end;
+   end;
+end;
+
+procedure TFrm3DModelizer.SetNormalsMode(_NormalsMode : integer);
+begin
+   NormalsMode := _NormalsMode;
+   case NormalsMode of
+      0: // Normals per face
+      begin
+         NormalFXNormalize.Enabled := true;
+         NormalsFXConvertFaceToVertexNormals.Enabled := true;
+         NormalsFXQuickSmoothNormals.Enabled := true;
+         NormalsFXSmoothNormals.Enabled := true;
+         NormalsFXCubicSmoothNormals.Enabled := true;
+         NormalsFXLanczosSmoothNormals.Enabled := true;
+         TextureFXNormal.Enabled := false;
+         TextureFXBump.Enabled := false;
+      end;
+      1: // Normals per vertex
+      begin
+         NormalFXNormalize.Enabled := true;
+         NormalsFXConvertFaceToVertexNormals.Enabled := false;
+         NormalsFXQuickSmoothNormals.Enabled := true;
+         NormalsFXSmoothNormals.Enabled := true;
+         NormalsFXCubicSmoothNormals.Enabled := true;
+         NormalsFXLanczosSmoothNormals.Enabled := true;
+         TextureFXNormal.Enabled := (ColoursMode > 1);
+         TextureFXBump.Enabled := (ColoursMode > 1);
+      end;
+      2: // Normals in a Normal Map or Bump Map
+      begin
+         NormalFXNormalize.Enabled := false;
+         NormalsFXConvertFaceToVertexNormals.Enabled := false;
+         NormalsFXQuickSmoothNormals.Enabled := false;
+         NormalsFXSmoothNormals.Enabled := false;
+         NormalsFXCubicSmoothNormals.Enabled := false;
+         NormalsFXLanczosSmoothNormals.Enabled := false;
+         TextureFXNormal.Enabled := false;
+         TextureFXBump.Enabled := false;
+      end;
+      else
+      begin
+         NormalFXNormalize.Enabled := true;
+         NormalsFXConvertFaceToVertexNormals.Enabled := true;
+         NormalsFXQuickSmoothNormals.Enabled := true;
+         NormalsFXSmoothNormals.Enabled := true;
+         NormalsFXCubicSmoothNormals.Enabled := true;
+         NormalsFXLanczosSmoothNormals.Enabled := true;
+         TextureFXNormal.Enabled := true;
+         TextureFXBump.Enabled := true;
+      end;
+   end;
+end;
+
+procedure TFrm3DModelizer.SetColoursMode(_ColoursMode : integer);
+begin
+   ColoursMode := _ColoursMode;
+   case ColoursMode of
+      0: // Colours per face
+      begin
+         ColourFXSmooth.Enabled := true;
+         ColourFXHeavySmooth.Enabled := true;
+         ColourFXConvertFaceToVertexS.Enabled := true;
+         ColourFXConvertFaceToVertexHS.Enabled := true;
+         ColourFXConvertFaceToVertexLS.Enabled := true;
+         ColourFXConvertVertexToFace.Enabled := false;
+         ColourFXConvertFacetoVertex.Enabled := true;
+         TextureFXDiffuse.Enabled := false;
+         TextureFXDiffuseCustom.Enabled := false;
+         TextureFSExport.Enabled := false;
+         TextureFXNormal.Enabled := false;
+         TextureFXBump.Enabled := false;
+      end;
+      1: // Colours per vertex
+      begin
+         ColourFXSmooth.Enabled := true;
+         ColourFXHeavySmooth.Enabled := true;
+         ColourFXConvertFaceToVertexS.Enabled := false;
+         ColourFXConvertFaceToVertexHS.Enabled := false;
+         ColourFXConvertFaceToVertexLS.Enabled := false;
+         ColourFXConvertVertexToFace.Enabled := true;
+         ColourFXConvertFacetoVertex.Enabled := false;
+         TextureFXDiffuse.Enabled := true;
+         TextureFXDiffuseCustom.Enabled := true;
+         TextureFSExport.Enabled := false;
+         TextureFXNormal.Enabled := false;
+         TextureFXBump.Enabled := false;
+      end;
+      2: // Colours in a diffuse texture
+      begin
+         ColourFXSmooth.Enabled := false;
+         ColourFXHeavySmooth.Enabled := false;
+         ColourFXConvertFaceToVertexS.Enabled := false;
+         ColourFXConvertFaceToVertexHS.Enabled := false;
+         ColourFXConvertFaceToVertexLS.Enabled := false;
+         ColourFXConvertVertexToFace.Enabled := false;
+         ColourFXConvertFacetoVertex.Enabled := false;
+         TextureFXDiffuse.Enabled := false;
+         TextureFXDiffuseCustom.Enabled := false;
+         TextureFSExport.Enabled := true;
+         TextureFXNormal.Enabled := (NormalsMode = 1);
+         TextureFXBump.Enabled := (NormalsMode = 1);
+      end;
+      else
+      begin
+         ColourFXSmooth.Enabled := true;
+         ColourFXHeavySmooth.Enabled := true;
+         ColourFXConvertFaceToVertexS.Enabled := true;
+         ColourFXConvertFaceToVertexHS.Enabled := true;
+         ColourFXConvertFaceToVertexLS.Enabled := true;
+         ColourFXConvertVertexToFace.Enabled := true;
+         ColourFXConvertFacetoVertex.Enabled := true;
+         TextureFXDiffuse.Enabled := true;
+         TextureFXDiffuseCustom.Enabled := true;
+         TextureFSExport.Enabled := true;
+         TextureFXNormal.Enabled := true;
+         TextureFXBump.Enabled := true;
+      end;
+   end;
 end;
 
 

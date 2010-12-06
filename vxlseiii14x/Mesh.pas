@@ -156,7 +156,6 @@ type
          procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
-         procedure AddBumpMappingVertexAttributes(_ShaderID: integer);
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -266,6 +265,7 @@ begin
    Next := -1;
    Son := -1;
    Plugins := nil;
+   SetShaderAttributes := SetAtributeShaderDoNothing;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
@@ -358,6 +358,7 @@ begin
    SetLength(TexCoords,0);
    ClearMaterials;
    ClearPlugins;
+   SetShaderAttributes := SetAtributeShaderDoNothing;
 end;
 
 
@@ -570,7 +571,6 @@ begin
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
    AddMaterial;
    Opened := true;
-//   Plugins := nil;
 end;
 
 // Mesh Effects.
@@ -1457,6 +1457,7 @@ begin
    _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseBitmap);
    DiffuseBitmap.Free;
    AddBumpMapDataPlugin;
+   SetShaderAttributes := SetAtributeShaderBumpMapping;
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
@@ -1473,15 +1474,6 @@ begin
    else
       Materials[_MaterialID].Shader := nil;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
-end;
-
-procedure TMesh.AddBumpMappingVertexAttributes(_ShaderID: integer);
-var
-   Shader: PShaderBankItem;
-begin
-   Shader := ShaderBank^.Get(_ShaderID);
-   Shader^.AddAttribute('tangent');
-   Shader^.AddAttribute('bitangent');
 end;
 
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
@@ -1820,10 +1812,12 @@ end;
 procedure TMesh.RenderWithVertexNormalsAndWithTexture;
 var
    i,f,v,tex : longword;
+   Plugin: PMeshPluginBase;
 begin
    f := 0;
    i := 0;
    glColor4f(1,1,1,1);
+   Plugin := GetPlugin(C_MPL_BUMPMAPDATA);
    for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
@@ -1843,6 +1837,7 @@ begin
             begin
                glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
             end;
+            SetShaderAttributes(Faces[f],Plugin);
             glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
@@ -2001,8 +1996,13 @@ begin
 end;
 
 procedure TMesh.SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
+var
+   Shader: PShaderBankItem;
 begin
-
+   // sends tangent and bitangent attributes in this exact order.
+   Shader := ShaderBank^.Get(C_SHD_PHONG_DOT3TEX);
+   Shader^.glSendAttribute3f(0,TBumpMapDataPlugin(_PPlugin^).Tangents[_VertexID]);
+   Shader^.glSendAttribute3f(1,TBumpMapDataPlugin(_PPlugin^).BiTangents[_VertexID]);
 end;
 
 // Copies

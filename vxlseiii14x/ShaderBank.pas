@@ -51,6 +51,11 @@ begin
       Load('phong_1tex');
       Load('phong_2tex');
       Load('phong_dot3tex');
+
+      // Add Attributes.
+      Items[C_SHD_PHONG_DOT3TEX].AddAttribute('tangent');
+      Items[C_SHD_PHONG_DOT3TEX].AddAttribute('bitangent');
+
       ActivateShaders := true;
       ShaderSupport := true;
    end
