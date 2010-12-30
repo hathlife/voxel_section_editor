@@ -3,7 +3,8 @@ unit Material;
 interface
 
 uses dglOpenGL, BasicDataTypes, TextureBank, TextureBankItem, ShaderBank, ShaderBankItem,
-   BasicFunctions, GlConstants, ClassIntegerSet, SysUtils, Windows, Graphics;
+   BasicFunctions, GlConstants, ClassIntegerSet, SysUtils, Windows, Graphics,
+   Dialogs;
 
 type
    TMeshMaterial = class

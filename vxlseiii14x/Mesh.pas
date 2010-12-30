@@ -96,7 +96,7 @@ type
          // GUI
          IsSelected : boolean;
          // Additional Features
-         Plugins: PMeshPluginBase;
+         Plugins: PAMeshPluginBase;
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank); overload;
          constructor Create(const _Mesh : TMesh); overload;
@@ -264,7 +264,7 @@ begin
    IsSelected := false;
    Next := -1;
    Son := -1;
-   Plugins := nil;
+   SetLength(Plugins,0);
    SetShaderAttributes := SetAtributeShaderDoNothing;
 end;
 
@@ -360,7 +360,6 @@ begin
    ClearPlugins;
    SetShaderAttributes := SetAtributeShaderDoNothing;
 end;
-
 
 // I/O;
 procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
@@ -1592,7 +1591,7 @@ end;
 // Rendering methods.
 procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
 var
-   Plugin: PMeshPluginBase;
+   i : integer;
 begin
    if IsVisible and Opened then
    begin
@@ -1615,11 +1614,12 @@ begin
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
       glCallList(List);
-      Plugin := Plugins;
-      while Plugin <> nil do
+      for i := Low(Plugins) to High(Plugins) do
       begin
-         Plugin^.Render;
-         Plugin := Plugin^.Next;
+         if Plugins[i] <> nil then
+         begin
+            Plugins[i]^.Render;
+         end;
       end;
    end;
 end;
@@ -1974,18 +1974,19 @@ end;
 // Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
 procedure TMesh.ForceRefresh;
 var
-   Plugin: PMeshPluginBase;
+   i : integer;
 begin
    if List > C_LIST_NONE then
    begin
       glDeleteLists(List,1);
    end;
    List := C_LIST_NONE;
-   Plugin := Plugins;
-   while Plugin <> nil do
+   for i := Low(Plugins) to High(Plugins) do
    begin
-      Plugin^.Update(Addr(self));
-      Plugin := Plugin^.Next;
+      if Plugins[i] <> nil then
+      begin
+         Plugins[i]^.Update(Addr(self));
+      end;
    end;
 end;
 
@@ -2123,7 +2124,7 @@ end;
 
 procedure TMesh.DeleteMaterial(_ID: integer);
 var
-   i,j : integer;
+   i: integer;
 begin
    i := _ID;
    while i < High(Materials) do
@@ -2137,7 +2138,7 @@ end;
 
 procedure TMesh.ClearMaterials;
 var
-   i, j: integer;
+   i: integer;
 begin
    for i := Low(Materials) to High(Materials) do
    begin
@@ -2186,136 +2187,114 @@ end;
 // Plugins
 procedure TMesh.AddNormalsPlugin;
 var
-   NewPlugin,Plugin : PMeshPluginBase;
+   NewPlugin : PMeshPluginBase;
 begin
    new(NewPlugin);
    NewPlugin^ := TNormalsMeshPlugin.Create();
-   Plugin := Plugins;
-   if Plugin <> nil then
-   begin
-      while Plugin^.Next <> nil do
-      begin
-         Plugin := Plugin^.Next;
-      end;
-      Plugin^.Next := NewPlugin;
-   end
-   else
-   begin
-      Plugins := NewPlugin;
-   end;
+   SetLength(Plugins,High(Plugins)+2);
+   Plugins[High(Plugins)] := NewPlugin;
    ForceRefresh;
 end;
 
 procedure TMesh.AddNeighborhoodPlugin;
 var
-   NewPlugin,Plugin : PMeshPluginBase;
+   NewPlugin : PMeshPluginBase;
 begin
    new(NewPlugin);
    NewPlugin^ := TNeighborhoodDataPlugin.Create(Faces,VerticesPerFace,High(Vertices)+1);
-   Plugin := Plugins;
-   if Plugin <> nil then
-   begin
-      while Plugin^.Next <> nil do
-      begin
-         Plugin := Plugin^.Next;
-      end;
-      Plugin^.Next := NewPlugin;
-   end
-   else
-   begin
-      Plugins := NewPlugin;
-   end;
+   SetLength(Plugins,High(Plugins)+2);
+   Plugins[High(Plugins)] := NewPlugin;
    ForceRefresh;
 end;
 
 procedure TMesh.AddBumpMapDataPlugin;
 var
-   NewPlugin,Plugin : PMeshPluginBase;
+   NewPlugin : PMeshPluginBase;
 begin
    new(NewPlugin);
    NewPlugin^ := TBumpMapDataPlugin.Create(Vertices,Normals,TexCoords,Faces,VerticesPerFace);
-   Plugin := Plugins;
-   if Plugin <> nil then
-   begin
-      while Plugin^.Next <> nil do
-      begin
-         Plugin := Plugin^.Next;
-      end;
-      Plugin^.Next := NewPlugin;
-   end
-   else
-   begin
-      Plugins := NewPlugin;
-   end;
+   SetLength(Plugins,High(Plugins)+2);
+   Plugins[High(Plugins)] := NewPlugin;
    ForceRefresh;
 end;
 
 
 procedure TMesh.RemovePlugin(_PluginType: integer);
 var
-   Plugin,DisposedPlugin : PMeshPluginBase;
+   i : integer;
 begin
-   Plugin := Plugins;
-   while Plugin <> nil do
+   i := Low(Plugins);
+   while i <= High(Plugins) do
    begin
-      DisposedPlugin := Plugin;
-      Plugin := Plugin^.Next;
-      if DisposedPlugin^.PluginType = _PluginType then
+      if Plugins[i] <> nil then
       begin
-         if DisposedPlugin = Plugins then
-            Plugins := Plugin;
-         DisposedPlugin^.Free;
-         DisposedPlugin := nil;
+         if Plugins[i]^.PluginType = _PluginType then
+         begin
+            Plugins[i]^.Free;
+            while i < High(Plugins) do
+            begin
+               Plugins[i] := Plugins[i+1];
+               inc(i);
+            end;
+         end;
       end;
+      inc(i);
    end;
+   SetLength(Plugins,High(Plugins));
    ForceRefresh;
 end;
 
 procedure TMesh.ClearPlugins;
 var
    Plugin,DisposedPlugin : PMeshPluginBase;
+   i : integer;
 begin
-   Plugin := Plugins;
-   while Plugin <> nil do
+   for i := Low(Plugins) to High(Plugins) do
    begin
-      DisposedPlugin := Plugin;
-      Plugin := Plugin^.Next;
-      DisposedPlugin^.Free;
-      DisposedPlugin := nil;
+      if Plugins[i] <> nil then
+      begin
+         Plugins[i]^.Free;
+      end;
    end;
-   Plugins := nil;
+   SetLength(Plugins,0);
 end;
 
 function TMesh.IsPluginEnabled(_PluginType: integer): boolean;
 var
-   Plugin : PMeshPluginBase;
+   i : integer;
 begin
    Result := false;
-   Plugin := Plugins;
-   while Plugin <> nil do
+   i := Low(Plugins);
+   while i <= High(Plugins) do
    begin
-      if Plugin^.PluginType = _PluginType then
+      if Plugins[i] <> nil then
       begin
-         Result := true;
-         exit;
+         if Plugins[i]^.PluginType = _PluginType then
+         begin
+            Result := true;
+            exit;
+         end;
       end;
-      Plugin := Plugin^.Next;
+      inc(i);
    end;
 end;
 
 function TMesh.GetPlugin(_PluginType: integer): PMeshPluginBase;
 var
-   Plugin : PMeshPluginBase;
+   i : integer;
 begin
-   Plugin := Plugins;
-   while Plugin <> nil do
+   i := Low(Plugins);
+   while i <= High(Plugins) do
    begin
-      if Plugin^.PluginType = _PluginType then
+      if Plugins[i] <> nil then
       begin
-         Result := Plugin;
-         exit;
+         if Plugins[i]^.PluginType = _PluginType then
+         begin
+            Result := Plugins[i];
+            exit;
+         end;
       end;
-      Plugin := Plugin^.Next;
+      inc(i);
    end;
    Result := nil;
 end;

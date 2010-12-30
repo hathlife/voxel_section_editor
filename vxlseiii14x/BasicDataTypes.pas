@@ -153,7 +153,16 @@ type
       z,
       Distance : single;
    end;
-   
+
+   TDescriptor = record
+      Start,Size: integer;
+   end;
+   TADescriptor = array of TDescriptor;
+   TNeighborDetectorSaveData = record
+      cID, nID : integer;
+   end;
+
+
    TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
    TBinaryMap = array of array of array of single; //byte;
    T3DBooleanMap = array of array of array of boolean;

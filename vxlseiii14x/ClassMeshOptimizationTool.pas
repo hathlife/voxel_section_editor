@@ -583,7 +583,7 @@ var
    BorderList,BlacklistedFaces: CIntegerSet;
    SavedBorderList,SavedBlackListedFaces: CIntegerSet;
    FaceList,SavedFaceList: CTriangleNeighbourSet;
-   State: PIntegerItem;
+   State: TNeighborDetectorSaveData;
    MatrixList: TAMatrix;
    VertexUtils: TVertexTransformationUtils;
 begin

@@ -17,24 +17,25 @@ type
    TNeighborDetector = class
       private
          FNeighbors: array of PIntegerItem;
-         FRequest : PIntegerItem;
+         FRequest : integer;
+         FNeighborID: integer;
+         FCurrentID: integer;
+         FNeighborhoodData: array of integer;
+         FDescriptorData: TADescriptor;
          // Constructors and Destructors
          procedure Initialize;
          procedure InitializeNeighbors(_NumElements: integer);
+         procedure ClearFNeighbors;
          // Executes
          procedure OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
-         procedure OrganizeVertexVertexLowMemory(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFaceFromVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+         procedure DefragmentData;
          // Adds
          procedure AddElementAtTarget(_Value: integer; _Target: integer);
-         procedure AddElementAtTargetLowMemory(_Value: integer; _Target: integer);
-         // Removes
-         procedure ClearElement(_Element : PIntegerItem);
-         // Memory Usage
-         function IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
+         procedure AddElementAtTargetWithoutRepetition(_Value: integer; _Target: integer);
       public
          VertexVertexNeighbors: TNeighborDetector;
          VertexFaceNeighbors: TNeighborDetector;
@@ -46,8 +47,8 @@ type
          destructor Destroy; override;
          procedure Clear;
          // I/O
-         procedure LoadState(_State: PIntegerItem);
-         function SaveState:PIntegerItem;
+         procedure LoadState(_State: TNeighborDetectorSaveData);
+         function SaveState:TNeighborDetectorSaveData;
          // Sets
          procedure SetType(_Type: byte);
          // Executes
@@ -80,14 +81,16 @@ end;
 
 procedure TNeighborDetector.Initialize;
 begin
-   FRequest := nil;
+   FRequest := -1;
    VertexVertexNeighbors := nil;
    VertexFaceNeighbors := nil;
    IsValid := false;
    SetLength(FNeighbors,0);
+   SetLength(FNeighborhoodData,0);
+   SetLength(FDescriptorData,0);
 end;
 
-procedure TNeighborDetector.Clear;
+procedure TNeighborDetector.ClearFNeighbors;
 var
    i : integer;
    Element, DisposedElement: PIntegerItem;
@@ -104,6 +107,12 @@ begin
       end;
       FNeighbors[i] := nil;
    end;
+   SetLength(FNeighbors,0);
+end;
+
+procedure TNeighborDetector.Clear;
+begin
+   ClearFNeighbors;
    Initialize;
 end;
 
@@ -112,6 +121,7 @@ var
    i : integer;
 begin
    SetLength(FNeighbors,_NumElements);
+   SetLength(FDescriptorData,_NumElements);
    for i := Low(FNeighbors) to High(FNeighbors) do
    begin
       FNeighbors[i] := nil;
@@ -119,14 +129,17 @@ begin
 end;
 
 // I/O
-procedure TNeighborDetector.LoadState(_State: PIntegerItem);
+procedure TNeighborDetector.LoadState(_State: TNeighborDetectorSaveData);
 begin
-   FRequest := _State;
+   FCurrentID := _State.cID;
+   FNeighborID := _State.nID;
+   FRequest := FNeighborhoodData[FDescriptorData[FCurrentID].Start + FNeighborID];
 end;
 
-function TNeighborDetector.SaveState:PIntegerItem;
+function TNeighborDetector.SaveState:TNeighborDetectorSaveData;
 begin
-   Result := FRequest;
+   Result.nID := FNeighborID;
+   Result.cID := FCurrentID;
 end;
 
 // Sets
@@ -145,8 +158,7 @@ begin
    Case(NeighborType) of
       C_NEIGHBTYPE_VERTEX_VERTEX:     // vertex neighbors of vertexes.
       begin
-         OrganizeVertexVertexLowMemory(_Faces,_VertexesPerFace,_NumVertexes); // Much faster and safer!
-//         OrganizeVertexVertex(_Faces,_VertexesPerFace,_NumVertexes);
+         OrganizeVertexVertex(_Faces,_VertexesPerFace,_NumVertexes);
       end;
       C_NEIGHBTYPE_VERTEX_FACE:       // face neighbors of vertexes.
       begin
@@ -165,64 +177,11 @@ begin
          OrganizeFaceFaceFromVertex(_Faces,_VertexesPerFace,_NumVertexes);
       end;
    end;
+   DefragmentData;
    IsValid := true;
 end;
 
-// Deprecated: Low memory version "flies" compared to this one.
 procedure TNeighborDetector.OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
-var
-   f, v, i : integer;
-   VertsHit : array of array of boolean;
-begin
-   // Setup VertsHit
-   if IsRAMEnoughForVertsHit(_NumVertexes) then
-   begin
-      SetLength(VertsHit,_NumVertexes,_NumVertexes);
-      for v := Low(VertsHit) to High(VertsHit) do
-      begin
-         for i := Low(VertsHit[v]) to High(VertsHit[v]) do
-         begin
-            VertsHit[v,i] := false;
-         end;
-         VertsHit[v,v] := true;
-      end;
-      // Setup Neighbors.
-      InitializeNeighbors(_NumVertexes);
-
-      // Main loop goes here.
-      f := 0;
-      while f < High(_Faces) do
-      begin
-         // check each vertex of the face.
-         for v := 0 to _VertexesPerFace - 1 do
-         begin
-            // for each vertex, try to add all its neighbors.
-            for i := 0 to _VertexesPerFace - 1 do
-            begin
-               if not VertsHit[_Faces[f+v],_Faces[f+i]] then
-               begin
-                  // Here we add the element to FNeighbors[f+v]
-                  AddElementAtTarget(_Faces[f+i],_Faces[f+v]);
-                  VertsHit[_Faces[f+v],_Faces[f+i]] := true;
-               end;
-            end;
-         end;
-         inc(f,_VertexesPerFace);
-      end;
-      // Clean up memory
-      for v := Low(VertsHit) to High(VertsHit) do
-      begin
-         SetLength(VertsHit[v],0);
-      end;
-      SetLength(VertsHit,0);
-   end
-   else
-   begin
-      OrganizeVertexVertexLowMemory(_Faces,_VertexesPerFace,_NumVertexes);
-   end;
-end;
-
-procedure TNeighborDetector.OrganizeVertexVertexLowMemory(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, i : integer;
    SearchArray : array of array of integer;
@@ -246,8 +205,8 @@ begin
       // check all neighbors of each vertex of the face.
       for i := Low(SearchArray) to High(SearchArray) do
       begin
-         AddElementAtTargetLowMemory(_Faces[f+SearchArray[i,0]],_Faces[f+SearchArray[i,1]]);
-         AddElementAtTargetLowMemory(_Faces[f+SearchArray[i,1]],_Faces[f+SearchArray[i,0]]);
+         AddElementAtTarget(_Faces[f+SearchArray[i,0]],_Faces[f+SearchArray[i,1]]);
+         AddElementAtTarget(_Faces[f+SearchArray[i,1]],_Faces[f+SearchArray[i,0]]);
       end;
       inc(f,_VertexesPerFace);
    end;
@@ -275,7 +234,7 @@ begin
       for v := 0 to _VertexesPerFace - 1 do
       begin
          // Here we add the element to FNeighbors[f+v]
-         AddElementAtTarget(face,_Faces[f+v]);
+         AddElementAtTargetWithoutRepetition(face,_Faces[f+v]);
       end;
       inc(f,_VertexesPerFace);
       inc(face);
@@ -313,7 +272,7 @@ begin
          while Value <> -1 do
          begin
             // Here we add the element to the face
-            AddElementAtTargetLowMemory(Value,face);
+            AddElementAtTarget(Value,face);
             Value := TempDetector.GetNextNeighbor;
          end;
       end;
@@ -369,7 +328,7 @@ begin
                      if _Faces[f+vi] = _Faces[fn+vn] then
                      begin
                         // Here we add the element to the face
-                        AddElementAtTargetLowMemory(Value,face);
+                        AddElementAtTarget(Value,face);
                         goto FinishedVertex;
                      end;
                   end;
@@ -423,7 +382,7 @@ begin
             if (face <> Value) then
             begin
                // Here we add the element to the face
-               AddElementAtTargetLowMemory(Value,face);
+               AddElementAtTarget(Value,face);
             end;
             Value := TempDetector.GetNextNeighbor;
          end;
@@ -437,30 +396,46 @@ begin
       TempDetector.Free;
 end;
 
-// Adds
-procedure TNeighborDetector.AddElementAtTarget(_Value: integer; _Target: integer);
+// Transform the data at the fragmented FNeighbors into a single array.
+procedure TNeighborDetector.DefragmentData;
 var
-   Element,Previous: PIntegerItem;
+   e, i, Size: integer;
+   Element: PIntegerItem;
 begin
-   new(Element);
-   Element^.Value := _Value;
-   Element^.Next := nil;
-   if FNeighbors[_Target] <> nil then
+   Size := 0;
+   // Let's fill the descriptors first.
+   for i := Low(FNeighbors) to High(FNeighbors) do
    begin
-      Previous := FNeighbors[_Target];
-      while Previous^.Next <> nil do
+      Element := FNeighbors[i];
+      FDescriptorData[i].Start := Size;
+      while Element <> nil do
       begin
-         Previous := Previous^.Next;
+         Element := Element^.Next;
+         inc(Size);
       end;
-      Previous^.Next := Element;
-   end
-   else
-   begin
-      FNeighbors[_Target] := Element;
+      FDescriptorData[i].Size := Size - FDescriptorData[i].Start;
    end;
+   SetLength(FNeighborhoodData,Size);
+   // Now, we fill the data.
+   e := 0;
+   for i := Low(FNeighbors) to High(FNeighbors) do
+   begin
+      Element := FNeighbors[i];
+      while Element <> nil do
+      begin
+         FNeighborhoodData[e] := Element^.Value;
+         Element := Element^.Next;
+         inc(e);
+      end;
+   end;
+   // So... now that we've passed all the data from FNeighbors to an array, we
+   // need to get rid of FNeighbors.
+   ClearFNeighbors;
 end;
 
-procedure TNeighborDetector.AddElementAtTargetLowMemory(_Value: integer; _Target: integer);
+
+// Adds
+procedure TNeighborDetector.AddElementAtTarget(_Value: integer; _Target: integer);
 var
    Element,Previous: PIntegerItem;
 begin
@@ -490,59 +465,62 @@ begin
    end;
 end;
 
-
-// Removes
-procedure TNeighborDetector.ClearElement(_Element : PIntegerItem);
+procedure TNeighborDetector.AddElementAtTargetWithoutRepetition(_Value: integer; _Target: integer);
+var
+   Element,Previous: PIntegerItem;
 begin
-   if _Element <> nil then
+   new(Element);
+   Element^.Value := _Value;
+   Element^.Next := nil;
+   if FNeighbors[_Target] <> nil then
    begin
-      ClearElement(_Element^.Next);
-      Dispose(_Element);
+      Previous := FNeighbors[_Target];
+      while Previous^.Next <> nil do
+      begin
+         Previous := Previous^.Next;
+      end;
+      Previous^.Next := Element;
+   end
+   else
+   begin
+      FNeighbors[_Target] := Element;
    end;
 end;
 
 // Requests
 function TNeighborDetector.GetNeighborFromID(_ID: integer): integer;
 begin
-   if (_ID >= 0) and (_ID <= High(FNeighbors)) then
+   if (_ID >= 0) and (_ID <= High(FDescriptorData)) then
    begin
-      FRequest := FNeighbors[_ID];
-      Result := GetNextNeighbor;
+      FCurrentID := _ID;
+      FRequest := FNeighborhoodData[FDescriptorData[_ID].Start];
+      FNeighborID := 0;
+      Result := FRequest;
    end
    else
    begin
+      FRequest := -1;
       Result := -1;
    end;
 end;
 
 function TNeighborDetector.GetNextNeighbor: integer;
 begin
-   if FRequest <> nil then
+   if FRequest <> -1 then
    begin
-      Result := FRequest^.Value;
-      FRequest := FRequest^.Next;
+      Result := FRequest;
+      inc(FNeighborID);
+      if FNeighborID < FDescriptorData[FCurrentID].Size then
+      begin
+         FRequest := FNeighborhoodData[FDescriptorData[FCurrentID].Start + FNeighborID];
+      end
+      else
+      begin
+         FRequest := -1;
+      end;
    end
    else
       Result := -1;
 end;
-
-// Memory Usage
-function TNeighborDetector.IsRAMEnoughForVertsHit(_NumVertexes: integer): boolean;
-var
-   RealSize : int64;
-   PMC: TProcessMemoryCounters;
-begin
-   RealSize := _NumVertexes * _NumVertexes * sizeof(Boolean);
-   pmc.cb := SizeOf(pmc) ;
-   if GetProcessMemoryInfo(GetCurrentProcess, @pmc, SizeOf(pmc)) then
-   begin
-      Result := pmc.PeakWorkingSetSize > (pmc.WorkingSetSize + RealSize);
-   end
-   else
-   begin
-      RaiseLastOSError;
-   end;
-end;
-
 
 end.

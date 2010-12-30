@@ -15,7 +15,6 @@ type
       public
          AllowUpdate: boolean;
          AllowRender: boolean;
-         Next: PMeshPluginBase;
          // Constructors and destructors
          constructor Create;
          destructor Destroy; override;
@@ -29,7 +28,7 @@ type
          property PluginType: integer read GetPluginType;
    end;
    TAMeshPluginBase = array of TMeshPluginBase;
-   PAMeshPluginBase = ^TAMeshPluginBase;
+   PAMeshPluginBase = array of PMeshPluginBase;
 
 implementation
 
