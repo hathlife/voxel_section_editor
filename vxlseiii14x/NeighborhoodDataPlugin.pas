@@ -173,9 +173,18 @@ implementation
 
    procedure TNeighborhoodDataPlugin.UpdateEquivalences(const _VertsLocation: aint32);
    var
-      v : integer;
+      v,maxV : integer;
    begin
-      SetLength(VertexEquivalences,High(_VertsLocation)+1);
+      maxV := 0;
+      for v  := Low(_VertsLocation) to High(_VertsLocation) do
+      begin
+         if _VertsLocation[v] > maxV then
+            maxV := _VertsLocation[v];
+      end;
+      if maxV > High(_VertsLocation) then
+      begin
+         SetLength(VertexEquivalences,maxV+1);
+      end;
       for v  := Low(_VertsLocation) to High(_VertsLocation) do
       begin
          if _VertsLocation[v] > v then
