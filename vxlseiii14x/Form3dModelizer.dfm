@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 764
+  ClientHeight = 783
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 738
+    Height = 757
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 719
+    ExplicitHeight = 738
   end
   object Panel1: TPanel
     Left = 0
@@ -728,6 +728,86 @@ object Frm3DModelizer: TFrm3DModelizer
         object TextureFSFTBMP: TMenuItem
           Caption = 'Bitmap (BMP)'
           OnClick = TextureFSFTBMPClick
+        end
+      end
+      object extureSize1: TMenuItem
+        Caption = 'Texture Size'
+        object TextureFXSize4096: TMenuItem
+          Caption = '4096 x 4096'
+          OnClick = TextureFXSize4096Click
+        end
+        object TextureFXSize2048: TMenuItem
+          Caption = '2048 x 2048'
+          OnClick = TextureFXSize2048Click
+        end
+        object TextureFXSize1024: TMenuItem
+          Caption = '1024 x 1024'
+          Checked = True
+          OnClick = TextureFXSize1024Click
+        end
+        object TextureFXSize512: TMenuItem
+          Caption = '512 x 512'
+          OnClick = TextureFXSize512Click
+        end
+        object TextureFXSize256: TMenuItem
+          Caption = '256 x 256'
+          OnClick = TextureFXSize256Click
+        end
+        object TextureFXSize128: TMenuItem
+          Caption = '128 x 128'
+          OnClick = TextureFXSize128Click
+        end
+        object TextureFXSize64: TMenuItem
+          Caption = '64 x 64'
+          OnClick = TextureFXSize64Click
+        end
+        object TextureFXSize32: TMenuItem
+          Caption = '32 x 32'
+          OnClick = TextureFXSize32Click
+        end
+      end
+      object TextureFXNumMipMaps: TMenuItem
+        Caption = 'Texture MipMaps'
+        object TextureFX10MipMaps: TMenuItem
+          Caption = '10'
+          OnClick = TextureFX10MipMapsClick
+        end
+        object TextureFX9MipMaps: TMenuItem
+          Caption = '9'
+          Checked = True
+          OnClick = TextureFX9MipMapsClick
+        end
+        object TextureFX8MipMaps: TMenuItem
+          Caption = '8'
+          OnClick = TextureFX8MipMapsClick
+        end
+        object TextureFX7MipMaps: TMenuItem
+          Caption = '7'
+          OnClick = TextureFX7MipMapsClick
+        end
+        object TextureFX6MipMaps: TMenuItem
+          Caption = '6'
+          OnClick = TextureFX6MipMapsClick
+        end
+        object TextureFX5MipMaps: TMenuItem
+          Caption = '5'
+          OnClick = TextureFX5MipMapsClick
+        end
+        object TextureFX4MipMaps: TMenuItem
+          Caption = '4'
+          OnClick = TextureFX4MipMapsClick
+        end
+        object TextureFX3MipMaps: TMenuItem
+          Caption = '3'
+          OnClick = TextureFX3MipMapsClick
+        end
+        object TextureFX2MipMaps: TMenuItem
+          Caption = '2'
+          OnClick = TextureFX2MipMapsClick
+        end
+        object TextureFX1MipMaps: TMenuItem
+          Caption = '1'
+          OnClick = TextureFX1MipMapsClick
         end
       end
     end

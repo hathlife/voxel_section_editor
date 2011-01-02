@@ -138,6 +138,44 @@ type
     EnableBackFaceCuling1: TMenuItem;
     TextureFXNormal: TMenuItem;
     TextureFXBump: TMenuItem;
+    extureSize1: TMenuItem;
+    TextureFXSize4096: TMenuItem;
+    TextureFXSize2048: TMenuItem;
+    TextureFXSize1024: TMenuItem;
+    TextureFXSize512: TMenuItem;
+    TextureFXSize256: TMenuItem;
+    TextureFXSize128: TMenuItem;
+    TextureFXSize64: TMenuItem;
+    TextureFXSize32: TMenuItem;
+    TextureFXNumMipMaps: TMenuItem;
+    TextureFX10MipMaps: TMenuItem;
+    TextureFX9MipMaps: TMenuItem;
+    TextureFX8MipMaps: TMenuItem;
+    TextureFX7MipMaps: TMenuItem;
+    TextureFX6MipMaps: TMenuItem;
+    TextureFX5MipMaps: TMenuItem;
+    TextureFX4MipMaps: TMenuItem;
+    TextureFX3MipMaps: TMenuItem;
+    TextureFX2MipMaps: TMenuItem;
+    TextureFX1MipMaps: TMenuItem;
+    procedure TextureFX1MipMapsClick(Sender: TObject);
+    procedure TextureFX2MipMapsClick(Sender: TObject);
+    procedure TextureFX3MipMapsClick(Sender: TObject);
+    procedure TextureFX4MipMapsClick(Sender: TObject);
+    procedure TextureFX5MipMapsClick(Sender: TObject);
+    procedure TextureFX6MipMapsClick(Sender: TObject);
+    procedure TextureFX7MipMapsClick(Sender: TObject);
+    procedure TextureFX8MipMapsClick(Sender: TObject);
+    procedure TextureFX9MipMapsClick(Sender: TObject);
+    procedure TextureFX10MipMapsClick(Sender: TObject);
+    procedure TextureFXSize32Click(Sender: TObject);
+    procedure TextureFXSize64Click(Sender: TObject);
+    procedure TextureFXSize128Click(Sender: TObject);
+    procedure TextureFXSize256Click(Sender: TObject);
+    procedure TextureFXSize512Click(Sender: TObject);
+    procedure TextureFXSize1024Click(Sender: TObject);
+    procedure TextureFXSize2048Click(Sender: TObject);
+    procedure TextureFXSize4096Click(Sender: TObject);
     procedure TextureFXBumpClick(Sender: TObject);
     procedure TextureFXNormalClick(Sender: TObject);
     procedure EnableBackFaceCuling1Click(Sender: TObject);
@@ -257,6 +295,8 @@ type
     procedure ClearRemapClicks;
     procedure UncheckModelQuality;
     procedure UncheckFillMode;
+    procedure UncheckTextureSize;
+    procedure UncheckNumMipMaps;
   public
     { Public declarations }
     AnimationState : boolean;
@@ -266,6 +306,7 @@ type
     Camera : TCamera;
     TextureFileExt: string;
     MeshMode,NormalsMode,ColoursMode: integer;
+    TextureSize,NumMipMaps: integer;
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
     Procedure Reset3DView;
@@ -309,6 +350,8 @@ begin
    SetMeshMode(1);
    SetNormalsMode(1);
    SetColoursMode(1);
+   TextureSize := 1024;
+   NumMipMaps := 9;
 end;
 
 
@@ -397,7 +440,7 @@ end;
 procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
 begin
    // Export every single texture...
-   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt);
+   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
 end;
 
 procedure TFrm3DModelizer.TextureFSFTBMPClick(Sender: TObject);
@@ -542,6 +585,7 @@ end;
 procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
 begin
    Actor.GenerateDiffuseTexture;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    SetColoursMode(2);
 end;
 
@@ -553,7 +597,8 @@ begin
    Frm.ShowModal;
    if Frm.Apply then
    begin
-      Actor.GenerateDiffuseTexture(Frm.Threshold);
+      Actor.GenerateDiffuseTexture(Frm.Threshold,TextureSize);
+      Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
       SetColoursMode(2);
    end;
    Frm.Release;
@@ -1173,6 +1218,86 @@ begin
    AnimationTimer.Enabled := false;
 end;
 
+procedure TFrm3DModelizer.TextureFX10MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX10MipMaps.Checked := true;
+   NumMipMaps := 10;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX1MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX1MipMaps.Checked := true;
+   NumMipMaps := 1;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX2MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX2MipMaps.Checked := true;
+   NumMipMaps := 2;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX3MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX3MipMaps.Checked := true;
+   NumMipMaps := 3;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX4MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX4MipMaps.Checked := true;
+   NumMipMaps := 4;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX5MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX5MipMaps.Checked := true;
+   NumMipMaps := 5;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX6MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX6MipMaps.Checked := true;
+   NumMipMaps := 6;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX7MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX7MipMaps.Checked := true;
+   NumMipMaps := 7;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX8MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX8MipMaps.Checked := true;
+   NumMipMaps := 8;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
+procedure TFrm3DModelizer.TextureFX9MipMapsClick(Sender: TObject);
+begin
+   UncheckNumMipMaps;
+   TextureFX9MipMaps.Checked := true;
+   NumMipMaps := 9;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+end;
+
 procedure TFrm3DModelizer.TextureFXBumpClick(Sender: TObject);
 begin
    Actor.GenerateBumpMapTexture;
@@ -1183,6 +1308,74 @@ procedure TFrm3DModelizer.TextureFXNormalClick(Sender: TObject);
 begin
    Actor.GenerateNormalMapTexture;
    SetNormalsMode(2);
+end;
+
+procedure TFrm3DModelizer.UncheckTextureSize;
+begin
+   TextureFXSize4096.checked := false;
+   TextureFXSize2048.checked := false;
+   TextureFXSize1024.checked := false;
+   TextureFXSize512.checked := false;
+   TextureFXSize256.checked := false;
+   TextureFXSize128.checked := false;
+   TextureFXSize64.checked := false;
+   TextureFXSize32.checked := false;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize1024Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize1024.checked := true;
+   TextureSize := 1024;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize128Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize128.checked := true;
+   TextureSize := 128;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize2048Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize2048.checked := true;
+   TextureSize := 2048;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize256Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize256.checked := true;
+   TextureSize := 256;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize32Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize32.checked := true;
+   TextureSize := 32;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize4096Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize4096.checked := true;
+   TextureSize := 4096;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize512Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize512.checked := true;
+   TextureSize := 512;
+end;
+
+procedure TFrm3DModelizer.TextureFXSize64Click(Sender: TObject);
+begin
+   UncheckTextureSize;
+   TextureFXSize64.checked := true;
+   TextureSize := 64;
 end;
 
 function TFrm3DModelizer.GetQualityModel: integer;
@@ -1424,6 +1617,7 @@ begin
          TextureFSExport.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXNumMipMaps.Enabled := false;
       end;
       1: // Colours per vertex
       begin
@@ -1439,6 +1633,7 @@ begin
          TextureFSExport.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXNumMipMaps.Enabled := false;
       end;
       2: // Colours in a diffuse texture
       begin
@@ -1454,6 +1649,7 @@ begin
          TextureFSExport.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
+         TextureFXNumMipMaps.Enabled := true;
       end;
       else
       begin
@@ -1469,8 +1665,23 @@ begin
          TextureFSExport.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
+         TextureFXNumMipMaps.Enabled := true;
       end;
    end;
+end;
+
+procedure TFrm3DModelizer.UncheckNumMipMaps;
+begin
+   TextureFX1MipMaps.Checked := false;
+   TextureFX2MipMaps.Checked := false;
+   TextureFX3MipMaps.Checked := false;
+   TextureFX4MipMaps.Checked := false;
+   TextureFX5MipMaps.Checked := false;
+   TextureFX6MipMaps.Checked := false;
+   TextureFX7MipMaps.Checked := false;
+   TextureFX8MipMaps.Checked := false;
+   TextureFX9MipMaps.Checked := false;
+   TextureFX10MipMaps.Checked := false;
 end;
 
 

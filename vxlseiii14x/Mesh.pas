@@ -155,7 +155,8 @@ type
          procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
-         procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
+         procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
+         procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
@@ -1475,13 +1476,23 @@ begin
    SetColoursType(C_COLOURS_FROM_TEXTURE);
 end;
 
-procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet);
+procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
 var
    mat, tex: integer;
 begin
    for mat := Low(Materials) to High(Materials) do
    begin
-      Materials[mat].ExportTextures(_BaseDir,Name + '_' + IntToStr(ID) + '_' + IntToStr(mat),_Ext,_UsedTextures);
+      Materials[mat].ExportTextures(_BaseDir,Name + '_' + IntToStr(ID) + '_' + IntToStr(mat),_Ext,_UsedTextures,_previewTextures);
+   end;
+end;
+
+procedure TMesh.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
+var
+   mat : integer;
+begin
+   for mat := Low(Materials) to High(Materials) do
+   begin
+      Materials[mat].SetTextureNumMipmaps(_NumMipMaps,_TextureType);
    end;
 end;
 

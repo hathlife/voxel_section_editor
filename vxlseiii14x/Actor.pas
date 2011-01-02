@@ -118,10 +118,11 @@ type
       procedure NormalLanczosSmoothModel;
       // Textures
       procedure GenerateDiffuseTexture; overload;
-      procedure GenerateDiffuseTexture(_Angle: single); overload;
-      procedure ExportTextures(const _BaseDir, _Ext: string);
+      procedure GenerateDiffuseTexture(_Angle: single; _Size: integer); overload;
+      procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
       procedure GenerateBumpMapTexture;
+      procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _ModelID,_MeshID: integer);
@@ -1054,7 +1055,7 @@ begin
    RequestUpdateWorld := true;
 end;
 
-procedure TActor.GenerateDiffuseTexture(_Angle: single);
+procedure TActor.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 var
    i : integer;
 begin
@@ -1062,13 +1063,13 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlas(_Angle);
+         Models[i]^.SetTextureNumMipMaps(_NumMipMaps,_TextureType);
       end;
    end;
    RequestUpdateWorld := true;
 end;
 
-procedure TActor.ExportTextures(const _BaseDir, _Ext: string);
+procedure TActor.GenerateDiffuseTexture(_Angle: single; _Size: integer);
 var
    i : integer;
 begin
@@ -1076,7 +1077,21 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExportTextures(_BaseDir,_Ext);
+         Models[i]^.ExtractTextureAtlas(_Angle, _Size);
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ExportTextures(_BaseDir,_Ext,_previewTextures);
       end;
    end;
    RequestUpdateWorld := true;

@@ -29,6 +29,7 @@ type
          function GetNextTextureID: integer;
          function GetTextureSize(_TextureID: integer): integer;
          // Sets
+         procedure SetTextureNumMipmaps(_NumMipMaps, _Type: integer);
          // Render
          procedure Enable;
          procedure Disable;
@@ -37,7 +38,7 @@ type
          // Copies
          procedure Assign(const _MeshMaterial: TMeshMaterial);
          // Misc
-         procedure ExportTextures(const _BaseDir, _Name, _Ext : string; var _UsedTextures : CIntegerSet);
+         procedure ExportTextures(const _BaseDir, _Name, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean = false);
    end;
    PMeshMaterial = ^TMeshMaterial;
    TAMeshMaterial = array of TMeshMaterial;
@@ -97,7 +98,7 @@ begin
    begin
       if Texture[tex] <> nil then
       begin
-         if Texture[tex].TextureType = _Type then
+         if Texture[tex]^.TextureType = _Type then
          begin
             Result := tex;
             exit;
@@ -145,6 +146,21 @@ begin
 end;
 
 // Sets
+procedure TMeshMaterial.SetTextureNumMipmaps(_NumMipMaps, _Type: integer);
+var
+   tex: integer;
+begin
+   for tex := Low(Texture) to High(Texture) do
+   begin
+      if Texture[tex] <> nil then
+      begin
+         if Texture[tex]^.TextureType = _Type then
+         begin
+            Texture[tex]^.NumMipMaps := _NumMipMaps;
+         end;
+      end;
+   end;
+end;
 
 // Render
 procedure TMeshMaterial.Enable;
@@ -211,7 +227,7 @@ begin
 end;
 
 // Misc
-procedure TMeshMaterial.ExportTextures(const _BaseDir, _Name, _Ext : string; var _UsedTextures : CIntegerSet);
+procedure TMeshMaterial.ExportTextures(const _BaseDir, _Name, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean = false);
 var
    tex: integer;
 begin
@@ -224,6 +240,10 @@ begin
             glActiveTextureARB(GL_TEXTURE0_ARB + tex);
 //            Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
             Texture[tex]^.SaveTexture(_BaseDir + _Name + '_' + IntToStr(tex) + '.' + _Ext);
+            if (_previewTextures) then
+            begin
+               RunAProgram(_BaseDir + _Name + '_' + IntToStr(tex) + '.' + _Ext,'','');
+            end;
          end;
       end;
    end;

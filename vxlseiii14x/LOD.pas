@@ -70,13 +70,14 @@ type
       procedure NormalLanczosSmoothLOD;
       // Textures
       procedure ExtractTextureAtlas; overload;
-      procedure ExtractTextureAtlas(_Angle: single); overload;
+      procedure ExtractTextureAtlas(_Angle: single; _Size: integer = 1024); overload;
       procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
       procedure GenerateNormalMapTexture; overload;
       procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
       procedure GenerateBumpMapTexture; overload;
       procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
-      procedure ExportTextures(const _BaseDir, _Ext : string);
+      procedure ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
+      procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -493,7 +494,7 @@ begin
    ExtractTextureAtlas(C_TEX_MIN_ANGLE);
 end;
 
-procedure TLOD.ExtractTextureAtlas(_Angle: single);
+procedure TLOD.ExtractTextureAtlas(_Angle: single; _Size: integer = 1024);
 var
    i : integer;
    Seeds: TSeedSet;
@@ -529,7 +530,7 @@ begin
       Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexGenerator);
    end;
    // Now we build the diffuse texture.
-   GenerateDiffuseTexture(1024,0,0);
+   GenerateDiffuseTexture(_Size,0,0);
    // Free memory.
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -682,7 +683,7 @@ begin
 end;
 
 
-procedure TLOD.ExportTextures(const _BaseDir, _Ext : string);
+procedure TLOD.ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
 var
    i : integer;
    UsedTextures : CIntegerSet;
@@ -690,9 +691,19 @@ begin
    UsedTextures := CIntegerSet.Create;
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].ExportTextures(_BaseDir,_Ext,UsedTextures);
+      Mesh[i].ExportTextures(_BaseDir,_Ext,UsedTextures,_previewTextures);
    end;
    UsedTextures.Free;
+end;
+
+procedure TLOD.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].SetTextureNumMipMaps(_NumMipMaps,_TextureType);
+   end;
 end;
 
 // Transparency methods

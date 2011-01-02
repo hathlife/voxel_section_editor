@@ -88,10 +88,11 @@ type
       procedure NormalLanczosSmoothModel;
       // Textures
       procedure ExtractTextureAtlas; overload;
-      procedure ExtractTextureAtlas(_Angle: single); overload;
-      procedure ExportTextures(const _BaseDir, _Ext: string);
+      procedure ExtractTextureAtlas(_Angle: single; _Size: integer); overload;
+      procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
       procedure GenerateBumpMapTexture;
+      procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
       procedure ForceTransparencyOnMesh(_Level: single; _MeshID: integer);
@@ -518,14 +519,14 @@ begin
    LOD[CurrentLOD].ExtractTextureAtlas;
 end;
 
-procedure TModel.ExtractTextureAtlas(_Angle: single);
+procedure TModel.ExtractTextureAtlas(_Angle: single; _Size : integer);
 begin
-   LOD[CurrentLOD].ExtractTextureAtlas(_Angle);
+   LOD[CurrentLOD].ExtractTextureAtlas(_Angle,_Size);
 end;
 
-procedure TModel.ExportTextures(const _BaseDir, _Ext: string);
+procedure TModel.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
 begin
-   LOD[CurrentLOD].ExportTextures(_BaseDir,_Ext);
+   LOD[CurrentLOD].ExportTextures(_BaseDir,_Ext,_previewTextures);
 end;
 
 procedure TModel.GenerateNormalMapTexture;
@@ -536,6 +537,11 @@ end;
 procedure TModel.GenerateBumpMapTexture;
 begin
    LOD[CurrentLOD].GenerateBumpMapTexture;
+end;
+
+procedure TModel.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
+begin
+   LOD[CurrentLOD].SetTextureNumMipMaps(_NumMipMaps,_TextureType);
 end;
 
 

@@ -601,14 +601,14 @@ begin
       // Here we unflip the texture in the Y axis.
       if not IsCompressed then
       begin
-         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         SwapY(pixels,xSize,ySize);
          if IsRGBA then
          begin
-            glTexImage2D(GL_TEXTURE_2D,i,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+            glTexImage2D(GL_TEXTURE_2D,i,_Compression,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          end
          else
          begin
-            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+            glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,xSize,ySize,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
          end;
          FreeMem(pixels);
       end;
