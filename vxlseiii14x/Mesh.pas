@@ -15,6 +15,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
 type
    TRenderProc = procedure of object;
    TSetShaderAttributesFunc = procedure (_VertexID: integer; const _PPlugin: PMeshPluginBase) of object;
+   TSetShaderUniformFunc = procedure (_MaterialID,_TextureID: integer) of object;
    TMesh = class
       private
          ColoursType : byte;
@@ -27,6 +28,7 @@ type
          ShaderBank : PShaderBank;
          // SetShaderAttributes procedure for rendering bump maps
          SetShaderAttributes : TSetShaderAttributesFunc;
+         SetShaderUniform : TSetShaderUniformFunc;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -177,6 +179,8 @@ type
          // Redering methods related to bump mapping.
          procedure SetAtributeShaderDoNothing(_VertexID: integer; const _PPlugin: PMeshPluginBase);
          procedure SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
+         procedure SetUniformShaderDoNothing(_MaterialID,_TextureID: integer);
+         procedure SetUniformShaderBumpMapping(_MaterialID,_TextureID: integer);
 
          // Copies
          procedure Assign(const _Mesh : TMesh);
@@ -267,6 +271,7 @@ begin
    Son := -1;
    SetLength(Plugins,0);
    SetShaderAttributes := SetAtributeShaderDoNothing;
+   SetShaderUniform := SetUniformShaderDoNothing;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
@@ -360,6 +365,7 @@ begin
    ClearMaterials;
    ClearPlugins;
    SetShaderAttributes := SetAtributeShaderDoNothing;
+   SetShaderUniform := SetUniformShaderDoNothing;
 end;
 
 // I/O;
@@ -1446,6 +1452,7 @@ end;
 procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
 begin
    _TexGenerator.PaintMeshNormalMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+   SetShaderUniform := SetUniformShaderBumpMapping;
 end;
 
 procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
@@ -1458,6 +1465,7 @@ begin
    DiffuseBitmap.Free;
    AddBumpMapDataPlugin;
    SetShaderAttributes := SetAtributeShaderBumpMapping;
+   SetShaderUniform := SetUniformShaderBumpMapping;
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
@@ -1836,6 +1844,7 @@ begin
          glActiveTextureARB(GL_TEXTURE0_ARB + tex);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
          glEnable(GL_TEXTURE_2D);
+         SetShaderUniform(CurrentPass,tex);
       end;
    end;
    glBegin(FaceType);
@@ -2015,6 +2024,20 @@ begin
    Shader := ShaderBank^.Get(C_SHD_PHONG_DOT3TEX);
    Shader^.glSendAttribute3f(0,TBumpMapDataPlugin(_PPlugin^).Tangents[_VertexID]);
    Shader^.glSendAttribute3f(1,TBumpMapDataPlugin(_PPlugin^).BiTangents[_VertexID]);
+end;
+
+procedure TMesh.SetUniformShaderDoNothing(_MaterialID,_TextureID: integer);
+begin
+   // do nothing, really... it does nothing!
+end;
+
+procedure TMesh.SetUniformShaderBumpMapping(_MaterialID,_TextureID: integer);
+var
+   Shader: PShaderBankItem;
+begin
+   // sends tangent and bitangent attributes in this exact order.
+   Shader := Materials[_MaterialID].Shader;
+   Shader^.glSendUniform1i(_TextureID,_TextureID);
 end;
 
 // Copies

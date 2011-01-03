@@ -12,6 +12,8 @@ type
          ProgramID, VertexID, FragmentID : GLUInt;
          Attributes: AString;
          AttributeLocation: array of TGLInt;
+         Uniforms: AString;
+         UniformLocation: array of TGLInt;
       public
          // Constructor and Destructor
          constructor Create(const _VertexFilename, _FragmentFilename: string); overload;
@@ -28,12 +30,14 @@ type
          procedure DeactivateProgram;
          // Adds
          procedure AddAttribute(const _name: string);
+         procedure AddUniform(const _name: string);
          // Counter
          function GetCount : integer;
          procedure IncCounter;
          procedure DecCounter;
          // OpenGL
          procedure glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
+         procedure glSendUniform1i(_UniformID: integer; const _Value: integer);
    end;
    PShaderBankItem = ^TShaderBankItem;
 
@@ -264,9 +268,22 @@ begin
    AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,Attributes[High(Attributes)]);
 end;
 
+procedure TShaderBankItem.AddUniform(const _name: string);
+begin
+   SetLength(Uniforms,High(Uniforms)+2);
+   SetLength(UniformLocation,High(Uniforms)+1);
+   Uniforms[High(Uniforms)] := copy(_name,1,Length(_name));
+   UniformLocation[High(Uniforms)] := glGetUniformLocation(ProgramID,PChar(Uniforms[High(Uniforms)]));
+end;
+
 procedure TShaderBankItem.glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
 begin
    glVertexAttrib3f(AttributeLocation[_AttributeID], _Value.X, _Value.Y, _Value.Z);
+end;
+
+procedure TShaderBankItem.glSendUniform1i(_UniformID: integer; const _Value: integer);
+begin
+   glUniform1iARB(UniformLocation[_UniformID], _Value);
 end;
 
 // Counter
