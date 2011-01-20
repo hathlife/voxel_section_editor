@@ -43,6 +43,8 @@ type
 
 implementation
 
+uses Dialogs;
+
 // Constructors and Destructors
 constructor TShaderBankItem.Create(const _VertexFilename, _FragmentFilename: string);
 var
@@ -235,18 +237,25 @@ end;
 // Uses
 procedure TShaderBankItem.UseProgram;
 var
-   i : integer;
+   i,test : integer;
+   UniformName: Pchar;
 begin
    if IsLinked and (not IsRunning) and (isAuthorized) then
    begin
       glUseProgram(ProgramID);
-      IsRunning := true;
       i := 0;
       while i <= High(Attributes) do
       begin
          glBindAttribLocation(ProgramID,i,PChar(Attributes[i]));
          inc(i);
       end;
+       while i <= High(Uniforms) do
+      begin
+         UniformName := PChar(Uniforms[i]);
+         UniformLocation[i] := glGetUniformLocation(ProgramID,UniformName);
+         inc(i);
+      end;
+      IsRunning := true;
    end;
 end;
 
@@ -261,19 +270,25 @@ end;
 
 // Adds
 procedure TShaderBankItem.AddAttribute(const _name: string);
+//var
+//   AttributeName : PChar;
 begin
    SetLength(Attributes,High(Attributes)+2);
    SetLength(AttributeLocation,High(Attributes)+1);
    Attributes[High(Attributes)] := copy(_name,1,Length(_name));
-   AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,Attributes[High(Attributes)]);
+//   AttributeName := StrCat(PChar(Attributes[High(Attributes)]),#0);
+//   AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,AttributeName);
 end;
 
 procedure TShaderBankItem.AddUniform(const _name: string);
+//var
+//   UniformName : PChar;
 begin
    SetLength(Uniforms,High(Uniforms)+2);
    SetLength(UniformLocation,High(Uniforms)+1);
    Uniforms[High(Uniforms)] := copy(_name,1,Length(_name));
-   UniformLocation[High(Uniforms)] := glGetUniformLocation(ProgramID,PChar(Uniforms[High(Uniforms)]));
+//   UniformName := StrCat(PChar(Uniforms[High(Uniforms)]),#0);
+//   UniformLocation[High(Uniforms)] := glGetUniformLocation(ProgramID,UniformName);
 end;
 
 procedure TShaderBankItem.glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
@@ -283,7 +298,7 @@ end;
 
 procedure TShaderBankItem.glSendUniform1i(_UniformID: integer; const _Value: integer);
 begin
-   glUniform1iARB(UniformLocation[_UniformID], _Value);
+   glUniform1i(UniformLocation[_UniformID], _Value);
 end;
 
 // Counter

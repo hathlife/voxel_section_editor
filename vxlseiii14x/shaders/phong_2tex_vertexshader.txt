@@ -1,15 +1,14 @@
-uniform sampler2D colorMap;
-uniform sampler2D normalMap;
-
 varying mat3 normalMatrix;
 varying vec3 v;
+varying vec2 texCoord0;
+varying vec2 texCoord1;
 
 void main(void)
 {
    v = vec3(gl_ModelViewMatrix * gl_Vertex);       
    normalMatrix = gl_NormalMatrix;
-   gl_TexCoord[0] = gl_MultiTexCoord0;
-   gl_TexCoord[1] = gl_MultiTexCoord1;
+   texCoord0 = gl_MultiTexCoord0.st;
+   texCoord1 = gl_MultiTexCoord1.st;
    
    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }

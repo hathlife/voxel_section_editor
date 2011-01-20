@@ -1795,7 +1795,7 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glActiveTexture(GL_TEXTURE0_ARB + tex);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
          glEnable(GL_TEXTURE_2D);
       end;
@@ -1808,7 +1808,7 @@ begin
          begin
             for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
             begin
-               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+               glMultiTexCoord2f(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
             end;
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
@@ -1821,8 +1821,7 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glActiveTexture(GL_TEXTURE0_ARB + tex);
          glDisable(GL_TEXTURE_2D);
       end;
    end;
@@ -1837,13 +1836,13 @@ begin
    i := 0;
    glColor4f(1,1,1,1);
    Plugin := GetPlugin(C_MPL_BUMPMAPDATA);
+   glEnable(GL_TEXTURE_2D);
    for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glActiveTexture(GL_TEXTURE0 + tex);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
-         glEnable(GL_TEXTURE_2D);
          SetShaderUniform(CurrentPass,tex);
       end;
    end;
@@ -1855,7 +1854,7 @@ begin
          begin
             for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
             begin
-               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
             end;
             SetShaderAttributes(Faces[f],Plugin);
             glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
@@ -1870,11 +1869,10 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
-         glDisable(GL_TEXTURE_2D);
+         glActiveTexture(GL_TEXTURE0 + tex);
       end;
    end;
+   glDisable(GL_TEXTURE_2D);
 end;
 
 procedure TMesh.RenderWithFaceNormalsAndWithTexture;
@@ -1888,7 +1886,7 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+         glActiveTexture(GL_TEXTURE0 + tex);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
          glEnable(GL_TEXTURE_2D);
       end;
@@ -1902,7 +1900,7 @@ begin
          begin
             for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
             begin
-               glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
             end;
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
@@ -1915,8 +1913,7 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTextureARB(GL_TEXTURE0_ARB + tex);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
+         glActiveTexture(GL_TEXTURE0 + tex);
          glDisable(GL_TEXTURE_2D);
       end;
    end;
