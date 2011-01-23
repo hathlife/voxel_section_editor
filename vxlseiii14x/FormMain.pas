@@ -358,6 +358,9 @@ type
     DisplayFMSolid: TMenuItem;
     DisplayFMWireframe: TMenuItem;
     DisplayFMPointCloud: TMenuItem;
+    Splitter1: TSplitter;
+    Splitter2: TSplitter;
+    Splitter3: TSplitter;
     procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
     procedure DisplayFMSolidClick(Sender: TObject);

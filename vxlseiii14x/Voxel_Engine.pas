@@ -4,7 +4,7 @@ interface
 
 uses Windows,BasicDataTypes,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,
    cls_config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel, VoxelDocument,
-   BasicConstants;
+   BasicConstants, NormalsConstants;
 
 {$INCLUDE Global_Conditionals.inc}
 Var
@@ -321,26 +321,27 @@ begin
       Result := FrmMain.Document.Palette^[color]
    else
    begin
-      if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
-      begin
-         NormalNum := 244;
-         NormalDiv := 2.5;
-      end
-      else
-      begin
-         NormalNum := 35;
-         NormalDiv := 0.20;
-      end;
-
-      N := Color;
-      If N > NormalNum Then
-         N := NormalNum;
-      T.X := 255 + (N - (NormalNum/1))/NormalDiv;
-      T.Y := 0 + (N - (NormalNum/1))/NormalDiv;
-      T.Z := 255 + (N - (NormalNum/1))/NormalDiv;
-//      T.X := N;
-//      T.Y := N;
-//      T.Z := N;
+      // HBD: Let's color the normals in a better way
+     if FrmMain.Document.ActiveSection.Tailer.Unknown = 4 then
+     begin
+       if color >= RA2_NORMAL_CNT then begin
+         T.x := 0; T.y := 0; T.z := 0;
+       end else begin
+         T.X := 128*(RA2Normals_Table[Color].Z+1);
+         T.Y := 128*(RA2Normals_Table[Color].X+1);
+         T.Z := 128*(RA2Normals_Table[Color].Y+1);
+       end
+     end
+     else
+     begin
+       if color >= TS_NORMAL_CNT then begin
+         T.x := 0; T.y := 0; T.z := 0;
+       end else begin
+         T.X := 128*(TSNormals_Table[Color].Z+1);
+         T.Y := 128*(TSNormals_Table[Color].X+1);
+         T.Z := 128*(TSNormals_Table[Color].Y+1);
+       end;
+     end;
       Result := CleanVCol(T);
    end;
 end;
