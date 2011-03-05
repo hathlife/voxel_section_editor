@@ -1,6 +1,5 @@
 [FileVersion]
 Version=7.0
-
 [Compiler]
 A=8
 B=0
@@ -80,7 +79,6 @@ PrivatePropAccessor=1
 UnsafeType=1
 UnsafeCode=1
 UnsafeCast=1
-
 [Linker]
 MapFile=0
 OutputObjs=0
@@ -91,7 +89,6 @@ MinStackSize=16384
 MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
-
 [Directories]
 OutputDir=
 UnitOutputDir=
@@ -102,16 +99,14 @@ Packages=vcl;rtl;vclx;VclSmp;vclshlctrls;zippack6;DelphiX_for5;dx3depack;dfs;id3
 Conditionals=
 DebugSourceDirs=
 UsePackages=0
-
 [Parameters]
 RunParams=
 HostApplication=
 Launcher=
 UseLauncher=0
 DebugCWD=
-
 [Version Info]
-IncludeVerInfo=0
+IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=1
 MinorVer=0
@@ -124,7 +119,6 @@ Private=0
 DLL=0
 Locale=1033
 CodePage=1252
-
 [Version Info Keys]
 CompanyName=
 FileDescription=

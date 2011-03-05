@@ -84,7 +84,9 @@ Function ApplyTempView(var vxl :TVoxelSection): Boolean;
 Procedure VXLCopyToClipboard(Vxl : TVoxelSection);
 Procedure VXLCutToClipboard(Vxl : TVoxelSection);
 procedure VXLFloodFillTool(Vxl : TVoxelSection; Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
-Procedure RemoveDoublesFromTempView;
+procedure velFloodFill3D(VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
+procedure velFloodFillClear3D(VelSect: TVoxelSection; X, Y, Z: Byte);
+function velRemoveRedundantVoxels(VelSect: TVoxelSection): Cardinal;Procedure RemoveDoublesFromTempView;
 Procedure PasteFullVXL(var Vxl : TVoxelsection);
 Procedure PasteVXL(var Vxl : TVoxelsection);
 procedure PaintView2(WndIndex: Integer; isMouseLeftDown : boolean; var Cnv: PPaintBox; var View: TVoxelView);
@@ -2643,6 +2645,328 @@ begin
    {$endif}
    for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
       FrmMain.Document.ActiveVoxel^.Section[x].Tailer.Unknown := Normal;
+end;
+
+(***** COLORS ONLY *****)
+procedure velFloodFill3D(VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
+type
+  V3Byte = record
+    X, Y, Z: Byte;
+  end;
+var
+  Q: array of V3Byte;
+  QLen: Cardinal;
+  p0, p1: Cardinal;
+  v: TVoxelUnpacked;
+  function ShouldFill(X, Y, Z: Byte): Boolean;
+  begin
+    if v.Used then
+    begin
+      if ((VelSect.Data[X,Y,Z] and $00010000) > 0) and ((VelSect.Data[X,Y,Z] and $0000FF00) shr 8 = v.Colour) then
+        Result := True
+      else
+        Result := False;
+    end
+    else
+    begin
+      if (VelSect.Data[X,Y,Z] and $00010000) = 0 then
+        Result := True
+      else
+        Result := False;
+    end;
+  end;
+  procedure NewNode(X, Y, Z: Byte);
+  begin
+    Q[p1].X := X;
+    Q[p1].Y := Y;
+    Q[p1].Z := Z;
+    VelSect.Data[X,Y,Z] :=
+      VelSect.Data[X,Y,Z] and $FFFF00FF or $00010000 or (Cardinal(DesiredColor) shl 8);
+    p1 := p1+1;
+  end;
+begin
+  // TODO: Why don't we use public member fucntions to retrieve
+  // voxel section nformation such as x, y, z size so that
+  // we don't have to access them throuth the 'Tailer' member?
+
+  VelSect.GetVoxel(X, Y, Z, v);
+  if v.Used and (v.Colour = DesiredColor) then Exit; // Don't need to fill
+
+  QLen := VelSect.Tailer.XSize * VelSect.Tailer.YSize * VelSect.Tailer.ZSize;
+
+  // BFS Flood Fill
+  // Space cost: 255^3*3 = 49744125 Bytes (~ 47.44 MB) at most
+  // It shouldn't be a problem for modern computers
+  // (But what about repainting the 3D view? It crashed my display driver!) - HBD
+  try
+    SetLength(Q, QLen);
+  except
+    MessageDlg('No enough memory to perform 3D flood fill', mtError, [mbOK], 0);
+    Exit;
+  end;
+  p0 := 0;
+  p1 := 0;
+  NewNode(X, Y, Z);
+
+  while p0 <> p1 do
+  begin
+    // X-1
+    if (Q[p0].X > 0) and ShouldFill(Q[p0].X-1, Q[p0].Y, Q[p0].Z) then
+      NewNode(Q[p0].X-1, Q[p0].Y, Q[p0].Z);
+    // Y-1
+    if (Q[p0].Y > 0) and ShouldFill(Q[p0].X, Q[p0].Y-1, Q[p0].Z) then
+      NewNode(Q[p0].X, Q[p0].Y-1, Q[p0].Z);
+    // Z-1
+    if (Q[p0].Z > 0) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z-1) then
+      NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z-1);
+    // X+1
+    if (Q[p0].X < VelSect.Tailer.XSize-1) and ShouldFill(Q[p0].X+1, Q[p0].Y, Q[p0].Z) then
+      NewNode(Q[p0].X+1, Q[p0].Y, Q[p0].Z);
+    // Y+1
+    if (Q[p0].Y < VelSect.Tailer.YSize-1) and ShouldFill(Q[p0].X, Q[p0].Y+1, Q[p0].Z) then
+      NewNode(Q[p0].X, Q[p0].Y+1, Q[p0].Z);
+    // Z+1
+    if (Q[p0].Z < VelSect.Tailer.ZSize-1) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z+1) then
+      NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z+1);
+    p0 := p0+1;
+  end;
+
+  SetLength(Q, 0);
+end;
+
+procedure velFloodFillClear3D(VelSect: TVoxelSection; X, Y, Z: Byte);
+type
+  V3Byte = record
+    X, Y, Z: Byte;
+  end;
+var
+  Q: array of V3Byte;
+  QLen: Cardinal;
+  p0, p1: Cardinal;
+  v: TVoxelUnpacked;
+  function ShouldFill(X, Y, Z: Byte): Boolean;
+  begin
+    if ((VelSect.Data[X,Y,Z] and $00010000) > 0) and ((VelSect.Data[X,Y,Z] and $0000FF00) shr 8 = v.Colour) then
+      Result := True
+    else
+      Result := False;
+  end;
+  procedure NewNode(X, Y, Z: Byte);
+  begin
+    Q[p1].X := X;
+    Q[p1].Y := Y;
+    Q[p1].Z := Z;
+    VelSect.Data[X,Y,Z] := VelSect.Data[X,Y,Z] and $FFFEFFFF;
+    p1 := p1+1;
+  end;
+begin
+  VelSect.GetVoxel(X, Y, Z, v);
+  if not v.Used then Exit; // Don't need to fill
+
+  QLen := VelSect.Tailer.XSize * VelSect.Tailer.YSize * VelSect.Tailer.ZSize;
+
+  try
+    SetLength(Q, QLen);
+  except
+    MessageDlg('No enough memory to perform 3D flood fill', mtError, [mbOK], 0);
+    Exit;
+  end;
+  p0 := 0;
+  p1 := 0;
+  NewNode(X, Y, Z);
+
+  while p0 <> p1 do
+  begin
+    // X-1
+    if (Q[p0].X > 0) and ShouldFill(Q[p0].X-1, Q[p0].Y, Q[p0].Z) then
+      NewNode(Q[p0].X-1, Q[p0].Y, Q[p0].Z);
+    // Y-1
+    if (Q[p0].Y > 0) and ShouldFill(Q[p0].X, Q[p0].Y-1, Q[p0].Z) then
+      NewNode(Q[p0].X, Q[p0].Y-1, Q[p0].Z);
+    // Z-1
+    if (Q[p0].Z > 0) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z-1) then
+      NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z-1);
+    // X+1
+    if (Q[p0].X < VelSect.Tailer.XSize-1) and ShouldFill(Q[p0].X+1, Q[p0].Y, Q[p0].Z) then
+      NewNode(Q[p0].X+1, Q[p0].Y, Q[p0].Z);
+    // Y+1
+    if (Q[p0].Y < VelSect.Tailer.YSize-1) and ShouldFill(Q[p0].X, Q[p0].Y+1, Q[p0].Z) then
+      NewNode(Q[p0].X, Q[p0].Y+1, Q[p0].Z);
+    // Z+1
+    if (Q[p0].Z < VelSect.Tailer.ZSize-1) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z+1) then
+      NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z+1);
+    p0 := p0+1;
+  end;
+
+  SetLength(Q, 0);
+end;
+
+function velRemoveRedundantVoxels(VelSect: TVoxelSection): Cardinal;
+var
+  i, j, k: Byte;
+  code: Byte;
+  temp: Cardinal;
+  idx: Cardinal;
+  YZSize: Cardinal;
+  RemoveCount: Cardinal;
+  IsOutside: array of Byte;
+label
+  Next;
+  procedure FloodFillMark3D(X, Y, Z: Byte);
+  type
+    V3Byte = record
+      X, Y, Z: Byte;
+    end;
+  var
+    Q: array of V3Byte;
+    QLen: Cardinal;
+    p0, p1: Cardinal;
+    v: TVoxelUnpacked;
+    function ShouldFill(X, Y, Z: Byte): Boolean;
+    var
+      idx: Cardinal;
+    begin
+      if (VelSect.Data[X,Y,Z] and $00010000) <> 0 then
+      begin
+        Result := False;
+        Exit;
+      end;
+      idx := (X*VelSect.Tailer.YSize+Y)*VelSect.Tailer.ZSize+Z;
+      if IsOutside[idx shr 3] and (1 shl (idx and 7)) = 0 then
+        Result := True
+      else
+        Result := False;
+    end;
+    procedure NewNode(X, Y, Z: Byte);
+    var
+      idx: Cardinal;
+    begin
+      // Assert(p1 < QLen);
+      Q[p1].X := X;
+      Q[p1].Y := Y;
+      Q[p1].Z := Z;
+      idx := (X*VelSect.Tailer.YSize+Y)*VelSect.Tailer.ZSize+Z;
+      IsOutside[idx shr 3] := IsOutside[idx shr 3] or (1 shl (idx and 7));
+      p1 := p1+1;
+    end;
+  begin
+    VelSect.GetVoxel(X, Y, Z, v);
+    idx := (X*VelSect.Tailer.YSize+Y)*VelSect.Tailer.ZSize+Z;
+    if v.Used or (IsOutside[idx shr 3] and (1 shl (idx and 7)) > 0) then Exit; // Already marked as outside; exit
+    QLen := VelSect.Tailer.XSize * VelSect.Tailer.YSize * VelSect.Tailer.ZSize;
+    try
+      SetLength(Q, QLen);
+    except
+      MessageDlg('No enough memory to perform redundant voxel removal', mtError, [mbOK], 0);
+      Exit;
+    end;
+    p0 := 0;
+    p1 := 0;
+    NewNode(X, Y, Z);
+    while p0 <> p1 do
+    begin
+      if (Q[p0].X > 0) and ShouldFill(Q[p0].X-1, Q[p0].Y, Q[p0].Z) then
+        NewNode(Q[p0].X-1, Q[p0].Y, Q[p0].Z);
+      if (Q[p0].Y > 0) and ShouldFill(Q[p0].X, Q[p0].Y-1, Q[p0].Z) then
+        NewNode(Q[p0].X, Q[p0].Y-1, Q[p0].Z);
+      if (Q[p0].Z > 0) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z-1) then
+        NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z-1);
+      if (Q[p0].X < VelSect.Tailer.XSize-1) and ShouldFill(Q[p0].X+1, Q[p0].Y, Q[p0].Z) then
+        NewNode(Q[p0].X+1, Q[p0].Y, Q[p0].Z);
+      if (Q[p0].Y < VelSect.Tailer.YSize-1) and ShouldFill(Q[p0].X, Q[p0].Y+1, Q[p0].Z) then
+        NewNode(Q[p0].X, Q[p0].Y+1, Q[p0].Z);
+      if (Q[p0].Z < VelSect.Tailer.ZSize-1) and ShouldFill(Q[p0].X, Q[p0].Y, Q[p0].Z+1) then
+        NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z+1);
+      p0 := p0+1;
+    end;
+   SetLength(Q, 0);
+  end;
+begin
+  temp := (VelSect.Tailer.XSize*VelSect.Tailer.YSize*VelSect.Tailer.ZSize+7) shr 3;
+  SetLength(IsOutSide, temp);
+  //FillChar(IsOutside, temp, 0);
+  for i:=0 to VelSect.Tailer.XSize-1 do
+  begin
+    for j:=0 to VelSect.Tailer.YSize-1 do
+    begin
+      FloodFillMark3D(i, j, 0);
+      FloodFillMark3D(i, j, VelSect.Tailer.ZSize-1);
+    end;
+  end;
+  for i:=0 to VelSect.Tailer.YSize-1 do
+  begin
+    for j:=0 to VelSect.Tailer.ZSize-1 do
+    begin
+      FloodFillMark3D(0, i, j);
+      FloodFillMark3D(VelSect.Tailer.XSize-1, i, j);
+    end;
+  end;
+  for i:=0 to VelSect.Tailer.ZSize-1 do
+  begin
+    for j:=0 to VelSect.Tailer.XSize-1 do
+    begin
+      FloodFillMark3D(j, 0, i);
+      FloodFillMark3D(j, VelSect.Tailer.YSize-1, i);
+    end;
+  end;
+  YZSize := VelSect.Tailer.YSize * VelSect.Tailer.ZSize;
+  RemoveCount := 0;
+  idx := 0;
+  for i:=0 to VelSect.Tailer.XSize-1 do
+  begin
+    for j:=0 to VelSect.Tailer.YSize-1 do
+    begin
+      for k:=0 to VelSect.Tailer.ZSize-1 do
+      begin
+        code := 0;
+        // X-1
+        if i > 0 then
+        begin
+          temp := idx - YZSize;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        // Y-1
+        if j > 0 then
+        begin
+          temp := idx - VelSect.Tailer.ZSize;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        // Z-1
+        if k > 0 then
+        begin
+          temp := idx - 1;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        // X+1
+        if i < VelSect.Tailer.XSize-1 then
+        begin
+          temp := idx + YZSize;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        // Y+1
+        if j < VelSect.Tailer.YSize-1 then
+        begin
+          temp := idx + VelSect.Tailer.ZSize;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        // Z+1
+        if k < VelSect.Tailer.ZSize-1 then
+        begin
+          temp := idx + 1;
+          code := code or (IsOutside[temp shr 3] and (1 shl (temp and 7)));
+        end else goto Next;
+        if code = 0 then // None of the 6 adjecent voxels are marked as 'outside'; found redundant
+        begin
+          if VelSect.Data[i,j,k] and $00010000 > 0 then Inc(RemoveCount);
+          VelSect.Data[i,j,k] := VelSect.Data[i,j,k] and $FFFEFFFF;
+        end;
+      Next:
+        Inc(idx);
+      end;
+    end;
+  end;
+  SetLength(IsOutside, 0);
+  Result := RemoveCount;
 end;
 
 begin
