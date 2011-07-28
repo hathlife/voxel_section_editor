@@ -324,26 +324,33 @@ begin
    else
    begin
       // HBD: Let's color the normals in a better way
-     if FrmMain.Document.ActiveSection.Tailer.Unknown = 4 then
-     begin
-       if color >= RA2_NORMAL_CNT then begin
-         T.x := 0; T.y := 0; T.z := 0;
-       end else begin
-         T.X := 128*(RA2Normals_Table[Color].Z+1);
-         T.Y := 128*(RA2Normals_Table[Color].X+1);
-         T.Z := 128*(RA2Normals_Table[Color].Y+1);
-       end
-     end
-     else
-     begin
-       if color >= TS_NORMAL_CNT then begin
-         T.x := 0; T.y := 0; T.z := 0;
-       end else begin
-         T.X := 128*(TSNormals_Table[Color].Z+1);
-         T.Y := 128*(TSNormals_Table[Color].X+1);
-         T.Z := 128*(TSNormals_Table[Color].Y+1);
-       end;
-     end;
+      if FrmMain.Document.ActiveSection.Tailer.Unknown = 4 then
+      begin
+         if color >= RA2_NORMAL_CNT then
+         begin
+            T.x := 0; T.y := 0; T.z := 0;
+         end
+         else
+         begin
+            T.X := 128*(RA2Normals_Table[Color].Z+1);
+            T.Y := 128*(RA2Normals_Table[Color].X+1);
+            T.Z := 128*(RA2Normals_Table[Color].Y+1);
+         end
+      end
+      else
+      begin
+         if color >= TS_NORMAL_CNT
+         then
+         begin
+            T.x := 0; T.y := 0; T.z := 0;
+         end
+         else
+         begin
+            T.X := 128*(TSNormals_Table[Color].Z+1);
+            T.Y := 128*(TSNormals_Table[Color].X+1);
+            T.Z := 128*(TSNormals_Table[Color].Y+1);
+         end;
+      end;
       Result := CleanVCol(T);
    end;
 end;

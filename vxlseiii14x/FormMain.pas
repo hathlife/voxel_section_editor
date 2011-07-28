@@ -15,13 +15,14 @@ uses
   ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants;
+  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
+  FormHeightmap, ImageIOUtils;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.111';
+   APPLICATION_VER = '1.39.120';
    APPLICATION_BETA = true;
 
 type
@@ -366,6 +367,8 @@ type
     Splitter2: TSplitter;
     Splitter3: TSplitter;
     RemoveRedundantVoxelsB1: TMenuItem;
+    ImagewithHeightmap1: TMenuItem;
+    procedure ImagewithHeightmap1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
     procedure DisplayFMSolidClick(Sender: TObject);
@@ -2148,7 +2151,7 @@ end;
 procedure TFrmMain.CnvView0MouseMove(Sender: TObject; Shift: TShiftState;
   X, Y: Integer);
 label
-  PickColor;
+   PickColor;
 var
    V : TVoxelUnpacked;
    TempI : integer;
@@ -2160,9 +2163,9 @@ var
    GridOffset : TPoint;
    MeasureAngle : Extended;
 begin
-  // Maybe a switch statement is better because it can be optimized by the compiler - HBD
-  // Test whether left(right) mouse button is down with:
-  // if ssLeft(ssRight) in Shift then ... - HBD
+   // Maybe a switch statement is better because it can be optimized by the compiler - HBD
+   // Test whether left(right) mouse button is down with:
+   // if ssLeft(ssRight) in Shift then ... - HBD
    if VoxelOpen and isEditable then
    begin
       {$ifdef DEBUG_FILE}
@@ -2183,167 +2186,165 @@ begin
 
       if ssLeft in Shift then
       begin
-        if ssCtrl in shift then
-        begin
-           MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,true);
-           Exit;
-        end;
+         if ssCtrl in shift then
+         begin
+            MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,true);
+            Exit;
+         end;
 
-        // alt key dropper
-        if ssAlt in Shift then goto PickColor;
+         // alt key dropper
+         if ssAlt in Shift then goto PickColor;
 
-        case VxlTool of
+         case VxlTool of
 
-          VxlTool_Brush:
-          begin
-             if VXLBrush <> 4 then
-             begin
-                Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-                if (SpectrumMode = ModeColours) or (v.Used=False) then
-                   v.Colour := ActiveColour;
-                if (SpectrumMode = ModeNormals) or (v.Used=False) then
-                   v.Normal := ActiveNormal;
+            VxlTool_Brush:
+            begin
+               if VXLBrush <> 4 then
+               begin
+                  Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+                  if (SpectrumMode = ModeColours) or (v.Used=False) then
+                     v.Colour := ActiveColour;
+                  if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                     v.Normal := ActiveNormal;
 
-                v.Used := True;
-                VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
-                CnvView[0].Repaint;
-             end;
-          end;
+                  v.Used := True;
+                  VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+                  CnvView[0].Repaint;
+               end;
+            end;
 
-          VxlTool_Dropper:
-          PickColor:
-          begin
-           TempI := GetPaletteColourFromVoxel(X,Y,0);
-           if TempI > -1 then
-              if SpectrumMode = ModeColours then
-                 SetActiveColor(TempI,True)
-              else
-                 SetActiveNormal(TempI,True);
-          end;
+            VxlTool_Dropper:
+            PickColor:
+            begin
+               TempI := GetPaletteColourFromVoxel(X,Y,0);
+               if TempI > -1 then
+                  if SpectrumMode = ModeColours then
+                     SetActiveColor(TempI,True)
+                  else
+                     SetActiveNormal(TempI,True);
+            end;
 
-          VXLTool_SmoothNormal:
-          begin
-             Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-             VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
-             RepaintViews;
-          end;
+            VXLTool_SmoothNormal:
+            begin
+               Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+               VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+               RepaintViews;
+            end;
 
-          VXLTool_Erase:
-          begin
-             v.Used := false;
-             v.Colour := 0;
-             v.Normal := 0;
-             VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+            VXLTool_Erase:
+            begin
+               v.Used := false;
+               v.Colour := 0;
+               v.Normal := 0;
+               VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
 
-             RepaintViews;
-          end;
+               RepaintViews;
+            end;
 
-          VxlTool_Line:
-          begin
-             V.Used := true;
-             V.Colour := ActiveColour;
-             V.Normal := ActiveNormal;
-             drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
-             RepaintViews;
-          end;
+            VxlTool_Line:
+            begin
+               V.Used := true;
+               V.Colour := ActiveColour;
+               V.Normal := ActiveNormal;
+               drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
+               RepaintViews;
+            end;
 
-          VXLTool_Rectangle:
-          begin
-             V.Used := true;
-             V.Colour := ActiveColour;
-             V.Normal := ActiveNormal;
-             VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
-             RepaintViews;
-          end;
+            VXLTool_Rectangle:
+            begin
+               V.Used := true;
+               V.Colour := ActiveColour;
+               V.Normal := ActiveNormal;
+               VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
+               RepaintViews;
+            end;
 
-          VXLTool_FilledRectangle:
-          begin
-             V.Used := true;
-             V.Colour := ActiveColour;
-             V.Normal := ActiveNormal;
-             VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
-             RepaintViews;
-          end;
+            VXLTool_FilledRectangle:
+            begin
+               V.Used := true;
+               V.Colour := ActiveColour;
+               V.Normal := ActiveNormal;
+               VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
+               RepaintViews;
+            end;
 
-          VXLTool_Measure:
-          begin
-             Viewport := Document.ActiveSection^.Viewport[0];
+            VXLTool_Measure:
+            begin
+               Viewport := Document.ActiveSection^.Viewport[0];
 
-             GridPos1.X := ((OldMousePos.X-Viewport.Left) div Viewport.Zoom);
-             GridPos1.Y := ((OldMousePos.Y-Viewport.Top) div Viewport.Zoom);
-             GridPos2.X := ((MousePos.X-Viewport.Left) div Viewport.Zoom);
-             GridPos2.Y := ((MousePos.Y-Viewport.Top) div Viewport.Zoom);
-             SnapPos1.X := (GridPos1.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
-             SnapPos1.Y := (GridPos1.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
-             SnapPos2.X := (GridPos2.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
-             SnapPos2.Y := (GridPos2.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
-             GridOffset.X := GridPos2.X-GridPos1.X;
-             GridOffset.Y := GridPos2.Y-GridPos1.Y;
+               GridPos1.X := ((OldMousePos.X-Viewport.Left) div Viewport.Zoom);
+               GridPos1.Y := ((OldMousePos.Y-Viewport.Top) div Viewport.Zoom);
+               GridPos2.X := ((MousePos.X-Viewport.Left) div Viewport.Zoom);
+               GridPos2.Y := ((MousePos.Y-Viewport.Top) div Viewport.Zoom);
+               SnapPos1.X := (GridPos1.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
+               SnapPos1.Y := (GridPos1.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
+               SnapPos2.X := (GridPos2.X*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Left;
+               SnapPos2.Y := (GridPos2.Y*Viewport.Zoom + Viewport.Zoom div 2)+Viewport.Top;
+               GridOffset.X := GridPos2.X-GridPos1.X;
+               GridOffset.Y := GridPos2.Y-GridPos1.Y;
 
-             MeasureAngle := ArcTan2(SnapPos2.Y-SnapPos1.Y,SnapPos2.X-SnapPos1.X);
+               MeasureAngle := ArcTan2(SnapPos2.Y-SnapPos1.Y,SnapPos2.X-SnapPos1.X);
 
-             if (GridOffset.X <> 0) or (GridOffset.Y <> 0) then
-             begin
-                AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),1,clBlack);
-                AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
-                AddTempLine(Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
-                AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
-                AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
-                AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
-                AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
-                AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
-             end;
+               if (GridOffset.X <> 0) or (GridOffset.Y <> 0) then
+               begin
+                  AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),1,clBlack);
+                  AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+                  AddTempLine(Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos2.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+                  AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y+Sin(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.5)*10.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.5)*10.0),1,clBlack);
+                  AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
+                  AddTempLine(Round(SnapPos1.X+Cos(MeasureAngle)*5.0),Round(SnapPos1.Y+Sin(MeasureAngle)*5.0),Round(SnapPos1.X-Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos1.Y-Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
+                  AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle+Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle+Pi*0.8)*15.0),1,clBlack);
+                  AddTempLine(Round(SnapPos2.X-Cos(MeasureAngle)*5.0),Round(SnapPos2.Y-Sin(MeasureAngle)*5.0),Round(SnapPos2.X+Cos(MeasureAngle-Pi*0.8)*15.0),Round(SnapPos2.Y+Sin(MeasureAngle-Pi*0.8)*15.0),1,clBlack);
+               end;
 
-             StatusBar1.Panels[4].Text := 'Tool: Measure - ('+inttostr(GridPos1.X)+','+inttostr(GridPos1.Y)+') -> ('+inttostr(GridPos2.X)+','+inttostr(GridPos2.Y)+')     Offset - ('+inttostr(GridOffset.X)+','+inttostr(GridOffset.Y)+')     Length - ('+FloatToStrF(Sqrt(GridOffset.X*GridOffset.X+GridOffset.Y*GridOffset.Y),ffFixed,100,3)+')';
+               StatusBar1.Panels[4].Text := 'Tool: Measure - ('+inttostr(GridPos1.X)+','+inttostr(GridPos1.Y)+') -> ('+inttostr(GridPos2.X)+','+inttostr(GridPos2.Y)+')     Offset - ('+inttostr(GridOffset.X)+','+inttostr(GridOffset.Y)+')     Length - ('+FloatToStrF(Sqrt(GridOffset.X*GridOffset.X+GridOffset.Y*GridOffset.Y),ffFixed,100,3)+')';
+               RepaintViews;
+            end;
 
-             RepaintViews;
-          end;
-
-        end;
+         end;
       end
       else
       if ssRight in Shift then
       begin
-        case VxlTool of
+         case VxlTool of
 
-          VXLTool_Brush:
-          begin
-             v.Used := false;
-             v.Colour := 0;
-             v.Normal := 0;
-             VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+            VXLTool_Brush:
+            begin
+               v.Used := false;
+               v.Colour := 0;
+               v.Normal := 0;
+               VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+               RepaintViews;
+            end;
 
-             RepaintViews;
-          end;
+            VxlTool_Line:
+            begin
+               V.Used := False;
+               V.Colour := 0;
+               V.Normal := 0;
+               drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
+               RepaintViews;
+            end;
 
-          VxlTool_Line:
-          begin
-             V.Used := False;
-             V.Colour := 0;
-             V.Normal := 0;
-             drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
-             RepaintViews;
-          end;
+            VXLTool_Rectangle:
+            begin
+               V.Used := False;
+               V.Colour := 0;
+               V.Normal := 0;
+               VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
+               RepaintViews;
+            end;
 
-          VXLTool_Rectangle:
-          begin
-             V.Used := False;
-             V.Colour := 0;
-             V.Normal := 0;
-             VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
-             RepaintViews;
-          end;
+            VXLTool_FilledRectangle:
+            begin
+               V.Used := False;
+               V.Colour := 0;
+               V.Normal := 0;
+               VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
+               RepaintViews;
+            end;
 
-          VXLTool_FilledRectangle:
-          begin
-             V.Used := False;
-             V.Colour := 0;
-             V.Normal := 0;
-             VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
-             RepaintViews;
-          end;
-
-        end; // tool switch
+         end; // tool switch
       end
       else
       begin
@@ -2377,32 +2378,32 @@ begin
          begin
             case VXLTool of
 
-              VXLTool_Brush:
-              begin
-                 if VXLBrush <> 4 then
-                 begin
-                    Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-                    if (SpectrumMode = ModeColours) or (v.Used=False) then
-                       v.Colour := ActiveColour;
-                    if (SpectrumMode = ModeNormals) or (v.Used=False) then
-                       v.Normal := ActiveNormal;
+               VXLTool_Brush:
+               begin
+                  if VXLBrush <> 4 then
+                  begin
+                     Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+                     if (SpectrumMode = ModeColours) or (v.Used=False) then
+                        v.Colour := ActiveColour;
+                     if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                        v.Normal := ActiveNormal;
 
-                    v.Used := True;
-                    VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
-                    // ActiveSection.BrushTool(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
-                    CnvView[0].Repaint;
-                 end;
-              end;
+                     v.Used := True;
+                     VXLBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+                     // ActiveSection.BrushTool(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,ActiveSection.View[0].GetOrient);
+                     CnvView[0].Repaint;
+                  end;
+               end;
 
-              VXLTool_SmoothNormal:
-              begin
-                 if VXLBrush <> 4 then
-                 begin
-                    Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-                    VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
-                    CnvView[0].Repaint;
-                 end;
-              end;
+               VXLTool_SmoothNormal:
+               begin
+                  if VXLBrush <> 4 then
+                  begin
+                     Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+                     VXLSmoothBrushTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,VXLBrush,Document.ActiveSection^.View[0].GetOrient);
+                     CnvView[0].Repaint;
+                  end;
+               end;
 
             end; // tool switch
 
@@ -2641,42 +2642,66 @@ begin
    SpeedButton13.Down := false;
    SpeedButton14.Down := false;
 
-   if VXLTool_ = VXLTool_Brush then begin
+   if VXLTool_ = VXLTool_Brush then
+   begin
       VXLToolName := 'Brush';
-      SpeedButton3.Down := true; end
-   else if VXLTool_ = VXLTool_Line then begin
+      SpeedButton3.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Line then
+   begin
       VXLToolName := 'Line';
-      SpeedButton4.Down := true; end
-   else if VXLTool_ = VXLTool_Erase then begin
+      SpeedButton4.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Erase then
+   begin
       VXLToolName := 'Erase';
-      SpeedButton5.Down := true; end
-   else if VXLTool_ = VXLTool_FloodFill then begin
+      SpeedButton5.Down := true;
+   end
+   else if VXLTool_ = VXLTool_FloodFill then
+   begin
       VXLToolName := 'Flood Fill';
-      SpeedButton10.Down := true; end
-   else if VXLTool_ = VXLTool_FloodFillErase then begin
+      SpeedButton10.Down := true;
+   end
+   else if VXLTool_ = VXLTool_FloodFillErase then
+   begin
       VXLToolName := 'Flood Erase';
-      SpeedButton13.Down := true; end
-   else if VXLTool_ = VXLTool_Dropper then begin
+      SpeedButton13.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Dropper then
+   begin
       VXLToolName := 'Dropper';
-      SpeedButton11.Down := true; end
-   else if VXLTool_ = VXLTool_Rectangle then begin
+      SpeedButton11.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Rectangle then
+   begin
       VXLToolName := 'Rectangle';
-      SpeedButton6.Down := true; end
-   else if VXLTool_ = VXLTool_FilledRectangle then begin
+      SpeedButton6.Down := true;
+   end
+   else if VXLTool_ = VXLTool_FilledRectangle then
+   begin
       VXLToolName := 'Filled Rectange';
-      SpeedButton8.Down := true; end
-   else if VXLTool_ = VXLTool_Darken then begin
+      SpeedButton8.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Darken then
+   begin
       VXLToolName := 'Darken';
-      SpeedButton7.Down := true; end
-   else if VXLTool_ = VXLTool_Lighten then begin
+      SpeedButton7.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Lighten then
+   begin
       VXLToolName := 'Lighten';
-      SpeedButton12.Down := true; end
-   else if VXLTool_ = VXLTool_SmoothNormal then begin
+      SpeedButton12.Down := true;
+   end
+   else if VXLTool_ = VXLTool_SmoothNormal then
+   begin
       VXLToolName := 'Smooth Normals';
-      SpeedButton9.Down := true; end
-   else if VXLTool_ = VXLTool_Measure then begin
+      SpeedButton9.Down := true;
+   end
+   else if VXLTool_ = VXLTool_Measure then
+   begin
       VXLToolName := 'Measure';
-      SpeedButton14.Down := true; end;
+      SpeedButton14.Down := true;
+   end;
 
    StatusBar1.Panels[4].Text := 'Tool: '+VXLToolName;
 
@@ -2857,6 +2882,10 @@ begin
       begin
          Config.Location3ds2vxl := OpenDialog3ds2vxl.FileName;
          Config.INILocation3ds2vxl := IncludeTrailingPathDelimiter(ExtractFileDir(OpenDialog3ds2vxl.FileName)) + '3DS2VXL FE.ini';
+      end
+      else
+      begin
+         exit;
       end;
    end;
    SEInfo := RunProgram(Config.Location3ds2vxl,'',ExtractFileDir(Config.Location3ds2vxl));
@@ -3020,7 +3049,7 @@ begin
    DebugFile.Add('FrmMain: RemoveRedundantVoxels1Click');
    {$endif}
    // ensure the user wants to do this!
-   if MessageDlg('Remove Redundant Voxels v2.0' +#13#13+
+   if MessageDlg('Remove Redundant Voxels (8-Neighbors)' +#13#13+
         'This process will remove voxels that are hidden from view.' +#13+
         'If you choose to do this, you should first save' + #13 +
         'your model under a different name as a backup.',
@@ -3033,14 +3062,45 @@ begin
    // ok, do it
    no := RemoveRedundantVoxelsFromVXL(Document.ActiveSection^);
    if no = 0 then
-      ShowMessage('Remove Redundant Voxels v2.0' +#13#13+ 'Removed: 0')
+      ShowMessage('Remove Redundant Voxels (8-Neighbors)' +#13#13+ 'Removed: 0')
    else
    begin
-      ShowMessage('Remove Redundant Voxels v2.0' +#13#13+ 'Removed: ' + IntToStr(no));
+      ShowMessage('Remove Redundant Voxels (8-Neighbors)' +#13#13+ 'Removed: ' + IntToStr(no));
       RefreshAll;
       VXLChanged := true;
    end;
 end;
+
+procedure TFrmMain.RemoveRedundantVoxelsB1Click(Sender: TObject);
+var
+  RemoveCount: Cardinal;
+  TimeUsed: Cardinal;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: RemoveRedundantVoxelsB1Click');
+   {$endif}
+   // ensure the user wants to do this!
+   if MessageDlg('Remove Redundant Voxels (4-Neighbors)' +#13#13+
+        'This process will remove voxels that are hidden from view.' +#13+
+        'If you choose to do this, you should first save' + #13 +
+        'your model under a different name as a backup.',
+        mtWarning,mbOKCancel,0) = mrCancel then exit;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+   TimeUsed := GetTickCount;
+   RemoveCount := velRemoveRedundantVoxels(Document.ActiveSection^);
+   TimeUsed := GetTickCount - TimeUsed;
+   ShowMessage('Remove redundant Voxels (4-Neighbors)' +#13#13+ 'Removed: ' + IntToStr(RemoveCount)
+      + #13 + 'Time used: ' + IntToStr(TimeUsed) + 'ms');
+   if RemoveCount > 0 then
+   begin
+      RefreshAll;
+      VxlChanged := True;
+   end;
+end;
+
 
 procedure TFrmMain.ClearEntireSection1Click(Sender: TObject);
 begin
@@ -4082,7 +4142,12 @@ begin
       if VXLBrush = 4 then
          Mouse_Current := MouseSpray
       else
-         Mouse_Current := MouseDraw;
+         Mouse_Current := MouseDraw
+   else if VXLTool = VXLTool_SmoothNormal then
+      if VXLBrush = 4 then
+         Mouse_Current := MouseSpray
+      else
+         Mouse_Current := MouseSmoothNormal;
 
    if not iseditable then
       Mouse_Current := crDefault;
@@ -4320,6 +4385,79 @@ begin
 
    SetupSections;
    VXLChanged := true;
+end;
+
+procedure TFrmMain.ImagewithHeightmap1Click(Sender: TObject);
+var
+   Frm: TFrmHeightmap;
+   Img,Hmap : TBitmap;
+   x,y,z,h,curr: integer;
+   v : tvoxelunpacked;
+begin
+   Frm := TFrmHeightmap.Create(self);
+   Frm.ShowModal;
+   if Frm.OK then
+   begin
+      if FileExists(Frm.EdImage.Text) and FileExists(Frm.EdHeightmap.Text) then
+      begin
+         Img := GetBMPFromImageFile(Frm.EdImage.Text);
+         Hmap := GetBMPFromImageFile(Frm.EdHeightmap.Text);
+         if Assigned(Img) and Assigned(Hmap) then
+         begin
+            if (Img.Height = Hmap.Height) and (Img.Width = Hmap.Width) then
+            begin
+               if (Img.Height > 255) or (Img.Width > 255) then
+               begin
+                  ResizeBitmap(Img,255,255,0);
+                  ResizeBitmap(Hmap,255,255,0);
+               end;
+               // We are creating a new voxel file.
+               IsVXLLoading := true;
+               Application.OnIdle := nil;
+               CheckVXLChanged;
+               VoxelType := vtLand;
+               z := 0;
+               for x := 0 to Img.Width - 1 do
+                  for y := 0 to Img.Height - 1 do
+                  begin
+                     curr := GetBValue(HMap.Canvas.Pixels[x,y]);
+                     if curr > z then
+                     begin
+                        z := curr;
+                     end;
+                  end;
+               if z = 255 then
+                  z := 254;
+               if (NewVoxel(Document,4,Img.Width,Img.Height,z+1))then
+               begin
+                  VoxelOpen := false;
+                  VXLChanged := false;
+                  h := Img.Height - 1;
+                  for x := 0 to Img.Width - 1 do
+                     for y := 0 to Img.Height - 1 do
+                     begin
+                        z := GetBValue(HMap.Canvas.Pixels[x,y]);
+                        if z = 255 then
+                           z := 254;
+                        Document.ActiveSection^.GetVoxel(x,h-y,z,v);
+                        v.Used := true;
+                        v.Colour := Document.Palette^.GetColourFromPalette(Img.Canvas.Pixels[x,y]);
+                        v.Normal := 0;
+                        Document.ActiveSection^.SetVoxel(x,h-y,z,v);
+                     end;
+                  SetIsEditable(true);
+                  VoxelOpen := true;
+                  VXLChanged := true;
+                  DoAfterLoadingThings;
+               end;
+               IsVXLLoading := false;
+            end;
+         end;
+         Img.Free;
+         Hmap.Free;
+      end;
+   end;
+   Frm.Release;
 end;
 
 procedure TFrmMain.Importfromamodelusing3ds2vxl1Click(Sender: TObject);
@@ -4706,27 +4844,6 @@ end;
 procedure TFrmMain.FormDeactivate(Sender: TObject);
 begin
    Application.OnIdle := nil;
-end;
-
-procedure TFrmMain.RemoveRedundantVoxelsB1Click(Sender: TObject);
-var
-  RemoveCount: Cardinal;
-  TimeUsed: Cardinal;
-begin
-  if MessageDlg(
-    'Remove redundant Voxels II' + #13#13 +
-    'Proceed?',
-    mtConfirmation, [mbYes, mbNo], 0
-  ) = mrYes then
-  begin
-    TimeUsed := GetTickCount;
-    RemoveCount := velRemoveRedundantVoxels(Document.ActiveSection^);
-    TimeUsed := GetTickCount - TimeUsed;
-    ShowMessage('Remove redundant Voxels II' +#13#13+ 'Removed: ' + IntToStr(RemoveCount)
-      + #13 + 'Time used: ' + IntToStr(TimeUsed) + 'ms');
-    RefreshAll;
-    VxlChanged := True;
-  end;
 end;
 
 end.

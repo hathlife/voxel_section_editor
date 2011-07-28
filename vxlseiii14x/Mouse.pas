@@ -15,6 +15,7 @@ Const
    MouseMagnify = 1207;
    MouseSpray = 8029;
    MouseMoveC = 1033; // Named MouseMoveC cos of other things named MouseMove
+   MouseSmoothNormal = 1208;
 
 Var
    Mouse_Current : integer = crDefault;
@@ -40,6 +41,7 @@ begin
    temp := temp + LoadMouseCursor(MouseMagnify);
    temp := temp + LoadMouseCursor(MouseSpray);
    temp := temp + LoadMouseCursor(MouseMoveC);
+   temp := temp + LoadMouseCursor(MouseSmoothNormal);
 
    if temp < 0 then
       Result := false;

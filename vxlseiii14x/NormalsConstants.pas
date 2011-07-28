@@ -4,6 +4,10 @@ interface
 
 uses BasicDataTypes;
 
+const
+   RA2_NORMAL_CNT = 244;
+   TS_NORMAL_CNT = 36;
+
 var
    TSNormals_Table : array of TVector3f;
    RA2Normals_Table : array of TVector3f;

@@ -180,7 +180,7 @@ begin
    begin
       f := 0;
       i := 0;
-      glActiveTextureARB(GL_TEXTURE0_ARB);
+      glActiveTexture(GL_TEXTURE0);
       glDisable(GL_TEXTURE_2D);
       glBegin(_FaceType);
          while i < _NumFaces do
@@ -240,7 +240,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glEnable(GL_TEXTURE_2D);
          end;
@@ -253,7 +253,7 @@ begin
             begin
                for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
                begin
-                  glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
+                  glMultiTexCoord2f(GL_TEXTURE0 + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
                end;
                glVertex3f(_Vertices[_Faces[f]].X,_Vertices[_Faces[f]].Y,_Vertices[_Faces[f]].Z);
                inc(v);
@@ -266,7 +266,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glDisable(GL_TEXTURE_2D);
          end;
@@ -287,7 +287,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glEnable(GL_TEXTURE_2D);
          end;
@@ -300,7 +300,7 @@ begin
             begin
                for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
                begin
-                  glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
+                  glMultiTexCoord2f(GL_TEXTURE0 + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
                end;
                glNormal3f(_Normals[_Faces[f]].X,_Normals[_Faces[f]].Y,_Normals[_Faces[f]].Z);
                glVertex3f(_Vertices[_Faces[f]].X,_Vertices[_Faces[f]].Y,_Vertices[_Faces[f]].Z);
@@ -314,7 +314,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glDisable(GL_TEXTURE_2D);
          end;
@@ -335,7 +335,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glEnable(GL_TEXTURE_2D);
          end;
@@ -349,7 +349,7 @@ begin
             begin
                for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
                begin
-                  glMultiTexCoord2fARB(GL_TEXTURE0_ARB + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
+                  glMultiTexCoord2f(GL_TEXTURE0 + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
                end;
                glVertex3f(_Vertices[_Faces[f]].X,_Vertices[_Faces[f]].Y,_Vertices[_Faces[f]].Z);
                inc(v);
@@ -362,7 +362,7 @@ begin
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glDisable(GL_TEXTURE_2D);
          end;

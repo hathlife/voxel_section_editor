@@ -1403,7 +1403,7 @@ begin
    ClearMaterials;
    AddMaterial;
    SetLength(Materials[0].Texture,1);
-   glActiveTextureARB(GL_TEXTURE0_ARB);
+   glActiveTexture(GL_TEXTURE0);
    Bitmap := TexGenerator.GenerateDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,1024,AlphaMap);
    Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
    Materials[0].Texture[0]^.TextureType := C_TTP_DIFFUSE;
@@ -1741,7 +1741,7 @@ var
 begin
    f := 0;
    i := 0;
-   glActiveTextureARB(GL_TEXTURE0_ARB);
+   glActiveTexture(GL_TEXTURE0);
    glDisable(GL_TEXTURE_2D);
    glBegin(FaceType);
       while i < NumFaces do
@@ -1795,7 +1795,7 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTexture(GL_TEXTURE0_ARB + tex);
+         glActiveTexture(GL_TEXTURE0 + tex);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
          glEnable(GL_TEXTURE_2D);
       end;
@@ -1808,7 +1808,7 @@ begin
          begin
             for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
             begin
-               glMultiTexCoord2f(GL_TEXTURE0_ARB + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
+               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
             end;
             glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
             inc(v);
@@ -1821,10 +1821,11 @@ begin
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
-         glActiveTexture(GL_TEXTURE0_ARB + tex);
+         glActiveTexture(GL_TEXTURE0 + tex);
          glDisable(GL_TEXTURE_2D);
       end;
    end;
+   glActiveTexture(GL_TEXTURE0);
 end;
 
 procedure TMesh.RenderWithVertexNormalsAndWithTexture;
@@ -1836,12 +1837,12 @@ begin
    i := 0;
    glColor4f(1,1,1,1);
    Plugin := GetPlugin(C_MPL_BUMPMAPDATA);
-   glEnable(GL_TEXTURE_2D);
    for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
    begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
          glActiveTexture(GL_TEXTURE0 + tex);
+         glEnable(GL_TEXTURE_2D);
          glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
          SetShaderUniform(CurrentPass,tex);
       end;
@@ -1870,9 +1871,10 @@ begin
       if Materials[CurrentPass].Texture[tex] <> nil then
       begin
          glActiveTexture(GL_TEXTURE0 + tex);
+         glDisable(GL_TEXTURE_2D);
       end;
    end;
-   glDisable(GL_TEXTURE_2D);
+   glActiveTexture(GL_TEXTURE0);
 end;
 
 procedure TMesh.RenderWithFaceNormalsAndWithTexture;
@@ -1917,6 +1919,7 @@ begin
          glDisable(GL_TEXTURE_2D);
       end;
    end;
+   glActiveTexture(GL_TEXTURE0);
 end;
 
 procedure TMesh.RenderWithoutNormalsAndWithFaceColours;

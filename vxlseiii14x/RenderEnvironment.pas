@@ -295,7 +295,6 @@ begin
          Actor^.Render(Polycount,VoxelCount);
          Actor := Actor^.Next;
       end;
-
       glColor4f(1,1,1,0);
       glNormal3f(0,0,0);
       // Here we cache the existing scene in a texture.

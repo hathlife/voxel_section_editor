@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 806
+  ClientHeight = 825
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,15 +29,15 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 787
+    Height = 806
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 767
+    ExplicitHeight = 787
     object Splitter1: TSplitter
       Left = 653
       Top = 26
-      Height = 760
+      Height = 779
       Align = alRight
       ExplicitLeft = 640
       ExplicitTop = 360
@@ -47,10 +47,10 @@ object FrmMain: TFrmMain
       Left = 1
       Top = 26
       Width = 152
-      Height = 760
+      Height = 779
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 740
+      ExplicitHeight = 760
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1273,10 +1273,10 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 760
+      Height = 779
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 740
+      ExplicitHeight = 760
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1596,10 +1596,10 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 500
-      Height = 760
+      Height = 779
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 740
+      ExplicitHeight = 760
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1622,7 +1622,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 482
-        Height = 729
+        Height = 748
         Align = alClient
         OnMouseDown = CnvView0MouseDown
         OnMouseMove = CnvView0MouseMove
@@ -4316,7 +4316,7 @@ object FrmMain: TFrmMain
         Left = 483
         Top = 14
         Width = 16
-        Height = 729
+        Height = 748
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4325,17 +4325,17 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 709
+        ExplicitHeight = 729
       end
       object Panel5: TPanel
         Left = 1
-        Top = 743
+        Top = 762
         Width = 498
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 723
+        ExplicitTop = 743
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4538,7 +4538,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 787
+    Top = 806
     Width = 862
     Height = 19
     Panels = <
@@ -4557,7 +4557,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 767
+    ExplicitTop = 787
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -4612,6 +4612,10 @@ object FrmMain: TFrmMain
         object using3ds2vxl1: TMenuItem
           Caption = '3D models with 3ds2vxl...'
           OnClick = using3ds2vxl1Click
+        end
+        object ImagewithHeightmap1: TMenuItem
+          Caption = 'Image with Heightmap...'
+          OnClick = ImagewithHeightmap1Click
         end
       end
       object N20: TMenuItem
@@ -5069,19 +5073,19 @@ object FrmMain: TFrmMain
           ShortCut = 49230
           OnClick = CubedAutoNormals1Click
         end
-        object RemoveRedundantVoxels1: TMenuItem
-          Caption = 'Remove Redundant Voxels'
+        object RemoveRedundantVoxelsB1: TMenuItem
+          Caption = 'Remove Redundant Voxels (4-Neighbors)'
           ShortCut = 16465
+          OnClick = RemoveRedundantVoxelsB1Click
+        end
+        object RemoveRedundantVoxels1: TMenuItem
+          Caption = 'Remove Redundant Voxels (8-Neighbors)'
           OnClick = RemoveRedundantVoxels1Click
         end
         object SmoothNormals1: TMenuItem
           Caption = 'Smooth Normals'
           ShortCut = 49235
           OnClick = SmoothNormals1Click
-        end
-        object RemoveRedundantVoxelsB1: TMenuItem
-          Caption = 'Remove Redundant Voxels (HBD Method)'
-          OnClick = RemoveRedundantVoxelsB1Click
         end
       end
       object Colours2: TMenuItem

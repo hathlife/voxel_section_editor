@@ -1998,7 +1998,6 @@ begin
    Result.PixelFormat := pf32Bit;
    Result.Width := High(_Buffer)+1;
    Result.Height := High(_Buffer)+1;
-   SetLength(_AlphaMap,Result.Width,Result.Width);
    for x := Low(_Buffer) to High(_Buffer) do
    begin
       for y := Low(_Buffer[x]) to High(_Buffer[x]) do
@@ -2012,12 +2011,10 @@ begin
                Normal.Z := 1;
             Normalize(Normal);
             Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
-            _AlphaMap[x,Result.Height - y] := C_TRP_OPAQUE;
          end
          else
          begin
             Result.Canvas.Pixels[x,Result.Height - y] := 0;
-            _AlphaMap[x,Result.Height - y] := C_TRP_INVISIBLE;
          end;
       end;
    end;

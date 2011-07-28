@@ -106,7 +106,11 @@ uses
   BumpMapDataPlugin in 'BumpMapDataPlugin.pas',
   ClassMeshNormalsTool in 'ClassMeshNormalsTool.pas',
   ClassMeshColoursTool in 'ClassMeshColoursTool.pas',
-  ClassMeshProcessingTool in 'ClassMeshProcessingTool.pas';
+  ClassMeshProcessingTool in 'ClassMeshProcessingTool.pas',
+  FormHeightmap in 'FormHeightmap.pas' {FrmHeightMap},
+  ImageIOUtils in 'ImageIOUtils.pas',
+  PCXCtrl in 'PCXCtrl.pas',
+  TARGA in 'TARGA.pas';
 
 {$R *.res}
 

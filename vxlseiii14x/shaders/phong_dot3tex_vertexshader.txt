@@ -3,14 +3,14 @@ attribute vec3 bitangent;
 
 varying vec3 v;
 varying mat3 rotation;
+varying vec2 texCoord;
 
 void main(void)
 {
-   v = vec3(gl_ModelViewMatrix * gl_Vertex);       
+   v = (gl_ModelViewMatrix * gl_Vertex).xyz;       
    rotation = mat3(normalize(gl_NormalMatrix * tangent), normalize(gl_NormalMatrix * bitangent), normalize(gl_NormalMatrix * gl_Normal));
 
-   gl_TexCoord[0] = gl_MultiTexCoord0;
-   gl_TexCoord[1] = gl_MultiTexCoord1;
+   texCoord = gl_MultiTexCoord0.st;
    
    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }

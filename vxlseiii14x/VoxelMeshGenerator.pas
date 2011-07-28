@@ -23,6 +23,8 @@ type
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DIntGrid; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DIntGrid; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
+
+         function IsPointValid(_x,_y,_z,_maxx,_maxy,_maxz: integer): boolean;
       public
          procedure LoadFromVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
          procedure LoadFromExternalVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
@@ -65,40 +67,61 @@ begin
                   _VertexMap[x,y,z] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap[x+1,y,z] = -1 then
+               if IsPointValid(x+1,y,z,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x+1,y,z] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x+1,y,z] = -1 then
+                  begin
+                     _VertexMap[x+1,y,z] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x,y+1,z] = -1 then
+               if IsPointValid(x,y+1,z,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x,y+1,z] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x,y+1,z] = -1 then
+                  begin
+                     _VertexMap[x,y+1,z] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x+1,y+1,z] = -1 then
+               if IsPointValid(x+1,y+1,z,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x+1,y+1,z] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x+1,y+1,z] = -1 then
+                  begin
+                     _VertexMap[x+1,y+1,z] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x,y,z+1] = -1 then
+               if IsPointValid(x,y,z+1,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x,y,z+1] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x,y,z+1] = -1 then
+                  begin
+                     _VertexMap[x,y,z+1] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x+1,y,z+1] = -1 then
+               if IsPointValid(x+1,y,z+1,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x+1,y,z+1] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x+1,y,z+1] = -1 then
+                  begin
+                     _VertexMap[x+1,y,z+1] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x,y+1,z+1] = -1 then
+               if IsPointValid(x,y+1,z+1,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x,y+1,z+1] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x,y+1,z+1] = -1 then
+                  begin
+                     _VertexMap[x,y+1,z+1] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
-               if _VertexMap[x+1,y+1,z+1] = -1 then
+               if IsPointValid(x+1,y+1,z+1,High(_VertexMap),High(_VertexMap[x]),High(_VertexMap[x,y])) then
                begin
-                  _VertexMap[x+1,y+1,z+1] := _NumVertices;
-                  inc(_NumVertices);
+                  if _VertexMap[x+1,y+1,z+1] = -1 then
+                  begin
+                     _VertexMap[x+1,y+1,z+1] := _NumVertices;
+                     inc(_NumVertices);
+                  end;
                end;
             end;
          end;
@@ -1163,5 +1186,9 @@ begin
    VoxelMap.Free;
 end;
 
+function TVoxelMeshGenerator.IsPointValid(_x,_y,_z,_maxx,_maxy,_maxz: integer): boolean;
+begin
+   Result := (_x >= 0) and (_x <= _maxx) and (_y >= 0) and (_y <= _maxy) and (_z >= 0) and (_z <= _maxz);
+end;
 
 end.

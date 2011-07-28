@@ -30,6 +30,9 @@ function RunAProgram (const theProgram, itsParameters, defaultDirectory : string
 function RunProgram (const theProgram, itsParameters, defaultDirectory : string): TShellExecuteInfo;
 function GetParamStr: String;
 
+// Bitmap related
+procedure ResizeBitmap(var Bitmap: TBitmap; Width, Height: Integer; Background: TColor);
+
 
 implementation
 
@@ -253,6 +256,52 @@ begin
       else
          Result := ParamStr(x);
 end;
+
+
+// Bitmap related
+procedure ResizeBitmap(var Bitmap: TBitmap; Width, Height: Integer; Background: TColor);
+var
+  R: TRect;
+  B: TBitmap;
+  X, Y: Integer;
+begin
+   if assigned(Bitmap) then
+   begin
+      B:= TBitmap.Create;
+      try
+         if Bitmap.Width > Bitmap.Height then
+         begin
+            R.Right:= Width;
+            R.Bottom:= ((Width * Bitmap.Height) div Bitmap.Width);
+            X:= 0;
+            Y:= (Height div 2) - (R.Bottom div 2);
+         end
+         else
+         begin
+            R.Right:= ((Height * Bitmap.Width) div Bitmap.Height);
+            R.Bottom:= Height;
+            X:= (Width div 2) - (R.Right div 2);
+            Y:= 0;
+         end;
+         R.Left:= 0;
+         R.Top:= 0;
+         B.PixelFormat:= Bitmap.PixelFormat;
+         B.Width:= Width;
+         B.Height:= Height;
+         B.Canvas.Brush.Color:= Background;
+         B.Canvas.FillRect(B.Canvas.ClipRect);
+         B.Canvas.StretchDraw(R, Bitmap);
+         Bitmap.Width:= Width;
+         Bitmap.Height:= Height;
+         Bitmap.Canvas.Brush.Color:= Background;
+         Bitmap.Canvas.FillRect(Bitmap.Canvas.ClipRect);
+         Bitmap.Canvas.Draw(X, Y, B);
+      finally
+         B.Free;
+      end;
+   end;
+end;
+
 
 
 end.

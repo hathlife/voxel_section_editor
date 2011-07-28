@@ -82,7 +82,7 @@ begin
       begin
          if Texture[tex].TextureType = _Type then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
             Result := Texture[tex]^.DownloadTexture(0);
          end;
       end;
@@ -237,7 +237,7 @@ begin
       begin
          if _UsedTextures.Add(Texture[tex]^.GetID) then
          begin
-            glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            glActiveTexture(GL_TEXTURE0 + tex);
 //            Texture[tex]^.SaveTexture(_BaseDir + Name + '_' + IntToStr(ID) + '_' + IntToStr(mat) + '_' +  IntToStr(tex) + '.' + _Ext);
             Texture[tex]^.SaveTexture(_BaseDir + _Name + '_' + IntToStr(tex) + '.' + _Ext);
             if (_previewTextures) then

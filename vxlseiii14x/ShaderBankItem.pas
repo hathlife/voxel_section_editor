@@ -36,6 +36,7 @@ type
          procedure IncCounter;
          procedure DecCounter;
          // OpenGL
+         procedure glSendAttribute2f(_AttributeID: integer; const _Value: TVector2f);
          procedure glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);
          procedure glSendUniform1i(_UniformID: integer; const _Value: integer);
    end;
@@ -237,7 +238,7 @@ end;
 // Uses
 procedure TShaderBankItem.UseProgram;
 var
-   i,test : integer;
+   i : integer;
    UniformName: Pchar;
 begin
    if IsLinked and (not IsRunning) and (isAuthorized) then
@@ -247,9 +248,11 @@ begin
       while i <= High(Attributes) do
       begin
          glBindAttribLocation(ProgramID,i,PChar(Attributes[i]));
+         AttributeLocation[i] := glGetAttribLocation(ProgramID,PChar(Attributes[i]));
          inc(i);
       end;
-       while i <= High(Uniforms) do
+      i := 0;
+      while i <= High(Uniforms) do
       begin
          UniformName := PChar(Uniforms[i]);
          UniformLocation[i] := glGetUniformLocation(ProgramID,UniformName);
@@ -277,7 +280,7 @@ begin
    SetLength(AttributeLocation,High(Attributes)+1);
    Attributes[High(Attributes)] := copy(_name,1,Length(_name));
 //   AttributeName := StrCat(PChar(Attributes[High(Attributes)]),#0);
-//   AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,AttributeName);
+//   AttributeLocation[High(Attributes)] := glGetAttribLocation(ProgramID,PChar(Attributes[High(Attributes)]));
 end;
 
 procedure TShaderBankItem.AddUniform(const _name: string);
@@ -289,6 +292,11 @@ begin
    Uniforms[High(Uniforms)] := copy(_name,1,Length(_name));
 //   UniformName := StrCat(PChar(Uniforms[High(Uniforms)]),#0);
 //   UniformLocation[High(Uniforms)] := glGetUniformLocation(ProgramID,UniformName);
+end;
+
+procedure TShaderBankItem.glSendAttribute2f(_AttributeID: integer; const _Value: TVector2f);
+begin
+   glVertexAttrib2f(AttributeLocation[_AttributeID], _Value.U, _Value.V);
 end;
 
 procedure TShaderBankItem.glSendAttribute3f(_AttributeID: integer; const _Value: TVector3f);

@@ -56,7 +56,7 @@ begin
       Items[C_SHD_PHONG_DOT3TEX].AddAttribute('tangent');
       Items[C_SHD_PHONG_DOT3TEX].AddAttribute('bitangent');
 
-      // Addd uniforms
+      // Add uniforms
       Items[C_SHD_PHONG_2TEX].AddUniform('colorMap');
       Items[C_SHD_PHONG_2TEX].AddUniform('normalMap');
       Items[C_SHD_PHONG_DOT3TEX].AddUniform('colorMap');

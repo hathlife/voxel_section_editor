@@ -741,7 +741,7 @@ begin
    BorderColor.Z := 0;
    BorderColor.W := 1;
    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, @BorderColor);
-   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
    glGenerateMipMap(GL_TEXTURE_2D);
    glDisable(GL_TEXTURE_2D);
 end;
