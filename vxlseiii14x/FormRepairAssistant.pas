@@ -85,6 +85,7 @@ begin
    Write(StructureFile,FileStructureString);
    CloseFile(StructureFile);
    MMReport.Lines.Add('File structure data acquired. Starting procedure to repair the program.');
+   MMReport.Refresh;
    // Now, let's read it.
    CoInitialize(nil);
    XMLDocument := TXMLDocument.Create(nil);
@@ -118,22 +119,26 @@ begin
          if FileContents.Size > 0 then
          begin
             MMReport.Lines.Add(Filename + ' downloaded.');
+            MMReport.Refresh;
          end
          else
          begin
             MMReport.Lines.Add(Filename + ' failed.');
+            MMReport.Refresh;
          end;
          FileContents.Free;
       end
       else
       begin
          MMReport.Lines.Add(Filename + ' skipped.');
+         MMReport.Refresh;
       end;
       Node := Node.NextSibling;
    until Node = nil;
    XMLDocument.Active := false;
    DeleteFile(StructureFilename);
    MMReport.Lines.Add('Repairing procedure has been finished.');
+   MMReport.Refresh;
    RepairDone := true;
    Close;
 end;

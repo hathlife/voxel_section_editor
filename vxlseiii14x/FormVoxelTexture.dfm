@@ -57,7 +57,7 @@ object FrmVoxelTexture: TFrmVoxelTexture
       Stretch = True
     end
   end
-  object Button1: TButton
+  object BtGetVoxelTexture: TButton
     Left = 272
     Top = 72
     Width = 105
@@ -65,9 +65,9 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Caption = 'Get Voxel Texture'
     TabOrder = 1
     Visible = False
-    OnClick = Button1Click
+    OnClick = BtGetVoxelTextureClick
   end
-  object Button6: TButton
+  object BtApplyTexture: TButton
     Left = 272
     Top = 96
     Width = 105
@@ -75,41 +75,43 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Caption = 'Apply Texture'
     TabOrder = 2
     Visible = False
-    OnClick = Button6Click
+    OnClick = BtApplyTextureClick
   end
-  object Button2: TButton
+  object BtLoadTexture: TButton
     Left = 272
     Top = 120
     Width = 105
     Height = 25
-    Caption = 'Load Texture'
+    Caption = 'Import Texture'
     TabOrder = 3
-    OnClick = Button2Click
+    OnClick = BtLoadTextureClick
   end
-  object Button3: TButton
+  object BtSaveTexture: TButton
     Left = 272
     Top = 144
     Width = 105
     Height = 25
-    Caption = 'Save Texture'
+    Caption = 'Export Texture'
     TabOrder = 4
-    OnClick = Button3Click
+    OnClick = BtSaveTextureClick
   end
-  object Button4: TButton
+  object BtSavePalette: TButton
     Left = 272
     Top = 176
     Width = 105
     Height = 25
     Caption = 'Save Palette'
     TabOrder = 5
-    OnClick = Button4Click
+    OnClick = BtSavePaletteClick
   end
-  object CheckBox1: TCheckBox
+  object CbPaintRemaining: TCheckBox
     Left = 272
     Top = 208
-    Width = 105
+    Width = 218
     Height = 17
-    Caption = 'Apply To Layers'
+    Caption = 'Paint Remaining with Top/Bottom Colors'
+    Checked = True
+    State = cbChecked
     TabOrder = 6
   end
   object Panel2: TPanel
@@ -159,7 +161,7 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 8
-    object Label1: TLabel
+    object LbCurrentOperation: TLabel
       Left = 32
       Top = 4
       Width = 265
@@ -169,16 +171,16 @@ object FrmVoxelTexture: TFrmVoxelTexture
       Caption = 'Done'
       Visible = False
     end
-    object Button8: TButton
+    object BtOK: TButton
       Left = 327
       Top = 11
       Width = 75
       Height = 23
       Caption = 'Ok'
       TabOrder = 0
-      OnClick = Button8Click
+      OnClick = BtOKClick
     end
-    object Button9: TButton
+    object BtCancel: TButton
       Left = 408
       Top = 11
       Width = 75
@@ -186,9 +188,9 @@ object FrmVoxelTexture: TFrmVoxelTexture
       Cancel = True
       Caption = 'Cancel'
       TabOrder = 1
-      OnClick = Button9Click
+      OnClick = BtCancelClick
     end
-    object ProgressBar1: TProgressBar
+    object ProgressBar: TProgressBar
       Left = 32
       Top = 17
       Width = 265
@@ -198,14 +200,15 @@ object FrmVoxelTexture: TFrmVoxelTexture
     end
   end
   object OpenPictureDialog1: TOpenPictureDialog
+    DefaultExt = 'bmp'
     Filter = 'Bitmaps (*.bmp)|*.bmp'
-    Left = 272
-    Top = 176
+    Left = 392
+    Top = 160
   end
   object SavePictureDialog1: TSavePictureDialog
     DefaultExt = 'bmp'
     Filter = 'Bitmaps (*.bmp)|*.bmp'
-    Left = 304
-    Top = 176
+    Left = 424
+    Top = 160
   end
 end
