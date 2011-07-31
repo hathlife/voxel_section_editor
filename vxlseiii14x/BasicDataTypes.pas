@@ -170,7 +170,14 @@ type
    TDistanceArray = array of array of array of TDistanceUnit; //single;
 
    TDistanceFunc = function (_Distance: single): single of object;
-   
+   T2DFrameBuffer = array of array of TVector4f;
+   TWeightBuffer = array of array of real;
+
+   TSeedTreeItem = record
+      Left, Right: integer;
+   end;
+   TSeedTree = array of TSeedTreeItem;
+
 
 implementation
 

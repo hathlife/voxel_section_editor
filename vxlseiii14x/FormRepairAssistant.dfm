@@ -12,6 +12,7 @@ object FrmRepairAssistant: TFrmRepairAssistant
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnShow = FormShow
   DesignSize = (
     437
@@ -45,26 +46,11 @@ object FrmRepairAssistant: TFrmRepairAssistant
     WantReturns = False
     OnChange = MmReportChange
   end
-  object IdHTTP: TIdHTTP
-    AllowCookies = True
-    ProxyParams.BasicAuthentication = False
-    ProxyParams.ProxyPort = 0
-    Request.ContentLength = -1
-    Request.Accept = 'text/html, */*'
-    Request.BasicAuthentication = False
-    Request.UserAgent = 'Mozilla/3.0 (compatible; Indy Library)'
-    HTTPOptions = [hoForceEncodeParams]
-    Top = 40
-  end
-  object IdAntiFreeze1: TIdAntiFreeze
-    Left = 32
-    Top = 40
-  end
   object Timer: TTimer
     Enabled = False
-    Interval = 300
+    Interval = 200
     OnTimer = TimerTimer
-    Left = 64
-    Top = 40
+    Left = 120
+    Top = 8
   end
 end

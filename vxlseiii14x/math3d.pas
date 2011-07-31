@@ -14,15 +14,34 @@ const
 function VectorDistance(const v1, v2 : TVector3f) : Single;
 function DEG2RAD(a : single) : single;
 function RAD2DEG(a : single) : single;
-function Normalize(var v : TVector3f) : single;
-function ScaleVector(v : TVector3f; s : single) : TVector3f;
+function Normalize(var v : TVector2f) : single; overload;
+function Normalize(var v : TVector3f) : single; overload;
+function Normalize(var v : TVector4f) : single; overload;
+function ScaleVector(v : TVector2f; s : single) : TVector2f; overload;
+function ScaleVector(v : TVector3f; s : single) : TVector3f; overload;
+function ScaleVector(v : TVector4f; s : single) : TVector4f; overload;
+function ScaleVector2f(v,s : TVector2f) : TVector2f;
 function ScaleVector3f(v,s : TVector3f) : TVector3f;
-function AddVector(v1, v2 : TVector3f) : TVector3f;
-function SubtractVector(v1, v2 : TVector3f) : TVector3f;
-function DotProduct(v1, v2 : TVector3f) : single;
-function InvertVector(v : TVector3f) : TVector3f;
+function ScaleVector4f(v,s : TVector4f) : TVector4f;
+function AddVector(v1, v2 : TVector2f) : TVector2f; overload;
+function AddVector(v1, v2 : TVector3f) : TVector3f; overload;
+function AddVector(v1, v2 : TVector4f) : TVector4f; overload;
+function SubtractVector(v1, v2 : TVector2f) : TVector2f; overload;
+function SubtractVector(v1, v2 : TVector3f) : TVector3f; overload;
+function SubtractVector(v1, v2 : TVector4f) : TVector4f; overload;
+function DotProduct(v1, v2 : TVector2f) : single; overload;
+function DotProduct(v1, v2 : TVector3f) : single; overload;
+function DotProduct(v1, v2 : TVector4f) : single; overload;
+function InvertVector(v : TVector2f) : TVector2f; overload;
+function InvertVector(v : TVector3f) : TVector3f; overload;
+function InvertVector(v : TVector4f) : TVector4f; overload;
 function planeDistance(point, PlaneNormal : TVector3f; PlaneDistance : single) : single;
-function SetVector(x, y, z : single) : TVector3f;
+function SetVector(const v: TVector2f) : TVector2f; overload;
+function SetVector(const v: TVector3f) : TVector3f; overload;
+function SetVector(const v: TVector4f) : TVector4f; overload;
+function SetVector(u, v : single) : TVector2f; overload;
+function SetVector(x, y, z : single) : TVector3f; overload;
+function SetVector(x, y, z, w : single) : TVector4f; overload;
 function CrossProduct(const V1, V2: TVector3f): TVector3f;
 function ClassifyPoint(point, PlaneNormal : TVector3f; PlaneDistance : single) : single; overload;
 function ClassifyPoint(PlaneNormal : TVector3f; PlaneDistance : single) : single; overload;
@@ -50,11 +69,47 @@ asm
       FSQRT
 end;
 
+function SetVector(const v : TVector2f) : TVector2f;
+begin
+  result.u := v.u;
+  result.v := v.v;
+end;
+
+
+function SetVector(const v : TVector3f) : TVector3f;
+begin
+  result.x := v.x;
+  result.y := v.y;
+  result.z := v.z;
+end;
+
+function SetVector(const v : TVector4f) : TVector4f;
+begin
+  result.x := v.x;
+  result.y := v.y;
+  result.z := v.z;
+  result.w := v.w;
+end;
+
+function SetVector(u, v : single) : TVector2f;
+begin
+  result.u := u;
+  result.v := v;
+end;
+
 function SetVector(x, y, z : single) : TVector3f;
 begin
   result.x := x;
   result.y := y;
   result.z := z;
+end;
+
+function SetVector(x, y, z, w : single) : TVector4f;
+begin
+  result.x := x;
+  result.y := y;
+  result.z := z;
+  result.w := w;
 end;
 
 function DEG2RAD(a : single) : single;
@@ -65,6 +120,19 @@ end;
 function RAD2DEG(a : single) : single;
 begin
   result := a*M_180_PI;
+end;
+
+function Normalize(var v : TVector2f) : single;
+var l : single;
+begin
+   l := sqrt(v.u*v.u+v.v*v.v);
+
+   if (l > 0) then
+   begin
+      v.u := v.u/l;
+      v.v := v.v/l;
+   end;
+   result := l;
 end;
 
 function Normalize(var v : TVector3f) : single;
@@ -81,55 +149,139 @@ begin
    result := l;
 end;
 
+function Normalize(var v : TVector4f) : single;
+var l : single;
+begin
+   l := sqrt(v.x*v.x+v.y*v.y+v.z*v.z+v.w*v.w);
+
+   if (l > 0) then
+   begin
+      v.x := v.x/l;
+      v.y := v.y/l;
+      v.z := v.z/l;
+      v.w := v.w/l;
+   end;
+   result := l;
+end;
+
+function ScaleVector(v : TVector2f; s : single) : TVector2f;
+begin
+   Result.u := v.u * s;
+   Result.v := v.v * s;
+end;
+
 function ScaleVector(v : TVector3f; s : single) : TVector3f;
 begin
-  with result do begin
-    x := v.x * s;
-    y := v.y * s;
-    z := v.z * s;
-  end;
+   Result.x := v.x * s;
+   Result.y := v.y * s;
+   Result.z := v.z * s;
+end;
+
+function ScaleVector(v : TVector4f; s : single) : TVector4f;
+begin
+   Result.x := v.x * s;
+   Result.y := v.y * s;
+   Result.z := v.z * s;
+   Result.w := v.w * s;
+end;
+
+function ScaleVector2f(v,s : TVector2f) : TVector2f;
+begin
+   Result.u := v.u * s.u;
+   Result.v := v.v * s.v;
 end;
 
 function ScaleVector3f(v,s : TVector3f) : TVector3f;
 begin
-   with result do
-   begin
-      x := v.x * s.x;
-      y := v.y * s.y;
-      z := v.z * s.z;
-   end;
+   Result.x := v.x * s.x;
+   Result.y := v.y * s.y;
+   Result.z := v.z * s.z;
+end;
+
+function ScaleVector4f(v,s : TVector4f) : TVector4f;
+begin
+   Result.x := v.x * s.x;
+   Result.y := v.y * s.y;
+   Result.z := v.z * s.z;
+   Result.w := v.w * s.w;
+end;
+
+function AddVector(v1, v2 : TVector2f) : TVector2f;
+begin
+   Result.u := v1.u + v2.u;
+   Result.v := v1.v + v2.v;
 end;
 
 function AddVector(v1, v2 : TVector3f) : TVector3f;
 begin
-  with result do begin
-    x := v1.x + v2.x;
-    y := v1.y + v2.y;
-    z := v1.z + v2.z;
-  end;
+   Result.x := v1.x + v2.x;
+   Result.y := v1.y + v2.y;
+   Result.z := v1.z + v2.z;
+end;
+
+function AddVector(v1, v2 : TVector4f) : TVector4f;
+begin
+   Result.x := v1.x + v2.x;
+   Result.y := v1.y + v2.y;
+   Result.z := v1.z + v2.z;
+   Result.w := v1.w + v2.w;
+end;
+
+function SubtractVector(v1, v2 : TVector2f) : TVector2f;
+begin
+   Result.u := v1.u - v2.u;
+   Result.v := v1.v - v2.v;
 end;
 
 function SubtractVector(v1, v2 : TVector3f) : TVector3f;
 begin
-  with result do begin
-    x := v1.x - v2.x;
-    y := v1.y - v2.y;
-    z := v1.z - v2.z;
-  end;
+   Result.x := v1.x - v2.x;
+   Result.y := v1.y - v2.y;
+   Result.z := v1.z - v2.z;
+end;
+
+function SubtractVector(v1, v2 : TVector4f) : TVector4f;
+begin
+   Result.x := v1.x - v2.x;
+   Result.y := v1.y - v2.y;
+   Result.z := v1.z - v2.z;
+   Result.w := v1.w - v2.w;
+end;
+
+function DotProduct(v1, v2 : TVector2f) : single;
+begin
+   Result := v1.U*v2.U + v1.V*v2.V
 end;
 
 function DotProduct(v1, v2 : TVector3f) : single;
 begin
-  Result := v1.X*v2.X + v1.y*v2.y + v1.z*v2.z;
+   Result := v1.X*v2.X + v1.y*v2.y + v1.z*v2.z;
+end;
+
+function DotProduct(v1, v2 : TVector4f) : single;
+begin
+   Result := v1.X*v2.X + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w;
+end;
+
+function InvertVector(v : TVector2f) : TVector2f;
+begin
+   Result.u := -v.u;
+   Result.v := -v.v;
 end;
 
 function InvertVector(v : TVector3f) : TVector3f;
 begin
-  with result do begin
-    x := -v.x;
-    y := -v.y;
-    z := -v.z;
-  end;
+   Result.x := -v.x;
+   Result.y := -v.y;
+   Result.z := -v.z;
+end;
+
+function InvertVector(v : TVector4f) : TVector4f;
+begin
+   Result.x := -v.x;
+   Result.y := -v.y;
+   Result.z := -v.z;
+   Result.w := -v.w;
 end;
 
 function CrossProduct(const V1, V2: TVector3f): TVector3f;

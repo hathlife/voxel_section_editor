@@ -1061,8 +1061,6 @@ begin
 end;
 
 procedure TFrm3DModelizer.ModelFXGaussianSmoothClick(Sender: TObject);
-var
-   i : integer;
 begin
    Actor.GaussianSmoothModel;
 end;

@@ -136,7 +136,6 @@ end;
 procedure TShaderBank.EnableShaders(_value: boolean);
 var
    i : integer;
-   value: boolean;
 begin
    ActivateShaders := _value and ShaderSupport;
    for i := Low(Items) to High(Items) do

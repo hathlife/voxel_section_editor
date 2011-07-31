@@ -416,9 +416,10 @@ end;
 procedure TMeshOptimizationTool.DetectUselessVertexesIgnoringColours(var _Vertices, _Normals, _FaceNormals : TAVector3f; const _Textures: TAVector2f; var _VertexTransformation: aint32);
 var
    v, Value,BorderNeighborCount : integer;
-   Angle,MaxAngle,Size,x,y,z : single;
+//   Angle,MaxAngle,Size,x,y,z : single;
+   Angle,Size : single;
    Direction: TVector2f;
-   Baricentre : TVector3f;
+//   Baricentre : TVector3f;
 begin
    for v := Low(_Vertices) to High(_Vertices) do
    begin
@@ -574,8 +575,8 @@ end;
 procedure TMeshOptimizationTool.MergeVertexesWithTextures(var _Vertices, _Normals,_FaceNormals: TAVector3f; var _TexCoords : TAVector2f; var _VertexTransformation: aint32; const _Faces: auint32; _VerticesPerFace: integer);
 var
    List : CIntegerList;
-   v, Value,HitCounter,Vertex : integer;
-   Angle, MaxAngle, Size : single;
+   v, Value,HitCounter : integer;
+   Angle, MaxAngle : single;
    Position,Normal,EstimatedPosition,EstimatedNormal: TVector3f;
    TexCoordinate: TVector2f;
    VerticesBackup,NormalsBackup: TAVector3f;

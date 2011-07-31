@@ -861,10 +861,9 @@ end;
 procedure TVoxelMeshGenerator.BuildModelFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
 var
    NumVertices : longword;
-   HitCounter : integer;
    VertexMap : T3DIntGrid;
    FaceMap : T4DIntGrid;
-   x, y, z, i : longword;
+   x, y, z : longword;
 begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
@@ -926,11 +925,10 @@ end;
 procedure TVoxelMeshGenerator.BuildModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
 var
    NumVertices : longword;
-   HitCounter : integer;
    VertexMap : T3DIntGrid;
    FaceMap : T4DIntGrid;
    VertexTransformation: aint32;
-   x, y, z, i : longword;
+   x, y, z : longword;
 begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
@@ -998,11 +996,10 @@ end;
 procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithExternalData(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
 var
    NumVertices : longword;
-   HitCounter : integer;
    VertexMap : T3DIntGrid;
    FaceMap : T4DIntGrid;
    VertexTransformation: aint32;
-   x, y, z, i : longword;
+   x, y, z : longword;
 begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
@@ -1070,11 +1067,10 @@ end;
 procedure TVoxelMeshGenerator.BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer; var _VoxelMap: TVoxelMap);
 var
    NumVertices : longword;
-   HitCounter : integer;
    VertexMap : T3DIntGrid;
    FaceMap : T4DIntGrid;
    VertexTransformation: aint32;
-   x, y, z, i : longword;
+   x, y, z : longword;
 begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.

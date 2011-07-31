@@ -8,7 +8,7 @@ interface
 
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
-   ClassIntegerSet, ClassStopWatch;
+   ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -499,6 +499,7 @@ var
    i : integer;
    Seeds: TSeedSet;
    VertsSeed : TInt32Map;
+   TexExtractor : CTextureAtlasExtractor;
    TexGenerator: CTextureGenerator;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
@@ -518,16 +519,17 @@ begin
    // First, we'll build the texture atlas.
    SetLength(VertsSeed,High(Mesh)+1);
    SetLength(Seeds,0);
-   TexGenerator := CTextureGenerator.Create(_Angle);
+   TexGenerator := CTextureGenerator.Create;
+   TexExtractor := CTextureAtlasExtractor.Create(_Angle);
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],TexGenerator);
+      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],TexExtractor);
    end;
-   TexGenerator.MergeSeeds(Seeds);
+   TexExtractor.MergeSeeds(Seeds);
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexGenerator);
+      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexExtractor);
    end;
    // Now we build the diffuse texture.
    GenerateDiffuseTexture(_Size,0,0);
@@ -537,6 +539,7 @@ begin
       SetLength(VertsSeed[i],0);
    end;
    SetLength(VertsSeed,0);
+   TexExtractor.Free;
    TexGenerator.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;

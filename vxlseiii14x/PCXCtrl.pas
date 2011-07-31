@@ -74,7 +74,7 @@ type
       function GetImageSize: longint;
    public
       constructor Create;
-      destructor Destroy;
+      destructor Destroy; override;
       function DecodeStream(AStream: TStream; AHeader: TPCXHeader;
          AImage: TMemoryStream): integer; virtual; abstract;
    end;

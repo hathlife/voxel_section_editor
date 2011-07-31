@@ -1076,7 +1076,6 @@ var
    end;
 var
    i, BodyStart, BodyEnd: Integer;
-   temp : byte;
 begin
    if not Loaded then Exit; // cannot save an empty voxel?
    //-- when we save an empty voxel - this voxel will be unsupported - we must change this [Kamil ^aka Plasmadroid]

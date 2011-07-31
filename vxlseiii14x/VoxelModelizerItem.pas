@@ -1,5 +1,17 @@
 unit VoxelModelizerItem;
 
+// Warning: DEPRECATED!
+
+// Voxel Modelizer Item was an experience to create a method based
+// on marching cubes to transform voxel based data into polygonal models.
+
+// It has failed and it is deprecated. VXLSE does not use it.
+// The code is here just in case somebody get any idea from it... or not.
+
+// It was insane and ate far too much RAM while the current method does a
+// much better job using a ridiculous amount of RAM.
+
+
 interface
 
 uses BasicFunctions, BasicDataTypes, VoxelMap, Normals, Class2DPointQueue,

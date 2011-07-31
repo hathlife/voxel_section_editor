@@ -64,8 +64,7 @@ end;
 // Add
 procedure CIntegerSet.AddBlindly (_Value : integer);
 var
-   NewPosition,Position : PIntegerItem;
-   Found : boolean;
+   NewPosition : PIntegerItem;
 begin
    // Now, we add the value.
    New(NewPosition);
@@ -84,9 +83,6 @@ begin
 end;
 
 function CIntegerSet.Add (_Value : integer): boolean;
-var
-   NewPosition,Position : PIntegerItem;
-   Found : boolean;
 begin
    // First, we check it if we should add this value or not.
    if not IsValueInList(_Value) then

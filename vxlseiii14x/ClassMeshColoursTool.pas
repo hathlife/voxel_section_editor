@@ -31,7 +31,6 @@ end;
 procedure TMeshColoursTool.ApplyFaceColourSmooth(var _Colours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
 var
    OriginalColours,VertColours : TAVector4f;
-   i : integer;
 begin
    SetLength(OriginalColours,High(_Colours)+1);
    SetLength(VertColours,High(_Vertices)+1);
@@ -47,7 +46,6 @@ end;
 procedure TMeshColoursTool.ApplyVertexColourSmooth(var _Colours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _NumFaces,_VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
 var
    OriginalColours,FaceColours : TAVector4f;
-   i : integer;
 begin
    SetLength(OriginalColours,High(_Colours)+1);
    SetLength(FaceColours,_NumFaces);

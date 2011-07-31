@@ -9,7 +9,8 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       TextureBankItem, ClassTextureGenerator, ClassIntegerSet,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
-      ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool;
+      ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool,
+      ClassTextureAtlasExtractor;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -151,8 +152,8 @@ type
 
          // Texture related.
          procedure GenerateDiffuseTexture;
-         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
-         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
@@ -1381,6 +1382,7 @@ end;
 // -- DEPRECATED (still works, but avoid using it). Check LOD.pas instead.
 procedure TMesh.GenerateDiffuseTexture;
 var
+   AtlasExtractor: CTextureAtlasExtractor;
    TexGenerator: CTextureGenerator;
    Bitmap : TBitmap;
    AlphaMap : TByteMap;
@@ -1393,9 +1395,10 @@ begin
    StopWatch := TStopWatch.Create(true);
    {$endif}
    RebuildFaceNormals;
+   AtlasExtractor := CTextureAtlasExtractor.Create;
    TexGenerator := CTextureGenerator.Create;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   TexCoords := TexGenerator.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,NeighborhoodPlugin,VerticesPerFace);
+   TexCoords := AtlasExtractor.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,NeighborhoodPlugin,VerticesPerFace);
    if NeighborhoodPlugin <> nil then
    begin
       TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
@@ -1415,6 +1418,7 @@ begin
       Materials[0].Shader := nil;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
    SetLength(FaceNormals,0);
+   AtlasExtractor.Free;
    TexGenerator.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -1424,13 +1428,13 @@ begin
 end;
 
 // This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
 var
    NeighborhoodPlugin: PMeshPluginBase;
 begin
    RebuildFaceNormals;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   TexCoords := _TexGenerator.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
    if NeighborhoodPlugin <> nil then
    begin
       TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
@@ -1439,9 +1443,9 @@ begin
 end;
 
 // This one really acquires the final texture coordinates values.
-procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexGenerator: CTextureGenerator);
+procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
 begin
-   _TexGenerator.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
+   _TexExtractor.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
 end;
 
 procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
@@ -1458,7 +1462,6 @@ end;
 procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
 var
    DiffuseBitmap: TBitmap;
-   Mat: integer;
 begin
    DiffuseBitmap := Materials[0].GetTexture(C_TTP_DIFFUSE);
    _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseBitmap);
@@ -1469,8 +1472,6 @@ begin
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
-var
-   i : integer;
 begin
    while High(Materials) < _MaterialID do
    begin
@@ -1486,7 +1487,7 @@ end;
 
 procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
 var
-   mat, tex: integer;
+   mat: integer;
 begin
    for mat := Low(Materials) to High(Materials) do
    begin
@@ -2280,7 +2281,6 @@ end;
 
 procedure TMesh.ClearPlugins;
 var
-   Plugin,DisposedPlugin : PMeshPluginBase;
    i : integer;
 begin
    for i := Low(Plugins) to High(Plugins) do
@@ -2432,7 +2432,7 @@ var
    OldFaceNormals: TAVector3f;
    OldColours: TAVector4f;
    OldNumFaces : integer;
-   i,j,k : integer;
+   i,j : integer;
    NeighborhoodPlugin: PMeshPluginBase;
 begin
    if VerticesPerFace <> 3 then

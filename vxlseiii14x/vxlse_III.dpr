@@ -110,7 +110,11 @@ uses
   FormHeightmap in 'FormHeightmap.pas' {FrmHeightMap},
   ImageIOUtils in 'ImageIOUtils.pas',
   PCXCtrl in 'PCXCtrl.pas',
-  TARGA in 'TARGA.pas';
+  TARGA in 'TARGA.pas',
+  ClassTriangleFiller in 'ClassTriangleFiller.pas',
+  Internet in 'Internet.pas',
+  AutoUpdater in 'AutoUpdater.pas',
+  ClassTextureAtlasExtractor in 'ClassTextureAtlasExtractor.pas';
 
 {$R *.res}
 

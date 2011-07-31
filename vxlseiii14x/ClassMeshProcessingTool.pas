@@ -87,7 +87,6 @@ var
    HitCounter: single;
    OriginalVertexes: TAVector3f;
    v,v1 : integer;
-   Distance: single;
 begin
    SetLength(OriginalVertexes,High(_Vertices)+1);
    BackupVector3f(_Vertices,OriginalVertexes);

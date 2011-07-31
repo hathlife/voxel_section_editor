@@ -309,9 +309,6 @@ end;
 Function GetVXLPaletteColor(Color : integer) : TColor;
 Var
    T : TVector3f;
-   NormalNum : Integer;
-   NormalDiv : single;
-   N : integer;
 begin
    if Color < 0 then
    begin
@@ -2991,7 +2988,6 @@ begin
    ViewMode := ModeEmphasiseDepth;
 
    LoadMouseCursors; //if the files are missing, it will download them or close the program.
-
    if TestBuild then
       messagebox(0,'Voxel Section Editor III' + #13#13 + 'Version: TB '+testbuildversion+ #13#13#13 + 'THIS IS NOT TO BE DISTRIBUTED','Test Build Message',0);
 end.

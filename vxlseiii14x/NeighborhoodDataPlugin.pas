@@ -88,7 +88,6 @@ implementation
    procedure TNeighborhoodDataPlugin.UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
    var
       vf,vq,incf,incq: integer;
-      V1,V2: TVector3f;
       Tool: TMeshNormalsTool;
    begin
       // Build QuadFaces from _Faces.
