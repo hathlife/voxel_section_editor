@@ -194,17 +194,17 @@ begin
       Normal := SetVector(0,0,0);
       for i := 0 to 7 do
       begin
-         P1x := X + FaceSequence[i,2];
-         P1y := Y + FaceSequence[i,3];
-         P2x := X + FaceSequence[i,0];
-         P2y := Y + FaceSequence[i,1];
+         P1x := X + FaceSequence[i,0];
+         P1y := Y + FaceSequence[i,1];
+         P2x := X + FaceSequence[i,2];
+         P2y := Y + FaceSequence[i,3];
 
          if (P1x >= 0) and (P1y >= 0) and (P1x < _Size) and (P1y < _Size) and (P2x >= 0) and (P2y >= 0) and (P2x < _Size) and (P2y < _Size) then
          begin
             CurrentNormal := new(PVector3f);
 
-            V1 := SetVector(FaceSequence[i,2], FaceSequence[i,3], _HeightMap[P1x,P1y]);
-            V2 := SetVector(FaceSequence[i,0], FaceSequence[i,1], _HeightMap[P2x,P2y]);
+            V1 := SetVector(FaceSequence[i,0], FaceSequence[i,1], _HeightMap[X,Y] - _HeightMap[P1x,P1y]);
+            V2 := SetVector(FaceSequence[i,2], FaceSequence[i,3], _HeightMap[X,Y] - _HeightMap[P2x,P2y]);
             CurrentNormal^ := CrossProduct(V1,V2);
             Normalize(CurrentNormal^);
             if DifferentNormalsList.Add(CurrentNormal) then
