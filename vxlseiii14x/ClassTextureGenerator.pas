@@ -23,6 +23,7 @@ type
          function GenerateDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer; var _AlphaMap: TByteMap): TBitmap;
          function GenerateNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
          function GenerateNormalWithHeightMapTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _VertsNormals: TAVector3f; const _TextCoords: TAVector2f; _VerticesPerFace, _Size: integer): TBitmap;
+         function GenerateHeightMap(const _DiffuseMap: TBitmap): TBitmap;
          // Generate Textures step by step
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer); overload;
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; _Size: integer); overload;
@@ -258,7 +259,7 @@ begin
          Normal.X := _Buffer[x,y].X;
          Normal.Y := _Buffer[x,y].Y;
          Normal.Z := _Buffer[x,y].Z;
-         if abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0 then
+         if (abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0) then
             Normal.Z := 1;
          Normalize(Normal);
          Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
@@ -366,6 +367,31 @@ begin
    Filler.Free;
 end;
 
+function CTextureGenerator.GenerateHeightMap(const _DiffuseMap: TBitmap): TBitmap;
+var
+   x,y: integer;
+   r,g,b: single;
+   h : byte;
+begin
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32Bit;
+   Result.Transparent := false;
+   Result.Width := _DiffuseMap.Width;
+   Result.Height := _DiffuseMap.Height;
+   for x := 0 to (Result.Width - 1) do
+   begin
+      for y := 0 to (Result.Height - 1) do
+      begin
+         r := GetRValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         // Convert to YIQ
+         h := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         Result.Canvas.Pixels[x,y] := RGB(h,h,h);
+      end;
+   end;
+end;
+
 procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
 var
    i,LastFace : cardinal;
@@ -399,14 +425,12 @@ var
    HeightMap,PixelMap : TByteMap;
    x,y,Size,Face : integer;
    r,g,b: real;
-   VisitedMap : T2DBooleanMap;
    Filler: CTriangleFiller;
 begin
    // Build height map and visited map
    Size := High(_Buffer)+1;
    Filler := CTriangleFiller.Create;
    SetLength(HeightMap,Size,Size);
-   SetLength(VisitedMap,Size,Size);
    for x := Low(HeightMap) to High(HeightMap) do
    begin
       for y := Low(HeightMap[x]) to High(HeightMap[x]) do
@@ -416,7 +440,6 @@ begin
          b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          // Convert to YIQ
          HeightMap[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
-         VisitedMap[x,y] := false;
       end;
    end;
    // Now, we'll check each face.
@@ -424,7 +447,7 @@ begin
    while Face < High(_Faces) do
    begin
       // Paint the face here.
-      Filler.PaintFlatTriangleFromHeightMap(_Buffer,HeightMap,VisitedMap,_TexCoords[_Faces[Face]],_TexCoords[_Faces[Face+1]],_TexCoords[_Faces[Face+2]]);
+      Filler.PaintFlatTriangleFromHeightMap(_Buffer,HeightMap,_TexCoords[_Faces[Face]],_TexCoords[_Faces[Face+1]],_TexCoords[_Faces[Face+2]]);
 
       // Go to next face.
       inc(Face,_VerticesPerFace);

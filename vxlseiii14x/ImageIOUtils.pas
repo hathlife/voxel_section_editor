@@ -2,35 +2,37 @@ unit ImageIOUtils;
 
 interface
 
-uses Graphics, Jpeg, PCXCtrl, SysUtils, PNGImage, TARGA, Dialogs;
+uses Graphics, Jpeg, PCXCtrl, SysUtils, PNGImage, TARGA, TextureBankItem, Dialogs;
 
-function GetBMPFromImageFile(filename: string): TBitmap; overload;
-function GetBMPFromJPGImageFile(filename: string): TBitmap;
-function GetBMPFromPCXImageFile(filename: string): TBitmap;
-function GetBMPFromPNGImageFile(filename: string): TBitmap;
-function GetBMPFromTGAImageFile(filename: string): TBitmap;
+function GetBMPFromImageFile(_filename: string): TBitmap; overload;
+function GetBMPFromJPGImageFile(_filename: string): TBitmap;
+function GetBMPFromPCXImageFile(_filename: string): TBitmap;
+function GetBMPFromPNGImageFile(_filename: string): TBitmap;
+function GetBMPFromTGAImageFile(_filename: string): TBitmap;
+function GetBMPFromDDSImageFile(_filename: string): TBitmap;
 procedure SaveImage(const _FileName: string; const _Bitmap:TBitmap);
 procedure SaveBMPAsJPGImageFile(const _FileName: string; const _Bitmap:TBitmap);
 procedure SaveBMPAsPCXImageFile(const _FileName: string; const _Bitmap:TBitmap);
 procedure SaveBMPAsPNGImageFile(const _FileName: string; const _Bitmap:TBitmap);
 procedure SaveBMPAsTGAImageFile(const _FileName: string; const _Bitmap:TBitmap);
+procedure SaveBMPAsDDSImageFile(const _FileName: string; const _Bitmap:TBitmap);
 
 implementation
 
-function GetBMPFromTGAImageFile(filename: string): TBitmap;
+function GetBMPFromTGAImageFile(_filename: string): TBitmap;
 var
    Bitmap: TBitmap;
 begin
    Bitmap := TBitmap.Create;
    Result := TBitmap.Create;
 
-   LoadFromFileX(Filename, Bitmap);
+   LoadFromFileX(_Filename, Bitmap);
 
    Result.Assign(Bitmap);
    Bitmap.Free;
 end;
 
-function GetBMPFromPNGImageFile(filename: string): TBitmap;
+function GetBMPFromPNGImageFile(_filename: string): TBitmap;
 var
    PNGImage: TPNGObject;
    Bitmap:   TBitmap;
@@ -38,14 +40,14 @@ begin
    Bitmap   := TBitmap.Create;
    PNGImage := TPNGObject.Create;
 
-   PNGImage.LoadFromFile(Filename);
+   PNGImage.LoadFromFile(_Filename);
    Bitmap.Assign(PNGImage);
 
    PNGImage.Free;
    Result := Bitmap;
 end;
 
-function GetBMPFromJPGImageFile(filename: string): TBitmap;
+function GetBMPFromJPGImageFile(_filename: string): TBitmap;
 var
    JPEGImage: TJPEGImage;
    Bitmap:    TBitmap;
@@ -53,14 +55,14 @@ begin
    Bitmap    := TBitmap.Create;
    JPEGImage := TJPEGImage.Create;
 
-   JPEGImage.LoadFromFile(Filename);
+   JPEGImage.LoadFromFile(_Filename);
    Bitmap.Assign(JPEGImage);
 
    JPEGImage.Free;
    Result := Bitmap;
 end;
 
-function GetBMPFromPCXImageFile(filename: string): TBitmap;
+function GetBMPFromPCXImageFile(_filename: string): TBitmap;
 var
    PCXBitmap: TPCXBitmap;
    Bitmap:    TBitmap;
@@ -70,7 +72,7 @@ begin
 
    try
       try
-         PCXBitmap.LoadFromFile(Filename);
+         PCXBitmap.LoadFromFile(_Filename);
          Bitmap.Assign(TBitmap(PCXBitmap));
       except
          ShowMessage(
@@ -82,30 +84,49 @@ begin
    Result := Bitmap;
 end;
 
-function GetBMPFromImageFile(filename: string): TBitmap; overload;
+function GetBMPFromDDSImageFile(_filename: string): TBitmap;
+var
+   Texture: TTextureBankItem;
+begin
+   Texture := TTextureBankItem.Create(_Filename);
+   Result := Texture.DownloadTexture(0);
+   Texture.Free;
+end;
+
+
+function GetBMPFromImageFile(_filename: string): TBitmap; overload;
 var
    Bmp: TBitmap;
    Ext: string;
 begin
    Bmp := TBitmap.Create;
 
-   Ext := ansilowercase(extractfileext(filename));
+   Ext := ansilowercase(extractfileext(_filename));
 
    if Ext = '.bmp' then
-      Bmp.LoadFromFile(Filename);
-
-   if (Ext = '.jpg') or (Ext = '.jpeg') then
-      bmp := GetBMPFromJPGImageFile(Filename);
-
-   if (Ext = '.pcx') then
-      bmp := GetBMPFromPCXImageFile(Filename);
-
-   if (Ext = '.png') then
-      bmp := GetBMPFromPNGImageFile(Filename);
-
-   if (Ext = '.tga') then
-      bmp := GetBMPFromTGAImageFile(Filename);
-
+   begin
+      Bmp.LoadFromFile(_Filename);
+   end
+   else if (Ext = '.jpg') or (Ext = '.jpeg') then
+   begin
+      bmp := GetBMPFromJPGImageFile(_Filename);
+   end
+   else if (Ext = '.pcx') then
+   begin
+      bmp := GetBMPFromPCXImageFile(_Filename);
+   end
+   else if (Ext = '.png') then
+   begin
+      bmp := GetBMPFromPNGImageFile(_Filename);
+   end
+   else if (Ext = '.tga') then
+   begin
+      bmp := GetBMPFromTGAImageFile(_Filename);
+   end
+   else if (Ext = '.dds') then
+   begin
+      bmp := GetBMPFromDDSImageFile(_Filename);
+   end;
    Result := bmp;
 end;
 
@@ -133,6 +154,10 @@ begin
    else if (Ext = '.tga') then
    begin
       SaveBMPAsTGAImageFile(_FileName,_Bitmap);
+   end
+   else if (Ext = '.dds') then
+   begin
+      SaveBMPAsDDSImageFile(_FileName,_Bitmap);
    end;
 end;
 
@@ -169,6 +194,15 @@ end;
 procedure SaveBMPAsTGAImageFile(const _FileName: string; const _Bitmap:TBitmap);
 begin
    SaveToFileX(_Filename,_Bitmap,2);
+end;
+
+procedure SaveBMPAsDDSImageFile(const _FileName: string; const _Bitmap:TBitmap);
+var
+   Texture: TTextureBankItem;
+begin
+   Texture := TTextureBankItem.Create(_Bitmap);
+   Texture.SaveTexture(_Filename);
+   Texture.Free;
 end;
 
 

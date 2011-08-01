@@ -36,7 +36,6 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 757
   end
   object Panel1: TPanel
     Left = 0
@@ -706,6 +705,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object TextureFSExport: TMenuItem
         Caption = 'Export All Textures'
         OnClick = TextureFSExportClick
+      end
+      object TextureFSExportHeightMap: TMenuItem
+        Caption = 'Export HeightMap'
+        OnClick = TextureFSExportHeightMapClick
       end
       object N6: TMenuItem
         Caption = '-'

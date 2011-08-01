@@ -90,6 +90,7 @@ type
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single; _Size: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
+      procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
       procedure GenerateBumpMapTexture;
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
@@ -527,6 +528,11 @@ end;
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
 begin
    LOD[CurrentLOD].ExportTextures(_BaseDir,_Ext,_previewTextures);
+end;
+
+procedure TModel.ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
+begin
+   LOD[CurrentLOD].ExportHeightMap(_BaseDir,_Ext,_previewTextures);
 end;
 
 procedure TModel.GenerateNormalMapTexture;

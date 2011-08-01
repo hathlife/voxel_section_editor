@@ -27,7 +27,7 @@ unit DDS;
 
 interface
 
-uses Classes, dglOpenGL, Windows, SysUtils;
+uses Classes, dglOpenGL, Windows, Graphics, SysUtils;
 
 const
 //  little-endian, of course
@@ -164,6 +164,8 @@ var
 
 
 implementation
+
+uses TextureBankItem;
 
 destructor TDDSImage.Destroy;
 begin

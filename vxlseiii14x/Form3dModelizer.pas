@@ -158,6 +158,8 @@ type
     TextureFX3MipMaps: TMenuItem;
     TextureFX2MipMaps: TMenuItem;
     TextureFX1MipMaps: TMenuItem;
+    TextureFSExportHeightMap: TMenuItem;
+    procedure TextureFSExportHeightMapClick(Sender: TObject);
     procedure TextureFX1MipMapsClick(Sender: TObject);
     procedure TextureFX2MipMapsClick(Sender: TObject);
     procedure TextureFX3MipMapsClick(Sender: TObject);
@@ -435,6 +437,11 @@ end;
 procedure TFrm3DModelizer.Exit1Click(Sender: TObject);
 begin
    Close;
+end;
+
+procedure TFrm3DModelizer.TextureFSExportHeightMapClick(Sender: TObject);
+begin
+   Actor.ExportHeightmap(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
 end;
 
 procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
@@ -1613,6 +1620,7 @@ begin
          TextureFXDiffuse.Enabled := false;
          TextureFXDiffuseCustom.Enabled := false;
          TextureFSExport.Enabled := false;
+         TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
          TextureFXNumMipMaps.Enabled := false;
@@ -1629,6 +1637,7 @@ begin
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
          TextureFSExport.Enabled := false;
+         TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
          TextureFXNumMipMaps.Enabled := false;
@@ -1645,6 +1654,7 @@ begin
          TextureFXDiffuse.Enabled := false;
          TextureFXDiffuseCustom.Enabled := false;
          TextureFSExport.Enabled := true;
+         TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
          TextureFXNumMipMaps.Enabled := true;
@@ -1661,6 +1671,7 @@ begin
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
          TextureFSExport.Enabled := true;
+         TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
          TextureFXNumMipMaps.Enabled := true;

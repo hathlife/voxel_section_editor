@@ -8,7 +8,7 @@ interface
 
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
-   ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor;
+   ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor, ImageIOUtils;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -77,6 +77,7 @@ type
       procedure GenerateBumpMapTexture; overload;
       procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
+      procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -505,14 +506,6 @@ var
    StopWatch : TStopWatch;
    {$endif}
 begin
-// Here's the old code
-{
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].GenerateDiffuseTexture;
-   end;
-}
-// Now, the new code.
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
@@ -679,7 +672,6 @@ begin
    TexGenerator.Free;
 end;
 
-
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
 var
    i : integer;
@@ -692,6 +684,25 @@ begin
    end;
    UsedTextures.Free;
 end;
+
+procedure TLOD.ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
+var
+   DiffuseBitmap,HeightmapBitmap: TBitmap;
+   TexGenerator: CTextureGenerator;
+begin
+   DiffuseBitmap := Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE);
+   TexGenerator := CTextureGenerator.Create;
+   HeightmapBitmap := TexGenerator.GenerateHeightMap(DiffuseBitmap);
+   SaveImage(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,HeightMapBitmap);
+   if (_previewTextures) then
+   begin
+      RunAProgram(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,'','');
+   end;
+   TexGenerator.Free;
+   DiffuseBitmap.Free;
+   HeightmapBitmap.Free;
+end;
+
 
 procedure TLOD.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 var

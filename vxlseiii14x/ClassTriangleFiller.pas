@@ -21,27 +21,27 @@ type
          // Paint bicubic pixel
          procedure PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector4f); overload;
          procedure PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector3f); overload;
-         procedure PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X, _Y : single; _Size: integer);
+         procedure PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer);
          // Paint line
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector3f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
-         procedure PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X1, _X2, _Y : single; _Size: integer);
+         procedure PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X1, _X2, _Y : single; _Size: integer);
          // Triangle Utils
          procedure GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector3f; var _dx, _dr, _dg, _db: single); overload;
          procedure GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single); overload;
          procedure GetGradient(const _P2, _P1: TVector2f; var dx: single); overload;
          procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector3f; const _FinalPos, _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe: real); overload;
          procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos, _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real); overload;
-         procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; var _S, _E: TVector2f; const _FinalPos, _dxs, _dxe: single; _Size: integer); overload;
+         procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _S, _E: TVector2f; const _FinalPos, _dxs, _dxe: single; _Size: integer); overload;
          // Paint triangle
          procedure PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f); overload;
-         procedure PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
+         procedure PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
       public
          // Painting procedures
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
-         procedure PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
+         procedure PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
    end;
 
 implementation
@@ -174,7 +174,7 @@ begin
    PaintPixel(_Buffer, _WeightBuffer, Size, PosX+1, PosY+1, _Colour, FractionHigh.U * FractionHigh.V);
 end;
 
-procedure CTriangleFiller.PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X, _Y : single; _Size: integer);
+procedure CTriangleFiller.PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer);
 const
    FaceSequence : array [0..7,0..3] of integer = ((-1,-1,0,-1),(0,-1,1,-1),(1,-1,1,0),(1,0,1,1),(1,1,0,1),(0,1,-1,1),(-1,1,-1,0),(-1,0,-1,-1));
 var
@@ -187,41 +187,38 @@ begin
    y := Round(_Y);
    if (X < 0) or (Y < 0) or (X >= _Size) or (Y >= _Size) then exit;
 
-   if not _VisitedMap[X,Y] then
+   DifferentNormalsList := CVector3fSet.Create;
+   Normal := SetVector(0,0,0);
+   for i := 0 to 7 do
    begin
-      _VisitedMap[X,Y] := true;
-      DifferentNormalsList := CVector3fSet.Create;
-      Normal := SetVector(0,0,0);
-      for i := 0 to 7 do
+      P1x := X + FaceSequence[i,0];
+      P1y := Y + FaceSequence[i,1];
+      P2x := X + FaceSequence[i,2];
+      P2y := Y + FaceSequence[i,3];
+
+      if (P1x >= 0) and (P1y >= 0) and (P1x < _Size) and (P1y < _Size) and (P2x >= 0) and (P2y >= 0) and (P2x < _Size) and (P2y < _Size) then
       begin
-         P1x := X + FaceSequence[i,0];
-         P1y := Y + FaceSequence[i,1];
-         P2x := X + FaceSequence[i,2];
-         P2y := Y + FaceSequence[i,3];
-
-         if (P1x >= 0) and (P1y >= 0) and (P1x < _Size) and (P1y < _Size) and (P2x >= 0) and (P2y >= 0) and (P2x < _Size) and (P2y < _Size) then
+         CurrentNormal := new(PVector3f);
+         V1 := SetVector(FaceSequence[i,0], FaceSequence[i,1], _HeightMap[X,Y] - _HeightMap[P1x,P1y]);
+         V2 := SetVector(FaceSequence[i,2], FaceSequence[i,3], _HeightMap[X,Y] - _HeightMap[P2x,P2y]);
+         Normalize(V1);
+         Normalize(V2);
+         CurrentNormal^ := CrossProduct(V1,V2);
+         Normalize(CurrentNormal^);
+         if DifferentNormalsList.Add(CurrentNormal) then
          begin
-            CurrentNormal := new(PVector3f);
-
-            V1 := SetVector(FaceSequence[i,0], FaceSequence[i,1], _HeightMap[X,Y] - _HeightMap[P1x,P1y]);
-            V2 := SetVector(FaceSequence[i,2], FaceSequence[i,3], _HeightMap[X,Y] - _HeightMap[P2x,P2y]);
-            CurrentNormal^ := CrossProduct(V1,V2);
-            Normalize(CurrentNormal^);
-            if DifferentNormalsList.Add(CurrentNormal) then
-            begin
-               Normal := AddVector(Normal,CurrentNormal^);
-            end;
+            Normal := AddVector(Normal,CurrentNormal^);
          end;
       end;
-      if not DifferentNormalsList.isEmpty then
-      begin
-         Normalize(Normal);
-      end;
-      _Buffer[X,Y].X := Normal.X;
-      _Buffer[X,Y].Y := Normal.Y;
-      _Buffer[X,Y].Z := Normal.Z;
-      DifferentNormalsList.Free;
    end;
+   if not DifferentNormalsList.isEmpty then
+   begin
+      Normalize(Normal);
+   end;
+   _Buffer[X,Y].X := Normal.X;
+   _Buffer[X,Y].Y := Normal.Y;
+   _Buffer[X,Y].Z := Normal.Z;
+   DifferentNormalsList.Free;
 end;
 
 
@@ -324,7 +321,7 @@ begin
    end;
 end;
 
-procedure CTriangleFiller.PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _X1, _X2, _Y : single; _Size: integer);
+procedure CTriangleFiller.PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X1, _X2, _Y : single; _Size: integer);
 var
    x2, x1 : single;
    PP : TVector2f;
@@ -337,7 +334,7 @@ begin
    end
    else if _X1 = _X2 then
    begin
-      PaintBumpValueAtFrameBuffer(_Buffer, _HeightMap, _VisitedMap, _x1, _Y,_Size);
+      PaintBumpValueAtFrameBuffer(_Buffer, _HeightMap, _x1, _Y,_Size);
       exit;
    end
    else
@@ -350,7 +347,7 @@ begin
    PP := SetVector(x1,_Y);
    while PP.U <= x2 do
    begin
-      PaintBumpValueAtFrameBuffer(_Buffer, _HeightMap, _VisitedMap, PP.U, PP.V,_Size);
+      PaintBumpValueAtFrameBuffer(_Buffer, _HeightMap, PP.U, PP.V,_Size);
       PP.U := PP.U + 1;
    end;
 end;
@@ -436,11 +433,11 @@ begin
 	end;
 end;
 
-procedure CTriangleFiller.PaintTrianglePiece(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; var _S, _E: TVector2f; const _FinalPos, _dxs, _dxe: single; _Size: integer);
+procedure CTriangleFiller.PaintTrianglePiece(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _S, _E: TVector2f; const _FinalPos, _dxs, _dxe: single; _Size: integer);
 begin
    while _S.V <= _FinalPos do
    begin
-	   PaintBumpHorizontalLine(_Buffer, _HeightMap, _VisitedMap,_S.U,_E.U,_S.V,_Size);
+	   PaintBumpHorizontalLine(_Buffer, _HeightMap,_S.U,_E.U,_S.V,_Size);
       _S := SetVector(_S.U + _dxs, _S.V + 1);
       _E := SetVector(_E.U + _dxe, _E.V + 1);
    end;
@@ -505,7 +502,7 @@ begin
 	end;
 end;
 
-procedure CTriangleFiller.PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
+procedure CTriangleFiller.PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
 var
    P1, P2, P3 : TVector2f;
    dx1, dx2, dx3 : single;
@@ -521,15 +518,15 @@ begin
    S := SetVector(_P1);
 	if (dx1 > dx2) then
    begin
-      PaintTrianglePiece(_Buffer,_HeightMap,_VisitedMap,S,E,_P2.V,dx2,dx1,Size);
+      PaintTrianglePiece(_Buffer,_HeightMap,S,E,_P2.V,dx2,dx1,Size);
       E := SetVector(_P2);
-      PaintTrianglePiece(_Buffer,_HeightMap,_VisitedMap,S,E,_P3.V,dx2,dx3,Size);
+      PaintTrianglePiece(_Buffer,_HeightMap,S,E,_P3.V,dx2,dx3,Size);
 	end
    else
    begin
-      PaintTrianglePiece(_Buffer,_HeightMap,_VisitedMap,S,E,_P2.V,dx1,dx2,Size);
+      PaintTrianglePiece(_Buffer,_HeightMap,S,E,_P2.V,dx1,dx2,Size);
       S := SetVector(_P2);
-      PaintTrianglePiece(_Buffer,_HeightMap,_VisitedMap,S,E,_P3.V,dx3,dx2,Size);
+      PaintTrianglePiece(_Buffer,_HeightMap,S,E,_P3.V,dx3,dx2,Size);
 	end;
 end;
 
@@ -642,7 +639,7 @@ begin
    end;
 end;
 
-procedure CTriangleFiller.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _VisitedMap: T2DBooleanMap; _P1, _P2, _P3 : TVector2f);
+procedure CTriangleFiller.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
 var
    P1, P2, P3 : TVector2f;
    Size : integer;
@@ -656,19 +653,19 @@ begin
       if P2.V > P3.V then
       begin
          // P3 < P2 < P1
-         PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P3,P2,P1);
+         PaintBumpMapTriangle(_Buffer,_HeightMap,P3,P2,P1);
       end
       else
       begin
          if P1.V > P3.V then
          begin
             // P2 < P3 < P1
-            PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P2,P3,P1);
+            PaintBumpMapTriangle(_Buffer,_HeightMap,P2,P3,P1);
          end
          else
          begin
             // P2 < P1 < P3
-            PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P2,P1,P3);
+            PaintBumpMapTriangle(_Buffer,_HeightMap,P2,P1,P3);
          end;
       end;
    end
@@ -679,18 +676,18 @@ begin
          if P1.V > P3.V then
          begin
             // P3 < P1 < P2
-            PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P3,P1,P2);
+            PaintBumpMapTriangle(_Buffer,_HeightMap,P3,P1,P2);
          end
          else
          begin
             // P1 < P3 < P2
-            PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P1,P3,P2);
+            PaintBumpMapTriangle(_Buffer,_HeightMap,P1,P3,P2);
          end;
       end
       else
       begin
          // P1 < P2 < P3
-         PaintBumpMapTriangle(_Buffer,_HeightMap,_VisitedMap,P1,P2,P3);
+         PaintBumpMapTriangle(_Buffer,_HeightMap,P1,P2,P3);
       end;
    end;
 end;
