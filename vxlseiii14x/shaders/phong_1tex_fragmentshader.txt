@@ -11,10 +11,11 @@ void main (void)
  
    vec4 color = texture2D(colorMap, gl_TexCoord[0].st);	
    //calculate Ambient Term:  
-   vec4 Iamb = gl_FrontLightProduct[0].ambient + gl_FrontLightModelProduct.sceneColor;    
+   vec4 Iamb = gl_LightSource[0].ambient + gl_FrontMaterial.emission + gl_LightModel.ambient;    
 
    //calculate Diffuse Term:  
-   vec4 Idiff = gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);    
+   vec4 Idiff = max(dot(N,L), 0.0);   
+	Idiff.a = color.a;
 	
 	// calculate Specular Term:
 	vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);
