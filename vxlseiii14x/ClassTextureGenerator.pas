@@ -11,6 +11,7 @@ type
          // Painting procedures
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
+         function GenerateHeightMapBuffer(const _DiffuseMap: TBitmap): TByteMap;
       public
          // Constructors and Destructors
          constructor Create; overload;
@@ -36,6 +37,8 @@ type
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
+         function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer): TBitmap; overload;
+         function GetBumpMapTexture(const _DiffuseMap: TBitmap): TBitmap;
    end;
 
 
@@ -268,6 +271,30 @@ begin
    end;
 end;
 
+function CTextureGenerator.GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer): TBitmap;
+var
+   x,y : integer;
+   Normal: TVector3f;
+begin
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32Bit;
+   Result.Width := High(_Buffer)+1;
+   Result.Height := High(_Buffer)+1;
+   for x := Low(_Buffer) to High(_Buffer) do
+   begin
+      for y := Low(_Buffer[x]) to High(_Buffer[x]) do
+      begin
+         Normal.X := _Buffer[x,y].X;
+         Normal.Y := _Buffer[x,y].Y;
+         Normal.Z := _Buffer[x,y].Z;
+         if (abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0) then
+            Normal.Z := 1;
+         Normalize(Normal);
+         Result.Canvas.Pixels[x,Result.Height - y] := RGB(Round((1 + Normal.X) * 127.5),Round((1 + Normal.Y) * 127.5),Round((1 + Normal.Z) * 127.5));
+      end;
+   end;
+end;
+
 function CTextureGenerator.GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
 var
    x,y : integer;
@@ -392,6 +419,28 @@ begin
    end;
 end;
 
+function CTextureGenerator.GenerateHeightMapBuffer(const _DiffuseMap: TBitmap): TByteMap;
+var
+   x,y,Size : integer;
+   r,g,b: real;
+begin
+   // Build height map and visited map
+   Size := _DiffuseMap.Width;
+   SetLength(Result,Size,Size);
+   for x := Low(Result) to High(Result) do
+   begin
+      for y := Low(Result[x]) to High(Result[x]) do
+      begin
+         r := GetRValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         // Convert to YIQ
+         Result[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+      end;
+   end;
+end;
+
+
 procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
 var
    i,LastFace : cardinal;
@@ -420,28 +469,16 @@ begin
    Filler.Free;
 end;
 
+// This is the original attempt painting faces.
 procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; const _DiffuseMap: TBitmap);
 var
-   HeightMap,PixelMap : TByteMap;
-   x,y,Size,Face : integer;
-   r,g,b: real;
+   HeightMap : TByteMap;
+   Face : integer;
    Filler: CTriangleFiller;
 begin
    // Build height map and visited map
-   Size := High(_Buffer)+1;
    Filler := CTriangleFiller.Create;
-   SetLength(HeightMap,Size,Size);
-   for x := Low(HeightMap) to High(HeightMap) do
-   begin
-      for y := Low(HeightMap[x]) to High(HeightMap[x]) do
-      begin
-         r := GetRValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
-         g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
-         b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
-         // Convert to YIQ
-         HeightMap[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
-      end;
-   end;
+   HeightMap := GenerateHeightMapBuffer(_DiffuseMap);
    // Now, we'll check each face.
    Face := 0;
    while Face < High(_Faces) do
@@ -452,6 +489,31 @@ begin
       // Go to next face.
       inc(Face,_VerticesPerFace);
    end;
+   Filler.Free;
+end;
+
+// This is the latest attempt as a simple image processsing operation.
+function CTextureGenerator.GetBumpMapTexture(const _DiffuseMap: TBitmap): TBitmap;
+var
+   HeightMap : TByteMap;
+   x,y,Size : integer;
+   Filler: CTriangleFiller;
+begin
+   // Build height map and visited map
+   Filler := CTriangleFiller.Create;
+   HeightMap := GenerateHeightMapBuffer(_DiffuseMap);
+   Size := High(HeightMap)+1;
+   Result := TBitmap.Create;
+   Result.PixelFormat := pf32bit;
+   Result.Transparent := false;
+   Result.Width := Size;
+   Result.Height := Size;
+   // Now, we'll check each face.
+   for x := Low(HeightMap) to High(HeightMap) do
+      for y := Low(HeightMap[x]) to High(HeightMap[x]) do
+      begin
+         Filler.PaintBumpValueAtFrameBuffer(Result,HeightMap,X,Y,Size);
+      end;
    Filler.Free;
 end;
 

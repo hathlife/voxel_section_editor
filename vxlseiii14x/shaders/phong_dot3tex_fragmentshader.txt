@@ -8,7 +8,7 @@ varying vec2 texCoord;
 void main (void)  
 {  
 	vec3 N = (texture2D(bumpMap, texCoord).xyz * 2.0) - 1.0;
-//	N.z *= -1.0;
+	N.z *= -1.0;
 	N = (N * rotation);
 	vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
 	vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  

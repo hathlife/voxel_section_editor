@@ -639,9 +639,31 @@ procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer);
 var
    i : integer;
    TexGenerator: CTextureGenerator;
+   Bitmap : TBitmap;
+   NormalTexture : PTextureBankItem;
+begin
+   TexGenerator := CTextureGenerator.Create;
+   Bitmap := TexGenerator.GetBumpMapTexture(Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE));
+   // Now we generate a texture that will be used by all meshes.
+   glActiveTexture(GL_TEXTURE0 + _TextureID);
+   Bitmap.SaveToFile('last_bumpmapping_texture.bmp');
+   NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
+   // Now we add this diffuse texture to all meshes.
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DOT3BUMP,C_SHD_PHONG_DOT3TEX,NormalTexture);
+   end;
+   // Free memory.
+   GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
+   Bitmap.Free;
+   TexGenerator.Free;
+
+{
+var
+   i : integer;
+   TexGenerator: CTextureGenerator;
    Buffer: T2DFrameBuffer;
    Bitmap : TBitmap;
-   AlphaMap : TByteMap;
    NormalTexture : PTextureBankItem;
 begin
    TexGenerator := CTextureGenerator.Create;
@@ -650,12 +672,12 @@ begin
    begin
       Mesh[i].PaintMeshBumpMapTexture(Buffer,TexGenerator);
    end;
-   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer,AlphaMap);
+   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer);
    TexGenerator.DisposeFrameBuffer(Buffer);
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
    Bitmap.SaveToFile('last_bumpmapping_texture.bmp');
-   NormalTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -663,13 +685,9 @@ begin
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   for i := Low(AlphaMap) to High(AlphaMap) do
-   begin
-      SetLength(AlphaMap[i],0);
-   end;
-   SetLength(AlphaMap,0);
    Bitmap.Free;
    TexGenerator.Free;
+}
 end;
 
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);

@@ -2,7 +2,7 @@ unit ClassTriangleFiller;
 
 interface
 
-uses BasicDataTypes, ClassVector3fSet, math3D;
+uses BasicDataTypes, ClassVector3fSet, math3D, Windows, Graphics;
 
 type
    CTriangleFiller = class
@@ -21,7 +21,7 @@ type
          // Paint bicubic pixel
          procedure PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector4f); overload;
          procedure PaintPixelAtFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Point: TVector2f; _Colour: TVector3f); overload;
-         procedure PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer);
+         procedure PaintBumpValueAtFrameBuffer(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer); overload;
          // Paint line
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector3f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
@@ -38,6 +38,8 @@ type
          procedure PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f); overload;
          procedure PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
       public
+         // For bump mapping only
+         procedure PaintBumpValueAtFrameBuffer(var _Bitmap: TBitmap; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer); overload;
          // Painting procedures
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
@@ -220,6 +222,54 @@ begin
    _Buffer[X,Y].Z := Normal.Z;
    DifferentNormalsList.Free;
 end;
+
+procedure CTriangleFiller.PaintBumpValueAtFrameBuffer(var _Bitmap: TBitmap; const _HeightMap: TByteMap; _X, _Y : single; _Size: integer);
+const
+   FaceSequence : array [0..7,0..3] of integer = ((-1,-1,0,-1),(0,-1,1,-1),(1,-1,1,0),(1,0,1,1),(1,1,0,1),(0,1,-1,1),(-1,1,-1,0),(-1,0,-1,-1));
+var
+   DifferentNormalsList: CVector3fSet;
+   i,x,y,P1x,P1y,P2x,P2y : integer;
+   CurrentNormal : PVector3f;
+   V1, V2, Normal: TVector3f;
+begin
+   x := Round(_X);
+   y := Round(_Y);
+   if (X < 0) or (Y < 0) or (X >= _Size) or (Y >= _Size) then exit;
+
+   DifferentNormalsList := CVector3fSet.Create;
+   Normal := SetVector(0,0,0);
+   for i := 0 to 7 do
+   begin
+      P1x := X + FaceSequence[i,0];
+      P1y := Y + FaceSequence[i,1];
+      P2x := X + FaceSequence[i,2];
+      P2y := Y + FaceSequence[i,3];
+
+      if (P1x >= 0) and (P1y >= 0) and (P1x < _Size) and (P1y < _Size) and (P2x >= 0) and (P2y >= 0) and (P2x < _Size) and (P2y < _Size) then
+      begin
+         CurrentNormal := new(PVector3f);
+         V1 := SetVector(FaceSequence[i,0], FaceSequence[i,1], _HeightMap[X,Y] - _HeightMap[P1x,P1y]);
+         V2 := SetVector(FaceSequence[i,2], FaceSequence[i,3], _HeightMap[X,Y] - _HeightMap[P2x,P2y]);
+         Normalize(V1);
+         Normalize(V2);
+         CurrentNormal^ := CrossProduct(V1,V2);
+         Normalize(CurrentNormal^);
+         if DifferentNormalsList.Add(CurrentNormal) then
+         begin
+            Normal := AddVector(Normal,CurrentNormal^);
+         end;
+      end;
+   end;
+   if not DifferentNormalsList.isEmpty then
+   begin
+      Normalize(Normal);
+   end;
+   if (abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z)) = 0 then
+      Normal.Z := 1;
+   _Bitmap.Canvas.Pixels[X,Y] := RGB(Round((1 + Normal.X) * 127.5), Round((1 + Normal.Y) * 127.5), Round((1 + Normal.Z) * 127.5));
+   DifferentNormalsList.Free;
+end;
+
 
 
 // Paint line
