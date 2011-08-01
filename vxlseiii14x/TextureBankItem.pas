@@ -193,7 +193,7 @@ begin
          inc(Line);
       end;
    end;
-   UploadTexture(Addr(Data[0]),GL_RGBA,_Bitmap.Height,_Bitmap.Width,_Level);
+   UploadTexture(Addr(Data[0]),GL_RGB,_Bitmap.Height,_Bitmap.Width,_Level);
    SetLength(Data,0);
 end;
 
@@ -603,7 +603,7 @@ begin
    TextureSize := _Width;
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, ID);
-   glTexImage2D(GL_TEXTURE_2D, _Level, GL_RGBA, _Width, _Height, 0, _Format, GL_UNSIGNED_BYTE, _Data);
+   glTexImage2D(GL_TEXTURE_2D, _Level, _Format, _Width, _Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _Data);
    glDisable(GL_TEXTURE_2D);
 end;
 

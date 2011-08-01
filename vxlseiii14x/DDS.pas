@@ -141,7 +141,7 @@ type
          function PF_IS_BGR565(var pf: TDDSPixelFormat): boolean;
          function PF_IS_INDEX8(const pf: TDDSPixelFormat): boolean;
          function max(v1,v2: Cardinal): Cardinal;
-         Procedure SwapY(Pixels: pBytes; xSize, ySize: Integer);
+         Procedure SwapY(_Pixels: pBytes; _xSize, _ySize,_PixelSize: Integer);
       public
          destructor Destroy; override;
          // I/O
@@ -245,20 +245,25 @@ begin
       result:=v1;
 end;
 
-Procedure TDDSImage.SwapY(Pixels: pBytes; xSize, ySize: Integer);
+Procedure TDDSImage.SwapY(_Pixels: pBytes; _xSize, _ySize,_PixelSize: Integer);
 var
    x, y: integer;
-   P1, P2: ^Cardinal;
-   Temp: Cardinal;
+   P1, P2: ^Byte;
+   Temp,i: Byte;
 begin
-   for y:=0 to Pred(ySize shr 1) do
-      for x:=0 to Pred(xSize) do
+   for y:=0 to Pred(_ySize shr 1) do
+      for x:=0 to Pred(_xSize) do
       begin
-         P1 := Addr(Pixels^[(y*xSize + x)*4]);
-         P2 := Addr(Pixels^[((ySize-y-1)*xSize + x)*4]);
-         Temp := P1^;
-         P1^ := P2^;
-         P2^ := Temp;
+         P1 := Addr(_Pixels^[(y*_xSize + x)*_PixelSize]);
+         P2 := Addr(_Pixels^[((_ySize-y-1)*_xSize + x)*_PixelSize]);
+         for i := 1 to _PixelSize do
+         begin
+            Temp := P1^;
+            P1^ := P2^;
+            P2^ := Temp;
+            inc(P1);
+            inc(P2);
+         end;
       end;
 end;
 
@@ -329,7 +334,7 @@ begin
          _Stream.Read(data^, size);
          glCompressedTexImage2D(GL_TEXTURE_2D, ix, li.internalFormat, x, y, 0, size, data);
          glGetTexImage(GL_TEXTURE_2D, ix, GL_RGBA, GL_BYTE, pixels);
-         SwapY(pixels,xSize,ySize);
+         SwapY(pixels,xSize,ySize,4);
          glTexImage2D(GL_TEXTURE_2D, ix, GL_RGBA, xsize, ysize, 0, GL_RGBA, GL_BYTE, pixels);
          x := (x+1) shr 1;
          y := (y+1) shr 1;
@@ -351,7 +356,7 @@ begin
          glPixelStorei(GL_UNPACK_ROW_LENGTH, y);
          glTexImage2D(GL_TEXTURE_2D, ix, li.internalFormat, x, y, 0, li.externalFormat, li.typ, unpacked);
          glGetTexImage(GL_TEXTURE_2D, ix, GL_RGBA, GL_BYTE, pixels);
-         SwapY(pixels,xSize,ySize);
+         SwapY(pixels,xSize,ySize,4);
          glTexImage2D(GL_TEXTURE_2D, ix, GL_RGBA, xsize, ysize, 0, GL_RGBA, GL_BYTE, pixels);
          x := (x+1) shr 1;
          y := (y+1) shr 1;
@@ -373,7 +378,7 @@ begin
          glPixelStorei(GL_UNPACK_ROW_LENGTH, y);
          glTexImage2D(GL_TEXTURE_2D, ix, li.internalFormat, x, y, 0, li.externalFormat, li.typ, data);
          glGetTexImage(GL_TEXTURE_2D, ix, GL_RGBA, GL_BYTE, pixels);
-         SwapY(pixels,xSize,ySize);
+         SwapY(pixels,xSize,ySize,4);
          glTexImage2D(GL_TEXTURE_2D, ix, GL_RGBA, xsize, ysize, 0, GL_RGBA, GL_BYTE, pixels);
          x := (x+1) shr 1;
          y := (y+1) shr 1;
@@ -463,7 +468,7 @@ begin
    hdr.Caps.dwCaps2 := 0; // volume and cube maps are ignored.
    hdr.Caps.dwDDSX := 0;
    hdr.Caps.dwReserved := 0;
-   hdr.PixelFormat.dwSize := 32;
+   hdr.PixelFormat.dwSize := 24;
    GetMem(tempi,4);
    glGetTexLevelParameteriv(GL_TEXTURE_2D,0,GL_TEXTURE_INTERNAL_FORMAT,tempi);
    hdr.PixelFormat.dwFlags := DDPF_RGB or DDPF_FOURCC;
@@ -477,6 +482,7 @@ begin
       hdr.PixelFormat.dwFlags := hdr.PixelFormat.dwFlags or DDPF_ALPHAPIXELS;
       hdr.PixelFormat.dwAlphaBitMask := $ff000000;
       hdr.PixelFormat.dwRGBBitCount := 32;
+      hdr.PixelFormat.dwSize := 32;
       IsRGBA := true;
    end;
    GetMem(tempi,4);
@@ -501,14 +507,14 @@ begin
       begin
          GetMem(pixels, hdr.dwWidth*hdr.dwHeight*4);
          glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight,4);
          glTexImage2D(GL_TEXTURE_2D,0,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
       end
       else
       begin
          GetMem(pixels, hdr.dwWidth*hdr.dwHeight*3);
          glGetTexImage(GL_TEXTURE_2D,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
-         SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight,3);
          glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
       end;
    end;
@@ -540,13 +546,14 @@ begin
    // Here we unflip the texture in the Y axis.
    if not IsCompressed then
    begin
-      SwapY(pixels,hdr.dwWidth,hdr.dwHeight);
       if IsRGBA then
       begin
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight,4);
          glTexImage2D(GL_TEXTURE_2D,0,_Compression,hdr.dwWidth,hdr.dwHeight,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
       end
       else
       begin
+         SwapY(pixels,hdr.dwWidth,hdr.dwHeight,3);
          glTexImage2D(GL_TEXTURE_2D,0,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,hdr.dwWidth,hdr.dwHeight,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
       end;
       FreeMem(pixels);
@@ -577,14 +584,14 @@ begin
          begin
             GetMem(pixels, xSize*ySize*4);
             glGetTexImage(GL_TEXTURE_2D,i,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
-            SwapY(pixels,xSize,ySize);
+            SwapY(pixels,xSize,ySize,4);
             glTexImage2D(GL_TEXTURE_2D,i,_Compression,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          end
          else
          begin
             GetMem(pixels, xSize*ySize*3);
             glGetTexImage(GL_TEXTURE_2D,i,GL_RGB,GL_UNSIGNED_BYTE,pixels);
-            SwapY(pixels,xSize,ySize);
+            SwapY(pixels,xSize,ySize,3);
             glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,xSize,ySize,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
          end;
       end;
@@ -603,13 +610,14 @@ begin
       // Here we unflip the texture in the Y axis.
       if not IsCompressed then
       begin
-         SwapY(pixels,xSize,ySize);
          if IsRGBA then
          begin
+            SwapY(pixels,xSize,ySize,4);
             glTexImage2D(GL_TEXTURE_2D,i,_Compression,xSize,ySize,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
          end
          else
          begin
+            SwapY(pixels,xSize,ySize,3);
             glTexImage2D(GL_TEXTURE_2D,i,GL_COMPRESSED_RGB_S3TC_DXT1_EXT,xSize,ySize,0,GL_RGB,GL_UNSIGNED_BYTE,pixels);
          end;
          FreeMem(pixels);
