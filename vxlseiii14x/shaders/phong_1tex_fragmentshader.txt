@@ -14,8 +14,8 @@ void main (void)
    vec4 Iamb = gl_LightSource[0].ambient + gl_FrontMaterial.emission + gl_LightModel.ambient;    
 
    //calculate Diffuse Term:  
-   vec4 Idiff = max(dot(N,L), 0.0);   
-	Idiff.a = color.a;
+	float diff = max(dot(N,L), 0.0);
+	vec4 Idiff = vec4(diff, diff, diff, 0.0);   
 	
 	// calculate Specular Term:
 	vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);

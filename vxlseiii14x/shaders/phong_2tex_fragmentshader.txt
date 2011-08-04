@@ -7,7 +7,7 @@ varying vec2 texCoord;
 
 void main(void)  
 {  
-   vec3 N = (texture2D(normalMap, texCoord).xyz * 2.0) - 1.0;
+   vec3 N = ((texture2D(normalMap, texCoord).xyz * 2.0) - 1.0) * (-1.0);
    N = normalize(N * normalMatrix);
    vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
    vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
@@ -19,8 +19,8 @@ void main(void)
    Iamb.a = 1.0;
    
    //calculate Diffuse Term:  
-   vec4 Idiff = max(dot(N,L), 0.0);   
-   Idiff.a = 0.0;
+	float diff = max(dot(N,L), 0.0);
+	vec4 Idiff = vec4(diff, diff, diff, 0.0);   
 	
    // calculate Specular Term:
    vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);
