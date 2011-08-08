@@ -389,6 +389,11 @@ begin
                      _Material.Texture[tex]^.SaveTexture(BaseName + '_normal.' + TexExtension);
                      Writeln(_File,'bump ' + ObjectName + '_normal.' + TexExtension);
                   end;
+                  C_TTP_DOT3BUMP:
+                  begin
+                     _Material.Texture[tex]^.SaveTexture(BaseName + '_bump.' + TexExtension);
+                     Writeln(_File,'bump ' + ObjectName + '_bump.' + TexExtension);
+                  end;
                   C_TTP_SPECULAR:
                   begin
                      _Material.Texture[tex]^.SaveTexture(BaseName + '_spec.' + TexExtension);

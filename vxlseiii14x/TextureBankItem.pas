@@ -14,6 +14,8 @@ type
          Filename: string;
          MipmapCount : integer;
          TextureSize : integer;
+         // Constructor and Destructor
+         procedure Clear;
          // Gets
          function GetMipmapCount: integer;
          function GetSize: integer;
@@ -48,6 +50,11 @@ type
          procedure LoadTexture(const _Bitmap : TBitmap; _Level: integer); overload;
          procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
+         procedure ReplaceTexture(const _Filename : string); overload;
+         procedure ReplaceTexture(const _Bitmaps : TABitmap); overload;
+         procedure ReplaceTexture(const _Bitmap : TBitmap; _Level: integer); overload;
+         procedure ReplaceTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
+         procedure ReplaceTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
          procedure SaveTexture(const _Filename: string);
          function DownloadTexture(_Level : integer): TBitmap; overload;
          function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
@@ -145,10 +152,15 @@ end;
 
 destructor TTextureBankItem.Destroy;
 begin
+   Clear;
+   inherited Destroy;
+end;
+
+procedure TTextureBankItem.Clear;
+begin
    if (ID <> 0) and (ID <> -1) then
       glDeleteTextures(1,@ID);
    Filename := '';
-   inherited Destroy;
 end;
 
 // I/O
@@ -241,6 +253,37 @@ begin
       LoadTexture(_Bitmaps[i],_AlphaMaps[i],i);
    end;
 end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Filename : string);
+begin
+   Clear;
+   LoadTexture(_Filename);
+end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Bitmaps : TABitmap);
+begin
+   Clear;
+   LoadTexture(_Bitmaps);
+end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Bitmap : TBitmap; _Level: integer);
+begin
+   Clear;
+   LoadTexture(_Bitmap,_Level);
+end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap);
+begin
+   Clear;
+   LoadTexture(_Bitmaps,_AlphaMaps);
+end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer);
+begin
+   Clear;
+   LoadTexture(_Bitmap,_AlphaMap,_Level);
+end;
+
 
 procedure TTextureBankItem.SaveTexture(const _Filename: string);
 var
