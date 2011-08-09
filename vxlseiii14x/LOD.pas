@@ -645,7 +645,6 @@ begin
    Bitmap := TexGenerator.GetBumpMapTexture(Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE));
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
-   Bitmap.SaveToFile('last_bumpmapping_texture.bmp');
    NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do

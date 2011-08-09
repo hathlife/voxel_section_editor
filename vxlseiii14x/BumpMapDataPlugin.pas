@@ -54,8 +54,8 @@ begin
    while Face < High(_Faces) do
    begin
       P1.X := _Vertices[_Faces[Face+2]].X - _Vertices[_Faces[Face+1]].X;
-      P1.Y := _Vertices[_Faces[Face+2]].Y - _Vertices[_Faces[Face+1]].X;
-      P1.Z := _Vertices[_Faces[Face+2]].Z - _Vertices[_Faces[Face+1]].X;
+      P1.Y := _Vertices[_Faces[Face+2]].Y - _Vertices[_Faces[Face+1]].Y;
+      P1.Z := _Vertices[_Faces[Face+2]].Z - _Vertices[_Faces[Face+1]].Z;
       P2.X := _Vertices[_Faces[Face]].X - _Vertices[_Faces[Face+1]].X;
       P2.Y := _Vertices[_Faces[Face]].Y - _Vertices[_Faces[Face+1]].Y;
       P2.Z := _Vertices[_Faces[Face]].Z - _Vertices[_Faces[Face+1]].Z;
@@ -87,7 +87,7 @@ begin
     for v := Low(_Vertices) to High(_Vertices) do
     begin
         // Gram-Schmidt orthogonalize
-        Tangents[v] := ScaleVector(SubtractVector(Tan1[v],_Normals[v]),DotProduct(_Normals[v], Tan1[v]));
+        Tangents[v] := SubtractVector(Tan1[v],ScaleVector(_Normals[v],DotProduct(_Normals[v], Tan1[v])));
         Normalize(Tangents[v]);
 
         // Calculate handedness
