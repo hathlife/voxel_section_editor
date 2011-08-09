@@ -1482,6 +1482,12 @@ begin
       Materials[_MaterialID].Shader := ShaderBank^.Get(_ShaderID)
    else
       Materials[_MaterialID].Shader := nil;
+   if _TextureType = C_TTP_DOT3BUMP then
+   begin
+      AddBumpMapDataPlugin;
+      SetShaderAttributes := SetAtributeShaderBumpMapping;
+      SetShaderUniform := SetUniformShaderBumpMapping;
+   end;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
 end;
 

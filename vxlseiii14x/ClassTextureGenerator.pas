@@ -413,7 +413,7 @@ begin
          g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          // Convert to YIQ
-         h := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         h := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
          Result.Canvas.Pixels[x,y] := RGB(h,h,h);
       end;
    end;
@@ -435,7 +435,7 @@ begin
          g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
          // Convert to YIQ
-         Result[x,y] := Round(((0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         Result[x,y] := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
       end;
    end;
 end;
