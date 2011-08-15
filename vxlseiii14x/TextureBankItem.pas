@@ -43,6 +43,7 @@ type
          constructor Create(const _Bitmaps : TABitmap); overload;
          constructor Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap); overload;
          constructor Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
+         constructor Create(const _Data : Pointer; _Format: GLInt; _Height,_Width: integer); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;
@@ -50,6 +51,7 @@ type
          procedure LoadTexture(const _Bitmap : TBitmap; _Level: integer); overload;
          procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
+         procedure LoadTexture(const _Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer); overload;
          procedure ReplaceTexture(const _Filename : string); overload;
          procedure ReplaceTexture(const _Bitmaps : TABitmap); overload;
          procedure ReplaceTexture(const _Bitmap : TBitmap; _Level: integer); overload;
@@ -147,6 +149,16 @@ begin
    glEnable(GL_TEXTURE_2D);
    LoadTexture(_Bitmaps,_AlphaMaps);
    Counter := 1;
+   glDisable(GL_TEXTURE_2D);
+end;
+
+constructor TTextureBankItem.Create(const _Data : Pointer; _Format: GLInt; _Height,_Width: integer);
+begin
+   glGenTextures(1, @ID);
+   glEnable(GL_TEXTURE_2D);
+   LoadTexture(_Data,_Format,_Height,_Width,0);
+   Counter := 1;
+   SetNumMipmaps(1);
    glDisable(GL_TEXTURE_2D);
 end;
 
@@ -252,6 +264,11 @@ begin
    begin
       LoadTexture(_Bitmaps[i],_AlphaMaps[i],i);
    end;
+end;
+
+procedure TTextureBankItem.LoadTexture(const _Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
+begin
+   UploadTexture(_Data,_Format,_Height,_Width,_Level);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Filename : string);

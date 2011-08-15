@@ -72,5 +72,14 @@
     <Transaction>2011/07/29 19:24:04.625.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\AutoUpdater.pas</Transaction>
     <Transaction>2011/07/31 00:50:20.109.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTextureExtractor.pas</Transaction>
     <Transaction>2011/07/31 01:05:51.625.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTextureExtractor.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTextureAtlasExtractor.pas</Transaction>
+    <Transaction>2011/08/11 12:13:05.320.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassGLImage.pas</Transaction>
+    <Transaction>2011/08/14 02:45:56.133.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassGLImage.pas=</Transaction>
+    <Transaction>2011/08/14 20:58:25.242.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBAIntDataSet.pas</Transaction>
+    <Transaction>2011/08/14 21:37:47.508.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageRGBAIntData.pas</Transaction>
+    <Transaction>2011/08/14 21:47:40.539.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBByteDataSet.pas</Transaction>
+    <Transaction>2011/08/14 21:47:51.195.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBByteDataSet.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBAByteDataSet.pas</Transaction>
+    <Transaction>2011/08/14 22:57:29.711.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBByteDataSet.pas</Transaction>
+    <Transaction>2011/08/14 23:09:13.383.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageRGBAByteData.pas</Transaction>
+    <Transaction>2011/08/14 23:15:48.695.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageRGBByteData.pas</Transaction>
   </Transactions>
 </BorlandProject>

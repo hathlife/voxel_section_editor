@@ -114,7 +114,24 @@ uses
   ClassTriangleFiller in 'ClassTriangleFiller.pas',
   Internet in 'Internet.pas',
   AutoUpdater in 'AutoUpdater.pas',
-  ClassTextureAtlasExtractor in 'ClassTextureAtlasExtractor.pas';
+  ClassTextureAtlasExtractor in 'ClassTextureAtlasExtractor.pas',
+  AbstractDataSet in 'AbstractDataSet.pas',
+  Abstract2DImageData in 'Abstract2DImageData.pas',
+  ByteDataSet in 'ByteDataSet.pas',
+  IntDataSet in 'IntDataSet.pas',
+  ImageGrayByteData in 'ImageGrayByteData.pas',
+  ImageGrayData in 'ImageGrayData.pas',
+  ImageRGBData in 'ImageRGBData.pas',
+  ImageRGBIntData in 'ImageRGBIntData.pas',
+  SingleDataSet in 'SingleDataSet.pas',
+  RGBIntDataSet in 'RGBIntDataSet.pas',
+  RGBSingleDataSet in 'RGBSingleDataSet.pas',
+  RGBAIntDataSet in 'RGBAIntDataSet.pas',
+  ImageRGBAIntData in 'ImageRGBAIntData.pas',
+  RGBAByteDataSet in 'RGBAByteDataSet.pas',
+  RGBByteDataSet in 'RGBByteDataSet.pas',
+  ImageRGBAByteData in 'ImageRGBAByteData.pas',
+  ImageRGBByteData in 'ImageRGBByteData.pas';
 
 {$R *.res}
 

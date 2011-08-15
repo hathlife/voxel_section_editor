@@ -140,6 +140,7 @@ type
    AString = array of string;
    PAUint32 = ^AUInt32;
    ABool = array of boolean;
+   AByte = array of byte;
    AFloat = array of single;
    TByteMap = array of array of byte;
    T2DBooleanMap = array of array of Boolean;
