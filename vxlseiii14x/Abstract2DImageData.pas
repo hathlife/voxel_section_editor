@@ -42,6 +42,8 @@ type
          procedure LoadRGBA(const _Data:Pointer; _Width, _Height: integer);
          procedure LoadGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
          function SaveToBitmap:TBitmap;
+         function SaveToRGBA:Pointer;
+         function SaveToGL_RGBA:Pointer;
          // Gets
          function isPixelValid(_x, _y: integer):boolean;
          // Copies
@@ -139,7 +141,7 @@ end;
 procedure TAbstract2DImageData.LoadRGBA(const _Data:Pointer; _Width, _Height: integer);
 var
    x, DataLength, Position: integer;
-   Data,GData,BData,AData: Pointer;
+   Data,GData,BData,RData: Pointer;
 begin
    if Assigned(_Data) then
    begin
@@ -151,10 +153,10 @@ begin
       Data := _Data;
       for x := 1 to DataLength do
       begin
-         GData := Pointer(Cardinal(Data) + 1);
-         BData := Pointer(Cardinal(Data) + 2);
-         AData := Pointer(Cardinal(Data) + 3);
-         SetRGBAPixelColor(Position,Byte(Data^),Byte(GData^),Byte(BData^),Byte(AData^));
+         BData := Pointer(Cardinal(Data) + 1);
+         GData := Pointer(Cardinal(Data) + 2);
+         RData := Pointer(Cardinal(Data) + 3);
+         SetRGBAPixelColor(Position,Byte(RData^),Byte(GData^),Byte(BData^),Byte(Data^));
          inc(Position);
          Data := Pointer(Cardinal(Data) + 4);
       end;
@@ -171,7 +173,7 @@ end;
 procedure TAbstract2DImageData.LoadGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
 var
    x, y, Position,DataPosition: integer;
-   Data,GData,BData,AData: Pointer;
+   Data,GData,BData,RData: Pointer;
 begin
    if Assigned(_Data) then
    begin
@@ -184,10 +186,10 @@ begin
          Position := (y * FXSize);
          for x := 0 to FXSize - 1 do
          begin
-            GData := Pointer(Cardinal(Data) + 1);
-            BData := Pointer(Cardinal(Data) + 2);
-            AData := Pointer(Cardinal(Data) + 3);
-            SetRGBAPixelColor(Position,Byte(Data^),Byte(GData^),Byte(BData^),Byte(AData^));
+            BData := Pointer(Cardinal(Data) + 1);
+            GData := Pointer(Cardinal(Data) + 2);
+            RData := Pointer(Cardinal(Data) + 3);
+            SetRGBAPixelColor(Position,Byte(RData^),Byte(GData^),Byte(BData^),Byte(Data^));
             inc(Position);
             Data := Pointer(Cardinal(Data) + 4);
          end;
@@ -221,6 +223,39 @@ begin
          inc(Line);
       end;
    end;
+end;
+
+function TAbstract2DImageData.SaveToRGBA:Pointer;
+var
+   Data : Array of LongWord;
+   DataLength, x : Integer;
+begin
+   DataLength := FXSize*FYSize;
+   SetLength(Data,DataLength);
+   for x := 0 to (DataLength-1) do
+   begin
+      Data[x] := GetRPixelColor(x) + (GetGPixelColor(x) shl 8) + (GetBPixelColor(x) shl 16) + (GetAPixelColor(x) shl 24);
+   end;
+   Result := @Data[0];
+end;
+
+function TAbstract2DImageData.SaveToGL_RGBA:Pointer;
+var
+   Data : Array of LongWord;
+   DataLength, x,y, Position : Integer;
+begin
+   DataLength := FXSize*FYSize;
+   SetLength(Data,DataLength);
+   for y := FYSize - 1 downto 0 do
+   begin
+      Position := (y * FXSize);
+      for x := 0 to FXSize - 1 do
+      begin
+         Data[Position] := GetRPixelColor(Position) + (GetGPixelColor(Position) shl 8) + (GetBPixelColor(Position) shl 16) + (GetAPixelColor(Position) shl 24);
+         inc(Position);
+      end;
+   end;
+   Result := @Data[0];
 end;
 
 // Gets
