@@ -46,6 +46,9 @@ type
          function isPixelValid(_x, _y: integer):boolean;
          // Copies
          procedure Assign(const _Source: TAbstract2DImageData); virtual;
+         // Misc
+         procedure ScaleBy(_Value: single); virtual; abstract;
+         procedure Invert; virtual; abstract;
          // properties
          property XSize:integer read GetXSize;
          property YSize:integer read GetYSize;

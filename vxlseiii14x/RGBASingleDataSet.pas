@@ -1,11 +1,11 @@
-unit RGBSingleDataSet;
+unit RGBASingleDataSet;
 
 interface
 
 uses SingleDataSet;
 
 type
-   TRGBSingleDataSet = class (TSingleDataSet)
+   TRGBASingleDataSet = class (TSingleDataSet)
       private
          FData : array of single;
          FLength : integer;
@@ -14,11 +14,13 @@ type
          function GetRed(_pos: integer): single;
          function GetGreen(_pos: integer): single;
          function GetBlue(_pos: integer): single;
+         function GetAlpha(_pos: integer): single;
          // Sets
          procedure SetData(_pos: integer; _data: single);
          procedure SetRed(_pos: integer; _data: single);
          procedure SetGreen(_pos: integer; _data: single);
          procedure SetBlue(_pos: integer; _data: single);
+         procedure SetAlpha(_pos: integer; _data: single);
       protected
          // Gets
          function GetDataLength: integer; override;
@@ -31,67 +33,78 @@ type
          property Red[_pos: integer]:single read GetRed write SetRed;
          property Green[_pos: integer]:single read GetGreen write SetGreen;
          property Blue[_pos: integer]:single read GetBlue write SetBlue;
+         property Alpha[_pos: integer]:single read GetAlpha write SetAlpha;
    end;
 
 implementation
 
 // Gets
-function TRGBSingleDataSet.GetData(_pos: integer): single;
+function TRGBASingleDataSet.GetData(_pos: integer): single;
 begin
    Result := FData[_pos];
 end;
 
-function TRGBSingleDataSet.GetRed(_pos: integer): single;
+function TRGBASingleDataSet.GetRed(_pos: integer): single;
 begin
-   Result := FData[3*_pos];
+   Result := FData[4*_pos];
 end;
 
-function TRGBSingleDataSet.GetGreen(_pos: integer): single;
+function TRGBASingleDataSet.GetGreen(_pos: integer): single;
 begin
-   Result := FData[(3*_pos)+1];
+   Result := FData[(4*_pos)+1];
 end;
 
-function TRGBSingleDataSet.GetBlue(_pos: integer): single;
+function TRGBASingleDataSet.GetBlue(_pos: integer): single;
 begin
-   Result := FData[(3*_pos)+2];
+   Result := FData[(4*_pos)+2];
 end;
 
-function TRGBSingleDataSet.GetLength: integer;
+function TRGBASingleDataSet.GetAlpha(_pos: integer): single;
+begin
+   Result := FData[(4*_pos)+3];
+end;
+
+function TRGBASingleDataSet.GetLength: integer;
 begin
    Result := FLength;
 end;
 
-function TRGBSingleDataSet.GetDataLength: integer;
+function TRGBASingleDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
 end;
 
 
 // Sets
-procedure TRGBSingleDataSet.SetData(_pos: integer; _data: single);
+procedure TRGBASingleDataSet.SetData(_pos: integer; _data: single);
 begin
    FData[_pos] := _data;
 end;
 
-procedure TRGBSingleDataSet.SetRed(_pos: integer; _data: single);
+procedure TRGBASingleDataSet.SetRed(_pos: integer; _data: single);
 begin
-   FData[3*_pos] := _data;
+   FData[4*_pos] := _data;
 end;
 
-procedure TRGBSingleDataSet.SetGreen(_pos: integer; _data: single);
+procedure TRGBASingleDataSet.SetGreen(_pos: integer; _data: single);
 begin
-   FData[(3*_pos)+1] := _data;
+   FData[(4*_pos)+1] := _data;
 end;
 
-procedure TRGBSingleDataSet.SetBlue(_pos: integer; _data: single);
+procedure TRGBASingleDataSet.SetBlue(_pos: integer; _data: single);
 begin
-   FData[(3*_pos)+2] := _data;
+   FData[(4*_pos)+2] := _data;
 end;
 
-procedure TRGBSingleDataSet.SetLength(_size: Integer);
+procedure TRGBASingleDataSet.SetAlpha(_pos: integer; _data: single);
+begin
+   FData[(4*_pos)+3] := _data;
+end;
+
+procedure TRGBASingleDataSet.SetLength(_size: Integer);
 begin
    FLength := _size;
-   System.SetLength(FData,_size*3);
+   System.SetLength(FData,_size*4);
 end;
 
 end.

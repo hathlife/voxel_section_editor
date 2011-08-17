@@ -24,6 +24,9 @@ type
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
          procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
       public
+         // Misc
+         procedure ScaleBy(_Value: single); override;
+         procedure Invert; override;
          // properties
          property Data[_x,_y,_c:integer]:single read GetData write SetData; default;
    end;
@@ -106,6 +109,33 @@ begin
          1: (FData as TRGBSingleDataSet).Green[(_y * FXSize) + _x] := _value;
          2: (FData as TRGBSingleDataSet).Blue[(_y * FXSize) + _x] := _value;
       end;
+   end;
+end;
+
+// Misc
+procedure T2DImageRGBData.ScaleBy(_Value: single);
+var
+   x,maxx: integer;
+begin
+   maxx := (FXSize * FYSize) - 1;
+   for x := 0 to maxx do
+   begin
+      (FData as TRGBSingleDataSet).Red[x] := Round((FData as TRGBSingleDataSet).Red[x] * _Value);
+      (FData as TRGBSingleDataSet).Green[x] := Round((FData as TRGBSingleDataSet).Green[x] * _Value);
+      (FData as TRGBSingleDataSet).Blue[x] := Round((FData as TRGBSingleDataSet).Blue[x] * _Value);
+   end;
+end;
+
+procedure T2DImageRGBData.Invert;
+var
+   x,maxx: integer;
+begin
+   maxx := (FXSize * FYSize) - 1;
+   for x := 0 to maxx do
+   begin
+      (FData as TRGBSingleDataSet).Red[x] := 1 - (FData as TRGBSingleDataSet).Red[x];
+      (FData as TRGBSingleDataSet).Green[x] := 1 - (FData as TRGBSingleDataSet).Green[x];
+      (FData as TRGBSingleDataSet).Blue[x] := 1 - (FData as TRGBSingleDataSet).Blue[x];
    end;
 end;
 

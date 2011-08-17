@@ -33,6 +33,9 @@ type
       public
          // copies
          procedure Assign(const _Source: TAbstract2DImageData); override;
+         // Misc
+         procedure ScaleBy(_Value: single); override;
+         procedure Invert; override;
          // properties
          property Data[_x,_y,_c:integer]:longword read GetData write SetData; default;
          property DefaultColor:TImagePixelRGBAIntData read GetDefaultColor write SetDefaultColor;
@@ -156,6 +159,35 @@ begin
    FDefaultColor.g := (_Source as T2DImageRGBAIntData).FDefaultColor.g;
    FDefaultColor.b := (_Source as T2DImageRGBAIntData).FDefaultColor.b;
    FDefaultColor.a := (_Source as T2DImageRGBAIntData).FDefaultColor.a;
+end;
+
+// Misc
+procedure T2DImageRGBAIntData.ScaleBy(_Value: single);
+var
+   x,maxx: integer;
+begin
+   maxx := (FXSize * FYSize) - 1;
+   for x := 0 to maxx do
+   begin
+      (FData as TRGBAIntDataSet).Red[x] := Round((FData as TRGBAIntDataSet).Red[x] * _Value);
+      (FData as TRGBAIntDataSet).Green[x] := Round((FData as TRGBAIntDataSet).Green[x] * _Value);
+      (FData as TRGBAIntDataSet).Blue[x] := Round((FData as TRGBAIntDataSet).Blue[x] * _Value);
+      (FData as TRGBAIntDataSet).Alpha[x] := Round((FData as TRGBAIntDataSet).Alpha[x] * _Value);
+   end;
+end;
+
+procedure T2DImageRGBAIntData.Invert;
+var
+   x,maxx: integer;
+begin
+   maxx := (FXSize * FYSize) - 1;
+   for x := 0 to maxx do
+   begin
+      (FData as TRGBAIntDataSet).Red[x] := 255 - (FData as TRGBAIntDataSet).Red[x];
+      (FData as TRGBAIntDataSet).Green[x] := 255 - (FData as TRGBAIntDataSet).Green[x];
+      (FData as TRGBAIntDataSet).Blue[x] := 255 - (FData as TRGBAIntDataSet).Blue[x];
+      (FData as TRGBAIntDataSet).Alpha[x] := 255 - (FData as TRGBAIntDataSet).Alpha[x];
+   end;
 end;
 
 end.

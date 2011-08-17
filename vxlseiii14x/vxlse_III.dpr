@@ -119,8 +119,8 @@ uses
   Abstract2DImageData in 'Abstract2DImageData.pas',
   ByteDataSet in 'ByteDataSet.pas',
   IntDataSet in 'IntDataSet.pas',
-  ImageGrayByteData in 'ImageGrayByteData.pas',
-  ImageGrayData in 'ImageGrayData.pas',
+  ImageGreyByteData in 'ImageGreyByteData.pas',
+  ImageGreyData in 'ImageGreyData.pas',
   ImageRGBData in 'ImageRGBData.pas',
   ImageRGBIntData in 'ImageRGBIntData.pas',
   SingleDataSet in 'SingleDataSet.pas',
@@ -131,7 +131,9 @@ uses
   RGBAByteDataSet in 'RGBAByteDataSet.pas',
   RGBByteDataSet in 'RGBByteDataSet.pas',
   ImageRGBAByteData in 'ImageRGBAByteData.pas',
-  ImageRGBByteData in 'ImageRGBByteData.pas';
+  ImageRGBByteData in 'ImageRGBByteData.pas',
+  RGBASingleDataSet in 'RGBASingleDataSet.pas',
+  ImageRGBAData in 'ImageRGBAData.pas';
 
 {$R *.res}
 
