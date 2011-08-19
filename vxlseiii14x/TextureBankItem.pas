@@ -45,7 +45,7 @@ type
          constructor Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap); overload;
          constructor Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          constructor Create(const _Data : Pointer; _Format: GLInt; _Height,_Width: integer); overload;
-         constructor Create(const _Image : TAbstract2DImageData; _Format: GLInt); overload;
+         constructor Create(const _Image : TAbstract2DImageData; _Format: GLInt = GL_RGBA); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;

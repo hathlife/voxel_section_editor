@@ -4,7 +4,7 @@ interface
 
 uses dglOpenGL, BasicDataTypes, TextureBank, TextureBankItem, ShaderBank, ShaderBankItem,
    BasicFunctions, GlConstants, ClassIntegerSet, SysUtils, Windows, Graphics,
-   Dialogs;
+   Dialogs, Abstract2DImageData;
 
 type
    TMeshMaterial = class
@@ -24,6 +24,7 @@ type
          destructor Destroy; override;
          // Gets
          function GetTexture(_Type: integer):TBitmap;
+         procedure GetTextureData(_Type: integer; var _Image: TAbstract2DImageData);
          function GetTextureID(_Type: integer):integer;
          function GetLastTextureID: integer;
          function GetNextTextureID: integer;
@@ -84,10 +85,30 @@ begin
          begin
             glActiveTexture(GL_TEXTURE0 + tex);
             Result := Texture[tex]^.DownloadTexture(0);
+            exit;
          end;
       end;
    end;
 end;
+
+procedure TMeshMaterial.GetTextureData(_Type: integer; var _Image: TAbstract2DImageData);
+var
+   tex: integer;
+begin
+   for tex := Low(Texture) to High(Texture) do
+   begin
+      if Texture[tex] <> nil then
+      begin
+         if Texture[tex].TextureType = _Type then
+         begin
+            glActiveTexture(GL_TEXTURE0 + tex);
+            Texture[tex]^.DownloadTexture(0,_Image);
+            exit;
+         end;
+      end;
+   end;
+end;
+
 
 function TMeshMaterial.GetTextureID(_Type: integer):integer;
 var

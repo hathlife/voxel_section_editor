@@ -341,9 +341,9 @@ begin
    begin
       Normalize(Normal);
    end;
-   _Buffer.Red[X,Y] := Normal.X;
-   _Buffer.Green[X,Y] := Normal.Y;
-   _Buffer.Blue[X,Y] := Normal.Z;
+   _Buffer.Red[X,Y] := (1 + Normal.X) * 127.5;
+   _Buffer.Green[X,Y] := (1 + Normal.Y) * 127.5;
+   _Buffer.Blue[X,Y] := (1 + Normal.Z) * 127.5;
    DifferentNormalsList.Free;
 end;
 

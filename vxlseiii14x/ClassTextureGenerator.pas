@@ -3,7 +3,8 @@ unit ClassTextureGenerator;
 interface
 
 uses GLConstants, BasicDataTypes, Windows, Graphics, BasicFunctions, SysUtils,
-   Math3d, ClassTriangleFiller;
+   Math3d, ClassTriangleFiller, ImageRGBAByteData, ImageGreyByteData,
+   ImageRGBByteData, Abstract2DImageData;
 
 type
    CTextureGenerator = class
@@ -11,7 +12,7 @@ type
          // Painting procedures
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
          procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
-         function GenerateHeightMapBuffer(const _DiffuseMap: TBitmap): TByteMap;
+         function GenerateHeightMapBuffer(const _DiffuseMap: TAbstract2DImageData): T2DImageGreyByteData;
       public
          // Constructors and Destructors
          constructor Create; overload;
@@ -30,7 +31,7 @@ type
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; _Size: integer); overload;
          procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
          procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
-         procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; const _DiffuseMap: TBitmap);
+         procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; const _DiffuseMap: TAbstract2DImageData);
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer); overload;
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer); overload;
          function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
@@ -38,7 +39,7 @@ type
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer): TBitmap; overload;
-         function GetBumpMapTexture(const _DiffuseMap: TBitmap): TBitmap;
+         function GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData): TAbstract2DImageData;
    end;
 
 
@@ -419,23 +420,23 @@ begin
    end;
 end;
 
-function CTextureGenerator.GenerateHeightMapBuffer(const _DiffuseMap: TBitmap): TByteMap;
+function CTextureGenerator.GenerateHeightMapBuffer(const _DiffuseMap: TAbstract2DImageData): T2DImageGreyByteData;
 var
    x,y,Size : integer;
    r,g,b: real;
 begin
    // Build height map and visited map
-   Size := _DiffuseMap.Width;
-   SetLength(Result,Size,Size);
-   for x := Low(Result) to High(Result) do
+   Size := _DiffuseMap.XSize;
+   Result := T2DImageGreyByteData.Create(Size,Size);
+   for x := 0 to Result.MaxX do
    begin
-      for y := Low(Result[x]) to High(Result[x]) do
+      for y := 0 to Result.MaxY do
       begin
-         r := GetRValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
-         g := GetGValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
-         b := GetBValue(_DiffuseMap.Canvas.Pixels[x,y]) / 255;
+         r := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,0] / 255;
+         g := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,1] / 255;
+         b := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,2] / 255;
          // Convert to YIQ
-         Result[x,y] := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         Result.Data[x,y] := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
       end;
    end;
 end;
@@ -470,9 +471,9 @@ begin
 end;
 
 // This is the original attempt painting faces.
-procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; const _DiffuseMap: TBitmap);
+procedure CTextureGenerator.PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; const _DiffuseMap: TAbstract2DImageData);
 var
-   HeightMap : TByteMap;
+   HeightMap : TAbstract2DImageData;
    Face : integer;
    Filler: CTriangleFiller;
 begin
@@ -489,31 +490,29 @@ begin
       // Go to next face.
       inc(Face,_VerticesPerFace);
    end;
+   HeightMap.Free;
    Filler.Free;
 end;
 
 // This is the latest attempt as a simple image processsing operation.
-function CTextureGenerator.GetBumpMapTexture(const _DiffuseMap: TBitmap): TBitmap;
+function CTextureGenerator.GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData): TAbstract2DImageData;
 var
-   HeightMap : TByteMap;
+   HeightMap : TAbstract2DImageData;
    x,y,Size : integer;
    Filler: CTriangleFiller;
 begin
    // Build height map and visited map
    Filler := CTriangleFiller.Create;
    HeightMap := GenerateHeightMapBuffer(_DiffuseMap);
-   Size := High(HeightMap)+1;
-   Result := TBitmap.Create;
-   Result.PixelFormat := pf32bit;
-   Result.Transparent := false;
-   Result.Width := Size;
-   Result.Height := Size;
+   Size := HeightMap.XSize;
+   Result := T2DImageRGBByteData.Create(Size,Size);
    // Now, we'll check each face.
-   for x := Low(HeightMap) to High(HeightMap) do
-      for y := Low(HeightMap[x]) to High(HeightMap[x]) do
+   for x := 0 to HeightMap.MaxX do
+      for y := 0 to HeightMap.MaxY do
       begin
          Filler.PaintBumpValueAtFrameBuffer(Result,HeightMap,X,Y,Size);
       end;
+   HeightMap.Free;
    Filler.Free;
 end;
 

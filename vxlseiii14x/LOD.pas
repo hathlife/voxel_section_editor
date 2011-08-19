@@ -8,7 +8,8 @@ interface
 
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
-   ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor, ImageIOUtils;
+   ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor, ImageIOUtils,
+   ImageRGBAByteData, ImageRGBByteData, Abstract2DImageData;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -638,14 +639,17 @@ procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer);
 var
    i : integer;
    TexGenerator: CTextureGenerator;
-   Bitmap : TBitmap;
+   DiffuseMap: TAbstract2DImageData;
+   BumpMap : TAbstract2DImageData;
    NormalTexture : PTextureBankItem;
 begin
    TexGenerator := CTextureGenerator.Create;
-   Bitmap := TexGenerator.GetBumpMapTexture(Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE));
+   DiffuseMap := T2DImageRGBAByteData.Create(0,0);
+   Mesh[0].Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
+   BumpMap := TexGenerator.GetBumpMapTexture(DiffuseMap);
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
-   NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
+   NormalTexture := GlobalVars.TextureBank.Add(BumpMap);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -653,7 +657,8 @@ begin
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   Bitmap.Free;
+   DiffuseMap.Free;
+   BumpMap.Free;
    TexGenerator.Free;
 
 {

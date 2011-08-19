@@ -10,7 +10,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
       ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool,
-      ClassTextureAtlasExtractor;
+      ClassTextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -156,7 +156,7 @@ type
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
-         procedure PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
          procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
@@ -1459,13 +1459,14 @@ begin
    SetShaderUniform := SetUniformShaderBumpMapping;
 end;
 
-procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: T2DFrameBuffer; var _TexGenerator: CTextureGenerator);
+procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
 var
-   DiffuseBitmap: TBitmap;
+   DiffuseMap: TAbstract2DImageData;
 begin
-   DiffuseBitmap := Materials[0].GetTexture(C_TTP_DIFFUSE);
-   _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseBitmap);
-   DiffuseBitmap.Free;
+   DiffuseMap := T2DImageRGBAByteData.Create(0,0);
+   Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
+   _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseMap);
+   DiffuseMap.Free;
    AddBumpMapDataPlugin;
    SetShaderAttributes := SetAtributeShaderBumpMapping;
    SetShaderUniform := SetUniformShaderBumpMapping;

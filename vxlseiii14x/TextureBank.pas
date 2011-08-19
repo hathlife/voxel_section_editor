@@ -2,7 +2,8 @@ unit TextureBank;
 
 interface
 
-uses BasicDataTypes, dglOpengl, TextureBankItem, SysUtils, Windows, Graphics;
+uses BasicDataTypes, dglOpengl, TextureBankItem, SysUtils, Windows, Graphics,
+   Abstract2DImageData;
 
 type
    TTextureBank = class
@@ -31,6 +32,7 @@ type
          function Add(const _Bitmaps: TABitmap): PTextureBankItem; overload;
          function Add(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem; overload;
          function Add(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem; overload;
+         function Add(const _Image: TAbstract2DImageData): PTextureBankItem; overload;
          function AddReadOnly(const _filename: string): PTextureBankItem; overload;
          function AddReadOnly(const _ID: GLInt): PTextureBankItem; overload;
          function Clone(const _filename: string): PTextureBankItem; overload;
@@ -39,6 +41,7 @@ type
          function Clone(const _Bitmaps: TABitmap): PTextureBankItem; overload;
          function Clone(const _Bitmap: TBitmap; const _AlphaMap: TByteMap): PTextureBankItem; overload;
          function Clone(const _Bitmaps: TABitmap; const _AlphaMaps: TAByteMap): PTextureBankItem; overload;
+         function Clone(const _Image: TAbstract2DImageData): PTextureBankItem; overload;
          function CloneEditable(const _ID: GLInt): PTextureBankItem; overload;
          // Deletes
          procedure Delete(const _ID : GLInt);
@@ -336,6 +339,11 @@ begin
    Result := Clone(_Bitmaps,_AlphaMaps);
 end;
 
+function TTextureBank.Add(const _Image: TAbstract2DImageData): PTextureBankItem;
+begin
+   Result := Clone(_Image);
+end;
+
 function TTextureBank.AddReadOnly(const _filename: string): PTextureBankItem;
 var
    i : integer;
@@ -485,6 +493,23 @@ begin
    end;
    Result := Items[High(Items)];
 end;
+
+function TTextureBank.Clone(const _Image: TAbstract2DImageData): PTextureBankItem;
+begin
+   SetLength(Items,High(Items)+2);
+   try
+      new(Items[High(Items)]);
+      Items[High(Items)]^ := TTextureBankItem.Create(_Image);
+   except
+      Items[High(Items)]^.Free;
+      Dispose(Items[High(Items)]);
+      SetLength(Items,High(Items));
+      Result := nil;
+      exit;
+   end;
+   Result := Items[High(Items)];
+end;
+
 
 function TTextureBank.CloneEditable(const _ID: GLInt): PTextureBankItem;
 begin
