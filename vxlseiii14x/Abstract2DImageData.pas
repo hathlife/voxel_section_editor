@@ -35,6 +35,8 @@ type
          constructor Create(_XSize, _YSize: integer); overload;
          constructor CreateFromBitmap(const _Bitmap:TBitmap);
          constructor Create(const _Source: TAbstract2DImageData); overload;
+         constructor CreateFromRGBA(const _Data:Pointer; _Width, _Height: integer);
+         constructor CreateFromGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
          destructor Destroy; override;
          procedure Clear;
          // I/O
@@ -80,6 +82,19 @@ begin
    Initialize;
    Assign(_Source);
 end;
+
+constructor TAbstract2DImageData.CreateFromRGBA(const _Data:Pointer; _Width, _Height: integer);
+begin
+   Initialize;
+   LoadRGBA(_Data,_Width,_Height);
+end;
+
+constructor TAbstract2DImageData.CreateFromGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
+begin
+   Initialize;
+   LoadGL_RGBA(_Data,_Width,_Height);
+end;
+
 
 destructor TAbstract2DImageData.Destroy;
 begin

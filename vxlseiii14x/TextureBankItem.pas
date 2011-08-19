@@ -3,7 +3,7 @@ unit TextureBankItem;
 interface
 
 uses dglOpenGL, BasicDataTypes, BasicFunctions, Windows, Graphics, JPEG,
-   PNGImage, DDS, SysUtils;
+   PNGImage, DDS, SysUtils, Abstract2DImageData;
 
 type
    TTextureBankItem = class
@@ -32,7 +32,8 @@ type
          procedure SavePNGTexture(const _Filename : string);
          procedure SaveTGATexture(const _Filename : string);
          procedure SaveDDSTexture(const _Filename : string);
-         procedure UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
+         procedure UploadTexture(_Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer); overload;
+         procedure UploadTexture(const _Image : TAbstract2DImageData; _Format: GLInt; _Level: integer); overload;
       public
          TextureType : integer;
          // Constructor and Destructor
@@ -44,6 +45,7 @@ type
          constructor Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap); overload;
          constructor Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          constructor Create(const _Data : Pointer; _Format: GLInt; _Height,_Width: integer); overload;
+         constructor Create(const _Image : TAbstract2DImageData; _Format: GLInt); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;
@@ -52,6 +54,7 @@ type
          procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
          procedure LoadTexture(const _Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer); overload;
+         procedure LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt;_Level: integer); overload;
          procedure ReplaceTexture(const _Filename : string); overload;
          procedure ReplaceTexture(const _Bitmaps : TABitmap); overload;
          procedure ReplaceTexture(const _Bitmap : TBitmap; _Level: integer); overload;
@@ -60,6 +63,7 @@ type
          procedure SaveTexture(const _Filename: string);
          function DownloadTexture(_Level : integer): TBitmap; overload;
          function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
+         procedure DownloadTexture(_Level : integer; var _Image: TAbstract2DImageData); overload;
          // Sets
          procedure SetEditable(_value: boolean);
          procedure SetFilename(_value: string);
@@ -161,6 +165,17 @@ begin
    SetNumMipmaps(1);
    glDisable(GL_TEXTURE_2D);
 end;
+
+constructor TTextureBankItem.Create(const _Image : TAbstract2DImageData; _Format: GLInt);
+begin
+   glGenTextures(1, @ID);
+   glEnable(GL_TEXTURE_2D);
+   LoadTexture(_Image,_Format,0);
+   Counter := 1;
+   SetNumMipmaps(1);
+   glDisable(GL_TEXTURE_2D);
+end;
+
 
 destructor TTextureBankItem.Destroy;
 begin
@@ -269,6 +284,11 @@ end;
 procedure TTextureBankItem.LoadTexture(const _Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer);
 begin
    UploadTexture(_Data,_Format,_Height,_Width,_Level);
+end;
+
+procedure TTextureBankItem.LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt;_Level: integer);
+begin
+   UploadTexture(_Image,_Format,_Level);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Filename : string);
@@ -667,6 +687,19 @@ begin
    glDisable(GL_TEXTURE_2D);
 end;
 
+procedure TTextureBankItem.UploadTexture(const _Image : TAbstract2DImageData; _Format: GLInt; _Level: integer);
+var
+   Data: Pointer;
+begin
+   TextureSize := _Image.XSize;
+   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D, ID);
+   Data := _Image.SaveToRGBA;
+   glTexImage2D(GL_TEXTURE_2D, _Level, _Format, _Image.XSize, _Image.YSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+   SetLength(AUInt32(Data^),0);
+   glDisable(GL_TEXTURE_2D);
+end;
+
 // Borrowed and adapted from Stucuk's code from OS: Voxel Viewer 1.80+ without AllWhite.
 function TTextureBankItem.DownloadTexture(_Level : integer) : TBitmap;
 var
@@ -756,6 +789,33 @@ begin
       end;
 
    FreeMem(RGBBits);
+end;
+
+procedure TTextureBankItem.DownloadTexture(_Level : integer; var _Image: TAbstract2DImageData);
+var
+   Width, Height : cardinal;
+   Tempi : PGLInt;
+   Data: Pointer;
+begin
+   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D,ID);
+
+   GetMem(Tempi,4);
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,_Level,GL_TEXTURE_WIDTH,tempi);
+   Width := tempi^;
+   FreeMem(tempi);
+   GetMem(tempi,4);
+   glGetTexLevelParameteriv(GL_TEXTURE_2D,_Level,GL_TEXTURE_HEIGHT,tempi);
+   Height := tempi^;
+   FreeMem(tempi);
+
+   GetMem(Data, Width * Height * 4);
+   glGetTexImage(GL_TEXTURE_2D,_Level,GL_RGBA,GL_UNSIGNED_BYTE, Data);
+
+   glDisable(GL_TEXTURE_2D);
+   _Image.LoadRGBA(Data,Width,Height);
+
+   FreeMem(Data);
 end;
 
 
