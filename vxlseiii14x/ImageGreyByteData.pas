@@ -19,9 +19,17 @@ type
          function GetGPixelColor(_Position: longword):byte; override;
          function GetBPixelColor(_Position: longword):byte; override;
          function GetAPixelColor(_Position: longword):byte; override;
+         function GetRedPixelColor(_x,_y: integer):single; override;
+         function GetGreenPixelColor(_x,_y: integer):single; override;
+         function GetBluePixelColor(_x,_y: integer):single; override;
+         function GetAlphaPixelColor(_x,_y: integer):single; override;
          // Sets
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
          procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
+         procedure SetRedPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetGreenPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
+         procedure SetAlphaPixelColor(_x,_y: integer; _value:single); override;
       public
          // Misc
          procedure ScaleBy(_Value: single); override;
@@ -76,6 +84,26 @@ begin
    Result := 0;
 end;
 
+function T2DImageGreyByteData.GetRedPixelColor(_x,_y: integer):single;
+begin
+   Result := (FData as TByteDataSet).Data[(_y * FXSize) + _x];
+end;
+
+function T2DImageGreyByteData.GetGreenPixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
+function T2DImageGreyByteData.GetBluePixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
+function T2DImageGreyByteData.GetAlphaPixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
 
 // Sets
 procedure T2DImageGreyByteData.SetBitmapPixelColor(_Position, _Color: longword);
@@ -86,6 +114,26 @@ end;
 procedure T2DImageGreyByteData.SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte);
 begin
    (FData as TByteDataSet).Data[_Position] := Round(((0.299 * _r) + (0.587 * _g) + (0.114 * _b)) * 255);
+end;
+
+procedure T2DImageGreyByteData.SetRedPixelColor(_x,_y: integer; _value:single);
+begin
+   (FData as TByteDataSet).Data[(_y * FXSize) + _x] := Round(_value) and $FF;
+end;
+
+procedure T2DImageGreyByteData.SetGreenPixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
+end;
+
+procedure T2DImageGreyByteData.SetBluePixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
+end;
+
+procedure T2DImageGreyByteData.SetAlphaPixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
 end;
 
 

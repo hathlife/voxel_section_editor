@@ -19,9 +19,17 @@ type
          function GetGPixelColor(_Position: longword):byte; override;
          function GetBPixelColor(_Position: longword):byte; override;
          function GetAPixelColor(_Position: longword):byte; override;
+         function GetRedPixelColor(_x,_y: integer):single; override;
+         function GetGreenPixelColor(_x,_y: integer):single; override;
+         function GetBluePixelColor(_x,_y: integer):single; override;
+         function GetAlphaPixelColor(_x,_y: integer):single; override;
          // Sets
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
          procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
+         procedure SetRedPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetGreenPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
+         procedure SetAlphaPixelColor(_x,_y: integer; _value:single); override;
       public
          // Misc
          procedure ScaleBy(_Value: single); override;
@@ -76,6 +84,25 @@ begin
    Result := 0;
 end;
 
+function T2DImageGreyData.GetRedPixelColor(_x,_y: integer):single;
+begin
+   Result := (FData as TSingleDataSet).Data[(_y * FXSize) + _x];
+end;
+
+function T2DImageGreyData.GetGreenPixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
+function T2DImageGreyData.GetBluePixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
+function T2DImageGreyData.GetAlphaPixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
 
 
 // Sets
@@ -87,6 +114,26 @@ end;
 procedure T2DImageGreyData.SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte);
 begin
    (FData as TSingleDataSet).Data[_Position] := (0.299 * _r) + (0.587 * _g) + (0.114 * _b);
+end;
+
+procedure T2DImageGreyData.SetRedPixelColor(_x,_y: integer; _value:single);
+begin
+   (FData as TSingleDataSet).Data[(_y * FXSize) + _x] := _value;
+end;
+
+procedure T2DImageGreyData.SetGreenPixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
+end;
+
+procedure T2DImageGreyData.SetBluePixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
+end;
+
+procedure T2DImageGreyData.SetAlphaPixelColor(_x,_y: integer; _value:single);
+begin
+   // Do nothing
 end;
 
 procedure T2DImageGreyData.SetData(_x, _y: integer; _value: single);

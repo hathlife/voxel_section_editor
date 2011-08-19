@@ -24,11 +24,19 @@ type
          function GetGPixelColor(_Position: longword):byte; virtual; abstract;
          function GetBPixelColor(_Position: longword):byte; virtual; abstract;
          function GetAPixelColor(_Position: longword):byte; virtual; abstract;
+         function GetRedPixelColor(_x,_y: integer):single; virtual; abstract;
+         function GetGreenPixelColor(_x,_y: integer):single; virtual; abstract;
+         function GetBluePixelColor(_x,_y: integer):single; virtual; abstract;
+         function GetAlphaPixelColor(_x,_y: integer):single; virtual; abstract;
          function GetName: String;
          // Sets
          procedure SetDataLength(_Size: longword); virtual;
          procedure SetBitmapPixelColor(_Position, _Color: longword); virtual; abstract;
          procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); virtual; abstract;
+         procedure SetRedPixelColor(_x,_y: integer; _value:single); virtual; abstract;
+         procedure SetGreenPixelColor(_x,_y: integer; _value:single); virtual; abstract;
+         procedure SetBluePixelColor(_x,_y: integer; _value:single); virtual; abstract;
+         procedure SetAlphaPixelColor(_x,_y: integer; _value:single); virtual; abstract;
          procedure SetName(const _Name:String);
       public
          // constructors and destructors
@@ -59,6 +67,10 @@ type
          property MaxX:integer read GetMaxX;
          property MaxY:integer read GetMaxY;
          property Name:String read GetName write SetName;
+         property Red[_x,_y: integer]:single read GetRedPixelColor write SetRedPixelColor;
+         property Green[_x,_y: integer]:single read GetGreenPixelColor write SetGreenPixelColor;
+         property Blue[_x,_y: integer]:single read GetBluePixelColor write SetBluePixelColor;
+         property Alpha[_x,_y: integer]:single read GetAlphaPixelColor write SetAlphaPixelColor;
    end;
 
 implementation

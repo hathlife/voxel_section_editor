@@ -20,9 +20,17 @@ type
          function GetGPixelColor(_Position: longword):byte; override;
          function GetBPixelColor(_Position: longword):byte; override;
          function GetAPixelColor(_Position: longword):byte; override;
+         function GetRedPixelColor(_x,_y: integer):single; override;
+         function GetGreenPixelColor(_x,_y: integer):single; override;
+         function GetBluePixelColor(_x,_y: integer):single; override;
+         function GetAlphaPixelColor(_x,_y: integer):single; override;
          // Sets
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
          procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
+         procedure SetRedPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetGreenPixelColor(_x,_y: integer; _value:single); override;
+         procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
+         procedure SetAlphaPixelColor(_x,_y: integer; _value:single); override;
       public
          // Misc
          procedure ScaleBy(_Value: single); override;
@@ -84,6 +92,26 @@ begin
    Result := 0;
 end;
 
+function T2DImageRGBData.GetRedPixelColor(_x,_y: integer):single;
+begin
+   Result := (FData as TRGBSingleDataSet).Red[(_y * FXSize) + _x];
+end;
+
+function T2DImageRGBData.GetGreenPixelColor(_x,_y: integer):single;
+begin
+   Result := (FData as TRGBSingleDataSet).Green[(_y * FXSize) + _x];
+end;
+
+function T2DImageRGBData.GetBluePixelColor(_x,_y: integer):single;
+begin
+   Result := (FData as TRGBSingleDataSet).Blue[(_y * FXSize) + _x];
+end;
+
+function T2DImageRGBData.GetAlphaPixelColor(_x,_y: integer):single;
+begin
+   Result := 0;
+end;
+
 
 // Sets
 procedure T2DImageRGBData.SetBitmapPixelColor(_Position, _Color: longword);
@@ -98,6 +126,26 @@ begin
    (FData as TRGBSingleDataSet).Red[_Position] := _r;
    (FData as TRGBSingleDataSet).Green[_Position] := _g;
    (FData as TRGBSingleDataSet).Blue[_Position] := _b;
+end;
+
+procedure T2DImageRGBData.SetRedPixelColor(_x,_y: integer; _value:single);
+begin
+   (FData as TRGBSingleDataSet).Red[(_y * FXSize) + _x] := Round(_value) and $FF;
+end;
+
+procedure T2DImageRGBData.SetGreenPixelColor(_x,_y: integer; _value:single);
+begin
+   (FData as TRGBSingleDataSet).Green[(_y * FXSize) + _x] := Round(_value) and $FF;
+end;
+
+procedure T2DImageRGBData.SetBluePixelColor(_x,_y: integer; _value:single);
+begin
+   (FData as TRGBSingleDataSet).Blue[(_y * FXSize) + _x] := Round(_value) and $FF;
+end;
+
+procedure T2DImageRGBData.SetAlphaPixelColor(_x,_y: integer; _value:single);
+begin
+   // do nothing
 end;
 
 procedure T2DImageRGBData.SetData(_x, _y, _c: integer; _value: single);
