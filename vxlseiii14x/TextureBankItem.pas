@@ -3,7 +3,7 @@ unit TextureBankItem;
 interface
 
 uses dglOpenGL, BasicDataTypes, BasicFunctions, Windows, Graphics, JPEG,
-   PNGImage, DDS, SysUtils, Abstract2DImageData;
+   PNGImage, DDS, SysUtils, Abstract2DImageData, Dialogs;
 
 type
    TTextureBankItem = class
@@ -689,14 +689,14 @@ end;
 
 procedure TTextureBankItem.UploadTexture(const _Image : TAbstract2DImageData; _Format: GLInt; _Level: integer);
 var
-   Data: Pointer;
+   Data: AUInt32;
 begin
    TextureSize := _Image.XSize;
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D, ID);
-   Data := _Image.SaveToRGBA;
-   glTexImage2D(GL_TEXTURE_2D, _Level, _Format, _Image.XSize, _Image.YSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
-   SetLength(AUInt32(Data^),0);
+   Data := _Image.SaveToGL_RGBA;
+   glTexImage2D(GL_TEXTURE_2D, _Level, _Format, _Image.XSize, _Image.YSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, Addr(Data[0]));
+   SetLength(Data,0);
    glDisable(GL_TEXTURE_2D);
 end;
 
@@ -796,6 +796,8 @@ var
    Width, Height : cardinal;
    Tempi : PGLInt;
    Data: Pointer;
+   RData,GData,BData,AData: PByte;
+   x, y: integer;
 begin
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D,ID);
@@ -813,7 +815,19 @@ begin
    glGetTexImage(GL_TEXTURE_2D,_Level,GL_RGBA,GL_UNSIGNED_BYTE, Data);
 
    glDisable(GL_TEXTURE_2D);
-   _Image.LoadRGBA(Data,Width,Height);
+{
+   RData := Data;
+   for x := 0 to (Width * Height) - 1 do
+   begin
+       GData := PByte(Cardinal(Data) + 1);
+       BData := PByte(Cardinal(Data) + 2);
+       AData := PByte(Cardinal(Data) + 3);
+       if (RData^ + GData^ + BData^ + AData^) > 0 then
+         ShowMessage('Position: ' + IntToStr(x) + ' - (' + IntToStr(RData^) + ', ' + IntToStr(GData^) + ', ' + IntToStr(BData^) + ', ' + IntToStr(AData^) + ')');
+       RData := PByte(Cardinal(Data) + 4);
+   end;
+}
+   _Image.LoadGL_RGBA(Addr(Data^),Width,Height);
 
    FreeMem(Data);
 end;

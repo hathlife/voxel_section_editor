@@ -154,8 +154,8 @@ type
          procedure GenerateDiffuseTexture;
          procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
-         procedure PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
-         procedure PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
+         procedure PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
@@ -1448,12 +1448,12 @@ begin
    _TexExtractor.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
 end;
 
-procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
 begin
    _TexGenerator.PaintMeshDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
 end;
 
-procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _TexGenerator: CTextureGenerator);
+procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
 begin
    _TexGenerator.PaintMeshNormalMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
    SetShaderUniform := SetUniformShaderBumpMapping;

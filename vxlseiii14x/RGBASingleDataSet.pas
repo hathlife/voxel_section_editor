@@ -7,7 +7,6 @@ uses SingleDataSet;
 type
    TRGBASingleDataSet = class (TSingleDataSet)
       private
-         FData : array of single;
          FLength : integer;
          // Gets
          function GetData(_pos: integer): single;

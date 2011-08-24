@@ -9,7 +9,8 @@ interface
 uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
    ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor, ImageIOUtils,
-   ImageRGBAByteData, ImageRGBByteData, Abstract2DImageData;
+   ImageRGBAByteData, ImageRGBAData, ImageRGBByteData, ImageGreyData,
+   Abstract2DImageData, ImageRGBData;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -546,23 +547,24 @@ procedure TLOD.GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
 var
    i : integer;
    TexGenerator: CTextureGenerator;
-   Buffer: T2DFrameBuffer;
-   WeightBuffer: TWeightBuffer;
-   Bitmap : TBitmap;
-   AlphaMap : TByteMap;
+   Buffer: TAbstract2DImageData;
+   WeightBuffer: TAbstract2DImageData;
+   TextureImage : TAbstract2DImageData;
    DiffuseTexture : PTextureBankItem;
 begin
    TexGenerator := CTextureGenerator.Create;
-   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
+   Buffer := T2DImageRGBAData.Create(_Size,_Size);
+   WeightBuffer := T2DImageGreyData.Create(_Size,_Size);
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].PaintMeshDiffuseTexture(Buffer,WeightBuffer,TexGenerator);
    end;
-   Bitmap := TexGenerator.GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,AlphaMap);
-   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   TextureImage := TexGenerator.GetColouredImageDataFromBuffer(Buffer,WeightBuffer);
+   Buffer.Free;
+   WeightBuffer.Free;
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
-   DiffuseTexture := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
+   DiffuseTexture := GlobalVars.TextureBank.Add(TextureImage);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -570,12 +572,7 @@ begin
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
-   for i := Low(AlphaMap) to High(AlphaMap) do
-   begin
-      SetLength(AlphaMap[i],0);
-   end;
-   SetLength(AlphaMap,0);
-   Bitmap.Free;
+   TextureImage.Free;
    TexGenerator.Free;
 end;
 
@@ -595,22 +592,24 @@ procedure TLOD.GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer)
 var
    i : integer;
    TexGenerator: CTextureGenerator;
-   Buffer: T2DFrameBuffer;
-   WeightBuffer: TWeightBuffer;
-   Bitmap : TBitmap;
+   Buffer: TAbstract2DImageData;
+   WeightBuffer: TAbstract2DImageData;
+   TextureImage : TAbstract2DImageData;
    NormalTexture : PTextureBankItem;
 begin
    TexGenerator := CTextureGenerator.Create;
-   TexGenerator.SetupFrameBuffer(Buffer,WeightBuffer,_Size);
+   Buffer := T2DImageRGBData.Create(_Size,_Size);
+   WeightBuffer := T2DImageGreyData.Create(_Size,_Size);
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].PaintMeshNormalMapTexture(Buffer,WeightBuffer,TexGenerator);
    end;
-   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer,WeightBuffer);
-   TexGenerator.DisposeFrameBuffer(Buffer,WeightBuffer);
+   TextureImage := TexGenerator.GetPositionedImageDataFromBuffer(Buffer,WeightBuffer);
+   Buffer.Free;
+   WeightBuffer.Free;
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
-   NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
+   NormalTexture := GlobalVars.TextureBank.Add(TextureImage);
    // Now we add this diffuse texture to all meshes.
    for i := Low(Mesh) to High(Mesh) do
    begin
@@ -618,7 +617,7 @@ begin
    end;
    // Free memory.
    GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   Bitmap.Free;
+   TextureImage.Free;
    TexGenerator.Free;
 end;
 

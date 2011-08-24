@@ -2,7 +2,7 @@ unit ImageRGBIntData;
 
 interface
 
-uses Windows, Graphics, Abstract2DImageData, RGBIntDataSet;
+uses Windows, Graphics, Abstract2DImageData, RGBIntDataSet, dglOpenGL;
 
 type
    TImagePixelRGBIntData = record
@@ -33,12 +33,14 @@ type
          function GetAlphaPixelColor(_x,_y: integer):single; override;
          // Sets
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
-         procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
+         procedure SetRGBAPixelColor(_Position: integer; _r, _g, _b, _a: byte); override;
          procedure SetRedPixelColor(_x,_y: integer; _value:single); override;
          procedure SetGreenPixelColor(_x,_y: integer; _value:single); override;
          procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y: integer; _value:single); override;
       public
+         // Gets
+         function GetOpenGLFormat:TGLInt; override;
          // copies
          procedure Assign(const _Source: TAbstract2DImageData); override;
          // Misc
@@ -94,7 +96,7 @@ end;
 
 function T2DImageRGBIntData.GetBitmapPixelColor(_Position: longword):longword;
 begin
-   Result := RGB((FData as TRGBIntDataSet).Red[_Position],(FData as TRGBIntDataSet).Green[_Position],(FData as TRGBIntDataSet).Blue[_Position]);
+   Result := RGB((FData as TRGBIntDataSet).Blue[_Position],(FData as TRGBIntDataSet).Green[_Position],(FData as TRGBIntDataSet).Red[_Position]);
 end;
 
 function T2DImageRGBIntData.GetRPixelColor(_Position: longword):byte;
@@ -137,6 +139,11 @@ begin
    Result := 0;
 end;
 
+function T2DImageRGBIntData.GetOpenGLFormat:TGLInt;
+begin
+   Result := GL_RGB;
+end;
+
 
 // Sets
 procedure T2DImageRGBIntData.SetBitmapPixelColor(_Position, _Color: longword);
@@ -146,7 +153,7 @@ begin
    (FData as TRGBIntDataSet).Blue[_Position] := GetBValue(_Color);
 end;
 
-procedure T2DImageRGBIntData.SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte);
+procedure T2DImageRGBIntData.SetRGBAPixelColor(_Position: integer; _r, _g, _b, _a: byte);
 begin
    (FData as TRGBIntDataSet).Red[_Position] := _r;
    (FData as TRGBIntDataSet).Green[_Position] := _g;

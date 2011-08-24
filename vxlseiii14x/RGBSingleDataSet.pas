@@ -2,12 +2,11 @@ unit RGBSingleDataSet;
 
 interface
 
-uses SingleDataSet;
+uses SingleDataSet, dglOpenGL;
 
 type
    TRGBSingleDataSet = class (TSingleDataSet)
       private
-         FData : array of single;
          FLength : integer;
          // Gets
          function GetData(_pos: integer): single;

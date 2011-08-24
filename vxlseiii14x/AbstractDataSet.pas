@@ -6,15 +6,13 @@ type
    TAbstractDataSet = class
       private
          FData : array of pointer;
-         // Gets
-         function GetData(_pos: integer): pointer;
-         // Sets
-         procedure SetData(_pos: integer; _data: pointer);
       protected
          // Gets
+         function GetData(_pos: integer): pointer; virtual;
          function GetDataLength: integer; virtual;
          function GetLength: integer; virtual;
          // Sets
+         procedure SetData(_pos: integer; _data: pointer); virtual;
          procedure SetLength(_size: integer); virtual;
       public
          // constructors and destructors

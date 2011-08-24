@@ -7,7 +7,6 @@ uses ByteDataSet;
 type
    TRGBAByteDataSet = class (TByteDataSet)
       private
-         FData : array of byte;
          FLength : integer;
          // Gets
          function GetData(_pos: integer): byte;

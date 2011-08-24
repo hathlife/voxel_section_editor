@@ -2,7 +2,7 @@ unit Abstract2DImageData;
 
 interface
 
-uses Windows, Graphics, BasicFunctions, AbstractDataSet;
+uses Windows, Graphics, BasicFunctions, BasicDataTypes, AbstractDataSet, dglOpenGL;
 
 type
    TAbstract2DImageData = class
@@ -32,7 +32,7 @@ type
          // Sets
          procedure SetDataLength(_Size: longword); virtual;
          procedure SetBitmapPixelColor(_Position, _Color: longword); virtual; abstract;
-         procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); virtual; abstract;
+         procedure SetRGBAPixelColor(_Position: integer; _r, _g, _b, _a: byte); virtual; abstract;
          procedure SetRedPixelColor(_x,_y: integer; _value:single); virtual; abstract;
          procedure SetGreenPixelColor(_x,_y: integer; _value:single); virtual; abstract;
          procedure SetBluePixelColor(_x,_y: integer; _value:single); virtual; abstract;
@@ -52,10 +52,11 @@ type
          procedure LoadRGBA(const _Data:Pointer; _Width, _Height: integer);
          procedure LoadGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
          function SaveToBitmap:TBitmap;
-         function SaveToRGBA:Pointer;
-         function SaveToGL_RGBA:Pointer;
+         function SaveToRGBA:AUInt32;
+         function SaveToGL_RGBA:AUInt32;
          // Gets
          function isPixelValid(_x, _y: integer):boolean;
+         function GetOpenGLFormat:TGLInt; virtual;
          // Copies
          procedure Assign(const _Source: TAbstract2DImageData); virtual;
          // Misc
@@ -148,12 +149,13 @@ begin
       for y := 0 to FYSize - 1 do
       begin
          Line := _Bitmap.ScanLine[y];
+         Position := (y * FXSize);
          for x := 0 to FXSize - 1 do
          begin
             Value := Longword(Line^);
-            Position := (y * FXSize) + x;
             SetBitmapPixelColor(Position,Value);
             Line := Pointer(longword(Line) + 4);
+            inc(Position);
          end;
       end;
    end
@@ -168,7 +170,7 @@ end;
 procedure TAbstract2DImageData.LoadRGBA(const _Data:Pointer; _Width, _Height: integer);
 var
    x, DataLength, Position: integer;
-   Data,GData,BData,RData: Pointer;
+   Data,GData,BData,AData: PByte;
 begin
    if Assigned(_Data) then
    begin
@@ -180,12 +182,12 @@ begin
       Data := _Data;
       for x := 1 to DataLength do
       begin
-         BData := Pointer(Cardinal(Data) + 1);
-         GData := Pointer(Cardinal(Data) + 2);
-         RData := Pointer(Cardinal(Data) + 3);
-         SetRGBAPixelColor(Position,Byte(RData^),Byte(GData^),Byte(BData^),Byte(Data^));
+         GData := PByte(Cardinal(Data) + 1);
+         BData := PByte(Cardinal(Data) + 2);
+         AData := PByte(Cardinal(Data) + 3);
+         SetRGBAPixelColor(Position,Data^,GData^,BData^,AData^);
          inc(Position);
-         Data := Pointer(Cardinal(Data) + 4);
+         Data := PByte(Cardinal(Data) + 4);
       end;
    end
    else
@@ -200,7 +202,7 @@ end;
 procedure TAbstract2DImageData.LoadGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
 var
    x, y, Position,DataPosition: integer;
-   Data,GData,BData,RData: Pointer;
+   Data,GData,BData,AData: PByte;
 begin
    if Assigned(_Data) then
    begin
@@ -213,12 +215,12 @@ begin
          Position := (y * FXSize);
          for x := 0 to FXSize - 1 do
          begin
-            BData := Pointer(Cardinal(Data) + 1);
-            GData := Pointer(Cardinal(Data) + 2);
-            RData := Pointer(Cardinal(Data) + 3);
-            SetRGBAPixelColor(Position,Byte(RData^),Byte(GData^),Byte(BData^),Byte(Data^));
+            GData := PByte(Cardinal(Data) + 1);
+            BData := PByte(Cardinal(Data) + 2);
+            AData := PByte(Cardinal(Data) + 3);
+            SetRGBAPixelColor(Position,Data^,GData^,BData^,AData^);
             inc(Position);
-            Data := Pointer(Cardinal(Data) + 4);
+            Data := PByte(Cardinal(Data) + 4);
          end;
       end;
    end
@@ -243,46 +245,47 @@ begin
    for y := 0 to FYSize - 1 do
    begin
       Line := Result.ScanLine[y];
-      for x := 0 to FXSize - 1 do
-      begin
-         Position := (y * FXSize) + x;
-         Line^ := GetBitmapPixelColor(Position);
-         inc(Line);
-      end;
-   end;
-end;
-
-function TAbstract2DImageData.SaveToRGBA:Pointer;
-var
-   Data : Array of LongWord;
-   DataLength, x : Integer;
-begin
-   DataLength := FXSize*FYSize;
-   SetLength(Data,DataLength);
-   for x := 0 to (DataLength-1) do
-   begin
-      Data[x] := GetRPixelColor(x) + (GetGPixelColor(x) shl 8) + (GetBPixelColor(x) shl 16) + (GetAPixelColor(x) shl 24);
-   end;
-   Result := @Data[0];
-end;
-
-function TAbstract2DImageData.SaveToGL_RGBA:Pointer;
-var
-   Data : Array of LongWord;
-   DataLength, x,y, Position : Integer;
-begin
-   DataLength := FXSize*FYSize;
-   SetLength(Data,DataLength);
-   for y := FYSize - 1 downto 0 do
-   begin
       Position := (y * FXSize);
       for x := 0 to FXSize - 1 do
       begin
-         Data[Position] := GetRPixelColor(Position) + (GetGPixelColor(Position) shl 8) + (GetBPixelColor(Position) shl 16) + (GetAPixelColor(Position) shl 24);
+         Line^ := GetBitmapPixelColor(Position);
+         inc(Line);
          inc(Position);
       end;
    end;
-   Result := @Data[0];
+end;
+
+function TAbstract2DImageData.SaveToRGBA:AUInt32;
+var
+   DataLength, x : Integer;
+begin
+   DataLength := FXSize*FYSize;
+   SetLength(Result,DataLength);
+   for x := 0 to High(Result) do
+   begin
+      Result[x] := GetRPixelColor(x) + (GetGPixelColor(x) shl 8) + (GetBPixelColor(x) shl 16) + (GetAPixelColor(x) shl 24);
+   end;
+end;
+
+function TAbstract2DImageData.SaveToGL_RGBA:AUInt32;
+var
+   DataLength, x,y,yRes, PositionImg,PositionRes : Integer;
+begin
+   DataLength := FXSize*FYSize;
+   SetLength(Result,DataLength);
+   yRes := 0;
+   for y := (FYSize - 1) downto 0 do
+   begin
+      PositionImg := y * FXSize;
+      PositionRes := yRes * FXSize;
+      for x := 0 to FXSize - 1 do
+      begin
+         Result[PositionRes] := GetRPixelColor(PositionImg) + (GetGPixelColor(PositionImg) shl 8) + (GetBPixelColor(PositionImg) shl 16) + (GetAPixelColor(PositionImg) shl 24);
+         inc(PositionImg);
+         inc(PositionRes);
+      end;
+      inc(yRes);
+   end;
 end;
 
 // Gets
@@ -310,6 +313,12 @@ function TAbstract2DImageData.GetName: String;
 begin
    Result := FName;
 end;
+
+function TAbstract2DImageData.GetOpenGLFormat:TGLInt;
+begin
+   Result := GL_RGBA;
+end;
+
 
 function TAbstract2DImageData.isPixelValid(_x, _y: integer):boolean;
 begin

@@ -85,6 +85,7 @@ begin
          begin
             glActiveTexture(GL_TEXTURE0 + tex);
             Result := Texture[tex]^.DownloadTexture(0);
+            glActiveTexture(GL_TEXTURE0);
             exit;
          end;
       end;
@@ -103,6 +104,7 @@ begin
          begin
             glActiveTexture(GL_TEXTURE0 + tex);
             Texture[tex]^.DownloadTexture(0,_Image);
+            glActiveTexture(GL_TEXTURE0);
             exit;
          end;
       end;

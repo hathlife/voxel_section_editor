@@ -7,7 +7,6 @@ uses ByteDataSet;
 type
    TRGBByteDataSet = class (TByteDataSet)
       private
-         FData : array of byte;
          FLength : integer;
          // Gets
          function GetData(_pos: integer): byte;
@@ -91,7 +90,7 @@ end;
 procedure TRGBByteDataSet.SetLength(_size: Integer);
 begin
    FLength := _size;
-   System.SetLength(FData,_size*4);
+   System.SetLength(FData,_size*3);
 end;
 
 end.

@@ -25,7 +25,7 @@ type
          function GetAlphaPixelColor(_x,_y: integer):single; override;
          // Sets
          procedure SetBitmapPixelColor(_Position, _Color: longword); override;
-         procedure SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte); override;
+         procedure SetRGBAPixelColor(_Position: integer; _r, _g, _b, _a: byte); override;
          procedure SetRedPixelColor(_x,_y: integer; _value:single); override;
          procedure SetGreenPixelColor(_x,_y: integer; _value:single); override;
          procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
@@ -111,7 +111,7 @@ begin
    (FData as TByteDataSet).Data[_Position] := Round(((0.299 * GetRValue(_Color)) + (0.587 * GetGValue(_Color)) + (0.114 * GetBValue(_Color))) * 255);
 end;
 
-procedure T2DImageGreyByteData.SetRGBAPixelColor(_Position, _r, _g, _b, _a: byte);
+procedure T2DImageGreyByteData.SetRGBAPixelColor(_Position: integer; _r, _g, _b, _a: byte);
 begin
    (FData as TByteDataSet).Data[_Position] := Round(((0.299 * _r) + (0.587 * _g) + (0.114 * _b)) * 255);
 end;

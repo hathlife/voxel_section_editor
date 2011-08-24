@@ -7,7 +7,6 @@ uses IntDataSet;
 type
    TRGBIntDataSet = class (TIntDataSet)
       private
-         FData : array of longword;
          FLength : integer;
          // Gets
          function GetData(_pos: integer): longword;

@@ -11,7 +11,8 @@ type
       private
          // Painting procedures
          function GetHeightPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
-         procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap);
+         procedure FixBilinearBorders(var _Bitmap: TBitmap; var _AlphaMap: TByteMap); overload;
+         procedure FixBilinearBorders(var _ImageData: TAbstract2DImageData); overload;
          function GenerateHeightMapBuffer(const _DiffuseMap: TAbstract2DImageData): T2DImageGreyByteData;
       public
          // Constructors and Destructors
@@ -29,16 +30,18 @@ type
          // Generate Textures step by step
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size: integer); overload;
          procedure SetupFrameBuffer(var _Buffer: T2DFrameBuffer; _Size: integer); overload;
-         procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
-         procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+         procedure PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData);
+         procedure PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData);
          procedure PaintMeshBumpMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; const _DiffuseMap: TAbstract2DImageData);
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer); overload;
          procedure DisposeFrameBuffer(var _Buffer: T2DFrameBuffer); overload;
          function GetColouredBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap;
+         function GetColouredImageDataFromBuffer(var _Buffer, _WeightBuffer: TAbstract2DImageData): TAbstract2DImageData;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer): TBitmap; overload;
+         function GetPositionedImageDataFromBuffer(const _Buffer, _WeightBuffer: TAbstract2DImageData): TAbstract2DImageData;
          function GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData): TAbstract2DImageData;
    end;
 
@@ -184,6 +187,51 @@ begin
    FixBilinearBorders(Result,_AlphaMap);
 end;
 
+function CTextureGenerator.GetColouredImageDataFromBuffer(var _Buffer, _WeightBuffer: TAbstract2DImageData): TAbstract2DImageData;
+var
+   x,y : integer;
+begin
+   Result := T2DImageRGBAByteData.Create(_Buffer.XSize,_Buffer.YSize);
+   for x := 0 to _Buffer.MaxX do
+   begin
+      for y := 0 to _Buffer.MaxY do
+      begin
+         if _WeightBuffer.Red[x,y] > 0 then
+         begin
+            if ((_Buffer.Red[x,y]  / _WeightBuffer.Red[x,y]) < 0) then
+               _Buffer.Red[x,y] := 0;
+            if (abs(_Buffer.Red[x,y]  / _WeightBuffer.Red[x,y]) > 1) then
+               _Buffer.Red[x,y] := _WeightBuffer.Red[x,y];
+            if ((_Buffer.Green[x,y]  / _WeightBuffer.Red[x,y]) < 0) then
+               _Buffer.Green[x,y] := 0;
+            if (abs(_Buffer.Green[x,y]  / _WeightBuffer.Red[x,y]) > 1) then
+               _Buffer.Green[x,y] := _WeightBuffer.Red[x,y];
+            if ((_Buffer.Blue[x,y]  / _WeightBuffer.Red[x,y]) < 0) then
+               _Buffer.Blue[x,y] := 0;
+            if (abs(_Buffer.Blue[x,y]  / _WeightBuffer.Red[x,y]) > 1) then
+               _Buffer.Blue[x,y] := _WeightBuffer.Red[x,y];
+            if ((_Buffer.Alpha[x,y]  / _WeightBuffer.Red[x,y]) < 0) then
+               _Buffer.Alpha[x,y] := 0;
+            if (abs(_Buffer.Alpha[x,y]  / _WeightBuffer.Red[x,y]) > 1) then
+               _Buffer.Alpha[x,y] := _WeightBuffer.Red[x,y];
+
+            Result.Red[x,Result.YSize - y] := (_Buffer.Red[x,y] / _WeightBuffer.Red[x,y]) * 255;
+            Result.Green[x,Result.YSize - y] := (_Buffer.Green[x,y] / _WeightBuffer.Red[x,y]) * 255;
+            Result.Blue[x,Result.YSize - y] := (_Buffer.Blue[x,y] / _WeightBuffer.Red[x,y]) * 255;
+            Result.Alpha[x,Result.YSize - y] := (_Buffer.Alpha[x,y] / _WeightBuffer.Red[x,y]) * 255;
+         end
+         else
+         begin
+            Result.Red[x,Result.YSize - y] := 0;//$888888;
+            Result.Green[x,Result.YSize - y] := 0;//$888888;
+            Result.Blue[x,Result.YSize - y] := 0;//$888888;
+            Result.Alpha[x,Result.YSize - y] := C_TRP_INVISIBLE;
+         end;
+      end;
+   end;
+   FixBilinearBorders(Result);
+end;
+
 function CTextureGenerator.GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer): TBitmap;
 var
    x,y : integer;
@@ -210,6 +258,38 @@ begin
          else
          begin
             Result.Canvas.Pixels[x,Result.Height - y] := 0;
+         end;
+      end;
+   end;
+end;
+
+function CTextureGenerator.GetPositionedImageDataFromBuffer(const _Buffer, _WeightBuffer: TAbstract2DImageData): TAbstract2DImageData;
+var
+   x,y : integer;
+   Normal: TVector3f;
+begin
+   Result := T2DImageRGBByteData.Create(_Buffer.XSize,_Buffer.YSize);
+   for x := 0 to _Buffer.MaxX do
+   begin
+      for y := 0 to _Buffer.MaxY do
+      begin
+         if _WeightBuffer.Red[x,y] > 0 then
+         begin
+            Normal.X := _Buffer.Red[x,y] / _WeightBuffer.Red[x,y];
+            Normal.Y := _Buffer.Green[x,y] / _WeightBuffer.Red[x,y];
+            Normal.Z := _Buffer.Blue[x,y] / _WeightBuffer.Red[x,y];
+            if abs(Normal.X) + abs(Normal.Y) + abs(Normal.Z) = 0 then
+               Normal.Z := 1;
+            Normalize(Normal);
+            Result.Red[x,Result.YSize - y] := Round((1 + Normal.X) * 127.5);
+            Result.Green[x,Result.YSize - y] := Round((1 + Normal.Y) * 127.5);
+            Result.Blue[x,Result.YSize - y] := Round((1 + Normal.Z) * 127.5);
+         end
+         else
+         begin
+            Result.Red[x,Result.YSize - y] := 0;
+            Result.Green[x,Result.YSize - y] := 0;
+            Result.Blue[x,Result.YSize - y] := 0;
          end;
       end;
    end;
@@ -336,7 +416,6 @@ begin
       Filler.PaintTriangle(Buffer,WeightBuffer,_TextCoords[_Faces[(i * _VerticesPerFace)]],_TextCoords[_Faces[(i * _VerticesPerFace)+1]],_TextCoords[_Faces[(i * _VerticesPerFace)+2]],_VertsColours[_Faces[(i * _VerticesPerFace)]],_VertsColours[_Faces[(i * _VerticesPerFace)+1]],_VertsColours[_Faces[(i * _VerticesPerFace)+2]]);
    end;
    Result := GetColouredBitmapFromFrameBuffer(Buffer,WeightBuffer,_AlphaMap);
-//   Result.SaveToFile('test.bmp');
    DisposeFrameBuffer(Buffer,WeightBuffer);
    Filler.Free;
 end;
@@ -432,17 +511,17 @@ begin
    begin
       for y := 0 to Result.MaxY do
       begin
-         r := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,0] / 255;
-         g := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,1] / 255;
-         b := (_DiffuseMap as T2DImageRGBAByteData).Data[x,y,2] / 255;
+         r := _DiffuseMap.Red[x,y] / 255;
+         g := _DiffuseMap.Green[x,y] / 255;
+         b := _DiffuseMap.Blue[x,y] / 255;
          // Convert to YIQ
-         Result.Data[x,y] := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
+         Result.Red[x,y] := Round((1 - (0.299 * r) + (0.587 * g) + (0.114 * b)) * 255) and $FF;
       end;
    end;
 end;
 
 
-procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+procedure CTextureGenerator.PaintMeshDiffuseTexture(const _Faces: auint32; const _VertsColours: TAVector4f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData);
 var
    i,LastFace : cardinal;
    Filler: CTriangleFiller;
@@ -456,7 +535,7 @@ begin
    Filler.Free;
 end;
 
-procedure CTextureGenerator.PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer);
+procedure CTextureGenerator.PaintMeshNormalMapTexture(const _Faces: auint32; const _VertsNormals: TAVector3f; const _TexCoords: TAVector2f; _VerticesPerFace: integer; var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData);
 var
    i,LastFace : cardinal;
    Filler: CTriangleFiller;
@@ -583,5 +662,73 @@ begin
    SetLength(AlphaMapBackup,0);
 end;
 
+procedure CTextureGenerator.FixBilinearBorders(var _ImageData: TAbstract2DImageData);
+var
+   x,y,i,k,mini,maxi,mink,maxk,r,g,b,ri,gi,bi,sum : integer;
+   AlphaMapBackup: TByteMap;
+begin
+   SetLength(AlphaMapBackup,_ImageData.XSize,_ImageData.YSize);
+   for x := 0 to _ImageData.MaxX do
+   begin
+      for y := 0 to _ImageData.MaxY do
+      begin
+         AlphaMapBackup[x,y] := Trunc(_ImageData.Alpha[x,y]);
+      end;
+   end;
+   for x := 0 to _ImageData.MaxX do
+   begin
+      for y := 0 to _ImageData.MaxY do
+      begin
+         if AlphaMapBackup[x,y] = C_TRP_RGB_INVISIBLE then
+         begin
+            mini := x - 1;
+            if mini < 0 then
+               mini := 0;
+            maxi := x + 1;
+            if maxi > _ImageData.MaxX then
+               maxi := _ImageData.MaxX;
+            mink := y - 1;
+            if mink < 0 then
+               mink := 0;
+            maxk := y + 1;
+            if maxk > _ImageData.MaxY then
+               maxk := _ImageData.MaxY;
+
+            r := 0;
+            g := 0;
+            b := 0;
+            sum := 0;
+            for i := mini to maxi do
+               for k := mink to maxk do
+               begin
+                  if AlphaMapBackup[i,k] <> C_TRP_RGB_INVISIBLE then
+                  begin
+                     ri := Trunc(_ImageData.Red[i,k]);
+                     gi := Trunc(_ImageData.Green[i,k]);
+                     bi := Trunc(_ImageData.Blue[i,k]);
+                     r := r + ri;
+                     g := g + gi;
+                     b := b + bi;
+                     inc(sum);
+                  end;
+               end;
+            if (r + g + b) > 0 then
+               _ImageData.Alpha[x,y] := C_TRP_RGB_OPAQUE;
+            if sum > 0 then
+            begin
+               _ImageData.Red[x,y] := r div sum;
+               _ImageData.Green[x,y] :=  g div sum;
+               _ImageData.Blue[x,y] :=  b div sum;
+            end;
+         end;
+      end;
+   end;
+   // Free memory
+   for i := Low(AlphaMapBackup) to High(AlphaMapBackup) do
+   begin
+      SetLength(AlphaMapBackup[i],0);
+   end;
+   SetLength(AlphaMapBackup,0);
+end;
 
 end.
