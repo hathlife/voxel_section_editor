@@ -133,7 +133,8 @@ uses
   ImageRGBAByteData in 'ImageRGBAByteData.pas',
   ImageRGBByteData in 'ImageRGBByteData.pas',
   RGBASingleDataSet in 'RGBASingleDataSet.pas',
-  ImageRGBAData in 'ImageRGBAData.pas';
+  ImageRGBAData in 'ImageRGBAData.pas',
+  FormBumpMapping in 'FormBumpMapping.pas' {FrmBumpMapping};
 
 {$R *.res}
 

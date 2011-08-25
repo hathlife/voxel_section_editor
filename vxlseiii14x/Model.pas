@@ -92,7 +92,8 @@ type
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
-      procedure GenerateBumpMapTexture;
+      procedure GenerateBumpMapTexture; overload;
+      procedure GenerateBumpMapTexture(_Scale: single); overload;
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -543,6 +544,11 @@ end;
 procedure TModel.GenerateBumpMapTexture;
 begin
    LOD[CurrentLOD].GenerateBumpMapTexture;
+end;
+
+procedure TModel.GenerateBumpMapTexture(_Scale: single);
+begin
+   LOD[CurrentLOD].GenerateBumpMapTexture(_Scale);
 end;
 
 procedure TModel.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);

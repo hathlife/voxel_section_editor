@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 802
+  ClientHeight = 821
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 776
+    Height = 795
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,6 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
+    ExplicitHeight = 776
   end
   object Panel1: TPanel
     Left = 0
@@ -698,6 +699,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object TextureFXBump: TMenuItem
         Caption = 'Generate Bump Mapping'
         OnClick = TextureFXBumpClick
+      end
+      object TextureFXBumpCustom: TMenuItem
+        Caption = 'Generate Bump Mapping...'
+        OnClick = TextureFXBumpCustomClick
       end
       object N5: TMenuItem
         Caption = '-'

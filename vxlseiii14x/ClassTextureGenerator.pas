@@ -42,7 +42,7 @@ type
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer; var _AlphaMap: TByteMap): TBitmap; overload;
          function GetPositionedBitmapFromFrameBuffer(var _Buffer: T2DFrameBuffer): TBitmap; overload;
          function GetPositionedImageDataFromBuffer(const _Buffer, _WeightBuffer: TAbstract2DImageData): TAbstract2DImageData;
-         function GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData): TAbstract2DImageData;
+         function GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData; _Scale: single = C_BUMP_DEFAULTSCALE): TAbstract2DImageData;
    end;
 
 
@@ -574,7 +574,7 @@ begin
 end;
 
 // This is the latest attempt as a simple image processsing operation.
-function CTextureGenerator.GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData): TAbstract2DImageData;
+function CTextureGenerator.GetBumpMapTexture(const _DiffuseMap: TAbstract2DImageData; _Scale: single): TAbstract2DImageData;
 var
    HeightMap : TAbstract2DImageData;
    x,y,Size : integer;
@@ -583,6 +583,7 @@ begin
    // Build height map and visited map
    Filler := CTriangleFiller.Create;
    HeightMap := GenerateHeightMapBuffer(_DiffuseMap);
+   HeightMap.ScaleBy(_Scale / 255);
    Size := HeightMap.XSize;
    Result := T2DImageRGBByteData.Create(Size,Size);
    // Now, we'll check each face.

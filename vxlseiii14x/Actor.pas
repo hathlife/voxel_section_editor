@@ -122,7 +122,8 @@ type
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
-      procedure GenerateBumpMapTexture;
+      procedure GenerateBumpMapTexture; overload;
+      procedure GenerateBumpMapTexture(_Scale: single); overload;
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -1051,6 +1052,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.GenerateBumpMapTexture;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GenerateBumpMapTexture(_Scale: single);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.GenerateBumpMapTexture(_Scale);
       end;
    end;
    RequestUpdateWorld := true;

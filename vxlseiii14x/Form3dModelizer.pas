@@ -7,7 +7,7 @@ uses
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
   HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture;
+  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture, FormBumpMapping;
 
 type
   PFrm3DModelizer = ^TFrm3DModelizer;
@@ -159,6 +159,8 @@ type
     TextureFX2MipMaps: TMenuItem;
     TextureFX1MipMaps: TMenuItem;
     TextureFSExportHeightMap: TMenuItem;
+    TextureFXBumpCustom: TMenuItem;
+    procedure TextureFXBumpCustomClick(Sender: TObject);
     procedure TextureFSExportHeightMapClick(Sender: TObject);
     procedure TextureFX1MipMapsClick(Sender: TObject);
     procedure TextureFX2MipMapsClick(Sender: TObject);
@@ -1309,6 +1311,19 @@ begin
    SetNormalsMode(2);
 end;
 
+procedure TFrm3DModelizer.TextureFXBumpCustomClick(Sender: TObject);
+var
+   Form: TFrmBumpMapping;
+begin
+   Form := TFrmBumpMapping.Create(self);
+   Form.ShowModal;
+   if Form.Apply then
+   begin
+      Actor.GenerateBumpMapTexture(StrToFloatDef(Form.EdBump.Text,2.2));
+      SetNormalsMode(2);
+   end;
+end;
+
 procedure TFrm3DModelizer.TextureFXNormalClick(Sender: TObject);
 begin
    Actor.GenerateNormalMapTexture;
@@ -1567,6 +1582,7 @@ begin
          NormalsFXLanczosSmoothNormals.Enabled := true;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXBumpCustom.Enabled := false;
       end;
       1: // Normals per vertex
       begin
@@ -1578,6 +1594,7 @@ begin
          NormalsFXLanczosSmoothNormals.Enabled := true;
          TextureFXNormal.Enabled := (ColoursMode > 1);
          TextureFXBump.Enabled := (ColoursMode > 1);
+         TextureFXBumpCustom.Enabled := (ColoursMode > 1);
       end;
       2: // Normals in a Normal Map or Bump Map
       begin
@@ -1589,6 +1606,7 @@ begin
          NormalsFXLanczosSmoothNormals.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXBumpCustom.Enabled := false;
       end;
       else
       begin
@@ -1600,6 +1618,7 @@ begin
          NormalsFXLanczosSmoothNormals.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
+         TextureFXBumpCustom.Enabled := true;
       end;
    end;
 end;
@@ -1623,6 +1642,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXBumpCustom.Enabled := false;
          TextureFXNumMipMaps.Enabled := false;
       end;
       1: // Colours per vertex
@@ -1640,6 +1660,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
+         TextureFXBumpCustom.Enabled := false;
          TextureFXNumMipMaps.Enabled := false;
       end;
       2: // Colours in a diffuse texture
@@ -1657,6 +1678,7 @@ begin
          TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
+         TextureFXBumpCustom.Enabled := (NormalsMode = 1);
          TextureFXNumMipMaps.Enabled := true;
       end;
       else
@@ -1674,6 +1696,7 @@ begin
          TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
+         TextureFXBumpCustom.Enabled := true;
          TextureFXNumMipMaps.Enabled := true;
       end;
    end;

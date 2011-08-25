@@ -77,7 +77,8 @@ type
       procedure GenerateNormalMapTexture; overload;
       procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
       procedure GenerateBumpMapTexture; overload;
-      procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
+      procedure GenerateBumpMapTexture(_Scale: single); overload;
+      procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer; _Scale: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
@@ -629,12 +630,23 @@ begin
    begin
       Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
       TextureID := Mesh[0].GetNextTextureID(0);
-      GenerateBumpMapTexture(Size,0,TextureID);
+      GenerateBumpMapTexture(Size,0,TextureID,C_BUMP_DEFAULTSCALE);
    end;
 end;
 
+procedure TLOD.GenerateBumpMapTexture(_Scale: single);
+var
+   Size,TextureID: integer;
+begin
+   if High(Mesh) >= 0 then
+   begin
+      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
+      TextureID := Mesh[0].GetNextTextureID(0);
+      GenerateBumpMapTexture(Size,0,TextureID,_Scale);
+   end;
+end;
 
-procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer);
+procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer; _Scale: single);
 var
    i : integer;
    TexGenerator: CTextureGenerator;
@@ -645,7 +657,7 @@ begin
    TexGenerator := CTextureGenerator.Create;
    DiffuseMap := T2DImageRGBAByteData.Create(0,0);
    Mesh[0].Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
-   BumpMap := TexGenerator.GetBumpMapTexture(DiffuseMap);
+   BumpMap := TexGenerator.GetBumpMapTexture(DiffuseMap,_Scale);
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + _TextureID);
    NormalTexture := GlobalVars.TextureBank.Add(BumpMap);

@@ -90,6 +90,9 @@ const
    C_DSF_EULERSQUARED1D = 12;
    C_DSF_SINCINFINITE1D = 13;
 
+   // For bump mapping texture generation
+   C_BUMP_DEFAULTSCALE = 2.2;
+
    // Remappables
    RemapColourMap : array [0..8] of TVector3b =
    (
