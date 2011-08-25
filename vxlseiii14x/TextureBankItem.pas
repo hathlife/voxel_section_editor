@@ -45,7 +45,7 @@ type
          constructor Create(const _Bitmap : TBitmap; const _AlphaMap: TByteMap); overload;
          constructor Create(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          constructor Create(const _Data : Pointer; _Format: GLInt; _Height,_Width: integer); overload;
-         constructor Create(const _Image : TAbstract2DImageData; _Format: GLInt = GL_RGBA); overload;
+         constructor Create(const _Image : TAbstract2DImageData); overload;
          destructor Destroy; override;
          // I/O
          procedure LoadTexture(const _Filename : string); overload;
@@ -166,11 +166,14 @@ begin
    glDisable(GL_TEXTURE_2D);
 end;
 
-constructor TTextureBankItem.Create(const _Image : TAbstract2DImageData; _Format: GLInt);
+constructor TTextureBankItem.Create(const _Image : TAbstract2DImageData);
+var
+   Format: TGLInt;
 begin
    glGenTextures(1, @ID);
    glEnable(GL_TEXTURE_2D);
-   LoadTexture(_Image,_Format,0);
+   Format := _Image.GetOpenGLFormat;
+   LoadTexture(_Image,Format,0);
    Counter := 1;
    SetNumMipmaps(1);
    glDisable(GL_TEXTURE_2D);
