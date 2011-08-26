@@ -1,7 +1,7 @@
 unit ImageGreyByteData;
 
 interface
-uses Windows, Graphics, Abstract2DImageData, ByteDataSet;
+uses Windows, Graphics, Abstract2DImageData, ByteDataSet, dglOpenGL;
 
 type
    T2DImageGreyByteData = class (TAbstract2DImageData)
@@ -31,6 +31,8 @@ type
          procedure SetBluePixelColor(_x,_y: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y: integer; _value:single); override;
       public
+         // Gets
+         function GetOpenGLFormat:TGLInt; override;
          // Misc
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
@@ -102,6 +104,11 @@ end;
 function T2DImageGreyByteData.GetAlphaPixelColor(_x,_y: integer):single;
 begin
    Result := 0;
+end;
+
+function T2DImageGreyByteData.GetOpenGLFormat:TGLInt;
+begin
+   Result := GL_RGB;
 end;
 
 
