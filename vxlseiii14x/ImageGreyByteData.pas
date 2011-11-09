@@ -1,6 +1,7 @@
 unit ImageGreyByteData;
 
 interface
+
 uses Windows, Graphics, Abstract2DImageData, ByteDataSet, dglOpenGL;
 
 type
@@ -174,7 +175,6 @@ begin
       (FData as TByteDataSet).Data[x] := 255 - (FData as TByteDataSet).Data[x];
    end;
 end;
-
 
 end.
 

@@ -8,13 +8,14 @@ unit VoxelMap;
 interface
 
 uses BasicDataTypes, Class3DPointList, Voxel, Normals, BasicConstants,
-   BasicFunctions;
+   BasicFunctions, VolumeGreyData;
 
 type
    TVoxelMap = class
       private
          // Variables
-         FMap : T3DSingleGrid;
+         //FMap : T3DSingleGrid;
+         FMap: T3DVolumeGreyData;
          FBias : integer;
          FSection : TVoxelSection;
          // Constructors and Destructors
@@ -51,7 +52,7 @@ type
          procedure GenerateFullMap;
          // Copies
          procedure Assign(const _Map : TVoxelMap);
-         function CopyMap(const _Map: T3DSingleGrid): T3DSingleGrid;
+         function CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
          // Misc
          procedure FloodFill(const _Point : TVector3i; _value : single);
          procedure MergeMapData(const _Source : TVoxelMap; _Data : single);
@@ -76,17 +77,25 @@ implementation
 
 // Constructors and Destructors
 constructor TVoxelMap.Create(const _Voxel: TVoxelSection; _Bias: Integer);
+var
+   Bias: longword;
 begin
    FBias := _Bias;
    FSection := _Voxel;
-   Initialize(C_MODE_NONE);
+   Bias := 2 * _Bias;
+   FMap := T3DVolumeGreyData.Create(FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias,FSection.Tailer.ZSize + Bias);
+   FillMap(C_MODE_NONE,C_INSIDE_VOLUME);
 end;
 
 constructor TVoxelMap.Create(const _Voxel: TVoxelSection; _Bias: Integer; _Mode: integer; _Value: integer);
+var
+   Bias: longword;
 begin
    FBias := _Bias;
    FSection := _Voxel;
-   Initialize(_Mode,_Value);
+   Bias := 2 * _Bias;
+   FMap := T3DVolumeGreyData.Create(FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias,FSection.Tailer.ZSize + Bias);
+   FillMap(_Mode,_Value);
 end;
 
 constructor TVoxelMap.Create(const _Map : TVoxelMap);
@@ -106,15 +115,7 @@ procedure TVoxelMap.Clear;
 var
    x,y : integer;
 begin
-   for x := High(FMap) downto Low(FMap) do
-   begin
-      for y := High(FMap[x]) downto Low(FMap[x]) do
-      begin
-         SetLength(FMap[x,y],0);
-      end;
-      SetLength(FMap[x],0);
-   end;
-   SetLength(FMap,0,0,0);
+   FMap.Clear;
 end;
 
 procedure TVoxelMap.FillMap(_Mode : integer = C_MODE_NONE; _Value: integer = C_INSIDE_VOLUME);
@@ -128,66 +129,66 @@ begin
    begin
       Unfilled := _Value and $FF;
       Filled := _Value shr 8;
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
                   // Check if it's used.
                   if v.Used then
                   begin
-                     FMap[x,y,z] := Filled;
+                     FMap.DataUnsafe[x,y,z] := Filled;
                   end
                   else
                   begin
-                     FMap[x,y,z] := Unfilled;
+                     FMap.DataUnsafe[x,y,z] := Unfilled;
                   end
                end
                else
                begin
-                  FMap[x,y,z] := Unfilled;
+                  FMap.DataUnsafe[x,y,z] := Unfilled;
                end;
             end;
    end
    else if _Mode = C_MODE_COLOUR then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
-                  FMap[x,y,z] := v.Colour;
+                  FMap.DataUnsafe[x,y,z] := v.Colour;
                end
                else
                begin
-                  FMap[x,y,z] := 0;
+                  FMap.DataUnsafe[x,y,z] := 0;
                end;
             end;
    end
    else if _Mode = C_MODE_NORMAL then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
-                  FMap[x,y,z] := v.Normal;
+                  FMap.DataUnsafe[x,y,z] := v.Normal;
                end
                else
                begin
-                  FMap[x,y,z] := 0;
+                  FMap.DataUnsafe[x,y,z] := 0;
                end;
             end;
    end
    else if (_Mode <> C_MODE_NONE) then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
-               FMap[x,y,z] := _Value;
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
+               FMap.DataUnsafe[x,y,z] := _Value;
    end;
 end;
 
@@ -208,7 +209,7 @@ end;
 function TVoxelMap.GetMap(_x: Integer; _y: Integer; _z: Integer): single;
 begin
    try
-      Result := FMap[_x,_y,_z];
+      Result := FMap.DataUnsafe[_x,_y,_z];
    except
       Result := -1;
    end;
@@ -216,14 +217,7 @@ end;
 
 function TVoxelMap.GetMapSafe(_x: Integer; _y: Integer; _z: Integer): single;
 begin
-   if IsPointOK(_x,_y,_z) then
-   begin
-      Result := FMap[_x,_y,_z];
-   end
-   else
-   begin
-      Result := -1;
-   end;
+   Result := FMap[_x,_y,_z];
 end;
 
 
@@ -234,17 +228,17 @@ end;
 
 function TVoxelMap.GetMaxX: integer;
 begin
-   Result := High(FMap);
+   Result := FMap.MaxX;
 end;
 
 function TVoxelMap.GetMaxY: integer;
 begin
-   Result := High(FMap[0]);
+   Result := FMap.MaxY;
 end;
 
 function TVoxelMap.GetMaxZ: integer;
 begin
-   Result := High(FMap[0,0]);
+   Result := FMap.MaxZ;
 end;
 
 
@@ -253,7 +247,7 @@ end;
 procedure TVoxelMap.SetMap(_x: Integer; _y: Integer; _z: Integer; _value: single);
 begin
    try
-      FMap[_x,_y,_z] := _value;
+      FMap.DataUnsafe[_x,_y,_z] := _value;
    except
       exit;
    end;
@@ -261,16 +255,13 @@ end;
 
 procedure TVoxelMap.SetMapSafe(_x: Integer; _y: Integer; _z: Integer; _value: single);
 begin
-   if IsPointOK(_x,_y,_z) then
-   begin
-      FMap[_x,_y,_z] := _value;
-   end;
+   FMap[_x,_y,_z] := _value;
 end;
 
 procedure TVoxelMap.SetBias(_value: Integer);
 var
    OldMapBias, Offset: integer;
-   Map : T3DSingleGrid;
+   Map : T3DVolumeGreyData;
    x, y, z: Integer;
 begin
    if FBias = _Value then exit;
@@ -282,38 +273,30 @@ begin
    Offset := abs(OldMapBias - FBias);
    if OldMapBias > FBias then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[x]) to High(FMap[x]) do
-            for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               FMap[x,y,z] := Map[Offset+x,Offset+y,Offset+z];
+               FMap.DataUnsafe[x,y,z] := Map.DataUnsafe[Offset+x,Offset+y,Offset+z];
             end;
    end
    else
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[x]) to High(FMap[x]) do
-            for z := Low(FMap[x,y]) to High(FMap[x,y]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               FMap[x,y,z] := 0;
+               FMap.DataUnsafe[x,y,z] := 0;
             end;
-      for x := Low(Map) to High(Map) do
-         for y := Low(Map[x]) to High(Map[x]) do
-            for z := Low(Map[x,y]) to High(Map[x,y]) do
+      for x := 0 to Map.MaxX do
+         for y := 0 to Map.MaxY do
+            for z := 0 to Map.MaxZ do
             begin
-               FMap[x+Offset,y+Offset,z+Offset] := Map[x,y,z];
+               FMap.DataUnsafe[x+Offset,y+Offset,z+Offset] := Map.DataUnsafe[x,y,z];
             end;
    end;
    // Free memory
-   for x := High(Map) downto Low(Map) do
-   begin
-      for y := High(Map[x]) downto Low(Map[x]) do
-      begin
-         SetLength(Map[x,y],0);
-      end;
-      SetLength(Map[x],0);
-   end;
-   SetLength(Map,0);
+   Map.Free;
 end;
 
 // Generates
@@ -395,26 +378,14 @@ var
 begin
    FBias := _Map.FBias;
    FSection := _Map.FSection;
-   SetMapSize;
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[x]) to High(FMap[x]) do
-         for z := Low(FMap[x,y]) to High(FMap[x,y]) do
-         begin
-            FMap[x,y,z] := _Map.FMap[x,y,z];
-         end;
+   FMap := T3DVolumeGreyData.Create(_Map.FMap);
 end;
 
-function TVoxelMap.CopyMap(const _Map: T3DSingleGrid): T3DSingleGrid;
+function TVoxelMap.CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
 var
    x, y, z: integer;
 begin
-   SetLength(Result,High(_Map)+1,High(_Map[0])+1,High(_Map[0,0])+1);
-   for x := Low(_Map) to High(_Map) do
-      for y := Low(_Map[x]) to High(_Map[x]) do
-         for z := Low(_Map[x,y]) to High(_Map[x,y]) do
-         begin
-            Result[x,y,z] := _Map[x,y,z];
-         end;
+   Result := T3DVolumeGreyData.Create(_Map);
 end;
 
 
@@ -425,7 +396,7 @@ var
    Bias : integer;
 begin
    Bias := 2 * FBias;
-   SetLength(FMap, FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias, FSection.Tailer.ZSize + Bias);
+   FMap.Resize(FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias,FSection.Tailer.ZSize + Bias);
 end;
 
 procedure TVoxelMap.FloodFill(const _Point : TVector3i; _value : single);
@@ -442,39 +413,39 @@ begin
    begin
       // Check and add the neighbours (6 faces)
       if IsPointOK(x-1,y,z) then
-         if FMap[x-1,y,z] <> _value then
+         if FMap.DataUnsafe[x-1,y,z] <> _value then
          begin
-            FMap[x-1,y,z] := _value;
+            FMap.DataUnsafe[x-1,y,z] := _value;
             List.Add(x-1,y,z);
          end;
       if IsPointOK(x+1,y,z) then
-         if FMap[x+1,y,z] <> _value then
+         if FMap.DataUnsafe[x+1,y,z] <> _value then
          begin
-            FMap[x+1,y,z] := _value;
+            FMap.DataUnsafe[x+1,y,z] := _value;
             List.Add(x+1,y,z);
          end;
       if IsPointOK(x,y-1,z) then
-         if FMap[x,y-1,z] <> _value then
+         if FMap.DataUnsafe[x,y-1,z] <> _value then
          begin
-            FMap[x,y-1,z] := _value;
+            FMap.DataUnsafe[x,y-1,z] := _value;
             List.Add(x,y-1,z);
          end;
       if IsPointOK(x,y+1,z) then
-         if FMap[x,y+1,z] <> _value then
+         if FMap.DataUnsafe[x,y+1,z] <> _value then
          begin
-            FMap[x,y+1,z] := _value;
+            FMap.DataUnsafe[x,y+1,z] := _value;
             List.Add(x,y+1,z);
          end;
       if IsPointOK(x,y,z-1) then
-         if FMap[x,y,z-1] <> _value then
+         if FMap.DataUnsafe[x,y,z-1] <> _value then
          begin
-            FMap[x,y,z-1] := _value;
+            FMap.DataUnsafe[x,y,z-1] := _value;
             List.Add(x,y,z-1);
          end;
       if IsPointOK(x,y,z+1) then
-         if FMap[x,y,z+1] <> _value then
+         if FMap.DataUnsafe[x,y,z+1] <> _value then
          begin
-            FMap[x,y,z+1] := _value;
+            FMap.DataUnsafe[x,y,z+1] := _value;
             List.Add(x,y,z+1);
          end;
    end;
@@ -488,12 +459,12 @@ begin
    if _Source.FSection = FSection then
    begin
       // Copies every data from the source to the map.
-      for x := 0 to High(_Source.FMap) do
-         for y := 0 to High(_Source.FMap[x]) do
-            for z := 0 to High(_Source.FMap[x,y]) do
+      for x := 0 to _Source.FMap.MaxX do
+         for y := 0 to _Source.FMap.MaxY do
+            for z := 0 to _Source.FMap.MaxZ do
             begin
-               if _Source.FMap[x,y,z] = _Data then
-                  FMap[x,y,z] := _Data;
+               if _Source.FMap.DataUnsafe[x,y,z] = _Data then
+                  FMap.DataUnsafe[x,y,z] := _Data;
             end;
    end;
 end;
@@ -505,13 +476,13 @@ var
    V : TVoxelUnpacked;
 begin
    // Scan the volume on the direction z
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap) to High(FMap[x]) do
+   for x := 0 to FMap.MaxX do
+      for y := 0 to FMap.MaxY do
       begin
          // Get the initial position.
-         z := Low(FMap[x,y]);
+         z := 0;
          InitialPosition := -1;
-         while (z <= High(FMap[x,y])) and (InitialPosition = -1) do
+         while (z <= FMap.MaxZ) and (InitialPosition = -1) do
          begin
             if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
             begin
@@ -525,9 +496,9 @@ begin
          // Get the final position, if there is a used pizel in the axis.
          if InitialPosition <> -1 then
          begin
-            z := High(FMap[x,y]);
+            z := FMap.MaxZ;
             FinalPosition := -1;
-            while (z >= Low(FMap[x,y])) and (FinalPosition = -1) do
+            while (z >= 0) and (FinalPosition = -1) do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
@@ -542,20 +513,20 @@ begin
             z := InitialPosition;
             while z <= FinalPosition do
             begin
-               FMap[x,y,z] := FMap[x,y,z] + 1;
+               FMap.DataUnsafe[x,y,z] := FMap.DataUnsafe[x,y,z] + 1;
                inc(z);
             end;
          end;
       end;
 
    // Scan the volume on the direction x
-   for y := Low(FMap[0]) to High(FMap[0]) do
-      for z := Low(FMap[0,y]) to High(FMap[0,y]) do
+   for y := 0 to FMap.MaxY do
+      for z := 0 to FMap.MaxZ do
       begin
          // Get the initial position.
-         x := Low(FMap);
+         x := 0;
          InitialPosition := -1;
-         while (x <= High(FMap)) and (InitialPosition = -1) do
+         while (x <= FMap.MaxX) and (InitialPosition = -1) do
          begin
             if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
             begin
@@ -569,9 +540,9 @@ begin
          // Get the final position, if there is a used pizel in the axis.
          if InitialPosition <> -1 then
          begin
-            x := High(FMap);
+            x := FMap.MaxX;
             FinalPosition := -1;
-            while (x >= Low(FMap)) and (FinalPosition = -1) do
+            while (x >= 0) and (FinalPosition = -1) do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
@@ -586,20 +557,20 @@ begin
             x := InitialPosition;
             while x <= FinalPosition do
             begin
-               FMap[x,y,z] := FMap[x,y,z] + 1;
+               FMap.DataUnsafe[x,y,z] := FMap.DataUnsafe[x,y,z] + 1;
                inc(x);
             end;
          end;
       end;
 
    // Scan the volume on the direction y
-   for x := Low(FMap) to High(FMap) do
-      for z := Low(FMap[x,0]) to High(FMap[x,0]) do
+   for x := 0 to FMap.MaxX do
+      for z := 0 to FMap.MaxZ do
       begin
          // Get the initial position.
-         y := Low(FMap[x]);
+         y := 0;
          InitialPosition := -1;
-         while (y <= High(FMap[x])) and (InitialPosition = -1) do
+         while (y <= FMap.MaxY) and (InitialPosition = -1) do
          begin
             if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
             begin
@@ -613,9 +584,9 @@ begin
          // Get the final position, if there is a used pizel in the axis.
          if InitialPosition <> -1 then
          begin
-            y := High(FMap[x]);
+            y := FMap.MaxY;
             FinalPosition := -1;
-            while (y >= Low(FMap[x])) and (FinalPosition = -1) do
+            while (y >= 0) and (FinalPosition = -1) do
             begin
                if FSection.GetVoxelSafe(x-FBias,y-FBias,z-FBias,v) then
                begin
@@ -630,7 +601,7 @@ begin
             y := InitialPosition;
             while y <= FinalPosition do
             begin
-               FMap[x,y,z] := FMap[x,y,z] + 1;
+               FMap.DataUnsafe[x,y,z] := FMap.DataUnsafe[x,y,z] + 1;
                inc(y);
             end;
          end;
@@ -647,11 +618,11 @@ begin
    maxi := Cube.GetLastID;
    if (maxi > 0) then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               if FMap[x,y,z] = _Value then
+               if FMap.DataUnsafe[x,y,z] = _Value then
                begin
                   i := 0;
                   while i <= maxi do
@@ -670,11 +641,11 @@ begin
                   if i <> (maxi * 2) then
                   begin
                      // inside the voxel
-                     FMap[x,y,z] := C_INSIDE_VOLUME;
+                     FMap.DataUnsafe[x,y,z] := C_INSIDE_VOLUME;
                   end
                   else // surface
                   begin
-                     FMap[x,y,z] := C_SURFACE;
+                     FMap.DataUnsafe[x,y,z] := C_SURFACE;
                   end;
                end;
             end;
@@ -692,11 +663,11 @@ begin
    maxi := Cube.GetLastID;
    if (maxi > 0) then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               if FMap[x,y,z] = _Value then
+               if FMap.DataUnsafe[x,y,z] = _Value then
                begin
                   i := 0;
                   while i <= maxi do
@@ -714,7 +685,7 @@ begin
                   end;
                   if i = (maxi * 2) then
                   begin
-                     FMap[x,y,z] := C_SURFACE;
+                     FMap.DataUnsafe[x,y,z] := C_SURFACE;
                   end;
                end;
             end;
@@ -732,11 +703,11 @@ begin
    maxi := Cube.GetLastID;
    if (maxi > 0) then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               if FMap[x,y,z] = _Value then
+               if FMap.DataUnsafe[x,y,z] = _Value then
                begin
                   i := 0;
                   while i <= maxi do
@@ -754,7 +725,7 @@ begin
                   end;
                   if i = (maxi * 2) then
                   begin
-                     FMap[x,y,z] := C_SURFACE;
+                     FMap.DataUnsafe[x,y,z] := C_SURFACE;
                   end;
                end;
             end;
@@ -823,14 +794,14 @@ begin
    VertsAndEdgesNeighboors := TNormals.Create(8);
    MaxFace := FaceNeighboors.GetLastID;
    MaxEdge := VertsAndEdgesNeighboors.GetLastID;
-   SetLength(_SemiSurfaces,High(FMap)+1,High(FMap[0])+1,High(FMap[0,0])+1);
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[0]) to High(FMap[0]) do
-         for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+   SetLength(_SemiSurfaces,FMap.XSize,FMap.YSize,FMap.ZSize);
+   for x := 0 to FMap.MaxX do
+      for y := 0 to FMap.MaxY do
+         for z := 0 to FMap.MaxZ do
             _SemiSurfaces[x,y,z] := 0;
-   for x := Low(FMap) to High(FMap) do
-      for y := Low(FMap[0]) to High(FMap[0]) do
-         for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+   for x := 0 to FMap.MaxX do
+      for y := 0 to FMap.MaxY do
+         for z := 0 to FMap.MaxZ do
          begin
             // Let's check if the surface has face neighbors
             if FMap[x,y,z] = C_SURFACE then
@@ -895,7 +866,7 @@ begin
                FSection.GetVoxel(x,y,z,v);
                if v.Used then
                begin
-                  v.Used := (FMap[x + FBias, y + FBias, z + FBias] >= _Threshold);
+                  v.Used := (FMap.DataUnsafe[x + FBias, y + FBias, z + FBias] >= _Threshold);
                   if not v.Used then
                      inc(Result);
                   FSection.SetVoxel(x,y,z,v);
@@ -909,7 +880,7 @@ begin
             for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
             begin
                FSection.GetVoxel(x,y,z,v);
-               v.Colour := Round(FMap[x + FBias,y + FBias, z + FBias]);
+               v.Colour := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
                FSection.SetVoxel(x,y,z,v);
             end;
    end
@@ -920,7 +891,7 @@ begin
             for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
             begin
                FSection.GetVoxel(x,y,z,v);
-               v.Normal := Round(FMap[x + FBias,y + FBias, z + FBias]);
+               v.Normal := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
                FSection.SetVoxel(x,y,z,v);
             end;
    end;
@@ -937,13 +908,13 @@ var
 begin
    if High(_Values) >= 0 then
    begin
-      for x := Low(FMap) to High(FMap) do
-         for y := Low(FMap[0]) to High(FMap[0]) do
-            for z := Low(FMap[0,0]) to High(FMap[0,0]) do
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
             begin
-               if (Map[x,y,z] > 0) and (Map[x,y,z] <= High(_Values)) then
+               if (FMap.DataUnsafe[x,y,z] > 0) and (FMap.DataUnsafe[x,y,z] <= High(_Values)) then
                begin
-                  Map[x,y,z] := _Values[Round(Map[x,y,z])];
+                  FMap.DataUnsafe[x,y,z] := _Values[Round(FMap.DataUnsafe[x,y,z])];
                end;
             end;
    end;
@@ -954,9 +925,9 @@ end;
 function TVoxelMap.IsPointOK (const x,y,z: integer) : boolean;
 begin
    result := false;
-   if (x < 0) or (x > High(FMap)) then exit;
-   if (y < 0) or (y > High(FMap[0])) then exit;
-   if (z < 0) or (z > High(FMap[0,0])) then exit;
+   if (x < 0) or (x > FMap.MaxX) then exit;
+   if (y < 0) or (y > FMap.MaxY) then exit;
+   if (z < 0) or (z > FMap.MaxZ) then exit;
    result := true;
 end;
 

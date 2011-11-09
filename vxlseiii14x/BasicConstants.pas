@@ -70,6 +70,9 @@ const
    C_SF_RIGHT_FRONT_LINE = $40022;
    C_SF_RIGHT_BACK_LINE = $80088;
 
+   // From VoxelMeshGenerator
+   C_VMG_NO_VERTEX = 2147483647;
+
    //------------------------------------------------------------------
    // From VoxelModelizerItem.pas
    //------------------------------------------------------------------

@@ -2,22 +2,18 @@ unit ImageRGBIntData;
 
 interface
 
-uses Windows, Graphics, Abstract2DImageData, RGBIntDataSet, dglOpenGL;
+uses Windows, Graphics, BasicDataTypes, Abstract2DImageData, RGBIntDataSet, dglOpenGL;
 
 type
-   TImagePixelRGBIntData = record
-      r,g,b: longword;
-   end;
-
    T2DImageRGBIntData = class (TAbstract2DImageData)
       private
-         FDefaultColor: TImagePixelRGBIntData;
+         FDefaultColor: TPixelRGBIntData;
          // Gets
          function GetData(_x, _y, _c: integer):longword;
-         function GetDefaultColor:TImagePixelRGBIntData;
+         function GetDefaultColor:TPixelRGBIntData;
          // Sets
          procedure SetData(_x, _y, _c: integer; _value: longword);
-         procedure SetDefaultColor(_value: TImagePixelRGBIntData);
+         procedure SetDefaultColor(_value: TPixelRGBIntData);
       protected
          // Constructors and Destructors
          procedure Initialize; override;
@@ -48,7 +44,7 @@ type
          procedure Invert; override;
          // properties
          property Data[_x,_y,_c:integer]:longword read GetData write SetData; default;
-         property DefaultColor:TImagePixelRGBIntData read GetDefaultColor write SetDefaultColor;
+         property DefaultColor:TPixelRGBIntData read GetDefaultColor write SetDefaultColor;
    end;
 
 implementation
@@ -89,7 +85,7 @@ begin
    end;
 end;
 
-function T2DImageRGBIntData.GetDefaultColor:TImagePixelRGBIntData;
+function T2DImageRGBIntData.GetDefaultColor:TPixelRGBIntData;
 begin
    Result := FDefaultColor;
 end;
@@ -192,7 +188,7 @@ begin
    end;
 end;
 
-procedure T2DImageRGBIntData.SetDefaultColor(_value: TImagePixelRGBIntData);
+procedure T2DImageRGBIntData.SetDefaultColor(_value: TPixelRGBIntData);
 begin
    FDefaultColor.r := _value.r;
    FDefaultColor.g := _value.g;

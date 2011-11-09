@@ -1,18 +1,18 @@
-unit IntDataSet;
+unit BooleanDataSet;
 
 interface
 
 uses AbstractDataSet;
 
 type
-   TIntDataSet = class (TAbstractDataSet)
+   TBooleanDataSet = class (TAbstractDataSet)
       private
          // Gets
-         function GetData(_pos: integer): longword; reintroduce;
+         function GetData(_pos: integer): boolean; reintroduce;
          // Sets
-         procedure SetData(_pos: integer; _data: longword); reintroduce;
+         procedure SetData(_pos: integer; _data: boolean); reintroduce;
       protected
-         FData : packed array of longword;
+         FData : packed array of boolean;
          // Gets
          function GetDataLength: integer; override;
          // Sets
@@ -21,35 +21,35 @@ type
          // copies
          procedure Assign(const _Source: TAbstractDataSet); override;
          // properties
-         property Data[_pos: integer]:longword read GetData write SetData;
+         property Data[_pos: integer]:boolean read GetData write SetData;
    end;
 
 implementation
 
 // Gets
-function TIntDataSet.GetData(_pos: integer): longword;
+function TBooleanDataSet.GetData(_pos: integer): boolean;
 begin
    Result := FData[_pos];
 end;
 
-function TIntDataSet.GetDataLength: integer;
+function TBooleanDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
 end;
 
 // Sets
-procedure TIntDataSet.SetData(_pos: integer; _data: longword);
+procedure TBooleanDataSet.SetData(_pos: integer; _data: boolean);
 begin
    FData[_pos] := _data;
 end;
 
-procedure TIntDataSet.SetLength(_size: Integer);
+procedure TBooleanDataSet.SetLength(_size: Integer);
 begin
    System.SetLength(FData,_size);
 end;
 
 // copies
-procedure TIntDataSet.Assign(const _Source: TAbstractDataSet);
+procedure TBooleanDataSet.Assign(const _Source: TAbstractDataSet);
 var
    maxData,i: integer;
 begin
@@ -57,7 +57,7 @@ begin
    maxData := GetDataLength() - 1;
    for i := 0 to maxData do
    begin
-      Data[i] := (_Source as TIntDataSet).Data[i];
+      Data[i] := (_Source as TBooleanDataSet).Data[i];
    end;
 end;
 

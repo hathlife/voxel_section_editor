@@ -90,6 +90,28 @@ const
    C_DSF_EULERSQUARED1D = 12;
    C_DSF_SINCINFINITE1D = 13;
 
+   // To clean topological problems
+   C_TOPO_DOESNT_EXIST = -2;
+   C_TOPO_MAKRED_TO_DIE = -1;
+   C_TOPO_X_POS = 0;
+   C_TOPO_X_NEG = 1;
+   C_TOPO_Y_POS = 2;
+   C_TOPO_Y_NEG = 3;
+   C_TOPO_Z_POS = 4;
+   C_TOPO_Z_NEG = 5;
+   C_ORI_XNEG_YNEG = 0;
+   C_ORI_XPOS_YNEG = 1;
+   C_ORI_XNEG_YPOS = 2;
+   C_ORI_XPOS_YPOS = 3;
+   C_ORI_XNEG_ZNEG = $10;
+   C_ORI_XPOS_ZNEG = $11;
+   C_ORI_XNEG_ZPOS = $14;
+   C_ORI_XPOS_ZPOS = $15;
+   C_ORI_YNEG_ZNEG = $20;
+   C_ORI_YPOS_ZNEG = $22;
+   C_ORI_YNEG_ZPOS = $24;
+   C_ORI_YPOS_ZPOS = $26;
+
    // For bump mapping texture generation
    C_BUMP_DEFAULTSCALE = 2.2;
 

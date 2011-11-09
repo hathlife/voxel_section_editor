@@ -178,6 +178,15 @@ type
       Left, Right: integer;
    end;
    TSeedTree = array of TSeedTreeItem;
+   TPixelRGBAByteData = record
+      r,g,b,a: byte;
+   end;
+   TPixelRGBByteData = record
+      r,g,b: byte;
+   end;
+   TPixelRGBIntData = record
+      r,g,b: longword;
+   end;
 
 
 implementation

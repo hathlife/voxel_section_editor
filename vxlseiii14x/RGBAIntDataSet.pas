@@ -9,13 +9,13 @@ type
       private
          FLength : integer;
          // Gets
-         function GetData(_pos: integer): longword;
+         function GetData(_pos: integer): longword; reintroduce;
          function GetRed(_pos: integer): longword;
          function GetGreen(_pos: integer): longword;
          function GetBlue(_pos: integer): longword;
          function GetAlpha(_pos: integer): longword;
          // Sets
-         procedure SetData(_pos: integer; _data: longword);
+         procedure SetData(_pos: integer; _data: longword); reintroduce;
          procedure SetRed(_pos: integer; _data: longword);
          procedure SetGreen(_pos: integer; _data: longword);
          procedure SetBlue(_pos: integer; _data: longword);

@@ -12,7 +12,7 @@ type
          // Sets
          procedure SetData(_pos: integer; _data: byte);
       protected
-         FData : array of byte;
+         FData : packed array of byte;
          // Gets
          function GetDataLength: integer; override;
          // Sets

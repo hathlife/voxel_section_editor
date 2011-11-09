@@ -22,7 +22,6 @@ type
          // copies
          procedure Assign(const _Source: TAbstractDataSet); virtual;
          // properties
-         property Data[_pos: integer]:pointer read GetData write SetData;
          property Length: integer read GetLength write SetLength;
    end;
 
@@ -81,7 +80,7 @@ begin
    maxData := GetDataLength() - 1;
    for i := 0 to maxData do
    begin
-      Data[i] := _Source.Data[i];
+      SetData(i,_Source.GetData(i));
    end;
 end;
 

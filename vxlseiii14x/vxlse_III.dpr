@@ -134,7 +134,20 @@ uses
   ImageRGBByteData in 'ImageRGBByteData.pas',
   RGBASingleDataSet in 'RGBASingleDataSet.pas',
   ImageRGBAData in 'ImageRGBAData.pas',
-  FormBumpMapping in 'FormBumpMapping.pas' {FrmBumpMapping};
+  FormBumpMapping in 'FormBumpMapping.pas' {FrmBumpMapping},
+  ClassTopologyCleanerUtility in 'ClassTopologyCleanerUtility.pas',
+  BooleanDataSet in 'BooleanDataSet.pas',
+  Abstract3DVolumeData in 'Abstract3DVolumeData.pas',
+  VolumeGreyByteData in 'VolumeGreyByteData.pas',
+  VolumeGreyData in 'VolumeGreyData.pas',
+  VolumeRGBAByteData in 'VolumeRGBAByteData.pas',
+  VolumeRGBAData in 'VolumeRGBAData.pas',
+  VolumeRGBAIntData in 'VolumeRGBAIntData.pas',
+  VolumeRGBByteData in 'VolumeRGBByteData.pas',
+  VolumeRGBData in 'VolumeRGBData.pas',
+  VolumeRGBIntData in 'VolumeRGBIntData.pas',
+  ImageGreyIntData in 'ImageGreyIntData.pas',
+  VolumeGreyIntData in 'VolumeGreyIntData.pas';
 
 {$R *.res}
 
