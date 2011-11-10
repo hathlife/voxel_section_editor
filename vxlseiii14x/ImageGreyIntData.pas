@@ -8,9 +8,9 @@ type
    T2DImageGreyIntData = class (TAbstract2DImageData)
       private
          // Gets
-         function GetData(_x, _y: integer):longword;
+         function GetData(_x, _y: integer):integer;
          // Sets
-         procedure SetData(_x, _y: integer; _value: longword);
+         procedure SetData(_x, _y: integer; _value: integer);
       protected
          // Constructors and Destructors
          procedure Initialize; override;
@@ -38,7 +38,7 @@ type
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
          // properties
-         property Data[_x,_y:integer]:longword read GetData write SetData; default;
+         property Data[_x,_y:integer]:integer read GetData write SetData; default;
    end;
 
 implementation
@@ -50,7 +50,7 @@ begin
 end;
 
 // Gets
-function T2DImageGreyIntData.GetData(_x, _y: integer):longword;
+function T2DImageGreyIntData.GetData(_x, _y: integer):integer;
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) then
    begin
@@ -145,7 +145,7 @@ begin
 end;
 
 
-procedure T2DImageGreyIntData.SetData(_x, _y: integer; _value: longword);
+procedure T2DImageGreyIntData.SetData(_x, _y: integer; _value: integer);
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) then
    begin

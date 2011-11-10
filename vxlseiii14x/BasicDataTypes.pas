@@ -184,8 +184,17 @@ type
    TPixelRGBByteData = record
       r,g,b: byte;
    end;
-   TPixelRGBIntData = record
+   TPixelRGBLongData = record
       r,g,b: longword;
+   end;
+   TPixelRGBIntData = record
+      r,g,b: integer;
+   end;
+   TPixelRGBALongData = record
+      r,g,b,a: longword;
+   end;
+   TPixelRGBAIntData = record
+      r,g,b,a: integer;
    end;
 
 

@@ -9,15 +9,15 @@ type
       private
          FLength : integer;
          // Gets
-         function GetData(_pos: integer): longword; reintroduce;
-         function GetRed(_pos: integer): longword;
-         function GetGreen(_pos: integer): longword;
-         function GetBlue(_pos: integer): longword;
+         function GetData(_pos: integer): integer; reintroduce;
+         function GetRed(_pos: integer): integer;
+         function GetGreen(_pos: integer): integer;
+         function GetBlue(_pos: integer): integer;
          // Sets
-         procedure SetData(_pos: integer; _data: longword); reintroduce;
-         procedure SetRed(_pos: integer; _data: longword);
-         procedure SetGreen(_pos: integer; _data: longword);
-         procedure SetBlue(_pos: integer; _data: longword);
+         procedure SetData(_pos: integer; _data: integer); reintroduce;
+         procedure SetRed(_pos: integer; _data: integer);
+         procedure SetGreen(_pos: integer; _data: integer);
+         procedure SetBlue(_pos: integer; _data: integer);
       protected
          // Gets
          function GetDataLength: integer; override;
@@ -26,31 +26,31 @@ type
          procedure SetLength(_size: integer); override;
       public
          // properties
-         property Data[_pos: integer]:longword read GetData write SetData;
-         property Red[_pos: integer]:longword read GetRed write SetRed;
-         property Green[_pos: integer]:longword read GetGreen write SetGreen;
-         property Blue[_pos: integer]:longword read GetBlue write SetBlue;
+         property Data[_pos: integer]:integer read GetData write SetData;
+         property Red[_pos: integer]:integer read GetRed write SetRed;
+         property Green[_pos: integer]:integer read GetGreen write SetGreen;
+         property Blue[_pos: integer]:integer read GetBlue write SetBlue;
    end;
 
 implementation
 
 // Gets
-function TRGBIntDataSet.GetData(_pos: integer): longword;
+function TRGBIntDataSet.GetData(_pos: integer): integer;
 begin
    Result := FData[_pos];
 end;
 
-function TRGBIntDataSet.GetRed(_pos: integer): longword;
+function TRGBIntDataSet.GetRed(_pos: integer): integer;
 begin
    Result := FData[3*_pos];
 end;
 
-function TRGBIntDataSet.GetGreen(_pos: integer): longword;
+function TRGBIntDataSet.GetGreen(_pos: integer): integer;
 begin
    Result := FData[(3*_pos)+1];
 end;
 
-function TRGBIntDataSet.GetBlue(_pos: integer): longword;
+function TRGBIntDataSet.GetBlue(_pos: integer): integer;
 begin
    Result := FData[(3*_pos)+2];
 end;
@@ -67,22 +67,22 @@ end;
 
 
 // Sets
-procedure TRGBIntDataSet.SetData(_pos: integer; _data: longword);
+procedure TRGBIntDataSet.SetData(_pos: integer; _data: integer);
 begin
    FData[_pos] := _data;
 end;
 
-procedure TRGBIntDataSet.SetRed(_pos: integer; _data: longword);
+procedure TRGBIntDataSet.SetRed(_pos: integer; _data: integer);
 begin
    FData[3*_pos] := _data;
 end;
 
-procedure TRGBIntDataSet.SetGreen(_pos: integer; _data: longword);
+procedure TRGBIntDataSet.SetGreen(_pos: integer; _data: integer);
 begin
    FData[(3*_pos)+1] := _data;
 end;
 
-procedure TRGBIntDataSet.SetBlue(_pos: integer; _data: longword);
+procedure TRGBIntDataSet.SetBlue(_pos: integer; _data: integer);
 begin
    FData[(3*_pos)+2] := _data;
 end;

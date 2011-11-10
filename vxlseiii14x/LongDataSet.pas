@@ -1,18 +1,18 @@
-unit IntDataSet;
+unit LongDataSet;
 
 interface
 
 uses AbstractDataSet;
 
 type
-   TIntDataSet = class (TAbstractDataSet)
+   TLongDataSet = class (TAbstractDataSet)
       private
          // Gets
-         function GetData(_pos: integer): integer; reintroduce;
+         function GetData(_pos: integer): longword; reintroduce;
          // Sets
-         procedure SetData(_pos: integer; _data: integer); reintroduce;
+         procedure SetData(_pos: integer; _data: longword); reintroduce;
       protected
-         FData : packed array of integer;
+         FData : packed array of longword;
          // Gets
          function GetDataLength: integer; override;
          // Sets
@@ -21,35 +21,35 @@ type
          // copies
          procedure Assign(const _Source: TAbstractDataSet); override;
          // properties
-         property Data[_pos: integer]:integer read GetData write SetData;
+         property Data[_pos: integer]:longword read GetData write SetData;
    end;
 
 implementation
 
 // Gets
-function TIntDataSet.GetData(_pos: integer): integer;
+function TLongDataSet.GetData(_pos: integer): longword;
 begin
    Result := FData[_pos];
 end;
 
-function TIntDataSet.GetDataLength: integer;
+function TLongDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
 end;
 
 // Sets
-procedure TIntDataSet.SetData(_pos: integer; _data: integer);
+procedure TLongDataSet.SetData(_pos: integer; _data: longword);
 begin
    FData[_pos] := _data;
 end;
 
-procedure TIntDataSet.SetLength(_size: Integer);
+procedure TLongDataSet.SetLength(_size: Integer);
 begin
    System.SetLength(FData,_size);
 end;
 
 // copies
-procedure TIntDataSet.Assign(const _Source: TAbstractDataSet);
+procedure TLongDataSet.Assign(const _Source: TAbstractDataSet);
 var
    maxData,i: integer;
 begin
@@ -57,7 +57,7 @@ begin
    maxData := GetDataLength() - 1;
    for i := 0 to maxData do
    begin
-      Data[i] := (_Source as TIntDataSet).Data[i];
+      Data[i] := (_Source as TLongDataSet).Data[i];
    end;
 end;
 

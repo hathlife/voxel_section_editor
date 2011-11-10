@@ -10,12 +10,12 @@ type
       private
          FDefaultColor: TPixelRGBIntData;
          // Gets
-         function GetData(_x, _y, _z, _c: integer):longword;
-         function GetDataUnsafe(_x, _y, _z, _c: integer):longword;
+         function GetData(_x, _y, _z, _c: integer):integer;
+         function GetDataUnsafe(_x, _y, _z, _c: integer):integer;
          function GetDefaultColor:TPixelRGBIntData;
          // Sets
-         procedure SetData(_x, _y, _z, _c: integer; _value: longword);
-         procedure SetDataUnsafe(_x, _y, _z, _c: integer; _value: longword);
+         procedure SetData(_x, _y, _z, _c: integer; _value: integer);
+         procedure SetDataUnsafe(_x, _y, _z, _c: integer; _value: integer);
          procedure SetDefaultColor(_value: TPixelRGBIntData);
       protected
          // Constructors and Destructors
@@ -38,7 +38,7 @@ type
          procedure SetBluePixelColor(_x,_y,_z: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y,_z: integer; _value:single); override;
          // Copies
-         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword); override;
+         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer); override;
       public
          // Gets
          function GetOpenGLFormat:TGLInt; override;
@@ -47,10 +47,10 @@ type
          // Misc
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
-         procedure Fill(_Value: longword);
+         procedure Fill(_Value: integer);
          // properties
-         property Data[_x,_y,_z,_c:integer]:longword read GetData write SetData; default;
-         property DataUnsafe[_x,_y,_z,_c:integer]:longword read GetDataUnsafe write SetDataUnsafe;
+         property Data[_x,_y,_z,_c:integer]:integer read GetData write SetData; default;
+         property DataUnsafe[_x,_y,_z,_c:integer]:integer read GetDataUnsafe write SetDataUnsafe;
          property DefaultColor:TPixelRGBIntData read GetDefaultColor write SetDefaultColor;
    end;
 
@@ -66,7 +66,7 @@ begin
 end;
 
 // Gets
-function T3DVolumeRGBIntData.GetData(_x, _y, _z, _c: integer):longword;
+function T3DVolumeRGBIntData.GetData(_x, _y, _z, _c: integer):integer;
 begin
    if IsPixelValid(_x,_y,_z) and (_c >= 0) and (_c <= 2) then
    begin
@@ -92,7 +92,7 @@ begin
    end;
 end;
 
-function T3DVolumeRGBIntData.GetDataUnsafe(_x, _y, _z, _c: integer):longword;
+function T3DVolumeRGBIntData.GetDataUnsafe(_x, _y, _z, _c: integer):integer;
 begin
    case (_c) of
       0: Result := (FData as TRGBIntDataSet).Red[(_z * FYxXSize) + (_y * FXSize) + _x];
@@ -195,7 +195,7 @@ begin
    // do nothing
 end;
 
-procedure T3DVolumeRGBIntData.SetData(_x, _y, _z, _c: integer; _value: longword);
+procedure T3DVolumeRGBIntData.SetData(_x, _y, _z, _c: integer; _value: integer);
 begin
    if IsPixelValid(_x,_y,_z) and (_c >= 0) and (_c <= 2) then
    begin
@@ -207,7 +207,7 @@ begin
    end;
 end;
 
-procedure T3DVolumeRGBIntData.SetDataUnsafe(_x, _y, _z, _c: integer; _value: longword);
+procedure T3DVolumeRGBIntData.SetDataUnsafe(_x, _y, _z, _c: integer; _value: integer);
 begin
    case (_c) of
       0: (FData as TRGBIntDataSet).Red[(_z * FYxXSize) + (_y * FXSize) + _x] := _value;
@@ -232,9 +232,9 @@ begin
    FDefaultColor.b := (_Source as T3DVolumeRGBIntData).FDefaultColor.b;
 end;
 
-procedure T3DVolumeRGBIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword);
+procedure T3DVolumeRGBIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer);
 var
-   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: longword;
+   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: integer;
 begin
    maxX := min(FXSize,_DataXSize)-1;
    maxY := min(FYSize,_DataYSize)-1;
@@ -284,7 +284,7 @@ begin
    end;
 end;
 
-procedure T3DVolumeRGBIntData.Fill(_value: longword);
+procedure T3DVolumeRGBIntData.Fill(_value: integer);
 var
    x,maxx: integer;
 begin

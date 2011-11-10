@@ -35,7 +35,7 @@ type
          procedure SetBluePixelColor(_x,_y,_z: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y,_z: integer; _value:single); override;
          // Copies
-         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword); override;
+         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer); override;
       public
          // Gets
          function GetOpenGLFormat:TGLInt; override;
@@ -196,9 +196,9 @@ begin
 end;
 
 // Copies
-procedure T3DVolumeRGBData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword);
+procedure T3DVolumeRGBData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer);
 var
-   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: longword;
+   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: integer;
 begin
    maxX := min(FXSize,_DataXSize)-1;
    maxY := min(FYSize,_DataYSize)-1;

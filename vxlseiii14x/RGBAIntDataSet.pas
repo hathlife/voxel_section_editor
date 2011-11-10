@@ -9,17 +9,17 @@ type
       private
          FLength : integer;
          // Gets
-         function GetData(_pos: integer): longword; reintroduce;
-         function GetRed(_pos: integer): longword;
-         function GetGreen(_pos: integer): longword;
-         function GetBlue(_pos: integer): longword;
-         function GetAlpha(_pos: integer): longword;
+         function GetData(_pos: integer): integer; reintroduce;
+         function GetRed(_pos: integer): integer;
+         function GetGreen(_pos: integer): integer;
+         function GetBlue(_pos: integer): integer;
+         function GetAlpha(_pos: integer): integer;
          // Sets
-         procedure SetData(_pos: integer; _data: longword); reintroduce;
-         procedure SetRed(_pos: integer; _data: longword);
-         procedure SetGreen(_pos: integer; _data: longword);
-         procedure SetBlue(_pos: integer; _data: longword);
-         procedure SetAlpha(_pos: integer; _data: longword);
+         procedure SetData(_pos: integer; _data: integer); reintroduce;
+         procedure SetRed(_pos: integer; _data: integer);
+         procedure SetGreen(_pos: integer; _data: integer);
+         procedure SetBlue(_pos: integer; _data: integer);
+         procedure SetAlpha(_pos: integer; _data: integer);
       protected
          // Gets
          function GetDataLength: integer; override;
@@ -28,37 +28,37 @@ type
          procedure SetLength(_size: integer); override;
       public
          // properties
-         property Data[_pos: integer]:longword read GetData write SetData;
-         property Red[_pos: integer]:longword read GetRed write SetRed;
-         property Green[_pos: integer]:longword read GetGreen write SetGreen;
-         property Blue[_pos: integer]:longword read GetBlue write SetBlue;
-         property Alpha[_pos: integer]:longword read GetAlpha write SetAlpha;
+         property Data[_pos: integer]:integer read GetData write SetData;
+         property Red[_pos: integer]:integer read GetRed write SetRed;
+         property Green[_pos: integer]:integer read GetGreen write SetGreen;
+         property Blue[_pos: integer]:integer read GetBlue write SetBlue;
+         property Alpha[_pos: integer]:integer read GetAlpha write SetAlpha;
    end;
 
 implementation
 
 // Gets
-function TRGBAIntDataSet.GetData(_pos: integer): longword;
+function TRGBAIntDataSet.GetData(_pos: integer): integer;
 begin
    Result := FData[_pos];
 end;
 
-function TRGBAIntDataSet.GetRed(_pos: integer): longword;
+function TRGBAIntDataSet.GetRed(_pos: integer): integer;
 begin
    Result := FData[4*_pos];
 end;
 
-function TRGBAIntDataSet.GetGreen(_pos: integer): longword;
+function TRGBAIntDataSet.GetGreen(_pos: integer): integer;
 begin
    Result := FData[(4*_pos)+1];
 end;
 
-function TRGBAIntDataSet.GetBlue(_pos: integer): longword;
+function TRGBAIntDataSet.GetBlue(_pos: integer): integer;
 begin
    Result := FData[(4*_pos)+2];
 end;
 
-function TRGBAIntDataSet.GetAlpha(_pos: integer): longword;
+function TRGBAIntDataSet.GetAlpha(_pos: integer): integer;
 begin
    Result := FData[(4*_pos)+3];
 end;
@@ -75,27 +75,27 @@ end;
 
 
 // Sets
-procedure TRGBAIntDataSet.SetData(_pos: integer; _data: longword);
+procedure TRGBAIntDataSet.SetData(_pos: integer; _data: integer);
 begin
    FData[_pos] := _data;
 end;
 
-procedure TRGBAIntDataSet.SetRed(_pos: integer; _data: longword);
+procedure TRGBAIntDataSet.SetRed(_pos: integer; _data: integer);
 begin
    FData[4*_pos] := _data;
 end;
 
-procedure TRGBAIntDataSet.SetGreen(_pos: integer; _data: longword);
+procedure TRGBAIntDataSet.SetGreen(_pos: integer; _data: integer);
 begin
    FData[(4*_pos)+1] := _data;
 end;
 
-procedure TRGBAIntDataSet.SetBlue(_pos: integer; _data: longword);
+procedure TRGBAIntDataSet.SetBlue(_pos: integer; _data: integer);
 begin
    FData[(4*_pos)+2] := _data;
 end;
 
-procedure TRGBAIntDataSet.SetAlpha(_pos: integer; _data: longword);
+procedure TRGBAIntDataSet.SetAlpha(_pos: integer; _data: integer);
 begin
    FData[(4*_pos)+3] := _data;
 end;

@@ -147,7 +147,16 @@ uses
   VolumeRGBData in 'VolumeRGBData.pas',
   VolumeRGBIntData in 'VolumeRGBIntData.pas',
   ImageGreyIntData in 'ImageGreyIntData.pas',
-  VolumeGreyIntData in 'VolumeGreyIntData.pas';
+  VolumeGreyIntData in 'VolumeGreyIntData.pas',
+  LongDataSet in 'LongDataSet.pas',
+  RGBALongDataSet in 'RGBALongDataSet.pas',
+  RGBLongDataSet in 'RGBLongDataSet.pas',
+  ImageGreyLongData in 'ImageGreyLongData.pas',
+  ImageRGBALongData in 'ImageRGBALongData.pas',
+  ImageRGBLongData in 'ImageRGBLongData.pas',
+  VolumeGreyLongData in 'VolumeGreyLongData.pas',
+  VolumeRGBALongData in 'VolumeRGBALongData.pas',
+  VolumeRGBLongData in 'VolumeRGBLongData.pas';
 
 {$R *.res}
 

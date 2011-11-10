@@ -100,5 +100,14 @@
     <Transaction>2011/11/03 23:20:52.494.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\VolumeRGBIntData.pas</Transaction>
     <Transaction>2011/11/06 13:45:28.649.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageGreyIntData.pas</Transaction>
     <Transaction>2011/11/06 13:54:22.524.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\VolumeGreyIntData.pas</Transaction>
+    <Transaction>2011/11/09 16:30:03.790.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\LongDataSet.pas</Transaction>
+    <Transaction>2011/11/09 16:35:51.196.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBALongDataSet.pas</Transaction>
+    <Transaction>2011/11/09 16:37:46.587.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\RGBLongDataSet.pas</Transaction>
+    <Transaction>2011/11/09 20:09:40.087.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageGreyLongData.pas</Transaction>
+    <Transaction>2011/11/09 20:13:05.462.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageRGBALongData.pas</Transaction>
+    <Transaction>2011/11/10 00:53:52.556.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ImageRGBLongData.pas</Transaction>
+    <Transaction>2011/11/10 00:54:58.868.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\VolumeGreyLongData.pas</Transaction>
+    <Transaction>2011/11/10 00:56:52.368.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\VolumeRGBALongData.pas</Transaction>
+    <Transaction>2011/11/10 00:58:14.696.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\VolumeRGBLongData.pas</Transaction>
   </Transactions>
 </BorlandProject>

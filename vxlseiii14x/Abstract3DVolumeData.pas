@@ -11,8 +11,8 @@ type
          FXSize, FYSize, FZSize: integer;
          FName: string;
          // Variables for performance optimization
-         FYxXSize: longword;
-         FMaxX, FMaxY, FMaxZ: longword;
+         FYxXSize: integer;
+         FMaxX, FMaxY, FMaxZ: integer;
          // Constructors and Destructors
          procedure Initialize; virtual;
          // I/O
@@ -45,7 +45,7 @@ type
          procedure SetName(const _Name:String);
          procedure UpdateSizeDataCaching;
          // Copies
-         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword); virtual; abstract;
+         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer); virtual; abstract;
       public
          // constructors and destructors
          constructor Create(_XSize, _YSize, _ZSize: integer); overload;
@@ -66,8 +66,8 @@ type
          function isPixelValid(_x, _y, _z: integer):boolean;
          function GetOpenGLFormat:TGLInt; virtual;
          // Sets
-         procedure Resize(_XSize,_YSize,_ZSize: longword);
-         procedure SetSize(_XSize,_YSize,_ZSize: longword);
+         procedure Resize(_XSize,_YSize,_ZSize: integer);
+         procedure SetSize(_XSize,_YSize,_ZSize: integer);
          // Copies
          procedure Assign(const _Source: TAbstract3DVolumeData); virtual;
          // Misc
@@ -394,10 +394,10 @@ begin
    FData.Length := _Size;
 end;
 
-procedure TAbstract3DVolumeData.Resize(_XSize,_YSize,_ZSize: longword);
+procedure TAbstract3DVolumeData.Resize(_XSize,_YSize,_ZSize: integer);
 var
    OldData: TAbstractDataSet;
-   OldXSize,OldYSize,OldZSize: longword;
+   OldXSize,OldYSize,OldZSize: integer;
 begin
    OldData := FData;
    Initialize;
@@ -422,7 +422,7 @@ begin
    FMaxZ := FZSize - 1;
 end;
 
-procedure TAbstract3DVolumeData.SetSize(_XSize,_YSize,_ZSize: longword);
+procedure TAbstract3DVolumeData.SetSize(_XSize,_YSize,_ZSize: integer);
 begin
    FData.Free;
    Initialize;

@@ -14,12 +14,12 @@ type
       private
          FDefaultColor: TImagePixelRGBAIntData;
          // Gets
-         function GetData(_x, _y, _z, _c: integer):longword;
-         function GetDataUnsafe(_x, _y, _z, _c: integer):longword;
+         function GetData(_x, _y, _z, _c: integer):integer;
+         function GetDataUnsafe(_x, _y, _z, _c: integer):integer;
          function GetDefaultColor:TImagePixelRGBAIntData;
          // Sets
-         procedure SetData(_x, _y, _z, _c: integer; _value: longword);
-         procedure SetDataUnsafe(_x, _y, _z, _c: integer; _value: longword);
+         procedure SetData(_x, _y, _z, _c: integer; _value: integer);
+         procedure SetDataUnsafe(_x, _y, _z, _c: integer; _value: integer);
          procedure SetDefaultColor(_value: TImagePixelRGBAIntData);
       protected
          // Constructors and Destructors
@@ -42,17 +42,17 @@ type
          procedure SetBluePixelColor(_x,_y,_z: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y,_z: integer; _value:single); override;
          // Copies
-         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword); override;
+         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer); override;
       public
          // copies
          procedure Assign(const _Source: TAbstract3DVolumeData); override;
          // Misc
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
-         procedure Fill(_Value: longword);
+         procedure Fill(_Value: integer);
          // properties
-         property Data[_x,_y,_z,_c:integer]:longword read GetData write SetData; default;
-         property DataUnsafe[_x,_y,_z,_c:integer]:longword read GetDataUnsafe write SetDataUnsafe;
+         property Data[_x,_y,_z,_c:integer]:integer read GetData write SetData; default;
+         property DataUnsafe[_x,_y,_z,_c:integer]:integer read GetDataUnsafe write SetDataUnsafe;
          property DefaultColor:TImagePixelRGBAIntData read GetDefaultColor write SetDefaultColor;
    end;
 
@@ -69,7 +69,7 @@ begin
 end;
 
 // Gets
-function T3DVolumeRGBAIntData.GetData(_x, _y, _z, _c: integer):longword;
+function T3DVolumeRGBAIntData.GetData(_x, _y, _z, _c: integer):integer;
 begin
    if IsPixelValid(_x,_y,_z) and (_c >= 0) and (_c <= 2) then
    begin
@@ -97,7 +97,7 @@ begin
    end;
 end;
 
-function T3DVolumeRGBAIntData.GetDataUnsafe(_x, _y, _z, _c: integer):longword;
+function T3DVolumeRGBAIntData.GetDataUnsafe(_x, _y, _z, _c: integer):integer;
 begin
    case (_c) of
       0: Result := (FData as TRGBAIntDataSet).Red[(_z * FYxXSize) + (_y * FXSize) + _x];
@@ -197,7 +197,7 @@ begin
    (FData as TRGBAIntDataSet).Alpha[(_z * FYxXSize) + (_y * FXSize) + _x] := Round(_value);
 end;
 
-procedure T3DVolumeRGBAIntData.SetData(_x, _y, _z, _c: integer; _value: longword);
+procedure T3DVolumeRGBAIntData.SetData(_x, _y, _z, _c: integer; _value: integer);
 begin
    if IsPixelValid(_x,_y,_z) and (_c >= 0) and (_c <= 2) then
    begin
@@ -210,7 +210,7 @@ begin
    end;
 end;
 
-procedure T3DVolumeRGBAIntData.SetDataUnsafe(_x, _y, _z, _c: integer; _value: longword);
+procedure T3DVolumeRGBAIntData.SetDataUnsafe(_x, _y, _z, _c: integer; _value: integer);
 begin
    case (_c) of
       0: (FData as TRGBAIntDataSet).Red[(_z * FYxXSize) + (_y * FXSize) + _x] := _value;
@@ -238,9 +238,9 @@ begin
    FDefaultColor.a := (_Source as T3DVolumeRGBAIntData).FDefaultColor.a;
 end;
 
-procedure T3DVolumeRGBAIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword);
+procedure T3DVolumeRGBAIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer);
 var
-   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: longword;
+   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: integer;
 begin
    maxX := min(FXSize,_DataXSize)-1;
    maxY := min(FYSize,_DataYSize)-1;
@@ -292,7 +292,7 @@ begin
    end;
 end;
 
-procedure T3DVolumeRGBAIntData.Fill(_value: longword);
+procedure T3DVolumeRGBAIntData.Fill(_value: integer);
 var
    x,maxx: integer;
 begin

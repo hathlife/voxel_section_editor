@@ -9,10 +9,10 @@ type
       private
          FDefaultColor: TPixelRGBIntData;
          // Gets
-         function GetData(_x, _y, _c: integer):longword;
+         function GetData(_x, _y, _c: integer):integer;
          function GetDefaultColor:TPixelRGBIntData;
          // Sets
-         procedure SetData(_x, _y, _c: integer; _value: longword);
+         procedure SetData(_x, _y, _c: integer; _value: integer);
          procedure SetDefaultColor(_value: TPixelRGBIntData);
       protected
          // Constructors and Destructors
@@ -43,7 +43,7 @@ type
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
          // properties
-         property Data[_x,_y,_c:integer]:longword read GetData write SetData; default;
+         property Data[_x,_y,_c:integer]:integer read GetData write SetData; default;
          property DefaultColor:TPixelRGBIntData read GetDefaultColor write SetDefaultColor;
    end;
 
@@ -59,7 +59,7 @@ begin
 end;
 
 // Gets
-function T2DImageRGBIntData.GetData(_x, _y, _c: integer):longword;
+function T2DImageRGBIntData.GetData(_x, _y, _c: integer):integer;
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) and (_c >= 0) and (_c <= 2) then
    begin
@@ -176,7 +176,7 @@ begin
    // do nothing
 end;
 
-procedure T2DImageRGBIntData.SetData(_x, _y, _c: integer; _value: longword);
+procedure T2DImageRGBIntData.SetData(_x, _y, _c: integer; _value: integer);
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) and (_c >= 0) and (_c <= 2) then
    begin

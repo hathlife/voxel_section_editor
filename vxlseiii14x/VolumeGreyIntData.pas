@@ -9,11 +9,11 @@ type
    T3DVolumeGreyIntData = class (TAbstract3DVolumeData)
       private
          // Gets
-         function GetData(_x, _y, _z: integer):longword;
-         function GetDataUnsafe(_x, _y, _z: integer):longword;
+         function GetData(_x, _y, _z: integer):integer;
+         function GetDataUnsafe(_x, _y, _z: integer):integer;
          // Sets
-         procedure SetData(_x, _y, _z: integer; _value: longword);
-         procedure SetDataUnsafe(_x, _y, _z: integer; _value: longword);
+         procedure SetData(_x, _y, _z: integer; _value: integer);
+         procedure SetDataUnsafe(_x, _y, _z: integer; _value: integer);
       protected
          // Constructors and Destructors
          procedure Initialize; override;
@@ -35,17 +35,17 @@ type
          procedure SetBluePixelColor(_x,_y,_z: integer; _value:single); override;
          procedure SetAlphaPixelColor(_x,_y,_z: integer; _value:single); override;
          // Copies
-         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword); override;
+         procedure CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer); override;
       public
          // Gets
          function GetOpenGLFormat:TGLInt; override;
          // Misc
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
-         procedure Fill(_value: longword);
+         procedure Fill(_value: integer);
          // properties
-         property Data[_x,_y,_z:integer]:longword read GetData write SetData; default;
-         property DataUnsafe[_x,_y,_z:integer]:longword read GetDataUnsafe write SetDataUnsafe;
+         property Data[_x,_y,_z:integer]:integer read GetData write SetData; default;
+         property DataUnsafe[_x,_y,_z:integer]:integer read GetDataUnsafe write SetDataUnsafe;
    end;
 
 implementation
@@ -57,7 +57,7 @@ begin
 end;
 
 // Gets
-function T3DVolumeGreyIntData.GetData(_x, _y,_z: integer):longword;
+function T3DVolumeGreyIntData.GetData(_x, _y,_z: integer):integer;
 begin
    if IsPixelValid(_x,_y,_z) then
    begin
@@ -69,7 +69,7 @@ begin
    end;
 end;
 
-function T3DVolumeGreyIntData.GetDataUnsafe(_x, _y,_z: integer):longword;
+function T3DVolumeGreyIntData.GetDataUnsafe(_x, _y,_z: integer):integer;
 begin
    // Use with care, otherwise you'll get an access violation
    Result := (FData as TIntDataSet).Data[(_z * FYxXSize) + (_y * FXSize) + _x];
@@ -158,7 +158,7 @@ begin
 end;
 
 
-procedure T3DVolumeGreyIntData.SetData(_x, _y, _z: integer; _value: longword);
+procedure T3DVolumeGreyIntData.SetData(_x, _y, _z: integer; _value: integer);
 begin
    if IsPixelValid(_x,_y,_z) then
    begin
@@ -166,15 +166,15 @@ begin
    end;
 end;
 
-procedure T3DVolumeGreyIntData.SetDataUnsafe(_x, _y, _z: integer; _value: longword);
+procedure T3DVolumeGreyIntData.SetDataUnsafe(_x, _y, _z: integer; _value: integer);
 begin
   (FData as TIntDataSet).Data[(_z * FYxXSize) + (_y * FXSize) + _x] := _value;
 end;
 
 // Copies
-procedure T3DVolumeGreyIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: longword);
+procedure T3DVolumeGreyIntData.CopyData(const _Data: TAbstractDataSet; _DataXSize, _DataYSize, _DataZSize: integer);
 var
-   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: longword;
+   x,y,z,ZPos,ZDataPos,Pos,maxPos,DataPos,maxX, maxY, maxZ: integer;
 begin
    maxX := min(FXSize,_DataXSize)-1;
    maxY := min(FYSize,_DataYSize)-1;
@@ -220,7 +220,7 @@ begin
    end;
 end;
 
-procedure T3DVolumeGreyIntData.Fill(_value: longword);
+procedure T3DVolumeGreyIntData.Fill(_value: integer);
 var
    x,maxx: integer;
 begin

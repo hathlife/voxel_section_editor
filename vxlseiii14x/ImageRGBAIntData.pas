@@ -2,22 +2,18 @@ unit ImageRGBAIntData;
 
 interface
 
-uses Windows, Graphics, Abstract2DImageData, RGBAIntDataSet;
+uses Windows, Graphics, Abstract2DImageData, RGBAIntDataSet, BasicDataTypes;
 
 type
-   TImagePixelRGBAIntData = record
-      r,g,b,a: longword;
-   end;
-
    T2DImageRGBAIntData = class (TAbstract2DImageData)
       private
-         FDefaultColor: TImagePixelRGBAIntData;
+         FDefaultColor: TPixelRGBAIntData;
          // Gets
-         function GetData(_x, _y, _c: integer):longword;
-         function GetDefaultColor:TImagePixelRGBAIntData;
+         function GetData(_x, _y, _c: integer):integer;
+         function GetDefaultColor:TPixelRGBAIntData;
          // Sets
-         procedure SetData(_x, _y, _c: integer; _value: longword);
-         procedure SetDefaultColor(_value: TImagePixelRGBAIntData);
+         procedure SetData(_x, _y, _c: integer; _value: integer);
+         procedure SetDefaultColor(_value: TPixelRGBAIntData);
       protected
          // Constructors and Destructors
          procedure Initialize; override;
@@ -45,8 +41,8 @@ type
          procedure ScaleBy(_Value: single); override;
          procedure Invert; override;
          // properties
-         property Data[_x,_y,_c:integer]:longword read GetData write SetData; default;
-         property DefaultColor:TImagePixelRGBAIntData read GetDefaultColor write SetDefaultColor;
+         property Data[_x,_y,_c:integer]:integer read GetData write SetData; default;
+         property DefaultColor:TPixelRGBAIntData read GetDefaultColor write SetDefaultColor;
    end;
 
 implementation
@@ -62,7 +58,7 @@ begin
 end;
 
 // Gets
-function T2DImageRGBAIntData.GetData(_x, _y, _c: integer):longword;
+function T2DImageRGBAIntData.GetData(_x, _y, _c: integer):integer;
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) and (_c >= 0) and (_c <= 2) then
    begin
@@ -90,7 +86,7 @@ begin
    end;
 end;
 
-function T2DImageRGBAIntData.GetDefaultColor:TImagePixelRGBAIntData;
+function T2DImageRGBAIntData.GetDefaultColor:TPixelRGBAIntData;
 begin
    Result := FDefaultColor;
 end;
@@ -177,7 +173,7 @@ begin
    (FData as TRGBAIntDataSet).Alpha[(_y * FXSize) + _x] := Round(_value);
 end;
 
-procedure T2DImageRGBAIntData.SetData(_x, _y, _c: integer; _value: longword);
+procedure T2DImageRGBAIntData.SetData(_x, _y, _c: integer; _value: integer);
 begin
    if (_x >= 0) and (_x < FXSize) and (_y >= 0) and (_y < FYSize) and (_c >= 0) and (_c <= 2) then
    begin
@@ -190,7 +186,7 @@ begin
    end;
 end;
 
-procedure T2DImageRGBAIntData.SetDefaultColor(_value: TImagePixelRGBAIntData);
+procedure T2DImageRGBAIntData.SetDefaultColor(_value: TPixelRGBAIntData);
 begin
    FDefaultColor.r := _value.r;
    FDefaultColor.g := _value.g;
