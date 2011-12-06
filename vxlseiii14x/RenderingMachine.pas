@@ -271,6 +271,7 @@ begin
             glDisable(GL_TEXTURE_2D);
          end;
       end;
+      glActiveTexture(GL_TEXTURE0);
    end;
 end;
 
@@ -319,6 +320,7 @@ begin
             glDisable(GL_TEXTURE_2D);
          end;
       end;
+      glActiveTexture(GL_TEXTURE0);
    end;
 end;
 
@@ -367,6 +369,7 @@ begin
             glDisable(GL_TEXTURE_2D);
          end;
       end;
+      glActiveTexture(GL_TEXTURE0);
    end;
 end;
 

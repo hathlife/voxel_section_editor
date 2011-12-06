@@ -50,6 +50,7 @@ type
          procedure GenerateExternalSurfaceMap;
          procedure GenerateInfluenceMapOnly;
          procedure GenerateFullMap;
+         procedure GenerateSurfaceAndInterpolationMap;
          // Copies
          procedure Assign(const _Map : TVoxelMap);
          function CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
@@ -57,10 +58,12 @@ type
          procedure FloodFill(const _Point : TVector3i; _value : single);
          procedure MergeMapData(const _Source : TVoxelMap; _Data : single);
          procedure MapInfluences;
-         procedure MapSurfaces(_Value: single);
+         procedure MapSurfaces(_Value: single); overload;
+         procedure MapSurfaces(_Candidate,_InsideVolume,_Surface: single); overload;
          procedure MapSurfacesOnly(_Value: single);
          procedure MapExternalSurfaces(_Value: single);
          procedure MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
+         procedure MapInterpolationZones(_Surface: single);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
          procedure ConvertValues(_Values : array of single);
@@ -370,6 +373,18 @@ begin
    MapSurfaces(C_SURFACE);
 end;
 
+procedure TVoxelMap.GenerateSurfaceAndInterpolationMap;
+var
+   FilledMap : TVoxelMap;
+begin
+   FillMap(C_MODE_USED,GenerateFilledDataParam(511,C_OUTSIDE_VOLUME));
+   FilledMap := TVoxelMap.Create(FSection,FBias,C_MODE_USED,GenerateFilledDataParam(C_OUTSIDE_VOLUME,511));
+   FilledMap.FloodFill(SetVectorI(0,0,0),0);
+   MergeMapData(FilledMap,511);
+   FilledMap.Free;
+   MapSurfaces(511,511,1023);
+   MapInterpolationZones(511);
+end;
 
 // Copies
 procedure TVoxelMap.Assign(const _Map : TVoxelMap);
@@ -653,6 +668,51 @@ begin
    Cube.Free;
 end;
 
+procedure TVoxelMap.MapSurfaces(_Candidate,_InsideVolume,_Surface: single);
+var
+   Cube : TNormals;
+   CurrentNormal : TVector3f;
+   x, y, z, i, maxi : integer;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
+            begin
+               if FMap.DataUnsafe[x,y,z] = _Candidate then
+               begin
+                  i := 0;
+                  while i <= maxi do
+                  begin
+                     CurrentNormal := Cube[i];
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Candidate) then
+                     begin
+                        inc(i);
+                     end
+                     else
+                     begin
+                        // surface
+                        i := maxi * 2;
+                     end;
+                  end;
+                  if i <> (maxi * 2) then
+                  begin
+                     // inside the voxel
+                     FMap.DataUnsafe[x,y,z] := _InsideVolume;
+                  end
+                  else // surface
+                  begin
+                     FMap.DataUnsafe[x,y,z] := _Surface;
+                  end;
+               end;
+            end;
+   end;
+   Cube.Free;
+end;
+
 procedure TVoxelMap.MapSurfacesOnly(_Value: single);
 var
    Cube : TNormals;
@@ -850,6 +910,156 @@ begin
    VertsAndEdgesNeighboors.Free;
 end;
 
+// Interpolation zones are regions that are neighbour to two surface voxels that
+// are 'linked by edge or vertex'. These zones, while considered to be out of
+// the volume, they'll have part of the volume of the model, in order to avoid
+// regions where the internal volume does not exist, therefore not being
+// manifolds. We'll do a sort of marching cubes on these regions.
+procedure TVoxelMap.MapInterpolationZones(_Surface: single);
+const
+   CubeVertexBit: array [0..25] of byte = (15,10,5,12,3,4,8,1,2,51,34,170,136,204,68,85,17,240,160,80,192,48,64,128,16,32);
+   IsFaceNeighbour: array[0..25] of boolean = (true,false,false,false,false,false,false,false,false,true,false,true,false,true,false,true,false,true,false,false,false,false,false,false,false,false);
+var
+   Cube : TNormals;
+   CurrentNormal : TVector3f;
+   x, y, z, i, maxi,finalBitValue,bitValue,bitCount : integer;
+   VertexCounter: array [0..7] of byte;
+   HasFaceNeighbour,HasSharedVertex: boolean;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      // Check all voxels.
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
+            begin
+               // interpolation zones are points out of the model that are close to surfaces
+               if FMap.DataUnsafe[x,y,z] < _Surface then
+               begin
+                  // Reset vertex counter.
+                  for i := 0 to 7 do
+                     VertexCounter[i] := 0;
+                  HasFaceNeighbour := false;
+                  // check all neighbors
+                  i := 0;
+                  while i <= maxi do
+                  begin
+                     CurrentNormal := Cube[i];
+                     // if our neighbor is surface, vertexes that belongs to both are checked.
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
+                     begin
+                        // here we increment each common vertex at VertexCounter
+                        bitValue := CubeVertexBit[i];
+                        if (bitValue and 1) <> 0 then
+                           inc(VertexCounter[0]);
+                        if (bitValue and 2) <> 0 then
+                           inc(VertexCounter[1]);
+                        if (bitValue and 4) <> 0 then
+                           inc(VertexCounter[2]);
+                        if (bitValue and 8) <> 0 then
+                           inc(VertexCounter[3]);
+                        if (bitValue and 16) <> 0 then
+                           inc(VertexCounter[4]);
+                        if (bitValue and 32) <> 0 then
+                           inc(VertexCounter[5]);
+                        if (bitValue and 64) <> 0 then
+                           inc(VertexCounter[6]);
+                        if (bitValue and 128) <> 0 then
+                           inc(VertexCounter[7]);
+                        if IsFaceNeighbour[i] then
+                           HasFaceNeighbour := true;
+                     end;
+                     inc(i);
+                  end;
+                  // Now we check if we have a face neighbour and if 5 vertexes
+                  // are checked.
+                  if HasFaceNeighbour then
+                  begin
+                     // That's the part where we count the checked vertexes.
+                     // Here we also check if it has a shared vertex
+                     // (VertexCounter[i] > 1).
+                     bitCount := 0;
+                     HasSharedVertex := false;
+                     for i := 0 to 7 do
+                     begin
+                        if VertexCounter[i] > 1 then
+                        begin
+                           HasSharedVertex := true;
+                           inc(bitCount);
+                        end
+                        else if VertexCounter[i] > 0 then
+                        begin
+                           inc(bitCount);
+                        end;
+                     end;
+                     if (bitCount > 4) and HasSharedVertex then
+                     begin
+                        // Now, we really calculate the configuration of this
+                        // region.
+
+                        // Visit all neighbours again...
+                        i := 0;
+                        finalBitValue := 0;
+                        while i <= maxi do
+                        begin
+                           // The idea of this part is simple:
+
+                           // if this neighbour has a shared vertex with count
+                           // > 1, then we do an 'or' of its neighbour bits with
+                           // the final bit value
+                           HasSharedVertex := false; // this variable gets a new
+                           //purpose here.
+                           CurrentNormal := Cube[i];
+                           // So, if the neighbour is surface, then..
+                           if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
+                           begin
+                              // check if a shared vertex has a counter > 1
+                              bitValue := CubeVertexBit[i];
+                              if (bitValue and 1) <> 0 then
+                                 if VertexCounter[0] > 1 then
+                                    HasSharedVertex := true;
+                              if (bitValue and 2) <> 0 then
+                                 if (VertexCounter[1] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 4) <> 0 then
+                                 if (VertexCounter[2] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 8) <> 0 then
+                                 if (VertexCounter[3] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 16) <> 0 then
+                                 if (VertexCounter[4] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 32) <> 0 then
+                                 if (VertexCounter[5] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 64) <> 0 then
+                                 if (VertexCounter[6] > 1) then
+                                    HasSharedVertex := true;
+                              if (bitValue and 128) <> 0 then
+                                 if (VertexCounter[7] > 1) then
+                                    HasSharedVertex := true;
+                              // if there is a shared vertex with a counter > 1
+                              if HasSharedVertex then
+                              begin
+                                 finalBitValue := finalBitValue or bitValue;
+                              end;
+                           end;
+                           inc(i);
+                        end;
+                        // Finally, we write the value of the interpolation zone
+                        // here.
+                        FMap.DataUnsafe[x,y,z] := finalBitValue;
+                     end;
+                  end;
+
+               end;
+            end;
+   end;
+
+end;
 
 function TVoxelMap.SynchronizeWithSection(_Mode : integer; _Threshold : single): integer;
 var

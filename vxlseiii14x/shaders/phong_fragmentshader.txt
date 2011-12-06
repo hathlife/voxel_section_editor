@@ -14,8 +14,7 @@ void main (void)
 
    //calculate Diffuse Term:  
 	float diff = max(dot(N,L), 0.0);
-	vec4 Idiff = vec4(diff, diff, diff, 0.0);   
-	Idiff.a = color.a;
+	vec4 Idiff = vec4(diff, diff, diff, 1.0);   
 	
 	// calculate Specular Term:
 	vec4 Ispec = vec4(0.0, 0.0, 0.0, 0.0);

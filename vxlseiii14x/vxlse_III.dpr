@@ -156,7 +156,8 @@ uses
   ImageRGBLongData in 'ImageRGBLongData.pas',
   VolumeGreyLongData in 'VolumeGreyLongData.pas',
   VolumeRGBALongData in 'VolumeRGBALongData.pas',
-  VolumeRGBLongData in 'VolumeRGBLongData.pas';
+  VolumeRGBLongData in 'VolumeRGBLongData.pas',
+  DifferentMeshFaceTypePlugin in 'DifferentMeshFaceTypePlugin.pas';
 
 {$R *.res}
 
