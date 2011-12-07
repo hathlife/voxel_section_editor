@@ -31,6 +31,7 @@ type
          procedure LoadFromExternalVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
          procedure LoadTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
+         procedure LoadQuadsWithTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
     end;
 
 implementation
@@ -803,6 +804,105 @@ begin
    end;
 end;
 
+// Interpolation zones are regions that are neighbour to two surface voxels that
+// are 'linked by edge or vertex'. These zones, while considered to be out of
+// the volume, they'll have part of the volume of the model, in order to avoid
+// regions where the internal volume does not exist, therefore not being
+// manifolds. We'll do a sort of marching cubes on these regions.
+
+// Here we build triangles or quads at interpolation zones.
+{ // Under Construction
+procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; var _VertexMap : T3DVolumeGreyIntData; var _VoxelMap: TVoxelMap);
+var
+   x,y,z,i,j,k: integer;
+   V : TVoxelUnpacked;
+   DivideX,DivideY,DivideZ : boolean;
+   NeighbourVertexIDs: array[0..2,0..2,0..2] of integer;
+begin
+   // visit every region.
+   for x := 0 to _VoxelMap.GetMaxX do
+      for y := 0 to _VoxelMap.GetMaxY do
+         for z := 0 to _VoxelMap.GetMaxZ do
+         begin
+            // if the region is an interpolation zone, then...
+            if (_VoxelMap.Map[x,y,z] > 0) and (_VoxelMap.Map[x,y,z] < 256) then
+            begin
+               // Should we subdivide it? If an interpolation zone has all 8
+               // corners filled (=255), then the answer is yes. Otherwise, no.
+               if (_VoxelMap.Map[x,y,z] = 255) then
+               begin
+                  // Subdivision starts here...
+
+                  // Let's build the neighbour vertex IDs.
+                  for i := 0 to 2 do
+                     for j := 0 to 2 do
+                        for k := 0 to 2 do
+                        begin
+                           NeighbourVertexIDs[i,j,k] := C_VMG_NO_VERTEX;
+                        end;
+                  NeighbourVertexIDs[0,0,0] := _VertexMap.Data[x,y,z];
+                  NeighbourVertexIDs[0,0,2] := _VertexMap.Data[x,y,z+1];
+                  NeighbourVertexIDs[0,2,0] := _VertexMap.Data[x,y+1,z];
+                  NeighbourVertexIDs[0,2,2] := _VertexMap.Data[x,y+1,z+1];
+                  NeighbourVertexIDs[2,0,0] := _VertexMap.Data[x+1,y,z];
+                  NeighbourVertexIDs[2,0,2] := _VertexMap.Data[x+1,y,z+1];
+                  NeighbourVertexIDs[2,2,0] := _VertexMap.Data[x+1,y+1,z];
+                  NeighbourVertexIDs[2,2,2] := _VertexMap.Data[x+1,y+1,z+1];
+
+                  // Let's check its neighbour faces. If opposite faces are part
+                  // of the surface, then we divide the region in its direction.
+
+                  // Axis X
+                  DivideX := false;
+                  _Voxel.GetVoxelSafe(x-1,y,z,v);
+                  if v.Used then
+                  begin
+                     _Voxel.GetVoxelSafe(x+1,y,z,v);
+                     if v.Used then
+                     begin
+                        if NeighbourVertexIDs[1,0,0] = C_VMG_NO_VERTEX then
+                        begin
+                           // NeighbourVertexIDs[1,0,0] := CreateVertex;
+                        end;
+
+                        DivideX := true;
+                     end;
+                  end;
+
+                  // Axis Y
+                  DivideY := false;
+                  _Voxel.GetVoxelSafe(x,y-1,z,v);
+                  if v.Used then
+                  begin
+                     _Voxel.GetVoxelSafe(x,y+1,z,v);
+                     if v.Used then
+                     begin
+                        DivideY := true;
+                     end;
+                  end;
+
+                  // Axis Z
+                  DivideZ := false;
+                  _Voxel.GetVoxelSafe(x,y,z-1,v);
+                  if v.Used then
+                  begin
+                     _Voxel.GetVoxelSafe(x,y,z+1,v);
+                     if v.Used then
+                     begin
+                        DivideZ := true;
+                     end;
+                  end;
+
+               end
+               else
+               begin
+                  // Does not subdivide it.
+               end;
+            end;
+         end;
+end;
+}
+
 procedure TVoxelMeshGenerator.EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
 var
    HitCounter, i: integer;
@@ -1123,6 +1223,19 @@ begin
    VoxelMap.GenerateSurfaceMap;
 
    BuildTriangleModelFromVoxelMap(_Voxel,_Palette,_Vertices,_Faces,_Colours,_Normals,_FaceNormals,_TexCoords,_NumVoxels,_NumFaces,_VerticesPerFace,VoxelMap);
+
+   VoxelMap.Free;
+end;
+
+procedure TVoxelMeshGenerator.LoadQuadsWithTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _Normals,_FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumVoxels,_NumFaces: longword; const _VerticesPerFace: integer);
+var
+   VoxelMap: TVoxelMap;
+begin
+   // Let's map our voxels.
+   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap.GenerateSurfaceAndInterpolationMap;
+
+   BuildModelFromVoxelMap(_Voxel,_Palette,_Vertices,_Faces,_Colours,_Normals,_FaceNormals,_TexCoords,_NumVoxels,_NumFaces,_VerticesPerFace,VoxelMap);
 
    VoxelMap.Free;
 end;
