@@ -157,7 +157,9 @@ uses
   VolumeGreyLongData in 'VolumeGreyLongData.pas',
   VolumeRGBALongData in 'VolumeRGBALongData.pas',
   VolumeRGBLongData in 'VolumeRGBLongData.pas',
-  DifferentMeshFaceTypePlugin in 'DifferentMeshFaceTypePlugin.pas';
+  DifferentMeshFaceTypePlugin in 'DifferentMeshFaceTypePlugin.pas',
+  ClassVertexList in 'ClassVertexList.pas',
+  ClassTriangleList in 'ClassTriangleList.pas';
 
 {$R *.res}
 

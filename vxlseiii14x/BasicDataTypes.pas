@@ -118,6 +118,19 @@ type
       Next : PIntegerItem;
    end;
 
+   PVertexItem = ^TVertexItem;
+   TVertexItem = record
+      ID: integer;
+      x,y,z: single;
+      Next: PVertexItem;
+   end;
+
+   PTriangleItem = ^TTriangleItem;
+   TTriangleItem = record
+      v1, v2, v3: integer;
+      Next: PTriangleItem;
+   end;
+
    TTriangleNeighbourItem = record
       ID: integer;
       V1,V2: integer;
