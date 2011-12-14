@@ -159,7 +159,8 @@ uses
   VolumeRGBLongData in 'VolumeRGBLongData.pas',
   DifferentMeshFaceTypePlugin in 'DifferentMeshFaceTypePlugin.pas',
   ClassVertexList in 'ClassVertexList.pas',
-  ClassTriangleList in 'ClassTriangleList.pas';
+  ClassTriangleList in 'ClassTriangleList.pas',
+  ClassQuadList in 'ClassQuadList.pas';
 
 {$R *.res}
 

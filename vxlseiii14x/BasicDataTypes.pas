@@ -131,6 +131,12 @@ type
       Next: PTriangleItem;
    end;
 
+   PQuadItem = ^TQuadItem;
+   TQuadItem = record
+      v1, v2, v3, v4: integer;
+      Next: PQuadItem;
+   end;
+
    TTriangleNeighbourItem = record
       ID: integer;
       V1,V2: integer;
@@ -209,7 +215,6 @@ type
    TPixelRGBAIntData = record
       r,g,b,a: integer;
    end;
-
 
 implementation
 

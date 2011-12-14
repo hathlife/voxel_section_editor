@@ -3,7 +3,7 @@ unit VoxelMeshGenerator;
 interface
 
 uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
-   VolumeGreyIntData;
+   VolumeGreyIntData, ClassVertexList, ClassTriangleList, ClassQuadList;
 
 type
    TVoxelMeshGenerator = class
@@ -812,13 +812,568 @@ end;
 
 // Here we build triangles or quads at interpolation zones.
 { // Under Construction
-procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; var _VertexMap : T3DVolumeGreyIntData; var _VoxelMap: TVoxelMap);
+procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; var _VertexMap : T3DVolumeGreyIntData; var _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Faces: auint32; var _NumFaces,_NumVertices: longword);
+   function InitializeNeighbourVertexIDsSize3( const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer): T3DIntGrid;
+   begin
+      SetLength(Result,3,3,3);
+      Result[0,0,0] := _VertexMap.Data[_x,_y,_z];
+      Result[0,0,1] := C_VMG_NO_VERTEX;
+      Result[0,0,2] := _VertexMap.Data[_x,_y,_z+1];
+      Result[0,1,0] := C_VMG_NO_VERTEX;
+      Result[0,1,1] := C_VMG_NO_VERTEX;
+      Result[0,1,2] := C_VMG_NO_VERTEX;
+      Result[0,2,0] := _VertexMap.Data[_x,_y+1,_z];
+      Result[0,2,1] := C_VMG_NO_VERTEX;
+      Result[0,2,2] := _VertexMap.Data[_x,_y+1,_z+1];
+      Result[1,0,0] := C_VMG_NO_VERTEX;
+      Result[1,0,1] := C_VMG_NO_VERTEX;
+      Result[1,0,2] := C_VMG_NO_VERTEX;
+      Result[1,1,0] := C_VMG_NO_VERTEX;
+      Result[1,1,1] := C_VMG_NO_VERTEX;
+      Result[1,1,2] := C_VMG_NO_VERTEX;
+      Result[1,2,0] := C_VMG_NO_VERTEX;
+      Result[1,2,1] := C_VMG_NO_VERTEX;
+      Result[1,2,2] := C_VMG_NO_VERTEX;
+      Result[2,0,0] := _VertexMap.Data[_x+1,_y,_z];
+      Result[2,0,1] := C_VMG_NO_VERTEX;
+      Result[2,0,2] := _VertexMap.Data[_x+1,_y,_z+1];
+      Result[2,1,0] := C_VMG_NO_VERTEX;
+      Result[2,1,1] := C_VMG_NO_VERTEX;
+      Result[2,1,2] := C_VMG_NO_VERTEX;
+      Result[2,2,0] := _VertexMap.Data[_x+1,_y+1,_z];
+      Result[2,2,1] := C_VMG_NO_VERTEX;
+      Result[2,2,2] := _VertexMap.Data[_x+1,_y+1,_z+1];
+   end;
+
+   function InitializeNeighbourVertexIDsSize4( const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer): T3DIntGrid;
+   begin
+      SetLength(Result,4,4,4);
+      Result[0,0,0] := _VertexMap.Data[_x,_y,_z];
+      Result[0,0,1] := C_VMG_NO_VERTEX;
+      Result[0,0,2] := C_VMG_NO_VERTEX;
+      Result[0,0,3] := _VertexMap.Data[_x,_y,_z+1];
+      Result[0,1,0] := C_VMG_NO_VERTEX;
+      Result[0,1,1] := C_VMG_NO_VERTEX;
+      Result[0,1,2] := C_VMG_NO_VERTEX;
+      Result[0,1,3] := C_VMG_NO_VERTEX;
+      Result[0,2,0] := C_VMG_NO_VERTEX;
+      Result[0,2,1] := C_VMG_NO_VERTEX;
+      Result[0,2,2] := C_VMG_NO_VERTEX;
+      Result[0,2,3] := C_VMG_NO_VERTEX;
+      Result[0,3,0] := _VertexMap.Data[_x,_y+1,_z];
+      Result[0,3,1] := C_VMG_NO_VERTEX;
+      Result[0,3,2] := C_VMG_NO_VERTEX;
+      Result[0,3,3] := _VertexMap.Data[_x,_y+1,_z+1];
+      Result[1,0,0] := C_VMG_NO_VERTEX;
+      Result[1,0,1] := C_VMG_NO_VERTEX;
+      Result[1,0,2] := C_VMG_NO_VERTEX;
+      Result[1,0,3] := C_VMG_NO_VERTEX;
+      Result[1,1,0] := C_VMG_NO_VERTEX;
+      Result[1,1,1] := C_VMG_NO_VERTEX;
+      Result[1,1,2] := C_VMG_NO_VERTEX;
+      Result[1,1,3] := C_VMG_NO_VERTEX;
+      Result[1,2,0] := C_VMG_NO_VERTEX;
+      Result[1,2,1] := C_VMG_NO_VERTEX;
+      Result[1,2,2] := C_VMG_NO_VERTEX;
+      Result[1,2,3] := C_VMG_NO_VERTEX;
+      Result[1,3,0] := C_VMG_NO_VERTEX;
+      Result[1,3,1] := C_VMG_NO_VERTEX;
+      Result[1,3,2] := C_VMG_NO_VERTEX;
+      Result[1,3,3] := C_VMG_NO_VERTEX;
+      Result[2,0,0] := C_VMG_NO_VERTEX;
+      Result[2,0,1] := C_VMG_NO_VERTEX;
+      Result[2,0,2] := C_VMG_NO_VERTEX;
+      Result[2,0,3] := C_VMG_NO_VERTEX;
+      Result[2,1,0] := C_VMG_NO_VERTEX;
+      Result[2,1,1] := C_VMG_NO_VERTEX;
+      Result[2,1,2] := C_VMG_NO_VERTEX;
+      Result[2,1,3] := C_VMG_NO_VERTEX;
+      Result[2,2,0] := C_VMG_NO_VERTEX;
+      Result[2,2,1] := C_VMG_NO_VERTEX;
+      Result[2,2,2] := C_VMG_NO_VERTEX;
+      Result[2,2,3] := C_VMG_NO_VERTEX;
+      Result[2,3,0] := C_VMG_NO_VERTEX;
+      Result[2,3,1] := C_VMG_NO_VERTEX;
+      Result[2,3,2] := C_VMG_NO_VERTEX;
+      Result[2,3,3] := C_VMG_NO_VERTEX;
+      Result[3,0,0] := _VertexMap.Data[_x+1,_y,_z];
+      Result[3,0,1] := C_VMG_NO_VERTEX;
+      Result[3,0,2] := C_VMG_NO_VERTEX;
+      Result[3,0,3] := _VertexMap.Data[_x+1,_y,_z+1];
+      Result[3,1,0] := C_VMG_NO_VERTEX;
+      Result[3,1,1] := C_VMG_NO_VERTEX;
+      Result[3,1,2] := C_VMG_NO_VERTEX;
+      Result[3,1,3] := C_VMG_NO_VERTEX;
+      Result[3,2,0] := C_VMG_NO_VERTEX;
+      Result[3,2,1] := C_VMG_NO_VERTEX;
+      Result[3,2,2] := C_VMG_NO_VERTEX;
+      Result[3,2,3] := C_VMG_NO_VERTEX;
+      Result[3,3,0] := _VertexMap.Data[_x+1,_y+1,_z];
+      Result[3,3,1] := C_VMG_NO_VERTEX;
+      Result[3,3,2] := C_VMG_NO_VERTEX;
+      Result[3,3,3] := _VertexMap.Data[_x+1,_y+1,_z+1];
+   end;
+
+   procedure AddLeftFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[0,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,0] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,0] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,0,1] := _VertexList.Add(_NumVertices,_x,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,1,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,1] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,1] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,3,1] := _VertexList.Add(_NumVertices,_x,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,0,2] := _VertexList.Add(_NumVertices,_x,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,1,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,2] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,2] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,3,2] := _VertexList.Add(_NumVertices,_x,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,3] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,3] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddRightFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[3,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,0] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,0] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,0,1] := _VertexList.Add(_NumVertices,_x+1,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,1,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,1] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,1] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,3,1] := _VertexList.Add(_NumVertices,_x+1,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,0,2] := _VertexList.Add(_NumVertices,_x+1,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,1,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,2] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,2] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,3,2] := _VertexList.Add(_NumVertices,_x+1,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,3] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,3] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddBackFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[0,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,0] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,0] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,0,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,0] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,1,0] := _VertexList.Add(_NumVertices,_x+0.33,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,2,0] := _VertexList.Add(_NumVertices,_x+0.33,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,3,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,0] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,0] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,1,0] := _VertexList.Add(_NumVertices,_x+0.66,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,2,0] := _VertexList.Add(_NumVertices,_x+0.66,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,0] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,1,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,0] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,0] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddFrontFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[0,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,1,3] := _VertexList.Add(_NumVertices,_x,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,2,3] := _VertexList.Add(_NumVertices,_x,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,0,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,3] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,1,3] := _VertexList.Add(_NumVertices,_x+0.33,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,2,3] := _VertexList.Add(_NumVertices,_x+0.33,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,3,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,3] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,3] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,1,3] := _VertexList.Add(_NumVertices,_x+0.66,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,2,3] := _VertexList.Add(_NumVertices,_x+0.66,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,3] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,1,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,1,3] := _VertexList.Add(_NumVertices,_x+1,_y+0.33,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,2,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,2,3] := _VertexList.Add(_NumVertices,_x+1,_y+0.66,_z+1);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddBottomFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[1,0,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,0] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,0] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,0,1] := _VertexList.Add(_NumVertices,_x,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,1] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,1] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,0,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,0,1] := _VertexList.Add(_NumVertices,_x+1,_y,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,0,2] := _VertexList.Add(_NumVertices,_x,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,2] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,2] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,0,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,0,2] := _VertexList.Add(_NumVertices,_x+1,_y,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,0,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,0,3] := _VertexList.Add(_NumVertices,_x+0.33,_y,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,0,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,0,3] := _VertexList.Add(_NumVertices,_x+0.66,_y,_z+1);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddTopFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
+   begin
+      if _NeighbourVertexIDs[1,3,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,0] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,0] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,0] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,3,1] := _VertexList.Add(_NumVertices,_x,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,1] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,1] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,3,1] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,3,1] := _VertexList.Add(_NumVertices,_x+1,_y+1,_z+0.33);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[0,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[0,3,2] := _VertexList.Add(_NumVertices,_x,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,2] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,2] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[3,3,2] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[3,3,2] := _VertexList.Add(_NumVertices,_x+1,_y+1,_z+0.66);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[1,3,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[1,3,3] := _VertexList.Add(_NumVertices,_x+0.33,_y+1,_z+1);
+         inc(_NumVertices);
+      end;
+      if _NeighbourVertexIDs[2,3,3] = C_VMG_NO_VERTEX then
+      begin
+         _NeighbourVertexIDs[2,3,3] := _VertexList.Add(_NumVertices,_x+0.66,_y+1,_z+1);
+         inc(_NumVertices);
+      end;
+   end;
+
+   procedure AddInterpolationFaces(_LeftBottomFront,_LeftBottomBack,_LeftTopFront,_LeftTopBack,_RightBottomFront,_RightBottomBack,_RightTopFront,_RightTopBack: integer; _LeftFaceFiiled, _RightFaceFiiled, _BottomFaceFiiled, _TopFaceFiiled, _FrontFaceFiiled, _BackFaceFiiled: boolean; var _TriangleList: CTriangleList; var _QuadList: CQuadList);
+   const
+      QuadSet: array[1..36,0..3] of shortint = ((0,1,5,4),(0,1,5,6),(0,1,7,4),(0,1,7,6),(0,2,3,1),(0,2,7,5),(0,3,5,4),(0,3,7,4),(0,3,7,5),(0,4,6,2),(0,4,6,3),(0,4,7,2),(0,4,7,3),(0,5,6,2),(0,5,7,2),(0,5,7,3),(0,6,7,1),(0,6,7,3),(1,2,6,5),(1,2,6,7),(1,2,7,5),(1,3,6,4),(1,3,6,5),(1,3,7,5),(1,4,2,3),(1,4,6,2),(1,4,6,3),(1,5,4,2),(1,5,6,2),(1,6,4,7),(2,4,3,7),(2,4,5,3),(2,4,7,3),(2,6,5,3),(2,6,7,3),(4,5,7,6));
+      QuadFaces: array[1..36] of shortint = (2,-1,-1,-1,0,-1,-1,-1,-1,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,3,1);
+      QuadConfigStart: array[0..255] of shortint = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,10,10,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,16,16,16,16,17,17,17,17,20,20,20,20,23,23,26,26,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,34,34,34,34,34,34,34,34,34,34,34,34,35,35,35,36,39,39,39,39,40,40,40,40,43,43,43,44,47,47,47,50,54,54,54,54,54,54,54,54,54,54,54,54,54,54,55,56,59,59,59,59,59,59,60,60,63,63,63,63,63,64,67,70,74,74,74,74,74,74,74,74,74,74,74,75,78,78,81,84,88,88,89,90,93,94,97,100,104,105,108,111,115,118,122,126);
+      QuadConfigData: array[0..127] of shortint = (36,36,35,35,32,36,35,36,24,24,27,36,24,20,36,28,35,29,35,24,35,25,30,24,31,28,24,36,35,26,36,11,36,16,10,10,10,36,6,5,35,14,9,10,35,10,8,34,10,7,10,36,35,7,1,1,36,1,17,24,2,24,18,1,1,24,13,11,23,1,24,1,36,18,10,34,10,7,12,1,21,10,1,19,10,1,36,20,5,5,35,5,4,5,24,5,15,34,5,2,35,24,5,2,5,33,5,3,10,5,22,35,5,10,3,1,5,32,10,5,1,34,1,5,24,35);
+      TriangleSet: array[1..58,0..2] of shortint = ((0,1,4),(0,1,5),(0,1,6),(0,2,1),(0,2,3),(0,2,5),(0,2,7),(0,3,1),(0,3,2),(0,3,4),(0,4,2),(0,4,3),(0,4,6),(0,4,7),(0,5,2),(0,5,4),(0,5,7),(0,6,1),(0,6,2),(0,6,7),(0,7,1),(0,7,2),(0,7,3),(0,7,5),(1,2,3),(1,2,6),(1,3,2),(1,3,4),(1,3,5),(1,3,6),(1,3,7),(1,4,3),(1,4,5),(1,4,6),(1,5,4),(1,5,6),(1,5,7),(1,6,2),(1,6,3),(1,6,4),(1,6,5),(1,6,7),(1,7,5),(1,7,6),(2,3,4),(2,3,5),(2,4,3),(2,4,6),(2,5,3),(2,5,4),(2,5,7),(2,6,3),(2,6,5),(2,6,7),(2,7,3),(3,4,5),(3,4,6),(3,4,7),(3,5,4),(3,6,4),(3,6,7),(3,7,5),(3,7,6),(4,5,6),(4,5,7),(4,7,5),(4,7,6),(5,7,6));
+   var
+      Vertexes: array [0..7] of integer;
+      AllowedFaces: array[0..5] of boolean;
+      i,Config,Mult2: byte;
+   begin
+      // Fill vertexes.
+      Vertexes[0] := _LeftBottomFront;
+      Vertexes[1] := _LeftBottomBack;
+      Vertexes[2] := _LeftTopFront;
+      Vertexes[3] := _LeftTopBack;
+      Vertexes[4] := _RightBottomFront;
+      Vertexes[5] := _RightBottomBack;
+      Vertexes[6] := _RightTopFront;
+      Vertexes[7] := _RightTopBack;
+      // Fill faces.
+      AllowedFaces[0] := _LeftFaceFiiled;
+      AllowedFaces[1] := _RightFaceFiiled;
+      AllowedFaces[2] := _BottomFaceFiiled;
+      AllowedFaces[3] := _TopFaceFiiled;
+      AllowedFaces[4] := _FrontFaceFiiled;
+      AllowedFaces[5] := _BackFaceFiiled;
+      // Find out vertex configuration
+      Config := 0;
+      Mult2 := 1;
+      for i := 0 to 7 do
+      begin
+         if Vertexes[i] <> C_VMG_NO_VERTEX then
+         begin
+            Config := Config or Mult2;
+         end;
+         Mult2 := Mult2 * 2;
+      end;
+      // Add the new quads.
+      i := QuadConfigStart[config];
+      while i < QuadConfigStart[config+1] do // config will always be below 255
+      begin
+         if (QuadFaces[QuadConfigData[i]] = -1) then
+         begin
+            // Add face.
+            _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]]);
+         end
+         else if AllowedFaces[QuadFaces[QuadConfigData[i]]] then
+         begin
+            // This condition was splitted to avoid access violations.
+            // Add face.
+            _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]]);
+         end;
+         // else does not add face.
+         inc(i);
+      end;
+      // Add the new triangles.
+      while i < QuadConfigStart[config+1] do // config will always be below 255
+      begin
+         // Add face.
+         _TriangleList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]]);
+         inc(i);
+      end;
+   end;
+
 var
-   x,y,z,i,j,k: integer;
+   x,y,z,i,j,k,OldNumVertices: integer;
    V : TVoxelUnpacked;
-   DivideX,DivideY,DivideZ : boolean;
-   NeighbourVertexIDs: array[0..2,0..2,0..2] of integer;
+   SubdivisionSituation : integer;
+   NeighbourVertexIDs: T3DIntGrid;
+   VertexList: CVertexList;
+   TriangleList: CTriangleList;
+   QuadList: CQuadList;
 begin
+   OldNumVertices := _NumVertices;
    // visit every region.
    for x := 0 to _VoxelMap.GetMaxX do
       for y := 0 to _VoxelMap.GetMaxY do
@@ -833,63 +1388,152 @@ begin
                begin
                   // Subdivision starts here...
 
-                  // Let's build the neighbour vertex IDs.
-                  for i := 0 to 2 do
-                     for j := 0 to 2 do
-                        for k := 0 to 2 do
-                        begin
-                           NeighbourVertexIDs[i,j,k] := C_VMG_NO_VERTEX;
-                        end;
-                  NeighbourVertexIDs[0,0,0] := _VertexMap.Data[x,y,z];
-                  NeighbourVertexIDs[0,0,2] := _VertexMap.Data[x,y,z+1];
-                  NeighbourVertexIDs[0,2,0] := _VertexMap.Data[x,y+1,z];
-                  NeighbourVertexIDs[0,2,2] := _VertexMap.Data[x,y+1,z+1];
-                  NeighbourVertexIDs[2,0,0] := _VertexMap.Data[x+1,y,z];
-                  NeighbourVertexIDs[2,0,2] := _VertexMap.Data[x+1,y,z+1];
-                  NeighbourVertexIDs[2,2,0] := _VertexMap.Data[x+1,y+1,z];
-                  NeighbourVertexIDs[2,2,2] := _VertexMap.Data[x+1,y+1,z+1];
-
                   // Let's check its neighbour faces. If opposite faces are part
                   // of the surface, then we divide the region in its direction.
 
                   // Axis X
-                  DivideX := false;
+                  SubdivisionSituation := 0;
                   _Voxel.GetVoxelSafe(x-1,y,z,v);
                   if v.Used then
                   begin
                      _Voxel.GetVoxelSafe(x+1,y,z,v);
                      if v.Used then
                      begin
-                        if NeighbourVertexIDs[1,0,0] = C_VMG_NO_VERTEX then
-                        begin
-                           // NeighbourVertexIDs[1,0,0] := CreateVertex;
-                        end;
-
-                        DivideX := true;
+                        SubdivisionSituation := SubdivisionSituation or 4;
                      end;
                   end;
 
                   // Axis Y
-                  DivideY := false;
                   _Voxel.GetVoxelSafe(x,y-1,z,v);
                   if v.Used then
                   begin
                      _Voxel.GetVoxelSafe(x,y+1,z,v);
                      if v.Used then
                      begin
-                        DivideY := true;
+                        SubdivisionSituation := SubdivisionSituation or 2;
                      end;
                   end;
 
                   // Axis Z
-                  DivideZ := false;
                   _Voxel.GetVoxelSafe(x,y,z-1,v);
                   if v.Used then
                   begin
                      _Voxel.GetVoxelSafe(x,y,z+1,v);
                      if v.Used then
                      begin
-                        DivideZ := true;
+                        SubdivisionSituation := SubdivisionSituation or 1;
+                     end;
+                  end;
+
+                  // Now we operate each piece according to each situation
+                  case (SubdivisionSituation) of
+                     1: // subdivides z only
+                     begin
+                        InitializeNeighbourVertexIDsSize3(_VertexMap,x,y,z);
+                        if NeighbourVertexIDs[0,0,1] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[0,0,1] := VertexList.Add(_NumVertices,x,y,z+0.5);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[0,2,1] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[0,2,1] := VertexList.Add(_NumVertices,x,y+1,z+0.5);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[2,0,1] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[2,0,1] := VertexList.Add(_NumVertices,x+1,y,z+0.5);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[2,2,1] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[2,2,1] := VertexList.Add(_NumVertices,x+1,y+1,z+0.5);
+                           inc(_NumVertices);
+                        end;
+                        AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,1],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,1],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,1],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,1],TriangleList,QuadList);
+                        AddInterpolationFaces(NeighbourVertexIDs[0,0,1],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,2,1],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[2,0,1],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,2,1],NeighbourVertexIDs[2,2,2],TriangleList,QuadList);
+                     end;
+                     2: // subdivides y only
+                     begin
+                        InitializeNeighbourVertexIDsSize3(_VertexMap,x,y,z);
+                        if NeighbourVertexIDs[0,1,0] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[0,1,0] := VertexList.Add(_NumVertices,x,y+0.5,z);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[0,1,2] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[0,1,2] := VertexList.Add(_NumVertices,x,y+0.5,z+1);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[2,1,0] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[2,1,0] := VertexList.Add(_NumVertices,x+1,y+0.5,z);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[2,1,2] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[2,1,2] := VertexList.Add(_NumVertices,x+1,y+0.5,z+1);
+                           inc(_NumVertices);
+                        end;
+                        AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,1,0],NeighbourVertexIDs[0,1,2],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,1,0],NeighbourVertexIDs[2,1,2],TriangleList,QuadList);
+                        AddInterpolationFaces(NeighbourVertexIDs[0,1,0],NeighbourVertexIDs[0,1,2],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[2,1,0],NeighbourVertexIDs[2,1,2],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,2],TriangleList,QuadList);
+                     end;
+                     3: // subdivides y and z
+                     begin
+                        InitializeNeighbourVertexIDsSize4(_VertexMap,x,y,z);
+                        // Add neighbour faces
+                        AddBottomFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddTopFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddBackFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddFrontFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+
+                     end;
+                     4: // subdivides x only
+                     begin
+                        InitializeNeighbourVertexIDsSize3(_VertexMap,x,y,z);
+                        if NeighbourVertexIDs[1,0,0] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[1,0,0] := VertexList.Add(_NumVertices,x+0.5,y,z);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[1,0,2] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[1,0,2] := VertexList.Add(_NumVertices,x+0.5,y,z+1);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[1,2,0] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[1,2,0] := VertexList.Add(_NumVertices,x+0.5,y+1,z);
+                           inc(_NumVertices);
+                        end;
+                        if NeighbourVertexIDs[1,2,2] = C_VMG_NO_VERTEX then
+                        begin
+                           NeighbourVertexIDs[1,2,2] := VertexList.Add(_NumVertices,x+0.5,y+1,z+1);
+                           inc(_NumVertices);
+                        end;
+                        AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[1,0,0],NeighbourVertexIDs[1,0,2],NeighbourVertexIDs[1,2,0],NeighbourVertexIDs[1,2,2],TriangleList,QuadList);
+                        AddInterpolationFaces(NeighbourVertexIDs[1,0,0],NeighbourVertexIDs[1,0,2],NeighbourVertexIDs[1,2,0],NeighbourVertexIDs[1,2,2],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,2],TriangleList,QuadList);
+                     end;
+                     5: // subdivides x and z
+                     begin
+                        InitializeNeighbourVertexIDsSize4(_VertexMap,x,y,z);
+                        // Add neighbour faces
+                        AddLeftFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddRightFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddBackFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddFrontFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+
+                     end;
+                     6: // subdivides x and y
+                     begin
+                        InitializeNeighbourVertexIDsSize4(_VertexMap,x,y,z);
+                        // Add neighbour faces
+                        AddLeftFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddRightFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddBottomFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+                        AddTopFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
+
                      end;
                   end;
 
