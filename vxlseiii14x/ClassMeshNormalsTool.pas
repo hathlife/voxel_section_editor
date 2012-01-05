@@ -10,6 +10,7 @@ type
          function GetEquivalentVertex(_VertexID,_MaxVertexID: integer; const _VertexEquivalences: auint32): integer;
       public
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
+         function GetQuadNormalValue(const _V1,_V2,_V3,_V4: TVector3f): TVector3f;
          procedure SmoothVertexNormalsOperation(var _Normals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; const _Neighbors : TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction: TDistanceFunc);
          procedure SmoothFaceNormalsOperation(var _FaceNormals: TAVector3f; const _Vertices: TAVector3f; const _Neighbors : TNeighborDetector; _DistanceFunction: TDistanceFunc);
          procedure TransformFaceToVertexNormals(var _VertexNormals: TAVector3f; const _FaceNormals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; _NeighborDetector : TNeighborDetector;  const _VertexEquivalences: auint32);
@@ -33,6 +34,18 @@ begin
    Result.X := (((_V3.Y - _V2.Y) * (_V1.Z - _V2.Z)) - ((_V1.Y - _V2.Y) * (_V3.Z - _V2.Z)));
    Result.Y := (((_V3.Z - _V2.Z) * (_V1.X - _V2.X)) - ((_V1.Z - _V2.Z) * (_V3.X - _V2.X)));
    Result.Z := (((_V3.X - _V2.X) * (_V1.Y - _V2.Y)) - ((_V1.X - _V2.X) * (_V3.Y - _V2.Y)));
+   Normalize(Result);
+end;
+
+function TMeshNormalsTool.GetQuadNormalValue(const _V1,_V2,_V3,_V4: TVector3f): TVector3f;
+var
+   Temp : TVector3f;
+begin
+   Result := GetNormalsValue(_V1,_V2,_V3);
+   Temp := GetNormalsValue(_V3,_V4,_V1);
+   Result.X := Result.X + Temp.X;
+   Result.Y := Result.Y + Temp.Y;
+   Result.Z := Result.Z + Temp.Z;
    Normalize(Result);
 end;
 
@@ -196,23 +209,20 @@ begin
    begin
       if _VerticesPerFace = 3 then
       begin
+         face := 0;
          for f := Low(_FaceNormals) to High(_FaceNormals) do
          begin
-            face := f * 3;
             _FaceNormals[f] := GetNormalsValue(_Vertices[_Faces[face]],_Vertices[_Faces[face+1]],_Vertices[_Faces[face+2]]);
+            inc(face,3);
          end;
       end
       else if _VerticesPerFace = 4 then
       begin
+         face := 0;
          for f := Low(_FaceNormals) to High(_FaceNormals) do
          begin
-            face := f * 4;
-            _FaceNormals[f] := GetNormalsValue(_Vertices[_Faces[face]],_Vertices[_Faces[face+1]],_Vertices[_Faces[face+2]]);
-            Temp := GetNormalsValue(_Vertices[_Faces[face+2]],_Vertices[_Faces[face+3]],_Vertices[_Faces[face]]);
-            _FaceNormals[f].X := _FaceNormals[f].X + Temp.X;
-            _FaceNormals[f].Y := _FaceNormals[f].Y + Temp.Y;
-            _FaceNormals[f].Z := _FaceNormals[f].Z + Temp.Z;
-            Normalize(_FaceNormals[f]);
+            _FaceNormals[f] := GetQuadNormalValue(_Vertices[_Faces[face]],_Vertices[_Faces[face+1]],_Vertices[_Faces[face+2]],_Vertices[_Faces[face+3]]);
+            inc(face,4);
          end;
       end;
    end;

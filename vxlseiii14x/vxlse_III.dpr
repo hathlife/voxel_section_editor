@@ -160,7 +160,10 @@ uses
   DifferentMeshFaceTypePlugin in 'DifferentMeshFaceTypePlugin.pas',
   ClassVertexList in 'ClassVertexList.pas',
   ClassTriangleList in 'ClassTriangleList.pas',
-  ClassQuadList in 'ClassQuadList.pas';
+  ClassQuadList in 'ClassQuadList.pas',
+  MeshGeometryBase in 'MeshGeometryBase.pas',
+  MeshBRepGeometry in 'MeshBRepGeometry.pas',
+  ClassMeshGeometryList in 'ClassMeshGeometryList.pas';
 
 {$R *.res}
 

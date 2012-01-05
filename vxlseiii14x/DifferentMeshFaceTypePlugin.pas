@@ -3,7 +3,7 @@ unit DifferentMeshFaceTypePlugin;
 interface
 
 uses MeshPluginBase, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
-   dglOpenGL, RenderingMachine, Material;
+   dglOpenGL, RenderingMachine, Material, MeshBRepGeometry;
 
 type
    TDifferentMeshFaceTypePlugin = class (TMeshPluginBase)
@@ -36,7 +36,7 @@ uses Mesh;
 
 constructor TDifferentMeshFaceTypePlugin.Create;
 begin
-   FPluginType := C_MPL_NORMALS;
+   FPluginType := C_MPL_MESH;
    FaceType := GL_TRIANGLES;
    VerticesPerFace := 3;
    Initialize;
@@ -68,7 +68,8 @@ begin
    end
    else
    begin
-      MeshNormals := PAVector3f(Addr((PMesh(MyMesh))^.FaceNormals));
+      (PMesh(MyMesh))^.Geometry.GoToFirstElement;
+      MeshNormals := PAVector3f(Addr(((PMesh(MyMesh))^.Geometry.Current^ as TMeshBRepGeometry).Normals));
    end;
    NumNormals := High(MeshNormals^)+1;
    Render.ForceRefresh;

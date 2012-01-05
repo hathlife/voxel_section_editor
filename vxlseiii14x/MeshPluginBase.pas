@@ -2,10 +2,11 @@ unit MeshPluginBase;
 
 interface
 
-uses GlConstants;
+uses GlConstants, ShaderBank;
 
 type
    PMeshPluginBase = ^TMeshPluginBase;
+   TSetShaderAttributesFunc = procedure (const _ShaderBank: PShaderBank; _VertexID: integer; const _PPlugin: PMeshPluginBase) of object;
    TMeshPluginBase = class
       protected
          FPluginType : integer;

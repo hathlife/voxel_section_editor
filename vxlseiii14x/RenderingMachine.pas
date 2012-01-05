@@ -2,19 +2,27 @@ unit RenderingMachine;
 
 interface
 
-uses BasicDataTypes, BasicConstants, BasicFunctions, DglOpenGL, GlConstants, Material;
+uses BasicDataTypes, BasicConstants, BasicFunctions, DglOpenGL, GlConstants,
+   Material, ShaderBank, ShaderBankItem, MeshPluginBase, BumpMapDataPlugin;
 
 type
    TRenderingMachine = class
       public
          List : integer;
          IsGeneratingList: boolean;
+         RenderingProcedure: integer;
+         // SetShaderAttributes procedure for rendering bump maps
+         SetShaderAttributes : TSetShaderAttributesFunc;
+         SetShaderUniform : TSetShaderUniformFunc;
          // constructors and destructors.
          constructor Create;
          destructor Destroy; override;
          // Render basics
          procedure StartRender();
-         procedure FinishRender(const _TranslatePosition: TVector3f);
+         procedure DoRender(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _BumpPlugin: PMeshPluginBase; const _ShaderBank: PShaderBank; const _NumFaces,_CurrentPass: integer);
+         procedure FinishRender(const _TranslatePosition: TVector3f); overload;
+         procedure FinishRender(); overload;
+         procedure CallList();
          procedure ForceRefresh;
          // Rendering modes
          procedure RenderWithoutNormalsAndColours(const _Vertices: TAVector3f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
@@ -24,11 +32,22 @@ type
          procedure RenderWithVertexNormalsAndColours(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
          procedure RenderWithFaceNormalsAndVertexColours(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
          procedure RenderWithoutNormalsAndWithTexture(const _Vertices: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces,_CurrentPass: integer);
-         procedure RenderWithVertexNormalsAndWithTexture(const _Vertices,_Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces,_CurrentPass: integer);
+         procedure RenderWithVertexNormalsAndWithTexture(const _Vertices,_Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _BumpPlugin: PMeshPluginBase; const _ShaderBank: PShaderBank; const _NumFaces,_CurrentPass: integer);
          procedure RenderWithFaceNormalsAndWithTexture(const _Vertices,_Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces,_CurrentPass: integer);
          procedure RenderWithoutNormalsAndWithFaceColours(const _Vertices: TAVector3f; const _Colours: TAVector4f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
          procedure RenderWithVertexNormalsAndFaceColours(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
          procedure RenderWithFaceNormalsAndColours(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
+         // Shaders
+         procedure SetUniformShaderDoNothing(const _Materials: TAMeshMaterial; _MaterialID,_TextureID: integer);
+         procedure SetUniformShaderBumpMapping(const _Materials: TAMeshMaterial; _MaterialID,_TextureID: integer);
+         procedure SetAtributeShaderDoNothing(const _ShaderBank: PShaderBank; _VertexID: integer; const _PPlugin: PMeshPluginBase);
+         procedure SetAtributeShaderBumpMapping(const _ShaderBank: PShaderBank; _VertexID: integer; const _PPlugin: PMeshPluginBase);
+         // Sets
+         procedure SetDiffuseMappingShader;
+         procedure SetNormalMappingShader;
+         procedure SetBumpMappingShader;
+         // Miscellaneous
+         procedure SetRenderingProcedure(_NormalsType, _ColoursType: integer);
    end;
 
 implementation
@@ -37,6 +56,8 @@ implementation
 constructor TRenderingMachine.Create;
 begin
    List := C_LIST_NONE;
+   RenderingProcedure := -1;
+   SetDiffuseMappingShader;
 end;
 
 destructor TRenderingMachine.Destroy;
@@ -66,6 +87,20 @@ begin
    glTranslatef(_TranslatePosition.X, _TranslatePosition.Y, _TranslatePosition.Z);
    glCallList(List);
    isGeneratingList := false;
+end;
+
+procedure TRenderingMachine.FinishRender;
+begin
+   if IsGeneratingList then
+   begin
+      glEndList;
+   end;
+   isGeneratingList := false;
+end;
+
+procedure TRenderingMachine.CallList;
+begin
+   glCallList(List);
 end;
 
 procedure TRenderingMachine.RenderWithoutNormalsAndColours(const _Vertices: TAVector3f; const _Faces: auint32; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces: integer);
@@ -275,7 +310,7 @@ begin
    end;
 end;
 
-procedure TRenderingMachine.RenderWithVertexNormalsAndWithTexture(const _Vertices,_Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _NumFaces,_CurrentPass: integer);
+procedure TRenderingMachine.RenderWithVertexNormalsAndWithTexture(const _Vertices,_Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _BumpPlugin: PMeshPluginBase; const _ShaderBank: PShaderBank; const _NumFaces,_CurrentPass: integer);
 var
    i,f,v,tex : longword;
 begin
@@ -291,6 +326,7 @@ begin
             glActiveTexture(GL_TEXTURE0 + tex);
             glBindTexture(GL_TEXTURE_2D,_Materials[_CurrentPass].Texture[tex]^.GetID);
             glEnable(GL_TEXTURE_2D);
+            SetShaderUniform(_Materials,_CurrentPass,tex);
          end;
       end;
       glBegin(_FaceType);
@@ -303,6 +339,7 @@ begin
                begin
                   glMultiTexCoord2f(GL_TEXTURE0 + tex,_TexCoords[_Faces[f]].U,_TexCoords[_Faces[f]].V);
                end;
+               SetShaderAttributes(_ShaderBank,_Faces[f],_BumpPlugin);
                glNormal3f(_Normals[_Faces[f]].X,_Normals[_Faces[f]].Y,_Normals[_Faces[f]].Z);
                glVertex3f(_Vertices[_Faces[f]].X,_Vertices[_Faces[f]].Y,_Vertices[_Faces[f]].Z);
                inc(v);
@@ -460,5 +497,182 @@ begin
    List := C_LIST_NONE;
 end;
 
+// Shader related.
+procedure TRenderingMachine.SetUniformShaderDoNothing(const _Materials: TAMeshMaterial; _MaterialID,_TextureID: integer);
+begin
+   // do nothing, really... it does nothing!
+end;
+
+procedure TRenderingMachine.SetUniformShaderBumpMapping(const _Materials: TAMeshMaterial; _MaterialID,_TextureID: integer);
+var
+   Shader: PShaderBankItem;
+begin
+   // sends texture to shader.
+   Shader := _Materials[_MaterialID].Shader;
+   Shader^.glSendUniform1i(_TextureID,_TextureID);
+end;
+
+procedure TRenderingMachine.SetAtributeShaderDoNothing(const _ShaderBank: PShaderBank; _VertexID: integer; const _PPlugin: PMeshPluginBase);
+begin
+   // do nothing, really... it does nothing!
+end;
+
+procedure TRenderingMachine.SetAtributeShaderBumpMapping(const _ShaderBank: PShaderBank; _VertexID: integer; const _PPlugin: PMeshPluginBase);
+var
+   Shader: PShaderBankItem;
+begin
+   // sends tangent and bitangent attributes in this exact order.
+   Shader := _ShaderBank^.Get(C_SHD_PHONG_DOT3TEX);
+   Shader^.glSendAttribute3f(0,TBumpMapDataPlugin(_PPlugin^).Tangents[_VertexID]);
+   Shader^.glSendAttribute3f(1,TBumpMapDataPlugin(_PPlugin^).BiTangents[_VertexID]);
+end;
+
+// Sets
+procedure TRenderingMachine.SetDiffuseMappingShader;
+begin
+   SetShaderAttributes := SetAtributeShaderDoNothing;
+   SetShaderUniform := SetUniformShaderDoNothing;
+end;
+
+procedure TRenderingMachine.SetNormalMappingShader;
+begin
+   SetShaderAttributes := SetAtributeShaderDoNothing;
+   SetShaderUniform := SetUniformShaderBumpMapping;
+end;
+
+procedure TRenderingMachine.SetBumpMappingShader;
+begin
+   SetShaderAttributes := SetAtributeShaderBumpMapping;
+   SetShaderUniform := SetUniformShaderBumpMapping;
+end;
+
+// Rendering procedure.
+procedure TRenderingMachine.SetRenderingProcedure(_NormalsType, _ColoursType: integer);
+begin
+   case (_NormalsType) of
+      C_NORMALS_DISABLED:
+      begin
+         case (_ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := 0;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := 1;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := 2;
+            end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := 3;
+            end;
+         end;
+      end;
+      C_NORMALS_PER_VERTEX:
+      begin
+         case (_ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := 4;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := 5;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := 6;
+            end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := 7;
+            end;
+         end;
+      end;
+      C_NORMALS_PER_FACE:
+      begin
+         case (_ColoursType) of
+            C_COLOURS_DISABLED:
+            begin
+               RenderingProcedure := 8;
+            end;
+            C_COLOURS_PER_VERTEX:
+            begin
+               RenderingProcedure := 9;
+            end;
+            C_COLOURS_PER_FACE:
+            begin
+               RenderingProcedure := 10;
+            end;
+            C_COLOURS_FROM_TEXTURE:
+            begin
+               RenderingProcedure := 11;
+            end;
+         end;
+      end;
+   end;
+   ForceRefresh;
+end;
+
+procedure TRenderingMachine.DoRender(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _BumpPlugin: PMeshPluginBase; const _ShaderBank: PShaderBank; const _NumFaces,_CurrentPass: integer);
+begin
+   case (RenderingProcedure) of
+      0:
+      begin
+         RenderWithoutNormalsAndColours(_Vertices,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      1:
+      begin
+         RenderWithoutNormalsAndWithColoursPerVertex(_Vertices,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      2:
+      begin
+         RenderWithoutNormalsAndWithFaceColours(_Vertices,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      3:
+      begin
+         RenderWithoutNormalsAndWithTexture(_Vertices,_TexCoords,_Faces,_Materials,_FaceType,_VerticesPerFace,_NumFaces,_CurrentPass);
+      end;
+      4:
+      begin
+         RenderWithVertexNormalsAndNoColours(_Vertices,_Normals,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      5:
+      begin
+         RenderWithVertexNormalsAndColours(_Vertices,_Normals,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      6:
+      begin
+         RenderWithVertexNormalsAndFaceColours(_Vertices,_Normals,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      7:
+      begin
+         RenderWithVertexNormalsAndWithTexture(_Vertices,_Normals,_TexCoords,_Faces,_Materials,_FaceType,_VerticesPerFace,_BumpPlugin,_ShaderBank,_NumFaces,_CurrentPass);
+      end;
+      8:
+      begin
+         RenderWithFaceNormalsAndNoColours(_Vertices,_Normals,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      9:
+      begin
+         RenderWithFaceNormalsAndVertexColours(_Vertices,_Normals,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      10:
+      begin
+         RenderWithFaceNormalsAndColours(_Vertices,_Normals,_Colours,_Faces,_FaceType,_VerticesPerFace,_NumFaces);
+      end;
+      11:
+      begin
+         RenderWithFaceNormalsAndWithTexture(_Vertices,_Normals,_TexCoords,_Faces,_Materials,_FaceType,_VerticesPerFace,_NumFaces,_CurrentPass);
+      end
+      else
+      begin
+         // does not render.
+      end;
+   end;
+end;
 
 end.

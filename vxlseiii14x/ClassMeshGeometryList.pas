@@ -1,28 +1,26 @@
-unit ClassVertexList;
+unit ClassMeshGeometryList;
 
 interface
 
-uses BasicDataTypes;
+uses BasicDataTypes, BasicConstants, MeshGeometryBase;
 
 type
-   CVertexList = class
+   CMeshGeometryList = class
       private
-         Start,Last,Active : PVertexItem;
+         Start,Last,Active : PMeshGeometryBase;
          FCount: integer;
          procedure Reset;
-         function GetX: single;
-         function GetY: single;
-         function GetZ: single;
-         function GetID: integer;
+         function GetActive: PMeshGeometryBase;
       public
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
          // I/O
-         procedure LoadState(_State: PVertexItem);
-         function SaveState:PVertexItem;
+         procedure LoadState(_State: PMeshGeometryBase);
+         function SaveState:PMeshGeometryBase;
          // Add
-         procedure Add (_ID : integer; _x,_y,_z: single);
+         procedure Add; overload;
+         procedure Add(_type: integer); overload;
          procedure Delete;
          // Delete
          procedure Clear;
@@ -31,26 +29,25 @@ type
          procedure GoToNextElement;
          // Properties
          property Count: integer read FCount;
-         property X: single read GetX;
-         property Y: single read GetY;
-         property Z: single read GetZ;
-         property ID: integer read GetID;
+         property Current: PMeshGeometryBase read GetActive;
    end;
 
 implementation
 
-constructor CVertexList.Create;
+uses MeshBRepGeometry;
+
+constructor CMeshGeometryList.Create;
 begin
    Reset;
 end;
 
-destructor CVertexList.Destroy;
+destructor CMeshGeometryList.Destroy;
 begin
    Clear;
    inherited Destroy;
 end;
 
-procedure CVertexList.Reset;
+procedure CMeshGeometryList.Reset;
 begin
    Start := nil;
    Last := nil;
@@ -59,27 +56,47 @@ begin
 end;
 
 // I/O
-procedure CVertexList.LoadState(_State: PVertexItem);
+procedure CMeshGeometryList.LoadState(_State: PMeshGeometryBase);
 begin
    Active := _State;
 end;
 
-function CVertexList.SaveState:PVertexItem;
+function CMeshGeometryList.SaveState:PMeshGeometryBase;
 begin
    Result := Active;
 end;
 
 
 // Add
-procedure CVertexList.Add (_ID : integer; _x,_y,_z: single);
+procedure CMeshGeometryList.Add;
 var
-   NewPosition : PVertexItem;
+   NewPosition : PMeshGeometryBase;
 begin
    New(NewPosition);
-   NewPosition^.ID := _ID;
-   NewPosition^.x := _x;
-   NewPosition^.y := _y;
-   NewPosition^.z := _z;
+   inc(FCount);
+   if Start <> nil then
+   begin
+      Last^.Next := NewPosition;
+   end
+   else
+   begin
+      Start := NewPosition;
+      Active := Start;
+   end;
+   Last := NewPosition;
+end;
+
+procedure CMeshGeometryList.Add(_type: integer);
+var
+   NewPosition : PMeshGeometryBase;
+begin
+   New(NewPosition);
+   Case(_Type) of
+      C_GEO_BREP:
+      begin
+         NewPosition^ := TMeshBRepGeometry.Create();
+      end; 
+   end;
    NewPosition^.Next := nil;
    inc(FCount);
    if Start <> nil then
@@ -95,9 +112,9 @@ begin
 end;
 
 // Delete
-procedure CVertexList.Delete;
+procedure CMeshGeometryList.Delete;
 var
-   Previous : PVertexItem;
+   Previous : PMeshGeometryBase;
 begin
    if Active <> nil then
    begin
@@ -123,9 +140,9 @@ begin
    end;
 end;
 
-procedure CVertexList.Clear;
+procedure CMeshGeometryList.Clear;
 var
-   Garbage : PVertexItem;
+   Garbage : PMeshGeometryBase;
 begin
    Active := Start;
    while Active <> nil do
@@ -138,57 +155,13 @@ begin
 end;
 
 // Gets
-function CVertexList.GetX: single;
+function CMeshGeometryList.GetActive: PMeshGeometryBase;
 begin
-   if Active <> nil then
-   begin
-      Result := Active^.x;
-   end
-   else
-   begin
-      Result := 0;
-   end;
+   Result := Active;
 end;
-
-function CVertexList.GetY: single;
-begin
-   if Active <> nil then
-   begin
-      Result := Active^.y;
-   end
-   else
-   begin
-      Result := 0;
-   end;
-end;
-
-function CVertexList.GetZ: single;
-begin
-   if Active <> nil then
-   begin
-      Result := Active^.z;
-   end
-   else
-   begin
-      Result := 0;
-   end;
-end;
-
-function CVertexList.GetID: integer;
-begin
-   if Active <> nil then
-   begin
-      Result := Active^.id;
-   end
-   else
-   begin
-      Result := -1;
-   end;
-end;
-
 
 // Misc
-procedure CVertexList.GoToNextElement;
+procedure CMeshGeometryList.GoToNextElement;
 begin
    if Active <> nil then
    begin
@@ -196,7 +169,7 @@ begin
    end
 end;
 
-procedure CVertexList.GoToFirstElement;
+procedure CMeshGeometryList.GoToFirstElement;
 begin
    Active := Start;
 end;

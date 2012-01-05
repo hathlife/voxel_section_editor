@@ -3,7 +3,7 @@ unit NormalsMeshPlugin;
 interface
 
 uses MeshPluginBase, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
-   dglOpenGL, RenderingMachine, Material;
+   dglOpenGL, RenderingMachine, Material, MeshBRepGeometry;
 
 type
    TNormalsMeshPlugin = class (TMeshPluginBase)
@@ -75,10 +75,11 @@ begin
    end
    else
    begin
-      MeshNormals := PAVector3f(Addr((PMesh(MyMesh))^.FaceNormals));
+      (PMesh(MyMesh))^.Geometry.GoToFirstElement;
+      MeshNormals := PAVector3f(Addr(((PMesh(MyMesh))^.Geometry.Current^ as TMeshBRepGeometry).Normals));
    end;
    NumNormals := High(MeshNormals^)+1;
-   MeshFaces := PAUInt32(Addr((PMesh(MyMesh))^.Faces));
+   MeshFaces := PAUInt32(Addr(((PMesh(MyMesh))^.Geometry.Current^ as TMeshBRepGeometry).Faces));
    BuildMesh;
    Render.ForceRefresh;
 end;

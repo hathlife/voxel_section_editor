@@ -18,7 +18,7 @@ type
          procedure LoadState(_State: PTriangleItem);
          function SaveState:PTriangleItem;
          // Add
-         procedure Add (_v1,_v2,_v3: integer);
+         procedure Add (_v1,_v2,_v3: integer; _Color: Cardinal);
          procedure Delete;
          // Delete
          procedure Clear;
@@ -63,7 +63,7 @@ end;
 
 
 // Add
-procedure CTriangleList.Add (_v1,_v2,_v3: integer);
+procedure CTriangleList.Add (_v1,_v2,_v3: integer; _Color: Cardinal);
 var
    NewPosition : PTriangleItem;
 begin
@@ -71,6 +71,7 @@ begin
    NewPosition^.v1 := _v1;
    NewPosition^.v2 := _v2;
    NewPosition^.v3 := _v3;
+   NewPosition^.Color := _Color;
    NewPosition^.Next := nil;
    inc(FCount);
    if Start <> nil then

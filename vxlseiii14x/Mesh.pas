@@ -10,13 +10,11 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       ClassMeshOptimizationTool, Material, VoxelMeshGenerator, ClassVector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
       ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool,
-      ClassTextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData;
+      ClassTextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData,
+      ClassMeshGeometryList, MeshBRepGeometry, MeshGeometryBase;
 
 {$INCLUDE Global_Conditionals.inc}
 type
-   TRenderProc = procedure of object;
-   TSetShaderAttributesFunc = procedure (_VertexID: integer; const _PPlugin: PMeshPluginBase) of object;
-   TSetShaderUniformFunc = procedure (_MaterialID,_TextureID: integer) of object;
    TMesh = class
       private
          ColoursType : byte;
@@ -24,12 +22,10 @@ type
          TransparencyLevel : single;
          Opened : boolean;
          // For multi-texture rendering purposes
-         CurrentPass : integer;
-         // Connect to the correct shader bank
-         ShaderBank : PShaderBank;
+//         CurrentPass : integer;
          // SetShaderAttributes procedure for rendering bump maps
-         SetShaderAttributes : TSetShaderAttributesFunc;
-         SetShaderUniform : TSetShaderUniformFunc;
+//         SetShaderAttributes : TSetShaderAttributesFunc;
+//         SetShaderUniform : TSetShaderUniformFunc;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
@@ -37,7 +33,6 @@ type
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Sets
-         procedure SetRenderingProcedure;
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          procedure LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
@@ -76,7 +71,7 @@ type
          Next : integer;
          Son : integer; // not implemented yet.
          // Graphical atributes goes here
-         FaceType : GLINT; // GL_QUADS for volumes, and GL_TRIANGLES for geometry
+//         FaceType : GLINT; // GL_QUADS for quads, and GL_TRIANGLES for triangles
          VerticesPerFace : byte; // for optimization purposes only.
          NormalsType : byte;
          NumFaces : longword;
@@ -84,18 +79,22 @@ type
          Vertices : TAVector3f;
          Normals : TAVector3f;
          Colours : TAVector4f;
-         Faces : auint32;
+//         Faces : auint32;
          TexCoords : TAVector2f;
-         FaceNormals : TAVector3f;
+         Geometry: CMeshGeometryList;
+//         FaceNormals : TAVector3f;
          Materials : TAMeshMaterial;
          // Graphical and colision
+
          BoundingBox : TRectangle3f;
          Scale : TVector3f;
          IsColisionEnabled : boolean;
          IsVisible : boolean;
          // Rendering optimization
          RenderingProcedure : TRenderProc;
-         List : Integer;
+//         List : Integer;
+         // Connect to the correct shader bank
+         ShaderBank : PShaderBank;
          // GUI
          IsSelected : boolean;
          // Additional Features
@@ -163,25 +162,7 @@ type
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
-         procedure RenderWithoutNormalsAndColours;
-         procedure RenderWithVertexNormalsAndNoColours;
-         procedure RenderWithFaceNormalsAndNoColours;
-         procedure RenderWithoutNormalsAndWithColoursPerVertex;
-         procedure RenderWithVertexNormalsAndColours;
-         procedure RenderWithFaceNormalsAndVertexColours;
-         procedure RenderWithoutNormalsAndWithFaceColours;
-         procedure RenderWithVertexNormalsAndFaceColours;
-         procedure RenderWithFaceNormalsAndColours;
-         procedure RenderWithoutNormalsAndWithTexture;
-         procedure RenderWithVertexNormalsAndWithTexture;
-         procedure RenderWithFaceNormalsAndWithTexture;
          procedure ForceRefresh;
-
-         // Redering methods related to bump mapping.
-         procedure SetAtributeShaderDoNothing(_VertexID: integer; const _PPlugin: PMeshPluginBase);
-         procedure SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
-         procedure SetUniformShaderDoNothing(_MaterialID,_TextureID: integer);
-         procedure SetUniformShaderBumpMapping(_MaterialID,_TextureID: integer);
 
          // Copies
          procedure Assign(const _Mesh : TMesh);
@@ -224,36 +205,20 @@ constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : T
 begin
    // Set basic variables:
    ShaderBank := _ShaderBank;
-   List := C_LIST_NONE;
    ID := _ID;
    VerticesPerFace := _VerticesPerFace;
    NumFaces := _NumFaces;
    NumVoxels := 0;
    SetColoursAndNormalsType(_ColoursType,_NormalsType);
    ColourGenStructure := _ColoursType;
-   // Let's set the face type:
-   if VerticesPerFace = 4 then
-      FaceType := GL_QUADS
-   else
-      FaceType := GL_TRIANGLES;
+   Geometry := CMeshGeometryList.Create();
+   Geometry.Add;
+   //Geometry.Current^ := TMeshBRepGeometry.Create(_NumFaces,_VerticesPerFace,_ColoursType,_NormalsType);
    // Let's set the array sizes.
    SetLength(Vertices,_NumVertices);
-   SetLength(Faces,_NumFaces);
    SetLength(TexCoords,_NumVertices);
-   if (NormalsType and C_NORMALS_PER_VERTEX) <> 0 then
-      SetLength(Normals,_NumVertices)
-   else
-      SetLength(Normals,0);
-   if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
-      SetLength(FaceNormals,NumFaces)
-   else
-      SetLength(FaceNormals,0);
-   if (ColoursType = C_COLOURS_PER_VERTEX) then
-      SetLength(Colours,_NumVertices)
-   else if (ColoursType = C_COLOURS_PER_FACE) then
-      SetLength(Colours,NumFaces)
-   else
-      SetLength(Colours,0);
+   SetLength(Normals,_NumVertices);
+   SetLength(Colours,_NumVertices);
    // The rest
    BoundingBox.Min.X := _BoundingBox.Min.X;
    BoundingBox.Min.Y := _BoundingBox.Min.Y;
@@ -265,19 +230,16 @@ begin
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    TransparencyLevel := C_TRP_OPAQUE;
-   AddMaterial;
    Opened := false;
    IsSelected := false;
+   AddMaterial;
    Next := -1;
    Son := -1;
    SetLength(Plugins,0);
-   SetShaderAttributes := SetAtributeShaderDoNothing;
-   SetShaderUniform := SetUniformShaderDoNothing;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
 begin
-   List := C_LIST_NONE;
    Assign(_Mesh);
 end;
 
@@ -286,7 +248,7 @@ var
    c : integer;
 begin
    ShaderBank := _ShaderBank;
-   List := C_LIST_NONE;
+   Geometry := CMeshGeometryList.Create;
    Clear;
    ColoursType := C_COLOURS_PER_FACE;
    ColourGenStructure := C_COLOURS_PER_FACE;
@@ -358,15 +320,12 @@ begin
    Opened := false;
    ForceRefresh;
    SetLength(Vertices,0);
-   SetLength(Faces,0);
    SetLength(Colours,0);
    SetLength(Normals,0);
-   SetLength(FaceNormals,0);
    SetLength(TexCoords,0);
+   Geometry.Clear;
    ClearMaterials;
    ClearPlugins;
-   SetShaderAttributes := SetAtributeShaderDoNothing;
-   SetShaderUniform := SetUniformShaderDoNothing;
 end;
 
 // I/O;
@@ -440,13 +399,13 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   VerticesPerFace := 4;
-   FaceType := GL_QUADS;
    SetNormalsType(C_NORMALS_PER_FACE);
+   Geometry.Add;
+   Geometry.Current^ := TMeshBRepGeometry.Create(0,4,ColoursType,NormalsType);
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
    MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadFromVoxels(_Voxel,_Palette,Vertices,Faces,Colours,Normals,FaceNormals,TexCoords,NumVoxels,NumFaces,VerticesPerFace);
+   MeshGen.LoadFromVoxels(_Voxel,_Palette,Vertices,Colours,Normals,TexCoords,Geometry,NumVoxels,NumFaces);
    MeshGen.Free;
 
    CommonVoxelLoadingActions(_Voxel);
@@ -467,14 +426,14 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   VerticesPerFace := 4;
-   FaceType := GL_QUADS;
    SetNormalsType(C_NORMALS_PER_FACE);
+   Geometry.Add;
+   Geometry.Current^ := TMeshBRepGeometry.Create(0,4,ColoursType,NormalsType);
 
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
    MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadFromVisibleVoxels(_Voxel,_Palette,Vertices,Faces,Colours,Normals,FaceNormals,TexCoords,NumVoxels,NumFaces,VerticesPerFace);
+   MeshGen.LoadFromVisibleVoxels(_Voxel,_Palette,Vertices,Colours,Normals,TexCoords,Geometry,NumVoxels,NumFaces);
    MeshGen.Free;
 
    AddNeighborhoodPlugin;
@@ -496,14 +455,14 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   VerticesPerFace := 3;
-   FaceType := GL_TRIANGLES;
    SetNormalsType(C_NORMALS_PER_FACE);
+   Geometry.Add;
+   Geometry.Current^ := TMeshBRepGeometry.Create(0,3,ColoursType,NormalsType);
 
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
    MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadTrianglesFromVisibleVoxels(_Voxel,_Palette,Vertices,Faces,Colours,Normals,FaceNormals,TexCoords,NumVoxels,NumFaces,VerticesPerFace);
+   MeshGen.LoadTrianglesFromVisibleVoxels(_Voxel,_Palette,Vertices,Colours,Normals,TexCoords,Geometry,NumVoxels,NumFaces);
    MeshGen.Free;
 
    CommonVoxelLoadingActions(_Voxel);
@@ -527,10 +486,10 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   VerticesPerFace := 3;
-   FaceType := GL_TRIANGLES;
    ColoursType := C_COLOURS_PER_FACE;
    NormalsType := C_NORMALS_PER_FACE;
+   Geometry.Add;
+   Geometry.Current^ := TMeshBRepGeometry.Create(0,3,ColoursType,NormalsType);
    SetLength(TexCoords,0);
    SetLength(Normals,0);
    // Voxel classification stage
@@ -540,8 +499,8 @@ begin
    // Colour mapping stage
    ColourMap := TVoxelMap.Create(_Voxel,1,C_MODE_COLOUR,C_OUTSIDE_VOLUME);
    // Mesh generation process
-   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,Faces,FaceNormals,Colours,_Palette,ColourMap);
-   NumFaces := (High(Faces)+1) div VerticesPerFace;
+   VoxelModelizer := TVoxelModelizer.Create(VoxelMap,SemiSurfacesMap,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,_Palette,ColourMap);
+   NumFaces := (High((Geometry.Current^ as TMeshBRepGeometry).Faces)+1) div VerticesPerFace;
    // Do the rest.
    CommonVoxelLoadingActions(_Voxel);
    // Clear memory
@@ -576,7 +535,6 @@ begin
    Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
    Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
    Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
-   AddMaterial;
    Opened := true;
 end;
 
@@ -640,7 +598,7 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
       NumVertices := High(Vertices)+1;
       VertexEquivalences := nil;
    end;
@@ -684,7 +642,7 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
       NumVertices := High(Vertices)+1;
       VertexEquivalences := nil;
    end;
@@ -728,7 +686,7 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
       NumVertices := High(Vertices)+1;
       VertexEquivalences := nil;
    end;
@@ -772,7 +730,7 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
       NumVertices := High(Vertices)+1;
       VertexEquivalences := nil;
    end;
@@ -816,7 +774,7 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create;
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
       NumVertices := High(Vertices)+1;
       VertexEquivalences := nil;
    end;
@@ -922,7 +880,8 @@ begin
       else
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-         MyFaces := Faces;
+         Geometry.GoToFirstElement;
+         MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
          MyNumFaces := NumFaces;
          MyFaceColours := Colours;
       end;
@@ -932,10 +891,11 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+      Geometry.GoToFirstElement;
+      NeighborDetector.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
       VertexEquivalences := nil;
       NumVertices := High(Vertices)+1;
-      MyFaces := Faces;
+      MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
       MyNumFaces := NumFaces;
       MyFaceColours := Colours;
    end;
@@ -991,7 +951,8 @@ begin
          else
          begin
             NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-            MyFaces := Faces;
+            Geometry.GoToFirstElement;
+            MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
             MyFaceColours := Colours;
          end;
          VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
@@ -1000,10 +961,11 @@ begin
       else
       begin
          NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-         NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         Geometry.GoToFirstElement;
+         NeighborDetector.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
          VertexEquivalences := nil;
          NumVertices := High(Vertices)+1;
-         MyFaces := Faces;
+         MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
          MyFaceColours := Colours;
       end;
       SetLength(OriginalColours,High(MyFaceColours)+1);
@@ -1045,7 +1007,8 @@ begin
       SetLength(OriginalColours,High(Colours)+1);
       Tool.BackupColourVector(Colours,OriginalColours);
       SetLength(Colours,NumFaces);
-      Tool.TransformVertexToFaceColours(OriginalColours,Colours,Faces,VerticesPerFace);
+      Geometry.GoToFirstElement;
+      Tool.TransformVertexToFaceColours(OriginalColours,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace);
       SetLength(OriginalColours,0);
       ColourGenStructure := C_COLOURS_PER_FACE;
       SetColoursType(C_COLOURS_PER_FACE);
@@ -1066,6 +1029,7 @@ var
    VertsHit: array of array of boolean;
    i,j,f,v,v1,v2 : integer;
    MaxVerticePerFace: integer;
+   MyFaces: Auint32;
 begin
    SetLength(HitCounter,High(Vertices)+1);
    SetLength(OriginalVertexes,High(Vertices)+1);
@@ -1087,6 +1051,8 @@ begin
       VertsHit[i,i] := true;
    end;
    MaxVerticePerFace := VerticesPerFace - 1;
+   Geometry.GoToFirstElement;
+   MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
    // Now, let's check each face.
    for f := 0 to NumFaces-1 do
    begin
@@ -1101,13 +1067,13 @@ begin
          begin
             v2 := v1 - v + i;
             // if this connection wasn't summed, add it to the sum.
-            if not VertsHit[Faces[v1],Faces[v2]] then
+            if not VertsHit[MyFaces[v1],MyFaces[v2]] then
             begin
-               Vertices[Faces[v1]].X := Vertices[Faces[v1]].X + OriginalVertexes[Faces[v2]].X;
-               Vertices[Faces[v1]].Y := Vertices[Faces[v1]].Y + OriginalVertexes[Faces[v2]].Y;
-               Vertices[Faces[v1]].Z := Vertices[Faces[v1]].Z + OriginalVertexes[Faces[v2]].Z;
-               inc(HitCounter[Faces[v1]]);
-               VertsHit[Faces[v1],Faces[v2]] := true;
+               Vertices[MyFaces[v1]].X := Vertices[MyFaces[v1]].X + OriginalVertexes[MyFaces[v2]].X;
+               Vertices[MyFaces[v1]].Y := Vertices[MyFaces[v1]].Y + OriginalVertexes[MyFaces[v2]].Y;
+               Vertices[MyFaces[v1]].Z := Vertices[MyFaces[v1]].Z + OriginalVertexes[MyFaces[v2]].Z;
+               inc(HitCounter[MyFaces[v1]]);
+               VertsHit[MyFaces[v1],MyFaces[v2]] := true;
             end;
             // increment vertex.
             i := (i + 1) mod VerticesPerFace;
@@ -1179,7 +1145,8 @@ begin
    StopWatch := TStopWatch.Create(true);
    {$endif}
    Tool := TMeshNormalsTool.Create;
-   Tool.RebuildFaceNormals(FaceNormals,VerticesPerFace,Vertices,Faces);
+   Geometry.GoToFirstElement;
+   Tool.RebuildFaceNormals((Geometry.Current^ as TMeshBRepGeometry).Normals,VerticesPerFace,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces);
    // If it uses vertex normals, it will normalize vertexes.
    if (NormalsType and C_NORMALS_PER_VERTEX) <> 0 then
    begin
@@ -1194,7 +1161,7 @@ begin
          else
          begin
             NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-            MyNormals := FaceNormals;
+            MyNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
          end;
          VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
          NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
@@ -1202,8 +1169,8 @@ begin
       else
       begin
          NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-         NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-         MyNormals := FaceNormals;
+         NeighborDetector.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
+         MyNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
          VertexEquivalences := nil;
          NumVertices := High(Vertices)+1;
       end;
@@ -1226,12 +1193,16 @@ end;
 
 procedure TMesh.RebuildFaceNormals;
 var
-   Tool : TMeshNormalsTool;
+   CurrentGeometry: PMeshGeometryBase;
 begin
-   SetLength(FaceNormals,NumFaces);
-   Tool := TMeshNormalsTool.Create;
-   Tool.RebuildFaceNormals(FaceNormals,VerticesPerFace,Vertices,Faces);
-   Tool.Free;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).RebuildNormals(Addr(Self));
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
 end;
 
 procedure TMesh.TransformFaceToVertexNormals;
@@ -1245,6 +1216,7 @@ var
 begin
    Tool := TMeshNormalsTool.Create;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   Geometry.GoToFirstElement;
    if NeighborhoodPlugin <> nil then
    begin
       if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
@@ -1255,7 +1227,7 @@ begin
       else
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
-         MyNormals := FaceNormals;
+         MyNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
       end;
       VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
       NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
@@ -1263,8 +1235,8 @@ begin
    else
    begin
       NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
-      NeighborDetector.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
-      MyNormals := FaceNormals;
+      NeighborDetector.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
+      MyNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
       VertexEquivalences := nil;
       NumVertices := High(Vertices)+1;
    end;
@@ -1291,7 +1263,7 @@ begin
       NormalsType := C_NORMALS_PER_VERTEX;
       SetLength(Normals,High(Vertices)+1);
       TransformFaceToVertexNormals;
-      SetRenderingProcedure;
+      SetNormalsType(C_NORMALS_PER_VERTEX);
    end;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
@@ -1325,6 +1297,7 @@ begin
    Tool := TMeshNormalsTool.Create;
    // Setup Neighbors.
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   Geometry.GoToFirstElement;
    if (NormalsType and C_NORMALS_PER_FACE) = 0 then
    begin
       if NeighborhoodPlugin <> nil then
@@ -1343,7 +1316,7 @@ begin
       else
       begin
          Neighbors := TNeighborDetector.Create;
-         Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         Neighbors.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
          NumVertices := High(Vertices)+1;
          VertexEquivalences := nil;
       end;
@@ -1359,9 +1332,9 @@ begin
       begin
          Neighbors := TNeighborDetector.Create;
          Neighbors.NeighborType := C_NEIGHBTYPE_FACE_FACE_FROM_EDGE;
-         Neighbors.BuildUpData(Faces,VerticesPerFace,High(Vertices)+1);
+         Neighbors.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
       end;
-      Tool.SmoothFaceNormalsOperation(FaceNormals,Vertices,Neighbors,_DistanceFunction);
+      Tool.SmoothFaceNormalsOperation((Geometry.Current^ as TMeshBRepGeometry).Normals,Vertices,Neighbors,_DistanceFunction);
    end;
 
    // Free memory
@@ -1398,7 +1371,8 @@ begin
    AtlasExtractor := CTextureAtlasExtractor.Create;
    TexGenerator := CTextureGenerator.Create;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   TexCoords := AtlasExtractor.GetTextureCoordinates(Vertices,FaceNormals,Normals,Colours,Faces,NeighborhoodPlugin,VerticesPerFace);
+   Geometry.GoToFirstElement;
+   TexCoords := AtlasExtractor.GetTextureCoordinates(Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,NeighborhoodPlugin,VerticesPerFace);
    if NeighborhoodPlugin <> nil then
    begin
       TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
@@ -1407,7 +1381,7 @@ begin
    AddMaterial;
    SetLength(Materials[0].Texture,1);
    glActiveTexture(GL_TEXTURE0);
-   Bitmap := TexGenerator.GenerateDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,1024,AlphaMap);
+   Bitmap := TexGenerator.GenerateDiffuseTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Colours,TexCoords,VerticesPerFace,1024,AlphaMap);
    Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
    Materials[0].Texture[0]^.TextureType := C_TTP_DIFFUSE;
    SetLength(AlphaMap,0,0);
@@ -1417,7 +1391,6 @@ begin
    else
       Materials[0].Shader := nil;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
-   SetLength(FaceNormals,0);
    AtlasExtractor.Free;
    TexGenerator.Free;
    {$ifdef SPEED_TEST}
@@ -1434,12 +1407,12 @@ var
 begin
    RebuildFaceNormals;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,FaceNormals,Normals,Colours,Faces,VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   Geometry.GoToFirstElement;
+   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
    if NeighborhoodPlugin <> nil then
    begin
       TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
    end;
-   SetLength(FaceNormals,0);
 end;
 
 // This one really acquires the final texture coordinates values.
@@ -1450,13 +1423,19 @@ end;
 
 procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
 begin
-   _TexGenerator.PaintMeshDiffuseTexture(Faces,Colours,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+   Geometry.GoToFirstElement;
+   _TexGenerator.PaintMeshDiffuseTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Colours,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
 end;
 
 procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
 begin
-   _TexGenerator.PaintMeshNormalMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
-   SetShaderUniform := SetUniformShaderBumpMapping;
+   Geometry.GoToFirstElement;
+   _TexGenerator.PaintMeshNormalMapTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Normals,TexCoords,VerticesPerFace,_Buffer,_WeightBuffer);
+   while Geometry.Current <> nil do
+   begin
+      (Geometry.Current^ as TMeshBRepGeometry).SetNormalMappingShader;
+      Geometry.GoToNextElement;
+   end;
 end;
 
 procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
@@ -1464,12 +1443,16 @@ var
    DiffuseMap: TAbstract2DImageData;
 begin
    DiffuseMap := T2DImageRGBAByteData.Create(0,0);
+   Geometry.GoToFirstElement;
    Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
-   _TexGenerator.PaintMeshBumpMapTexture(Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseMap);
+   _TexGenerator.PaintMeshBumpMapTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Normals,TexCoords,VerticesPerFace,_Buffer,DiffuseMap);
    DiffuseMap.Free;
    AddBumpMapDataPlugin;
-   SetShaderAttributes := SetAtributeShaderBumpMapping;
-   SetShaderUniform := SetUniformShaderBumpMapping;
+   while Geometry.Current <> nil do
+   begin
+      (Geometry.Current^ as TMeshBRepGeometry).SetBumpMappingShader;
+      Geometry.GoToNextElement;
+   end;
 end;
 
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
@@ -1486,126 +1469,66 @@ begin
    if _TextureType = C_TTP_DOT3BUMP then
    begin
       AddBumpMapDataPlugin;
-      SetShaderAttributes := SetAtributeShaderBumpMapping;
-      SetShaderUniform := SetUniformShaderBumpMapping;
+      Geometry.GoToFirstElement;
+      while Geometry.Current <> nil do
+      begin
+         (Geometry.Current^ as TMeshBRepGeometry).SetBumpMappingShader;
+         Geometry.GoToNextElement;
+      end;
    end;
    SetColoursType(C_COLOURS_FROM_TEXTURE);
 end;
 
-procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
-var
-   mat: integer;
-begin
-   for mat := Low(Materials) to High(Materials) do
-   begin
-      Materials[mat].ExportTextures(_BaseDir,Name + '_' + IntToStr(ID) + '_' + IntToStr(mat),_Ext,_UsedTextures,_previewTextures);
-   end;
-end;
-
-procedure TMesh.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
-var
-   mat : integer;
-begin
-   for mat := Low(Materials) to High(Materials) do
-   begin
-      Materials[mat].SetTextureNumMipmaps(_NumMipMaps,_TextureType);
-   end;
-end;
-
 // Sets
-procedure TMesh.SetRenderingProcedure;
-begin
-   case (NormalsType) of
-      C_NORMALS_DISABLED:
-      begin
-         case (ColoursType) of
-            C_COLOURS_DISABLED:
-            begin
-               RenderingProcedure := RenderWithoutNormalsAndColours;
-            end;
-            C_COLOURS_PER_VERTEX:
-            begin
-               RenderingProcedure := RenderWithoutNormalsAndWithColoursPerVertex;
-            end;
-            C_COLOURS_PER_FACE:
-            begin
-               RenderingProcedure := RenderWithoutNormalsAndWithFaceColours;
-            end;
-            C_COLOURS_FROM_TEXTURE:
-            begin
-               RenderingProcedure := RenderWithoutNormalsAndWithTexture;
-            end;
-         end;
-      end;
-      C_NORMALS_PER_VERTEX:
-      begin
-         case (ColoursType) of
-            C_COLOURS_DISABLED:
-            begin
-               RenderingProcedure := RenderWithVertexNormalsAndNoColours;
-            end;
-            C_COLOURS_PER_VERTEX:
-            begin
-               RenderingProcedure := RenderWithVertexNormalsAndColours;
-            end;
-            C_COLOURS_PER_FACE:
-            begin
-               RenderingProcedure := RenderWithVertexNormalsAndFaceColours;
-            end;
-            C_COLOURS_FROM_TEXTURE:
-            begin
-               RenderingProcedure := RenderWithVertexNormalsAndWithTexture;
-            end;
-         end;
-      end;
-      C_NORMALS_PER_FACE:
-      begin
-         case (ColoursType) of
-            C_COLOURS_DISABLED:
-            begin
-               RenderingProcedure := RenderWithFaceNormalsAndNoColours;
-            end;
-            C_COLOURS_PER_VERTEX:
-            begin
-               RenderingProcedure := RenderWithFaceNormalsAndVertexColours;
-            end;
-            C_COLOURS_PER_FACE:
-            begin
-               RenderingProcedure := RenderWithFaceNormalsAndColours;
-            end;
-            C_COLOURS_FROM_TEXTURE:
-            begin
-               RenderingProcedure := RenderWithFaceNormalsAndWithTexture;
-            end;
-         end;
-      end;
-   end;
-   ForceRefresh;
-end;
-
 procedure TMesh.SetColoursType(_ColoursType: integer);
+var
+   CurrentGeometry: PMeshGeometryBase;
 begin
    ColoursType := _ColoursType and 3;
-   SetRenderingProcedure;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      CurrentGeometry^.SetColoursType(ColoursType);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
 end;
 
 procedure TMesh.ForceColoursRendering;
 begin
-   ColoursType := ColourGenStructure;
-   SetRenderingProcedure;
+   SetColoursType(ColourGenStructure);
 end;
 
 procedure TMesh.SetNormalsType(_NormalsType: integer);
+var
+   CurrentGeometry: PMeshGeometryBase;
 begin
    NormalsType := _NormalsType and 3;
-   SetRenderingProcedure;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      CurrentGeometry^.SetNormalsType(NormalsType);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
 end;
 
 procedure TMesh.SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
+var
+   CurrentGeometry: PMeshGeometryBase;
 begin
    ColoursType := _ColoursType and 3;
    NormalsType := _NormalsType and 3;
-   SetRenderingProcedure;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      CurrentGeometry^.SetColoursAndNormalsType(ColoursType,NormalsType);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
 end;
 
 // Gets
@@ -1619,28 +1542,31 @@ end;
 procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
 var
    i : integer;
+   CurrentGeometry: PMeshGeometryBase;
 begin
    if IsVisible and Opened then
    begin
       inc(_PolyCount,NumFaces);
       inc(_VoxelCount,NumVoxels);
-      if List = C_LIST_NONE then
+
+      Geometry.GoToFirstElement;
+      CurrentGeometry := Geometry.Current;
+      while CurrentGeometry <> nil do
       begin
-         List := glGenLists(1);
-         glNewList(List, GL_COMPILE);
-         CurrentPass := Low(Materials);
-         while CurrentPass <= High(Materials) do
-         begin
-            Materials[CurrentPass].Enable;
-            RenderingProcedure();
-            Materials[CurrentPass].Disable;
-            inc(CurrentPass);
-         end;
-         glEndList;
+         CurrentGeometry^.PreRender(Addr(self));
+         Geometry.GoToNextElement;
+         CurrentGeometry := Geometry.Current;
       end;
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
-      glCallList(List);
+      Geometry.GoToFirstElement;
+      CurrentGeometry := Geometry.Current;
+      while CurrentGeometry <> nil do
+      begin
+         CurrentGeometry^.Render;
+         Geometry.GoToNextElement;
+         CurrentGeometry := Geometry.Current;
+      end;
       for i := Low(Plugins) to High(Plugins) do
       begin
          if Plugins[i] <> nil then
@@ -1651,364 +1577,20 @@ begin
    end;
 end;
 
-procedure TMesh.RenderWithoutNormalsAndColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
-   glNormal3f(0,0,0);
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithVertexNormalsAndNoColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithFaceNormalsAndNoColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
-         while (v < VerticesPerFace) do
-         begin
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithoutNormalsAndWithColoursPerVertex;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   glNormal3f(0,0,0);
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithVertexNormalsAndColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   i := 0;
-   glActiveTexture(GL_TEXTURE0);
-   glDisable(GL_TEXTURE_2D);
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
-            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithFaceNormalsAndVertexColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
-         while (v < VerticesPerFace) do
-         begin
-            glColor4f(Colours[Faces[f]].X,Colours[Faces[f]].Y,Colours[Faces[f]].Z,Colours[Faces[f]].W);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithoutNormalsAndWithTexture;
-var
-   i,f,v,tex : longword;
-begin
-   f := 0;
-   glNormal3f(0,0,0);
-   glColor4f(1,1,1,1);
-   i := 0;
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
-         glEnable(GL_TEXTURE_2D);
-      end;
-   end;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-            begin
-               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
-            end;
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glDisable(GL_TEXTURE_2D);
-      end;
-   end;
-   glActiveTexture(GL_TEXTURE0);
-end;
-
-procedure TMesh.RenderWithVertexNormalsAndWithTexture;
-var
-   i,f,v,tex : longword;
-   Plugin: PMeshPluginBase;
-begin
-   f := 0;
-   i := 0;
-   glColor4f(1,1,1,1);
-   Plugin := GetPlugin(C_MPL_BUMPMAPDATA);
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glEnable(GL_TEXTURE_2D);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
-         SetShaderUniform(CurrentPass,tex);
-      end;
-   end;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         while (v < VerticesPerFace) do
-         begin
-            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-            begin
-               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
-            end;
-            SetShaderAttributes(Faces[f],Plugin);
-            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glDisable(GL_TEXTURE_2D);
-      end;
-   end;
-   glActiveTexture(GL_TEXTURE0);
-end;
-
-procedure TMesh.RenderWithFaceNormalsAndWithTexture;
-var
-   i,f,v,tex : longword;
-begin
-   f := 0;
-   i := 0;
-   glColor4f(1,1,1,1);
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glBindTexture(GL_TEXTURE_2D,Materials[CurrentPass].Texture[tex]^.GetID);
-         glEnable(GL_TEXTURE_2D);
-      end;
-   end;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
-         while (v < VerticesPerFace) do
-         begin
-            for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-            begin
-               glMultiTexCoord2f(GL_TEXTURE0 + tex,TexCoords[Faces[f]].U,TexCoords[Faces[f]].V);
-            end;
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-   for tex := Low(Materials[CurrentPass].Texture) to High(Materials[CurrentPass].Texture) do
-   begin
-      if Materials[CurrentPass].Texture[tex] <> nil then
-      begin
-         glActiveTexture(GL_TEXTURE0 + tex);
-         glDisable(GL_TEXTURE_2D);
-      end;
-   end;
-   glActiveTexture(GL_TEXTURE0);
-end;
-
-procedure TMesh.RenderWithoutNormalsAndWithFaceColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   glNormal3f(0,0,0);
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
-         while (v < VerticesPerFace) do
-         begin
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithVertexNormalsAndFaceColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
-         while (v < VerticesPerFace) do
-         begin
-            glNormal3f(Normals[Faces[f]].X,Normals[Faces[f]].Y,Normals[Faces[f]].Z);
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
-procedure TMesh.RenderWithFaceNormalsAndColours;
-var
-   i,f,v : longword;
-begin
-   f := 0;
-   i := 0;
-   glBegin(FaceType);
-      while i < NumFaces do
-      begin
-         v := 0;
-         glColor4f(Colours[i].X,Colours[i].Y,Colours[i].Z,Colours[i].W);
-         glNormal3f(FaceNormals[i].X,FaceNormals[i].Y,FaceNormals[i].Z);
-         while (v < VerticesPerFace) do
-         begin
-            glVertex3f(Vertices[Faces[f]].X,Vertices[Faces[f]].Y,Vertices[Faces[f]].Z);
-            inc(v);
-            inc(f);
-         end;
-         inc(i);
-      end;
-   glEnd();
-end;
-
 // Basically clears the OpenGL List, so the RenderingProcedure may run next time it renders the mesh.
 procedure TMesh.ForceRefresh;
 var
    i : integer;
+   CurrentGeometry: PMeshGeometryBase;
 begin
-   if List > C_LIST_NONE then
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
    begin
-      glDeleteLists(List,1);
+      CurrentGeometry^.ForceRefresh;
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
    end;
-   List := C_LIST_NONE;
    for i := Low(Plugins) to High(Plugins) do
    begin
       if Plugins[i] <> nil then
@@ -2018,40 +1600,11 @@ begin
    end;
 end;
 
-// Redering methods related to bump mapping.
-procedure TMesh.SetAtributeShaderDoNothing(_VertexID: integer; const _PPlugin: PMeshPluginBase);
-begin
-   // do nothing, really... it does nothing!
-end;
-
-procedure TMesh.SetAtributeShaderBumpMapping(_VertexID: integer; const _PPlugin: PMeshPluginBase);
-var
-   Shader: PShaderBankItem;
-begin
-   // sends tangent and bitangent attributes in this exact order.
-   Shader := ShaderBank^.Get(C_SHD_PHONG_DOT3TEX);
-   Shader^.glSendAttribute3f(0,TBumpMapDataPlugin(_PPlugin^).Tangents[_VertexID]);
-   Shader^.glSendAttribute3f(1,TBumpMapDataPlugin(_PPlugin^).BiTangents[_VertexID]);
-end;
-
-procedure TMesh.SetUniformShaderDoNothing(_MaterialID,_TextureID: integer);
-begin
-   // do nothing, really... it does nothing!
-end;
-
-procedure TMesh.SetUniformShaderBumpMapping(_MaterialID,_TextureID: integer);
-var
-   Shader: PShaderBankItem;
-begin
-   // sends tangent and bitangent attributes in this exact order.
-   Shader := Materials[_MaterialID].Shader;
-   Shader^.glSendUniform1i(_TextureID,_TextureID);
-end;
-
 // Copies
 procedure TMesh.Assign(const _Mesh : TMesh);
 var
    i : integer;
+   CurrentGeometry: PMeshGeometryBase;
 begin
    ShaderBank := _Mesh.ShaderBank;
    NormalsType := _Mesh.NormalsType;
@@ -2061,7 +1614,6 @@ begin
    Name := CopyString(_Mesh.Name);
    ID := _Mesh.ID;
    Son := _Mesh.Son;
-   FaceType := _Mesh.FaceType;
    VerticesPerFace := _Mesh.VerticesPerFace;
    Scale.X := _Mesh.Scale.X;
    Scale.Y := _Mesh.Scale.Y;
@@ -2082,24 +1634,12 @@ begin
       Vertices[i].Y := _Mesh.Vertices[i].Y;
       Vertices[i].Z := _Mesh.Vertices[i].Z;
    end;
-   SetLength(Faces,High(_Mesh.Faces)+1);
-   for i := Low(Faces) to High(Faces) do
-   begin
-      Faces[i] := _Mesh.Faces[i];
-   end;
    SetLength(Normals,High(_Mesh.Normals)+1);
    for i := Low(Normals) to High(Normals) do
    begin
       Normals[i].X := _Mesh.Normals[i].X;
       Normals[i].Y := _Mesh.Normals[i].Y;
       Normals[i].Z := _Mesh.Normals[i].Z;
-   end;
-   SetLength(FaceNormals,High(_Mesh.FaceNormals)+1);
-   for i := Low(FaceNormals) to High(FaceNormals) do
-   begin
-      FaceNormals[i].X := _Mesh.FaceNormals[i].X;
-      FaceNormals[i].Y := _Mesh.FaceNormals[i].Y;
-      FaceNormals[i].Z := _Mesh.FaceNormals[i].Z;
    end;
    SetLength(Colours,High(_Mesh.Colours)+1);
    for i := Low(Colours) to High(Colours) do
@@ -2115,11 +1655,23 @@ begin
       TexCoords[i].U := _Mesh.TexCoords[i].U;
       TexCoords[i].V := _Mesh.TexCoords[i].V;
    end;
-   SetLength(Materials,High(_Mesh.Materials)+1);
+   SetLength(Materials,High(Materials)+1);
    for i := Low(Materials) to High(Materials) do
    begin
-      Materials[i].Assign(_Mesh.Materials[i]);
+      Materials[i].Assign(Materials[i]);
    end;
+   _Mesh.Geometry.GoToFirstElement;
+   CurrentGeometry := _Mesh.Geometry.Current;
+   Geometry := CMeshGeometryList.Create();
+   while CurrentGeometry <> nil do
+   begin
+      Geometry.Add(C_GEO_BREP);
+      Geometry.Current^.Assign(CurrentGeometry^);
+
+      _Mesh.Geometry.GoToNextElement;
+      CurrentGeometry := _Mesh.Geometry.Current;
+   end;
+
    Next := _Mesh.Next;
 end;
 
@@ -2225,6 +1777,26 @@ begin
    end;
 end;
 
+procedure TMesh.ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
+var
+   mat: integer;
+begin
+   for mat := Low(Materials) to High(Materials) do
+   begin
+      Materials[mat].ExportTextures(_BaseDir,Name + '_' + IntToStr(ID) + '_' + IntToStr(mat),_Ext,_UsedTextures,_previewTextures);
+   end;
+end;
+
+procedure TMesh.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
+var
+   mat : integer;
+begin
+   for mat := Low(Materials) to High(Materials) do
+   begin
+      Materials[mat].SetTextureNumMipmaps(_NumMipMaps,_TextureType);
+   end;
+end;
+
 
 // Plugins
 procedure TMesh.AddNormalsPlugin;
@@ -2243,7 +1815,8 @@ var
    NewPlugin : PMeshPluginBase;
 begin
    new(NewPlugin);
-   NewPlugin^ := TNeighborhoodDataPlugin.Create(Faces,VerticesPerFace,High(Vertices)+1);
+   Geometry.GoToFirstElement;
+   NewPlugin^ := TNeighborhoodDataPlugin.Create((Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,High(Vertices)+1);
    SetLength(Plugins,High(Plugins)+2);
    Plugins[High(Plugins)] := NewPlugin;
    ForceRefresh;
@@ -2254,7 +1827,8 @@ var
    NewPlugin : PMeshPluginBase;
 begin
    new(NewPlugin);
-   NewPlugin^ := TBumpMapDataPlugin.Create(Vertices,Normals,TexCoords,Faces,VerticesPerFace);
+   Geometry.GoToFirstElement;
+   NewPlugin^ := TBumpMapDataPlugin.Create(Vertices,Normals,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace);
    SetLength(Plugins,High(Plugins)+2);
    Plugins[High(Plugins)] := NewPlugin;
    ForceRefresh;
@@ -2361,186 +1935,29 @@ end;
 
 procedure TMesh.RemoveInvisibleFaces;
 var
-   iRead,iWrite,v: integer;
-   MarkForRemoval: boolean;
-   Normal : TVector3f;
+   CurrentGeometry: PMeshGeometryBase;
 begin
-   iRead := 0;
-   iWrite := 0;
-   while iRead <= High(Faces) do
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
    begin
-      MarkForRemoval := false;
-      // check if vertexes are NaN.
-      v := 0;
-      while v < VerticesPerFace do
-      begin
-         if IsNaN(Vertices[Faces[iRead+v]].X) or IsNaN(Vertices[Faces[iRead+v]].Y) or IsNaN(Vertices[Faces[iRead+v]].Z) or IsInfinite(Vertices[Faces[iRead+v]].X) or IsInfinite(Vertices[Faces[iRead+v]].Y) or IsInfinite(Vertices[Faces[iRead+v]].Z) then
-         begin
-            MarkForRemoval := true;
-         end;
-         inc(v);
-      end;
-      if not MarkForRemoval then
-      begin
-         // check if normal is 0,0,0.
-         Normal := GetNormalsValue(Vertices[Faces[iRead]],Vertices[Faces[iRead+1]],Vertices[Faces[iRead+2]]);
-         if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
-            MarkForRemoval := true;
-         if VerticesPerFace = 4 then
-         begin
-            Normal := GetNormalsValue(Vertices[Faces[iRead+2]],Vertices[Faces[iRead+3]],Vertices[Faces[iRead]]);
-            if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
-               MarkForRemoval := true;
-          end;
-      end;
-
-      // Finally, we remove it.
-      if not MarkForRemoval then
-      begin
-         v := 0;
-         while v < VerticesPerFace do
-         begin
-            Faces[iWrite+v] := Faces[iRead+v];
-            inc(v);
-         end;
-         if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
-         begin
-            FaceNormals[iWrite div VerticesPerFace].X := FaceNormals[iRead div VerticesPerFace].X;
-            FaceNormals[iWrite div VerticesPerFace].Y := FaceNormals[iRead div VerticesPerFace].Y;
-            FaceNormals[iWrite div VerticesPerFace].Z := FaceNormals[iRead div VerticesPerFace].Z;
-         end;
-         if (ColoursType = C_COLOURS_PER_FACE) then
-         begin
-            Colours[iWrite div VerticesPerFace].X := Colours[iRead div VerticesPerFace].X;
-            Colours[iWrite div VerticesPerFace].Y := Colours[iRead div VerticesPerFace].Y;
-            Colours[iWrite div VerticesPerFace].Z := Colours[iRead div VerticesPerFace].Z;
-            Colours[iWrite div VerticesPerFace].W := Colours[iRead div VerticesPerFace].W;
-         end;
-         iWrite := iWrite + VerticesPerFace;
-      end;
-      iRead := iRead + VerticesPerFace;
+      (CurrentGeometry^ as TMeshBRepGeometry).RemoveInvisibleFaces(Addr(Self));
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
    end;
-   NumFaces := iWrite div VerticesPerFace;
-   SetLength(Faces,iWrite);
-   if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
-   begin
-      SetLength(FaceNormals,NumFaces);
-   end;
-   if (ColoursType = C_COLOURS_PER_FACE) then
-   begin
-      SetLength(Colours,NumFaces);
-   end;
-   ForceRefresh;
 end;
 
 procedure TMesh.ConvertQuadsToTris;
 var
-   OldFaces: auint32;
-   OldFaceNormals: TAVector3f;
-   OldColours: TAVector4f;
-   OldNumFaces : integer;
-   i,j : integer;
-   NeighborhoodPlugin: PMeshPluginBase;
+   CurrentGeometry: PMeshGeometryBase;
 begin
-   if VerticesPerFace <> 3 then
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
    begin
-      // Start with face conversion.
-      VerticesPerFace := 3;
-      FaceType := GL_TRIANGLES;
-      OldNumFaces := NumFaces;
-      NumFaces := NumFaces * 2;
-      // Make a backup of the faces first.
-      SetLength(OldFaces,High(Faces)+1);
-      for i := Low(Faces) to High(Faces) do
-         OldFaces[i] := Faces[i];
-      // Now we transform each quad in two tris.
-      SetLength(Faces,Round((High(Faces)+1)*1.5));
-      i := 0;
-      j := 0;
-      while i <= High(Faces) do
-      begin
-         Faces[i] := OldFaces[j];
-         inc(i);
-         Faces[i] := OldFaces[j+1];
-         inc(i);
-         Faces[i] := OldFaces[j+2];
-         inc(i);
-         Faces[i] := OldFaces[j+2];
-         inc(i);
-         Faces[i] := OldFaces[j+3];
-         inc(i);
-         Faces[i] := OldFaces[j];
-         inc(i);
-         inc(j,4);
-      end;
-      SetLength(OldFaces,0);
-
-      // Go with Colour conversion.
-      if (ColoursType = C_COLOURS_PER_FACE) then
-      begin
-         // Make a backup of the colours first.
-         SetLength(OldColours,High(Colours)+1);
-         for i := Low(Colours) to High(Colours) do
-         begin
-            OldColours[i].X := Colours[i].X;
-            OldColours[i].Y := Colours[i].Y;
-            OldColours[i].Z := Colours[i].Z;
-            OldColours[i].W := Colours[i].W;
-         end;
-         // Duplicate the colours.
-         SetLength(Colours,NumFaces);
-         i := 0;
-         j := 0;
-         while j < OldNumFaces do
-         begin
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            inc(j);
-         end;
-         SetLength(OldColours,0);
-      end;
-      // Go with Normals conversion.
-      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
-      begin
-         // Make a backup of the normals first.
-         SetLength(OldFaceNormals,High(FaceNormals)+1);
-         for i := Low(FaceNormals) to High(FaceNormals) do
-         begin
-            OldFaceNormals[i].X := FaceNormals[i].X;
-            OldFaceNormals[i].Y := FaceNormals[i].Y;
-            OldFaceNormals[i].Z := FaceNormals[i].Z;
-         end;
-         // Duplicate the face normals.
-         SetLength(FaceNormals,NumFaces);
-         for i := 0 to OldNumFaces - 1 do
-         begin
-            FaceNormals[i*2].X := OldFaceNormals[i].X;
-            FaceNormals[i*2].Y := OldFaceNormals[i].Y;
-            FaceNormals[i*2].Z := OldFaceNormals[i].Z;
-            FaceNormals[(i*2)+1].X := OldFaceNormals[i].X;
-            FaceNormals[(i*2)+1].Y := OldFaceNormals[i].Y;
-            FaceNormals[(i*2)+1].Z := OldFaceNormals[i].Z;
-         end;
-         SetLength(OldFaceNormals,0);
-      end;
-      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-      if NeighborhoodPlugin <> nil then
-      begin
-         TNeighborhoodDataPlugin(NeighborhoodPlugin^).UpdateQuadsToTriangles(Faces,Vertices,High(Vertices)+1,VerticesPerFace);
-         if (ColoursType = C_COLOURS_PER_FACE) then
-         begin
-            TNeighborhoodDataPlugin(NeighborhoodPlugin^).UpdateQuadsToTriangleColours(Colours);
-         end;
-      end;
-      ForceRefresh;
+      (CurrentGeometry^ as TMeshBRepGeometry).ConvertQuadsToTris(Addr(Self));
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
    end;
 end;
 
@@ -2560,11 +1977,11 @@ begin
    end;
    RebuildFaceNormals;
    // Check ClassMeshOptimizationTool.pas. Note: _Angle is actually the value of the cosine
+   Geometry.GoToFirstElement;
    OptimizationTool := TMeshOptimizationTool.Create(_IgnoreColours,_Angle);
-   OptimizationTool.Execute(Vertices,Normals,FaceNormals,Colours,TexCoords,Faces,VerticesPerFace,ColoursType,NormalsType,NumFaces);
+   OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,VerticesPerFace,ColoursType,NormalsType,NumFaces);
    OptimizationTool.Free;
 
-   SetLength(FaceNormals,0);
    ForceRefresh;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;

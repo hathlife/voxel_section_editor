@@ -10,6 +10,11 @@ type
          Start,Last,Active : PQuadItem;
          FCount: integer;
          procedure Reset;
+         function GetV1: integer;
+         function GetV2: integer;
+         function GetV3: integer;
+         function GetV4: integer;
+         function GetColour: cardinal;
       public
          // Constructors and Destructors
          constructor Create;
@@ -18,7 +23,7 @@ type
          procedure LoadState(_State: PQuadItem);
          function SaveState:PQuadItem;
          // Add
-         procedure Add (_v1,_v2,_v3,_v4: integer);
+         procedure Add (_v1,_v2,_v3,_v4: integer; _Color: Cardinal);
          procedure Delete;
          // Delete
          procedure Clear;
@@ -27,6 +32,11 @@ type
          procedure GoToNextElement;
          // Properties
          property Count: integer read FCount;
+         property V1: integer read GetV1;
+         property V2: integer read GetV2;
+         property V3: integer read GetV3;
+         property V4: integer read GetV4;
+         property Colour: cardinal read GetColour;
    end;
 
 implementation
@@ -63,7 +73,7 @@ end;
 
 
 // Add
-procedure CQuadList.Add (_v1,_v2,_v3,_v4: integer);
+procedure CQuadList.Add (_v1,_v2,_v3,_v4: integer; _Color: Cardinal);
 var
    NewPosition : PQuadItem;
 begin
@@ -72,6 +82,7 @@ begin
    NewPosition^.v2 := _v2;
    NewPosition^.v3 := _v3;
    NewPosition^.v4 := _v4;
+   NewPosition^.Color := _Color;
    NewPosition^.Next := nil;
    inc(FCount);
    if Start <> nil then
@@ -128,6 +139,68 @@ begin
    end;
    Reset;
 end;
+
+// Gets
+function CQuadList.GetV1: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v1;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CQuadList.GetV2: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v2;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CQuadList.GetV3: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v3;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CQuadList.GetV4: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v4;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CQuadList.GetColour: cardinal;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.color;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
 
 // Misc
 procedure CQuadList.GoToNextElement;

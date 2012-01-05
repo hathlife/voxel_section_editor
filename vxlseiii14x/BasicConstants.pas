@@ -73,6 +73,9 @@ const
    // From VoxelMeshGenerator
    C_VMG_NO_VERTEX = -1;//2147483647;
 
+   // From MeshGeometryList
+   C_GEO_BREP = 1;
+
    //------------------------------------------------------------------
    // From VoxelModelizerItem.pas
    //------------------------------------------------------------------

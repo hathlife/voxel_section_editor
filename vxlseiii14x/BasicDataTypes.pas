@@ -128,12 +128,14 @@ type
    PTriangleItem = ^TTriangleItem;
    TTriangleItem = record
       v1, v2, v3: integer;
+      Color: cardinal;
       Next: PTriangleItem;
    end;
 
    PQuadItem = ^TQuadItem;
    TQuadItem = record
       v1, v2, v3, v4: integer;
+      Color: cardinal;
       Next: PQuadItem;
    end;
 
@@ -215,6 +217,8 @@ type
    TPixelRGBAIntData = record
       r,g,b,a: integer;
    end;
+
+   TRenderProc = procedure of object;
 
 implementation
 

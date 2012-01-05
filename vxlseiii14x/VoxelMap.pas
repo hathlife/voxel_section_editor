@@ -1058,7 +1058,7 @@ begin
                end;
             end;
    end;
-
+   Cube.Free;
 end;
 
 function TVoxelMap.SynchronizeWithSection(_Mode : integer; _Threshold : single): integer;

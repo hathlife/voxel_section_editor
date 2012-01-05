@@ -3,7 +3,7 @@ unit OBJFile;
 interface
 
 uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem,
-ClassIntegerSet, Material;
+   ClassIntegerSet, Material, MeshBRepGeometry;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;
@@ -123,13 +123,14 @@ begin
       for Material := Low(MyMesh^.Mesh^.Materials) to High(MyMesh^.Mesh^.Materials) do
       begin
          WriteMaterial(MTLFile,MyMesh^.Mesh^.Materials[Material],MyMesh^.Mesh^.Name);
+         MyMesh^.Mesh^.Geometry.GoToFirstElement;
          if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
          begin
-            WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+            WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).Faces);
          end
          else
          begin
-            WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,MyMesh^.Mesh^.Faces);
+            WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as  TMeshBRepGeometry).Faces);
          end;
       end;
       MyMesh := MyMesh^.Next;
@@ -304,7 +305,8 @@ begin
       end
       else
       begin
-         WriteMeshNormals(_File,MyMesh^.Mesh^.FaceNormals);
+         MyMesh^.Mesh^.Geometry.GoToFirstElement;
+         WriteMeshNormals(_File,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).Normals);
       end;
       MyMesh := MyMesh^.Next;
    end;

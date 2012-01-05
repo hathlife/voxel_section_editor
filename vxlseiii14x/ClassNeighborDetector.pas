@@ -2,7 +2,7 @@ unit ClassNeighborDetector;
 
 interface
 
-uses BasicDataTypes, SysUtils, PSAPI, Windows;
+uses BasicDataTypes, SysUtils, PSAPI, Windows, ClassMeshGeometryList;
 
 const
    C_NEIGHBTYPE_VERTEX_VERTEX = 0;     // vertex neighbors of vertexes.
@@ -27,7 +27,8 @@ type
          procedure InitializeNeighbors(_NumElements: integer);
          procedure ClearFNeighbors;
          // Executes
-         procedure OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+         procedure OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer); overload;
+         procedure OrganizeVertexVertex(const _Geometry: CMeshGeometryList; _NumVertexes: integer); overload;
          procedure OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
@@ -52,13 +53,16 @@ type
          // Sets
          procedure SetType(_Type: byte);
          // Executes
-         procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
+         procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer); overload;
+         procedure BuildUpData(const _Geometry: CMeshGeometryList; _NumVertexes: integer); overload;
          // Requests
          function GetNeighborFromID(_ID: integer): integer;
          function GetNextNeighbor: integer;
    end;
 
 implementation
+
+uses MeshBRepGeometry;
 
 // Constructors and Destructors
 constructor TNeighborDetector.Create;
@@ -181,6 +185,34 @@ begin
    IsValid := true;
 end;
 
+procedure TNeighborDetector.BuildUpData(const _Geometry: CMeshGeometryList; _NumVertexes: integer);
+begin
+   Case(NeighborType) of
+      C_NEIGHBTYPE_VERTEX_VERTEX:     // vertex neighbors of vertexes.
+      begin
+         OrganizeVertexVertex(_Geometry,_NumVertexes);
+      end;
+      C_NEIGHBTYPE_VERTEX_FACE:       // face neighbors of vertexes.
+      begin
+         OrganizeVertexFace((_Geometry.Current^ as TMeshBRepGeometry).Faces,(_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_NumVertexes);
+      end;
+      C_NEIGHBTYPE_FACE_VERTEX:       // vertex neighbors of faces.
+      begin
+         OrganizeFaceVertex((_Geometry.Current^ as TMeshBRepGeometry).Faces,(_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_NumVertexes);
+      end;
+      C_NEIGHBTYPE_FACE_FACE_FROM_EDGE:         // face neighbors of faces with common edges.
+      begin
+         OrganizeFaceFace((_Geometry.Current^ as TMeshBRepGeometry).Faces,(_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_NumVertexes);
+      end;
+      C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX:         // face neighbors of faces with common vertexes.
+      begin
+         OrganizeFaceFaceFromVertex((_Geometry.Current^ as TMeshBRepGeometry).Faces,(_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_NumVertexes);
+      end;
+   end;
+   DefragmentData;
+   IsValid := true;
+end;
+
 procedure TNeighborDetector.OrganizeVertexVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
 var
    f, v, i : integer;
@@ -216,6 +248,49 @@ begin
       SetLength(SearchArray,i,0);
    end;
    SetLength(SearchArray,0);
+end;
+
+procedure TNeighborDetector.OrganizeVertexVertex(const _Geometry: CMeshGeometryList; _NumVertexes: integer);
+var
+   f, v, i : integer;
+   SearchArray : array of array of integer;
+   VertexesPerFace: integer;
+begin
+   // Setup Neighbors.
+   InitializeNeighbors(_NumVertexes);
+   _Geometry.GoToFirstElement;
+   while _Geometry.Current <> nil do
+   begin
+      VertexesPerFace := (_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
+      SetLength(SearchArray,((VertexesPerFace-1)*VertexesPerFace) shr 1,2);
+      f := 0;
+      for v := 0 to VertexesPerFace - 2 do
+         for i := v+1 to VertexesPerFace -1 do
+         begin
+            SearchArray[f,0] := v;
+            SearchArray[f,1] := i;
+            inc(f);
+         end;
+
+      // Main loop goes here.
+      f := 0;
+      while f < High((_Geometry.Current^ as TMeshBRepGeometry).Faces) do
+      begin
+         // check all neighbors of each vertex of the face.
+         for i := Low(SearchArray) to High(SearchArray) do
+         begin
+            AddElementAtTarget((_Geometry.Current^ as TMeshBRepGeometry).Faces[f+SearchArray[i,0]],(_Geometry.Current^ as TMeshBRepGeometry).Faces[f+SearchArray[i,1]]);
+            AddElementAtTarget((_Geometry.Current^ as TMeshBRepGeometry).Faces[f+SearchArray[i,1]],(_Geometry.Current^ as TMeshBRepGeometry).Faces[f+SearchArray[i,0]]);
+         end;
+         inc(f,VertexesPerFace);
+      end;
+
+      for i := Low(SearchArray) to High(SearchArray) do
+      begin
+         SetLength(SearchArray,i,0);
+      end;
+      SetLength(SearchArray,0);
+   end;
 end;
 
 procedure TNeighborDetector.OrganizeVertexFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);

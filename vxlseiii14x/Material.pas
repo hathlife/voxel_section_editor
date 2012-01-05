@@ -43,6 +43,7 @@ type
    end;
    PMeshMaterial = ^TMeshMaterial;
    TAMeshMaterial = array of TMeshMaterial;
+   TSetShaderUniformFunc = procedure (const _Materials: TAMeshMaterial; _MaterialID,_TextureID: integer) of object;
 
 implementation
 

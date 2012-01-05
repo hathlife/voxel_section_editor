@@ -73,6 +73,7 @@ const
    C_MPL_NORMALS = 1;
    C_MPL_NEIGHBOOR = 2;
    C_MPL_BUMPMAPDATA = 3;
+   C_MPL_MESH = 4;
 
    // Distance Functions
    C_DSF_IGNORE = 0;
