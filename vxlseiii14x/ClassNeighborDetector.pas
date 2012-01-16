@@ -290,6 +290,7 @@ begin
          SetLength(SearchArray,i,0);
       end;
       SetLength(SearchArray,0);
+      _Geometry.GoToNextElement;
    end;
 end;
 

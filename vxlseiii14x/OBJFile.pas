@@ -126,11 +126,11 @@ begin
          MyMesh^.Mesh^.Geometry.GoToFirstElement;
          if MyMesh^.Mesh^.NormalsType = C_NORMALS_PER_VERTEX then
          begin
-            WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).Faces);
+            WriteGroupVN(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).Faces);
          end
          else
          begin
-            WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,MyMesh^.Mesh^.VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as  TMeshBRepGeometry).Faces);
+            WriteGroup(OBJFIle,MyMesh^.Mesh^.Name,MyMesh^.VertexStart,MyMesh^.TextureStart,MyMesh^.NormalStart,(MyMesh^.Mesh^.Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,(MyMesh^.Mesh^.Geometry.Current^ as  TMeshBRepGeometry).Faces);
          end;
       end;
       MyMesh := MyMesh^.Next;

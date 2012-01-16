@@ -96,6 +96,14 @@ begin
       begin
          NewPosition^ := TMeshBRepGeometry.Create();
       end; 
+      C_GEO_BREP3:
+      begin
+         NewPosition^ := TMeshBRepGeometry.Create(3);
+      end;
+      C_GEO_BREP4:
+      begin
+         NewPosition^ := TMeshBRepGeometry.Create(4);
+      end;
    end;
    NewPosition^.Next := nil;
    inc(FCount);

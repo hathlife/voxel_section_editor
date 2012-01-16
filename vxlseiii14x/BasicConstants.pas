@@ -75,6 +75,8 @@ const
 
    // From MeshGeometryList
    C_GEO_BREP = 1;
+   C_GEO_BREP3 = 2;
+   C_GEO_BREP4 = 3;
 
    //------------------------------------------------------------------
    // From VoxelModelizerItem.pas

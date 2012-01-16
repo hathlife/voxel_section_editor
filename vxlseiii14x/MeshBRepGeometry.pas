@@ -23,7 +23,6 @@ type
          Normals : TAVector3f;
          Colours : TAVector4f;
          Faces : auint32;
-//         Materials : TAMeshMaterial;
          IsVisible : boolean;
          // Rendering optimization
          RenderingProcedure : TRenderProc;
@@ -31,8 +30,12 @@ type
 
          // Constructors and Destructors.
          constructor Create; overload;
+         constructor Create(_VerticesPerFace : byte); overload;
+         constructor Create(_NumFaces : longword; _VerticesPerFace : byte); overload;
+         constructor Create(_VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          constructor Create(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          constructor Create(const _Geometry : TMeshGeometryBase); overload;
+         procedure InitializeWithParams(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          procedure Initialize; override;
          procedure Clear; override;
          procedure Reset; override;
@@ -71,7 +74,27 @@ begin
    Renderer := TRenderingMachine.Create;
 end;
 
+constructor TMeshBRepGeometry.Create(_VerticesPerFace : byte);
+begin
+   InitializeWithParams(0, _VerticesPerFace, C_COLOURS_PER_FACE, C_NORMALS_PER_FACE);
+end;
+
+constructor TMeshBRepGeometry.Create(_NumFaces : longword; _VerticesPerFace : byte);
+begin
+   InitializeWithParams(_NumFaces, _VerticesPerFace, C_COLOURS_PER_FACE, C_NORMALS_PER_FACE);
+end;
+
+constructor TMeshBRepGeometry.Create(_VerticesPerFace, _ColoursType, _NormalsType : byte);
+begin
+   InitializeWithParams(0, _VerticesPerFace, _ColoursType, _NormalsType);
+end;
+
 constructor TMeshBRepGeometry.Create(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte);
+begin
+   InitializeWithParams(_NumFaces, _VerticesPerFace, _ColoursType, _NormalsType);
+end;
+
+procedure TMeshBRepGeometry.InitializeWithParams(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte);
 begin
    Next := nil;
    // Set basic variables:

@@ -66,8 +66,9 @@ end;
 procedure TNormalsMeshPlugin.DoUpdate(_MeshAddress: Pointer);
 begin
    MyMesh := _MeshAddress;
+   (PMesh(MyMesh))^.Geometry.GoToFirstElement;
    MeshNormalsType := (PMesh(MyMesh))^.NormalsType;
-   MeshVerticesPerFace := (PMesh(MyMesh))^.VerticesPerFace;
+   MeshVerticesPerFace := ((PMesh(MyMesh))^.Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
    MeshVertices := PAVector3f(Addr((PMesh(MyMesh))^.Vertices));
    if MeshNormalsType = C_NORMALS_PER_VERTEX then
    begin
@@ -75,7 +76,6 @@ begin
    end
    else
    begin
-      (PMesh(MyMesh))^.Geometry.GoToFirstElement;
       MeshNormals := PAVector3f(Addr(((PMesh(MyMesh))^.Geometry.Current^ as TMeshBRepGeometry).Normals));
    end;
    NumNormals := High(MeshNormals^)+1;

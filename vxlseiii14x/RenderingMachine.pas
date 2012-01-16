@@ -109,6 +109,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
       glNormal3f(0,0,0);
@@ -135,6 +137,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
       i := 0;
@@ -161,6 +165,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       glColor4f(0.5,0.5,0.5,C_TRP_OPAQUE);
       i := 0;
@@ -187,6 +193,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       glNormal3f(0,0,0);
       i := 0;
@@ -241,6 +249,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       i := 0;
       glBegin(_FaceType);
@@ -416,6 +426,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       glNormal3f(0,0,0);
       i := 0;
@@ -442,6 +454,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       i := 0;
       glBegin(_FaceType);
@@ -468,6 +482,8 @@ var
 begin
    if IsGeneratingList then
    begin
+      glActiveTexture(GL_TEXTURE0);
+      glDisable(GL_TEXTURE_2D);
       f := 0;
       i := 0;
       glBegin(_FaceType);
