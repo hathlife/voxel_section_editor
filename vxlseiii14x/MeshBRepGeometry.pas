@@ -57,6 +57,9 @@ type
          // Copies
          procedure Assign(const _Geometry : TMeshGeometryBase); override;
 
+         // Colours
+         procedure OverrideTransparency(_TransparencyLevel: single);
+
          // Miscellaneous
          procedure RebuildNormals(_Mesh : Pointer);
          procedure RemoveInvisibleFaces(_Mesh : Pointer);
@@ -289,6 +292,18 @@ begin
    end;
    inherited Assign(_Geometry);
 end;
+
+// Colours
+procedure TMeshBRepGeometry.OverrideTransparency(_TransparencyLevel : single);
+var
+   c : integer;
+begin
+   for c := Low(Colours) to High(Colours) do
+   begin
+      Colours[c].W := _TransparencyLevel;
+   end;
+end;
+
 
 // Miscellaneous
 procedure TMeshBRepGeometry.RebuildNormals(_Mesh : Pointer);

@@ -1925,10 +1925,19 @@ end;
 procedure TMesh.OverrideTransparency;
 var
    c : integer;
+   CurrentGeometry: PMeshGeometryBase;
 begin
    for c := Low(Colours) to High(Colours) do
    begin
       Colours[c].W := TransparencyLevel;
+   end;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).OverrideTransparency(TransparencyLevel);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
    end;
 end;
 
