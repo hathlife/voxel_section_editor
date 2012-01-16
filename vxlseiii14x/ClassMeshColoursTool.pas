@@ -2,7 +2,7 @@ unit ClassMeshColoursTool;
 
 interface
 
-uses BasicDataTypes, ClassNeighborDetector, Math;
+uses BasicDataTypes, ClassNeighborDetector, Math, ClassMeshGeometryList;
 
 type
    TMeshColoursTool = class
@@ -12,12 +12,15 @@ type
          procedure ApplyFaceColourSmooth(var _Colours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
          procedure ApplyVertexColourSmooth(var _Colours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _NumFaces,_VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
          procedure FilterAndFixColours(var _Colours: TAVector4f);
-         procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
+         procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc); overload;
+         procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _Geometry: CMeshGeometryList; const _Vertices: TAVector3f; _NumVertices: integer; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc); overload;
          procedure TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f; const _Faces: auint32; _VerticesPerFace: integer);
          procedure BackupColourVector(const _Source: TAVector4f; var _Destination: TAVector4f);
    end;
 
 implementation
+
+uses MeshGeometryBase, MeshBRepGeometry;
 
 function TMeshColoursTool.GetEquivalentVertex(_VertexID,_MaxVertexID: integer; const _VertexEquivalences: auint32): integer;
 begin
@@ -131,6 +134,110 @@ begin
       _VertColours[v].W := _VertColours[v1].W;
    end;
    SetLength(MidPoint,0);
+end;
+
+procedure TMeshColoursTool.TransformFaceToVertexColours(var _VertColours: TAVector4f; const _Geometry: CMeshGeometryList; const _Vertices: TAVector3f; _NumVertices: integer; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
+var
+   CurrentGeometry: PMeshGeometryBase;
+   HitCounter: array of single;
+   i,f,v,v1 : integer;
+   MaxVerticePerFace,VerticesPerFace: integer;
+   MidPoint : TAVector3f;
+   Distance: single;
+begin
+   // Initialize _VertsColours and HitCounter
+   SetLength(HitCounter,_NumVertices);
+   SetLength(_VertColours,_NumVertices);
+   for v := Low(_VertColours) to (_NumVertices - 1) do
+   begin
+      HitCounter[v] := 0;
+      _VertColours[v].X := 0;
+      _VertColours[v].Y := 0;
+      _VertColours[v].Z := 0;
+      _VertColours[v].W := 0;
+   end;
+   // Check each geometry support.
+   _Geometry.GoToFirstElement;
+   CurrentGeometry := _Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      VerticesPerFace := (CurrentGeometry^ as TMeshBRepGeometry).VerticesPerFace;
+      MaxVerticePerFace := VerticesPerFace - 1;
+      SetLength(MidPoint,(High((CurrentGeometry^ as TMeshBRepGeometry).Faces)+1) div VerticesPerFace);
+      // Let's check the mid point of every face.
+      f := 0;
+      i := 0;
+      while (f < (CurrentGeometry^ as TMeshBRepGeometry).NumFaces) do
+      begin
+         // find central position of the face.
+         MidPoint[i].X := 0;
+         MidPoint[i].Y := 0;
+         MidPoint[i].Z := 0;
+         for v := 0 to MaxVerticePerFace do
+         begin
+            v1 := (CurrentGeometry^ as TMeshBRepGeometry).Faces[f + v];
+            MidPoint[i].X := MidPoint[i].X + _Vertices[v1].X;
+            MidPoint[i].Y := MidPoint[i].Y + _Vertices[v1].Y;
+            MidPoint[i].Z := MidPoint[i].Z + _Vertices[v1].Z;
+         end;
+         MidPoint[i].X := MidPoint[i].X / VerticesPerFace;
+         MidPoint[i].Y := MidPoint[i].Y / VerticesPerFace;
+         MidPoint[i].Z := MidPoint[i].Z / VerticesPerFace;
+         inc(i);
+         inc(f,VerticesPerFace);
+      end;
+      // Let's add the face colours into the vertexes.
+      f := 0;
+      i := 0;
+      while (i < (CurrentGeometry^ as TMeshBRepGeometry).NumFaces) do
+      begin
+         for v := 0 to MaxVerticePerFace do
+         begin
+            v1 := (CurrentGeometry^ as TMeshBRepGeometry).Faces[f + v];
+            Distance := sqrt(Power(MidPoint[i].X - _Vertices[v1].X,2) + Power(MidPoint[i].Y - _Vertices[v1].Y,2) + Power(MidPoint[i].Z - _Vertices[v1].Z,2));
+            Distance := _DistanceFunction(Distance);
+            _VertColours[v1].X := _VertColours[v1].X + ((CurrentGeometry^ as TMeshBRepGeometry).Colours[i].X * Distance);
+            _VertColours[v1].Y := _VertColours[v1].Y + ((CurrentGeometry^ as TMeshBRepGeometry).Colours[i].Y * Distance);
+            _VertColours[v1].Z := _VertColours[v1].Z + ((CurrentGeometry^ as TMeshBRepGeometry).Colours[i].Z * Distance);
+            _VertColours[v1].W := _VertColours[v1].W + ((CurrentGeometry^ as TMeshBRepGeometry).Colours[i].W * Distance);
+            HitCounter[v1] := HitCounter[v1] + Distance;
+         end;
+         inc(i);
+         inc(f,VerticesPerFace);
+      end;
+
+      // Move to next geometry
+      _Geometry.GoToNextElement;
+      CurrentGeometry := _Geometry.Current;
+   end;
+
+   // Now, let's find the final colour of each vertex.
+   for v := Low(_VertColours) to (_NumVertices - 1) do
+   begin
+      if HitCounter[v] > 0 then
+      begin
+         _VertColours[v].X := (_VertColours[v].X / HitCounter[v]);
+         _VertColours[v].Y := (_VertColours[v].Y / HitCounter[v]);
+         _VertColours[v].Z := (_VertColours[v].Z / HitCounter[v]);
+         _VertColours[v].W := (_VertColours[v].W / HitCounter[v]);
+      end;
+   end;
+   // Ensure the correct colour value for _VertexEquivalences.
+   if (_VertexEquivalences <> nil) then
+   begin
+      v := _NumVertices;
+      while v <= High(_Vertices) do
+      begin
+         v1 := GetEquivalentVertex(v,_NumVertices,_VertexEquivalences);
+         _VertColours[v].X := _VertColours[v1].X;
+         _VertColours[v].Y := _VertColours[v1].Y;
+         _VertColours[v].Z := _VertColours[v1].Z;
+         _VertColours[v].W := _VertColours[v1].W;
+      end;
+   end;
+   // Free memory.
+   SetLength(MidPoint,0);
+   SetLength(HitCounter,0);
 end;
 
 procedure TMeshColoursTool.TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f; const _Faces: auint32; _VerticesPerFace: integer);

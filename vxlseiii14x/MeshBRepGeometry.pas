@@ -4,7 +4,7 @@ interface
 
 uses BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
    RenderingMachine, ShaderBank, MeshPluginBase, NeighborhoodDataPlugin, Math,
-   ClassMeshNormalsTool, SysUtils, ClassIntegerSet;
+   ClassMeshNormalsTool, SysUtils, ClassIntegerSet, ClassMeshColoursTool;
 
 type
    PMeshBRepGeometry = ^TMeshBRepGeometry;
@@ -59,6 +59,7 @@ type
 
          // Colours
          procedure OverrideTransparency(_TransparencyLevel: single);
+         procedure ConvertVertexToFaceColours(const _VertexColours: TAVector4f);
 
          // Miscellaneous
          procedure RebuildNormals(_Mesh : Pointer);
@@ -301,6 +302,28 @@ begin
    for c := Low(Colours) to High(Colours) do
    begin
       Colours[c].W := _TransparencyLevel;
+   end;
+end;
+
+procedure TMeshBRepGeometry.ConvertVertexToFaceColours(const _VertexColours: TAVector4f);
+var
+   Tool: TMeshColoursTool;
+   OriginalColours : TAVector4f;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   if (ColoursType = C_COLOURS_PER_VERTEX) then
+   begin
+      Tool := TMeshColoursTool.Create;
+      Tool.TransformVertexToFaceColours(_VertexColours,Colours,Faces,VerticesPerFace);
+      ColourGenStructure := C_COLOURS_PER_FACE;
+      SetColoursType(C_COLOURS_PER_FACE);
+      ForceRefresh;
+      Tool.Free;
    end;
 end;
 

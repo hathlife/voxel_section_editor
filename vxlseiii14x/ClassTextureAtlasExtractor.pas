@@ -380,15 +380,15 @@ var
    FaceNeighbors: TNeighborDetector;
 begin
    // Get the neighbours of each face.
-//   if _NeighborhoodPlugin <> nil then
-//   begin
-//      FaceNeighbors := TNeighborhoodDataPlugin(_NeighborhoodPlugin^).FaceFaceNeighbors;
-//   end
-//   else
-//   begin
+   if _NeighborhoodPlugin <> nil then
+   begin
+      FaceNeighbors := TNeighborhoodDataPlugin(_NeighborhoodPlugin^).FaceFaceNeighbors;
+   end
+   else
+   begin
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
-//   end;
+   end;
    // Setup FaceSeed, FaceOrder and FacePriority.
    SetLength(FaceSeed,High(_FaceNormals)+1);
    SetLength(FaceOrder,High(FaceSeed)+1);
