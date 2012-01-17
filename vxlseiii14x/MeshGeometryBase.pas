@@ -7,9 +7,8 @@ uses BasicDataTypes, ShaderBank;
 type
    PMeshGeometryBase = ^TMeshGeometryBase;
    TMeshGeometryBase = class
-      private
-         FNumFaces: longword;
       protected
+         FNumFaces: longword;
          // Gets
          function GetNumFaces: longword;
          // Sets

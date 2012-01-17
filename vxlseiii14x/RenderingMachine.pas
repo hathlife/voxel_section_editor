@@ -279,7 +279,7 @@ begin
    begin
       f := 0;
       glNormal3f(0,0,0);
-      glColor4f(1,1,1,1);
+      glColor4f(1,1,1,C_TRP_OPAQUE);
       i := 0;
       for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
       begin
@@ -328,7 +328,7 @@ begin
    begin
       f := 0;
       i := 0;
-      glColor4f(1,1,1,1);
+      glColor4f(1,1,1,C_TRP_OPAQUE);
       for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then
@@ -379,7 +379,7 @@ begin
    begin
       f := 0;
       i := 0;
-      glColor4f(1,1,1,1);
+      glColor4f(1,1,1,C_TRP_OPAQUE);
       for tex := Low(_Materials[_CurrentPass].Texture) to High(_Materials[_CurrentPass].Texture) do
       begin
          if _Materials[_CurrentPass].Texture[tex] <> nil then

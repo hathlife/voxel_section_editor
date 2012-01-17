@@ -54,7 +54,7 @@ type
          procedure SetType(_Type: byte);
          // Executes
          procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer); overload;
-         procedure BuildUpData(const _Geometry: CMeshGeometryList; _NumVertexes: integer); overload;
+         procedure BuildUpData(var _Geometry: CMeshGeometryList; _NumVertexes: integer); overload;
          // Requests
          function GetNeighborFromID(_ID: integer): integer;
          function GetNextNeighbor: integer;
@@ -185,7 +185,7 @@ begin
    IsValid := true;
 end;
 
-procedure TNeighborDetector.BuildUpData(const _Geometry: CMeshGeometryList; _NumVertexes: integer);
+procedure TNeighborDetector.BuildUpData(var _Geometry: CMeshGeometryList; _NumVertexes: integer);
 begin
    Case(NeighborType) of
       C_NEIGHBTYPE_VERTEX_VERTEX:     // vertex neighbors of vertexes.

@@ -147,7 +147,6 @@ var
 begin
    // Initialize _VertsColours and HitCounter
    SetLength(HitCounter,_NumVertices);
-   SetLength(_VertColours,_NumVertices);
    for v := Low(_VertColours) to (_NumVertices - 1) do
    begin
       HitCounter[v] := 0;

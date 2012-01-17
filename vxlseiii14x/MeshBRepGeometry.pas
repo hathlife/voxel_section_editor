@@ -19,7 +19,7 @@ type
          procedure SetNumFaces(_Value: longword); override;
       public
          FaceType : GLINT; // GL_QUADS for quads, and GL_TRIANGLES for triangles
-         VerticesPerFace : byte; // for optimization purposes only.
+         VerticesPerFace : byte;
          Normals : TAVector3f;
          Colours : TAVector4f;
          Faces : auint32;
@@ -65,6 +65,7 @@ type
          procedure RebuildNormals(_Mesh : Pointer);
          procedure RemoveInvisibleFaces(_Mesh : Pointer);
          procedure ConvertQuadsToTris(_Mesh : Pointer);
+         procedure UpdateNumFaces;
    end;
 
 implementation
@@ -412,7 +413,7 @@ var
    OldFaces: auint32;
    OldNormals: TAVector3f;
    OldColours: TAVector4f;
-   OldNumFaces : integer;
+   OldNumFaces,OldFaceSize : integer;
    i,j : integer;
    NeighborhoodPlugin: PMeshPluginBase;
    MyMesh: PMesh;
@@ -424,13 +425,13 @@ begin
       VerticesPerFace := 3;
       FaceType := GL_TRIANGLES;
       OldNumFaces := NumFaces;
-      NumFaces := NumFaces * 2;
+      OldFaceSize := High(Faces)+1;
       // Make a backup of the faces first.
-      SetLength(OldFaces,High(Faces)+1);
-      for i := Low(Faces) to High(Faces) do
+      SetLength(OldFaces,OldFaceSize);
+      for i := Low(OldFaces) to High(OldFaces) do
          OldFaces[i] := Faces[i];
       // Now we transform each quad in two tris.
-      SetLength(Faces,Round((High(Faces)+1)*1.5));
+      NumFaces := NumFaces * 2;
       i := 0;
       j := 0;
       while i <= High(Faces) do
@@ -455,8 +456,8 @@ begin
       if (ColoursType = C_COLOURS_PER_FACE) then
       begin
          // Make a backup of the colours first.
-         SetLength(OldColours,High(Colours)+1);
-         for i := Low(Colours) to High(Colours) do
+         SetLength(OldColours,OldNumFaces);
+         for i := Low(OldColours) to High(OldColours) do
          begin
             OldColours[i].X := Colours[i].X;
             OldColours[i].Y := Colours[i].Y;
@@ -464,7 +465,6 @@ begin
             OldColours[i].W := Colours[i].W;
          end;
          // Duplicate the colours.
-         SetLength(Colours,NumFaces);
          i := 0;
          j := 0;
          while j < OldNumFaces do
@@ -487,16 +487,15 @@ begin
       if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
       begin
          // Make a backup of the normals first.
-         SetLength(OldNormals,High(Normals)+1);
-         for i := Low(Normals) to High(Normals) do
+         SetLength(OldNormals,OldNumFaces);
+         for i := Low(OldNormals) to High(OldNormals) do
          begin
             OldNormals[i].X := Normals[i].X;
             OldNormals[i].Y := Normals[i].Y;
             OldNormals[i].Z := Normals[i].Z;
          end;
          // Duplicate the face normals.
-         SetLength(Normals,NumFaces);
-         for i := 0 to OldNumFaces - 1 do
+         for i := Low(OldNormals) to High(OldNormals) do
          begin
             Normals[i*2].X := OldNormals[i].X;
             Normals[i*2].Y := OldNormals[i].Y;
@@ -520,5 +519,10 @@ begin
    end;
 end;
 
+// Workaround for Mesh Optimization.
+procedure TMeshBRepGeometry.UpdateNumFaces;
+begin
+   FNumFaces := High(Faces)+1;
+end;
 
 end.

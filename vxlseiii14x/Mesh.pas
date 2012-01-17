@@ -294,6 +294,7 @@ begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
          ConvertQuadsToTris;
+         RebuildFaceNormals;
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
       end;
@@ -373,6 +374,7 @@ begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
          ConvertQuadsToTris;
+         RebuildFaceNormals;
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
       end;
@@ -888,8 +890,8 @@ begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
          Geometry.GoToFirstElement;
          MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
-         MyNumFaces := NumFaces;
-         MyFaceColours := Colours;
+         MyNumFaces := (Geometry.Current^ as TMeshBRepGeometry).NumFaces;
+         MyFaceColours := (Geometry.Current^ as TMeshBRepGeometry).Colours;
       end;
       VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
       NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
@@ -901,8 +903,8 @@ begin
       VertexEquivalences := nil;
       NumVertices := High(Vertices)+1;
       MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
-      MyNumFaces := NumFaces;
-      MyFaceColours := Colours;
+      MyNumFaces := (Geometry.Current^ as TMeshBRepGeometry).NumFaces;
+      MyFaceColours := (Geometry.Current^ as TMeshBRepGeometry).Colours;
    end;
    if (ColoursType = C_COLOURS_PER_FACE) then
    begin
@@ -990,16 +992,20 @@ begin
          NeighborDetector.Free;
       end;
       }
+      NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
       if NeighborhoodPlugin <> nil then
       begin
          VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+         NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
       end
       else
       begin
          VertexEquivalences := nil;
+         NumVertices := High(Vertices)+1;
       end;
       Tool := TMeshColoursTool.Create;
-      Tool.TransformFaceToVertexColours(Colours,Geometry,Vertices,High(Vertices)+1,VertexEquivalences,_DistanceFunction);
+      SetLength(Colours,High(Vertices)+1);
+      Tool.TransformFaceToVertexColours(Colours,Geometry,Vertices,NumVertices,VertexEquivalences,_DistanceFunction);
       ColourGenStructure := C_COLOURS_PER_VERTEX;
       SetColoursType(C_COLOURS_PER_VERTEX);
       ForceRefresh;
@@ -1191,6 +1197,7 @@ begin
       else
       begin
          NeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+         Geometry.GoToFirstElement;
          NeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
          MyNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
          VertexEquivalences := nil;
@@ -1262,6 +1269,7 @@ begin
       VertexEquivalences := nil;
       NumVertices := High(Vertices)+1;
    end;
+   SetLength(Normals,High(Vertices)+1);
    Tool.TransformFaceToVertexNormals(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
    // Free memory
    Tool.Free;
@@ -1339,6 +1347,7 @@ begin
       begin
          Neighbors := TNeighborDetector.Create;
          Neighbors.BuildUpData((Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,High(Vertices)+1);
+         Geometry.GoToFirstElement;
          NumVertices := High(Vertices)+1;
          VertexEquivalences := nil;
       end;
@@ -1427,10 +1436,11 @@ procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsS
 var
    NeighborhoodPlugin: PMeshPluginBase;
 begin
-   RebuildFaceNormals;
+   //RebuildFaceNormals;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);              if NeighborhoodPlugin <> nil then
+   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   if NeighborhoodPlugin <> nil then
    begin
       TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
    end;
@@ -2008,7 +2018,15 @@ begin
    // Check ClassMeshOptimizationTool.pas. Note: _Angle is actually the value of the cosine
    Geometry.GoToFirstElement;
    OptimizationTool := TMeshOptimizationTool.Create(_IgnoreColours,_Angle);
-   OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
+   if ColoursType >= C_COLOURS_PER_VERTEX then
+   begin
+      OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
+   end
+   else
+   begin
+      OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,(Geometry.Current^ as TMeshBRepGeometry).Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
+   end;
+   (Geometry.Current^ as TMeshBRepGeometry).UpdateNumFaces;
    OptimizationTool.Free;
 
    ForceRefresh;

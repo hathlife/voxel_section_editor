@@ -23,7 +23,7 @@ type
          InitialVertexCount: integer;
          // Constructors and Destructors
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer); overload;
-         constructor Create(const _Geometry: CMeshGeometryList; _NumVertices: integer); overload;
+         constructor Create(var _Geometry: CMeshGeometryList; _NumVertices: integer); overload;
          destructor Destroy; override;
          // Updates
          procedure UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
@@ -73,26 +73,29 @@ implementation
       end;
    end;
 
-   constructor TNeighborhoodDataPlugin.Create(const _Geometry: CMeshGeometryList; _NumVertices: integer);
+   constructor TNeighborhoodDataPlugin.Create(var _Geometry: CMeshGeometryList; _NumVertices: integer);
    var
       i : integer;
-      Faces: auint32;
+//      Faces: auint32;
       VerticesPerFace: integer;
    begin
       FPluginType := C_MPL_NEIGHBOOR;
       AllowRender := false;
       AllowUpdate := false;
-      Faces := (_Geometry.Current^ as TMeshBRepGeometry).Faces;
+//      Faces := (_Geometry.Current^ as TMeshBRepGeometry).Faces;
+      _Geometry.GoToFirstElement;
       VerticesPerFace := (_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
       VertexNeighbors := TNeighborDetector.Create;
       VertexNeighbors.BuildUpData(_Geometry,_NumVertices);
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
       FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
-      FaceNeighbors.BuildUpData(Faces,VerticesPerFace,_NumVertices);
+      _Geometry.GoToFirstElement;
+      FaceNeighbors.BuildUpData(_Geometry,_NumVertices);
       FaceFaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
       FaceFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
       FaceFaceNeighbors.VertexFaceNeighbors := FaceNeighbors;
-      FaceFaceNeighbors.BuildUpData(Faces,VerticesPerFace,_NumVertices);
+      _Geometry.GoToFirstElement;
+      FaceFaceNeighbors.BuildUpData(_Geometry,_NumVertices);
       QuadFaceNeighbors := TNeighborDetector.Create;
       UseQuadFaces := false;
       SetLength(QuadFaces,0);
@@ -201,7 +204,7 @@ implementation
 
    procedure TNeighborhoodDataPlugin.DeactivateQuadFaces;
    begin
-//      UseQuadFaces := false;
+      UseQuadFaces := false;
 //      QuadFaceNeighbors.Free;
 //      QuadFaceNeighbors := TNeighborDetector.Create;
 //      SetLength(QuadFaces,0);
