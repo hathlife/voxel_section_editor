@@ -4,7 +4,8 @@ interface
 
 uses BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
    RenderingMachine, ShaderBank, MeshPluginBase, NeighborhoodDataPlugin, Math,
-   ClassMeshNormalsTool, SysUtils, ClassIntegerSet, ClassMeshColoursTool;
+   ClassMeshNormalsTool, SysUtils, ClassIntegerSet, ClassMeshColoursTool,
+   ClassQuadList, ClassTriangleList;
 
 type
    PMeshBRepGeometry = ^TMeshBRepGeometry;
@@ -57,6 +58,10 @@ type
          // Copies
          procedure Assign(const _Geometry : TMeshGeometryBase); override;
 
+         // Adds
+         procedure AddTrianglesFromList(var _TriangleList: CTriangleList; const _Vertices: TAVector3f);
+         procedure AddQuadsFromList(var _QuadList: CQuadList; const _Vertices: TAVector3f);
+
          // Colours
          procedure OverrideTransparency(_TransparencyLevel: single);
          procedure ConvertVertexToFaceColours(const _VertexColours: TAVector4f);
@@ -64,13 +69,14 @@ type
          // Miscellaneous
          procedure RebuildNormals(_Mesh : Pointer);
          procedure RemoveInvisibleFaces(_Mesh : Pointer);
-         procedure ConvertQuadsToTris(_Mesh : Pointer);
+         procedure ConvertQuadsToTris(_Mesh : Pointer); overload;
+         procedure ConvertQuadsToTris(); overload;
          procedure UpdateNumFaces;
    end;
 
 implementation
 
-uses Mesh;
+uses Mesh, Windows;
 
 // Constructors and Destructors.
 constructor TMeshBRepGeometry.Create;
@@ -328,6 +334,75 @@ begin
    end;
 end;
 
+// Adds
+procedure TMeshBRepGeometry.AddTrianglesFromList(var _TriangleList: CTriangleList; const _Vertices: TAVector3f);
+var
+   x,y: integer;
+   Tool : TMeshNormalsTool;
+begin
+   // Build new quads (faces, normals, colours).
+   if VerticesPerFace = 3 then
+   begin
+      if _TriangleList.Count > 0 then
+      begin
+         Tool := TMeshNormalsTool.Create;
+         x := NumFaces * 3;
+         y := NumFaces;
+         NumFaces := NumFaces + _TriangleList.Count;
+         _TriangleList.GoToFirstElement;
+         while x < High(Faces) do
+         begin
+            Faces[x] := _TriangleList.V1;
+            Faces[x+1] := _TriangleList.V2;
+            Faces[x+2] := _TriangleList.V3;
+            Colours[y].X := GetRValue(_TriangleList.Colour) / 255;
+            Colours[y].Y := GetGValue(_TriangleList.Colour) / 255;
+            Colours[y].Z := GetBValue(_TriangleList.Colour) / 255;
+            Colours[y].W := 0;
+            Normals[y] := Tool.GetNormalsValue(_Vertices[_TriangleList.V1],_Vertices[_TriangleList.V2],_Vertices[_TriangleList.V3]);
+            _TriangleList.GoToNextElement;
+            inc(y);
+            inc(x,3);
+         end;
+         Tool.Free;
+      end;
+   end;
+end;
+
+procedure TMeshBRepGeometry.AddQuadsFromList(var _QuadList: CQuadList; const _Vertices: TAVector3f);
+var
+   x,y: integer;
+   Tool : TMeshNormalsTool;
+begin
+   // Build new quads (faces, normals, colours).
+   if VerticesPerFace = 4 then
+   begin
+      if _QuadList.Count > 0 then
+      begin
+         Tool := TMeshNormalsTool.Create;
+         x := NumFaces * 4;
+         y := NumFaces;
+         NumFaces := NumFaces + _QuadList.Count;
+         _QuadList.GoToFirstElement;
+         while x < High(Faces) do
+         begin
+            Faces[x] := _QuadList.V1;
+            Faces[x+1] := _QuadList.V2;
+            Faces[x+2] := _QuadList.V3;
+            Faces[x+3] := _QuadList.V4;
+            Colours[y].X := GetRValue(_QuadList.Colour) / 255;
+            Colours[y].Y := GetGValue(_QuadList.Colour) / 255;
+            Colours[y].Z := GetBValue(_QuadList.Colour) / 255;
+            Colours[y].W := 0;
+            Normals[y] := Tool.GetQuadNormalValue(_Vertices[_QuadList.V1],_Vertices[_QuadList.V2],_Vertices[_QuadList.V3],_Vertices[_QuadList.V4]);
+            _QuadList.GoToNextElement;
+            inc(y);
+            inc(x,4);
+         end;
+         Tool.Free;
+      end;
+   end;
+end;
 
 // Miscellaneous
 procedure TMeshBRepGeometry.RebuildNormals(_Mesh : Pointer);
@@ -516,6 +591,104 @@ begin
          end;
       end;
       ForceRefresh;
+   end;
+end;
+
+procedure TMeshBRepGeometry.ConvertQuadsToTris();
+var
+   OldFaces: auint32;
+   OldNormals: TAVector3f;
+   OldColours: TAVector4f;
+   OldNumFaces,OldFaceSize : integer;
+   i,j : integer;
+begin
+   if VerticesPerFace <> 3 then
+   begin
+      // Start with face conversion.
+      VerticesPerFace := 3;
+      FaceType := GL_TRIANGLES;
+      OldNumFaces := NumFaces;
+      OldFaceSize := High(Faces)+1;
+      // Make a backup of the faces first.
+      SetLength(OldFaces,OldFaceSize);
+      for i := Low(OldFaces) to High(OldFaces) do
+         OldFaces[i] := Faces[i];
+      // Now we transform each quad in two tris.
+      NumFaces := NumFaces * 2;
+      i := 0;
+      j := 0;
+      while i <= High(Faces) do
+      begin
+         Faces[i] := OldFaces[j];
+         inc(i);
+         Faces[i] := OldFaces[j+1];
+         inc(i);
+         Faces[i] := OldFaces[j+2];
+         inc(i);
+         Faces[i] := OldFaces[j+2];
+         inc(i);
+         Faces[i] := OldFaces[j+3];
+         inc(i);
+         Faces[i] := OldFaces[j];
+         inc(i);
+         inc(j,4);
+      end;
+      SetLength(OldFaces,0);
+
+      // Go with Colour conversion.
+      if (ColoursType = C_COLOURS_PER_FACE) then
+      begin
+         // Make a backup of the colours first.
+         SetLength(OldColours,OldNumFaces);
+         for i := Low(OldColours) to High(OldColours) do
+         begin
+            OldColours[i].X := Colours[i].X;
+            OldColours[i].Y := Colours[i].Y;
+            OldColours[i].Z := Colours[i].Z;
+            OldColours[i].W := Colours[i].W;
+         end;
+         // Duplicate the colours.
+         i := 0;
+         j := 0;
+         while j < OldNumFaces do
+         begin
+            Colours[i].X := OldColours[j].X;
+            Colours[i].Y := OldColours[j].Y;
+            Colours[i].Z := OldColours[j].Z;
+            Colours[i].W := OldColours[j].W;
+            inc(i);
+            Colours[i].X := OldColours[j].X;
+            Colours[i].Y := OldColours[j].Y;
+            Colours[i].Z := OldColours[j].Z;
+            Colours[i].W := OldColours[j].W;
+            inc(i);
+            inc(j);
+         end;
+         SetLength(OldColours,0);
+      end;
+      // Go with Normals conversion.
+      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+      begin
+         // Make a backup of the normals first.
+         SetLength(OldNormals,OldNumFaces);
+         for i := Low(OldNormals) to High(OldNormals) do
+         begin
+            OldNormals[i].X := Normals[i].X;
+            OldNormals[i].Y := Normals[i].Y;
+            OldNormals[i].Z := Normals[i].Z;
+         end;
+         // Duplicate the face normals.
+         for i := Low(OldNormals) to High(OldNormals) do
+         begin
+            Normals[i*2].X := OldNormals[i].X;
+            Normals[i*2].Y := OldNormals[i].Y;
+            Normals[i*2].Z := OldNormals[i].Z;
+            Normals[(i*2)+1].X := OldNormals[i].X;
+            Normals[(i*2)+1].Y := OldNormals[i].Y;
+            Normals[(i*2)+1].Z := OldNormals[i].Z;
+         end;
+         SetLength(OldNormals,0);
+      end;
    end;
 end;
 

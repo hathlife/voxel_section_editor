@@ -22,7 +22,7 @@ type
          procedure LoadState(_State: PVertexItem);
          function SaveState:PVertexItem;
          // Add
-         procedure Add (_ID : integer; _x,_y,_z: single);
+         function Add (_ID : integer; _x,_y,_z: single): integer;
          procedure Delete;
          // Delete
          procedure Clear;
@@ -71,27 +71,56 @@ end;
 
 
 // Add
-procedure CVertexList.Add (_ID : integer; _x,_y,_z: single);
+function CVertexList.Add (_ID : integer; _x,_y,_z: single):integer;
 var
-   NewPosition : PVertexItem;
+   Position,NewPosition : PVertexItem;
+   Found: boolean;
 begin
-   New(NewPosition);
-   NewPosition^.ID := _ID;
-   NewPosition^.x := _x;
-   NewPosition^.y := _y;
-   NewPosition^.z := _z;
-   NewPosition^.Next := nil;
-   inc(FCount);
-   if Start <> nil then
+   // Ensure that no vertex will repeat.
+   Position := Start;
+   Found := false;
+   while (Position <> nil) and (not Found) do
    begin
-      Last^.Next := NewPosition;
-   end
-   else
-   begin
-      Start := NewPosition;
-      Active := Start;
+      if Position^.x <> _x then
+      begin
+         Position := Position^.Next;
+      end
+      else if Position^.y <> _y then
+      begin
+         Position := Position^.Next;
+      end
+      else if Position^.z <> _z then
+      begin
+         Position := Position^.Next;
+      end
+      else
+      begin
+         Found := true;
+         Result := Position^.ID;
+      end;
    end;
-   Last := NewPosition;
+   // Add vertex if it is not in the list.
+   if not Found then
+   begin
+      New(NewPosition);
+      NewPosition^.ID := _ID;
+      NewPosition^.x := _x;
+      NewPosition^.y := _y;
+      NewPosition^.z := _z;
+      NewPosition^.Next := nil;
+      inc(FCount);
+      if Start <> nil then
+      begin
+         Last^.Next := NewPosition;
+      end
+      else
+      begin
+         Start := NewPosition;
+         Active := Start;
+      end;
+      Last := NewPosition;
+      Result := _ID;
+   end;
 end;
 
 // Delete

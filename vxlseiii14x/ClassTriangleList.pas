@@ -10,6 +10,10 @@ type
          Start,Last,Active : PTriangleItem;
          FCount: integer;
          procedure Reset;
+         function GetV1: integer;
+         function GetV2: integer;
+         function GetV3: integer;
+         function GetColour: cardinal;
       public
          // Constructors and Destructors
          constructor Create;
@@ -27,6 +31,10 @@ type
          procedure GoToNextElement;
          // Properties
          property Count: integer read FCount;
+         property V1: integer read GetV1;
+         property V2: integer read GetV2;
+         property V3: integer read GetV3;
+         property Colour: cardinal read GetColour;
    end;
 
 implementation
@@ -61,6 +69,54 @@ begin
    Result := Active;
 end;
 
+// Gets
+function CTriangleList.GetV1: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v1;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CTriangleList.GetV2: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v2;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CTriangleList.GetV3: integer;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.v3;
+   end
+   else
+   begin
+      Result := -1;
+   end;
+end;
+
+function CTriangleList.GetColour: cardinal;
+begin
+   if Active <> nil then
+   begin
+      Result := Active^.color;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
 
 // Add
 procedure CTriangleList.Add (_v1,_v2,_v3: integer; _Color: Cardinal);

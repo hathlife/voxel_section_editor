@@ -163,7 +163,8 @@ uses
   ClassQuadList in 'ClassQuadList.pas',
   MeshGeometryBase in 'MeshGeometryBase.pas',
   MeshBRepGeometry in 'MeshBRepGeometry.pas',
-  ClassMeshGeometryList in 'ClassMeshGeometryList.pas';
+  ClassMeshGeometryList in 'ClassMeshGeometryList.pas',
+  ClassInterpolationTrianglesSupporter in 'ClassInterpolationTrianglesSupporter.pas';
 
 {$R *.res}
 
