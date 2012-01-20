@@ -30,6 +30,7 @@ type
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
+         procedure LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure ModelizeFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Sets
@@ -274,6 +275,10 @@ begin
       begin
          LoadTrisFromVisibleVoxels(_Voxel,_Palette);
       end;
+      C_QUALITY_VISIBLE_MANIFOLD:
+      begin
+         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
+      end;
       C_QUALITY_LANCZOS_QUADS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
@@ -353,6 +358,10 @@ begin
       C_QUALITY_VISIBLE_TRIS:
       begin
          LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+      end;
+      C_QUALITY_VISIBLE_MANIFOLD:
+      begin
+         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
       end;
       C_QUALITY_LANCZOS_QUADS:
       begin
@@ -445,6 +454,34 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('LoadFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TMesh.LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
+var
+   MeshGen: TVoxelMeshGenerator;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   SetNormalsType(C_NORMALS_PER_FACE);
+   Geometry.Add(C_GEO_BREP4);
+
+   // This is the complex part of the thing. We'll map all vertices and faces
+   // and make a model out of it.
+   MeshGen := TVoxelMeshGenerator.Create;
+   MeshGen.LoadManifoldsFromVisibleVoxels(_Voxel,_Palette,Vertices,Geometry,TexCoords,NumVoxels);
+   NumFaces := Geometry.Current^.NumFaces;
+   MeshGen.Free;
+
+   CommonVoxelLoadingActions(_Voxel);
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('LoadManifoldsFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;

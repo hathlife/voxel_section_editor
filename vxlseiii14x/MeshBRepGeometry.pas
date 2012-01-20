@@ -26,7 +26,6 @@ type
          Faces : auint32;
          IsVisible : boolean;
          // Rendering optimization
-         RenderingProcedure : TRenderProc;
          Renderer: TRenderingMachine;
 
          // Constructors and Destructors.

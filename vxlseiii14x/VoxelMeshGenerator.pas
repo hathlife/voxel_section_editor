@@ -12,8 +12,9 @@ type
    TVoxelMeshGenerator = class
       private
          procedure BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
-         procedure BuildModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
          procedure BuildModelFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword);
+         procedure BuildModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
+         procedure BuildModelFromVoxelMapWithInterpolationZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
 
          procedure SetupVertexMap(var _VertexMap: T3DVolumeGreyIntData; _XSize,_YSize,_ZSize: integer);
          procedure BuildVertexMap(var _VertexMap: T3DVolumeGreyIntData; const _Voxel : TVoxelSection; var _NumVertices, _NumVoxels: longword);
@@ -21,16 +22,17 @@ type
          procedure SetupFaceMap(var _FaceMap: T4DIntGrid; const _XSize, _YSize, _ZSize: integer);
          procedure BuildFaceMap(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword); overload;
          procedure BuildFaceMap(var _FaceMap: T4DIntGrid; const _Voxel : TVoxelSection; const _Vertices: TAVector3f; var _NumFaces: longword); overload;
+         procedure BuildFaceMapI(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
-         procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword);
+         procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
          procedure LoadFromVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
          procedure LoadTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
-         procedure LoadQuadsWithTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: CMeshGeometryList; var _TexCoords: TAVector2f; var _NumVoxels: longword);
+         procedure LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: CMeshGeometryList; var _TexCoords: TAVector2f; var _NumVoxels: longword);
     end;
 
 implementation
@@ -263,6 +265,122 @@ begin
    end;
 end;
 
+procedure TVoxelMeshGenerator.BuildFaceMapI(var _FaceMap: T4DIntGrid; const _VoxelMap: TVoxelMap; const _Vertices: TAVector3f; var _NumFaces: longword);
+var
+   x,y,z,i: integer;
+   value : single;
+   v1, v2, interpolation : boolean;
+begin
+      // Now we give the faces an ID and count them.
+   _NumFaces := 0;
+   for i := Low(_Vertices) to High(_Vertices) do
+   begin
+      x := Round(_Vertices[i].X);
+      y := Round(_Vertices[i].Y);
+      z := Round(_Vertices[i].Z);
+
+      // Checking for the side face.
+      // Is there any chance of the user look at this face?
+      // To know it, we need to check if the pixels (x and x-1) that
+      // this face splits are actually used.
+      v1 := false;
+      interpolation := false;
+      value := _VoxelMap.MapSafe[x+1,y+1,z+1];
+      if value >= 510 then
+      begin
+         v1 := true;
+      end
+      else if value = C_OUTSIDE_VOLUME then
+      begin
+         v1 := false;
+      end
+      else
+      begin
+         interpolation := true;
+      end;
+
+      if not interpolation then
+      begin
+         v2 := false;
+         value := _VoxelMap.MapSafe[x,y+1,z+1];
+         if value >= 510 then
+         begin
+            v2 := true;
+         end
+         else if value = C_OUTSIDE_VOLUME then
+         begin
+            v2 := false;
+         end
+         else
+         begin
+            interpolation := true;
+         end;
+         // We'll only make a face if exactly one of them is used.
+         if (not interpolation) and (v1 xor v2) then
+         begin
+            // Then, we add the Face
+            _FaceMap[x,y,z,C_VOXEL_FACE_SIDE] := _NumFaces;
+            inc(_NumFaces);
+         end;
+
+         // Checking for the height face.
+         // Is there any chance of the user look at this face?
+         // To know it, we need to check if the pixels (y and y-1) that
+         // this face splits are actually used.
+         v2 := false;
+         interpolation := false;
+         value := _VoxelMap.MapSafe[x+1,y,z+1];
+         if value >= 510 then
+         begin
+            v2 := true;
+         end
+         else if value = C_OUTSIDE_VOLUME then
+         begin
+            v2 := false;
+         end
+         else
+         begin
+            interpolation := true;
+         end;
+         // We'll only make a face if exactly one of them is used.
+         if (not interpolation) and (v1 xor v2) then
+         begin
+            // Then, we add the Face
+            _FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] := _NumFaces;
+            inc(_NumFaces);
+         end;
+
+         // Checking for the depth face.
+         // Is there any chance of the user look at this face?
+         // To know it, we need to check if the pixels (z and z-1) that
+         // this face splits are actually used.
+         v2 := false;
+         interpolation := false;
+         value := _VoxelMap.MapSafe[x+1,y+1,z];
+         if value >= 510 then
+         begin
+            v2 := true;
+         end
+         else if value = C_OUTSIDE_VOLUME then
+         begin
+            v2 := false;
+         end
+         else
+         begin
+            interpolation := true;
+         end;
+         // We'll only make a face if exactly one of them is used.
+         if (not interpolation) and (v1 xor v2) then
+         begin
+            // Then, we add the Face
+            _FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] := _NumFaces;
+            inc(_NumFaces);
+         end;
+      end;
+   end;
+end;
+
+
 procedure TVoxelMeshGenerator.FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer);
 var
    x,y,z,i,f: integer;
@@ -394,7 +512,7 @@ var
 begin
    for i := Low(_Vertices) to High(_Vertices) do
    begin
-      _VertexTransformation[i] := -1;
+      _VertexTransformation[i] := C_VMG_NO_VERTEX;
    end;
 
    for i := Low(_Vertices) to High(_Vertices) do
@@ -747,7 +865,7 @@ end;
 // Here we build triangles or quads at interpolation zones.
 // Under Construction
 
-procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword);
+procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
 var
    x,y,z,OldNumVertices: integer;
    V : TVoxelUnpacked;
@@ -964,11 +1082,35 @@ begin
          _Vertices[x].Z := VertexList.Z;
          VertexList.GoToNextElement;
       end;
+      SetLength(_VertexTransformation,_NumVertices);
 
       // Add all new faces
       _Geometry.AddQuadsFromList(QuadList,_Vertices);
       _Geometry.ConvertQuadsToTris();
       _Geometry.AddTrianglesFromList(TriangleList,_Vertices);
+
+      // Ensure that these new vertexes will be used.
+      QuadList.GoToFirstElement;
+      x := 0;
+      while x < QuadList.Count do
+      begin
+         _VertexTransformation[QuadList.V1] := QuadList.V1;
+         _VertexTransformation[QuadList.V2] := QuadList.V2;
+         _VertexTransformation[QuadList.V3] := QuadList.V3;
+         _VertexTransformation[QuadList.V4] := QuadList.V4;
+         QuadList.GoToNextElement;
+         inc(x);
+      end;
+      TriangleList.GoToFirstElement;
+      x := 0;
+      while x < TriangleList.Count do
+      begin
+         _VertexTransformation[TriangleList.V1] := TriangleList.V1;
+         _VertexTransformation[TriangleList.V2] := TriangleList.V2;
+         _VertexTransformation[TriangleList.V3] := TriangleList.V3;
+         TriangleList.GoToNextElement;
+         inc(x);
+      end;
    end;
    // Free memory.
    VertexList.Free;
@@ -1124,6 +1266,63 @@ begin
    SetLength(FaceMap,0);
 end;
 
+procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithInterpolationZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
+var
+   NumVertices,NumFaces : longword;
+   VertexMap : T3DVolumeGreyIntData;
+   FaceMap : T4DIntGrid;
+   VertexTransformation: aint32;
+   x, y, z : longword;
+begin
+   // This is the complex part of the thing. We'll map all vertices and faces
+   // and make a model out of it.
+
+   // Let's map the vertices.
+   SetupVertexMap(VertexMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
+   // Now we give the vertices an ID and count them.
+   BuildVertexMap(VertexMap,_Voxel,NumVertices,_NumVoxels);
+   // vertex map is done. If there is no vertex, quit.
+   if NumVertices = 0 then
+   begin
+      _Geometry.NumFaces := 0;
+      SetLength(_TexCoords,0);
+      exit;
+   end;
+   // let's fill the vertices array
+   FillVerticesArray(_Vertices,VertexMap,NumVertices);
+   // Now, we'll look for the faces.
+   SetupFaceMap(FaceMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
+   // Now we give the faces an ID and count them.
+   BuildFaceMapI(FaceMap,_VoxelMap,_Vertices,NumFaces);
+   // face map is done.
+   // let's fill the faces array, normals, colours, etc.
+   _Geometry.NumFaces := NumFaces;
+   SetLength(_TexCoords,0);
+   SetLength(VertexTransformation,High(_Vertices)+1);
+   FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Geometry.Faces,_Geometry.Colours,_Geometry.Normals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_Geometry.VerticesPerFace);
+   // Here we build the triangles from the interpolation zones.
+   BuildInterpolationTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
+   // Get the positions of the vertexes in the new vertex list, so we can eliminate
+   // the unused ones.
+//   EliminateUselessVertices(VertexTransformation,_Vertices,_Geometry.Faces,NumVertices);
+   // Free memory
+   SetLength(VertexTransformation,0);
+   VertexMap.Free;
+   for x := Low(FaceMap) to High(FaceMap) do
+   begin
+      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
+      begin
+         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
+         begin
+            SetLength(FaceMap[x,y,z],0);
+         end;
+         SetLength(FaceMap[x,y],0);
+      end;
+      SetLength(FaceMap[x],0);
+   end;
+   SetLength(FaceMap,0);
+end;
+
 procedure TVoxelMeshGenerator.BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
 var
    NumVertices,NumFaces : longword;
@@ -1223,7 +1422,7 @@ begin
    VoxelMap.Free;
 end;
 
-procedure TVoxelMeshGenerator.LoadQuadsWithTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: CMeshGeometryList; var _TexCoords: TAVector2f; var _NumVoxels: longword);
+procedure TVoxelMeshGenerator.LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: CMeshGeometryList; var _TexCoords: TAVector2f; var _NumVoxels: longword);
 var
    VoxelMap: TVoxelMap;
    Geometry: PMeshBRepGeometry;
@@ -1234,7 +1433,7 @@ begin
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceAndInterpolationMap;
 
-   BuildModelFromVoxelMap(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
+   BuildModelFromVoxelMapWithInterpolationZones(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
 
    VoxelMap.Free;
 end;

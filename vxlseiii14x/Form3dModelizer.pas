@@ -160,6 +160,8 @@ type
     TextureFX1MipMaps: TMenuItem;
     TextureFSExportHeightMap: TMenuItem;
     TextureFXBumpCustom: TMenuItem;
+    RenderManifolds: TMenuItem;
+    procedure RenderManifoldsClick(Sender: TObject);
     procedure TextureFXBumpCustomClick(Sender: TObject);
     procedure TextureFSExportHeightMapClick(Sender: TObject);
     procedure TextureFX1MipMapsClick(Sender: TObject);
@@ -874,6 +876,16 @@ begin
    SetColoursMode(0);
 end;
 
+procedure TFrm3DModelizer.RenderManifoldsClick(Sender: TObject);
+begin
+   UncheckModelQuality;
+   RenderManifolds.Checked := true;
+   Actor.SetQuality(GetQualityModel);
+   SetMeshMode(1);
+   SetNormalsMode(0);
+   SetColoursMode(0);
+end;
+
 procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
 begin
    UncheckModelQuality;
@@ -1424,6 +1436,10 @@ begin
    begin
       Result := C_QUALITY_VISIBLE_CUBED;
    end
+   else if RenderManifolds.Checked then
+   begin
+      Result := C_QUALITY_VISIBLE_MANIFOLD;
+   end
    else
    begin
       Result := C_QUALITY_CUBED;
@@ -1457,6 +1473,10 @@ begin
    begin
       RenderVisibleCubesClick(nil);
    end
+   else if RenderManifolds.Checked then
+   begin
+      RenderManifoldsClick(nil);
+   end
    else
    begin
       RenderCubesClick(nil);
@@ -1472,6 +1492,7 @@ begin
    RenderModel.Checked := false;
    Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
+   RenderManifolds.Checked := false;
 end;
 
 procedure TFrm3DModelizer.UncheckFillMode;
