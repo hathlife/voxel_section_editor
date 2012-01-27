@@ -10,8 +10,8 @@ type
    CInterpolationTrianglesSupporter = class
       public
          // Initialize
-         procedure InitializeNeighbourVertexIDsSize3(var _NeighbourVertexIDs: T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer);
-         procedure InitializeNeighbourVertexIDsSize4(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer);
+         procedure InitializeNeighbourVertexIDsSize3(var _NeighbourVertexIDs: T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
+         procedure InitializeNeighbourVertexIDsSize4(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
 
          // Add side faces.
          procedure AddLeftFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
@@ -22,25 +22,26 @@ type
          procedure AddTopFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
 
          // Misc
-         procedure AddInterpolationFaces(_LeftBottomFront,_LeftBottomBack,_LeftTopFront,_LeftTopBack,_RightBottomFront,_RightBottomBack,_RightTopFront,_RightTopBack,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
+         procedure AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
          function GetColour(const _Voxel : TVoxelSection; const _Palette: TPalette; _x,_y,_z,_config: integer): Cardinal;
          procedure AddInterpolationFacesFor4x4Regions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _NeighbourVertexIDs: T3DIntGrid; _x,_y,_z: integer; const _FaceConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList);
          procedure AddVertexToTarget (var _Target: integer; var _VertexList: CVertexList; var _PotentialID : longword; _x,_y,_z: single);
+         function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32): integer;
    end;
 
 implementation
 
-procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize3(var _NeighbourVertexIDs: T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer);
+procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize3(var _NeighbourVertexIDs: T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
 begin
-   _NeighbourVertexIDs[0,0,0] := _VertexMap.Data[_x,_y,_z];
+   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,_VertexTransformation);
    _NeighbourVertexIDs[0,0,1] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,0,2] := _VertexMap.Data[_x,_y,_z+1];
+   _NeighbourVertexIDs[0,0,2] := GetVertex(_VertexMap,_x,_y,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[0,1,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,1,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,1,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,2,0] := _VertexMap.Data[_x,_y+1,_z];
+   _NeighbourVertexIDs[0,2,0] := GetVertex(_VertexMap,_x,_y+1,_z,_VertexTransformation);
    _NeighbourVertexIDs[0,2,1] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,2,2] := _VertexMap.Data[_x,_y+1,_z+1];
+   _NeighbourVertexIDs[0,2,2] := GetVertex(_VertexMap,_x,_y+1,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[1,0,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,0,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,0,2] := C_VMG_NO_VERTEX;
@@ -50,23 +51,23 @@ begin
    _NeighbourVertexIDs[1,2,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,2,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,2,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[2,0,0] := _VertexMap.Data[_x+1,_y,_z];
+   _NeighbourVertexIDs[2,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,_VertexTransformation);
    _NeighbourVertexIDs[2,0,1] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[2,0,2] := _VertexMap.Data[_x+1,_y,_z+1];
+   _NeighbourVertexIDs[2,0,2] := GetVertex(_VertexMap,_x+1,_y,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[2,1,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[2,1,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[2,1,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[2,2,0] := _VertexMap.Data[_x+1,_y+1,_z];
+   _NeighbourVertexIDs[2,2,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,_VertexTransformation);
    _NeighbourVertexIDs[2,2,1] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[2,2,2] := _VertexMap.Data[_x+1,_y+1,_z+1];
+   _NeighbourVertexIDs[2,2,2] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,_VertexTransformation);
 end;
 
-procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize4(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer);
+procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize4(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
 begin
-   _NeighbourVertexIDs[0,0,0] := _VertexMap.Data[_x,_y,_z];
+   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,_VertexTransformation);
    _NeighbourVertexIDs[0,0,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,0,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,0,3] := _VertexMap.Data[_x,_y,_z+1];
+   _NeighbourVertexIDs[0,0,3] := GetVertex(_VertexMap,_x,_y,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[0,1,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,1,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,1,2] := C_VMG_NO_VERTEX;
@@ -75,10 +76,10 @@ begin
    _NeighbourVertexIDs[0,2,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,2,2] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,2,3] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,3,0] := _VertexMap.Data[_x,_y+1,_z];
+   _NeighbourVertexIDs[0,3,0] := GetVertex(_VertexMap,_x,_y+1,_z,_VertexTransformation);
    _NeighbourVertexIDs[0,3,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[0,3,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[0,3,3] := _VertexMap.Data[_x,_y+1,_z+1];
+   _NeighbourVertexIDs[0,3,3] := GetVertex(_VertexMap,_x,_y+1,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[1,0,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,0,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[1,0,2] := C_VMG_NO_VERTEX;
@@ -111,10 +112,10 @@ begin
    _NeighbourVertexIDs[2,3,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[2,3,2] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[2,3,3] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[3,0,0] := _VertexMap.Data[_x+1,_y,_z];
+   _NeighbourVertexIDs[3,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,_VertexTransformation);
    _NeighbourVertexIDs[3,0,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,0,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[3,0,3] := _VertexMap.Data[_x+1,_y,_z+1];
+   _NeighbourVertexIDs[3,0,3] := GetVertex(_VertexMap,_x+1,_y,_z+1,_VertexTransformation);
    _NeighbourVertexIDs[3,1,0] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,1,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,1,2] := C_VMG_NO_VERTEX;
@@ -123,10 +124,10 @@ begin
    _NeighbourVertexIDs[3,2,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,2,2] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,2,3] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[3,3,0] := _VertexMap.Data[_x+1,_y+1,_z];
+   _NeighbourVertexIDs[3,3,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,_VertexTransformation);
    _NeighbourVertexIDs[3,3,1] := C_VMG_NO_VERTEX;
    _NeighbourVertexIDs[3,3,2] := C_VMG_NO_VERTEX;
-   _NeighbourVertexIDs[3,3,3] := _VertexMap.Data[_x+1,_y+1,_z+1];
+   _NeighbourVertexIDs[3,3,3] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,_VertexTransformation);
 end;
 
 procedure CInterpolationTrianglesSupporter.AddLeftFace(var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList; _x, _y, _z: integer; var _NumVertices: longword);
@@ -225,36 +226,37 @@ begin
    AddVertexToTarget(_NeighbourVertexIDs[2,3,3],_VertexList,_NumVertices,_x+0.66,_y+1,_z+1);
 end;
 
-procedure CInterpolationTrianglesSupporter.AddInterpolationFaces(_LeftBottomFront,_LeftBottomBack,_LeftTopFront,_LeftTopBack,_RightBottomFront,_RightBottomBack,_RightTopFront,_RightTopBack,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
+procedure CInterpolationTrianglesSupporter.AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
 const
-   QuadSet: array[1..36,0..3] of byte = ((0,1,5,4),(0,1,5,6),(0,1,7,4),(0,1,7,6),(0,2,3,1),(0,2,7,5),(0,3,5,4),(0,3,7,4),(0,3,7,5),(0,4,6,2),(0,4,6,3),(0,4,7,2),(0,4,7,3),(0,5,6,2),(0,5,7,2),(0,5,7,3),(0,6,7,1),(0,6,7,3),(1,2,6,5),(1,2,6,7),(1,2,7,5),(1,3,6,4),(1,3,6,5),(1,3,7,5),(1,4,2,3),(1,4,6,2),(1,4,6,3),(1,5,4,2),(1,5,6,2),(1,6,4,7),(2,4,3,7),(2,4,5,3),(2,4,7,3),(2,6,5,3),(2,6,7,3),(4,5,7,6));
-   QuadFaces: array[1..36] of shortint = (2,-1,-1,-1,0,-1,-1,-1,-1,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,3,1);
-   QuadConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,10,10,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,16,16,16,16,17,17,17,17,20,20,20,20,23,23,26,26,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,34,34,34,34,34,34,34,34,34,34,34,34,35,35,35,36,39,39,39,39,40,40,40,40,43,43,43,44,47,47,47,50,54,54,54,54,54,54,54,54,54,54,54,54,54,54,55,56,59,59,59,59,59,59,60,60,63,63,63,63,63,64,67,70,74,74,74,74,74,74,74,74,74,74,74,75,78,78,81,84,88,88,89,90,93,94,97,100,104,105,108,111,115,118,122,126);
-   QuadConfigData: array[0..125] of byte = (36,36,35,35,32,36,35,36,24,24,27,36,24,20,36,28,35,29,35,24,35,25,30,24,31,28,24,36,35,26,36,11,36,16,10,10,10,36,6,5,35,14,9,10,35,10,8,34,10,7,10,36,35,7,1,1,36,1,17,24,2,24,18,1,1,24,13,11,23,1,24,1,36,18,10,34,10,7,12,1,21,10,1,19,10,1,36,20,5,5,35,5,4,5,24,5,15,34,5,2,35,24,5,2,5,33,5,3,10,5,22,35,5,10,3,1,5,32,10,5,1,34,1,5,24,35);
-   TriangleSet: array[1..68,0..2] of byte = ((0,1,4),(0,1,5),(0,1,6),(0,2,1),(0,2,3),(0,2,5),(0,2,7),(0,3,1),(0,3,2),(0,3,4),(0,4,2),(0,4,3),(0,4,6),(0,4,7),(0,5,2),(0,5,4),(0,5,7),(0,6,1),(0,6,2),(0,6,7),(0,7,1),(0,7,2),(0,7,3),(0,7,5),(1,2,3),(1,2,6),(1,3,2),(1,3,4),(1,3,5),(1,3,6),(1,3,7),(1,4,3),(1,4,5),(1,4,6),(1,5,4),(1,5,6),(1,5,7),(1,6,2),(1,6,3),(1,6,4),(1,6,5),(1,6,7),(1,7,5),(1,7,6),(2,3,4),(2,3,5),(2,4,3),(2,4,6),(2,5,3),(2,5,4),(2,5,7),(2,6,3),(2,6,5),(2,6,7),(2,7,3),(3,4,5),(3,4,6),(3,4,7),(3,5,4),(3,6,4),(3,6,7),(3,7,5),(3,7,6),(4,5,6),(4,5,7),(4,7,5),(4,7,6),(5,7,6));
-   TriConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,12,12,12,12,16,16,16,16,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,22,22,22,22,22,22,22,22,26,26,26,26,26,26,30,30,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,34,34,34,34,38,38,38,38,40,40,40,40,42,42,44,44,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,52,52,52,52,52,52,52,52,52,52,52,52,56,56,56,60,62,62,62,62,66,66,66,66,68,68,68,72,74,74,74,76,78,78,78,78,78,78,78,78,78,78,78,78,78,78,82,86,88,88,88,88,88,88,92,92,94,94,94,94,94,98,100,102,104,104,104,104,104,104,104,104,104,104,104,108,110,110,112,114,116,116,120,124,126,130,132,134,136,140,142,144,146,148,150,152);
-   TriConfigData: array[0..151] of byte = (57,62,61,59,51,48,54,49,46,68,62,53,58,48,67,45,48,62,42,35,34,43,36,63,39,68,58,35,65,32,61,35,48,37,44,25,31,38,68,25,48,31,67,27,33,25,20,24,16,13,16,61,7,14,67,54,6,16,64,53,54,16,19,18,30,52,68,5,52,9,10,60,67,8,64,4,62,5,43,66,14,21,13,18,41,64,13,43,8,2,17,23,68,8,8,29,56,12,65,8,64,8,8,13,4,1,40,26,64,5,4,65,64,4,43,4,31,21,22,55,39,3,19,52,19,31,29,2,15,49,55,2,19,29,68,19,11,1,28,47,11,31,52,1,67,31,11,29,64,29,65,11);
+   QuadSet: array[1..18,0..3] of byte = ((0,1,5,4),(0,2,3,1),(0,4,6,2),(1,3,7,5),(2,6,7,3),(4,5,7,6),(2,3,5,4),(1,4,6,3),(1,5,6,2),(0,2,7,5),(0,3,7,4),(0,6,7,1),(0,4,7,3),(1,2,6,5),(0,1,7,6),(0,5,7,2),(1,3,6,4),(2,4,5,3));
+   QuadFaces: array[1..18] of shortint = (2,0,4,5,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
+   QuadConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,10,10,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,14,14,14,14,15,15,16,16,19,19,19,19,20,20,21,21,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,26,26,26,26,26,26,26,26,26,26,26,26,27,27,27,28,31,31,31,31,32,32,32,32,33,33,33,34,37,37,37,38,41,41,41,41,41,41,41,41,41,41,41,41,41,41,42,43,46,46,46,46,46,46,47,47,48,48,48,48,48,49,52,53,56,56,56,56,56,56,56,56,56,56,56,57,58,59,60,63,66,66,67,68,71,72,75,76,79,80,81,84,87,90,93,96);
+   QuadConfigData: array[0..95] of byte = (6,6,5,5,5,6,7,6,4,4,4,6,8,6,5,4,4,5,9,5,4,4,5,6,6,6,3,3,3,6,10,5,5,3,3,5,11,3,3,5,6,1,1,1,6,12,4,4,1,1,4,13,1,1,4,6,3,3,1,1,1,3,14,1,3,6,2,2,2,5,15,2,2,4,16,2,2,4,5,2,2,2,3,17,2,3,5,1,2,18,1,2,4,1,2,3);
+   TriangleSet: array[1..79,0..2] of byte = ((3,6,4),(3,6,7),(3,7,5),(2,4,5),(2,4,6),(2,6,7),(2,7,5),(2,3,5),(2,5,6),(5,7,6),(2,3,4),(3,7,4),(4,7,6),(1,4,6),(1,5,4),(1,6,7),(1,7,5),(1,5,6),(1,6,3),(1,4,3),(1,4,5),(3,4,7),(4,5,7),(1,2,7),(1,4,2),(1,2,3),(1,2,6),(1,3,7),(1,7,6),(1,5,2),(2,5,7),(2,7,3),(1,7,4),(1,3,2),(2,4,7),(0,4,6),(0,5,4),(0,6,7),(0,7,5),(0,3,5),(0,6,3),(0,2,7),(0,7,4),(0,2,5),(2,6,5),(4,5,6),(0,2,3),(0,3,7),(0,6,2),(0,7,6),(0,5,6),(0,3,4),(2,6,3),(3,6,5),(0,4,7),(0,7,1),(0,6,1),(1,6,5),(0,1,5),(0,3,1),(0,5,7),(0,7,3),(0,4,3),(1,3,5),(3,4,5),(0,1,4),(0,2,1),(1,6,4),(2,7,1),(0,4,2),(1,2,5),(0,1,7),(0,7,2),(0,1,6),(1,3,6),(0,5,2),(2,5,3),(1,3,4),(2,4,3));
+   TriangleFaces: array[1..79] of shortint = (-1,3,5,-1,4,3,-1,-1,-1,1,-1,-1,1,-1,2,-1,5,-1,-1,-1,2,-1,1,-1,-1,0,-1,5,-1,-1,-1,3,-1,0,-1,4,2,-1,-1,-1,-1,-1,-1,-1,-1,1,0,-1,4,-1,-1,-1,3,-1,-1,-1,-1,-1,2,0,-1,-1,-1,5,-1,2,0,-1,-1,4,-1,-1,-1,-1,-1,-1,-1,-1,-1);
+   TriConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,12,12,12,12,16,16,16,16,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,22,22,22,22,22,22,22,22,26,26,26,26,26,26,30,30,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,38,38,38,38,42,42,46,46,48,48,48,48,54,54,60,60,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,74,74,74,74,74,74,74,74,74,74,74,74,78,78,78,82,84,84,84,84,88,88,88,88,94,94,94,98,100,100,100,106,110,110,110,110,110,110,110,110,110,110,110,110,110,110,114,118,120,120,120,120,120,120,124,124,130,130,130,130,130,134,136,142,146,146,146,146,146,146,146,146,146,146,146,150,156,160,166,168,172,172,176,180,182,186,188,194,198,202,208,210,214,216,220,224);
+   TriConfigData: array[0..223] of byte = (1,2,3,4,5,6,7,8,9,10,3,11,12,5,13,14,5,3,15,16,17,18,19,20,2,10,21,22,23,24,15,2,25,26,15,17,5,6,27,28,29,30,26,31,32,33,26,10,26,28,25,34,5,13,35,25,15,36,32,13,26,25,15,5,37,38,39,40,41,36,37,42,2,3,43,44,6,13,45,37,46,47,37,6,48,49,50,51,47,40,52,49,3,10,47,53,54,1,47,13,47,40,37,53,55,46,47,40,37,3,56,57,17,23,36,58,59,46,36,17,60,61,62,63,59,60,51,41,2,10,60,64,65,66,60,23,60,36,41,64,54,46,60,36,41,2,67,68,27,69,66,67,33,6,70,13,67,71,72,4,67,70,71,35,69,23,67,46,67,24,17,6,73,74,28,32,75,49,76,53,49,28,59,77,64,78,59,32,59,51,49,64,53,54,59,51,49,10,66,70,79,80,66,70,28,33,35,32,66,53,66,28,33,13,70,64,70,35,32,23,64,53,54,46);
 var
    Vertexes: array [0..7] of integer;
    AllowedFaces: array[0..5] of boolean;
    i,Config,Mult2: byte;
 begin
    // Fill vertexes.
-   Vertexes[0] := _LeftBottomFront;
-   Vertexes[1] := _LeftBottomBack;
-   Vertexes[2] := _LeftTopFront;
-   Vertexes[3] := _LeftTopBack;
-   Vertexes[4] := _RightBottomFront;
-   Vertexes[5] := _RightBottomBack;
-   Vertexes[6] := _RightTopFront;
-   Vertexes[7] := _RightTopBack;
+   Vertexes[0] := _LeftBottomBack;
+   Vertexes[1] := _LeftBottomFront;
+   Vertexes[2] := _LeftTopBack;
+   Vertexes[3] := _LeftTopFront;
+   Vertexes[4] := _RightBottomBack;
+   Vertexes[5] := _RightBottomFront;
+   Vertexes[6] := _RightTopBack;
+   Vertexes[7] := _RightTopFront;
    // Fill faces.
    AllowedFaces[0] := (_FaceFilledConfig and 32) = 0; // left (x-1)
    AllowedFaces[1] := (_FaceFilledConfig and 16) = 0; // right (x+1)
    AllowedFaces[2] := (_FaceFilledConfig and 8) = 0;  // bottom (y-1)
    AllowedFaces[3] := (_FaceFilledConfig and 4) = 0;  // top (y+1)
-   AllowedFaces[4] := (_FaceFilledConfig and 2) = 0;  // front (z-1)
-   AllowedFaces[5] := (_FaceFilledConfig and 1) = 0;  // back (z+1)
+   AllowedFaces[4] := (_FaceFilledConfig and 2) = 0;  // back (z-1)
+   AllowedFaces[5] := (_FaceFilledConfig and 1) = 0;  // front (z+1)
    // Find out vertex configuration
    Config := 0;
    Mult2 := 1;
@@ -262,10 +264,12 @@ begin
    begin
       if Vertexes[i] <> C_VMG_NO_VERTEX then
       begin
-         Config := Config or Mult2;
+         Config := Config + Mult2;
       end;
       Mult2 := Mult2 * 2;
    end;
+   if Config = 255 then
+      Config := 254;
    // Add the new quads.
    i := QuadConfigStart[config];
    while i < QuadConfigStart[config+1] do // config will always be below 255
@@ -285,10 +289,19 @@ begin
       inc(i);
    end;
    // Add the new triangles.
+   i := TriConfigStart[config];
    while i < TriConfigStart[config+1] do // config will always be below 255
    begin
-      // Add face.
-      _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
+      if (TriangleFaces[TriConfigData[i]] = -1) then
+      begin
+         // Add face.
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
+      end
+      else if AllowedFaces[TriangleFaces[TriConfigData[i]]] then
+      begin
+         // Add face.
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
+      end;
       inc(i);
    end;
 end;
@@ -386,5 +399,16 @@ begin
       end;
    end;
 end;
+
+function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32): integer;
+begin
+   Result := _VertexMap.Data[_x,_y,_z];
+   if Result <> C_VMG_NO_VERTEX then
+   begin
+      if _VertexTransformation[Result] <> Result then
+         Result := C_VMG_NO_VERTEX;
+   end;
+end;
+
 
 end.
