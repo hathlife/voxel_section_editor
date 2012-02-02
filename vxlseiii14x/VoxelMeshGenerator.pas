@@ -869,9 +869,10 @@ procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelS
 var
    x,y,z,OldNumVertices: integer;
    V : TVoxelUnpacked;
-   c1,c2: single;
+   c: single;
    SubdivisionSituation,FaceConfig : integer;
    NeighbourVertexIDs: T3DIntGrid;
+   SubdivisionVertexes: T3DBooleanMap;
    VertexList: CVertexList;
    TriangleList: CTriangleList;
    QuadList: CQuadList;
@@ -882,7 +883,8 @@ begin
    TriangleList := CTriangleList.Create;
    QuadList := CQuadList.Create;
    OldNumVertices := _NumVertices;
-   SetLength(NeighbourVertexIDs,4,4,4);
+   SetLength(NeighbourVertexIDs,5,5,5);
+   SetLength(SubdivisionVertexes,5,5,5);
    // visit every region.
    for x := 0 to _VoxelMap.GetMaxX do
       for y := 0 to _VoxelMap.GetMaxY do
@@ -891,210 +893,43 @@ begin
             // if the region is an interpolation zone, then...
             if (_VoxelMap.Map[x,y,z] > 0.9) and (_VoxelMap.Map[x,y,z] < 256) then
             begin
+               // Detect face configuration
+               FaceConfig := 0;
+               // Axis X
+               if _VoxelMap.MapSafe[x-1,y,z] > 0.9 then
+                  FaceConfig := FaceConfig or 32;
+               if _VoxelMap.MapSafe[x+1,y,z] > 0.9 then
+                  FaceConfig := FaceConfig or 16;
+               // Axis Y
+               if _VoxelMap.MapSafe[x,y-1,z] > 0.9 then
+                  FaceConfig := FaceConfig or 8;
+               if _VoxelMap.MapSafe[x,y+1,z] > 0.9 then
+                  FaceConfig := FaceConfig or 4;
+               // Axis Z
+               if _VoxelMap.MapSafe[x,y,z-1] > 0.9 then
+                  FaceConfig := FaceConfig or 2;
+               if _VoxelMap.MapSafe[x,y,z+1] > 0.9 then
+                  FaceConfig := FaceConfig or 1;
+
                // Should we subdivide it? If an interpolation zone has all 8
                // corners filled (=255), then the answer is yes. Otherwise, no.
                if (_VoxelMap.Map[x,y,z] = 255) then
                begin
                   // Subdivision starts here...
 
-                  // Let's check its neighbour faces. If opposite faces are part
-                  // of the surface, then we divide the region in its direction.
+                  // Let's check its neighbour faces, edges and vertexes. We'll
+                  // fill the potential vertexes that this region may receive
+                  // according to the following criteria. If a face neighbour
+                  // exists, we'll fill every vertex in its face. A similar
+                  // approach applies to neighbour edges and vertexes.
 
-                  // Axis X
-                  SubdivisionSituation := 0;
-                  FaceConfig := 0;
-                  c1 := _VoxelMap.MapSafe[x-1,y,z];
-                  c2 := _VoxelMap.MapSafe[x+1,y,z];
-                  if (c1 > 256) and (c2 > 256) then
-                  begin
-                     SubdivisionSituation := SubdivisionSituation or 4;
-                  end;
-                  if c1 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 32;
-                  end;
-                  if c2 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 16;
-                  end;
-
-                  // Axis Y
-                  c1 := _VoxelMap.MapSafe[x,y-1,z];
-                  c2 := _VoxelMap.MapSafe[x,y+1,z];
-                  if (c1 > 256) and (c2 > 256) then
-                  begin
-                     SubdivisionSituation := SubdivisionSituation or 2;
-                  end;
-                  if c1 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 8;
-                  end;
-                  if c2 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 4;
-                  end;
-
-                  // Axis Z
-                  c1 := _VoxelMap.MapSafe[x,y,z-1];
-                  c2 := _VoxelMap.MapSafe[x,y,z+1];
-                  if (c1 > 256) and (c2 > 256) then
-                  begin
-                     SubdivisionSituation := SubdivisionSituation or 1;
-                  end;
-                  if c1 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 2;
-                  end;
-                  if c2 > 0.9 then
-                  begin
-                     FaceConfig := FaceConfig or 1;
-                  end;
-
-//                  if SubdivisionSituation = 0 then
-//                     ShowMessage('Subdivision é 0, Face Config é ' + IntToStr(FaceConfig) + ' e as faces vizinhas são: (' + FloatToStr(_VoxelMap.MapSafe[x-1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x+1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y-1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y+1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z-1]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z+1]) + ')');
-
-                  // Now we operate each piece according to each situation
-                  case (SubdivisionSituation) of
-                     1: // subdivides z only
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize3(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add Vertexes
-                        if _VoxelMap.MapSafe[x-1,y,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,0,1],VertexList,_NumVertices,x,y,z+0.5);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,2,1],VertexList,_NumVertices,x,y+1,z+0.5);
-                        end;
-                        if _VoxelMap.MapSafe[x+1,y,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,0,1],VertexList,_NumVertices,x+1,y,z+0.5);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,2,1],VertexList,_NumVertices,x+1,y+1,z+0.5);
-                        end;
-                        if _VoxelMap.MapSafe[x,y-1,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,0,1],VertexList,_NumVertices,x,y,z+0.5);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,0,1],VertexList,_NumVertices,x+1,y,z+0.5);
-                        end;
-                        if _VoxelMap.MapSafe[x,y+1,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,2,1],VertexList,_NumVertices,x,y+1,z+0.5);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,2,1],VertexList,_NumVertices,x+1,y+1,z+0.5);
-                        end;
-                        // Add Faces
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,1],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,1],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,1],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,1],FaceConfig and 61,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,51));
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[0,0,1],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,2,1],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[2,0,1],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,2,1],NeighbourVertexIDs[2,2,2],FaceConfig and 62,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,204));
-                     end;
-                     2: // subdivides y only
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize3(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add Vertexes
-                        if _VoxelMap.MapSafe[x-1,y,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,1,0],VertexList,_NumVertices,x,y+0.5,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,1,2],VertexList,_NumVertices,x,y+0.5,z+1);
-                        end;
-                        if _VoxelMap.MapSafe[x+1,y,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,1,0],VertexList,_NumVertices,x+1,y+0.5,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,1,2],VertexList,_NumVertices,x+1,y+0.5,z+1);
-                        end;
-                        if _VoxelMap.MapSafe[x,y,z-1] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,1,0],VertexList,_NumVertices,x,y+0.5,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,1,0],VertexList,_NumVertices,x+1,y+0.5,z);
-                        end;
-                        if _VoxelMap.MapSafe[x,y,z+1] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[0,1,2],VertexList,_NumVertices,x,y+0.5,z+1);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[2,1,2],VertexList,_NumVertices,x+1,y+0.5,z+1);
-                        end;
-                        // Add Faces
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,1,0],NeighbourVertexIDs[0,1,2],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,1,0],NeighbourVertexIDs[2,1,2],FaceConfig and 55,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,85));
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[0,1,0],NeighbourVertexIDs[0,1,2],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[2,1,0],NeighbourVertexIDs[2,1,2],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,2],FaceConfig and 59,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,170));
-                     end;
-                     3: // subdivides y and z
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize4(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add neighbour faces
-                        Tool.AddBottomFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddTopFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddBackFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddFrontFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        // Add the new faces
-                        Tool.AddInterpolationFacesFor4x4Regions(_Voxel,_Palette,NeighbourVertexIDs,x,y,z,FaceConfig,TriangleList,QuadList);
-                     end;
-                     4: // subdivides x only
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize3(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add Vertexes
-                        if _VoxelMap.MapSafe[x,y-1,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,0,0],VertexList,_NumVertices,x+0.5,y,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,0,2],VertexList,_NumVertices,x+0.5,y,z+1);
-                        end;
-                        if _VoxelMap.MapSafe[x,y+1,z] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,2,0],VertexList,_NumVertices,x+0.5,y+1,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,2,2],VertexList,_NumVertices,x+0.5,y+1,z+1);
-                        end;
-                        if _VoxelMap.MapSafe[x,y,z-1] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,0,0],VertexList,_NumVertices,x+0.5,y,z);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,2,0],VertexList,_NumVertices,x+0.5,y+1,z);
-                        end;
-                        if _VoxelMap.MapSafe[x,y,z+1] > 256 then
-                        begin
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,0,2],VertexList,_NumVertices,x+0.5,y,z+1);
-                           Tool.AddVertexToTarget(NeighbourVertexIDs[1,2,2],VertexList,_NumVertices,x+0.5,y+1,z+1);
-                        end;
-                        // Add Faces
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[0,0,0],NeighbourVertexIDs[0,0,2],NeighbourVertexIDs[0,2,0],NeighbourVertexIDs[0,2,2],NeighbourVertexIDs[1,0,0],NeighbourVertexIDs[1,0,2],NeighbourVertexIDs[1,2,0],NeighbourVertexIDs[1,2,2],FaceConfig and 31,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,15));
-                        Tool.AddInterpolationFaces(NeighbourVertexIDs[1,0,0],NeighbourVertexIDs[1,0,2],NeighbourVertexIDs[1,2,0],NeighbourVertexIDs[1,2,2],NeighbourVertexIDs[2,0,0],NeighbourVertexIDs[2,0,2],NeighbourVertexIDs[2,2,0],NeighbourVertexIDs[2,2,2],FaceConfig and 47,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,240));
-                     end;
-                     5: // subdivides x and z
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize4(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add neighbour faces
-                        Tool.AddLeftFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddRightFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddBackFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddFrontFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        // Add the new faces
-                        Tool.AddInterpolationFacesFor4x4Regions(_Voxel,_Palette,NeighbourVertexIDs,x,y,z,FaceConfig,TriangleList,QuadList);
-                     end;
-                     6: // subdivides x and y
-                     begin
-                        Tool.InitializeNeighbourVertexIDsSize4(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                        // Add neighbour faces
-                        Tool.AddLeftFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddRightFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddBottomFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        Tool.AddTopFace(NeighbourVertexIDs,VertexList,x,y,z,_NumVertices);
-                        // Add the new faces
-                        Tool.AddInterpolationFacesFor4x4Regions(_Voxel,_Palette,NeighbourVertexIDs,x,y,z,FaceConfig,TriangleList,QuadList);
-                     end;
-                  end;  // end of case
+                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
+                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
+                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x,y,z,FaceConfig);
                end
                else
                begin
                   // Does not subdivide it.
-                  SubdivisionSituation := -1;
-                  FaceConfig := 0;
-                  // Detect face configuration
-                  // Axis X
-                  if _VoxelMap.MapSafe[x-1,y,z] > 0.9 then
-                     FaceConfig := FaceConfig or 32;
-                  if _VoxelMap.MapSafe[x+1,y,z] > 0.9 then
-                     FaceConfig := FaceConfig or 16;
-                  // Axis Y
-                  if _VoxelMap.MapSafe[x,y-1,z] > 0.9 then
-                     FaceConfig := FaceConfig or 8;
-                  if _VoxelMap.MapSafe[x,y+1,z] > 0.9 then
-                     FaceConfig := FaceConfig or 4;
-                  // Axis Z
-                  if _VoxelMap.MapSafe[x,y,z-1] > 0.9 then
-                     FaceConfig := FaceConfig or 2;
-                  if _VoxelMap.MapSafe[x,y,z+1] > 0.9 then
-                     FaceConfig := FaceConfig or 1;
 
                   // Find faces
                   Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y+1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y+1,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y+1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y+1,z+1,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,255));
