@@ -923,16 +923,16 @@ begin
                   // exists, we'll fill every vertex in its face. A similar
                   // approach applies to neighbour edges and vertexes.
 
-                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,x,y,z,_VertexTransformation);
-                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
-                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x,y,z,FaceConfig);
+                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,x-1,y-1,z-1,_VertexTransformation);
+                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x-1,y-1,z-1);
+                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig);
                end
                else
                begin
                   // Does not subdivide it.
 
                   // Find faces
-                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y+1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y+1,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y,z+1,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y+1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x+1,y+1,z+1,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x,y,z,255));
+                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,255));
                end;
             end;
          end;
