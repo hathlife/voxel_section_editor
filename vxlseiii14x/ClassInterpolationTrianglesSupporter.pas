@@ -10,20 +10,20 @@ type
    CInterpolationTrianglesSupporter = class
       public
          // Initialize
-         procedure InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
+         procedure InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z: integer; const _VertexTransformation: aint32; var _NumVertices: longword; var _VertexList: CVertexList);
 
          // Misc
          procedure AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
          function GetColour(const _Voxel : TVoxelSection; const _Palette: TPalette; _x,_y,_z,_config: integer): Cardinal;
          procedure AddVertexToTarget (var _Target: integer; var _VertexList: CVertexList; var _PotentialID : longword; _x,_y,_z: single);
-         function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32): integer;
+         function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
          procedure DetectPotentialVertexes(const _Neighbours: T3DBooleanMap; const _VoxelMap: TVoxelMap; _x, _y, _z: integer);
          procedure AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces: integer);
    end;
 
 implementation
 
-procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32);
+procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z: integer; const _VertexTransformation: aint32; var _NumVertices: longword; var _VertexList: CVertexList);
 var
    x,y,z: integer;
 begin
@@ -33,14 +33,14 @@ begin
          begin
             _NeighbourVertexIDs[x,y,z] := C_VMG_NO_VERTEX;
          end;
-   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,_VertexTransformation);
-   _NeighbourVertexIDs[0,0,4] := GetVertex(_VertexMap,_x,_y,_z+1,_VertexTransformation);
-   _NeighbourVertexIDs[0,4,0] := GetVertex(_VertexMap,_x,_y+1,_z,_VertexTransformation);
-   _NeighbourVertexIDs[0,4,4] := GetVertex(_VertexMap,_x,_y+1,_z+1,_VertexTransformation);
-   _NeighbourVertexIDs[4,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,_VertexTransformation);
-   _NeighbourVertexIDs[4,0,4] := GetVertex(_VertexMap,_x+1,_y,_z+1,_VertexTransformation);
-   _NeighbourVertexIDs[4,4,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,_VertexTransformation);
-   _NeighbourVertexIDs[4,4,4] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,_VertexTransformation);
+   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,0,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,0,4] := GetVertex(_VertexMap,_x,_y,_z+1,1,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,4,0] := GetVertex(_VertexMap,_x,_y+1,_z,2,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,4,4] := GetVertex(_VertexMap,_x,_y+1,_z+1,3,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[4,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,4,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[4,0,4] := GetVertex(_VertexMap,_x+1,_y,_z+1,5,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[4,4,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,6,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[4,4,4] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,7,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
 end;
 
 procedure CInterpolationTrianglesSupporter.AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
@@ -86,10 +86,10 @@ begin
       end;
       Mult2 := Mult2 * 2;
    end;
-   if Config = 255 then   // this "if" is for debugging only.
-      ShowMessage('Configuration is 255: Vertexes are: (' + IntToStr(Vertexes[0]) + ',' + IntToStr(Vertexes[1]) + ',' + IntToStr(Vertexes[2]) + ',' + IntToStr(Vertexes[3]) + ',' + IntToStr(Vertexes[4]) + ',' + IntToStr(Vertexes[5]) + ',' + IntToStr(Vertexes[6]) + ',' + IntToStr(Vertexes[7]) + ').');
-   if QuadConfigStart[config] = QuadConfigStart[config+1] then
-      ShowMessage('Configuration detected and not calculated: ' + IntToStr(Config) + '.');
+//   if Config = 255 then   // this "if" is for debugging only.
+//      ShowMessage('Configuration is 255: Vertexes are: (' + IntToStr(Vertexes[0]) + ',' + IntToStr(Vertexes[1]) + ',' + IntToStr(Vertexes[2]) + ',' + IntToStr(Vertexes[3]) + ',' + IntToStr(Vertexes[4]) + ',' + IntToStr(Vertexes[5]) + ',' + IntToStr(Vertexes[6]) + ',' + IntToStr(Vertexes[7]) + ').');
+//   if QuadConfigStart[config] = QuadConfigStart[config+1] then
+//      ShowMessage('Configuration detected and not calculated: ' + IntToStr(Config) + '.');
    // Add the new quads.
    i := QuadConfigStart[config];
    while i < QuadConfigStart[config+1] do // config will always be below 255
@@ -101,7 +101,8 @@ begin
             ShowMessage('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
          end;
          // Add face.
-         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') has been constructed.');
+         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],3]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],1]],_Color);
       end
       else if AllowedFaces[QuadFaces[QuadConfigData[i]]] then
       begin
@@ -111,7 +112,12 @@ begin
          end;
          // This condition was splitted to avoid access violations.
          // Add face.
-         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been constructed.');
+         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],3]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],1]],_Color);
+      end
+      else
+      begin
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been rejected.');
       end;
       // else does not add face.
       inc(i);
@@ -123,12 +129,18 @@ begin
       if (TriangleFaces[TriConfigData[i]] = -1) then
       begin
          // Add face.
-         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],2]],Vertexes[TriangleSet[TriConfigData[i],1]],_Color);
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') has been constructed.');
       end
       else if AllowedFaces[TriangleFaces[TriConfigData[i]]] then
       begin
          // Add face.
-         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],2]],Vertexes[TriangleSet[TriConfigData[i],1]],_Color);
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') from the side ' + IntToStr(TriangleFaces[TriConfigData[i]]) +  ' has been constructed.');
+      end
+      else
+      begin
+//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') from the side ' + IntToStr(TriangleFaces[TriConfigData[i]]) +  ' has been rejected.');
       end;
       inc(i);
    end;
@@ -161,13 +173,15 @@ begin
       begin
          // add this colour.
          CurrentNormal := Cube[CubeConfigData[i]];
-         _Voxel.GetVoxelSafe(Round(_x + CurrentNormal.X),Round(_y + CurrentNormal.Y),Round(_z + CurrentNormal.Z),v);
-         if v.Used then
+         if _Voxel.GetVoxelSafe(Round(_x + CurrentNormal.X),Round(_y + CurrentNormal.Y),Round(_z + CurrentNormal.Z),v) then
          begin
-            r := r + GetRValue(_Palette[v.Colour]);
-            g := g + GetGValue(_Palette[v.Colour]);
-            b := b + GetBValue(_Palette[v.Colour]);
-            inc(numColours);
+            if v.Used then
+            begin
+               r := r + GetRValue(_Palette[v.Colour]);
+               g := g + GetGValue(_Palette[v.Colour]);
+               b := b + GetBValue(_Palette[v.Colour]);
+               inc(numColours);
+            end;
          end;
          inc(i);
       end;
@@ -194,7 +208,9 @@ begin
    end;
 end;
 
-function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z: integer; const _VertexTransformation: aint32): integer;
+function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
+const
+   RegionSet: array[0..7,0..2] of byte = ((0,0,0),(0,0,1),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1));
 begin
    if _VertexMap.isPixelValid(_x,_y,_z) then
    begin
@@ -202,7 +218,14 @@ begin
       if Result <> C_VMG_NO_VERTEX then
       begin
          if _VertexTransformation[Result] <> Result then
-            Result := C_VMG_NO_VERTEX;
+         begin
+            if _VoxelMap.MapSafe[_x + RegionSet[_reference,0],_y + RegionSet[_reference,1],_z + RegionSet[_reference,2]] > 256  then
+            begin
+               AddVertexToTarget(Result,_VertexList,_NumVertices,_x,_y,_z);
+            end
+            else
+               Result := C_VMG_NO_VERTEX;
+         end;
       end;
    end
    else

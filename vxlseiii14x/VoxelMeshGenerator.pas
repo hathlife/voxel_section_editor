@@ -923,8 +923,9 @@ begin
                   // exists, we'll fill every vertex in its face. A similar
                   // approach applies to neighbour edges and vertexes.
 
-                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,x-1,y-1,z-1,_VertexTransformation);
-                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x-1,y-1,z-1);
+//                  ShowMessage('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,_VertexTransformation,_NumVertices,VertexList);
+                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
                   Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig);
                end
                else
@@ -932,23 +933,27 @@ begin
                   // Does not subdivide it.
 
                   // Find faces
-                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,255));
+//                  ShowMessage('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
+                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
                end;
             end;
          end;
-   if (VertexList.Count > 0) and ((TriangleList.Count + QuadList.Count) > 0) then
+   if ((TriangleList.Count + QuadList.Count) > 0) then
    begin
       // Build new vertexes.
-      VertexList.GoToFirstElement;
-      SetLength(_Vertices,_NumVertices);
-      for x := OldNumVertices to High(_Vertices) do
+      if (VertexList.Count > 0) then
       begin
-         _Vertices[x].X := VertexList.X;
-         _Vertices[x].Y := VertexList.Y;
-         _Vertices[x].Z := VertexList.Z;
-         VertexList.GoToNextElement;
+         VertexList.GoToFirstElement;
+         SetLength(_Vertices,_NumVertices);
+         for x := OldNumVertices to High(_Vertices) do
+         begin
+            _Vertices[x].X := VertexList.X;
+            _Vertices[x].Y := VertexList.Y;
+            _Vertices[x].Z := VertexList.Z;
+            VertexList.GoToNextElement;
+         end;
+         SetLength(_VertexTransformation,_NumVertices);
       end;
-      SetLength(_VertexTransformation,_NumVertices);
 
       // Add all new faces
       _Geometry.AddQuadsFromList(QuadList,_Vertices);
