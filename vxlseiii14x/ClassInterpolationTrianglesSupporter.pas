@@ -89,27 +89,27 @@ begin
 //   if Config = 255 then   // this "if" is for debugging only.
 //      ShowMessage('Configuration is 255: Vertexes are: (' + IntToStr(Vertexes[0]) + ',' + IntToStr(Vertexes[1]) + ',' + IntToStr(Vertexes[2]) + ',' + IntToStr(Vertexes[3]) + ',' + IntToStr(Vertexes[4]) + ',' + IntToStr(Vertexes[5]) + ',' + IntToStr(Vertexes[6]) + ',' + IntToStr(Vertexes[7]) + ').');
 //   if QuadConfigStart[config] = QuadConfigStart[config+1] then
-//      ShowMessage('Configuration detected and not calculated: ' + IntToStr(Config) + '.');
+//      ShowMessage('Configuration detected and not calculated: ' + IntToStr(Config) + '. The vertexes are respectively: (' + IntToStr(Vertexes[0]) + ',' + IntToStr(Vertexes[1]) + ',' + IntToStr(Vertexes[2]) + ',' + IntToStr(Vertexes[3]) + ',' + IntToStr(Vertexes[4]) + ',' + IntToStr(Vertexes[5]) + ',' + IntToStr(Vertexes[6]) + ',' + IntToStr(Vertexes[7]) + ').');
    // Add the new quads.
    i := QuadConfigStart[config];
    while i < QuadConfigStart[config+1] do // config will always be below 255
    begin
       if (QuadFaces[QuadConfigData[i]] = -1) then
       begin
-         if (Vertexes[QuadSet[QuadConfigData[i],0]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] <= 0) then
-         begin
-            ShowMessage('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
-         end;
+//         if (Vertexes[QuadSet[QuadConfigData[i],0]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] <= 0) then
+//         begin
+//           ShowMessage('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
+//         end;
          // Add face.
-//         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') has been constructed.');
+ //        ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') has been constructed.');
          _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],3]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],1]],_Color);
       end
       else if AllowedFaces[QuadFaces[QuadConfigData[i]]] then
       begin
-         if (Vertexes[QuadSet[QuadConfigData[i],0]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] <= 0) then
-         begin
-            ShowMessage('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
-         end;
+//         if (Vertexes[QuadSet[QuadConfigData[i],0]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] <= 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] <= 0) then
+//         begin
+//            ShowMessage('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
+//         end;
          // This condition was splitted to avoid access violations.
          // Add face.
 //         ShowMessage('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been constructed.');
@@ -210,21 +210,28 @@ end;
 
 function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
 const
-   RegionSet: array[0..7,0..2] of byte = ((0,0,0),(0,0,1),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1));
+   RegionSet: array[0..7,0..2] of short = ((-1,-1,-1),(-1,-1,0),(-1,0,-1),(-1,0,0),(0,-1,-1),(0,-1,0),(0,0,-1),(0,0,0));
+   VertexBit: array[0..7] of byte = (1,2,4,8,16,32,64,128);
 begin
    if _VertexMap.isPixelValid(_x,_y,_z) then
    begin
       Result := _VertexMap.DataUnsafe[_x,_y,_z];
       if Result <> C_VMG_NO_VERTEX then
       begin
+{
          if _VertexTransformation[Result] <> Result then
          begin
             if _VoxelMap.MapSafe[_x + RegionSet[_reference,0],_y + RegionSet[_reference,1],_z + RegionSet[_reference,2]] > 256  then
             begin
-               AddVertexToTarget(Result,_VertexList,_NumVertices,_x,_y,_z);
+               //AddVertexToTarget(Result,_VertexList,_NumVertices,_x,_y,_z);
             end
             else
                Result := C_VMG_NO_VERTEX;
+         end;
+}
+         if (Round(_VoxelMap.MapSafe[_x - RegionSet[_reference,0],_y - RegionSet[_reference,1],_z - RegionSet[_reference,2]]) and VertexBit[_reference]) = 0 then
+         begin
+            Result := C_VMG_NO_VERTEX;
          end;
       end;
    end

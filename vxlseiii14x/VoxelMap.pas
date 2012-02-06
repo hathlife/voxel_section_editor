@@ -8,7 +8,7 @@ unit VoxelMap;
 interface
 
 uses BasicDataTypes, Class3DPointList, Voxel, Normals, BasicConstants,
-   BasicFunctions, VolumeGreyData;
+   BasicFunctions, VolumeGreyData, Dialogs, SysUtils;
 
 type
    TVoxelMap = class
@@ -1051,6 +1051,7 @@ begin
                         end;
                         // Finally, we write the value of the interpolation zone
                         // here.
+//                        ShowMessage('Location: (' + IntToStr(x) + ',' + IntToStr(y) + ',' + IntToStr(z) + '), config is ' + IntToStr(finalBitValue) + ' and VertexCounter is (' + IntToStr(VertexCounter[0]) + ',' + IntToStr(VertexCounter[1]) + ',' + IntToStr(VertexCounter[2]) + ',' + IntToStr(VertexCounter[3]) + ',' + IntToStr(VertexCounter[4]) + ',' + IntToStr(VertexCounter[5]) + ',' + IntToStr(VertexCounter[6]) + ',' + IntToStr(VertexCounter[7]) + ').');
                         FMap.DataUnsafe[x,y,z] := finalBitValue;
                      end;
                   end;
