@@ -8,6 +8,8 @@ uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
    MeshGeometryBase, MeshBRepGeometry, ClassMeshGeometryList,
    ClassInterpolationTrianglesSupporter, Dialogs, SysUtils;
 
+{$INCLUDE Global_Conditionals.inc}
+
 type
    TVoxelMeshGenerator = class
       private
@@ -36,6 +38,8 @@ type
     end;
 
 implementation
+
+uses GlobalVars;
 
 procedure TVoxelMeshGenerator.SetupVertexMap(var _VertexMap: T3DVolumeGreyIntData; _XSize,_YSize,_ZSize: integer);
 begin
@@ -923,7 +927,9 @@ begin
                   // exists, we'll fill every vertex in its face. A similar
                   // approach applies to neighbour edges and vertexes.
 
-//                  ShowMessage('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+                  {$ifdef MESH_TEST}
+                  GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+                  {$endif}
                   Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,_VertexTransformation,_NumVertices,VertexList);
                   Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
                   Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig);
@@ -933,7 +939,9 @@ begin
                   // Does not subdivide it.
 
                   // Find faces
-//                  ShowMessage('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
+                  {$ifdef MESH_TEST}
+                  GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
+                  {$endif}
                   Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
                end;
             end;
@@ -1301,10 +1309,21 @@ begin
    _Geometry.GoToFirstElement;
    Geometry := PMeshBRepGeometry(_Geometry.Current);
    // Let's map our voxels.
+   {$ifdef MESH_TEST}
+   GlobalVars.MeshFile.Add('Initializing Mesh Extraction');
+   GlobalVars.MeshFile.Add('...');
+   GlobalVars.MeshFile.Add('Surface Detection Starts now...');
+  {$endif}
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceAndInterpolationMap;
 
+   {$ifdef MESH_TEST}
+   GlobalVars.MeshFile.Add('Model Generation Starts now...');
+  {$endif}
    BuildModelFromVoxelMapWithInterpolationZones(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
+   {$ifdef MESH_TEST}
+   GlobalVars.MeshFile.Add('Mesh Extraction has been terminated...');
+  {$endif}
 
    VoxelMap.Free;
 end;
