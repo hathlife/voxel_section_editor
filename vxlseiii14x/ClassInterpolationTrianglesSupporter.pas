@@ -20,7 +20,8 @@ type
          procedure AddVertexToTarget (var _Target: integer; var _VertexList: CVertexList; var _PotentialID : longword; _x,_y,_z: single);
          function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
          procedure DetectPotentialVertexes(const _Neighbours: T3DBooleanMap; const _VoxelMap: TVoxelMap; _x, _y, _z: integer);
-         procedure AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces: integer);
+         procedure AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces,_SubdivisionSituation: integer);
+         function GetSubdivisionNeighboursConfig(const _VoxelMap: TVoxelMap; _x,_y,_z: integer): integer;
    end;
 
 implementation
@@ -49,15 +50,15 @@ end;
 
 procedure CInterpolationTrianglesSupporter.AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
 const
-   QuadSet: array[1..24,0..3] of byte = ((0,1,5,4),(0,2,3,1),(0,4,6,2),(1,3,7,5),(2,6,7,3),(4,5,7,6),(0,1,3,2),(0,4,5,1),(2,4,5,3),(0,2,6,4),(1,3,6,4),(1,2,6,5),(1,5,7,3),(0,5,7,2),(0,4,7,3),(2,3,7,6),(0,1,7,6),(0,3,7,4),(1,5,6,2),(4,6,7,5),(0,6,7,1),(0,2,7,5),(1,4,6,3),(2,3,5,4));
+   QuadSet: array[1..24,0..3] of byte = ((0,4,5,1),(0,1,3,2),(0,2,6,4),(1,5,7,3),(2,3,7,6),(4,6,7,5),(0,2,3,1),(0,1,5,4),(2,3,5,4),(0,4,6,2),(1,4,6,3),(1,5,6,2),(1,3,7,5),(0,2,7,5),(0,3,7,4),(2,6,7,3),(0,6,7,1),(0,4,7,3),(1,2,6,5),(4,5,7,6),(0,1,7,6),(0,5,7,2),(1,3,6,4),(2,4,5,3));
    QuadFaces: array[1..24] of shortint = (2,0,4,5,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
    QuadConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,11,11,12,12,12,12,12,12,13,13,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,18,18,19,19,22,22,22,22,23,23,24,24,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,31,31,31,32,35,35,35,35,36,36,36,36,37,37,37,38,41,41,41,42,45,45,45,45,45,45,45,45,45,45,45,45,45,46,47,48,51,51,51,51,51,51,52,52,53,53,53,53,53,54,57,58,61,61,61,61,61,61,61,61,61,61,61,62,63,64,65,68,71,72,73,74,77,78,81,82,85,86,87,90,93,96,99,102);
    QuadConfigData: array[0..101] of byte = (7,2,2,8,1,1,1,2,9,2,10,3,3,2,3,11,2,1,3,1,3,12,1,3,1,2,3,2,2,13,4,4,2,4,14,1,1,4,1,4,15,4,1,2,4,16,5,5,2,5,17,3,3,5,3,5,18,5,2,3,5,4,4,5,5,4,5,19,2,4,5,20,6,6,1,6,21,6,3,6,22,6,1,3,6,6,6,4,6,23,1,4,6,5,6,24,3,5,6,4,5,6);
 
-   TriangleSet: array[1..80,0..2] of byte = ((0,1,4),(0,4,2),(1,3,4),(2,4,3),(0,1,5),(0,5,2),(1,3,5),(2,5,3),(0,2,1),(1,2,5),(2,4,5),(0,3,1),(0,4,3),(3,4,5),(0,1,6),(0,6,2),(1,3,6),(2,6,3),(1,2,6),(1,6,4),(0,2,3),(0,3,4),(3,6,4),(0,5,6),(3,6,5),(0,4,6),(0,6,1),(1,6,5),(4,5,6),(0,2,5),(0,5,4),(2,6,5),(0,6,3),(0,3,5),(0,1,7),(0,7,2),(1,3,7),(2,7,3),(1,7,4),(2,4,7),(0,5,7),(0,7,3),(1,2,3),(1,5,2),(2,5,7),(0,4,7),(0,7,1),(1,7,5),(4,5,7),(2,7,1),(1,4,3),(1,4,5),(3,4,7),(1,3,2),(1,4,2),(1,5,4),(4,7,5),(0,3,7),(0,7,6),(1,7,6),(0,2,7),(0,7,4),(2,6,7),(4,7,6),(2,3,4),(2,4,6),(3,7,4),(1,5,6),(1,6,3),(3,6,7),(5,7,6),(2,3,5),(2,5,6),(3,7,5),(0,6,7),(0,7,5),(1,4,6),(1,6,7),(2,7,5),(1,2,7));
-   TriangleFaces: array[1..80] of shortint = (2,4,-1,-1,2,-1,5,-1,0,-1,-1,0,-1,-1,-1,4,-1,3,-1,-1,0,-1,-1,-1,-1,4,-1,-1,1,-1,2,-1,-1,-1,-1,-1,5,3,-1,-1,-1,-1,0,-1,-1,-1,-1,5,1,-1,-1,2,-1,0,-1,2,1,-1,-1,-1,-1,-1,3,1,-1,4,-1,-1,-1,3,1,-1,-1,5,-1,-1,-1,-1,-1,-1);
+   TriangleSet: array[1..84,0..2] of byte = ((0,4,1),(0,2,4),(1,4,3),(2,3,4),(0,5,1),(0,2,5),(1,5,3),(2,3,5),(0,1,2),(1,5,2),(2,5,4),(0,1,3),(0,3,4),(3,5,4),(0,6,1),(0,2,6),(1,6,3),(2,3,6),(1,6,2),(1,4,6),(0,3,2),(0,4,3),(3,4,6),(0,6,5),(3,5,6),(0,6,4),(0,1,6),(1,5,6),(4,6,5),(0,5,2),(0,4,5),(2,5,6),(0,3,6),(0,5,3),(0,7,1),(0,2,7),(1,7,3),(2,3,7),(1,4,7),(2,7,4),(0,7,5),(0,3,7),(1,3,2),(1,2,5),(2,7,5),(0,7,4),(0,1,7),(1,5,7),(4,7,5),(2,1,7),(1,3,4),(1,5,4),(3,7,4),(1,2,3),(1,2,4),(1,4,5),(4,5,7),(0,7,3),(0,6,7),(1,2,6),(1,6,7),(0,7,2),(0,4,7),(2,7,6),(4,6,7),(2,4,3),(2,6,4),(3,4,7),(1,6,5),(1,3,6),(3,7,6),(5,6,7),(2,5,3),(2,6,5),(3,5,7),(0,7,6),(0,5,7),(1,6,4),(1,7,6),(2,4,5),(2,5,7),(1,7,2),(3,4,5),(3,6,4));
+   TriangleFaces: array[1..84] of shortint = (2,4,-1,-1,2,-1,5,-1,0,-1,-1,0,-1,-1,-1,4,-1,3,-1,-1,0,-1,-1,-1,-1,4,-1,-1,1,-1,2,-1,-1,-1,-1,-1,5,3,-1,-1,-1,-1,0,-1,-1,-1,-1,5,1,-1,-1,2,-1,0,-1,2,1,-1,-1,-1,-1,-1,-1,3,1,-1,4,-1,-1,-1,3,1,-1,-1,5,-1,-1,-1,-1,-1,-1,-1,-1,-1);
    TriConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,12,12,12,12,16,16,16,16,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,22,22,22,22,22,22,22,22,26,26,26,26,26,26,30,30,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,38,38,38,38,42,42,46,46,48,48,48,48,54,54,60,60,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,74,74,74,74,74,74,74,74,74,74,74,74,78,78,78,82,84,84,84,84,88,88,88,88,94,94,94,98,100,100,100,106,110,110,110,110,110,110,110,110,110,110,110,110,110,110,114,118,120,120,120,120,120,120,124,124,130,130,130,130,130,134,136,142,146,146,146,146,146,146,146,146,146,146,146,150,156,160,166,168,172,172,176,180,182,186,188,194,198,202,208,210,214,216,220,224);
-   TriConfigData: array[0..223] of byte = (1,2,3,4,5,6,7,8,9,2,10,11,12,13,7,14,2,7,15,16,17,18,1,9,19,20,21,22,18,23,1,18,5,24,16,7,18,25,26,27,28,29,30,31,32,29,9,29,12,26,33,7,25,29,21,34,31,18,25,29,7,18,25,29,35,36,37,38,1,2,37,39,40,38,5,12,41,42,43,44,45,38,5,38,46,47,48,49,9,2,10,40,50,49,51,52,53,49,12,49,54,55,56,40,38,57,2,40,38,49,21,58,16,59,43,19,37,60,16,37,61,62,63,64,1,9,39,63,50,64,65,66,67,64,21,64,43,37,55,39,66,64,1,37,39,64,68,69,70,71,5,12,24,33,70,71,72,73,74,71,21,34,24,16,74,71,43,71,5,24,16,71,26,31,75,76,77,56,78,48,26,48,11,66,63,79,31,63,80,55,56,48,66,63,9,80,48,63,14,23,70,74,34,26,31,33,70,74,56,70,12,26,33,70,66,74,21,34,31,74,43,55,56,66);
+   TriConfigData: array[0..223] of byte = (1,2,3,4,5,6,7,8,9,2,10,11,12,13,7,14,2,7,15,16,17,18,1,9,19,20,21,22,18,23,1,18,5,24,16,7,18,25,26,27,28,29,30,31,32,29,9,29,12,26,33,7,25,29,21,34,31,18,25,29,7,18,25,29,35,36,37,38,1,2,37,39,40,38,5,12,41,42,43,44,45,38,5,38,46,47,48,49,9,2,10,40,50,49,51,52,53,49,12,49,54,55,56,40,38,57,2,40,38,49,21,58,16,59,43,60,37,61,16,37,62,63,64,65,1,9,39,64,50,65,66,67,68,65,21,65,43,37,55,39,67,65,1,37,39,65,69,70,71,72,5,12,24,33,71,72,73,74,75,72,21,34,24,16,75,72,43,72,5,24,16,72,26,31,76,77,78,56,79,48,26,48,80,67,64,81,31,64,82,55,56,48,67,64,9,82,48,64,83,84,71,75,34,26,31,33,71,75,56,71,12,26,33,71,67,75,21,34,31,75,43,55,56,67);
 var
    Vertexes: array [0..7] of integer;
    AllowedFaces: array[0..5] of boolean;
@@ -111,7 +112,7 @@ begin
          GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') has been constructed.');
          {$endif}
          // Add face.
-         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],3]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],1]],_Color);
+         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
       end
       else if AllowedFaces[QuadFaces[QuadConfigData[i]]] then
       begin
@@ -124,7 +125,7 @@ begin
          GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been constructed.');
          {$endif}
          // Add face.
-         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],3]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],1]],_Color);
+         _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
       end
       else
       begin
@@ -145,7 +146,7 @@ begin
          GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') has been constructed.');
          {$endif}
          // Add face.
-         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],2]],Vertexes[TriangleSet[TriConfigData[i],1]],_Color);
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
       end
       else if AllowedFaces[TriangleFaces[TriConfigData[i]]] then
       begin
@@ -153,7 +154,7 @@ begin
          GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') from the side ' + IntToStr(TriangleFaces[TriConfigData[i]]) +  ' has been constructed.');
          {$endif}
          // Add face.
-         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],2]],Vertexes[TriangleSet[TriConfigData[i],1]],_Color);
+         _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
       end
       else
       begin
@@ -186,6 +187,9 @@ begin
    numColours := 0;
    if maxi > 0 then
    begin
+      {$ifdef MESH_TEST}
+//      GlobalVars.MeshFile.Add('The Region that is being verified is: (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + ') and its config is: ' + IntToStr(_config) + '.');
+      {$endif}
       // visit all cubed neighbours
       i := CubeConfigStart[_config];
       while i < CubeConfigStart[_config+1] do
@@ -196,6 +200,9 @@ begin
          begin
             if v.Used then
             begin
+               {$ifdef MESH_TEST}
+//               GlobalVars.MeshFile.Add('Neighbour: (' + IntToStr(Round(_x + CurrentNormal.X)) + ',' + IntToStr(Round(_y + CurrentNormal.Y)) + ',' + IntToStr(Round(_z + CurrentNormal.Z)) + ') and its colour is: ' + IntToStr(v.Colour) + '[' + IntToStr(_Palette[v.Colour]) + '].');
+               {$endif}
                r := r + GetRValue(_Palette[v.Colour]);
                g := g + GetGValue(_Palette[v.Colour]);
                b := b + GetBValue(_Palette[v.Colour]);
@@ -211,7 +218,10 @@ begin
          b := b / numColours;
       end;
    end;
-   Result := RGB(Round(r),Round(b),Round(g));
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('Region (' + IntToStr(_x) + ',' + IntToStr(_y) + ',' + IntToStr(_z) + ') has colour (' + IntToStr(round(r)) + ',' + IntToStr(round(g)) + ',' + IntToStr(round(b)) + ') with ' + IntToStr(numColours) + ' valid neighbours.');
+   {$endif}
+   Result := RGB(Round(r),Round(g),Round(b));
    Cube.Free;
 end;
 
@@ -302,7 +312,7 @@ begin
    Cube.Free;
 end;
 
-procedure CInterpolationTrianglesSupporter.AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces: integer);
+procedure CInterpolationTrianglesSupporter.AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces,_SubdivisionSituation: integer);
 const
    VertexSet: array[1..125,0..2] of byte = ((0,0,0),(0,0,4),(0,4,0),(0,4,4),(2,0,0),(2,0,4),(2,4,0),(2,4,4),(4,0,0),(4,0,4),(4,4,0),(4,4,4),(0,2,0),(0,2,4),(4,2,0),(4,2,4),(0,0,2),(0,4,2),(4,0,2),(4,4,2),(0,0,1),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1),(0,2,1),(1,2,0),(1,2,1),(0,3,0),(0,3,1),(1,3,0),(1,3,1),(0,4,1),
       (1,4,0),(1,4,1),(0,1,2),(1,0,2),(1,1,2),(0,2,2),(1,2,2),(0,3,2),(1,3,2),(1,4,2),(0,0,3),(0,1,3),(1,0,3),(1,1,3),(0,2,3),(1,2,3),(0,3,3),(1,3,3),(0,4,3),(1,4,3),(0,1,4),(1,0,4),(1,1,4),(1,2,4),(0,3,4),(1,3,4),(1,4,4),(2,0,1),(2,1,0),(2,1,1),(2,2,0),(2,2,1),(2,3,0),(2,3,1),(2,4,1),(2,0,2),(2,1,2),(2,2,2),(2,3,2),(2,4,2),(2,0,3),(2,1,3),(2,2,3),(2,3,3),(2,4,3),(2,1,4),(2,2,4),(2,3,4),(3,0,0),(3,0,1),(3,1,0),(3,1,1),(3,2,0),(3,2,1),(3,3,0),(3,3,1),(3,4,0),(3,4,1),(3,0,2),(3,1,2),(3,2,2),(3,3,2),(3,4,2),(3,0,3),(3,1,3),(3,2,3),(3,3,3),(3,4,3),(3,0,4),(3,1,4),(3,2,4),(3,3,4),(3,4,4),(4,0,1),(4,1,0),(4,1,1),(4,2,1),(4,3,0),(4,3,1),(4,4,1),(4,1,2),(4,2,2),(4,3,2),(4,0,3),(4,1,3),(4,2,3),(4,3,3),(4,4,3),(4,1,4),(4,3,4));
@@ -310,9 +320,10 @@ const
    VertexConfigData: array[0..559] of byte = (1,2,3,4,5,6,7,8,5,6,7,8,9,10,11,12,1,2,13,14,9,10,15,16,13,14,3,4,15,16,11,12,1,17,3,18,9,19,11,20,17,2,18,4,19,10,20,12,1,21,22,23,24,25,26,27,22,23,13,28,26,27,29,30,13,28,31,32,29,30,33,34,31,32,3,35,33,34,36,37,21,17,23,38,25,39,27,40,23,38,28,41,27,40,30,42,28,41,32,43,30,42,34,44,32,43,35,18,34,44,37,45,17,46,38,47,39,48,40,49,38,47,41,50,40,49,42,51,41,50,43,52,42,51,44,53,43,52,18,54,44,53,45,55,46,2,47,56,48,57,49,58,47,56,50,14,49,58,51,59,50,14,52,60,51,59,53,61,52,60,54,4,53,61,55,62,24,25,26,27,5,63,64,65,26,27,29,30,64,65,66,67,29,30,33,34,66,67,68,69,33,34,36,37,68,69,7,70,25,39,27,40,63,71,65,72,27,40,30,42,65,72,67,73,30,42,34,44,67,73,69,74,34,44,37,45,69,
       74,70,75,39,48,40,49,71,76,72,77,40,49,42,51,72,77,73,78,42,51,44,53,73,78,74,79,44,53,45,55,74,79,75,80,48,57,49,58,76,6,77,81,49,58,51,59,77,81,78,82,51,59,53,61,78,82,79,83,53,61,55,62,79,83,80,8,5,63,64,65,84,85,86,87,64,65,66,67,86,87,88,89,66,67,68,69,88,89,90,91,68,69,7,70,90,91,92,93,63,71,65,72,85,94,87,95,65,72,67,73,87,95,89,96,67,73,69,74,89,96,91,97,69,74,70,75,91,97,93,98,71,76,72,77,94,99,95,100,72,77,73,78,95,100,96,101,73,78,74,79,96,101,97,102,74,79,75,80,97,102,98,103,76,6,77,81,99,104,100,105,77,81,78,82,100,105,101,106,78,82,79,83,101,106,102,107,79,83,80,8,102,107,103,108,84,85,86,87,9,109,110,111,86,87,88,89,110,111,15,112,88,89,90,91,15,112,113,114,90,91,92,93,113,114,11,115,85,94,87,95,109,
       19,111,116,87,95,89,96,111,116,112,117,89,96,91,97,112,117,114,118,91,97,93,98,114,118,115,20,94,99,95,100,19,119,116,120,95,100,96,101,116,120,117,121,96,101,97,102,117,121,118,122,97,102,98,103,118,122,20,123,99,104,100,105,119,10,120,124,100,105,101,106,120,124,121,16,101,106,102,107,121,16,122,125,102,107,103,108,122,125,123,12);
-   FaceConfigLimits: array[0..69] of integer = (47,31,59,55,61,62,42,34,34,38,40,32,32,36,40,32,32,36,41,33,33,37,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,26,18,18,22,24,16,16,20,24,16,16,20,25,17,17,21);
+   FaceConfigLimits: array[0..69] of integer = (47,31,59,55,62,61,42,34,34,38,40,32,32,36,40,32,32,36,41,33,33,37,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,26,18,18,22,24,16,16,20,24,16,16,20,25,17,17,21);
    FaceColorConfig: array[0..69]of byte = (26,27,28,29,30,31,7,2,2,5,4,0,0,3,4,0,0,3,8,1,1,6,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,14,19,19,22,21,17,17,20,21,17,17,20,25,18,18,23);
    SubdivisionStart: array[0..4] of byte = (0,2,4,6,70);
+   SubdivisionFaceRestrictions: array[0..3] of byte = (15,51,60,0);
 var
    i,j, subdivisionMode: integer;
    Subdivide,ConfigIs255: boolean;
@@ -321,6 +332,10 @@ begin
    // possible ways and we must ensure that every sub-region will not have a 255
    // config.
    Subdivide := false;
+   {$ifdef MESH_CORRECT}
+   subdivisionMode := 3;
+   {$endif}
+   {$ifndef MESH_CORRECT}
    subdivisionMode := 0;
 
    while (not subdivide) and (subdivisionMode < 3) do
@@ -346,10 +361,26 @@ begin
             inc(i);
       end;
       if ConfigIs255 then
-         inc(subdivisionMode)
+      begin
+         inc(subdivisionMode);
+      end
       else
-         subdivide := true;
+      begin
+         {$ifdef MESH_SUBDIVISION}
+         if _SubdivisionSituation and SubdivisionFaceRestrictions[subdivisionMode] = 0 then
+         begin
+         {$endif}
+            subdivide := true;
+         {$ifdef MESH_SUBDIVISION}
+         end
+         else
+         begin
+            inc(subdivisionMode);
+         end;
+         {$endif}
+      end;
    end;
+   {$endif}
 
    // Now we have to create the new vertexes.
    i := SubdivisionStart[subdivisionMode];
@@ -380,6 +411,28 @@ begin
          _NeighbourVertexIDs[VertexSet[VertexConfigData[j+7],0],VertexSet[VertexConfigData[j+7],1],VertexSet[VertexConfigData[j+7],2]],_AllowedFaces and FaceConfigLimits[i],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[i]));
       inc(i);
    end;
+end;
+
+// We'll use the data this function returns to figure out if certain
+// subdivisions are allowed or not.
+function CInterpolationTrianglesSupporter.GetSubdivisionNeighboursConfig(const _VoxelMap: TVoxelMap; _x,_y,_z: integer): integer;
+begin
+   Result := 0;
+   // Axis X
+   if _VoxelMap.MapSafe[_x-1,_y,_z] = 255 then
+      Result := Result or 32;
+   if _VoxelMap.MapSafe[_x+1,_y,_z] = 255 then
+      Result := Result or 16;
+   // Axis Y
+   if _VoxelMap.MapSafe[_x,_y-1,_z] = 255 then
+      Result := Result or 8;
+   if _VoxelMap.MapSafe[_x,_y+1,_z] = 255 then
+      Result := Result or 4;
+   // Axis Z
+   if _VoxelMap.MapSafe[_x,_y,_z-1] = 255 then
+      Result := Result or 2;
+   if _VoxelMap.MapSafe[_x,_y,_z+1] = 255 then
+      Result := Result or 1;
 end;
 
 end.

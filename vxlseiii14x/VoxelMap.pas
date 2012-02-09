@@ -1056,7 +1056,7 @@ begin
                         // Finally, we write the value of the interpolation zone
                         // here.
                         {$ifdef MESH_TEST}
-                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x) + ',' + IntToStr(y) + ',' + IntToStr(z) + '), config is ' + IntToStr(finalBitValue) + ' and VertexCounter is (' + IntToStr(VertexCounter[0]) + ',' + IntToStr(VertexCounter[1]) + ',' + IntToStr(VertexCounter[2]) + ',' + IntToStr(VertexCounter[3]) + ',' + IntToStr(VertexCounter[4]) + ',' + IntToStr(VertexCounter[5]) + ',' + IntToStr(VertexCounter[6]) + ',' + IntToStr(VertexCounter[7]) + ').');
+                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(finalBitValue) + ' and VertexCounter is (' + IntToStr(VertexCounter[0]) + ',' + IntToStr(VertexCounter[1]) + ',' + IntToStr(VertexCounter[2]) + ',' + IntToStr(VertexCounter[3]) + ',' + IntToStr(VertexCounter[4]) + ',' + IntToStr(VertexCounter[5]) + ',' + IntToStr(VertexCounter[6]) + ',' + IntToStr(VertexCounter[7]) + ').');
                         {$endif}
                         FMap.DataUnsafe[x,y,z] := finalBitValue;
                      end;

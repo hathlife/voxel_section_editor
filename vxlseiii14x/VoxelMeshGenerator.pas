@@ -928,11 +928,15 @@ begin
                   // approach applies to neighbour edges and vertexes.
 
                   {$ifdef MESH_TEST}
+                  GlobalVars.MeshFile.Add('...');
                   GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+                  {$endif}
+                  {$ifdef MESH_SUBDIVISION}
+                  SubdivisionSituation := Tool.GetSubdivisionNeighboursConfig(_VoxelMap,x,y,z);
                   {$endif}
                   Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,_VertexTransformation,_NumVertices,VertexList);
                   Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
-                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig);
+                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig,SubdivisionSituation);
                end
                else
                begin
@@ -940,6 +944,7 @@ begin
 
                   // Find faces
                   {$ifdef MESH_TEST}
+                  GlobalVars.MeshFile.Add('...');
                   GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
                   {$endif}
                   Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
