@@ -31,6 +31,9 @@ type
          procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
+         VUnit: integer; // amount of times the cube is divided for each dimension
+         constructor Create; overload;
+         constructor Create(_VUnit: integer); overload;
          procedure LoadFromVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
          procedure LoadTrianglesFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _TexCoords: TAVector2f; var _Geometry: CMeshGeometryList; var _NumVoxels: longword);
@@ -41,10 +44,20 @@ implementation
 
 uses GlobalVars;
 
+constructor TVoxelMeshGenerator.Create;
+begin
+   VUnit := 1;
+end;
+
+constructor TVoxelMeshGenerator.Create(_VUnit: integer);
+begin
+   VUnit := _VUnit;
+end;
+
 procedure TVoxelMeshGenerator.SetupVertexMap(var _VertexMap: T3DVolumeGreyIntData; _XSize,_YSize,_ZSize: integer);
 begin
    // Let's map the vertices.
-   _VertexMap := T3DVolumeGreyIntData.Create(_XSize,_YSize,_ZSize);
+   _VertexMap := T3DVolumeGreyIntData.Create(VUnit * _XSize,VUnit * _YSize,VUnit * _ZSize);
    // clear map
    _VertexMap.Fill(C_VMG_NO_VERTEX);
 end;
@@ -52,13 +65,22 @@ end;
 procedure TVoxelMeshGenerator.BuildVertexMap(var _VertexMap: T3DVolumeGreyIntData; const _Voxel : TVoxelSection; var _NumVertices, _NumVoxels: longword);
 var
    x,y,z: integer;
+   maxx, maxy, maxz: integer;
    V : TVoxelUnpacked;
 begin
    _NumVertices := 0;
    _NumVoxels := 0;
-   for x := Low(_Voxel.Data) to High(_Voxel.Data) do
-      for y := Low(_Voxel.Data[x]) to High(_Voxel.Data[x]) do
-         for z := Low(_Voxel.Data[x,y]) to High(_Voxel.Data[x,y]) do
+   maxx := VUnit * High(_Voxel.Data);
+   maxy := VUnit * High(_Voxel.Data[0]);
+   maxz := VUnit * High(_Voxel.Data[0,0]);
+   x := Low(_Voxel.Data);
+   while x <= maxx do
+   begin
+      y := Low(_Voxel.Data[x]);
+      while y <= maxy do
+      begin
+         z := Low(_Voxel.Data[x,y]);
+         while z <= maxz do
          begin
             _Voxel.GetVoxel(x,y,z,v);
             if v.Used then
@@ -69,43 +91,48 @@ begin
                   _VertexMap.DataUnsafe[x,y,z] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+1,y,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x+VUnit,y,z] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+1,y,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[x+VUnit,y,z] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y+1,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x,y+VUnit,z] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y+1,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[x,y+VUnit,z] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+1,y+1,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+1,y+1,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y,z+1] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x,y,z+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y,z+1] := _NumVertices;
+                  _VertexMap.DataUnsafe[x,y,z+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+1,y,z+1] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x+VUnit,y,z+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+1,y,z+1] := _NumVertices;
+                  _VertexMap.DataUnsafe[x+VUnit,y,z+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y+1,z+1] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x,y+VUnit,z+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y+1,z+1] := _NumVertices;
+                  _VertexMap.DataUnsafe[x,y+VUnit,z+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+1,y+1,z+1] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+1,y+1,z+1] := _NumVertices;
+                  _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
             end;
+            inc(z,VUnit);
          end;
+         inc(y,VUnit);
+      end;
+      inc(x,VUnit);
+   end;
 
 end;
 
@@ -120,9 +147,9 @@ begin
          begin
             if _VertexMap.DataUnsafe[x,y,z] <> C_VMG_NO_VERTEX then
             begin
-               _Vertices[_VertexMap.DataUnsafe[x,y,z]].X := x;
-               _Vertices[_VertexMap.DataUnsafe[x,y,z]].Y := y;
-               _Vertices[_VertexMap.DataUnsafe[x,y,z]].Z := z;
+               _Vertices[_VertexMap.DataUnsafe[x,y,z]].X := x div VUnit;
+               _Vertices[_VertexMap.DataUnsafe[x,y,z]].Y := y div VUnit;
+               _Vertices[_VertexMap.DataUnsafe[x,y,z]].Z := z div VUnit;
             end;
          end;
 end;
@@ -387,7 +414,7 @@ end;
 
 procedure TVoxelMeshGenerator.FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer);
 var
-   x,y,z,i,f: integer;
+   x,y,z,xU,yU,zU,i,f: integer;
    V : TVoxelUnpacked;
 begin
    for i := Low(_Vertices) to High(_Vertices) do
@@ -395,6 +422,9 @@ begin
       x := Round(_Vertices[i].X);
       y := Round(_Vertices[i].Y);
       z := Round(_Vertices[i].Z);
+      xU := x * VUnit;
+      yU := y * VUnit;
+      zU := z * VUnit;
       if _FaceMap[x,y,z,C_VOXEL_FACE_SIDE] <> C_VMG_NO_VERTEX then
       begin
          // Now that we have the vertices, we can grab voxel data (v).
@@ -404,26 +434,26 @@ begin
             if not v.Used then
             begin
                _Voxel.GetVoxelSafe(x-1,y,z,v);
-               _Faces[f+3] := _VertexMap.DataUnsafe[x,y+1,z+1];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x,y+1,z];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             end
             else
             begin
-               _Faces[f] := _VertexMap.DataUnsafe[x,y+1,z+1];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z+1];
+               _Faces[f] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             end;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x-1,y,z,v);
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y+1,z+1];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := _Voxel.Normals[v.Normal].X;
@@ -441,26 +471,26 @@ begin
             if not v.Used then
             begin
                _Voxel.GetVoxelSafe(x,y-1,z,v);
-               _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z+1];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x+1,y,z];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z+1];
+               _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             end
             else
             begin
-               _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z+1];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x+1,y,z];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             end;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y-1,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := _Voxel.Normals[v.Normal].X;
@@ -478,26 +508,26 @@ begin
             if not v.Used then
             begin
                _Voxel.GetVoxelSafe(x,y,z-1,v);
-               _Faces[f] := _VertexMap.DataUnsafe[x+1,y+1,z];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z];
+               _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             end
             else
             begin
-               _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y+1,z];
-               _Faces[f+2] := _VertexMap.DataUnsafe[x,y+1,z];
-               _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-               _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z];
+               _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+               _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+               _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+               _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             end;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y,z-1,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := _Voxel.Normals[v.Normal].X;
@@ -511,7 +541,7 @@ end;
 
 procedure TVoxelMeshGenerator.FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer);
 var
-   x,y,z,i,f: integer;
+   x,y,z,xU,yU,zU,i,f: integer;
    V : TVoxelUnpacked;
 begin
    for i := Low(_Vertices) to High(_Vertices) do
@@ -524,6 +554,9 @@ begin
       x := Round(_Vertices[i].X);
       y := Round(_Vertices[i].Y);
       z := Round(_Vertices[i].Z);
+      xU := x * VUnit;
+      yU := y * VUnit;
+      zU := z * VUnit;
       if _FaceMap[x,y,z,C_VOXEL_FACE_SIDE] <> C_VMG_NO_VERTEX then
       begin
          // Now that we have the vertices, we can grab voxel data (v).
@@ -533,18 +566,18 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x-1,y,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x,y+1,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end
          else
          begin
             _Voxel.GetVoxelSafe(x-1,y,z,v);
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y+1,z+1];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_SIDE]].X := _Voxel.Normals[v.Normal].X;
@@ -553,10 +586,10 @@ begin
          // Colour
          _Colours[_FaceMap[x,y,z,C_VOXEL_FACE_SIDE]] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z+1]] := _VertexMap.DataUnsafe[x,y+1,z+1];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z]] := _VertexMap.DataUnsafe[x,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z+1]] := _VertexMap.DataUnsafe[x,y,z+1];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
       end;
       if _FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] <> C_VMG_NO_VERTEX then
       begin
@@ -567,18 +600,18 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x,y-1,z,v);
-            _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z+1];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y-1,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]].X := _Voxel.Normals[v.Normal].X;
@@ -587,10 +620,10 @@ begin
          // Colour
          _Colours[_FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT]] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z+1]] := _VertexMap.DataUnsafe[x+1,y,z+1];
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z]] := _VertexMap.DataUnsafe[x+1,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z+1]] := _VertexMap.DataUnsafe[x,y,z+1];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
       end;
       if _FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] <> C_VMG_NO_VERTEX then
       begin
@@ -601,18 +634,18 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x,y,z-1,v);
-            _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y+1,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y,z-1,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+2] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+2] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
          end;
          // Normals
          _FaceNormals[_FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]].X := _Voxel.Normals[v.Normal].X;
@@ -621,17 +654,17 @@ begin
          // Colour
          _Colours[_FaceMap[x,y,z,C_VOXEL_FACE_DEPTH]] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y+1,z]] := _VertexMap.DataUnsafe[x+1,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z]] := _VertexMap.DataUnsafe[x,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z]] := _VertexMap.DataUnsafe[x+1,y,z];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
       end;
    end;
 end;
 
 procedure TVoxelMeshGenerator.FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer);
 var
-   x,y,z,i,f,fl,cv: integer;
+   x,y,z,xU,yU,zU,i,f,fl,cv: integer;
    V : TVoxelUnpacked;
    maxVertex : integer;
 begin
@@ -650,6 +683,9 @@ begin
       x := Round(_Vertices[i].X);
       y := Round(_Vertices[i].Y);
       z := Round(_Vertices[i].Z);
+      xU := x * VUnit;
+      yU := y * VUnit;
+      zU := z * VUnit;
       if _FaceMap[x,y,z,C_VOXEL_FACE_SIDE] <> C_VMG_NO_VERTEX then
       begin
          // add the central vertex.
@@ -666,33 +702,33 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x-1,y,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x,y+1,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x,y,z+1];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x,y+1,z+1];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
             _Faces[f+11] := cv;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x-1,y,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x,y+1,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x,y+1,z+1];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x,y+1,z+1];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             _Faces[f+11] := cv;
          end;
          // Normals
@@ -714,10 +750,10 @@ begin
          _Colours[fl+2] := _Palette.ColourGL4[v.Colour];
          _Colours[fl+3] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z+1]] := _VertexMap.DataUnsafe[x,y+1,z+1];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z]] := _VertexMap.DataUnsafe[x,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z+1]] := _VertexMap.DataUnsafe[x,y,z+1];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU+VUnit];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
       end;
       if _FaceMap[x,y,z,C_VOXEL_FACE_HEIGHT] <> C_VMG_NO_VERTEX then
       begin
@@ -735,33 +771,33 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x,y-1,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x,y,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x+1,y,z+1];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x+1,y,z+1];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             _Faces[f+11] := cv;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y-1,z,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z+1];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x,y,z+1];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x,y,z+1];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x+1,y,z+1];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
             _Faces[f+11] := cv;
          end;
          // Normals
@@ -783,10 +819,10 @@ begin
          _Colours[fl+2] := _Palette.ColourGL4[v.Colour];
          _Colours[fl+3] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z+1]] := _VertexMap.DataUnsafe[x+1,y,z+1];
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z]] := _VertexMap.DataUnsafe[x+1,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z+1]] := _VertexMap.DataUnsafe[x,y,z+1];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU+VUnit];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU+VUnit]] := _VertexMap.DataUnsafe[xU,yU,zU+VUnit];
       end;
       if _FaceMap[x,y,z,C_VOXEL_FACE_DEPTH] <> C_VMG_NO_VERTEX then
       begin
@@ -804,33 +840,33 @@ begin
             _Voxel.GetVoxelSafe(x,y,z,v);
             if not v.Used then
                _Voxel.GetVoxelSafe(x,y,z-1,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x,y+1,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x+1,y+1,z];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x+1,y+1,z];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             _Faces[f+11] := cv;
          end
          else
          begin
             _Voxel.GetVoxelSafe(x,y,z-1,v);
-            _Faces[f] := _VertexMap.DataUnsafe[x+1,y+1,z];
-            _Faces[f+1] := _VertexMap.DataUnsafe[x,y+1,z];
+            _Faces[f] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+            _Faces[f+1] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
             _Faces[f+2] := cv;
-            _Faces[f+3] := _VertexMap.DataUnsafe[x,y+1,z];
-            _Faces[f+4] := _VertexMap.DataUnsafe[x,y,z];
+            _Faces[f+3] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+            _Faces[f+4] := _VertexMap.DataUnsafe[xU,yU,zU];
             _Faces[f+5] := cv;
-            _Faces[f+6] := _VertexMap.DataUnsafe[x,y,z];
-            _Faces[f+7] := _VertexMap.DataUnsafe[x+1,y,z];
+            _Faces[f+6] := _VertexMap.DataUnsafe[xU,yU,zU];
+            _Faces[f+7] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
             _Faces[f+8] := cv;
-            _Faces[f+9] := _VertexMap.DataUnsafe[x+1,y,z];
-            _Faces[f+10] := _VertexMap.DataUnsafe[x+1,y+1,z];
+            _Faces[f+9] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
+            _Faces[f+10] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
             _Faces[f+11] := cv;
          end;
          // Normals
@@ -852,10 +888,10 @@ begin
          _Colours[fl+2] := _Palette.ColourGL4[v.Colour];
          _Colours[fl+3] := _Palette.ColourGL4[v.Colour];
          // Ensure that these vertexes are used in the model.
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y+1,z]] := _VertexMap.DataUnsafe[x+1,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y+1,z]] := _VertexMap.DataUnsafe[x,y+1,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x,y,z]] := _VertexMap.DataUnsafe[x,y,z];
-         _VertexTransformation[_VertexMap.DataUnsafe[x+1,y,z]] := _VertexMap.DataUnsafe[x+1,y,z];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU+VUnit,zU]] := _VertexMap.DataUnsafe[xU,yU+VUnit,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU,yU,zU]] := _VertexMap.DataUnsafe[xU,yU,zU];
+         _VertexTransformation[_VertexMap.DataUnsafe[xU+VUnit,yU,zU]] := _VertexMap.DataUnsafe[xU+VUnit,yU,zU];
       end;
    end;
 end;
