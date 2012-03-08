@@ -28,7 +28,7 @@ type
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
-         procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+         procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
          VUnit: integer; // amount of times the cube is divided for each dimension
@@ -64,74 +64,80 @@ end;
 
 procedure TVoxelMeshGenerator.BuildVertexMap(var _VertexMap: T3DVolumeGreyIntData; const _Voxel : TVoxelSection; var _NumVertices, _NumVoxels: longword);
 var
-   x,y,z: integer;
+   x,y,z,xVert,yVert,zVert: integer;
    maxx, maxy, maxz: integer;
    V : TVoxelUnpacked;
 begin
    _NumVertices := 0;
    _NumVoxels := 0;
-   maxx := VUnit * High(_Voxel.Data);
-   maxy := VUnit * High(_Voxel.Data[0]);
-   maxz := VUnit * High(_Voxel.Data[0,0]);
+   maxx := High(_Voxel.Data);
+   maxy := High(_Voxel.Data[0]);
+   maxz := High(_Voxel.Data[0,0]);
    x := Low(_Voxel.Data);
+   xVert := x;
    while x <= maxx do
    begin
       y := Low(_Voxel.Data[x]);
+      yVert := y;
       while y <= maxy do
       begin
          z := Low(_Voxel.Data[x,y]);
+         zVert := z;
          while z <= maxz do
          begin
             _Voxel.GetVoxel(x,y,z,v);
             if v.Used then
             begin
                inc(_NumVoxels);
-               if _VertexMap.DataUnsafe[x,y,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert,yVert,zVert] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert,yVert,zVert] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+VUnit,y,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert+VUnit,yVert,zVert] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+VUnit,y,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert+VUnit,yVert,zVert] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y+VUnit,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert,yVert+VUnit,zVert] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y+VUnit,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert,yVert+VUnit,zVert] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert+VUnit,yVert+VUnit,zVert] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert+VUnit,yVert+VUnit,zVert] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y,z+VUnit] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert,yVert,zVert+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y,z+VUnit] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert,yVert,zVert+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+VUnit,y,z+VUnit] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert+VUnit,yVert,zVert+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+VUnit,y,z+VUnit] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert+VUnit,yVert,zVert+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x,y+VUnit,z+VUnit] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert,yVert+VUnit,zVert+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x,y+VUnit,z+VUnit] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert,yVert+VUnit,zVert+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
-               if _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z+VUnit] = C_VMG_NO_VERTEX then
+               if _VertexMap.DataUnsafe[xVert+VUnit,yVert+VUnit,zVert+VUnit] = C_VMG_NO_VERTEX then
                begin
-                  _VertexMap.DataUnsafe[x+VUnit,y+VUnit,z+VUnit] := _NumVertices;
+                  _VertexMap.DataUnsafe[xVert+VUnit,yVert+VUnit,zVert+VUnit] := _NumVertices;
                   inc(_NumVertices);
                end;
             end;
-            inc(z,VUnit);
+            inc(z);
+            inc(zVert,VUnit);
          end;
-         inc(y,VUnit);
+         inc(y);
+         inc(yVert,VUnit);
       end;
-      inc(x,VUnit);
+      inc(x);
+      inc(xVert,VUnit);
    end;
 
 end;
@@ -905,26 +911,23 @@ end;
 // Here we build triangles or quads at interpolation zones.
 // Under Construction
 
-procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
 var
-   x,y,z,OldNumVertices: integer;
+   x,y,z,id,OldNumVertices,VUnitPlus1: integer;
    V : TVoxelUnpacked;
    c: single;
-   SubdivisionSituation,FaceConfig : integer;
+   FaceConfig : integer;
    NeighbourVertexIDs: T3DIntGrid;
-   SubdivisionVertexes: T3DBooleanMap;
-   VertexList: CVertexList;
    TriangleList: CTriangleList;
    QuadList: CQuadList;
    Tool: CInterpolationTrianglesSupporter;
 begin
+   VUnitPlus1 := VUnit + 1;
    Tool := CInterpolationTrianglesSupporter.Create;
-   VertexList := CVertexList.Create;
    TriangleList := CTriangleList.Create;
    QuadList := CQuadList.Create;
    OldNumVertices := _NumVertices;
-   SetLength(NeighbourVertexIDs,5,5,5);
-   SetLength(SubdivisionVertexes,5,5,5);
+   SetLength(NeighbourVertexIDs,VUnitPlus1,VUnitPlus1,VUnitPlus1);
    // visit every region.
    for x := 0 to _VoxelMap.GetMaxX do
       for y := 0 to _VoxelMap.GetMaxY do
@@ -936,19 +939,19 @@ begin
                // Detect face configuration
                FaceConfig := 0;
                // Axis X
-               if _VoxelMap.MapSafe[x-1,y,z] > 0.9 then
+               if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
                   FaceConfig := FaceConfig or 32;
-               if _VoxelMap.MapSafe[x+1,y,z] > 0.9 then
+               if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
                   FaceConfig := FaceConfig or 16;
                // Axis Y
-               if _VoxelMap.MapSafe[x,y-1,z] > 0.9 then
+               if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
                   FaceConfig := FaceConfig or 8;
-               if _VoxelMap.MapSafe[x,y+1,z] > 0.9 then
+               if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
                   FaceConfig := FaceConfig or 4;
                // Axis Z
-               if _VoxelMap.MapSafe[x,y,z-1] > 0.9 then
+               if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
                   FaceConfig := FaceConfig or 2;
-               if _VoxelMap.MapSafe[x,y,z+1] > 0.9 then
+               if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
                   FaceConfig := FaceConfig or 1;
 
                // Should we subdivide it? If an interpolation zone has all 8
@@ -967,12 +970,9 @@ begin
                   GlobalVars.MeshFile.Add('...');
                   GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
                   {$endif}
-                  {$ifdef MESH_SUBDIVISION}
-                  SubdivisionSituation := Tool.GetSubdivisionNeighboursConfig(_VoxelMap,x,y,z);
-                  {$endif}
-                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,_VertexTransformation,_NumVertices,VertexList);
-                  Tool.DetectPotentialVertexes(SubdivisionVertexes,_VoxelMap,x,y,z);
-                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,SubdivisionVertexes,NeighbourVertexIDs,VertexList,TriangleList,QuadList,_NumVertices,x-1,y-1,z-1,FaceConfig,SubdivisionSituation);
+                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
+                  Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
+                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,x-1,y-1,z-1,FaceConfig);
                end
                else
                begin
@@ -983,23 +983,39 @@ begin
                   GlobalVars.MeshFile.Add('...');
                   GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
                   {$endif}
-                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,_NumVertices,VertexList,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
+                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
                end;
             end;
          end;
    if ((TriangleList.Count + QuadList.Count) > 0) then
    begin
       // Build new vertexes.
-      if (VertexList.Count > 0) then
+      if _NumVertices > OldNumVertices then
       begin
-         VertexList.GoToFirstElement;
          SetLength(_Vertices,_NumVertices);
-         for x := OldNumVertices to High(_Vertices) do
+         x := 0;
+         while x <= _VertexMap.MaxX do
          begin
-            _Vertices[x].X := VertexList.X;
-            _Vertices[x].Y := VertexList.Y;
-            _Vertices[x].Z := VertexList.Z;
-            VertexList.GoToNextElement;
+            y := 0;
+            while y <= _VertexMap.MaxY do
+            begin
+               z := 0;
+               while z <= _VertexMap.MaxZ do
+               begin
+                  // it needs a condition.
+                  id := _VertexMap.DataUnsafe[x,y,z];
+                  if id <> C_VMG_NO_VERTEX then
+                  begin
+                     _Vertices[id].X := x / VUnit;
+                     _Vertices[id].Y := y / VUnit;
+                     _Vertices[id].Z := z / VUnit;
+                  end;
+                  // condition ends here.
+                  inc(z,1);
+               end;
+               inc(y,1);
+            end;
+            inc(x,1);
          end;
          SetLength(_VertexTransformation,_NumVertices);
       end;
@@ -1033,13 +1049,12 @@ begin
       end;
    end;
    // Free memory.
-   VertexList.Free;
    TriangleList.Free;
    QuadList.Free;
    Tool.Free;
-   for x := 0 to 3 do
+   for x := 0 to 2 do
    begin
-      for y := 0 to 3 do
+      for y := 0 to 2 do
       begin
          SetLength(NeighbourVertexIDs[x,y],0);
       end;
@@ -1355,6 +1370,7 @@ begin
    GlobalVars.MeshFile.Add('...');
    GlobalVars.MeshFile.Add('Surface Detection Starts now...');
   {$endif}
+   VUnit := 2;
    VoxelMap := TVoxelMap.Create(_Voxel,1);
    VoxelMap.GenerateSurfaceAndInterpolationMap;
 

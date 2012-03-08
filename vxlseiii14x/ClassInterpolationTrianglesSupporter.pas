@@ -12,40 +12,38 @@ type
    CInterpolationTrianglesSupporter = class
       public
          // Initialize
-         procedure InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z: integer; const _VertexTransformation: aint32; var _NumVertices: longword; var _VertexList: CVertexList);
+         procedure InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z,_VUnit: integer; const _VertexTransformation: aint32; var _NumVertices: longword);
 
          // Misc
          procedure AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
          function GetColour(const _Voxel : TVoxelSection; const _Palette: TPalette; _x,_y,_z,_config: integer): Cardinal;
-         procedure AddVertexToTarget (var _Target: integer; var _VertexList: CVertexList; var _PotentialID : longword; _x,_y,_z: single);
-         function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
-         procedure DetectPotentialVertexes(const _Neighbours: T3DBooleanMap; const _VoxelMap: TVoxelMap; _x, _y, _z: integer);
-         procedure AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces,_SubdivisionSituation: integer);
-         function GetSubdivisionNeighboursConfig(const _VoxelMap: TVoxelMap; _x,_y,_z: integer): integer;
+         function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference,_VUnit: integer; var _NumVertices: longword; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
+         procedure DetectPotentialVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
+         procedure AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; _x, _y, _z, _AllowedFaces: integer);
    end;
 
 implementation
 
 uses GlobalVars;
 
-procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z: integer; const _VertexTransformation: aint32; var _NumVertices: longword; var _VertexList: CVertexList);
+procedure CInterpolationTrianglesSupporter.InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z, _VUnit: integer; const _VertexTransformation: aint32; var _NumVertices: longword);
 var
    x,y,z: integer;
 begin
-   for x := 0 to 4 do
-      for y := 0 to 4 do
-         for z := 0 to 4 do
+   for x := 0 to 2 do
+      for y := 0 to 2 do
+         for z := 0 to 2 do
          begin
             _NeighbourVertexIDs[x,y,z] := C_VMG_NO_VERTEX;
          end;
-   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,0,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[0,0,4] := GetVertex(_VertexMap,_x,_y,_z+1,1,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[0,4,0] := GetVertex(_VertexMap,_x,_y+1,_z,2,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[0,4,4] := GetVertex(_VertexMap,_x,_y+1,_z+1,3,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[4,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,4,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[4,0,4] := GetVertex(_VertexMap,_x+1,_y,_z+1,5,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[4,4,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,6,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
-   _NeighbourVertexIDs[4,4,4] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,7,_NumVertices,_VertexList,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,0,0] := GetVertex(_VertexMap,_x,_y,_z,0,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,0,2] := GetVertex(_VertexMap,_x,_y,_z+1,1,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,2,0] := GetVertex(_VertexMap,_x,_y+1,_z,2,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[0,2,2] := GetVertex(_VertexMap,_x,_y+1,_z+1,3,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[2,0,0] := GetVertex(_VertexMap,_x+1,_y,_z,4,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[2,0,2] := GetVertex(_VertexMap,_x+1,_y,_z+1,5,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[2,2,0] := GetVertex(_VertexMap,_x+1,_y+1,_z,6,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
+   _NeighbourVertexIDs[2,2,2] := GetVertex(_VertexMap,_x+1,_y+1,_z+1,7,_VUnit,_NumVertices,_VoxelMap,_VertexTransformation);
 end;
 
 procedure CInterpolationTrianglesSupporter.AddInterpolationFaces(_LeftBottomBack,_LeftBottomFront,_LeftTopBack,_LeftTopFront,_RightBottomBack,_RightBottomFront,_RightTopBack,_RightTopFront,_FaceFilledConfig: integer; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _Color: cardinal);
@@ -74,12 +72,12 @@ begin
    Vertexes[6] := _RightTopBack;
    Vertexes[7] := _RightTopFront;
    // Fill faces.
-   AllowedFaces[0] := (_FaceFilledConfig and 32) = 0; // left (x-1)
-   AllowedFaces[1] := (_FaceFilledConfig and 16) = 0; // right (x+1)
-   AllowedFaces[2] := (_FaceFilledConfig and 8) = 0;  // bottom (y-1)
-   AllowedFaces[3] := (_FaceFilledConfig and 4) = 0;  // top (y+1)
-   AllowedFaces[4] := (_FaceFilledConfig and 2) = 0;  // back (z-1)
-   AllowedFaces[5] := (_FaceFilledConfig and 1) = 0;  // front (z+1)
+   AllowedFaces[0] := (_FaceFilledConfig and 32) <> 0; // left (x-1)
+   AllowedFaces[1] := (_FaceFilledConfig and 16) <> 0; // right (x+1)
+   AllowedFaces[2] := (_FaceFilledConfig and 8) <> 0;  // bottom (y-1)
+   AllowedFaces[3] := (_FaceFilledConfig and 4) <> 0;  // top (y+1)
+   AllowedFaces[4] := (_FaceFilledConfig and 2) <> 0;  // back (z-1)
+   AllowedFaces[5] := (_FaceFilledConfig and 1) <> 0;  // front (z+1)
    // Find out vertex configuration
    Config := 0;
    Mult2 := 1;
@@ -225,39 +223,16 @@ begin
    Cube.Free;
 end;
 
-procedure CInterpolationTrianglesSupporter.AddVertexToTarget (var _Target: integer; var _VertexList: CVertexList; var _PotentialID : longword; _x,_y,_z: single);
-begin
-   if _Target = C_VMG_NO_VERTEX then
-   begin
-      _Target := _VertexList.Add(_PotentialID,_x,_y,_z);
-      if (_PotentialID = _Target) then
-      begin
-         inc(_PotentialID);
-      end;
-   end;
-end;
-
-function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference: integer; var _NumVertices: longword; var _VertexList: CVertexList; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
+function CInterpolationTrianglesSupporter.GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference,_VUnit: integer; var _NumVertices: longword; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
 const
    RegionSet: array[0..7,0..2] of short = ((-1,-1,-1),(-1,-1,0),(-1,0,-1),(-1,0,0),(0,-1,-1),(0,-1,0),(0,0,-1),(0,0,0));
    VertexBit: array[0..7] of byte = (1,2,4,8,16,32,64,128);
 begin
-   if _VertexMap.isPixelValid(_x,_y,_z) then
+   if _VertexMap.isPixelValid(_x*_VUnit,_y*_VUnit,_z*_Vunit) then
    begin
-      Result := _VertexMap.DataUnsafe[_x,_y,_z];
+      Result := _VertexMap.DataUnsafe[_x*_VUnit,_y*_VUnit,_z*_VUnit];
       if Result <> C_VMG_NO_VERTEX then
       begin
-{
-         if _VertexTransformation[Result] <> Result then
-         begin
-            if _VoxelMap.MapSafe[_x + RegionSet[_reference,0],_y + RegionSet[_reference,1],_z + RegionSet[_reference,2]] > 256  then
-            begin
-               //AddVertexToTarget(Result,_VertexList,_NumVertices,_x,_y,_z);
-            end
-            else
-               Result := C_VMG_NO_VERTEX;
-         end;
-}
          if (Round(_VoxelMap.MapSafe[_x - RegionSet[_reference,0],_y - RegionSet[_reference,1],_z - RegionSet[_reference,2]]) and VertexBit[_reference]) = 0 then
          begin
             Result := C_VMG_NO_VERTEX;
@@ -270,11 +245,11 @@ begin
    end;
 end;
 
-procedure CInterpolationTrianglesSupporter.DetectPotentialVertexes(const _Neighbours: T3DBooleanMap; const _VoxelMap: TVoxelMap; _x, _y, _z: integer);
+procedure CInterpolationTrianglesSupporter.DetectPotentialVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
 const
-   VertexSet: array[1..98,0..2] of byte = ((0,0,0),(0,0,1),(0,0,2),(0,0,3),(0,0,4),(0,1,0),(0,1,1),(0,1,2),(0,1,3),(0,1,4),(0,2,0),(0,2,1),(0,2,2),(0,2,3),(0,2,4),(0,3,0),(0,3,1),(0,3,2),(0,3,3),(0,3,4),(0,4,0),(0,4,1),(0,4,2),(0,4,3),(0,4,4),(1,0,0),(1,0,1),(1,0,2),(1,0,3),(1,0,4),(2,0,0),(2,0,1),(2,0,2),(2,0,3),(2,0,4),(3,0,0),(3,0,1),(3,0,2),(3,0,3),(3,0,4),(4,0,0),(4,0,1),(4,0,2),(4,0,3),(4,0,4),(1,1,4),(2,1,4),(3,1,4),(4,1,4),(1,2,4),(2,2,4),(3,2,4),(4,2,4),(1,3,4),(2,3,4),(3,3,4),(4,3,4),(1,4,4),(2,4,4),(3,4,4),(4,4,4),(1,4,0),(1,4,1),(1,4,2),(1,4,3),(2,4,0),(2,4,1),(2,4,2),(2,4,3),(3,4,0),(3,4,1),(3,4,2),(3,4,3),(4,4,0),(4,4,1),(4,4,2),(4,4,3),(1,1,0),(2,1,0),(3,1,0),(4,1,0),(1,2,0),(2,2,0),(3,2,0),(4,2,0),(1,3,0),(2,3,0),(3,3,0),(4,3,0),(4,1,1),(4,1,2),(4,1,3),(4,2,1),(4,2,2),(4,2,3),(4,3,1),(4,3,2),(4,3,3));
-   VertexConfigStart: array[0..26] of byte = (0,25,30,35,40,45,46,47,48,49,74,79,104,109,134,139,164,169,194,199,204,209,214,215,216,217,218);
-   VertexConfigData: array[0..217] of byte = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,5,10,15,20,25,1,6,11,16,21,21,22,23,24,25,1,2,3,4,5,21,25,1,5,1,2,3,4,5,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,5,30,35,40,45,5,30,35,40,45,10,46,47,48,49,15,50,51,52,53,20,54,55,56,57,25,58,59,60,61,25,58,59,60,61,21,22,23,24,25,62,63,64,65,58,66,67,68,69,59,70,71,72,73,60,74,75,76,77,61,21,62,66,70,74,1,26,31,36,41,6,78,79,80,81,11,82,83,84,85,16,86,87,88,89,21,62,66,70,74,1,26,31,36,41,41,42,43,44,45,81,90,91,92,49,85,93,94,95,53,89,96,97,98,57,74,75,76,77,61,45,49,53,57,61,41,81,85,89,74,74,75,76,77,61,41,42,43,44,45,74,61,41,45);
+   VertexSet: array[1..18,0..2] of byte = ((0,0,1),(0,1,0),(0,1,1),(0,1,2),(0,2,1),(1,0,0),(1,0,1),(1,0,2),(2,0,1),(1,1,2),(2,1,2),(1,2,2),(1,2,0),(1,2,1),(2,2,1),(1,1,0),(2,1,0),(2,1,1));
+   VertexConfigStart: array[0..26] of byte = (0,5,6,7,8,9,9,9,9,9,14,15,20,21,26,27,32,33,38,39,40,41,42,42,42,42,42);
+   VertexConfigData: array[0..41] of byte = (1,2,3,4,5,4,2,5,1,1,6,7,8,9,8,8,4,10,11,12,12,5,13,14,12,15,13,6,2,16,17,13,6,9,17,18,11,15,11,17,15,9);
 var
    Cube : TNormals;
    i,j,k,maxi: integer;
@@ -284,15 +259,7 @@ begin
    maxi := Cube.GetLastID;
    if (maxi > 0) then
    begin
-      // Fill _Neighbours with false.
-      for i := 0 to 4 do
-         for j := 0 to 4 do
-            for k := 0 to 4 do
-            begin
-               _Neighbours[i,j,k] := false;
-            end;
-
-      // Now we fill the other potential vertexes with the value they deserve.
+      // We will fill the potential vertexes with the value they deserve.
       i := 0;
       while i <= maxi do
       begin
@@ -302,7 +269,16 @@ begin
             j := VertexConfigStart[i];
             while j < VertexConfigStart[i+1] do
             begin
-               _Neighbours[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]] := true;
+               if _VertexMap[((_x-1) * _VUnit) + VertexSet[VertexConfigData[j],0],((_y-1) * _VUnit) + VertexSet[VertexConfigData[j],1],((_z-1) * _VUnit) + VertexSet[VertexConfigData[j],2]] = C_VMG_NO_VERTEX then
+               begin
+                  _VertexMap[((_x-1) * _VUnit) + VertexSet[VertexConfigData[j],0],((_y-1) * _VUnit) + VertexSet[VertexConfigData[j],1],((_z-1) * _VUnit) + VertexSet[VertexConfigData[j],2]] := _NumVertices;
+                  _NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]] := _NumVertices;
+                  inc(_NumVertices);
+               end
+               else
+               begin
+                  _NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]] := _VertexMap[((_x-1) * _VUnit) + VertexSet[VertexConfigData[j],0],((_y-1) * _VUnit) + VertexSet[VertexConfigData[j],1],((_z-1) * _VUnit) + VertexSet[VertexConfigData[j],2]];
+               end;
                inc(j);
             end;
          end;
@@ -312,173 +288,54 @@ begin
    Cube.Free;
 end;
 
-procedure CInterpolationTrianglesSupporter.AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces,_SubdivisionSituation: integer);
+procedure CInterpolationTrianglesSupporter.AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid; var _TriangleList: CTriangleList; var _QuadList: CQuadList; _x, _y, _z, _AllowedFaces: integer);
 const
-//   VertexSet: array[1..125,0..2] of byte = ((0,0,0),(0,0,4),(0,4,0),(0,4,4),(2,0,0),(2,0,4),(2,4,0),(2,4,4),(4,0,0),(4,0,4),(4,4,0),(4,4,4),(0,2,0),(0,2,4),(4,2,0),(4,2,4),(0,0,2),(0,4,2),(4,0,2),(4,4,2),(0,0,1),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1),(0,2,1),(1,2,0),(1,2,1),(0,3,0),(0,3,1),(1,3,0),(1,3,1),(0,4,1),
-//      (1,4,0),(1,4,1),(0,1,2),(1,0,2),(1,1,2),(0,2,2),(1,2,2),(0,3,2),(1,3,2),(1,4,2),(0,0,3),(0,1,3),(1,0,3),(1,1,3),(0,2,3),(1,2,3),(0,3,3),(1,3,3),(0,4,3),(1,4,3),(0,1,4),(1,0,4),(1,1,4),(1,2,4),(0,3,4),(1,3,4),(1,4,4),(2,0,1),(2,1,0),(2,1,1),(2,2,0),(2,2,1),(2,3,0),(2,3,1),(2,4,1),(2,0,2),(2,1,2),(2,2,2),(2,3,2),(2,4,2),(2,0,3),(2,1,3),(2,2,3),(2,3,3),(2,4,3),(2,1,4),(2,2,4),(2,3,4),(3,0,0),(3,0,1),(3,1,0),(3,1,1),(3,2,0),(3,2,1),(3,3,0),(3,3,1),(3,4,0),(3,4,1),(3,0,2),(3,1,2),(3,2,2),(3,3,2),(3,4,2),(3,0,3),(3,1,3),(3,2,3),(3,3,3),(3,4,3),(3,0,4),(3,1,4),(3,2,4),(3,3,4),(3,4,4),(4,0,1),(4,1,0),(4,1,1),(4,2,1),(4,3,0),(4,3,1),(4,4,1),(4,1,2),(4,2,2),(4,3,2),(4,0,3),(4,1,3),(4,2,3),(4,3,3),(4,4,3),(4,1,4),(4,3,4));
-   VertexSet: array[1..27,0..2] of byte = ((0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(0,1,2),(0,2,0),(0,2,1),(0,2,2),(1,0,0),(1,0,1),(1,0,2),(1,1,0),(1,1,1),(1,1,2),(1,2,0),(1,2,1),(1,2,2),(2,0,0),(2,0,1),(2,0,2),(2,1,0),(2,1,1),(2,1,2),(2,2,0),(2,2,1),(2,2,2));
-   VertexesThatCanBeAdded: array [1..19] of byte = (1,3,4,5,7,9,10,11,12,13,15,16,17,18,20,22,23,24,26);
-   VertexConfigStart: array[0..70] of integer = (0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,184,192,200,208,216,224,232,240,248,256,264,272,280,288,296,304,312,320,328,336,344,352,360,368,376,384,392,400,408,416,424,432,440,448,456,464,472,480,488,496,504,512,520,528,536,544,552,560);
-   VertexConfigData: array[0..559] of byte = (1,2,3,4,5,6,7,8,5,6,7,8,9,10,11,12,1,2,13,14,9,10,15,16,13,14,3,4,15,16,11,12,1,17,3,18,9,19,11,20,17,2,18,4,19,10,20,12,1,21,22,23,24,25,26,27,22,23,13,28,26,27,29,30,13,28,31,32,29,30,33,34,31,32,3,35,33,34,36,37,21,17,23,38,25,39,27,40,23,38,28,41,27,40,30,42,28,41,32,43,30,42,34,44,32,43,35,18,34,44,37,45,17,46,38,47,39,48,40,49,38,47,41,50,40,49,42,51,41,50,43,52,42,51,44,53,43,52,18,54,44,53,45,55,46,2,47,56,48,57,49,58,47,56,50,14,49,58,51,59,50,14,52,60,51,59,53,61,52,60,54,4,53,61,55,62,24,25,26,27,5,63,64,65,26,27,29,30,64,65,66,67,29,30,33,34,66,67,68,69,33,34,36,37,68,69,7,70,25,39,27,40,63,71,65,72,27,40,30,42,65,72,67,73,30,42,34,44,67,73,69,74,34,44,37,45,69,
-      74,70,75,39,48,40,49,71,76,72,77,40,49,42,51,72,77,73,78,42,51,44,53,73,78,74,79,44,53,45,55,74,79,75,80,48,57,49,58,76,6,77,81,49,58,51,59,77,81,78,82,51,59,53,61,78,82,79,83,53,61,55,62,79,83,80,8,5,63,64,65,84,85,86,87,64,65,66,67,86,87,88,89,66,67,68,69,88,89,90,91,68,69,7,70,90,91,92,93,63,71,65,72,85,94,87,95,65,72,67,73,87,95,89,96,67,73,69,74,89,96,91,97,69,74,70,75,91,97,93,98,71,76,72,77,94,99,95,100,72,77,73,78,95,100,96,101,73,78,74,79,96,101,97,102,74,79,75,80,97,102,98,103,76,6,77,81,99,104,100,105,77,81,78,82,100,105,101,106,78,82,79,83,101,106,102,107,79,83,80,8,102,107,103,108,84,85,86,87,9,109,110,111,86,87,88,89,110,111,15,112,88,89,90,91,15,112,113,114,90,91,92,93,113,114,11,115,85,94,87,95,109,
-      19,111,116,87,95,89,96,111,116,112,117,89,96,91,97,112,117,114,118,91,97,93,98,114,118,115,20,94,99,95,100,19,119,116,120,95,100,96,101,116,120,117,121,96,101,97,102,117,121,118,122,97,102,98,103,118,122,20,123,99,104,100,105,119,10,120,124,100,105,101,106,120,124,121,16,101,106,102,107,121,16,122,125,102,107,103,108,122,125,123,12);
-   FaceConfigLimits: array[0..69] of integer = (47,31,59,55,62,61,42,34,34,38,40,32,32,36,40,32,32,36,41,33,33,37,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,26,18,18,22,24,16,16,20,24,16,16,20,25,17,17,21);
-   FaceColorConfig: array[0..69]of byte = (26,27,28,29,30,31,7,2,2,5,4,0,0,3,4,0,0,3,8,1,1,6,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,14,19,19,22,21,17,17,20,21,17,17,20,25,18,18,23);
-   SubdivisionStart: array[0..4] of byte = (0,2,4,6,70);
-   SubdivisionFaceRestrictions: array[0..3] of byte = (15,51,60,0);
-var
-   i,j, subdivisionMode: integer;
-   Subdivide,ConfigIs255: boolean;
+   FaceConfigLimits: array[0..7] of integer = (21,22,25,26,37,38,41,42);
+   FaceColorConfig: array[0..7] of byte = (7,8,5,6,24,25,22,23);
 begin
-    // First of all, we have to create the new vertexes.
-   i := 1;
-   while i < 19 do
-   begin
-      if _Neighbours[VertexSet[VertexesThatCanBeAdded[i],0],VertexSet[VertexesThatCanBeAdded[i],1],VertexSet[VertexesThatCanBeAdded[i],2]] then
-      begin
-         AddVertexToTarget(_NeighbourVertexIDs[VertexSet[VertexesThatCanBeAdded[i],0],VertexSet[VertexesThatCanBeAdded[i],1],VertexSet[VertexesThatCanBeAdded[i],2]],_VertexList,_NumVertices,_x+(0.5*VertexSet[VertexesThatCanBeAdded[i],0]),_y+(0.5*VertexSet[VertexesThatCanBeAdded[i],1]),_z+(0.5*VertexSet[VertexesThatCanBeAdded[i],2]));
-      end;
-      inc(i);
-   end;
+   // We'll now add the interpolation zones, subdividing the original region in
+   // 8, like an octree.
 
-   // Then we finally add the interpolation zones.
-   i := SubdivisionStart[subdivisionMode];
-   while i < SubdivisionStart[subdivisionMode+1] do
-   begin
-      j := VertexConfigStart[i];
-      {$ifdef MESH_TEST}
-      GlobalVars.MeshFile.Add('Subdivision Mode: ' + IntToStr(subdivisionMode) + ', Region: (' + IntToStr(VertexSet[VertexConfigData[j],0]) + ',' + IntToStr(VertexSet[VertexConfigData[j],1]) + ',' + IntToStr(VertexSet[VertexConfigData[j],2]) + ') -> (' + IntToStr(VertexSet[VertexConfigData[j+7],0]) + ',' + IntToStr(VertexSet[VertexConfigData[j+7],1]) + ',' + IntToStr(VertexSet[VertexConfigData[j+7],2]) + '), Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces and FaceConfigLimits[i]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+1],0],VertexSet[VertexConfigData[j+1],1],VertexSet[VertexConfigData[j+1],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+2],0],VertexSet[VertexConfigData[j+2],1],VertexSet[VertexConfigData[j+2],2]]) + ',' +
-         IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+3],0],VertexSet[VertexConfigData[j+3],1],VertexSet[VertexConfigData[j+3],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+4],0],VertexSet[VertexConfigData[j+4],1],VertexSet[VertexConfigData[j+4],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+5],0],VertexSet[VertexConfigData[j+5],1],VertexSet[VertexConfigData[j+5],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+6],0],VertexSet[VertexConfigData[j+6],1],VertexSet[VertexConfigData[j+6],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+7],0],VertexSet[VertexConfigData[j+7],1],VertexSet[VertexConfigData[j+7],2]]) + ')');
-      {$endif}
-      AddInterpolationFaces(_NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+1],0],VertexSet[VertexConfigData[j+1],1],VertexSet[VertexConfigData[j+1],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+2],0],VertexSet[VertexConfigData[j+2],1],VertexSet[VertexConfigData[j+2],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+3],0],VertexSet[VertexConfigData[j+3],1],VertexSet[VertexConfigData[j+3],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+4],0],VertexSet[VertexConfigData[j+4],1],VertexSet[VertexConfigData[j+4],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+5],0],VertexSet[VertexConfigData[j+5],1],VertexSet[VertexConfigData[j+5],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+6],0],VertexSet[VertexConfigData[j+6],1],VertexSet[VertexConfigData[j+6],2]],
-         _NeighbourVertexIDs[VertexSet[VertexConfigData[j+7],0],VertexSet[VertexConfigData[j+7],1],VertexSet[VertexConfigData[j+7],2]],_AllowedFaces and FaceConfigLimits[i],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[i]));
-      inc(i);
-   end;
-end;
-
-(*
-procedure CInterpolationTrianglesSupporter.AddInterpolationFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; const _Neighbours: T3DBooleanMap; var _NeighbourVertexIDs: T3DIntGrid; var _VertexList: CVertexList;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _NumVertices : longword; _x, _y, _z, _AllowedFaces,_SubdivisionSituation: integer);
-const
-   VertexSet: array[1..125,0..2] of byte = ((0,0,0),(0,0,4),(0,4,0),(0,4,4),(2,0,0),(2,0,4),(2,4,0),(2,4,4),(4,0,0),(4,0,4),(4,4,0),(4,4,4),(0,2,0),(0,2,4),(4,2,0),(4,2,4),(0,0,2),(0,4,2),(4,0,2),(4,4,2),(0,0,1),(0,1,0),(0,1,1),(1,0,0),(1,0,1),(1,1,0),(1,1,1),(0,2,1),(1,2,0),(1,2,1),(0,3,0),(0,3,1),(1,3,0),(1,3,1),(0,4,1),
-      (1,4,0),(1,4,1),(0,1,2),(1,0,2),(1,1,2),(0,2,2),(1,2,2),(0,3,2),(1,3,2),(1,4,2),(0,0,3),(0,1,3),(1,0,3),(1,1,3),(0,2,3),(1,2,3),(0,3,3),(1,3,3),(0,4,3),(1,4,3),(0,1,4),(1,0,4),(1,1,4),(1,2,4),(0,3,4),(1,3,4),(1,4,4),(2,0,1),(2,1,0),(2,1,1),(2,2,0),(2,2,1),(2,3,0),(2,3,1),(2,4,1),(2,0,2),(2,1,2),(2,2,2),(2,3,2),(2,4,2),(2,0,3),(2,1,3),(2,2,3),(2,3,3),(2,4,3),(2,1,4),(2,2,4),(2,3,4),(3,0,0),(3,0,1),(3,1,0),(3,1,1),(3,2,0),(3,2,1),(3,3,0),(3,3,1),(3,4,0),(3,4,1),(3,0,2),(3,1,2),(3,2,2),(3,3,2),(3,4,2),(3,0,3),(3,1,3),(3,2,3),(3,3,3),(3,4,3),(3,0,4),(3,1,4),(3,2,4),(3,3,4),(3,4,4),(4,0,1),(4,1,0),(4,1,1),(4,2,1),(4,3,0),(4,3,1),(4,4,1),(4,1,2),(4,2,2),(4,3,2),(4,0,3),(4,1,3),(4,2,3),(4,3,3),(4,4,3),(4,1,4),(4,3,4));
-   VertexConfigStart: array[0..70] of integer = (0,8,16,24,32,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,184,192,200,208,216,224,232,240,248,256,264,272,280,288,296,304,312,320,328,336,344,352,360,368,376,384,392,400,408,416,424,432,440,448,456,464,472,480,488,496,504,512,520,528,536,544,552,560);
-   VertexConfigData: array[0..559] of byte = (1,2,3,4,5,6,7,8,5,6,7,8,9,10,11,12,1,2,13,14,9,10,15,16,13,14,3,4,15,16,11,12,1,17,3,18,9,19,11,20,17,2,18,4,19,10,20,12,1,21,22,23,24,25,26,27,22,23,13,28,26,27,29,30,13,28,31,32,29,30,33,34,31,32,3,35,33,34,36,37,21,17,23,38,25,39,27,40,23,38,28,41,27,40,30,42,28,41,32,43,30,42,34,44,32,43,35,18,34,44,37,45,17,46,38,47,39,48,40,49,38,47,41,50,40,49,42,51,41,50,43,52,42,51,44,53,43,52,18,54,44,53,45,55,46,2,47,56,48,57,49,58,47,56,50,14,49,58,51,59,50,14,52,60,51,59,53,61,52,60,54,4,53,61,55,62,24,25,26,27,5,63,64,65,26,27,29,30,64,65,66,67,29,30,33,34,66,67,68,69,33,34,36,37,68,69,7,70,25,39,27,40,63,71,65,72,27,40,30,42,65,72,67,73,30,42,34,44,67,73,69,74,34,44,37,45,69,
-      74,70,75,39,48,40,49,71,76,72,77,40,49,42,51,72,77,73,78,42,51,44,53,73,78,74,79,44,53,45,55,74,79,75,80,48,57,49,58,76,6,77,81,49,58,51,59,77,81,78,82,51,59,53,61,78,82,79,83,53,61,55,62,79,83,80,8,5,63,64,65,84,85,86,87,64,65,66,67,86,87,88,89,66,67,68,69,88,89,90,91,68,69,7,70,90,91,92,93,63,71,65,72,85,94,87,95,65,72,67,73,87,95,89,96,67,73,69,74,89,96,91,97,69,74,70,75,91,97,93,98,71,76,72,77,94,99,95,100,72,77,73,78,95,100,96,101,73,78,74,79,96,101,97,102,74,79,75,80,97,102,98,103,76,6,77,81,99,104,100,105,77,81,78,82,100,105,101,106,78,82,79,83,101,106,102,107,79,83,80,8,102,107,103,108,84,85,86,87,9,109,110,111,86,87,88,89,110,111,15,112,88,89,90,91,15,112,113,114,90,91,92,93,113,114,11,115,85,94,87,95,109,
-      19,111,116,87,95,89,96,111,116,112,117,89,96,91,97,112,117,114,118,91,97,93,98,114,118,115,20,94,99,95,100,19,119,116,120,95,100,96,101,116,120,117,121,96,101,97,102,117,121,118,122,97,102,98,103,118,122,20,123,99,104,100,105,119,10,120,124,100,105,101,106,120,124,121,16,101,106,102,107,121,16,122,125,102,107,103,108,122,125,123,12);
-   FaceConfigLimits: array[0..69] of integer = (47,31,59,55,62,61,42,34,34,38,40,32,32,36,40,32,32,36,41,33,33,37,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,10,2,2,6,8,0,0,4,8,0,0,4,9,1,1,5,26,18,18,22,24,16,16,20,24,16,16,20,25,17,17,21);
-   FaceColorConfig: array[0..69]of byte = (26,27,28,29,30,31,7,2,2,5,4,0,0,3,4,0,0,3,8,1,1,6,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,16,15,15,14,9,32,32,13,9,32,32,13,10,11,11,12,14,19,19,22,21,17,17,20,21,17,17,20,25,18,18,23);
-   SubdivisionStart: array[0..4] of byte = (0,2,4,6,70);
-   SubdivisionFaceRestrictions: array[0..3] of byte = (15,51,60,0);
-var
-   i,j, subdivisionMode: integer;
-   Subdivide,ConfigIs255: boolean;
-begin
-   // First of all, we figure out how the region will be subdivided. There are 4
-   // possible ways and we must ensure that every sub-region will not have a 255
-   // config.
-   Subdivide := false;
-   {$ifdef MESH_CORRECT}
-   subdivisionMode := 3;
+   // (0,0,0) -> (1,1,1), left bottom back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[0]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ')');
    {$endif}
-   {$ifndef MESH_CORRECT}
-   subdivisionMode := 0;
-
-   while (not subdivide) and (subdivisionMode < 3) do
-   begin
-      i := SubdivisionStart[subdivisionMode];
-      while i < SubdivisionStart[subdivisionMode+1] do
-      begin
-         // Here we check each region.
-
-         // if all vertexes exist, then we skip to the next subdivision mode.
-         ConfigIs255 := true; // assume true just to make things easier.
-         j := VertexConfigStart[i];
-         while j < VertexConfigStart[i+1] do
-         begin
-            ConfigIs255 := ConfigIs255 and _Neighbours[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]];
-            inc(j);
-         end;
-         if ConfigIs255 then
-         begin
-            i := SubdivisionStart[subdivisionMode+1];
-         end
-         else
-            inc(i);
-      end;
-      if ConfigIs255 then
-      begin
-         inc(subdivisionMode);
-      end
-      else
-      begin
-         {$ifdef MESH_SUBDIVISION}
-         if _SubdivisionSituation and SubdivisionFaceRestrictions[subdivisionMode] = 0 then
-         begin
-         {$endif}
-            subdivide := true;
-         {$ifdef MESH_SUBDIVISION}
-         end
-         else
-         begin
-            inc(subdivisionMode);
-         end;
-         {$endif}
-      end;
-   end;
+   AddInterpolationFaces(_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0], _NeighbourVertexIDs[1,1,1],_AllowedFaces or FaceConfigLimits[0],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[0]));
+   // (0,0,1) -> (1,1,2), left bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[1]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ')');
    {$endif}
-
-   // Now we have to create the new vertexes.
-   i := SubdivisionStart[subdivisionMode];
-   while i < SubdivisionStart[subdivisionMode+1] do
-   begin
-      j := VertexConfigStart[i];
-      while j < VertexConfigStart[i+1] do
-      begin
-         if _Neighbours[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]] then
-         begin
-            AddVertexToTarget(_NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]],_VertexList,_NumVertices,_x+(0.25*VertexSet[VertexConfigData[j],0]),_y+(0.25*VertexSet[VertexConfigData[j],1]),_z+(0.25*VertexSet[VertexConfigData[j],2]));
-         end;
-         inc(j);
-      end;
-      inc(i);
-   end;
-
-   // Then we finally add the interpolation zones.
-   i := SubdivisionStart[subdivisionMode];
-   while i < SubdivisionStart[subdivisionMode+1] do
-   begin
-      j := VertexConfigStart[i];
-      {$ifdef MESH_TEST}
-      GlobalVars.MeshFile.Add('Subdivision Mode: ' + IntToStr(subdivisionMode) + ', Region: (' + IntToStr(VertexSet[VertexConfigData[j],0]) + ',' + IntToStr(VertexSet[VertexConfigData[j],1]) + ',' + IntToStr(VertexSet[VertexConfigData[j],2]) + ') -> (' + IntToStr(VertexSet[VertexConfigData[j+7],0]) + ',' + IntToStr(VertexSet[VertexConfigData[j+7],1]) + ',' + IntToStr(VertexSet[VertexConfigData[j+7],2]) + '), Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces and FaceConfigLimits[i]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+1],0],VertexSet[VertexConfigData[j+1],1],VertexSet[VertexConfigData[j+1],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+2],0],VertexSet[VertexConfigData[j+2],1],VertexSet[VertexConfigData[j+2],2]]) + ',' +
-         IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+3],0],VertexSet[VertexConfigData[j+3],1],VertexSet[VertexConfigData[j+3],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+4],0],VertexSet[VertexConfigData[j+4],1],VertexSet[VertexConfigData[j+4],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+5],0],VertexSet[VertexConfigData[j+5],1],VertexSet[VertexConfigData[j+5],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+6],0],VertexSet[VertexConfigData[j+6],1],VertexSet[VertexConfigData[j+6],2]]) + ',' + IntToStr(_NeighbourVertexIDs[VertexSet[VertexConfigData[j+7],0],VertexSet[VertexConfigData[j+7],1],VertexSet[VertexConfigData[j+7],2]]) + ')');
-      {$endif}
-      AddInterpolationFaces(_NeighbourVertexIDs[VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+1],0],VertexSet[VertexConfigData[j+1],1],VertexSet[VertexConfigData[j+1],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+2],0],VertexSet[VertexConfigData[j+2],1],VertexSet[VertexConfigData[j+2],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+3],0],VertexSet[VertexConfigData[j+3],1],VertexSet[VertexConfigData[j+3],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+4],0],VertexSet[VertexConfigData[j+4],1],VertexSet[VertexConfigData[j+4],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+5],0],VertexSet[VertexConfigData[j+5],1],VertexSet[VertexConfigData[j+5],2]],_NeighbourVertexIDs[VertexSet[VertexConfigData[j+6],0],VertexSet[VertexConfigData[j+6],1],VertexSet[VertexConfigData[j+6],2]],
-         _NeighbourVertexIDs[VertexSet[VertexConfigData[j+7],0],VertexSet[VertexConfigData[j+7],1],VertexSet[VertexConfigData[j+7],2]],_AllowedFaces and FaceConfigLimits[i],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[i]));
-      inc(i);
-   end;
-end;
-}
-*)
-// We'll use the data this function returns to figure out if certain
-// subdivisions are allowed or not.
-function CInterpolationTrianglesSupporter.GetSubdivisionNeighboursConfig(const _VoxelMap: TVoxelMap; _x,_y,_z: integer): integer;
-begin
-   Result := 0;
-   // Axis X
-   if _VoxelMap.MapSafe[_x-1,_y,_z] = 255 then
-      Result := Result or 32;
-   if _VoxelMap.MapSafe[_x+1,_y,_z] = 255 then
-      Result := Result or 16;
-   // Axis Y
-   if _VoxelMap.MapSafe[_x,_y-1,_z] = 255 then
-      Result := Result or 8;
-   if _VoxelMap.MapSafe[_x,_y+1,_z] = 255 then
-      Result := Result or 4;
-   // Axis Z
-   if _VoxelMap.MapSafe[_x,_y,_z-1] = 255 then
-      Result := Result or 2;
-   if _VoxelMap.MapSafe[_x,_y,_z+1] = 255 then
-      Result := Result or 1;
+   AddInterpolationFaces(_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1], _NeighbourVertexIDs[1,1,2],_AllowedFaces or FaceConfigLimits[1],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[1]));
+   // (0,1,0) -> (1,2,1), left top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[2]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0], _NeighbourVertexIDs[1,2,1],_AllowedFaces or FaceConfigLimits[2],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[2]));
+   // (0,1,1) -> (1,2,2), left top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[3]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1], _NeighbourVertexIDs[1,2,2],_AllowedFaces or FaceConfigLimits[3],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[3]));
+   // (1,0,0) -> (2,1,1), right bottom back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[4]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0], _NeighbourVertexIDs[2,1,1],_AllowedFaces or FaceConfigLimits[4],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[4]));
+   // (1,0,1) -> (2,1,2), right bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[5]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,1,1], _NeighbourVertexIDs[2,1,2],_AllowedFaces or FaceConfigLimits[5],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[5]));
+   // (1,1,0) -> (2,2,1), right top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[6]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,2,0], _NeighbourVertexIDs[2,2,1],_AllowedFaces or FaceConfigLimits[6],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[6]));
+   // (1,1,1) -> (2,2,2), right top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' // ' + IntToStr(_AllowedFaces or FaceConfigLimits[7]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,2]) + ')');
+   {$endif}
+   AddInterpolationFaces(_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,2,1], _NeighbourVertexIDs[2,2,2],_AllowedFaces or FaceConfigLimits[7],_TriangleList,_QuadList,GetColour(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[7]));
 end;
 
 end.
