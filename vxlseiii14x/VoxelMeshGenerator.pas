@@ -1239,7 +1239,7 @@ begin
    BuildInterpolationTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
    // Get the positions of the vertexes in the new vertex list, so we can eliminate
    // the unused ones.
-//   EliminateUselessVertices(VertexTransformation,_Vertices,_Geometry.Faces,NumVertices);
+   EliminateUselessVertices(VertexTransformation,_Vertices,_Geometry.Faces,NumVertices);
    // Free memory
    SetLength(VertexTransformation,0);
    VertexMap.Free;
