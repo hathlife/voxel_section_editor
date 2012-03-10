@@ -991,6 +991,10 @@ begin
       if _NumVertices > OldNumVertices then
       begin
          SetLength(_Vertices,_NumVertices);
+         {$ifdef MESH_TEST}
+         GlobalVars.MeshFile.Add('...');
+         GlobalVars.MeshFile.Add('We have ' + IntToStr(_NumVertices) + ' distributed in the following way:');
+         {$endif}
          x := 0;
          while x <= _VertexMap.MaxX do
          begin
@@ -1006,6 +1010,9 @@ begin
                      _Vertices[id].X := x / VUnit;
                      _Vertices[id].Y := y / VUnit;
                      _Vertices[id].Z := z / VUnit;
+                    {$ifdef MESH_TEST}
+                    GlobalVars.MeshFile.Add('Vertex ' + IntToStr(id) + ' Location: (' + FloatToStr(_Vertices[id].X) + ';' + FloatToStr(_Vertices[id].Y) + ';' + FloatToStr(_Vertices[id].Z) + ').');
+                    {$endif}
                   end;
                   inc(z,1);
                end;
@@ -1014,6 +1021,10 @@ begin
             inc(x,1);
          end;
          SetLength(_VertexTransformation,_NumVertices);
+         for x := OldNumVertices to High(_Vertices) do
+         begin
+            _VertexTransformation[x] := -1;
+         end;
       end;
 
       // Add all new faces

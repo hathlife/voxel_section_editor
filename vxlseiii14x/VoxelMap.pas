@@ -1018,7 +1018,7 @@ begin
                      begin
                         // Finally, we write the value of the refinement zone here.
                         {$ifdef MESH_TEST}
-                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(BitValue) + ' and in binary it is (' + IntToStr(BitValue and 128) + ',' + IntToStr(BitValue and 64) + ',' + IntToStr(BitValue and 32) + ',' + IntToStr(BitValue and 16) + ',' + IntToStr(BitValue and 8) + ',' + IntToStr(BitValue and 4) + ',' + IntToStr(BitValue and 2) + ',' + IntToStr(BitValue and 1) + ').');
+                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(BitValue) + ' and in binary it is (' + IntToStr((BitValue and 128) shr 7) + ',' + IntToStr((BitValue and 64) shr 6) + ',' + IntToStr((BitValue and 32) shr 5) + ',' + IntToStr((BitValue and 16) shr 4) + ',' + IntToStr((BitValue and 8) shr 3) + ',' + IntToStr((BitValue and 4) shr 2) + ',' + IntToStr((BitValue and 2) shr 1) + ',' + IntToStr(BitValue and 1) + ').');
                        {$endif}
                         FMap.DataUnsafe[x,y,z] := BitValue;
                      end;
