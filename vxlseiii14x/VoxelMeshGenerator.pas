@@ -6,7 +6,7 @@ uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
    VolumeGreyIntData, ClassVertexList, ClassTriangleList, ClassQuadList,
    Normals, Windows, ClassMeshNormalsTool, DifferentMeshFaceTypePlugin,
    MeshGeometryBase, MeshBRepGeometry, ClassMeshGeometryList,
-   ClassInterpolationTrianglesSupporter, Dialogs, SysUtils;
+   ClassRefinementTrianglesSupporter, Dialogs, SysUtils;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -16,7 +16,7 @@ type
          procedure BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
          procedure BuildModelFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword);
          procedure BuildModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
-         procedure BuildModelFromVoxelMapWithInterpolationZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
+         procedure BuildModelFromVoxelMapWithRefinementZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
 
          procedure SetupVertexMap(var _VertexMap: T3DVolumeGreyIntData; _XSize,_YSize,_ZSize: integer);
          procedure BuildVertexMap(var _VertexMap: T3DVolumeGreyIntData; const _Voxel : TVoxelSection; var _NumVertices, _NumVoxels: longword);
@@ -28,7 +28,7 @@ type
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
-         procedure BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+         procedure BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
          VUnit: integer; // amount of times the cube is divided for each dimension
@@ -902,16 +902,14 @@ begin
    end;
 end;
 
-// Interpolation zones are regions that are neighbour to two surface voxels that
+// Refinement zones are regions that are neighbour to two surface voxels that
 // are 'linked by edge or vertex'. These zones, while considered to be out of
 // the volume, they'll have part of the volume of the model, in order to avoid
 // regions where the internal volume does not exist, therefore not being
 // manifolds. We'll do a sort of marching cubes on these regions.
 
-// Here we build triangles or quads at interpolation zones.
-// Under Construction
-
-procedure TVoxelMeshGenerator.BuildInterpolationTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+// Here we build triangles or quads at refinement zones.
+procedure TVoxelMeshGenerator.BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
 var
    x,y,z,id,OldNumVertices,VUnitPlus1: integer;
    V : TVoxelUnpacked;
@@ -920,10 +918,10 @@ var
    NeighbourVertexIDs: T3DIntGrid;
    TriangleList: CTriangleList;
    QuadList: CQuadList;
-   Tool: CInterpolationTrianglesSupporter;
+   Tool: CRefinementTrianglesSupporter;
 begin
    VUnitPlus1 := VUnit + 1;
-   Tool := CInterpolationTrianglesSupporter.Create;
+   Tool := CRefinementTrianglesSupporter.Create;
    TriangleList := CTriangleList.Create;
    QuadList := CQuadList.Create;
    OldNumVertices := _NumVertices;
@@ -933,7 +931,7 @@ begin
       for y := 0 to _VoxelMap.GetMaxY do
          for z := 0 to _VoxelMap.GetMaxZ do
          begin
-            // if the region is an interpolation zone, then...
+            // if the region is an refinement zone, then...
             if (_VoxelMap.Map[x,y,z] > 0.9) and (_VoxelMap.Map[x,y,z] < 256) then
             begin
                // Detect face configuration
@@ -954,7 +952,7 @@ begin
                if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
                   FaceConfig := FaceConfig or 1;
 
-               // Should we subdivide it? If an interpolation zone has all 8
+               // Should we subdivide it? If a refinement zone has all 8
                // corners filled (=255), then the answer is yes. Otherwise, no.
                if (_VoxelMap.Map[x,y,z] = 255) then
                begin
@@ -972,7 +970,7 @@ begin
                   {$endif}
                   Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                   Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
-                  Tool.AddInterpolationFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,x-1,y-1,z-1,FaceConfig);
+                  Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,x-1,y-1,z-1,FaceConfig);
                end
                else
                begin
@@ -983,7 +981,7 @@ begin
                   GlobalVars.MeshFile.Add('...');
                   GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
                   {$endif}
-                  Tool.AddInterpolationFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
+                  Tool.AddRefinementFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
                end;
             end;
          end;
@@ -1002,7 +1000,6 @@ begin
                z := 0;
                while z <= _VertexMap.MaxZ do
                begin
-                  // it needs a condition.
                   id := _VertexMap.DataUnsafe[x,y,z];
                   if id <> C_VMG_NO_VERTEX then
                   begin
@@ -1010,7 +1007,6 @@ begin
                      _Vertices[id].Y := y / VUnit;
                      _Vertices[id].Z := z / VUnit;
                   end;
-                  // condition ends here.
                   inc(z,1);
                end;
                inc(y,1);
@@ -1201,7 +1197,7 @@ begin
    SetLength(FaceMap,0);
 end;
 
-procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithInterpolationZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
+procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithRefinementZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
 var
    NumVertices,NumFaces : longword;
    VertexMap : T3DVolumeGreyIntData;
@@ -1235,8 +1231,8 @@ begin
    SetLength(_TexCoords,0);
    SetLength(VertexTransformation,High(_Vertices)+1);
    FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Geometry.Faces,_Geometry.Colours,_Geometry.Normals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_Geometry.VerticesPerFace);
-   // Here we build the triangles from the interpolation zones.
-   BuildInterpolationTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
+   // Here we build the triangles from the refinement zones.
+   BuildRefinementTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
    // Get the positions of the vertexes in the new vertex list, so we can eliminate
    // the unused ones.
    EliminateUselessVertices(VertexTransformation,_Vertices,_Geometry.Faces,NumVertices);
@@ -1372,12 +1368,12 @@ begin
   {$endif}
    VUnit := 2;
    VoxelMap := TVoxelMap.Create(_Voxel,1);
-   VoxelMap.GenerateSurfaceAndInterpolationMap;
+   VoxelMap.GenerateSurfaceAndRefinementMap;
 
    {$ifdef MESH_TEST}
    GlobalVars.MeshFile.Add('Model Generation Starts now...');
   {$endif}
-   BuildModelFromVoxelMapWithInterpolationZones(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
+   BuildModelFromVoxelMapWithRefinementZones(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
    {$ifdef MESH_TEST}
    GlobalVars.MeshFile.Add('Mesh Extraction has been terminated...');
   {$endif}
