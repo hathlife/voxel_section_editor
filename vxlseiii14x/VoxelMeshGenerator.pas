@@ -1023,7 +1023,7 @@ begin
          SetLength(_VertexTransformation,_NumVertices);
          for x := OldNumVertices to High(_Vertices) do
          begin
-            _VertexTransformation[x] := -1;
+            _VertexTransformation[x] := C_VMG_NO_VERTEX;
          end;
       end;
 
