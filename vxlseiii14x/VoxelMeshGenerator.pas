@@ -934,29 +934,30 @@ begin
             // if the region is an refinement zone, then...
             if (_VoxelMap.Map[x,y,z] > 0.9) and (_VoxelMap.Map[x,y,z] < 256) then
             begin
-               // Detect face configuration
-               FaceConfig := 0;
-               // Axis X
-               if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
-                  FaceConfig := FaceConfig or 32;
-               if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
-                  FaceConfig := FaceConfig or 16;
-               // Axis Y
-               if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
-                  FaceConfig := FaceConfig or 8;
-               if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
-                  FaceConfig := FaceConfig or 4;
-               // Axis Z
-               if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
-                  FaceConfig := FaceConfig or 2;
-               if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
-                  FaceConfig := FaceConfig or 1;
-
                // Should we subdivide it? If a refinement zone has all 8
                // corners filled (=255), then the answer is yes. Otherwise, no.
-               if (_VoxelMap.Map[x,y,z] = 255) then
-               begin
+//               if (_VoxelMap.Map[x,y,z] = 255) then
+//               if (_VoxelMap.Map[x,y,z] = 127) or (_VoxelMap.Map[x,y,z] = 191) or (_VoxelMap.Map[x,y,z] = 223) or (_VoxelMap.Map[x,y,z] = 239) or (_VoxelMap.Map[x,y,z] = 247) or (_VoxelMap.Map[x,y,z] = 251) or (_VoxelMap.Map[x,y,z] = 253) or (_VoxelMap.Map[x,y,z] = 254) or (_VoxelMap.Map[x,y,z] = 255) then
+//               begin
                   // Subdivision starts here...
+
+                  // Detect face configuration
+                  FaceConfig := 0;
+                  // Axis X
+                  if _VoxelMap.MapSafe[x-1,y,z] < 255 then
+                     FaceConfig := FaceConfig or 32;
+                  if _VoxelMap.MapSafe[x+1,y,z] < 255 then
+                     FaceConfig := FaceConfig or 16;
+                  // Axis Y
+                  if _VoxelMap.MapSafe[x,y-1,z] < 255 then
+                     FaceConfig := FaceConfig or 8;
+                  if _VoxelMap.MapSafe[x,y+1,z] < 255 then
+                     FaceConfig := FaceConfig or 4;
+                  // Axis Z
+                  if _VoxelMap.MapSafe[x,y,z-1] < 255 then
+                     FaceConfig := FaceConfig or 2;
+                  if _VoxelMap.MapSafe[x,y,z+1] < 255 then
+                     FaceConfig := FaceConfig or 1;
 
                   // Let's check its neighbour faces, edges and vertexes. We'll
                   // fill the potential vertexes that this region may receive
@@ -971,10 +972,29 @@ begin
                   Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                   Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                   Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,x-1,y-1,z-1,FaceConfig);
+(*
                end
                else
                begin
                   // Does not subdivide it.
+
+                  // Detect face configuration
+                  FaceConfig := 0;
+                  // Axis X
+                  if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
+                     FaceConfig := FaceConfig or 32;
+                  if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
+                     FaceConfig := FaceConfig or 16;
+                  // Axis Y
+                  if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
+                     FaceConfig := FaceConfig or 8;
+                  if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
+                     FaceConfig := FaceConfig or 4;
+                  // Axis Z
+                  if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
+                     FaceConfig := FaceConfig or 2;
+                  if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
+                     FaceConfig := FaceConfig or 1;
 
                   // Find faces
                   {$ifdef MESH_TEST}
@@ -983,6 +1003,7 @@ begin
                   {$endif}
                   Tool.AddRefinementFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
                end;
+*)
             end;
          end;
    if ((TriangleList.Count + QuadList.Count) > 0) then
