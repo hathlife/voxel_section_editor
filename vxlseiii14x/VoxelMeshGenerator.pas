@@ -944,19 +944,19 @@ begin
                   // Detect face configuration
                   FaceConfig := 0;
                   // Axis X
-                  if _VoxelMap.MapSafe[x-1,y,z] < 255 then
+                  if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
                      FaceConfig := FaceConfig or 32;
-                  if _VoxelMap.MapSafe[x+1,y,z] < 255 then
+                  if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
                      FaceConfig := FaceConfig or 16;
                   // Axis Y
-                  if _VoxelMap.MapSafe[x,y-1,z] < 255 then
+                  if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
                      FaceConfig := FaceConfig or 8;
-                  if _VoxelMap.MapSafe[x,y+1,z] < 255 then
+                  if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
                      FaceConfig := FaceConfig or 4;
                   // Axis Z
-                  if _VoxelMap.MapSafe[x,y,z-1] < 255 then
+                  if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
                      FaceConfig := FaceConfig or 2;
-                  if _VoxelMap.MapSafe[x,y,z+1] < 255 then
+                  if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
                      FaceConfig := FaceConfig or 1;
 
                   // Let's check its neighbour faces, edges and vertexes. We'll
