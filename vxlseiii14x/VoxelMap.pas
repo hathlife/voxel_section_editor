@@ -922,11 +922,16 @@ end;
 procedure TVoxelMap.MapRefinementZones(_Surface: single);
 const
    CubeVertexBit: array [0..25] of byte = (15,10,5,12,3,4,8,1,2,51,34,170,136,204,68,85,17,240,160,80,192,48,64,128,16,32);
-   CubeFaceBit: array[0..25] of byte = (47,45,46,39,43,38,37,42,41,59,57,61,53,55,54,62,58,31,29,30,23,27,22,21,26,25);
+   EdgeDetectionBit: array[0..11] of longword = (513,8193,131584,139264,32769,2049,163840,133120,33280,2560,40960,10240);
+   EdgeForbiddenBit: array[0..11] of longword = (16,8,2097152,1048576,4,2,524288,262144,65536,1024,16384,4096);
+   EdgeVertexBit: array[0..11] of byte = (3,12,48,192,5,10,80,160,17,34,68,136);
+   VertexDetectionBit: array[0..7,0..2] of longword = ((65537,516,32784),(1025,514,2064),(16385,8196,32776),(4097,2056,8194),(524800,2129920,196608),(262656,2099200,132096),(532480,1081344,147456),(1050624,270336,135168));
+   VertexForbiddenBit: array[0..7,0..2] of longword = ((33428,98449,66181),(2834,3345,1795),(41004,49193,24613),(10314,12355,6217),(19103744,17498624,19431936),(35785728,33949184,35916288),(5423104,4874240,5808128),(8794112,9574400,9709568));
 var
    Cube : TNormals;
    CurrentNormal : TVector3f;
-   x, y, z, i, maxi,FaceConfig,bitValue,bitCount : integer;
+   x, y, z, i, j, maxi,VertexConfig,BitValue,BitCount : integer;
+   RegionBitConfig: longword;
 begin
    Cube := TNormals.Create(6);
    maxi := Cube.GetLastID;
@@ -941,89 +946,105 @@ begin
                // surfaces
                if FMap.DataUnsafe[x,y,z] < _Surface then
                begin
-                  // verify if we have any face neighbour (which is one of the
-                  // requirements of refinement zone.
-                  FaceConfig := 0;
-                  if (GetMapSafe(x-1,y,z) >= _Surface) then
+                  // Generate our bit config that we'll need to use later to find
+                  // if there is any topological problem in our region.
+                  i := 0;
+                  RegionBitConfig := 0;
+                  while i <= maxi do
                   begin
-                     FaceConfig := FaceConfig or 32;
-                  end;
-                  if (GetMapSafe(x+1,y,z) >= _Surface) then
-                  begin
-                     FaceConfig := FaceConfig or 16;
-                  end;
-                  if (GetMapSafe(x,y-1,z) >= _Surface) then
-                  begin
-                     FaceConfig := FaceConfig or 8;
-                  end;
-                  if (GetMapSafe(x,y+1,z) >= _Surface) then
-                  begin
-                     FaceConfig := FaceConfig or 4;
-                  end;
-                  if (GetMapSafe(x,y,z-1) >= _Surface) then
-                  begin
-                     FaceConfig := FaceConfig or 2;
-                  end;
-                  if (GetMapSafe(x,y,z+1) >= _Surface) then
-                  begin
-                     FaceConfig := FaceConfig or 1;
-                  end;
-
-
-                  // Now we check if we have a face neighbour and if 5 vertexes
-                  // are checked.
-                  if FaceConfig > 0 then
-                  begin
-                     // Now, we really calculate the configuration of this
-                     // region.
-
-                     // Visit all neighbours and calculate a preliminary config.
-                     i := 0;
-                     BitValue := 0;
-                     while i <= maxi do
+                     CurrentNormal := Cube[i];
+                     // So, if the neighbour is surface, then..
+                     if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
                      begin
-                        // If this neighbour is neighbour to any face that
-                        // incides in this refinement zone...
-                        if CubeFaceBit[i] and FaceConfig <> 0 then
+                        // increments the config with the neighbour config
+                        RegionBitConfig := RegionBitConfig or (1 shl i);
+                     end;
+                     inc(i);
+                  end;
+
+                  // Verify the presence of problematic edges and fill the
+                  // vertexes that belong to it.
+                  i := 0;
+                  VertexConfig := 0;
+                  while i < 12 do
+                  begin
+                     if ((RegionBitConfig and EdgeDetectionBit[i]) = EdgeDetectionBit[i]) and ((RegionBitConfig and EdgeForbiddenBit[i]) = 0) then
+                     begin
+                        VertexConfig := VertexConfig or EdgeVertexBit[i];
+                     end;
+                     inc(i);
+                  end;
+
+                  // Verify the presence of problematic vertexes on the ones
+                  // that are not part of the problematic edges.
+                  i := 0;
+                  while i < 8 do
+                  begin
+                     // if vertex not in VertexConfig, verify it.
+                     if ((1 shl i) and VertexConfig) = 0 then
+                     begin
+                        // verify the 3 possible situations of vertex topological
+                        // problems for each vertex:
+                        j := 0;
+                        while j < 3 do
                         begin
-                           CurrentNormal := Cube[i];
-                           // So, if the neighbour is surface, then..
-                           if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
+                           if ((RegionBitConfig and VertexDetectionBit[i,j]) = VertexDetectionBit[i,j]) and ((RegionBitConfig and VertexForbiddenBit[i,j]) = 0) then
                            begin
-                              // increments the config with the neighbour config
-                              BitValue := BitValue or CubeVertexBit[i];
+                              VertexConfig := VertexConfig or (1 shl i);
+                              j := 3;
                            end;
+                           inc(j);
                         end;
-                        inc(i);
                      end;
-                     // check if it has 5 or more vertexes.
-                     BitCount := 0;
-                     if BitValue and 1 > 0 then
-                        inc(BitCount);
-                     if BitValue and 2 > 0 then
-                        inc(BitCount);
-                     if BitValue and 4 > 0 then
-                        inc(BitCount);
-                     if BitValue and 8 > 0 then
-                        inc(BitCount);
-                     if BitValue and 16 > 0 then
-                        inc(BitCount);
-                     if BitValue and 32 > 0 then
-                        inc(BitCount);
-                     if BitValue and 64 > 0 then
-                        inc(BitCount);
-                     if BitValue and 128 > 0 then
-                        inc(BitCount);
-                     if BitCount >= 5 then
-                     begin
-                        // Finally, we write the value of the refinement zone here.
-                        {$ifdef MESH_TEST}
-                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(BitValue) + ' and in binary it is (' + IntToStr((BitValue and 128) shr 7) + ',' + IntToStr((BitValue and 64) shr 6) + ',' + IntToStr((BitValue and 32) shr 5) + ',' + IntToStr((BitValue and 16) shr 4) + ',' + IntToStr((BitValue and 8) shr 3) + ',' + IntToStr((BitValue and 4) shr 2) + ',' + IntToStr((BitValue and 2) shr 1) + ',' + IntToStr(BitValue and 1) + ').');
-                       {$endif}
-                        FMap.DataUnsafe[x,y,z] := BitValue;
-                     end;
+                     inc(i);
                   end;
 
+                  // The vertexes in VertexConfig are part of the final
+                  // mesh, but we'll add inside vertexes that are neighbour to
+                  // them.
+                  BitValue := VertexConfig;
+                  i := 0;
+                  while i < 26 do
+                  begin
+                     // if region i is in the surface, then
+                     if ((1 shl i) and RegionBitConfig) > 0 then
+                     begin
+                        // if it has one of the problematic vertexes, then
+                        if CubeVertexBit[i] and VertexConfig > 0 then
+                        begin
+                           // increment our config with its vertexes.
+                           BitValue := BitValue or CubeVertexBit[i];
+                        end;
+                     end;
+                     inc(i);
+                  end;
+
+                  // check if it has 5 or more vertexes.
+                  BitCount := 0;
+                  if BitValue and 1 > 0 then
+                     inc(BitCount);
+                  if BitValue and 2 > 0 then
+                     inc(BitCount);
+                  if BitValue and 4 > 0 then
+                     inc(BitCount);
+                  if BitValue and 8 > 0 then
+                     inc(BitCount);
+                  if BitValue and 16 > 0 then
+                     inc(BitCount);
+                  if BitValue and 32 > 0 then
+                     inc(BitCount);
+                  if BitValue and 64 > 0 then
+                     inc(BitCount);
+                  if BitValue and 128 > 0 then
+                     inc(BitCount);
+                  if BitCount >= 5 then
+                  begin
+                     // Finally, we write the value of the refinement zone here.
+                     {$ifdef MESH_TEST}
+                     GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(BitValue) + ' and in binary it is (' + IntToStr((BitValue and 128) shr 7) + ',' + IntToStr((BitValue and 64) shr 6) + ',' + IntToStr((BitValue and 32) shr 5) + ',' + IntToStr((BitValue and 16) shr 4) + ',' + IntToStr((BitValue and 8) shr 3) + ',' + IntToStr((BitValue and 4) shr 2) + ',' + IntToStr((BitValue and 2) shr 1) + ',' + IntToStr(BitValue and 1) + ').');
+                     {$endif}
+                     FMap.DataUnsafe[x,y,z] := BitValue;
+                  end;
                end;
             end;
    end;
