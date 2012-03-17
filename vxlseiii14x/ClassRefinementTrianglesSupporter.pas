@@ -53,7 +53,7 @@ const
    QuadSet: array[1..24,0..3] of byte = ((0,4,5,1),(0,1,3,2),(0,2,6,4),(1,5,7,3),(2,3,7,6),(4,6,7,5),(0,2,3,1),(0,1,5,4),(2,3,5,4),(0,4,6,2),(1,4,6,3),(1,5,6,2),(1,3,7,5),(0,2,7,5),(0,3,7,4),(2,6,7,3),(0,6,7,1),(0,4,7,3),(1,2,6,5),(4,5,7,6),(0,1,7,6),(0,5,7,2),(1,3,6,4),(2,4,5,3));
    QuadFaces: array[1..24] of shortint = (2,0,4,5,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
    QuadConfigStart: array[0..256] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,11,11,12,12,12,12,12,12,13,13,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,18,18,19,19,22,22,22,22,23,23,24,24,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,31,31,31,32,35,35,35,35,36,36,36,36,37,37,37,38,41,41,41,42,45,45,45,45,45,45,45,45,45,45,45,45,45,46,47,48,51,51,51,51,51,51,52,52,53,53,53,53,53,54,57,58,61,61,61,61,61,61,61,61,61,61,61,62,63,64,65,68,71,72,73,74,77,78,81,82,85,86,87,90,93,96,99,102,108);
-   QuadConfigData: array[0..107] of byte = (7,2,2,8,1,1,1,2,9,2,10,3,3,2,3,11,2,1,3,1,3,12,1,3,1,2,3,2,2,13,4,4,2,4,14,1,1,4,1,4,15,4,1,2,4,16,5,5,2,5,17,3,3,5,3,5,18,5,2,3,5,4,4,5,5,4,5,19,2,4,5,20,6,6,1,6,21,6,3,6,22,6,1,3,6,6,6,4,6,23,1,4,6,5,6,24,3,5,6,4,5,6,0,1,2,3,4,5);
+   QuadConfigData: array[0..107] of byte = (7,2,2,8,1,1,1,2,9,2,10,3,3,2,3,11,2,1,3,1,3,12,1,3,1,2,3,2,2,13,4,4,2,4,14,1,1,4,1,4,15,4,1,2,4,16,5,5,2,5,17,3,3,5,3,5,18,5,2,3,5,4,4,5,5,4,5,19,2,4,5,20,6,6,1,6,21,6,3,6,22,6,1,3,6,6,6,4,6,23,1,4,6,5,6,24,3,5,6,4,5,6,1,2,3,4,5,6);
 
    TriangleSet: array[1..84,0..2] of byte = ((0,4,1),(0,2,4),(1,4,3),(2,3,4),(0,5,1),(0,2,5),(1,5,3),(2,3,5),(0,1,2),(1,5,2),(2,5,4),(0,1,3),(0,3,4),(3,5,4),(0,6,1),(0,2,6),(1,6,3),(2,3,6),(1,6,2),(1,4,6),(0,3,2),(0,4,3),(3,4,6),(0,6,5),(3,5,6),(0,6,4),(0,1,6),(1,5,6),(4,6,5),(0,5,2),(0,4,5),(2,5,6),(0,3,6),(0,5,3),(0,7,1),(0,2,7),(1,7,3),(2,3,7),(1,4,7),(2,7,4),(0,7,5),(0,3,7),(1,3,2),(1,2,5),(2,7,5),(0,7,4),(0,1,7),(1,5,7),(4,7,5),(2,1,7),(1,3,4),(1,5,4),(3,7,4),(1,2,3),(1,2,4),(1,4,5),(4,5,7),(0,7,3),(0,6,7),(1,2,6),(1,6,7),(0,7,2),(0,4,7),(2,7,6),(4,6,7),(2,4,3),(2,6,4),(3,4,7),(1,6,5),(1,3,6),(3,7,6),(5,6,7),(2,5,3),(2,6,5),(3,5,7),(0,7,6),(0,5,7),(1,6,4),(1,7,6),(2,4,5),(2,5,7),(1,7,2),(3,4,5),(3,6,4));
    TriangleFaces: array[1..84] of shortint = (2,4,-1,-1,2,-1,5,-1,0,-1,-1,0,-1,-1,-1,4,-1,3,-1,-1,0,-1,-1,-1,-1,4,-1,-1,1,-1,2,-1,-1,-1,-1,-1,5,3,-1,-1,-1,-1,0,-1,-1,-1,-1,5,1,-1,-1,2,-1,0,-1,2,1,-1,-1,-1,-1,-1,-1,3,1,-1,4,-1,-1,-1,3,1,-1,-1,5,-1,-1,-1,-1,-1,-1,-1,-1,-1);
@@ -342,12 +342,13 @@ const
    VertexSet: array[1..18,0..2] of byte = ((0,0,1),(0,1,0),(0,1,1),(0,1,2),(0,2,1),(1,0,0),(1,0,1),(1,0,2),(2,0,1),(1,1,2),(2,1,2),(1,2,2),(1,2,0),(1,2,1),(2,2,1),(1,1,0),(2,1,0),(2,1,1));
    VertexConfigStart: array[0..26] of byte = (0,5,6,7,8,9,9,9,9,9,14,15,20,21,26,27,32,33,38,39,40,41,42,42,42,42,42);
    VertexConfigData: array[0..41] of byte = (1,2,3,4,5,4,2,5,1,1,6,7,8,9,8,8,4,10,11,12,12,5,13,14,12,15,13,6,2,16,17,13,6,9,17,18,11,15,11,17,15,9);
+
+   MidVerts: array[0..71,0..2] of byte = ((1,2,0),(1,2,2),(1,0,2),(1,0,0),(1,2,1),(1,1,2),(1,0,1),(1,1,0),(0,1,0),(0,1,2),(2,1,2),(2,1,0),(0,1,1),(1,1,2),(2,1,1),(1,1,0),(2,2,1),(0,2,1),(0,0,1),(2,0,1),(1,2,1),(0,1,1),(1,0,1),(2,1,1),(2,2,2),(0,2,0),(0,0,0),(2,0,2),(1,2,1),(0,1,0),(1,0,1),(2,1,2),(2,2,0),(0,2,2),(0,0,2),(2,0,0),(1,2,1),(0,1,2),(1,0,1),(2,1,0),(2,2,0),(0,0,0),(0,0,2),(2,2,2),(1,1,0),(0,0,1),(1,1,2),(2,2,1),(2,0,0),(0,2,0),(0,2,2),(2,0,2),(1,1,0),(0,2,1),(1,1,2),(2,0,1),(2,2,0),(0,2,0),(0,0,2),(2,0,2),(1,2,0),(0,1,1),(1,0,2),(2,1,1),(2,0,0),(0,0,0),(0,2,2),(2,2,2),(1,0,0),(0,1,1),(1,2,2),(2,1,1));
 var
    Cube : TNormals;
    i,j,k,maxi: integer;
    xBase,yBase,zBase : integer;
    CurrentNormal : TVector3f;
-   cLeft,cRight,cBottom,cTop,cBack,cFront: integer;
 begin
    Cube := TNormals.Create(6);
    maxi := Cube.GetLastID;
@@ -375,87 +376,49 @@ begin
       // update faces checking if the center vertex is used or not.
       // Order: NE, NW, SW, SE, N, W, S, E, Self -> pointing to the center of
       // the 3x3x3 region
-(*
+
       // Left
-      cLeft := _NeighbourVertexIDs[0,1,1];
       if HasMidFaceVertex(_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,1,1]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase + 1,zBase + 1,0,1,1,_NumVertices);
       end;
       // Right
-      cRight := _NeighbourVertexIDs[2,1,1];
       if HasMidFaceVertex(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 1,zBase + 1,2,1,1,_NumVertices);
       end;
       // Bottom
-      cBottom := _NeighbourVertexIDs[1,0,1];
-      if HasMidFaceVertex(_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,0,1]) then
+      if HasMidFaceVertex(_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,0,1]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase,zBase + 1,1,0,1,_NumVertices);
       end;
       // Top
-      cTop := _NeighbourVertexIDs[1,2,1];
       if HasMidFaceVertex(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[1,2,1]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 2,zBase + 1,1,2,1,_NumVertices);
       end;
       // Back
-      cBack := _NeighbourVertexIDs[1,1,0];
       if HasMidFaceVertex(_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[1,1,0]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase,1,1,0,_NumVertices);
       end;
       // Front
-      cFront := _NeighbourVertexIDs[1,1,2];
       if HasMidFaceVertex(_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[1,1,2]) then
       begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 2,1,1,2,_NumVertices);
       end;
       // update the center region check if it is used or not.
-      if not ((cLeft > C_VMG_NO_VERTEX) xor (cRight > C_VMG_NO_VERTEX)) then
+      i := 0;
+      j := 0;
+      while i < High(MidVerts) do
       begin
-         if HasMidFaceVertex(_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1]) then
+         if HasMidFaceVertex(_NeighbourVertexIDs[MidVerts[i,0],MidVerts[i,1],MidVerts[i,2]],_NeighbourVertexIDs[MidVerts[i+1,0],MidVerts[i+1,1],MidVerts[i+1,2]],_NeighbourVertexIDs[MidVerts[i+2,0],MidVerts[i+2,1],MidVerts[i+2,2]],_NeighbourVertexIDs[MidVerts[i+3,0],MidVerts[i+3,1],MidVerts[i+3,2]],_NeighbourVertexIDs[MidVerts[i+4,0],MidVerts[i+4,1],MidVerts[i+4,2]],_NeighbourVertexIDs[MidVerts[i+5,0],MidVerts[i+5,1],MidVerts[i+5,2]],_NeighbourVertexIDs[MidVerts[i+6,0],MidVerts[i+6,1],MidVerts[i+6,2]],_NeighbourVertexIDs[MidVerts[i+7,0],MidVerts[i+7,1],MidVerts[i+7,2]],_NeighbourVertexIDs[1,1,1]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-         end
-         else if not ((cBottom > C_VMG_NO_VERTEX) xor (cTop > C_VMG_NO_VERTEX)) then
-         begin
-            if HasMidFaceVertex(_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1]) then
-            begin
-               AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-            end
-            else if not ((cBack > C_VMG_NO_VERTEX) xor (cFront > C_VMG_NO_VERTEX)) then
-            begin
-               if HasMidFaceVertex(_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[1,1,1]) then
-               begin
-                  AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-               end;
-            end;
+            i := High(MidVerts);
          end;
-      end
-      else if not ((cBottom > C_VMG_NO_VERTEX) xor (cTop > C_VMG_NO_VERTEX)) then
-      begin
-         if HasMidFaceVertex(_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1]) then
-         begin
-            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-         end
-         else if not ((cBack > C_VMG_NO_VERTEX) xor (cFront > C_VMG_NO_VERTEX)) then
-         begin
-            if HasMidFaceVertex(_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[1,1,1]) then
-            begin
-               AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-            end;
-         end;
-      end
-      else if not ((cBack > C_VMG_NO_VERTEX) xor (cFront > C_VMG_NO_VERTEX)) then
-      begin
-         if HasMidFaceVertex(_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[1,1,1]) then
-         begin
-            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-         end;
+         inc(i,8);
       end;
-*)
    end;
    Cube.Free;
 end;
