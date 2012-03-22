@@ -65,6 +65,7 @@ type
          procedure MapSurfacesOnly(_Value: single);
          procedure MapExternalSurfaces(_Value: single);
          procedure MapSemiSurfaces(var _SemiSurfaces: T3DIntGrid);
+         procedure MapTopologicalProblems(_Surface: single);
          procedure MapRefinementZones(_Surface: single);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
@@ -387,7 +388,8 @@ begin
    MergeMapData(FilledMap,511);
    FilledMap.Free;
    MapSurfaces(511,511,1023);
-   MapRefinementZones(511);
+   //MapRefinementZones(511);
+   MapTopologicalProblems(511);
 end;
 
 // Copies
@@ -914,12 +916,7 @@ begin
    VertsAndEdgesNeighboors.Free;
 end;
 
-// Refinement zones are regions that are neighbour to two surface voxels that
-// are 'linked by edge or vertex'. These zones, while considered to be out of
-// the volume, they'll have part of the volume of the model, in order to avoid
-// regions where the internal volume does not exist, therefore not being
-// manifolds. We'll do a sort of marching cubes on these regions.
-procedure TVoxelMap.MapRefinementZones(_Surface: single);
+procedure TVoxelMap.MapTopologicalProblems(_Surface: single);
 const
    CubeVertexBit: array [0..25] of byte = (15,10,5,12,3,4,8,1,2,51,34,170,136,204,68,85,17,240,160,80,192,48,64,128,16,32);
    EdgeDetectionBit: array[0..11] of longword = (513,8193,131584,139264,32769,2049,163840,133120,33280,2560,40960,10240);
@@ -1045,6 +1042,122 @@ begin
                      {$endif}
                      FMap.DataUnsafe[x,y,z] := BitValue;
                   end;
+               end;
+            end;
+   end;
+   Cube.Free;
+end;
+
+// Refinement zones are regions that are neighbour to two surface voxels that
+// are 'linked by edge or vertex'. These zones, while considered to be out of
+// the volume, they'll have part of the volume of the model, in order to avoid
+// regions where the internal volume does not exist, therefore not being
+// manifolds. We'll do a sort of marching cubes on these regions.
+procedure TVoxelMap.MapRefinementZones(_Surface: single);
+const
+   CubeVertexBit: array [0..25] of byte = (15,10,5,12,3,4,8,1,2,51,34,170,136,204,68,85,17,240,160,80,192,48,64,128,16,32);
+   CubeFaceBit: array[0..25] of byte = (47,45,46,39,43,38,37,42,41,59,57,61,53,55,54,62,58,31,29,30,23,27,22,21,26,25);
+var
+   Cube : TNormals;
+   CurrentNormal : TVector3f;
+   x, y, z, i, maxi,FaceConfig,bitValue,bitCount : integer;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      // Check all voxels.
+      for x := 0 to FMap.MaxX do
+         for y := 0 to FMap.MaxY do
+            for z := 0 to FMap.MaxZ do
+            begin
+               // refinement zones are points out of the model that are close to
+               // surfaces
+               if FMap.DataUnsafe[x,y,z] < _Surface then
+               begin
+                  // verify if we have any face neighbour (which is one of the
+                  // requirements of refinement zone.
+                  FaceConfig := 0;
+                  if (GetMapSafe(x-1,y,z) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 32;
+                  end;
+                  if (GetMapSafe(x+1,y,z) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 16;
+                  end;
+                  if (GetMapSafe(x,y-1,z) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 8;
+                  end;
+                  if (GetMapSafe(x,y+1,z) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 4;
+                  end;
+                  if (GetMapSafe(x,y,z-1) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 2;
+                  end;
+                  if (GetMapSafe(x,y,z+1) >= _Surface) then
+                  begin
+                     FaceConfig := FaceConfig or 1;
+                  end;
+
+
+                  // Now we check if we have a face neighbour and if 5 vertexes
+                  // are checked.
+                  if FaceConfig > 0 then
+                  begin
+                     // Now, we really calculate the configuration of this
+                     // region.
+
+                     // Visit all neighbours and calculate a preliminary config.
+                     i := 0;
+                     BitValue := 0;
+                     while i <= maxi do
+                     begin
+                        // If this neighbour is neighbour to any face that
+                        // incides in this refinement zone...
+                        if CubeFaceBit[i] and FaceConfig <> 0 then
+                        begin
+                           CurrentNormal := Cube[i];
+                           // So, if the neighbour is surface, then..
+                           if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
+                           begin
+                              // increments the config with the neighbour config
+                              BitValue := BitValue or CubeVertexBit[i];
+                           end;
+                        end;
+                        inc(i);
+                     end;
+                     // check if it has 5 or more vertexes.
+                     BitCount := 0;
+                     if BitValue and 1 > 0 then
+                        inc(BitCount);
+                     if BitValue and 2 > 0 then
+                        inc(BitCount);
+                     if BitValue and 4 > 0 then
+                        inc(BitCount);
+                     if BitValue and 8 > 0 then
+                        inc(BitCount);
+                     if BitValue and 16 > 0 then
+                        inc(BitCount);
+                     if BitValue and 32 > 0 then
+                        inc(BitCount);
+                     if BitValue and 64 > 0 then
+                        inc(BitCount);
+                     if BitValue and 128 > 0 then
+                        inc(BitCount);
+                     if BitCount >= 5 then
+                     begin
+                        // Finally, we write the value of the refinement zone here.
+                        {$ifdef MESH_TEST}
+                        GlobalVars.MeshFile.Add('Interpolation Zone Location: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), config is ' + IntToStr(BitValue) + ' and in binary it is (' + IntToStr((BitValue and 128) shr 7) + ',' + IntToStr((BitValue and 64) shr 6) + ',' + IntToStr((BitValue and 32) shr 5) + ',' + IntToStr((BitValue and 16) shr 4) + ',' + IntToStr((BitValue and 8) shr 3) + ',' + IntToStr((BitValue and 4) shr 2) + ',' + IntToStr((BitValue and 2) shr 1) + ',' + IntToStr(BitValue and 1) + ').');
+                       {$endif}
+                        FMap.DataUnsafe[x,y,z] := BitValue;
+                     end;
+                  end;
+
                end;
             end;
    end;

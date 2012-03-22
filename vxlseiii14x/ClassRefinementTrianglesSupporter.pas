@@ -318,6 +318,10 @@ begin
             begin
                Result := true;
             end;
+         end
+         else if CountCenter > 2 then
+         begin
+            Result := true;
          end;
       end;
    end;
