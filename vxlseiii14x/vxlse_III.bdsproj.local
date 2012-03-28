@@ -118,5 +118,7 @@
     <Transaction>2011/12/23 13:45:17.971.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassMeshGeometryList.pas</Transaction>
     <Transaction>2012/01/18 00:21:59.003.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassInterpolationTrianglesSupporter.pas</Transaction>
     <Transaction>2012/03/09 02:32:37.558.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassInterpolationTrianglesSupporter.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassRefinementTrianglesSupporter.pas</Transaction>
+    <Transaction>2012/03/25 00:52:18.663.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassSurfaceDescriptorVolume.pas</Transaction>
+    <Transaction>2012/03/25 21:34:32.163.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassSurfaceDescriptorVolume.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassVolumeFaceVerifier.pas</Transaction>
   </Transactions>
 </BorlandProject>

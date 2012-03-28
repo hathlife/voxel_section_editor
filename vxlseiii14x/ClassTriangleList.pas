@@ -2,7 +2,7 @@ unit ClassTriangleList;
 
 interface
 
-uses BasicDataTypes;
+uses BasicDataTypes, BasicConstants;
 
 type
    CTriangleList = class
@@ -23,11 +23,13 @@ type
          function SaveState:PTriangleItem;
          // Add
          procedure Add (_v1,_v2,_v3: integer; _Color: Cardinal);
-         procedure Delete;
          // Delete
+         procedure Delete;
+         procedure CleanUpBadTriangles;
          procedure Clear;
          // Misc
          procedure GoToFirstElement;
+         procedure GoToLastElement;
          procedure GoToNextElement;
          // Properties
          property Count: integer read FCount;
@@ -171,6 +173,42 @@ begin
    end;
 end;
 
+procedure CTriangleList.CleanUpBadTriangles;
+var
+   Previous : PTriangleItem;
+begin
+   Active := Start;
+   Previous := nil;
+   while Active <> nil do
+   begin
+      // if vertex 1 is invalid, delete quad.
+      if Active^.v1 = C_VMG_NO_VERTEX then
+      begin
+         if Previous <> nil then
+         begin
+            Previous^.Next := Active^.Next;
+         end
+         else
+         begin
+            Start := Active^.Next;
+         end;
+         if Last = Active then
+         begin
+            Last := Previous;
+         end;
+         Dispose(Active);
+         dec(FCount);
+         Active := Previous^.Next;
+      end
+      else
+      begin
+         Previous := Active;
+         Active := Active^.Next;
+      end;
+   end;
+   Active := Start;
+end;
+
 procedure CTriangleList.Clear;
 var
    Garbage : PTriangleItem;
@@ -197,6 +235,11 @@ end;
 procedure CTriangleList.GoToFirstElement;
 begin
    Active := Start;
+end;
+
+procedure CTriangleList.GoToLastElement;
+begin
+   Active := Last;
 end;
 
 end.

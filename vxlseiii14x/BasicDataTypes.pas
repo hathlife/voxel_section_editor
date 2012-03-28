@@ -145,6 +145,11 @@ type
    end;
    PTriangleNeighbourItem = ^TTriangleNeighbourItem;
 
+   TSurfaceDescriptiorItem = record
+      Triangles: array [0..5] of PTriangleItem;
+      Quads: array [0..5] of PQuadItem;
+   end;
+
    TGLMatrixf4 = array[0..3, 0..3] of Single;
 
    T3DIntGrid = array of array of array of integer;

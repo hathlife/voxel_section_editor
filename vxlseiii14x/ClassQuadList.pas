@@ -2,7 +2,7 @@ unit ClassQuadList;
 
 interface
 
-uses BasicDataTypes;
+uses BasicDataTypes, BasicConstants;
 
 type
    CQuadList = class
@@ -27,9 +27,11 @@ type
          procedure Delete;
          // Delete
          procedure Clear;
+         procedure CleanUpBadQuads;
          // Misc
          procedure GoToFirstElement;
          procedure GoToNextElement;
+         procedure GoToLastElement;
          // Properties
          property Count: integer read FCount;
          property V1: integer read GetV1;
@@ -126,6 +128,42 @@ begin
    end;
 end;
 
+procedure CQuadList.CleanUpBadQuads;
+var
+   Previous : PQuadItem;
+begin
+   Active := Start;
+   Previous := nil;
+   while Active <> nil do
+   begin
+      // if vertex 1 is invalid, delete quad.
+      if Active^.v1 = C_VMG_NO_VERTEX then
+      begin
+         if Previous <> nil then
+         begin
+            Previous^.Next := Active^.Next;
+         end
+         else
+         begin
+            Start := Active^.Next;
+         end;
+         if Last = Active then
+         begin
+            Last := Previous;
+         end;
+         Dispose(Active);
+         dec(FCount);
+         Active := Previous^.Next;
+      end
+      else
+      begin
+         Previous := Active;
+         Active := Active^.Next;
+      end;
+   end;
+   Active := Start;
+end;
+
 procedure CQuadList.Clear;
 var
    Garbage : PQuadItem;
@@ -214,6 +252,11 @@ end;
 procedure CQuadList.GoToFirstElement;
 begin
    Active := Start;
+end;
+
+procedure CQuadList.GoToLastElement;
+begin
+   Active := Last;
 end;
 
 end.

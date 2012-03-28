@@ -6,7 +6,7 @@ uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
    VolumeGreyIntData, ClassVertexList, ClassTriangleList, ClassQuadList,
    Normals, Windows, ClassMeshNormalsTool, DifferentMeshFaceTypePlugin,
    MeshGeometryBase, MeshBRepGeometry, ClassMeshGeometryList,
-   ClassRefinementTrianglesSupporter, Dialogs, SysUtils;
+   ClassRefinementTrianglesSupporter, Dialogs, SysUtils, ClassVolumeFaceVerifier;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -918,6 +918,7 @@ var
    NeighbourVertexIDs: T3DIntGrid;
    TriangleList: CTriangleList;
    QuadList: CQuadList;
+   FaceVerifier: CVolumeFaceVerifier;
    Tool: CRefinementTrianglesSupporter;
 begin
    VUnitPlus1 := VUnit + 1;
@@ -926,6 +927,7 @@ begin
    QuadList := CQuadList.Create;
    OldNumVertices := _NumVertices;
    SetLength(NeighbourVertexIDs,VUnitPlus1,VUnitPlus1,VUnitPlus1);
+   FaceVerifier := CVolumeFaceVerifier.Create(_VertexMap.XSize,_VertexMap.YSize,_VertexMap.ZSize);
    // visit every region.
    for x := 0 to _VoxelMap.GetMaxX do
       for y := 0 to _VoxelMap.GetMaxY do
@@ -934,78 +936,44 @@ begin
             // if the region is an refinement zone, then...
             if (_VoxelMap.Map[x,y,z] > 0.9) and (_VoxelMap.Map[x,y,z] < 256) then
             begin
-               // Should we subdivide it? If a refinement zone has all 8
-               // corners filled (=255), then the answer is yes. Otherwise, no.
-//               if (_VoxelMap.Map[x,y,z] = 255) then
-//               if (_VoxelMap.Map[x,y,z] = 127) or (_VoxelMap.Map[x,y,z] = 191) or (_VoxelMap.Map[x,y,z] = 223) or (_VoxelMap.Map[x,y,z] = 239) or (_VoxelMap.Map[x,y,z] = 247) or (_VoxelMap.Map[x,y,z] = 251) or (_VoxelMap.Map[x,y,z] = 253) or (_VoxelMap.Map[x,y,z] = 254) or (_VoxelMap.Map[x,y,z] = 255) then
-//               begin
-                  // Subdivision starts here...
+               // Subdivision starts here...
 
-                  // Detect face configuration
-                  FaceConfig := 0;
-                  // Axis X
-                  if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
-                     FaceConfig := FaceConfig or 32;
-                  if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
-                     FaceConfig := FaceConfig or 16;
-                  // Axis Y
-                  if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
-                     FaceConfig := FaceConfig or 8;
-                  if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
-                     FaceConfig := FaceConfig or 4;
-                  // Axis Z
-                  if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
-                     FaceConfig := FaceConfig or 2;
-                  if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
-                     FaceConfig := FaceConfig or 1;
+               // Detect face configuration
+               FaceConfig := 255;//0;
+               // Axis X
+{
+               if _VoxelMap.MapSafe[x-1,y,z] < 256 then
+                  FaceConfig := FaceConfig or 32;
+               if _VoxelMap.MapSafe[x+1,y,z] < 256 then
+                  FaceConfig := FaceConfig or 16;
+               // Axis Y
+               if _VoxelMap.MapSafe[x,y-1,z] < 256 then
+                  FaceConfig := FaceConfig or 8;
+               if _VoxelMap.MapSafe[x,y+1,z] < 256 then
+                  FaceConfig := FaceConfig or 4;
+               // Axis Z
+               if _VoxelMap.MapSafe[x,y,z-1] < 256 then
+                  FaceConfig := FaceConfig or 2;
+               if _VoxelMap.MapSafe[x,y,z+1] < 256 then
+                  FaceConfig := FaceConfig or 1;
+}
+               // Let's check its neighbour faces, edges and vertexes. We'll
+               // fill the potential vertexes that this region may receive
+               // according to the following criteria. If a face neighbour
+               // exists, we'll fill every vertex in its face. A similar
+               // approach applies to neighbour edges and vertexes.
 
-                  // Let's check its neighbour faces, edges and vertexes. We'll
-                  // fill the potential vertexes that this region may receive
-                  // according to the following criteria. If a face neighbour
-                  // exists, we'll fill every vertex in its face. A similar
-                  // approach applies to neighbour edges and vertexes.
-
-                  {$ifdef MESH_TEST}
-                  GlobalVars.MeshFile.Add('...');
-                  GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
-                  {$endif}
-                  Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
-                  Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
-                  Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,x-1,y-1,z-1,FaceConfig);
-(*
-               end
-               else
-               begin
-                  // Does not subdivide it.
-
-                  // Detect face configuration
-                  FaceConfig := 0;
-                  // Axis X
-                  if _VoxelMap.MapSafe[x-1,y,z] < 0.9 then
-                     FaceConfig := FaceConfig or 32;
-                  if _VoxelMap.MapSafe[x+1,y,z] < 0.9 then
-                     FaceConfig := FaceConfig or 16;
-                  // Axis Y
-                  if _VoxelMap.MapSafe[x,y-1,z] < 0.9 then
-                     FaceConfig := FaceConfig or 8;
-                  if _VoxelMap.MapSafe[x,y+1,z] < 0.9 then
-                     FaceConfig := FaceConfig or 4;
-                  // Axis Z
-                  if _VoxelMap.MapSafe[x,y,z-1] < 0.9 then
-                     FaceConfig := FaceConfig or 2;
-                  if _VoxelMap.MapSafe[x,y,z+1] < 0.9 then
-                     FaceConfig := FaceConfig or 1;
-
-                  // Find faces
-                  {$ifdef MESH_TEST}
-                  GlobalVars.MeshFile.Add('...');
-                  GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ').');
-                  {$endif}
-                  Tool.AddRefinementFaces(Tool.GetVertex(_VertexMap,x-1,y-1,z-1,0,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y-1,z,1,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z-1,2,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x-1,y,z,3,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z-1,4,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y-1,z,5,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z-1,6,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),Tool.GetVertex(_VertexMap,x,y,z,7,VUnit,_NumVertices,_VoxelMap,_VertexTransformation),FaceConfig,TriangleList,QuadList,Tool.GetColour(_Voxel,_Palette,x-1,y-1,z-1,32));
-               end;
-*)
+               {$ifdef MESH_TEST}
+               GlobalVars.MeshFile.Add('...');
+               GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+               {$endif}
+               Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
+               Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
+               Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
             end;
          end;
+   QuadList.CleanUpBadQuads;
+   TriangleList.CleanUpBadTriangles;
    if ((TriangleList.Count + QuadList.Count) > 0) then
    begin
       // Build new vertexes.
@@ -1079,6 +1047,7 @@ begin
    // Free memory.
    TriangleList.Free;
    QuadList.Free;
+   FaceVerifier.Free;
    Tool.Free;
    for x := 0 to 2 do
    begin

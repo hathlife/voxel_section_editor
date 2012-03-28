@@ -164,7 +164,8 @@ uses
   MeshGeometryBase in 'MeshGeometryBase.pas',
   MeshBRepGeometry in 'MeshBRepGeometry.pas',
   ClassMeshGeometryList in 'ClassMeshGeometryList.pas',
-  ClassRefinementTrianglesSupporter in 'ClassRefinementTrianglesSupporter.pas';
+  ClassRefinementTrianglesSupporter in 'ClassRefinementTrianglesSupporter.pas',
+  ClassVolumeFaceVerifier in 'ClassVolumeFaceVerifier.pas';
 
 {$R *.res}
 
