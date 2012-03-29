@@ -387,9 +387,9 @@ begin
    FilledMap.FloodFill(SetVectorI(0,0,0),0);
    MergeMapData(FilledMap,511);
    FilledMap.Free;
-   MapSurfaces(511,511,1023);
-   //MapRefinementZones(511);
-   MapTopologicalProblems(511);
+   MapSurfaces(511,1023,511);
+   MapRefinementZones(511);
+   //MapTopologicalProblems(511);
 end;
 
 // Copies

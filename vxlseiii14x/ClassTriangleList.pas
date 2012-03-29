@@ -175,7 +175,7 @@ end;
 
 procedure CTriangleList.CleanUpBadTriangles;
 var
-   Previous : PTriangleItem;
+   Previous,Next : PTriangleItem;
 begin
    Active := Start;
    Previous := nil;
@@ -184,13 +184,14 @@ begin
       // if vertex 1 is invalid, delete quad.
       if Active^.v1 = C_VMG_NO_VERTEX then
       begin
+         Next := Active^.Next;
          if Previous <> nil then
          begin
-            Previous^.Next := Active^.Next;
+            Previous^.Next := Next;
          end
          else
          begin
-            Start := Active^.Next;
+            Start := Next;
          end;
          if Last = Active then
          begin
@@ -198,7 +199,7 @@ begin
          end;
          Dispose(Active);
          dec(FCount);
-         Active := Previous^.Next;
+         Active := Next;
       end
       else
       begin

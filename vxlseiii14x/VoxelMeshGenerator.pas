@@ -965,11 +965,28 @@ begin
 
                {$ifdef MESH_TEST}
                GlobalVars.MeshFile.Add('...');
-               GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+               GlobalVars.MeshFile.Add('Next refinement region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
                {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
-               Tool.DetectPotentialVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
+               Tool.DetectPotentialRefinementVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
+            end
+            else if (_VoxelMap.Map[x,y,z] = 511) then
+            begin
+               {$ifdef MESH_TEST}
+               GlobalVars.MeshFile.Add('...');
+               GlobalVars.MeshFile.Add('Next surface region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+               {$endif}
+               Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
+               Tool.DetectPotentialSurfaceVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
+               Tool.AddSurfaceFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
+            end
+            else
+            begin
+               {$ifdef MESH_TEST}
+               GlobalVars.MeshFile.Add('...');
+               GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it has been detected as ' + FloatToStr(_VoxelMap.Map[x,y,z]));
+               {$endif}
             end;
          end;
    QuadList.CleanUpBadQuads;
@@ -1202,7 +1219,7 @@ procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithRefinementZones(const _V
 var
    NumVertices,NumFaces : longword;
    VertexMap : T3DVolumeGreyIntData;
-   FaceMap : T4DIntGrid;
+//   FaceMap : T4DIntGrid;
    VertexTransformation: aint32;
    x, y, z : longword;
 begin
@@ -1210,28 +1227,30 @@ begin
    // and make a model out of it.
 
    // Let's map the vertices.
+   NumVertices := 0;
+   _NumVoxels := 0;
    SetupVertexMap(VertexMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
    // Now we give the vertices an ID and count them.
-   BuildVertexMap(VertexMap,_Voxel,NumVertices,_NumVoxels);
+//   BuildVertexMap(VertexMap,_Voxel,NumVertices,_NumVoxels);
    // vertex map is done. If there is no vertex, quit.
-   if NumVertices = 0 then
-   begin
+//   if NumVertices = 0 then
+//   begin
       _Geometry.NumFaces := 0;
-      SetLength(_TexCoords,0);
-      exit;
-   end;
+//      SetLength(_TexCoords,0);
+//      exit;
+//   end;
    // let's fill the vertices array
-   FillVerticesArray(_Vertices,VertexMap,NumVertices);
+//   FillVerticesArray(_Vertices,VertexMap,NumVertices);
    // Now, we'll look for the faces.
-   SetupFaceMap(FaceMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
+//   SetupFaceMap(FaceMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
    // Now we give the faces an ID and count them.
-   BuildFaceMapI(FaceMap,_VoxelMap,_Vertices,NumFaces);
+//   BuildFaceMapI(FaceMap,_VoxelMap,_Vertices,NumFaces);
    // face map is done.
    // let's fill the faces array, normals, colours, etc.
-   _Geometry.NumFaces := NumFaces;
+//   _Geometry.NumFaces := NumFaces;
    SetLength(_TexCoords,0);
-   SetLength(VertexTransformation,High(_Vertices)+1);
-   FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Geometry.Faces,_Geometry.Colours,_Geometry.Normals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_Geometry.VerticesPerFace);
+//   SetLength(VertexTransformation,High(_Vertices)+1);
+//   FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Geometry.Faces,_Geometry.Colours,_Geometry.Normals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_Geometry.VerticesPerFace);
    // Here we build the triangles from the refinement zones.
    BuildRefinementTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
    // Get the positions of the vertexes in the new vertex list, so we can eliminate
@@ -1240,6 +1259,7 @@ begin
    // Free memory
    SetLength(VertexTransformation,0);
    VertexMap.Free;
+{
    for x := Low(FaceMap) to High(FaceMap) do
    begin
       for y := Low(FaceMap[x]) to High(FaceMap[x]) do
@@ -1253,6 +1273,7 @@ begin
       SetLength(FaceMap[x],0);
    end;
    SetLength(FaceMap,0);
+}
 end;
 
 procedure TVoxelMeshGenerator.BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
