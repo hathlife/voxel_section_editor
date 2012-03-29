@@ -486,6 +486,57 @@ begin
       end;
       if counter <> 0 then
       begin
+         // Update 12 border edges.
+         if (_NeighbourVertexIDs[0,0,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[0,0,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase,zBase + 1,0,0,1,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[2,0,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,0,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase,zBase + 1,2,0,1,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,0,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[0,2,0] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase + 1,zBase,0,1,0,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[2,0,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,2,0] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 1,zBase,2,1,0,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,0,2] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[0,2,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase + 1,zBase + 2,0,1,2,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[2,0,2] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,2,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 1,zBase + 2,2,1,2,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,2,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[0,2,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase + 2,zBase + 1,0,2,1,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[2,2,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,2,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 2,zBase + 1,2,2,1,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,0,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,0,0] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase,zBase,1,0,0,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,0,2] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,0,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase,zBase + 2,1,0,2,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,2,0] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,2,0] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 2,zBase,1,2,0,_NumVertices);
+         end;
+         if (_NeighbourVertexIDs[0,2,2] <> C_VMG_NO_VERTEX) and (_NeighbourVertexIDs[2,2,2] <> C_VMG_NO_VERTEX) then
+         begin
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 2,zBase + 2,1,2,2,_NumVertices);
+         end;
+
+
          // update faces checking if the center vertex is used or not.
          // Order: NE, NW, SW, SE, N, W, S, E, Self -> pointing to the center of
          // the 3x3x3 region
