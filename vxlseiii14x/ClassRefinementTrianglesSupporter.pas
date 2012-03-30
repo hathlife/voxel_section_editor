@@ -24,6 +24,7 @@ type
          procedure AddRefinementFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _FaceVerifier: CVolumeFaceVerifier; _x, _y, _z, _AllowedFaces, _VUnit: integer);
          procedure AddSurfaceFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid; var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _FaceVerifier: CVolumeFaceVerifier; _x, _y, _z, _AllowedFaces, _VUnit: integer);
          function HasMidFaceVertex(_vNE, _vNW, _vSW, _vSE, _vN, _vW, _vS, _vE, _vSelf: integer): boolean;
+         function HasMidFaceVertexOnSurface(_vNE, _vNW, _vSW, _vSE, _vN, _vW, _vS, _vE, _vSelf: integer): boolean;
          procedure AddVertex(var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x,_y,_z,_xN,_yN,_zN: integer; var _NumVertices: longword);
    end;
 
@@ -335,6 +336,110 @@ begin
       end
       else if CountCorner = 4 then
       begin
+         CountCenter := 0;
+         if (_vS <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+         end;
+         if (_vW <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+         end;
+         if (_vN <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+         end;
+         if (_vE <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+         end;
+         if CountCenter = 3 then
+         begin
+            Result := true;
+         end;
+      end;
+   end;
+end;
+
+function CRefinementTrianglesSupporter.HasMidFaceVertexOnSurface(_vNE, _vNW, _vSW, _vSE, _vN, _vW, _vS, _vE, _vSelf: integer): boolean;
+const
+   ValidConfigs: array[0..3] of byte = (12,9,3,6);
+var
+   CountCorner,CountCenter,CenterConfig,i: byte;
+   Found : boolean;
+begin
+   Result := false;
+   if _vSelf = C_VMG_NO_VERTEX then
+   begin
+      CountCorner := 0;
+      if _vNE <> C_VMG_NO_VERTEX then
+      begin
+         inc(CountCorner);
+      end;
+      if _vNW <> C_VMG_NO_VERTEX then
+      begin
+         inc(CountCorner);
+      end;
+      if _vSE <> C_VMG_NO_VERTEX then
+      begin
+         inc(CountCorner);
+      end;
+      if _vSW <> C_VMG_NO_VERTEX then
+      begin
+         inc(CountCorner);
+      end;
+      if CountCorner = 3 then
+      begin
+         CountCenter := 0;
+         CenterConfig := 0;
+         if (_vS <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+            CenterConfig := CenterConfig or 8;
+         end;
+         if (_vW <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+            CenterConfig := CenterConfig or 4;
+         end;
+         if (_vN <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+            CenterConfig := CenterConfig or 2;
+         end;
+         if (_vE <> C_VMG_NO_VERTEX) then
+         begin
+            inc(CountCenter);
+            inc(CenterConfig);
+         end;
+         if CountCenter = 2 then
+         begin
+            Found := false;
+            i := 0;
+            while i < 4 do
+            begin
+               if CenterConfig = ValidConfigs[i] then
+               begin
+                  Found := true;
+                  i := 4;
+               end
+               else
+               begin
+                  inc(i);
+               end;
+            end;
+            if Found then
+            begin
+               Result := true;
+            end;
+         end
+         else if CountCenter > 2 then
+         begin
+            Result := true;
+         end;
+      end
+      else if CountCorner = 4 then
+      begin
          Result := true;
       end;
    end;
@@ -428,8 +533,7 @@ begin
          AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 2,1,1,2,_NumVertices);
       end;
       // update the center region check if it is used or not.
-      AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
-{
+//      AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
       i := 0;
       j := 0;
       while i < High(MidVerts) do
@@ -441,7 +545,6 @@ begin
          end;
          inc(i,8);
       end;
-}
    end;
    Cube.Free;
 end;
@@ -542,32 +645,32 @@ begin
          // the 3x3x3 region
 
          // Left
-         if HasMidFaceVertex(_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,1,1]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,1,1]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase,yBase + 1,zBase + 1,0,1,1,_NumVertices);
          end;
          // Right
-         if HasMidFaceVertex(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 1,zBase + 1,2,1,1,_NumVertices);
          end;
          // Bottom
-         if HasMidFaceVertex(_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,0,1]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[1,0,1]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase,zBase + 1,1,0,1,_NumVertices);
          end;
          // Top
-         if HasMidFaceVertex(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[1,2,1]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,2,1],_NeighbourVertexIDs[1,2,1]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 2,zBase + 1,1,2,1,_NumVertices);
          end;
          // Back
-         if HasMidFaceVertex(_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[1,1,0]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[2,2,0],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[1,1,0]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase,1,1,0,_NumVertices);
          end;
          // Front
-         if HasMidFaceVertex(_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[1,1,2]) then
+         if HasMidFaceVertexOnSurface(_NeighbourVertexIDs[2,2,2],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[1,1,2]) then
          begin
             AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 2,1,1,2,_NumVertices);
          end;
