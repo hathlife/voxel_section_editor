@@ -973,9 +973,25 @@ begin
             end
             else if (_VoxelMap.Map[x,y,z] = 511) then
             begin
+               FaceConfig := 0;
+               if _VoxelMap.MapSafe[x-1,y,z] < 512 then
+                  FaceConfig := FaceConfig or 32;
+               if _VoxelMap.MapSafe[x+1,y,z] < 512 then
+                  FaceConfig := FaceConfig or 16;
+               // Axis Y
+               if _VoxelMap.MapSafe[x,y-1,z] < 512 then
+                  FaceConfig := FaceConfig or 8;
+               if _VoxelMap.MapSafe[x,y+1,z] < 512 then
+                  FaceConfig := FaceConfig or 4;
+               // Axis Z
+               if _VoxelMap.MapSafe[x,y,z-1] < 512 then
+                  FaceConfig := FaceConfig or 2;
+               if _VoxelMap.MapSafe[x,y,z+1] < 512 then
+                  FaceConfig := FaceConfig or 1;
+
                {$ifdef MESH_TEST}
                GlobalVars.MeshFile.Add('...');
-               GlobalVars.MeshFile.Add('Next surface region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+               GlobalVars.MeshFile.Add('Next surface region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), FaceConfig = ' + IntToStr(FaceConfig) + ' taken from (' + FloatToStr(_VoxelMap.MapSafe[x-1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x+1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y-1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y+1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z-1]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z+1]) + ') and it will be subdivided!');
                {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                Tool.DetectPotentialSurfaceVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);

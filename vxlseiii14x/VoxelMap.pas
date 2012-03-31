@@ -135,8 +135,8 @@ var
 begin
    if _Mode = C_MODE_USED then
    begin
-      Unfilled := _Value and $FF;
-      Filled := _Value shr 8;
+      Unfilled := _Value and $FFFF;
+      Filled := _Value shr 16;
       for x := 0 to FMap.MaxX do
          for y := 0 to FMap.MaxY do
             for z := 0 to FMap.MaxZ do
@@ -1246,7 +1246,7 @@ end;
 
 function TVoxelMap.GenerateFilledDataParam(_Filled: Integer; _Unfilled: Integer): integer;
 begin
-   Result := (_Filled shl 8) + _Unfilled;
+   Result := (_Filled shl 16) + _Unfilled;
 end;
 
 
