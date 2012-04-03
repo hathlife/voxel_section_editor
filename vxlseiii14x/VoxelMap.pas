@@ -1156,7 +1156,31 @@ begin
                        {$endif}
                         FMap.DataUnsafe[x,y,z] := BitValue;
                      end;
-                  end;
+                  end
+                  else // In this case, the only valid config is a tetrahedron.
+                  begin
+                     // Visit all neighbours and calculate a preliminary config.
+                     i := 0;
+                     BitValue := 0;
+                     while i <= maxi do
+                     begin
+                        CurrentNormal := Cube[i];
+                        // So, if the neighbour is surface, then..
+                        if (GetMapSafe(x + Round(CurrentNormal.X),y + Round(CurrentNormal.Y),z + Round(CurrentNormal.Z)) >= _Surface) then
+                        begin
+                           // increments the config with the neighbour config
+                           BitValue := BitValue or CubeVertexBit[i];
+                        end;
+                        inc(i);
+                     end;
+                     // We've got the config. If it is a tetrahedron (configs:
+                     // 23, 43, 77, 105, 113, 142, 150, 178, 212, 232) then we
+                     // confirm the region.
+                     if (BitValue = 23) or (BitValue = 43) or (BitValue = 77) or (BitValue = 105) or (BitValue = 113) or (BitValue = 142) or (BitValue = 150) or (BitValue = 178) or (BitValue = 212) or (BitValue = 232) then
+                     begin
+                        FMap.DataUnsafe[x,y,z] := BitValue;
+                     end;                     
+                  end; // End tetrahedron detection.
 
                end;
             end;
