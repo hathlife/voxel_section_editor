@@ -22,6 +22,8 @@ type
          function GetVertex(const _VertexMap : T3DVolumeGreyIntData; _x, _y, _z,_reference,_VUnit: integer; var _NumVertices: longword; const _VoxelMap: TVoxelMap; const _VertexTransformation: aint32): integer;
          procedure DetectPotentialRefinementVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
          procedure DetectPotentialSurfaceVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
+         procedure DetectPotentialRefinementVertexesOld(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
+         procedure DetectPotentialSurfaceVertexesOld(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
          procedure AddRefinementFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid;  var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _FaceVerifier: CVolumeFaceVerifier; _x, _y, _z, _AllowedFaces, _VUnit: integer);
          procedure AddSurfaceFacesFromRegions(const _Voxel : TVoxelSection; const _Palette: TPalette; var _NeighbourVertexIDs: T3DIntGrid; var _TriangleList: CTriangleList; var _QuadList: CQuadList; var _FaceVerifier: CVolumeFaceVerifier; _x, _y, _z, _AllowedFaces, _VUnit: integer);
          function HasMidFaceVertex(_vNE, _vNW, _vSW, _vSE, _vN, _vW, _vS, _vE, _vSelf: integer): boolean;
@@ -525,6 +527,110 @@ end;
 
 procedure CRefinementTrianglesSupporter.DetectPotentialRefinementVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
 const
+   ConnectivityVertexConfigStart: array[0..26] of byte = (0,0,1,2,3,4,7,10,13,16,16,17,17,18,18,19,19,20,20,21,22,23,24,27,30,33,36);
+   ConnectivityVertexConfigData: array[0..35] of longword = (2049,32769,8193,513,32776,8196,16385,2056,8194,4097,32784,516,65537,2064,514,1025,2560,10240,40960,33280,133120,163840,139264,131584,1081344,532480,147456,1050624,270336,135168,2129920,524800,196608,2099200,262656,132096);
+   RegionBitNeighbours: array[0..25] of longword = (1,2049,32769,8193,513,57357,14347,98949,3603,512,2560,2048,10240,8192,40960,32768,33280,131072,133120,163840,139264,131584,1761280,1456128,2851328,2493952);
+   ConnectivityBitNeighbours: array[0..25] of longword = (30,2369,32929,8289,897,16396,4106,65556,1042,2163728,33557248,267266,8398912,1069064,4235296,606212,16810624,3932160,42076160,21135360,12722176,50463232,1589248,1314816,2686976,2360320);
+var
+   Cube : TNormals;
+   i,j,maxi: integer;
+   xBase,yBase,zBase : integer;
+   CurrentNormal : TVector3f;
+   RegionBitConfig,ConnectivityConfig,current: longword;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      xBase := (_x-1) * _VUnit;
+      yBase := (_y-1) * _VUnit;
+      zBase := (_z-1) * _VUnit;
+      // 1) We will fill the region config first.
+      i := 0;
+      RegionBitConfig := 0;
+      current := 1;
+      while i <= maxi do
+      begin
+         CurrentNormal := Cube[i];
+         if _VoxelMap.MapSafe[_x + Round(CurrentNormal.X),_y + Round(CurrentNormal.Y),_z + Round(CurrentNormal.Z)] > 256 then
+         begin
+            RegionBitConfig := RegionBitConfig or current;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+      // 2) Find the connectivity graph.
+      i := 0;
+      current := 1;
+      ConnectivityConfig := 0;
+      while i <= maxi do
+      begin
+         j := ConnectivityVertexConfigStart[i];
+         // if one of the next configurations match, the vertex i is in the config
+         while j < ConnectivityVertexConfigStart[i+1] do
+         begin
+            if (RegionBitConfig and ConnectivityVertexConfigData[j]) = ConnectivityVertexConfigData[j] then
+            begin
+               ConnectivityConfig := ConnectivityConfig or current;
+               j := ConnectivityVertexConfigStart[i+1]; // go to next i
+            end
+            else
+            begin
+               inc(j);
+            end;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+      {$ifdef MESH_TEST}
+         GlobalVars.MeshFile.Add('RegionBitConfig: ' + IntToStr(RegionBitConfig) + ' and ConnectivityConfig: ' + IntToStr(ConnectivityConfig) + ')');
+      {$endif}
+
+
+      // 3) Find the final vertexes.
+      i := 0;
+      current := 1;
+      while i <= maxi do
+      begin
+         // If the vertex is in the connectivity graph, then we add it (even if
+         // it gets eliminated in the end of the technique.
+         if (ConnectivityConfig and current) = current then
+         begin
+            // Add vertex
+            CurrentNormal := Cube[i];
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+         end
+         else // It's not in the connectivity graph.
+         begin
+            // If current is in the RegionBitConfig and one of the neighbours
+            // from the RegionBitNeighbours[i] is in RegionBitConfig then...
+            if ((RegionBitConfig and current) = current) and ((RegionBitConfig and RegionBitNeighbours[i]) <> 0) then
+            begin
+               // Add Vertex
+               CurrentNormal := Cube[i];
+               AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+            end
+            else // It's not in the connectivity graph from neighbour voxels.
+            begin
+               // Check if one of the neighbours of i in the ConnectivityConfig
+               // exists that it also adds a vertex
+               if (ConnectivityConfig and ConnectivityBitNeighbours[i]) <> 0 then
+               begin
+                  // Add Vertex
+                  CurrentNormal := Cube[i];
+                  AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+               end;
+            end;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+   end;
+   Cube.Free;
+end;
+
+procedure CRefinementTrianglesSupporter.DetectPotentialRefinementVertexesOld(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
+const
    VertexSet: array[1..26,0..2] of byte = ((0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(0,1,2),(0,2,0),(0,2,1),(0,2,2),(1,0,0),(1,0,1),(1,0,2),(2,0,0),(2,0,1),(2,0,2),(1,1,2),(2,1,2),(1,2,2),(2,2,2),(1,2,0),(1,2,1),(2,2,0),(2,2,1),(1,1,0),(2,1,0),(2,1,1));
    VertexConfigStart: array[0..26] of byte = (0,9,12,15,18,21,22,23,24,25,34,37,46,49,58,61,70,73,82,85,88,91,94,95,96,97,98);
    VertexConfigData: array[0..97] of byte = (1,2,3,4,5,6,7,8,9,3,6,9,1,4,7,7,8,9,1,2,3,7,9,1,3,1,2,3,10,11,12,13,14,15,3,12,15,3,12,15,6,16,17,9,18,19,9,18,19,7,8,9,20,21,18,22,23,19,7,20,22,1,10,13,4,24,25,7,20,22,1,10,13,13,14,15,25,26,17,22,23,19,15,17,19,13,25,22,22,23,19,13,14,15,22,19,13,15);
@@ -538,6 +644,7 @@ var
    i,j,k,maxi: integer;
    xBase,yBase,zBase : integer;
    CurrentNormal : TVector3f;
+   VertexConfig: longword;
 begin
    Cube := TNormals.Create(6);
    maxi := Cube.GetLastID;
@@ -545,6 +652,7 @@ begin
    begin
       // We will fill the potential vertexes with the value they deserve.
       i := 0;
+      VertexConfig := 0;
       xBase := (_x-1) * _VUnit;
       yBase := (_y-1) * _VUnit;
       zBase := (_z-1) * _VUnit;
@@ -557,6 +665,7 @@ begin
             while j < VertexConfigStart[i+1] do
             begin
                AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + VertexSet[VertexConfigData[j],0],yBase + VertexSet[VertexConfigData[j],1],zBase + VertexSet[VertexConfigData[j],2],VertexSet[VertexConfigData[j],0],VertexSet[VertexConfigData[j],1],VertexSet[VertexConfigData[j],2],_NumVertices);
+               VertexConfig := VertexConfig + (1 shl VertexConfigData[j]);
                inc(j);
             end;
          end;
@@ -621,6 +730,127 @@ begin
 end;
 
 procedure CRefinementTrianglesSupporter.DetectPotentialSurfaceVertexes(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
+const
+   ConnectivityVertexConfigStart: array[0..26] of byte = (0,0,1,2,3,4,7,10,13,16,16,17,17,18,18,19,19,20,20,21,22,23,24,27,30,33,36);
+   ConnectivityVertexConfigData: array[0..35] of longword = (2049,32769,8193,513,32776,8196,16385,2056,8194,4097,32784,516,65537,2064,514,1025,2560,10240,40960,33280,133120,163840,139264,131584,1081344,532480,147456,1050624,270336,135168,2129920,524800,196608,2099200,262656,132096);
+   RegionBitNeighbours: array[0..25] of longword = (1,2049,32769,8193,513,57357,14347,98949,3603,512,2560,2048,10240,8192,40960,32768,33280,131072,133120,163840,139264,131584,1761280,1456128,2851328,2493952);
+   ConnectivityBitNeighbours: array[0..25] of longword = (30,2369,32929,8289,897,16396,4106,65556,1042,2163728,33557248,267266,8398912,1069064,4235296,606212,16810624,3932160,42076160,21135360,12722176,50463232,1589248,1314816,2686976,2360320);
+var
+   Cube : TNormals;
+   i,j,maxi: integer;
+   xBase,yBase,zBase : integer;
+   CurrentNormal : TVector3f;
+   RegionBitConfig,ConnectivityConfig,current: longword;
+begin
+   Cube := TNormals.Create(6);
+   maxi := Cube.GetLastID;
+   if (maxi > 0) then
+   begin
+      xBase := (_x-1) * _VUnit;
+      yBase := (_y-1) * _VUnit;
+      zBase := (_z-1) * _VUnit;
+      // 1) We will fill the region config first.
+      i := 0;
+      current := 1;
+      RegionBitConfig := 0;
+      while i <= maxi do
+      begin
+         CurrentNormal := Cube[i];
+         if _VoxelMap.MapSafe[_x + Round(CurrentNormal.X),_y + Round(CurrentNormal.Y),_z + Round(CurrentNormal.Z)] > 256 then
+         begin
+            RegionBitConfig := RegionBitConfig or current;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+      // 2) Find the connectivity graph.
+      i := 0;
+      ConnectivityConfig := 0;
+      current := 1;
+      while i <= maxi do
+      begin
+         if (RegionBitConfig and current) = 0 then
+         begin
+            // if one of the next configurations match, the vertex i is in the config
+            j := ConnectivityVertexConfigStart[i];
+            while j < ConnectivityVertexConfigStart[i+1] do
+            begin
+               if (RegionBitConfig and ConnectivityVertexConfigData[j]) = ConnectivityVertexConfigData[j] then
+               begin
+                  ConnectivityConfig := ConnectivityConfig or current;
+                  j := ConnectivityVertexConfigStart[i+1]; // go to next i
+               end
+               else
+               begin
+                  inc(j);
+               end;
+            end;
+         end
+         else
+         begin
+            ConnectivityConfig := ConnectivityConfig or current;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+      {$ifdef MESH_TEST}
+         GlobalVars.MeshFile.Add('RegionBitConfig: ' + IntToStr(RegionBitConfig) + ' and ConnectivityConfig: ' + IntToStr(ConnectivityConfig) + ')');
+      {$endif}
+
+
+      // 3) Find the final vertexes.
+      i := 0;
+      current := 1;
+      while i <= maxi do
+      begin
+         // If the vertex is in the connectivity graph, then we add it (even if
+         // it gets eliminated in the end of the technique.
+         if (ConnectivityConfig and current) = current then
+         begin
+            // Add vertex
+            CurrentNormal := Cube[i];
+            AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+         end
+         else // It's not in the connectivity graph.
+         begin
+            // If current is in the RegionBitConfig and one of the neighbours
+            // from the RegionBitNeighbours[i] is in RegionBitConfig then...
+            if ((RegionBitConfig and current) = current) and ((RegionBitConfig and RegionBitNeighbours[i]) <> 0) then
+            begin
+               // Add Vertex
+               CurrentNormal := Cube[i];
+               AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+            end
+            else // It's not in the connectivity graph from neighbour voxels.
+            begin
+               // Check if one of the neighbours of i in the ConnectivityConfig
+               // exists that it also adds a vertex
+               if (ConnectivityConfig and ConnectivityBitNeighbours[i]) <> 0 then
+               begin
+                  // Add Vertex
+                  CurrentNormal := Cube[i];
+                  AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + Round(CurrentNormal.X) + 1,yBase + Round(CurrentNormal.Y) + 1,zBase + Round(CurrentNormal.Z) + 1,Round(CurrentNormal.X) + 1,Round(CurrentNormal.Y) + 1,Round(CurrentNormal.Z) + 1,_NumVertices);
+               end;
+            end;
+         end;
+         inc(i);
+         current := current shl 1;
+      end;
+   end;
+   Cube.Free;
+   // Add the fixed vertexes
+   // center
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 1,1,1,1,_NumVertices);
+   // Mid-edges
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 0,yBase + 1,zBase + 1,0,1,1,_NumVertices);
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 2,yBase + 1,zBase + 1,2,1,1,_NumVertices);
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 0,zBase + 1,1,0,1,_NumVertices);
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 2,zBase + 1,1,2,1,_NumVertices);
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 0,1,1,0,_NumVertices);
+   AddVertex(_VertexMap,_NeighbourVertexIDs,xBase + 1,yBase + 1,zBase + 2,1,1,2,_NumVertices);
+end;
+
+procedure CRefinementTrianglesSupporter.DetectPotentialSurfaceVertexesOld(const _VoxelMap: TVoxelMap; var _VertexMap : T3DVolumeGreyIntData; var _NeighbourVertexIDs:T3DIntGrid; _x, _y, _z, _VUnit: integer; var _NumVertices: longword);
 const
    VertexSet: array[1..26,0..2] of byte = ((0,0,0),(0,0,1),(0,0,2),(0,1,0),(0,1,1),(0,1,2),(0,2,0),(0,2,1),(0,2,2),(1,0,0),(1,0,1),(1,0,2),(2,0,0),(2,0,1),(2,0,2),(1,1,2),(2,1,2),(1,2,2),(2,2,2),(1,2,0),(1,2,1),(2,2,0),(2,2,1),(1,1,0),(2,1,0),(2,1,1));
    VertexConfigStart: array[0..26] of byte = (0,9,12,15,18,21,22,23,24,25,34,37,46,49,58,61,70,73,82,85,88,91,94,95,96,97,98);

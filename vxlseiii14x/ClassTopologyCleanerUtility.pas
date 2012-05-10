@@ -1,5 +1,7 @@
 unit ClassTopologyCleanerUtility;
 
+// Incomplete and deprecated.
+
 interface
 
 uses GLConstants, BasicDataTypes;
