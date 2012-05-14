@@ -16,13 +16,13 @@ uses
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
-  FormHeightmap, ImageIOUtils;
+  FormHeightmap, ImageIOUtils, FormTopologyAnalysis;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.137';
+   APPLICATION_VER = '1.39.138';
    APPLICATION_BETA = true;
 
 type
@@ -368,6 +368,9 @@ type
     Splitter3: TSplitter;
     RemoveRedundantVoxelsB1: TMenuItem;
     ImagewithHeightmap1: TMenuItem;
+    QualityAnalysis1: TMenuItem;
+    opologyAnalysis1: TMenuItem;
+    procedure opologyAnalysis1Click(Sender: TObject);
     procedure ImagewithHeightmap1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
@@ -4196,6 +4199,16 @@ begin
    frm.ShowModal;
    frm.Close;
    frm.Free;
+end;
+
+procedure TFrmMain.opologyAnalysis1Click(Sender: TObject);
+var
+   Frm : TFrmTopologyAnalysis;
+begin
+   Frm := TFrmTopologyAnalysis.Create(Document.ActiveSection^,self);
+   Frm.ShowModal;
+   Frm.Close;
+   Frm.Free;
 end;
 
 procedure TFrmMain.OpenHyperlink(HyperLink: PChar);

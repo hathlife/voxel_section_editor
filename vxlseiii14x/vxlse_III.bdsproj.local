@@ -120,5 +120,9 @@
     <Transaction>2012/03/09 02:32:37.558.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassInterpolationTrianglesSupporter.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassRefinementTrianglesSupporter.pas</Transaction>
     <Transaction>2012/03/25 00:52:18.663.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassSurfaceDescriptorVolume.pas</Transaction>
     <Transaction>2012/03/25 21:34:32.163.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassSurfaceDescriptorVolume.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassVolumeFaceVerifier.pas</Transaction>
+    <Transaction>2012/05/14 16:59:20.918.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTopologyVerifier.pas</Transaction>
+    <Transaction>2012/05/14 17:00:21.121.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTopologyVerifier.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\ClassTopologyAnalyzer.pas</Transaction>
+    <Transaction>2012/05/14 19:20:22.043.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\FormTopologyAnalysis.pas</Transaction>
+    <Transaction>2012/05/14 19:20:22.043.dfm,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.dfm=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\FormTopologyAnalysis.dfm</Transaction>
   </Transactions>
 </BorlandProject>

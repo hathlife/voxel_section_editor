@@ -165,7 +165,9 @@ uses
   MeshBRepGeometry in 'MeshBRepGeometry.pas',
   ClassMeshGeometryList in 'ClassMeshGeometryList.pas',
   ClassRefinementTrianglesSupporter in 'ClassRefinementTrianglesSupporter.pas',
-  ClassVolumeFaceVerifier in 'ClassVolumeFaceVerifier.pas';
+  ClassVolumeFaceVerifier in 'ClassVolumeFaceVerifier.pas',
+  ClassTopologyAnalyzer in 'ClassTopologyAnalyzer.pas',
+  FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis};
 
 {$R *.res}
 
