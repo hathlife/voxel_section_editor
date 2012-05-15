@@ -8,15 +8,22 @@ type
    CTopologyAnalyzer = class
       private
          FMap: TVoxelMap;
+         // I/O
+         procedure LoadVoxel(const _Voxel:TVoxelSection);
       public
          NumVoxels,NumCorrect,Num1Face,Num2Faces,Num3Faces,NumLoneVoxels : longword;
          // Constructors and Destructors.
          constructor Create(const _Map: TVoxelMap); overload;
          constructor Create(const _Voxel: TVoxelSection); overload;
          destructor Destroy; override;
+         procedure Clear;
          procedure ResetCounters;
+         // I/O
+         procedure Load(const _Voxel:TVoxelSection);
+         procedure LoadFullVoxel(const _Voxel: TVoxel);
          // Execute.
          procedure Execute();
+
    end;
 
 implementation
@@ -27,20 +34,24 @@ uses Normals, BasicDataTypes, BasicConstants, GLConstants;
 constructor CTopologyAnalyzer.Create(const _Map: TVoxelMap);
 begin
    FMap.Assign(_Map);
+   ResetCounters;
    Execute;
 end;
 
 constructor CTopologyAnalyzer.Create(const _Voxel: TVoxelSection);
 begin
-   FMap := TVoxelMap.Create(_Voxel,1);
-   FMap.GenerateSurfaceMap;
-   Execute;
+   LoadVoxel(_Voxel);
 end;
 
 destructor CTopologyAnalyzer.Destroy;
 begin
-   FMap.Free;
+   Clear;
    inherited Destroy;
+end;
+
+procedure CTopologyAnalyzer.Clear;
+begin
+   FMap.Free;
 end;
 
 procedure CTopologyAnalyzer.ResetCounters;
@@ -53,6 +64,35 @@ begin
    NumLoneVoxels := 0;
 end;
 
+// I/O
+procedure CTopologyAnalyzer.Load(const _Voxel:TVoxelSection);
+begin
+   Clear;
+   LoadVoxel(_Voxel);
+end;
+
+procedure CTopologyAnalyzer.LoadVoxel(const _Voxel:TVoxelSection);
+begin
+   FMap := TVoxelMap.Create(_Voxel,1);
+   FMap.GenerateSurfaceMap;
+   ResetCounters;
+   Execute;
+end;
+
+procedure CTopologyAnalyzer.LoadFullVoxel(const _Voxel:TVoxel);
+var
+   i : integer;
+begin
+   ResetCounters;
+   for i := 0 to (_Voxel.Header.NumSections-1) do
+   begin
+      Clear;
+      FMap := TVoxelMap.Create(_Voxel.Section[i],1);
+      FMap.GenerateSurfaceMap;
+      Execute;
+   end;
+end;
+
 // Execute.
 procedure CTopologyAnalyzer.Execute();
 var
@@ -61,7 +101,6 @@ var
    x, y, z, i: longword;
    AxisFaces,maxi: byte;
 begin
-   ResetCounters;
    for x := 0 to FMap.GetMaxX do
       for y := 0 to FMap.GetMaxY do
          for z := 0 to FMap.GetMaxZ do
