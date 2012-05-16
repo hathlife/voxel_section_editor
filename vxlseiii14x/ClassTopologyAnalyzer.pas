@@ -231,7 +231,7 @@ begin
    end
    else if NumCorrect = NumVoxels then
    begin
-      Result := 'Manifold Volume and Data Set, Unique Normals';
+      Result := 'Manifold Voxel Model, Unique Normals';
    end
    else if Num3Faces > 0 then
    begin
