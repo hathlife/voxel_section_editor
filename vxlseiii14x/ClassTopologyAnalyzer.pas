@@ -23,12 +23,20 @@ type
          procedure LoadFullVoxel(const _Voxel: TVoxel);
          // Execute.
          procedure Execute();
-
+         // Gets (GUI)
+         function GetCorrectVoxelsText: string;
+         function GetNum1FaceText: string;
+         function GetNum2FacesText: string;
+         function GetNum3FacesText: string;
+         function GetLoneVoxelsText: string;
+         function GetTotalVoxelsText: string;
+         function GetTopologyScoreText: string;
+         function GetClassificationText: string;
    end;
 
 implementation
 
-uses Normals, BasicDataTypes, BasicConstants, GLConstants;
+uses SysUtils, Normals, BasicDataTypes, BasicConstants, GLConstants;
 
 // Constructors and Destructors.
 constructor CTopologyAnalyzer.Create(const _Map: TVoxelMap);
@@ -160,6 +168,83 @@ begin
                inc(NumVoxels);
             end;
          end;
+end;
+
+// Gets
+function CTopologyAnalyzer.GetCorrectVoxelsText: string;
+begin
+   Result := IntToStr(NumCorrect) + ' (' + FloatToStrF((100 * NumCorrect) / NumVoxels,ffFixed,12,2) + '%)';
+end;
+
+function CTopologyAnalyzer.GetNum1FaceText: string;
+begin
+   Result := IntToStr(Num1Face) + ' (' + FloatToStrF((100 * Num1Face) / NumVoxels,ffFixed,12,2) + '%)';
+end;
+
+function CTopologyAnalyzer.GetNum2FacesText: string;
+begin
+   Result := IntToStr(Num2Faces) + ' (' + FloatToStrF((100 * Num2Faces) / NumVoxels,ffFixed,12,2) + '%)';
+end;
+
+function CTopologyAnalyzer.GetNum3FacesText: string;
+begin
+   Result := IntToStr(Num3Faces) + ' (' + FloatToStrF((100 * Num3Faces) / NumVoxels,ffFixed,12,2) + '%)';
+end;
+
+function CTopologyAnalyzer.GetLoneVoxelsText: string;
+begin
+   Result := IntToStr(NumLoneVoxels) + ' (' + FloatToStrF((100 * NumLoneVoxels) / NumVoxels,ffFixed,12,2) + '%)';
+end;
+
+function CTopologyAnalyzer.GetTotalVoxelsText: string;
+begin
+   Result := IntToStr(NumVoxels);
+end;
+
+function CTopologyAnalyzer.GetTopologyScoreText: string;
+var
+   Score : single;
+begin
+   if NumLoneVoxels = 0 then
+   begin
+      Score := (100 * (NumCorrect - Num2Faces - (2*Num3Faces))) / NumVoxels;
+      if Score > 0 then
+      begin
+         Result := FloatToStrF(Score,ffFixed,12,2) + ' points (out of 100)';
+      end
+      else
+      begin
+         Result := FloatToStrF(0,ffFixed,12,2) + ' points (out of 100)';
+      end;
+   end
+   else
+   begin
+      Result := FloatToStrF(0,ffFixed,12,2) + ' points (out of 100)';
+   end;
+end;
+
+function CTopologyAnalyzer.GetClassificationText: string;
+begin
+   if NumLoneVoxels > 0 then
+   begin
+      Result := 'Non-Manifold with Lone Voxels';
+   end
+   else if NumCorrect = NumVoxels then
+   begin
+      Result := 'Manifold Volume and Data Set, Unique Normals';
+   end
+   else if Num3Faces > 0 then
+   begin
+      Result := 'Non-Manifold Volume, Ambiguous Normals';
+   end
+   else if Num2Faces > 0 then
+   begin
+      Result := 'Manifold Volume, Ambiguous Normals';
+   end
+   else
+   begin
+      Result := 'Manifold Volume, Few Ambiguous Normals';
+   end;
 end;
 
 

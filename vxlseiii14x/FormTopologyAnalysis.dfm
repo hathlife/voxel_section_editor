@@ -134,58 +134,58 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Shape = bsBottomLine
   end
   object LbCorrectVoxels: TLabel
-    Left = 240
+    Left = 208
     Top = 16
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object Lb1Face: TLabel
-    Left = 240
+    Left = 208
     Top = 35
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object Lb2Faces: TLabel
-    Left = 240
+    Left = 208
     Top = 54
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object Lb3Faces: TLabel
-    Left = 240
+    Left = 208
     Top = 73
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object LbLoneVoxels: TLabel
-    Left = 240
+    Left = 208
     Top = 92
-    Width = 145
+    Width = 210
     Height = 13
     AutoSize = False
   end
   object LbTotalVoxels: TLabel
-    Left = 240
+    Left = 208
     Top = 117
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object LbTopologyScore: TLabel
-    Left = 240
+    Left = 208
     Top = 145
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end
   object LbClassification: TLabel
-    Left = 240
+    Left = 208
     Top = 164
-    Width = 145
+    Width = 201
     Height = 13
     AutoSize = False
   end

@@ -68,21 +68,14 @@ end;
 
 procedure TFrmTopologyAnalysis.FormShow(Sender: TObject);
 begin
-   LbCorrectVoxels.Caption := IntToStr(TopologyAnalyzer.NumCorrect) + ' (' + FloatToStrF((100 * TopologyAnalyzer.NumCorrect) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + '%)';
-   Lb1Face.Caption := IntToStr(TopologyAnalyzer.Num1Face) + ' (' + FloatToStrF((100 * TopologyAnalyzer.Num1Face) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + '%)';
-   Lb2Faces.Caption := IntToStr(TopologyAnalyzer.Num2Faces) + ' (' + FloatToStrF((100 * TopologyAnalyzer.Num2Faces) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + '%)';
-   Lb3Faces.Caption := IntToStr(TopologyAnalyzer.Num3Faces) + ' (' + FloatToStrF((100 * TopologyAnalyzer.Num3Faces) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + '%)';
-   LbLoneVoxels.Caption := IntToStr(TopologyAnalyzer.NumLoneVoxels) + ' (' + FloatToStrF((100 * TopologyAnalyzer.NumLoneVoxels) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + '%)';
-   LbTotalVoxels.Caption := IntToStr(TopologyAnalyzer.NumVoxels);
-   LbTopologyScore.Caption := FloatToStrF((100 * (TopologyAnalyzer.NumCorrect - TopologyAnalyzer.Num2Faces - (2*TopologyAnalyzer.Num3Faces))) / TopologyAnalyzer.NumVoxels,ffFixed,12,2) + ' points (out of 100)';
-   if TopologyAnalyzer.NumCorrect = TopologyAnalyzer.NumVoxels then
-   begin
-      LbClassification.Caption := 'Manifold Volume';
-   end
-   else
-   begin
-      LbClassification.Caption := 'Non-Manifold Volume';
-   end;
+   LbCorrectVoxels.Caption := TopologyAnalyzer.GetCorrectVoxelsText();
+   Lb1Face.Caption := TopologyAnalyzer.GetNum1FaceText();
+   Lb2Faces.Caption := TopologyAnalyzer.GetNum2FacesText();
+   Lb3Faces.Caption := TopologyAnalyzer.GetNum3FacesText();
+   LbLoneVoxels.Caption := TopologyAnalyzer.GetLoneVoxelsText();
+   LbTotalVoxels.Caption := TopologyAnalyzer.GetTotalVoxelsText();
+   LbTopologyScore.Caption := TopologyAnalyzer.GetTopologyScoreText();
+   LbClassification.Caption := TopologyAnalyzer.GetClassificationText();
 end;
 
 procedure TFrmTopologyAnalysis.BtOKClick(Sender: TObject);
