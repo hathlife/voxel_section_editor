@@ -249,8 +249,8 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
       AutoSize = False
       Caption = 
         'The Cubed Autonormals will work perfectly if the Topology Score ' +
-        'is 100, while the modelizer will work perfectly if the model onl' +
-        'y has manifold voxels.'
+        'is 100, while the 3D Modelizer will work perfectly if the model ' +
+        'only has manifold voxels.'
       WordWrap = True
     end
   end
@@ -286,9 +286,9 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
       Top = 30
       Width = 145
       Height = 21
+      Style = csDropDownList
       ItemHeight = 13
       TabOrder = 2
-      Text = 'CbSections'
       OnChange = CbSectionsChange
     end
   end

@@ -167,7 +167,8 @@ uses
   ClassRefinementTrianglesSupporter in 'ClassRefinementTrianglesSupporter.pas',
   ClassVolumeFaceVerifier in 'ClassVolumeFaceVerifier.pas',
   ClassTopologyAnalyzer in 'ClassTopologyAnalyzer.pas',
-  FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis};
+  FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis},
+  ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas';
 
 {$R *.res}
 

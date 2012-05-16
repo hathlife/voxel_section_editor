@@ -16,7 +16,7 @@ uses
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
-  FormHeightmap, ImageIOUtils, FormTopologyAnalysis;
+  FormHeightmap, ImageIOUtils, FormTopologyAnalysis, ClassIsoSurfaceFile;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -370,6 +370,10 @@ type
     ImagewithHeightmap1: TMenuItem;
     QualityAnalysis1: TMenuItem;
     opologyAnalysis1: TMenuItem;
+    Export1: TMenuItem;
+    Isosurfacesiso1: TMenuItem;
+    SaveDialogExport: TSaveDialog;
+    procedure Isosurfacesiso1Click(Sender: TObject);
     procedure opologyAnalysis1Click(Sender: TObject);
     procedure ImagewithHeightmap1Click(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
@@ -994,6 +998,8 @@ begin
    ools2.Visible := IsEditable;
    Edit1.Visible := IsEditable;
    Scripts1.Visible := IsEditable;
+
+   Export1.Enabled := IsEditable;
 
    SectionCombo.Enabled := IsEditable;
    BarSaveAs.Enabled := IsEditable;
@@ -4501,6 +4507,22 @@ begin
    end;
 end;
 
+procedure TFrmMain.Isosurfacesiso1Click(Sender: TObject);
+var
+   IsoFile: CIsosurfaceFile;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: Isosurfacesiso1Click');
+   {$endif}
+   if SaveDialogExport.execute then
+   begin
+      IsoFile := CIsoSurfaceFile.Create;
+      IsoFile.SaveToFile(SaveDialogExport.Filename,Document.ActiveSection^);
+      IsoFile.Free;
+   end;
+end;
 
 procedure TFrmMain.Resize1Click(Sender: TObject);
 var

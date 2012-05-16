@@ -1629,13 +1629,11 @@ object FrmMain: TFrmMain
         OnMouseUp = CnvView0MouseUp
         OnPaint = CnvView0Paint
         ExplicitLeft = 0
-        ExplicitTop = 8
-        ExplicitWidth = 485
-        ExplicitHeight = 913
+        ExplicitTop = 20
       end
       object TopBarImageHolder: TImage
         Left = 0
-        Top = 24
+        Top = 20
         Width = 490
         Height = 58
         Picture.Data = {
@@ -4616,6 +4614,13 @@ object FrmMain: TFrmMain
         object ImagewithHeightmap1: TMenuItem
           Caption = 'Image with Heightmap...'
           OnClick = ImagewithHeightmap1Click
+        end
+      end
+      object Export1: TMenuItem
+        Caption = 'Export'
+        object Isosurfacesiso1: TMenuItem
+          Caption = 'Section as Isosurface (.iso)...'
+          OnClick = Isosurfacesiso1Click
         end
       end
       object N20: TMenuItem
@@ -8715,5 +8720,11 @@ object FrmMain: TFrmMain
     Filter = '3ds2vxl executable|3ds2vxl.exe'
     Left = 320
     Top = 64
+  end
+  object SaveDialogExport: TSaveDialog
+    DefaultExt = 'iso'
+    Filter = 'Isosurfaces (*.iso)|*.iso'
+    Left = 192
+    Top = 96
   end
 end
