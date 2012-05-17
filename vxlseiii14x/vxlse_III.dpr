@@ -169,7 +169,8 @@ uses
   ClassTopologyAnalyzer in 'ClassTopologyAnalyzer.pas',
   FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis},
   ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas',
-  ClassPLYFile in 'ClassPLYFile.pas';
+  ClassPLYFile in 'ClassPLYFile.pas',
+  ClassTopologyFixer in 'ClassTopologyFixer.pas';
 
 {$R *.res}
 

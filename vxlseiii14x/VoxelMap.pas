@@ -1318,6 +1318,11 @@ begin
                   if not v.Used then
                      inc(Result);
                   FSection.SetVoxel(x,y,z,v);
+               end
+               else
+               begin
+                  v.Used := (FMap.DataUnsafe[x + FBias, y + FBias, z + FBias] >= _Threshold);
+                  FSection.SetVoxel(x,y,z,v);
                end;
             end;
    end
@@ -1328,8 +1333,11 @@ begin
             for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
             begin
                FSection.GetVoxel(x,y,z,v);
-               v.Colour := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
-               FSection.SetVoxel(x,y,z,v);
+               if v.Used then
+               begin
+                  v.Colour := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
+                  FSection.SetVoxel(x,y,z,v);
+               end;
             end;
    end
    else if _MODE = C_MODE_NORMAL then
@@ -1339,8 +1347,11 @@ begin
             for z := Low(FSection.Data[0,0]) to High(FSection.Data[0,0]) do
             begin
                FSection.GetVoxel(x,y,z,v);
-               v.Normal := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
-               FSection.SetVoxel(x,y,z,v);
+               if v.Used then
+               begin
+                  v.Normal := Round(FMap.DataUnsafe[x + FBias,y + FBias, z + FBias]);
+                  FSection.SetVoxel(x,y,z,v);
+               end;
             end;
    end;
 end;

@@ -16,13 +16,14 @@ uses
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
-  FormHeightmap, ImageIOUtils, FormTopologyAnalysis, ClassIsoSurfaceFile;
+  FormHeightmap, ImageIOUtils, FormTopologyAnalysis, ClassIsoSurfaceFile,
+  ClassTopologyFixer;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.139';
+   APPLICATION_VER = '1.39.140';
    APPLICATION_BETA = true;
 
 type
@@ -373,6 +374,8 @@ type
     Export1: TMenuItem;
     Isosurfacesiso1: TMenuItem;
     SaveDialogExport: TSaveDialog;
+    IncreaseResolution1: TMenuItem;
+    procedure IncreaseResolution1Click(Sender: TObject);
     procedure Isosurfacesiso1Click(Sender: TObject);
     procedure opologyAnalysis1Click(Sender: TObject);
     procedure ImagewithHeightmap1Click(Sender: TObject);
@@ -4594,6 +4597,30 @@ end;
 procedure TFrmMain.SpinButton2UpClick(Sender: TObject);
 begin
    XCursorBar.Position := XCursorBar.Position +1;
+end;
+
+procedure TFrmMain.IncreaseResolution1Click(Sender: TObject);
+var
+   Tool : CTopologyFixer;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: IncreaseResolution1Click');
+   {$endif}
+
+   if (Document.ActiveSection^.Tailer.XSize < 127) and (Document.ActiveSection^.Tailer.YSize < 127) and (Document.ActiveSection^.Tailer.ZSize < 127) then
+   begin
+      ResetUndoRedo;
+      UpdateUndo_RedoState;
+      SetIsEditable(false);
+      Tool := CTopologyFixer.Create(Document.ActiveSection^,Document.Palette^);
+      Tool.Free;
+      SetIsEditable(true);
+      SectionComboChange(Sender);
+      SetupStatusBar;
+      VXLChanged := true;
+   end;
 end;
 
 procedure TFrmMain.FullResize1Click(Sender: TObject);

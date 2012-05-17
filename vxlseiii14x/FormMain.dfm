@@ -33,7 +33,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 806
     object Splitter1: TSplitter
       Left = 653
       Top = 26
@@ -50,7 +49,6 @@ object FrmMain: TFrmMain
       Height = 798
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 779
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1276,7 +1274,6 @@ object FrmMain: TFrmMain
       Height = 798
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 779
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1599,7 +1596,6 @@ object FrmMain: TFrmMain
       Height = 798
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 779
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4323,7 +4319,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 748
       end
       object Panel5: TPanel
         Left = 1
@@ -4333,7 +4328,6 @@ object FrmMain: TFrmMain
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 762
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4555,7 +4549,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 806
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -4766,6 +4759,10 @@ object FrmMain: TFrmMain
         Caption = 'Full Resize'
         ShortCut = 16454
         OnClick = FullResize1Click
+      end
+      object IncreaseResolution1: TMenuItem
+        Caption = 'Increase Resolution'
+        OnClick = IncreaseResolution1Click
       end
       object Delete1: TMenuItem
         Caption = 'Delete'
