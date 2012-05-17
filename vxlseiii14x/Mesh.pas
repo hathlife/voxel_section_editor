@@ -39,7 +39,6 @@ type
          procedure LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          // Normals
          procedure RebuildFaceNormals;
-         procedure TransformFaceToVertexNormals;
          procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
          // Colours
          procedure ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
@@ -145,6 +144,7 @@ type
          procedure ReNormalizeMesh;
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
          procedure ConvertFaceToVertexNormals;
+         procedure TransformFaceToVertexNormals;
          procedure NormalSmooth;
          procedure NormalLinearSmooth;
          procedure NormalCubicSmooth;

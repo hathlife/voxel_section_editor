@@ -168,7 +168,8 @@ uses
   ClassVolumeFaceVerifier in 'ClassVolumeFaceVerifier.pas',
   ClassTopologyAnalyzer in 'ClassTopologyAnalyzer.pas',
   FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis},
-  ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas';
+  ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas',
+  ClassPLYFile in 'ClassPLYFile.pas';
 
 {$R *.res}
 

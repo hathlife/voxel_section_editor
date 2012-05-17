@@ -19,6 +19,7 @@ type
    private
       // I/O
       procedure SaveToOBJFile(const _Filename,_TexExt: string);
+      procedure SaveToPLYFile(const _Filename: string);
       // Rendering Methods
       procedure RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
    public
@@ -104,7 +105,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, ClassPLYFile, MeshBRepGeometry;
 
 // Constructors and Destructors
 constructor TLOD.Create;
@@ -147,6 +148,10 @@ begin
    if CompareStr(ext,'.obj') = 0 then
    begin
       SaveToOBJFile(_Filename,_TexExt);
+   end
+   else if CompareStr(ext,'.ply') = 0 then
+   begin
+      SaveToPLYFile(_Filename);
    end;
 end;
 
@@ -162,6 +167,20 @@ begin
    end;
    Obj.SaveToFile(_Filename,_TexExt);
    Obj.Free;
+end;
+
+procedure TLOD.SaveToPLYFile(const _Filename: string);
+var
+   Ply : CPLYFile;
+begin
+   Ply := CPLYFile.Create;
+   Mesh[0].Geometry.GoToFirstElement;
+   if High(Mesh[0].Normals) < 0 then
+   begin
+      Mesh[0].TransformFaceToVertexNormals;
+   end;
+   Ply.SaveToFile(_Filename,Mesh[0].Vertices,Mesh[0].Normals,(Mesh[0].Geometry.Current^ as TMeshBRepGeometry).Faces,(Mesh[0].Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace);
+   Ply.Free;
 end;
 
 // Gets

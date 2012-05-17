@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 840
+  ClientHeight = 859
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 814
+    Height = 833
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 795
+    ExplicitHeight = 814
   end
   object Panel1: TPanel
     Left = 0
@@ -840,7 +840,7 @@ object Frm3DModelizer: TFrm3DModelizer
   end
   object SaveModelDialog: TSaveDialog
     DefaultExt = 'obj'
-    Filter = 'Wavefront OBJ|*.obj'
+    Filter = 'Wavefront OBJ|*.obj|Polygon File Format PLY|*.ply'
     Left = 208
     Top = 40
   end
