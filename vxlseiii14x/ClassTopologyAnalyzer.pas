@@ -231,7 +231,7 @@ begin
    end
    else if NumCorrect = NumVoxels then
    begin
-      Result := 'Manifold Voxel Model, Unique Normals';
+      Result := 'Manifold Surface, Unique Normals';
    end
    else if Num3Faces > 0 then
    begin
@@ -243,7 +243,7 @@ begin
    end
    else
    begin
-      Result := 'Manifold Volume, Few Ambiguous Normals';
+      Result := 'Manifold Volume, 2-Sided Normals';
    end;
 end;
 
