@@ -236,6 +236,7 @@ begin
    {$endif}
    FrmMain.Document.ActiveSection := @(FrmMain.Document.ActiveVoxel^.Section[CurrentSection]);
    SetupViews;
+   FrmMain.SetupStatusBar;
 end;
 
 Procedure SetupViews;

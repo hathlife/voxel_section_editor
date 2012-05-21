@@ -28,7 +28,7 @@ type
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillQuadFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _NumFaces: longword; const _VerticesPerFace: integer); overload;
          procedure FillTriangleFaces(const _Voxel : TVoxelSection; const _Palette : TPalette; var _VertexMap : T3DVolumeGreyIntData; var _FaceMap: T4DIntGrid; var _Vertices: TAVector3f; var _Faces: auint32; var _Colours: TAVector4f; var _FaceNormals: TAVector3f; var _TexCoords: TAVector2f; var _VoxelMap: TVoxelMap; var _VertexTransformation: aint32; var _NumFaces,_NumVertices: longword; const _VerticesPerFace: integer); overload;
-         procedure BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+         procedure BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices,_NumVoxels: longword; var _VertexTransformation: aint32);
          procedure EliminateUselessVertices(var _VertexTransformation: aint32; var _Vertices: TAVector3f; var _Faces: auint32; var _NumVertices: longword);
       public
          VUnit: integer; // amount of times the cube is divided for each dimension
@@ -909,7 +909,7 @@ end;
 // manifolds. We'll do a sort of marching cubes on these regions.
 
 // Here we build triangles or quads at refinement zones.
-procedure TVoxelMeshGenerator.BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices: longword; var _VertexTransformation: aint32);
+procedure TVoxelMeshGenerator.BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices,_NumVoxels: longword; var _VertexTransformation: aint32);
 var
    x,y,z,id,OldNumVertices,VUnitPlus1: integer;
    V : TVoxelUnpacked;
@@ -974,6 +974,7 @@ begin
             else if (_VoxelMap.Map[x,y,z] = 511) then
             begin
                FaceConfig := 0;
+               inc(_NumVoxels);
                if _VoxelMap.MapSafe[x-1,y,z] < 512 then
                   FaceConfig := FaceConfig or 32;
                if _VoxelMap.MapSafe[x+1,y,z] < 512 then
@@ -1242,54 +1243,20 @@ begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.
 
-   // Let's map the vertices.
    NumVertices := 0;
    _NumVoxels := 0;
-   SetupVertexMap(VertexMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
-   // Now we give the vertices an ID and count them.
-//   BuildVertexMap(VertexMap,_Voxel,NumVertices,_NumVoxels);
-   // vertex map is done. If there is no vertex, quit.
-//   if NumVertices = 0 then
-//   begin
-      _Geometry.NumFaces := 0;
-//      SetLength(_TexCoords,0);
-//      exit;
-//   end;
-   // let's fill the vertices array
-//   FillVerticesArray(_Vertices,VertexMap,NumVertices);
-   // Now, we'll look for the faces.
-//   SetupFaceMap(FaceMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
-   // Now we give the faces an ID and count them.
-//   BuildFaceMapI(FaceMap,_VoxelMap,_Vertices,NumFaces);
-   // face map is done.
-   // let's fill the faces array, normals, colours, etc.
-//   _Geometry.NumFaces := NumFaces;
+   _Geometry.NumFaces := 0;
    SetLength(_TexCoords,0);
-//   SetLength(VertexTransformation,High(_Vertices)+1);
-//   FillQuadFaces(_Voxel,_Palette,VertexMap,FaceMap,_Vertices,_Geometry.Faces,_Geometry.Colours,_Geometry.Normals,_TexCoords,_VoxelMap,VertexTransformation,_NumVoxels,_Geometry.VerticesPerFace);
+   // Let's map the vertices.
+   SetupVertexMap(VertexMap,_Voxel.Tailer.XSize+1,_Voxel.Tailer.YSize+1,_Voxel.Tailer.ZSize+1);
    // Here we build the triangles from the refinement zones.
-   BuildRefinementTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,VertexTransformation);
+   BuildRefinementTriangles(_Voxel,_Palette,VertexMap,_VoxelMap,_Vertices,_Geometry,NumVertices,_NumVoxels,VertexTransformation);
    // Get the positions of the vertexes in the new vertex list, so we can eliminate
    // the unused ones.
    EliminateUselessVertices(VertexTransformation,_Vertices,_Geometry.Faces,NumVertices);
    // Free memory
    SetLength(VertexTransformation,0);
    VertexMap.Free;
-{
-   for x := Low(FaceMap) to High(FaceMap) do
-   begin
-      for y := Low(FaceMap[x]) to High(FaceMap[x]) do
-      begin
-         for z := Low(FaceMap[x,y]) to High(FaceMap[x,y]) do
-         begin
-            SetLength(FaceMap[x,y,z],0);
-         end;
-         SetLength(FaceMap[x,y],0);
-      end;
-      SetLength(FaceMap[x],0);
-   end;
-   SetLength(FaceMap,0);
-}
 end;
 
 procedure TVoxelMeshGenerator.BuildTriangleModelFromVoxelMap(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
