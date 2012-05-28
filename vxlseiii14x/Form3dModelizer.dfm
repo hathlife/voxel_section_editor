@@ -480,10 +480,6 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Visible Cubes (Very Low)'
         OnClick = RenderVisibleCubesClick
       end
-      object RenderManifolds: TMenuItem
-        Caption = 'Topologically Correct Triangle Model (Low)'
-        OnClick = RenderManifoldsClick
-      end
       object RenderVisibleTriangles: TMenuItem
         Caption = 'Visible Triangle Cubes (Low)'
         OnClick = RenderVisibleTrianglesClick
@@ -491,6 +487,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object RenderQuads: TMenuItem
         Caption = 'Quad Based 3D Model (Low)'
         OnClick = RenderQuadsClick
+      end
+      object RenderManifolds: TMenuItem
+        Caption = 'Topologically Correct Triangle Model (Low)'
+        OnClick = RenderManifoldsClick
       end
       object Render4Triangles: TMenuItem
         Caption = 'High Poly 3D Model (Medium)'

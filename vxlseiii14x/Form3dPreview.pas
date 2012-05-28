@@ -94,6 +94,8 @@ type
     akeScreenshotSVG1: TMenuItem;
     akeScreenshotDDS1: TMenuItem;
     DisplayNormalVectors1: TMenuItem;
+    RenderManifolds: TMenuItem;
+    procedure RenderManifoldsClick(Sender: TObject);
     procedure DisplayNormalVectors1Click(Sender: TObject);
     procedure akeScreenshotSVG1Click(Sender: TObject);
     procedure akeScreenshotPDF1Click(Sender: TObject);
@@ -629,6 +631,13 @@ begin
    Actor.SetQuality(GetQualityModel);
 end;
 
+procedure TFrm3DPReview.RenderManifoldsClick(Sender: TObject);
+begin
+   UncheckModelQuality;
+   RenderManifolds.Checked := true;
+   Actor.SetQuality(GetQualityModel);
+end;
+
 procedure TFrm3DPReview.RenderModelClick(Sender: TObject);
 begin
    UncheckModelQuality;
@@ -882,6 +891,10 @@ begin
    begin
       Result := C_QUALITY_LANCZOS_TRIS;
    end
+   else if RenderManifolds.Checked then
+   begin
+      Result := C_QUALITY_VISIBLE_MANIFOLD;
+   end
    else
    begin
       Result := C_QUALITY_CUBED;
@@ -906,6 +919,10 @@ begin
    begin
       RenderTrianglesClick(nil);
    end
+   else if RenderManifolds.Checked then
+   begin
+      RenderManifoldsClick(nil);
+   end
    else
    begin
       RenderCubesClick(nil);
@@ -920,6 +937,7 @@ begin
    RenderModel.Checked := false;
    Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
+   RenderManifolds.Checked := false;
 end;
 
 procedure TFrm3DPReview.UncheckFillMode;
