@@ -60,7 +60,7 @@ procedure TFrmVxlError.BtFixErrorNormalsClick(Sender: TObject);
 var
    N : integer;
 begin
-   N := FrmMain.Document.ActiveVoxel^.Section[0].Tailer.Unknown;
+   N := FrmMain.Document.ActiveVoxel^.Section[0].Tailer.NormalsType;
    SetNormals(N);
 
    MessageBox(0,Pchar('Normals Set To: ' + inttostr(N)),'Information',0);

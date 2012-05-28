@@ -1103,6 +1103,7 @@ begin
       end;
       p_Frm3DPreview^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
       p_Frm3DPreview^.SetActorModelTransparency;
+      p_Frm3DPreview^.UpdateQualityUI;
 
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
@@ -2148,12 +2149,12 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SetupStatusBar');
    {$endif}
-   if Document.ActiveSection^.Tailer.Unknown = 2 then
+   if Document.ActiveSection^.Tailer.NormalsType = 2 then
       StatusBar1.Panels[0].Text := 'Type: Tiberian Sun'
-   else if Document.ActiveSection^.Tailer.Unknown = 4 then
+   else if Document.ActiveSection^.Tailer.NormalsType = 4 then
       StatusBar1.Panels[0].Text := 'Type: RedAlert 2'
    else
-      StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(Document.ActiveSection^.Tailer.Unknown);
+      StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(Document.ActiveSection^.Tailer.NormalsType);
 
    StatusBar1.Panels[1].Text := 'X Size: ' + inttostr(Document.ActiveSection^.Tailer.XSize) + ', Y Size: ' + inttostr(Document.ActiveSection^.Tailer.YSize) + ', Z Size: ' + inttostr(Document.ActiveSection^.Tailer.ZSize);
    StatusBar1.Panels[2].Text := '';
@@ -2581,7 +2582,7 @@ begin
    DebugFile.Add('FrmMain: SelectCorrectPalette');
    {$endif}
 
-   if Document.ActiveVoxel^.Section[0].Tailer.Unknown = 2 then
+   if Document.ActiveVoxel^.Section[0].Tailer.NormalsType = 2 then
       SelectCorrectPalette2(Config.TS)
    else
    SelectCorrectPalette2(Config.RA2);
@@ -3461,7 +3462,7 @@ begin
          SectionCombo.Items.Add(Document.ActiveVoxel^.Section[i].Name);
       end;
 
-      Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Document.ActiveVoxel^.Section[0].Tailer.Unknown;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.NormalsType := Document.ActiveVoxel^.Section[0].Tailer.NormalsType;
       Document.ActiveHVA^.InsertSection(SectionIndex);
 
       VoxelType := OldVoxelType;
@@ -3519,7 +3520,7 @@ begin
          for y := 1 to 4 do
             Document.ActiveVoxel^.Section[SectionIndex].Tailer.Transform[x,y] := Transform[x,y];
 
-      Document.ActiveVoxel^.Section[SectionIndex].Tailer.Unknown := Unknown;
+      Document.ActiveVoxel^.Section[SectionIndex].Tailer.NormalsType := NormalsType;
    end;
 
    SectionCombo.Items.Clear;

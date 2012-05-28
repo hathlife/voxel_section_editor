@@ -170,7 +170,8 @@ uses
   FormTopologyAnalysis in 'FormTopologyAnalysis.pas' {FrmTopologyAnalysis},
   ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas',
   ClassPLYFile in 'ClassPLYFile.pas',
-  ClassTopologyFixer in 'ClassTopologyFixer.pas';
+  ClassTopologyFixer in 'ClassTopologyFixer.pas',
+  gl2PSUnit in 'gl2PSUnit.pas';
 
 {$R *.res}
 

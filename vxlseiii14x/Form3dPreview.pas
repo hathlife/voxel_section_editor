@@ -88,6 +88,18 @@ type
     DisplayFMSolid: TMenuItem;
     DisplayFMWireframe: TMenuItem;
     DisplayFMPointCloud: TMenuItem;
+    akeScreenshotPS1: TMenuItem;
+    akeScreenshotEPS1: TMenuItem;
+    akeScreenshotPDF1: TMenuItem;
+    akeScreenshotSVG1: TMenuItem;
+    akeScreenshotDDS1: TMenuItem;
+    DisplayNormalVectors1: TMenuItem;
+    procedure DisplayNormalVectors1Click(Sender: TObject);
+    procedure akeScreenshotSVG1Click(Sender: TObject);
+    procedure akeScreenshotPDF1Click(Sender: TObject);
+    procedure akeScreenshotEPS1Click(Sender: TObject);
+    procedure akeScreenshotPS1Click(Sender: TObject);
+    procedure akeScreenshotDDS1Click(Sender: TObject);
     procedure DisplayFMSolidClick(Sender: TObject);
     procedure DisplayFMWireframeClick(Sender: TObject);
     procedure DisplayFMPointCloudClick(Sender: TObject);
@@ -168,6 +180,7 @@ type
     procedure ClearRemapClicks;
     procedure UncheckModelQuality;
     procedure UncheckFillMode;
+    procedure DoDisplayNormals;
   public
     { Public declarations }
     AnimationState : boolean;
@@ -178,6 +191,7 @@ type
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
     function GetQualityModel: integer;
+    procedure UpdateQualityUI;
     Procedure Reset3DView;
   end;
 
@@ -543,14 +557,39 @@ begin
    Env.TakeScreenshot(VXLFilename,stBMP);
 end;
 
+procedure TFrm3DPReview.akeScreenshotDDS1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stDDS);
+end;
+
+procedure TFrm3DPReview.akeScreenshotEPS1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stEPS);
+end;
+
 procedure TFrm3DPReview.akeScreenshotJPG1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stJPG);
 end;
 
+procedure TFrm3DPReview.akeScreenshotPDF1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stPDF);
+end;
+
 procedure TFrm3DPReview.akeScreenshotPNG1Click(Sender: TObject);
 begin
    Env.TakeScreenshot(VXLFilename,stPNG);
+end;
+
+procedure TFrm3DPReview.akeScreenshotPS1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stPS);
+end;
+
+procedure TFrm3DPReview.akeScreenshotSVG1Click(Sender: TObject);
+begin
+   Env.TakeScreenshot(VXLFilename,stSVG);
 end;
 
 procedure TFrm3DPReview.ClearRemapClicks;
@@ -737,6 +776,28 @@ begin
    Env.SetPolygonMode(GL_LINE);
 end;
 
+procedure TFrm3DPReview.DisplayNormalVectors1Click(Sender: TObject);
+begin
+   DisplayNormalVectors1.Checked := not DisplayNormalVectors1.Checked;
+   if DisplayNormalVectors1.Checked then
+   begin
+      Actor.AddNormalsPlugin;
+   end
+   else
+   begin
+      Actor.RemoveNormalsPlugin;
+   end;
+end;
+
+procedure TFrm3DPReview.DoDisplayNormals();
+begin
+   if DisplayNormalVectors1.Checked then
+   begin
+      Actor.AddNormalsPlugin;
+   end;
+end;
+
+
 procedure TFrm3DPReview.SpeedButton2Click(Sender: TObject);
 begin
    Camera.SetPosition(Camera.Position.X,Camera.Position.Y,-150);
@@ -825,6 +886,31 @@ begin
    begin
       Result := C_QUALITY_CUBED;
    end;
+end;
+
+procedure TFrm3DPReview.UpdateQualityUI;
+begin
+   if RenderModel.checked then
+   begin
+      RenderModelClick(nil);
+   end
+   else if RenderQuads.Checked then
+   begin
+      RenderQuadsClick(nil);
+   end
+   else if Render4Triangles.Checked then
+   begin
+      Render4TrianglesClick(nil);
+   end
+   else if RenderTriangles.Checked then
+   begin
+      RenderTrianglesClick(nil);
+   end
+   else
+   begin
+      RenderCubesClick(nil);
+   end;
+   DoDisplayNormals();
 end;
 
 procedure TFrm3DPReview.UncheckModelQuality;

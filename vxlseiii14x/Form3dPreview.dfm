@@ -3,7 +3,7 @@ object Frm3DPReview: TFrm3DPReview
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = 'OpenGL 3D Preview'
-  ClientHeight = 346
+  ClientHeight = 365
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DPReview: TFrm3DPReview
     Left = 0
     Top = 26
     Width = 363
-    Height = 320
+    Height = 339
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,6 +36,7 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
+    ExplicitHeight = 320
   end
   object Panel1: TPanel
     Left = 0
@@ -352,6 +353,30 @@ object Frm3DPReview: TFrm3DPReview
         Caption = 'Take Screenshot (TGA)'
         OnClick = akeScreenshot1Click
       end
+      object akeScreenshotDDS1: TMenuItem
+        Caption = 'Take Screenshot (DDS)'
+        OnClick = akeScreenshotDDS1Click
+      end
+      object akeScreenshotPS1: TMenuItem
+        Caption = 'Take Screenshot (PS)'
+        Visible = False
+        OnClick = akeScreenshotPS1Click
+      end
+      object akeScreenshotEPS1: TMenuItem
+        Caption = 'Take Screenshot (EPS)'
+        Visible = False
+        OnClick = akeScreenshotEPS1Click
+      end
+      object akeScreenshotPDF1: TMenuItem
+        Caption = 'Take Screenshot (PDF)'
+        Visible = False
+        OnClick = akeScreenshotPDF1Click
+      end
+      object akeScreenshotSVG1: TMenuItem
+        Caption = 'Take Screenshot (SVG)'
+        Visible = False
+        OnClick = akeScreenshotSVG1Click
+      end
       object ake360DegScreenshots1: TMenuItem
         Caption = 'Make 360 Deg Animation (GIF)'
         OnClick = ake360DegScreenshots1Click
@@ -436,6 +461,10 @@ object Frm3DPReview: TFrm3DPReview
       object CameraRotationAngles1: TMenuItem
         Caption = 'Camera Rotation Angles'
         OnClick = CameraRotationAngles1Click
+      end
+      object DisplayNormalVectors1: TMenuItem
+        Caption = 'Display Normal Vectors'
+        OnClick = DisplayNormalVectors1Click
       end
       object FillMode1: TMenuItem
         Caption = 'Fill Mode'

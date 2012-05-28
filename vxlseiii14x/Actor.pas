@@ -42,6 +42,7 @@ type
       procedure SaveToFile(const _Filename,_TexExt: string; _ModelID: integer);
        // Execution
       procedure Render(var _PolyCount,_VoxelCount: longword);
+      procedure RenderVectorial();
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
@@ -210,6 +211,23 @@ begin
          if Models[i] <> nil then
          begin
             Models[i]^.Render(_PolyCount,_VoxelCount,Frame);
+         end;
+      end;
+   glPopMatrix;
+end;
+
+procedure TActor.RenderVectorial();
+var
+   i : integer;
+begin
+   glPushMatrix;
+      MoveActor;
+      RotateActor;
+      for i := Low(Models) to High(Models) do
+      begin
+         if Models[i] <> nil then
+         begin
+            Models[i]^.RenderVectorial(Frame);
          end;
       end;
    glPopMatrix;

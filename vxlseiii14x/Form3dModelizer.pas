@@ -303,6 +303,7 @@ type
     procedure UncheckFillMode;
     procedure UncheckTextureSize;
     procedure UncheckNumMipMaps;
+    procedure DoDisplayNormals();
   public
     { Public declarations }
     AnimationState : boolean;
@@ -1165,6 +1166,14 @@ begin
    end;
 end;
 
+procedure TFrm3DModelizer.DoDisplayNormals();
+begin
+   if DisplayNormalVectors1.Checked then
+   begin
+      Actor.AddNormalsPlugin;
+   end;
+end;
+
 procedure TFrm3DModelizer.CameraRotationAngles1Click(Sender: TObject);
 begin
    CameraRotationAngles1.Checked := not CameraRotationAngles1.Checked;
@@ -1481,6 +1490,7 @@ begin
    begin
       RenderCubesClick(nil);
    end;
+   DoDisplayNormals();
 end;
 
 procedure TFrm3DModelizer.UncheckModelQuality;

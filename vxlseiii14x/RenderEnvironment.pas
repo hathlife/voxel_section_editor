@@ -4,7 +4,7 @@ interface
 
 uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
    Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS,
-   ShaderBank;
+   ShaderBank, gl2PSUnit;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -25,6 +25,7 @@ type
          procedure ScreenShotBMP(const _Filename : string);
          procedure ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
          procedure ScreenShotDDS(const _Filename : string);
+         procedure ScreenShotViaGl2PS(const _FileName,_Ext: String; OutputType: GLInt);
       public
          Next : PRenderEnvironment;
          ActorList: PActor;
@@ -74,6 +75,7 @@ type
 
          // Renders and Related
          procedure Render;
+         procedure RenderVectorial;
          procedure DrawCacheTexture(Texture : Cardinal; X,Y : Single; Width,Height,AWidth,AHeight : Cardinal; XOff : Cardinal = 0; YOff : Cardinal = 0; XOffWidth : Cardinal = Cardinal(-1); YOffHeight : Cardinal = Cardinal(-1));
          procedure Resize(_width, _height: longword);
          procedure RenderNormals;
@@ -230,7 +232,6 @@ begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
    if CurrentCamera = nil then exit;
-
    // Calculate time and FPS
    QueryPerformanceCounter(temp);
    t2 := temp - FoldTime;
@@ -371,12 +372,12 @@ begin
             end
             else
             begin
-               // Animation is over. Let's conclude the movie.
-               FinishAnimation;
-
                // Reset animation variables.
                AnimFrameCounter := 0;
                AnimFrameMax := 0;
+
+               // Animation is over. Let's conclude the movie.
+               FinishAnimation;
             end;
          end;
          glMatrixMode(GL_PROJECTION);
@@ -384,6 +385,49 @@ begin
       glMatrixMode(GL_MODELVIEW);
    glPopMatrix;
    glEnable(GL_DEPTH_TEST);
+   // Rendering starts here
+   // -------------------------------------------------------
+   SwapBuffers(DC);                  // Display the scene
+end;
+
+procedure TRenderEnvironment.RenderVectorial;
+var
+   Actor : PActor;
+begin
+   if CurrentCamera = nil then exit;
+   wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
+
+   glActiveTexture(GL_TEXTURE0);
+   glDisable(GL_TEXTURE_2D);
+   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+   glClearColor(BackGroundColour.X, BackGroundColour.Y, BackGroundColour.Z, 1.0);
+
+   glDisable(GL_CULL_FACE);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity;
+
+   // Enable Lighting.
+   glEnable(GL_LIGHT0);
+   glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);
+   glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);
+
+   glPolygonMode(GL_FRONT_AND_BACK,PolygonMode);
+
+   CurrentCamera^.MoveCamera;
+   CurrentCamera^.RotateCamera;
+
+   // Render all models.
+   Actor := ActorList;
+   while Actor <> nil do
+   begin
+      Actor^.RenderVectorial();
+      Actor := Actor^.Next;
+   end;
+   // Final rendering part.
+   glDisable(GL_LIGHT0);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_COLOR_MATERIAL);
+
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
@@ -920,6 +964,37 @@ begin
    _GIFImage.Free;
 end;
 
+procedure TRenderEnvironment.ScreenShotViaGl2PS(const _FileName,_Ext: String; OutputType: GLInt);
+var
+   buffsize, state: GLInt;
+   viewport: GLVWarray;
+   pViewport : PGLVWarray;
+   Filename : string;
+begin
+   Filename := CopyString(_Filename);
+   MakeMeAScreenshotName(Filename,_Ext);
+   gl2psCreateStream(FileName);
+   buffsize := 0;
+   state := GL2PS_OVERFLOW;
+
+   glGetIntegerv(GL_VIEWPORT, @viewport);
+   pViewport := @viewport;
+
+   while( state = GL2PS_OVERFLOW ) do
+   begin
+      buffsize := 1000*width*height;
+      state := gl2psBeginPage (_FileName, 'Voxel Section Editor III', pViewport,
+                     OutputType,
+                     //GL2PS_SIMPLE_SORT, GL2PS_SIMPLE_LINE_OFFSET OR GL2PS_NO_PS3_SHADING,
+                     GL2PS_NO_SORT, GL2PS_SILENT OR GL2PS_SIMPLE_LINE_OFFSET OR GL2PS_OCCLUSION_CULL OR GL2PS_BEST_ROOT,
+                     GL_RGBA, 0, nil, 0, 0, 0, buffsize, Filename);
+      RenderVectorial();
+      state := gl2psEndPage();
+   end;
+
+   gl2psDestroyStream();
+end;
+
 procedure TRenderEnvironment.TakeScreenshot(const _Filename: string; _type: TScreenshotType; _Compression: integer = 0);
 begin
    ScreenFilename:= CopyString(_Filename);
@@ -994,6 +1069,22 @@ begin
       begin
          ScreenShotDDS(ScreenFilename);
       end;
+      stPS:
+      begin
+//         ScreenShotViaGl2PS(ScreenFilename,'.ps',GL2PS_PS);
+      end;
+      stPDF:
+      begin
+//         ScreenShotViaGl2PS(ScreenFilename,'.pdf',GL2PS_PDF);
+      end;
+      stEPS:
+      begin
+//         ScreenShotViaGl2PS(ScreenFilename,'.eps',GL2PS_EPS);
+      end;
+      stSVG:
+      begin
+//         ScreenShotViaGl2PS(ScreenFilename,'.svg',GL2PS_SVG);
+      end;
    end;
 end;
 
@@ -1023,6 +1114,22 @@ begin
       stDDS:
       begin
          ScreenShotDDS(ScreenFilename);
+      end;
+      stPS:
+      begin
+         ScreenShotViaGl2PS(ScreenFilename,'.ps',GL2PS_PS);
+      end;
+      stPDF:
+      begin
+         ScreenShotViaGl2PS(ScreenFilename,'.pdf',GL2PS_PDF);
+      end;
+      stEPS:
+      begin
+         ScreenShotViaGl2PS(ScreenFilename,'.eps',GL2PS_EPS);
+      end;
+      stSVG:
+      begin
+         ScreenShotViaGl2PS(ScreenFilename,'.svg',GL2PS_SVG);
       end;
    end;
    AnimFrameMax := 0;

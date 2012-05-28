@@ -54,6 +54,7 @@ type
       procedure SetQuality(_value: integer);
       // Rendering methods
       procedure Render(var _PolyCount,_VoxelCount: longword; _Frame: integer);
+      procedure RenderVectorial(_Frame: integer);
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
@@ -367,6 +368,18 @@ begin
       if CurrentLOD <= High(LOD) then
       begin
          LOD[CurrentLOD].Render(_PolyCount,_VoxelCount,HVA,_Frame);
+      end;
+   end;
+end;
+
+// No render to texture, nor display lists.
+procedure TModel.RenderVectorial(_Frame: integer);
+begin
+   if IsVisible and Opened and (HVA <> nil) then
+   begin
+      if CurrentLOD <= High(LOD) then
+      begin
+         LOD[CurrentLOD].RenderVectorial(HVA,_Frame);
       end;
    end;
 end;

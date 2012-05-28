@@ -108,9 +108,9 @@ begin
    label6.caption:='Start: '+IntToStr(p^.Header.StartPaletteRemap);
    label7.caption:='End: '+IntToStr(p^.Header.EndPaletteRemap);
    label14.caption:= extractfilename(VXLFilename);
-   if p^.Section[0].Tailer.Unknown = 2 then
+   if p^.Section[0].Tailer.NormalsType = 2 then
       Label17.caption := 'Game: Tiberian Sun'
-   else if p^.Section[0].Tailer.Unknown = 4 then
+   else if p^.Section[0].Tailer.NormalsType = 4 then
       Label17.caption := 'Game: Red Alert 2'
    else
       Label17.caption := 'Game: Unknown';
@@ -155,8 +155,8 @@ begin
    txtUnknown2.Text:=IntToStr(p^.Section[i].Header.Unknown2);
 //  txtUnknown2.OnChange:=txtChange;
    txtNormalMode.OnChange:=nil;
-   txtNormalMode.ItemIndex := p^.Section[i].Tailer.Unknown-1;
-   txtNormalMode.Text:=IntToStr(p^.Section[i].Tailer.Unknown);
+   txtNormalMode.ItemIndex := p^.Section[i].Tailer.NormalsType-1;
+   txtNormalMode.Text:=IntToStr(p^.Section[i].Tailer.NormalsType);
 //  txtNormalMode.OnChange:=txtChange;
 //  txtTrailer.Lines.Clear;
 
@@ -222,16 +222,16 @@ begin
          p^.Section[i].Header.Unknown1:=StrToIntDef(txtUnknown1.Text,1);
          p^.Section[i].Header.Unknown2:=StrToIntDef(txtUnknown2.Text,0);
 
-         if p^.Section[i].Tailer.Unknown <> txtNormalMode.itemindex+1 then
+         if p^.Section[i].Tailer.NormalsType <> txtNormalMode.itemindex+1 then
          begin
             SetNormals(txtNormalMode.itemindex+1);
             //  p^.Section[i].Tailer.Unknown:=txtNormalMode.itemindex+1;
-            if FrmMain.Document.ActiveSection^.Tailer.Unknown = 2 then
+            if FrmMain.Document.ActiveSection^.Tailer.NormalsType = 2 then
                FrmMain.StatusBar1.Panels[0].Text := 'Type: Tiberian Sun'
-            else if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
+            else if FrmMain.Document.ActiveSection^.Tailer.NormalsType = 4 then
                FrmMain.StatusBar1.Panels[0].Text := 'Type: RedAlert 2'
             else
-               FrmMain.StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(FrmMain.Document.ActiveSection^.Tailer.Unknown);
+               FrmMain.StatusBar1.Panels[0].Text := 'Type: Unknown ' + inttostr(FrmMain.Document.ActiveSection^.Tailer.NormalsType);
             SetNormalsCount;
             FrmMain.cnvPalette.Refresh;
             RepaintViews;
@@ -326,7 +326,7 @@ end;
 
 procedure TFrmHeader.FormCreate(Sender: TObject);
 begin
-   if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
+   if FrmMain.Document.ActiveSection^.Tailer.NormalsType = 4 then
       FrmMain.IconList.GetIcon(2,Image1.Picture.Icon)
    else
       FrmMain.IconList.GetIcon(0,Image1.Picture.Icon);

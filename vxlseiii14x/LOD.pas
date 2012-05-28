@@ -22,6 +22,7 @@ type
       procedure SaveToPLYFile(const _Filename: string);
       // Rendering Methods
       procedure RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
+      procedure RenderMeshVectorial(_i :integer; const _HVA: PHVA; _Frame: integer);
    public
       InitialMesh : integer;
       Name : string;
@@ -37,6 +38,7 @@ type
       function GetNumMeshes: longword;
       // Rendering Methods
       procedure Render(var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
+      procedure RenderVectorial(const _HVA: PHVA; _Frame: integer);
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
       // Refresh OpenGL List
@@ -195,6 +197,11 @@ begin
    RenderMesh(InitialMesh,_PolyCount,_VoxelCount,_HVA, _Frame);
 end;
 
+procedure TLOD.RenderVectorial(const _HVA: PHVA; _Frame: integer);
+begin
+   RenderMeshVectorial(InitialMesh,_HVA, _Frame);
+end;
+
 procedure TLOD.RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
 begin
    if _i <> -1 then
@@ -205,6 +212,19 @@ begin
          Mesh[_i].Render(_PolyCount,_VoxelCount);
       glPopMatrix();
       RenderMesh(Mesh[_i].Next,_PolyCount,_VoxelCount,_HVA, _Frame);
+   end;
+end;
+
+procedure TLOD.RenderMeshVectorial(_i :integer; const _HVA: PHVA; _Frame: integer);
+begin
+   if _i <> -1 then
+   begin
+      glPushMatrix();
+         _HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
+         RenderMeshVectorial(Mesh[_i].Son,_HVA, _Frame);
+         Mesh[_i].RenderVectorial();
+      glPopMatrix();
+      RenderMeshVectorial(Mesh[_i].Next,_HVA, _Frame);
    end;
 end;
 

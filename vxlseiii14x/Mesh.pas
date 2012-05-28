@@ -163,6 +163,7 @@ type
 
          // Rendering methods
          procedure Render(var _Polycount, _VoxelCount: longword);
+         procedure RenderVectorial;
          procedure ForceRefresh;
 
          // Copies
@@ -1632,6 +1633,33 @@ begin
       while CurrentGeometry <> nil do
       begin
          CurrentGeometry^.Render;
+         Geometry.GoToNextElement;
+         CurrentGeometry := Geometry.Current;
+      end;
+      for i := Low(Plugins) to High(Plugins) do
+      begin
+         if Plugins[i] <> nil then
+         begin
+            Plugins[i]^.Render;
+         end;
+      end;
+   end;
+end;
+
+procedure TMesh.RenderVectorial();
+var
+   i : integer;
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   if IsVisible and Opened then
+   begin
+      // Move accordingly to the bounding box position.
+      glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
+      Geometry.GoToFirstElement;
+      CurrentGeometry := Geometry.Current;
+      while CurrentGeometry <> nil do
+      begin
+         CurrentGeometry^.RenderVectorial(Addr(self));
          Geometry.GoToNextElement;
          CurrentGeometry := Geometry.Current;
       end;

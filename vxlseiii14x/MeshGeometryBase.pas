@@ -24,6 +24,7 @@ type
          // Renders
          procedure Render; virtual;
          procedure PreRender(_Mesh : Pointer); virtual;
+         procedure RenderVectorial(_Mesh : Pointer); virtual;
          procedure ForceRefresh; virtual;
          // Sets
          procedure SetColoursType(_ColoursType: integer); virtual;
@@ -82,6 +83,11 @@ begin
 end;
 
 procedure TMeshGeometryBase.PreRender(_Mesh : Pointer);
+begin
+   // do nothing.
+end;
+
+procedure TMeshGeometryBase.RenderVectorial(_Mesh : Pointer);
 begin
    // do nothing.
 end;

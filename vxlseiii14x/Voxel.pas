@@ -36,7 +36,7 @@ type
       XSize,
       YSize,
       ZSize,
-      Unknown: Byte; // always 2 (or 4?); possibly normals-encoding scheme selection
+      NormalsType: Byte; // always 2 (or 4?); possibly normals-encoding scheme selection
    end;
 
    TVoxelView = class; // forward dec
@@ -332,7 +332,7 @@ begin
    Header.Number := Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
-   Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
+   Tailer.NormalsType := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
    Normals := TNormals.Create(2);
 
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
@@ -373,8 +373,8 @@ begin
    Tailer.XSize := _VoxelSection.Tailer.XSize;
    Tailer.YSize := _VoxelSection.Tailer.YSize;
    Tailer.ZSize := _VoxelSection.Tailer.ZSize;
-   Tailer.Unknown := _VoxelSection.Tailer.Unknown;
-   Normals.SwitchNormalsType(Tailer.Unknown);
+   Tailer.NormalsType := _VoxelSection.Tailer.NormalsType;
+   Normals.SwitchNormalsType(Tailer.NormalsType);
    SetDataSize(Tailer.XSize,Tailer.YSize,Tailer.ZSize);
    // Copy Data
    for x := Low(Data) to High(Data) do
@@ -423,7 +423,7 @@ begin
    Header.Number := Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
-   Tailer.Unknown := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
+   Tailer.NormalsType := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
    Normals := TNormals.Create(2);
 
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
@@ -614,7 +614,7 @@ begin
         'Header.Number is : ' + IntToStr(Header.Number) + Chr(10) +
         'Header.Unknown1 is : ' + IntToStr(Header.Unknown1) + Chr(10) +
         'Header.Unknown2 is : ' + IntToStr(Header.Unknown2) + Chr(10) +
-        'Tailer.Unknown is : ' + IntToStr(Tailer.Unknown)
+        'Tailer.NormalsType is : ' + IntToStr(Tailer.NormalsType)
         ,mtInformation);
 {$ENDIF}
 // create memory for storing the actual voxels; note the creation order
@@ -672,12 +672,12 @@ begin
       end;
       // Banshee's adition here:
       // -- Speed up operations and avoid future mistakes.
-      if Tailer.Unknown = 2 then
+      if Tailer.NormalsType = 2 then
       begin
          Normals.SwitchNormalsType(2);
          MaxNormal := 35
       end
-      else if Tailer.Unknown = 4 then
+      else if Tailer.NormalsType = 4 then
       begin
          Normals.SwitchNormalsType(4);
          MaxNormal := 243;

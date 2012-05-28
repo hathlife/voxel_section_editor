@@ -43,6 +43,7 @@ type
          // Rendering
          procedure Render; override;
          procedure PreRender(_Mesh : Pointer); override;
+         procedure RenderVectorial(_Mesh : Pointer); override;
          procedure ForceRefresh; override;
 
          // Sets
@@ -220,6 +221,46 @@ begin
    end;
    Renderer.FinishRender;
 end;
+
+procedure TMeshBRepGeometry.RenderVectorial(_Mesh : Pointer);
+var
+   MyMesh: PMesh;
+   CurrentPass: integer;
+begin
+   MyMesh := PMesh(_Mesh);
+   Renderer.StartRenderVectorial;
+   CurrentPass := Low(MyMesh^.Materials);
+   while CurrentPass <= High(MyMesh^.Materials) do
+   begin
+      MyMesh^.Materials[CurrentPass].Enable;
+      if NormalsType = C_NORMALS_PER_VERTEX then
+      begin
+         if ColoursType = C_COLOURS_PER_FACE then
+         begin
+            Renderer.DoRender(MyMesh^.Vertices, MyMesh^.Normals, Colours, MyMesh^.TexCoords,Faces,MyMesh^.Materials,FaceType,VerticesPerFace,nil,MyMesh^.ShaderBank,NumFaces,CurrentPass);
+         end
+         else
+         begin
+            Renderer.DoRender(MyMesh^.Vertices, MyMesh^.Normals, MyMesh^.Colours, MyMesh^.TexCoords,Faces,MyMesh^.Materials,FaceType,VerticesPerFace,MyMesh^.GetPlugin(C_MPL_BUMPMAPDATA),MyMesh^.ShaderBank,NumFaces,CurrentPass);
+         end;
+      end
+      else
+      begin
+         if ColoursType = C_COLOURS_PER_FACE then
+         begin
+            Renderer.DoRender(MyMesh^.Vertices, Normals, Colours, MyMesh^.TexCoords,Faces,MyMesh^.Materials,FaceType,VerticesPerFace,nil,MyMesh^.ShaderBank,NumFaces,CurrentPass);
+         end
+         else
+         begin
+            Renderer.DoRender(MyMesh^.Vertices, Normals, MyMesh^.Colours, MyMesh^.TexCoords,Faces,MyMesh^.Materials,FaceType,VerticesPerFace,nil,MyMesh^.ShaderBank,NumFaces,CurrentPass);
+         end;
+      end;
+      MyMesh^.Materials[CurrentPass].Disable;
+      inc(CurrentPass);
+   end;
+   Renderer.FinishRenderVectorial;
+end;
+
 
 procedure TMeshBRepGeometry.ForceRefresh;
 begin

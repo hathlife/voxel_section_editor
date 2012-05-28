@@ -111,9 +111,9 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: HasNormalsBug');
    {$endif}
    Result := False;
-   N := FrmMain.Document.ActiveVoxel^.Section[0].Tailer.Unknown;
+   N := FrmMain.Document.ActiveVoxel^.Section[0].Tailer.NormalsType;
    for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
-      if FrmMain.Document.ActiveVoxel^.Section[x].Tailer.Unknown <> N then
+      if FrmMain.Document.ActiveVoxel^.Section[x].Tailer.NormalsType <> N then
          Result := True;
 end;
 
@@ -199,7 +199,7 @@ begin
       CurrentSection := 0;
       Document.ActiveVoxel^.InsertSection(0,'Body',x,y,z);
       Document.ActiveSection := @(Document.ActiveVoxel^.Section[0]);
-      Document.ActiveSection^.Tailer.Unknown := Game;
+      Document.ActiveSection^.Tailer.NormalsType := Game;
    except
       VoxelOpen := false;
       exit;
@@ -274,7 +274,7 @@ begin
    {$endif}
    ActiveNormalsCount := MAXNORM_TIBERIAN_SUN;
 
-   if FrmMain.Document.ActiveSection^.Tailer.Unknown = 4 then
+   if FrmMain.Document.ActiveSection^.Tailer.NormalsType = 4 then
       ActiveNormalsCount := MAXNORM_RED_ALERT2;
 end;
 
@@ -322,7 +322,7 @@ begin
    else
    begin
       // HBD: Let's color the normals in a better way
-      if FrmMain.Document.ActiveSection.Tailer.Unknown = 4 then
+      if FrmMain.Document.ActiveSection.Tailer.NormalsType = 4 then
       begin
          if color >= RA2_NORMAL_CNT then
          begin
@@ -2649,7 +2649,7 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: SetNormals');
    {$endif}
    for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
-      FrmMain.Document.ActiveVoxel^.Section[x].Tailer.Unknown := Normal;
+      FrmMain.Document.ActiveVoxel^.Section[x].Tailer.NormalsType := Normal;
 end;
 
 (***** COLORS ONLY *****)

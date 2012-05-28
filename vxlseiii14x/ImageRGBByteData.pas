@@ -92,7 +92,7 @@ end;
 
 function T2DImageRGBByteData.GetBitmapPixelColor(_Position: longword):longword;
 begin
-   Result := RGB((FData as TRGBByteDataSet).Blue[_Position],(FData as TRGBByteDataSet).Green[_Position],(FData as TRGBByteDataSet).Red[_Position]);
+   Result := RGB((FData as TRGBByteDataSet).Red[_Position],(FData as TRGBByteDataSet).Green[_Position],(FData as TRGBByteDataSet).Blue[_Position]);
 end;
 
 function T2DImageRGBByteData.GetRPixelColor(_Position: longword):byte;

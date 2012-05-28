@@ -190,7 +190,7 @@ type
    end;
 
 
-   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS);
+   TScreenshotType = (stNone,stBmp,stTga,stJpg,stGif,stPng,stDDS,stPS,stPDF,stEPS,stSVG);
    TBinaryMap = array of array of array of single; //byte;
    T3DBooleanMap = array of array of array of boolean;
    TVector3fMap = array of array of array of TVector3f;

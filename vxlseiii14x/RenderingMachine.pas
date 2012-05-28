@@ -19,9 +19,11 @@ type
          destructor Destroy; override;
          // Render basics
          procedure StartRender();
+         procedure StartRenderVectorial();
          procedure DoRender(const _Vertices, _Normals: TAVector3f; const _Colours: TAVector4f; const _TexCoords: TAVector2f; const _Faces: auint32; const _Materials : TAMeshMaterial; const _FaceType: GLInt; const _VerticesPerFace: byte; const _BumpPlugin: PMeshPluginBase; const _ShaderBank: PShaderBank; const _NumFaces,_CurrentPass: integer);
          procedure FinishRender(const _TranslatePosition: TVector3f); overload;
          procedure FinishRender(); overload;
+         procedure FinishRenderVectorial();
          procedure CallList();
          procedure ForceRefresh;
          // Rendering modes
@@ -77,6 +79,11 @@ begin
    end;
 end;
 
+procedure TRenderingMachine.StartRenderVectorial();
+begin
+   isGeneratingList := true;
+end;
+
 procedure TRenderingMachine.FinishRender(const _TranslatePosition: TVector3f);
 begin
    if IsGeneratingList then
@@ -95,6 +102,11 @@ begin
    begin
       glEndList;
    end;
+   isGeneratingList := false;
+end;
+
+procedure TRenderingMachine.FinishRenderVectorial;
+begin
    isGeneratingList := false;
 end;
 
