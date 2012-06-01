@@ -4,7 +4,7 @@ interface
 
 uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
    Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS,
-   ShaderBank, gl2PSUnit;
+   ShaderBank;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -25,7 +25,7 @@ type
          procedure ScreenShotBMP(const _Filename : string);
          procedure ScreenShotGIF(_GIFImage : TGIFImage; const _Filename : string);
          procedure ScreenShotDDS(const _Filename : string);
-         procedure ScreenShotViaGl2PS(const _FileName,_Ext: String; OutputType: GLInt);
+//         procedure ScreenShotViaGl2PS(const _FileName,_Ext: String; OutputType: GLInt);
       public
          Next : PRenderEnvironment;
          ActorList: PActor;
@@ -964,6 +964,7 @@ begin
    _GIFImage.Free;
 end;
 
+(*
 procedure TRenderEnvironment.ScreenShotViaGl2PS(const _FileName,_Ext: String; OutputType: GLInt);
 var
    buffsize, state: GLInt;
@@ -994,7 +995,7 @@ begin
 
    gl2psDestroyStream();
 end;
-
+*)
 procedure TRenderEnvironment.TakeScreenshot(const _Filename: string; _type: TScreenshotType; _Compression: integer = 0);
 begin
    ScreenFilename:= CopyString(_Filename);
@@ -1115,6 +1116,7 @@ begin
       begin
          ScreenShotDDS(ScreenFilename);
       end;
+(*
       stPS:
       begin
          ScreenShotViaGl2PS(ScreenFilename,'.ps',GL2PS_PS);
@@ -1131,6 +1133,7 @@ begin
       begin
          ScreenShotViaGl2PS(ScreenFilename,'.svg',GL2PS_SVG);
       end;
+*)
    end;
    AnimFrameMax := 0;
    ScreenType := stNone;
