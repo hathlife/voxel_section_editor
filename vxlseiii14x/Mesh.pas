@@ -179,6 +179,7 @@ type
          procedure MeshOptimization(_IgnoreColours: boolean; _Angle : single);
          procedure MeshOptimizationIgnoreColours(_Angle : single);
          procedure ConvertQuadsToTris;
+         procedure ConvertQuadsTo48Tris;
 
          // Materials
          function GetLastTextureID(_MaterialID: integer): integer;
@@ -292,8 +293,8 @@ begin
          MeshLanczosSmooth;
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
-         ColourLanczosSmooth;
-         ColourLanczosSmooth;
+//         ColourLanczosSmooth;
+//         ColourLanczosSmooth;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
@@ -2060,6 +2061,20 @@ begin
    while CurrentGeometry <> nil do
    begin
       (CurrentGeometry^ as TMeshBRepGeometry).ConvertQuadsToTris(Addr(Self));
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
+end;
+
+procedure TMesh.ConvertQuadsTo48Tris;
+var
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).ConvertQuadsTo48Tris(Addr(Self));
       Geometry.GoToNextElement;
       CurrentGeometry := Geometry.Current;
    end;

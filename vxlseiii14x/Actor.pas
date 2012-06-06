@@ -136,6 +136,7 @@ type
       procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
+      procedure ConvertQuadsTo48Tris;
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
@@ -1244,6 +1245,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ConvertQuadsToTris;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.ConvertQuadsTo48Tris;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ConvertQuadsTo48Tris;
       end;
    end;
    RequestUpdateWorld := true;

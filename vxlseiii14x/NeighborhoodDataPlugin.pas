@@ -27,6 +27,7 @@ type
          destructor Destroy; override;
          // Updates
          procedure UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
+         procedure UpdateQuadsTo48Triangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
          procedure UpdateQuadsToTriangleColours(const _Colours: TAVector4f);
          procedure DeactivateQuadFaces;
          procedure UpdateEquivalences(const _VertsLocation: aint32);
@@ -177,6 +178,23 @@ implementation
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
 
       UseQuadFaces := true;
+   end;
+
+   procedure TNeighborhoodDataPlugin.UpdateQuadsTo48Triangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
+   begin
+      // Update Vertex, Face and FaceFaceNeighbors
+      InitialVertexCount := _NumVertices;
+      VertexNeighbors.Clear;
+      VertexNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
+
+      FaceNeighbors.Clear;
+      FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+      FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
+
+      FaceFaceNeighbors.Clear;
+      FaceFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+      FaceFaceNeighbors.VertexFaceNeighbors := FaceNeighbors;
+      FaceFaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
    end;
 
    procedure TNeighborhoodDataPlugin.UpdateQuadsToTriangleColours(const _Colours: TAVector4f);

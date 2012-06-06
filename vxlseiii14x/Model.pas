@@ -113,6 +113,7 @@ type
       procedure OptimizeMeshMaxQualityIgnoreColours;
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
+      procedure ConvertQuadsTo48Tris;
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
@@ -660,10 +661,14 @@ begin
    LOD[CurrentLOD].OptimizeMesh(_QualityLoss,_IgnoreColours);
 end;
 
-
 procedure TModel.ConvertQuadsToTris;
 begin
    LOD[CurrentLOD].ConvertQuadsToTris;
+end;
+
+procedure TModel.ConvertQuadsTo48Tris;
+begin
+   LOD[CurrentLOD].ConvertQuadsTo48Tris;
 end;
 
 // Mesh Plugins

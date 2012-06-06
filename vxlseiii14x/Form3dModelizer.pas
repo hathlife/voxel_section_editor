@@ -161,6 +161,8 @@ type
     TextureFSExportHeightMap: TMenuItem;
     TextureFXBumpCustom: TMenuItem;
     RenderManifolds: TMenuItem;
+    FaceFXConvertQuadsto48Triangles: TMenuItem;
+    procedure FaceFXConvertQuadsto48TrianglesClick(Sender: TObject);
     procedure RenderManifoldsClick(Sender: TObject);
     procedure TextureFXBumpCustomClick(Sender: TObject);
     procedure TextureFSExportHeightMapClick(Sender: TObject);
@@ -847,6 +849,7 @@ begin
    Actor.ColourSmoothModel;
 end;
 
+
 procedure TFrm3DModelizer.Red1Click(Sender: TObject);
 begin
    ClearRemapClicks;
@@ -1034,8 +1037,7 @@ begin
    Actor.ReNormalizeModel;
 end;
 
-procedure TFrm3DModelizer.NormalsFXConvertFaceToVertexNormalsClick(
-  Sender: TObject);
+procedure TFrm3DModelizer.NormalsFXConvertFaceToVertexNormalsClick( Sender: TObject);
 begin
    Actor.ConvertFaceToVertexNormals;
    SetNormalsMode(1);
@@ -1069,6 +1071,12 @@ end;
 procedure TFrm3DModelizer.FaceFXConvertQuadstoTrianglesClick(Sender: TObject);
 begin
    Actor.ConvertQuadsToTris;
+   SetMeshMode(1);
+end;
+
+procedure TFrm3DModelizer.FaceFXConvertQuadsto48TrianglesClick( Sender: TObject);
+begin
+   Actor.ConvertQuadsTo48Tris;
    SetMeshMode(1);
 end;
 
@@ -1532,6 +1540,7 @@ begin
          ModelFXSquaredSmooth.Enabled := true;
          FaceFXCleanupInvisibleFaces.Enabled := true;
          FaceFXConvertQuadstoTriangles.Enabled := true;
+         FaceFXConvertQuadsto48Triangles.Enabled := true;
          FaceFXOptimizeMesh.Enabled := false;
          FaceFXOptimizeMeshIgnoringColours.Enabled := false;
          FaceFXOptimizeMeshCustom.Enabled := false;
@@ -1552,6 +1561,7 @@ begin
          ModelFXSquaredSmooth.Enabled := true;
          FaceFXCleanupInvisibleFaces.Enabled := true;
          FaceFXConvertQuadstoTriangles.Enabled := false;
+         FaceFXConvertQuadsto48Triangles.Enabled := false;
          FaceFXOptimizeMesh.Enabled := true;
          FaceFXOptimizeMeshIgnoringColours.Enabled := true;
          FaceFXOptimizeMeshCustom.Enabled := true;
@@ -1572,6 +1582,7 @@ begin
          ModelFXSquaredSmooth.Enabled := false;
          FaceFXCleanupInvisibleFaces.Enabled := false;
          FaceFXConvertQuadstoTriangles.Enabled := false;
+         FaceFXConvertQuadsto48Triangles.Enabled := false;
          FaceFXOptimizeMesh.Enabled := true;
          FaceFXOptimizeMeshIgnoringColours.Enabled := true;
          FaceFXOptimizeMeshCustom.Enabled := true;
@@ -1592,6 +1603,7 @@ begin
          ModelFXSquaredSmooth.Enabled := true;
          FaceFXCleanupInvisibleFaces.Enabled := true;
          FaceFXConvertQuadstoTriangles.Enabled := true;
+         FaceFXConvertQuadsto48Triangles.Enabled := true;
          FaceFXOptimizeMesh.Enabled := true;
          FaceFXOptimizeMeshIgnoringColours.Enabled := true;
          FaceFXOptimizeMeshCustom.Enabled := true;

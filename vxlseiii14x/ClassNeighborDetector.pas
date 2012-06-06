@@ -584,7 +584,6 @@ function TNeighborDetector.GetNextNeighbor: integer;
 begin
    if FRequest <> -1 then
    begin
-      Result := FRequest;
       inc(FNeighborID);
       if FNeighborID < FDescriptorData[FCurrentID].Size then
       begin
@@ -594,6 +593,7 @@ begin
       begin
          FRequest := -1;
       end;
+      Result := FRequest;
    end
    else
       Result := -1;
