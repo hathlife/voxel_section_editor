@@ -77,7 +77,7 @@ type
 
 implementation
 
-uses Mesh, Windows;
+uses Mesh, Windows, Math3d;
 
 // Constructors and Destructors.
 constructor TMeshBRepGeometry.Create;
@@ -569,62 +569,58 @@ begin
       SetLength(OldFaces,0);
 
       // Go with Colour conversion.
-      if (ColoursType = C_COLOURS_PER_FACE) then
+      // Make a backup of the colours first.
+      SetLength(OldColours,OldNumFaces);
+      for i := Low(OldColours) to High(OldColours) do
       begin
-         // Make a backup of the colours first.
-         SetLength(OldColours,OldNumFaces);
-         for i := Low(OldColours) to High(OldColours) do
-         begin
-            OldColours[i].X := Colours[i].X;
-            OldColours[i].Y := Colours[i].Y;
-            OldColours[i].Z := Colours[i].Z;
-            OldColours[i].W := Colours[i].W;
-         end;
-         // Duplicate the colours.
-         i := 0;
-         j := 0;
-         while j < OldNumFaces do
-         begin
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            inc(j);
-         end;
-         SetLength(OldColours,0);
+         OldColours[i].X := Colours[i].X;
+         OldColours[i].Y := Colours[i].Y;
+         OldColours[i].Z := Colours[i].Z;
+         OldColours[i].W := Colours[i].W;
       end;
+      // Duplicate the colours.
+      i := 0;
+      j := 0;
+      while j < OldNumFaces do
+      begin
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         inc(j);
+      end;
+      SetLength(OldColours,0);
+
       // Go with Normals conversion.
-      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+      // Make a backup of the normals first.
+      SetLength(OldNormals,OldNumFaces);
+      for i := Low(OldNormals) to High(OldNormals) do
       begin
-         // Make a backup of the normals first.
-         SetLength(OldNormals,OldNumFaces);
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            OldNormals[i].X := Normals[i].X;
-            OldNormals[i].Y := Normals[i].Y;
-            OldNormals[i].Z := Normals[i].Z;
-         end;
-         // Duplicate the face normals.
-         j := 0;
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-         end;
-         SetLength(OldNormals,0);
+         OldNormals[i].X := Normals[i].X;
+         OldNormals[i].Y := Normals[i].Y;
+         OldNormals[i].Z := Normals[i].Z;
       end;
+      // Duplicate the face normals.
+      j := 0;
+      for i := Low(OldNormals) to High(OldNormals) do
+      begin
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+      end;
+      SetLength(OldNormals,0);
+
       NeighborhoodPlugin := MyMesh^.GetPlugin(C_MPL_NEIGHBOOR);
       if NeighborhoodPlugin <> nil then
       begin
@@ -680,62 +676,57 @@ begin
       SetLength(OldFaces,0);
 
       // Go with Colour conversion.
-      if (ColoursType = C_COLOURS_PER_FACE) then
+      // Make a backup of the colours first.
+      SetLength(OldColours,OldNumFaces);
+      for i := Low(OldColours) to High(OldColours) do
       begin
-         // Make a backup of the colours first.
-         SetLength(OldColours,OldNumFaces);
-         for i := Low(OldColours) to High(OldColours) do
-         begin
-            OldColours[i].X := Colours[i].X;
-            OldColours[i].Y := Colours[i].Y;
-            OldColours[i].Z := Colours[i].Z;
-            OldColours[i].W := Colours[i].W;
-         end;
-         // Duplicate the colours.
-         i := 0;
-         j := 0;
-         while j < OldNumFaces do
-         begin
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            inc(j);
-         end;
-         SetLength(OldColours,0);
+         OldColours[i].X := Colours[i].X;
+         OldColours[i].Y := Colours[i].Y;
+         OldColours[i].Z := Colours[i].Z;
+         OldColours[i].W := Colours[i].W;
       end;
+      // Duplicate the colours.
+      i := 0;
+      j := 0;
+      while j < OldNumFaces do
+      begin
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         inc(j);
+      end;
+      SetLength(OldColours,0);
+
       // Go with Normals conversion.
-      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+      // Make a backup of the normals first.
+      SetLength(OldNormals,OldNumFaces);
+      for i := Low(OldNormals) to High(OldNormals) do
       begin
-         // Make a backup of the normals first.
-         SetLength(OldNormals,OldNumFaces);
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            OldNormals[i].X := Normals[i].X;
-            OldNormals[i].Y := Normals[i].Y;
-            OldNormals[i].Z := Normals[i].Z;
-         end;
-         // Duplicate the face normals.
-         j := 0;
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-         end;
-         SetLength(OldNormals,0);
+         OldNormals[i].X := Normals[i].X;
+         OldNormals[i].Y := Normals[i].Y;
+         OldNormals[i].Z := Normals[i].Z;
       end;
+      // Duplicate the face normals.
+      j := 0;
+      for i := Low(OldNormals) to High(OldNormals) do
+      begin
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+      end;
+      SetLength(OldNormals,0);
    end;
 end;
 
@@ -764,6 +755,9 @@ begin
       // Now we expand the amount of vertexes from the mesh.
       OldNumVertices := High(MyMesh^.Vertices)+1;
       SetLength(MyMesh^.Vertices,OldNumVertices+OldNumFaces);
+      SetLength(MyMesh^.Normals,High(MyMesh^.Vertices)+1);
+      SetLength(MyMesh^.Colours,High(MyMesh^.Vertices)+1);
+      SetLength(MyMesh^.TexCoords,High(MyMesh^.Vertices)+1);
 
       // Now we transform each quad in four tris.
       NumFaces := NumFaces * 4;
@@ -776,6 +770,20 @@ begin
          MyMesh^.Vertices[k].X := (MyMesh^.Vertices[OldFaces[j]].X + MyMesh^.Vertices[OldFaces[j+1]].X + MyMesh^.Vertices[OldFaces[j+2]].X + MyMesh^.Vertices[OldFaces[j+3]].X) / 4;
          MyMesh^.Vertices[k].Y := (MyMesh^.Vertices[OldFaces[j]].Y + MyMesh^.Vertices[OldFaces[j+1]].Y + MyMesh^.Vertices[OldFaces[j+2]].Y + MyMesh^.Vertices[OldFaces[j+3]].Y) / 4;
          MyMesh^.Vertices[k].Z := (MyMesh^.Vertices[OldFaces[j]].Z + MyMesh^.Vertices[OldFaces[j+1]].Z + MyMesh^.Vertices[OldFaces[j+2]].Z + MyMesh^.Vertices[OldFaces[j+3]].Z) / 4;
+
+         MyMesh^.Normals[k].X := MyMesh^.Normals[OldFaces[j]].X + MyMesh^.Normals[OldFaces[j+1]].X + MyMesh^.Normals[OldFaces[j+2]].X + MyMesh^.Normals[OldFaces[j+3]].X;
+         MyMesh^.Normals[k].Y := MyMesh^.Normals[OldFaces[j]].Y + MyMesh^.Normals[OldFaces[j+1]].Y + MyMesh^.Normals[OldFaces[j+2]].Y + MyMesh^.Normals[OldFaces[j+3]].Y;
+         MyMesh^.Normals[k].Z := MyMesh^.Normals[OldFaces[j]].Z + MyMesh^.Normals[OldFaces[j+1]].Z + MyMesh^.Normals[OldFaces[j+2]].Z + MyMesh^.Normals[OldFaces[j+3]].Z;
+         Normalize(MyMesh^.Normals[k]);
+
+         MyMesh^.Colours[k].X := (MyMesh^.Colours[OldFaces[j]].X + MyMesh^.Colours[OldFaces[j+1]].X + MyMesh^.Colours[OldFaces[j+2]].X + MyMesh^.Colours[OldFaces[j+3]].X) / 4;
+         MyMesh^.Colours[k].Y := (MyMesh^.Colours[OldFaces[j]].Y + MyMesh^.Colours[OldFaces[j+1]].Y + MyMesh^.Colours[OldFaces[j+2]].Y + MyMesh^.Colours[OldFaces[j+3]].Y) / 4;
+         MyMesh^.Colours[k].Z := (MyMesh^.Colours[OldFaces[j]].Z + MyMesh^.Colours[OldFaces[j+1]].Z + MyMesh^.Colours[OldFaces[j+2]].Z + MyMesh^.Colours[OldFaces[j+3]].Z) / 4;
+         MyMesh^.Colours[k].W := (MyMesh^.Colours[OldFaces[j]].W + MyMesh^.Colours[OldFaces[j+1]].W + MyMesh^.Colours[OldFaces[j+2]].W + MyMesh^.Colours[OldFaces[j+3]].W) / 4;
+
+         MyMesh^.TexCoords[k].U := (MyMesh^.TexCoords[OldFaces[j]].U + MyMesh^.TexCoords[OldFaces[j+1]].U + MyMesh^.TexCoords[OldFaces[j+2]].U + MyMesh^.TexCoords[OldFaces[j+3]].U) / 4;
+         MyMesh^.TexCoords[k].V := (MyMesh^.TexCoords[OldFaces[j]].V + MyMesh^.TexCoords[OldFaces[j+1]].V + MyMesh^.TexCoords[OldFaces[j+2]].V + MyMesh^.TexCoords[OldFaces[j+3]].V) / 4;
+
          // Generate new faces.
          // Face 1 (Left)
          Faces[i] := OldFaces[j];
@@ -812,80 +820,76 @@ begin
       SetLength(OldFaces,0);
 
       // Go with Colour conversion.
-      if (ColoursType = C_COLOURS_PER_FACE) then
+      // Make a backup of the colours first.
+      SetLength(OldColours,OldNumFaces);
+      for i := Low(OldColours) to High(OldColours) do
       begin
-         // Make a backup of the colours first.
-         SetLength(OldColours,OldNumFaces);
-         for i := Low(OldColours) to High(OldColours) do
-         begin
-            OldColours[i].X := Colours[i].X;
-            OldColours[i].Y := Colours[i].Y;
-            OldColours[i].Z := Colours[i].Z;
-            OldColours[i].W := Colours[i].W;
-         end;
-         // Quadruplicate the colours.
-         i := 0;
-         j := 0;
-         while j < OldNumFaces do
-         begin
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            Colours[i].X := OldColours[j].X;
-            Colours[i].Y := OldColours[j].Y;
-            Colours[i].Z := OldColours[j].Z;
-            Colours[i].W := OldColours[j].W;
-            inc(i);
-            inc(j);
-         end;
-         SetLength(OldColours,0);
+         OldColours[i].X := Colours[i].X;
+         OldColours[i].Y := Colours[i].Y;
+         OldColours[i].Z := Colours[i].Z;
+         OldColours[i].W := Colours[i].W;
       end;
+      // Quadruplicate the colours.
+      i := 0;
+      j := 0;
+      while j < OldNumFaces do
+      begin
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         Colours[i].X := OldColours[j].X;
+         Colours[i].Y := OldColours[j].Y;
+         Colours[i].Z := OldColours[j].Z;
+         Colours[i].W := OldColours[j].W;
+         inc(i);
+         inc(j);
+      end;
+      SetLength(OldColours,0);
+
       // Go with Normals conversion.
-      if (NormalsType and C_NORMALS_PER_FACE) <> 0 then
+      // Make a backup of the normals first.
+      SetLength(OldNormals,OldNumFaces);
+      for i := Low(OldNormals) to High(OldNormals) do
       begin
-         // Make a backup of the normals first.
-         SetLength(OldNormals,OldNumFaces);
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            OldNormals[i].X := Normals[i].X;
-            OldNormals[i].Y := Normals[i].Y;
-            OldNormals[i].Z := Normals[i].Z;
-         end;
-         // Quadruplicate the face normals.
-         j := 0;
-         for i := Low(OldNormals) to High(OldNormals) do
-         begin
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-            Normals[j].X := OldNormals[i].X;
-            Normals[j].Y := OldNormals[i].Y;
-            Normals[j].Z := OldNormals[i].Z;
-            inc(j);
-         end;
-         SetLength(OldNormals,0);
+         OldNormals[i].X := Normals[i].X;
+         OldNormals[i].Y := Normals[i].Y;
+         OldNormals[i].Z := Normals[i].Z;
       end;
+      // Quadruplicate the face normals.
+      j := 0;
+      for i := Low(OldNormals) to High(OldNormals) do
+      begin
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+         Normals[j].X := OldNormals[i].X;
+         Normals[j].Y := OldNormals[i].Y;
+         Normals[j].Z := OldNormals[i].Z;
+         inc(j);
+      end;
+      SetLength(OldNormals,0);
+
       NeighborhoodPlugin := MyMesh^.GetPlugin(C_MPL_NEIGHBOOR);
       if NeighborhoodPlugin <> nil then
       begin

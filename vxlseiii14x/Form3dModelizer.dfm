@@ -499,8 +499,12 @@ object Frm3DModelizer: TFrm3DModelizer
       end
       object RenderTriangles: TMenuItem
         Caption = 'Triangle Smoothed 3D Model (Medium)'
-        Checked = True
         OnClick = RenderTrianglesClick
+      end
+      object RenderSmoothManifolds: TMenuItem
+        Caption = 'Smooth Top. Correct 3D Model (Medium)'
+        Checked = True
+        OnClick = RenderSmoothManifoldsClick
       end
       object RenderModel: TMenuItem
         Caption = 'Triangle Based 3D Model (High)'

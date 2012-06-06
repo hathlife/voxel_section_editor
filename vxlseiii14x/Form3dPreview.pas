@@ -95,6 +95,8 @@ type
     akeScreenshotDDS1: TMenuItem;
     DisplayNormalVectors1: TMenuItem;
     RenderManifolds: TMenuItem;
+    RenderSmoothManifolds: TMenuItem;
+    procedure RenderSmoothManifoldsClick(Sender: TObject);
     procedure RenderManifoldsClick(Sender: TObject);
     procedure DisplayNormalVectors1Click(Sender: TObject);
     procedure akeScreenshotSVG1Click(Sender: TObject);
@@ -652,6 +654,13 @@ begin
    Actor.SetQuality(GetQualityModel);
 end;
 
+procedure TFrm3DPReview.RenderSmoothManifoldsClick(Sender: TObject);
+begin
+   UncheckModelQuality;
+   RenderSmoothManifolds.Checked := true;
+   Actor.SetQuality(GetQualityModel);
+end;
+
 procedure TFrm3DPReview.RenderTrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
@@ -895,6 +904,10 @@ begin
    begin
       Result := C_QUALITY_VISIBLE_MANIFOLD;
    end
+   else if RenderSmoothManifolds.Checked then
+   begin
+      Result := C_QUALITY_SMOOTH_MANIFOLD;
+   end
    else
    begin
       Result := C_QUALITY_CUBED;
@@ -923,6 +936,10 @@ begin
    begin
       RenderManifoldsClick(nil);
    end
+   else if RenderSmoothManifolds.Checked then
+   begin
+      RenderSmoothManifoldsClick(nil);
+   end
    else
    begin
       RenderCubesClick(nil);
@@ -938,6 +955,7 @@ begin
    Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    RenderManifolds.Checked := false;
+   RenderSmoothManifolds.Checked := false;
 end;
 
 procedure TFrm3DPReview.UncheckFillMode;

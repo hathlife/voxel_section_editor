@@ -288,13 +288,12 @@ begin
       end;
       C_QUALITY_2LANCZOS_4TRIS:
       begin
-         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+         LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
-         MeshLanczosSmooth;
+         RebuildFaceNormals;
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
-//         ColourLanczosSmooth;
-//         ColourLanczosSmooth;
+         ConvertQuadsTo48Tris;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
@@ -302,6 +301,12 @@ begin
          MeshLanczosSmooth;
          ConvertQuadsToTris;
          RebuildFaceNormals;
+         ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
+      end;
+      C_QUALITY_SMOOTH_MANIFOLD:
+      begin
+         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
       end;
@@ -372,13 +377,12 @@ begin
       end;
       C_QUALITY_2LANCZOS_4TRIS:
       begin
-         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
+         LoadFromVisibleVoxels(_Voxel,_Palette);
          MeshLanczosSmooth;
-         MeshLanczosSmooth;
+         RebuildFaceNormals;
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
-         ColourLanczosSmooth;
-         ColourLanczosSmooth;
+         ConvertQuadsTo48Tris;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
@@ -386,6 +390,12 @@ begin
          MeshLanczosSmooth;
          ConvertQuadsToTris;
          RebuildFaceNormals;
+         ConvertFaceToVertexNormals;
+         ConvertFaceToVertexColours;
+      end;
+      C_QUALITY_SMOOTH_MANIFOLD:
+      begin
+         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
          ConvertFaceToVertexNormals;
          ConvertFaceToVertexColours;
       end;
@@ -1031,20 +1041,35 @@ begin
          NeighborDetector.Free;
       end;
       }
+      Tool := TMeshColoursTool.Create;
+      SetLength(Colours,High(Vertices)+1);
       NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
       if NeighborhoodPlugin <> nil then
       begin
          VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
          NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+         if TNeighborhoodDataPlugin(NeighborhoodPlugin^).UseQuadFaces then
+         begin
+            NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
+            MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
+            MyFaceColours := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceColours;
+            SetLength(OriginalColours,High(MyFaceColours)+1);
+            Tool.BackupColourVector(MyFaceColours,OriginalColours);
+            Geometry.GoToFirstElement;
+            Tool.TransformFaceToVertexColours(Colours,OriginalColours,Vertices,NumVertices,MyFaces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,NeighborDetector,VertexEquivalences,_DistanceFunction);
+            SetLength(OriginalColours,0);
+         end
+         else
+         begin
+            Tool.TransformFaceToVertexColours(Colours,Geometry,Vertices,NumVertices,VertexEquivalences,_DistanceFunction);
+         end;
       end
       else
       begin
          VertexEquivalences := nil;
          NumVertices := High(Vertices)+1;
+         Tool.TransformFaceToVertexColours(Colours,Geometry,Vertices,NumVertices,VertexEquivalences,_DistanceFunction);
       end;
-      Tool := TMeshColoursTool.Create;
-      SetLength(Colours,High(Vertices)+1);
-      Tool.TransformFaceToVertexColours(Colours,Geometry,Vertices,NumVertices,VertexEquivalences,_DistanceFunction);
       ColourGenStructure := C_COLOURS_PER_VERTEX;
       SetColoursType(C_COLOURS_PER_VERTEX);
       ForceRefresh;

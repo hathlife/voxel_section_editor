@@ -36,7 +36,6 @@ object Frm3DPReview: TFrm3DPReview
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 320
   end
   object Panel1: TPanel
     Left = 0
@@ -505,6 +504,10 @@ object Frm3DPReview: TFrm3DPReview
       object RenderTriangles: TMenuItem
         Caption = 'Triangle Smoothed 3D Model (Medium)'
         OnClick = RenderTrianglesClick
+      end
+      object RenderSmoothManifolds: TMenuItem
+        Caption = 'Smooth Top. Correct 3D Model (Medium)'
+        OnClick = RenderSmoothManifoldsClick
       end
       object RenderModel: TMenuItem
         Caption = 'Triangle Based 3D Model (High)'

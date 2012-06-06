@@ -162,6 +162,8 @@ type
     TextureFXBumpCustom: TMenuItem;
     RenderManifolds: TMenuItem;
     FaceFXConvertQuadsto48Triangles: TMenuItem;
+    RenderSmoothManifolds: TMenuItem;
+    procedure RenderSmoothManifoldsClick(Sender: TObject);
     procedure FaceFXConvertQuadsto48TrianglesClick(Sender: TObject);
     procedure RenderManifoldsClick(Sender: TObject);
     procedure TextureFXBumpCustomClick(Sender: TObject);
@@ -910,6 +912,16 @@ begin
    SetColoursMode(0);
 end;
 
+procedure TFrm3DModelizer.RenderSmoothManifoldsClick(Sender: TObject);
+begin
+   UncheckModelQuality;
+   RenderSmoothManifolds.Checked := true;
+   Actor.SetQuality(GetQualityModel);
+   SetMeshMode(1);
+   SetNormalsMode(1);
+   SetColoursMode(1);
+end;
+
 procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
@@ -1457,6 +1469,10 @@ begin
    begin
       Result := C_QUALITY_VISIBLE_MANIFOLD;
    end
+   else if RenderSmoothManifolds.Checked then
+   begin
+      Result := C_QUALITY_SMOOTH_MANIFOLD;
+   end
    else
    begin
       Result := C_QUALITY_CUBED;
@@ -1494,6 +1510,10 @@ begin
    begin
       RenderManifoldsClick(nil);
    end
+   else if RenderSmoothManifolds.Checked then
+   begin
+      RenderSmoothManifoldsClick(nil);
+   end
    else
    begin
       RenderCubesClick(nil);
@@ -1511,6 +1531,7 @@ begin
    Render4Triangles.Checked := false;
    RenderTriangles.Checked := false;
    RenderManifolds.Checked := false;
+   RenderSmoothManifolds.Checked := false;
 end;
 
 procedure TFrm3DModelizer.UncheckFillMode;

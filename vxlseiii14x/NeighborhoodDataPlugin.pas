@@ -172,7 +172,7 @@ implementation
       QuadFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
       QuadFaceNeighbors.BuildUpData(QuadFaces,_VerticesPerFace,_NumVertices);
 
-      // Update FaceFaceNeighbors
+      // Update FaceNeighbors
       FaceNeighbors.Clear;
       FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
       FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,_NumVertices);
