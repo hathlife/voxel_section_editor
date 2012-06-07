@@ -102,7 +102,7 @@ begin
    // Parte 1: Mapeando as superfícies, parte interna e influências do
    // modelo.
    // ----------------------------------------------------
-   MapaDoVoxel := TVoxelMap.Create(Voxel,IntAlcance);
+   MapaDoVoxel := TVoxelMap.CreateQuick(Voxel,IntAlcance);
    MapaDoVoxel.GenerateFullMap;
    ConverteInfluenciasEmPesos(MapaDoVoxel);
 

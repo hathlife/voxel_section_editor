@@ -17,13 +17,13 @@ uses
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
   FormHeightmap, ImageIOUtils, FormTopologyAnalysis, ClassIsoSurfaceFile,
-  ClassTopologyFixer;
+  ClassTopologyFixer, ClassFillUselessGapsTool;
 
 {$INCLUDE Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.142';
+   APPLICATION_VER = '1.39.143';
    APPLICATION_BETA = true;
 
 type
@@ -375,6 +375,9 @@ type
     Isosurfacesiso1: TMenuItem;
     SaveDialogExport: TSaveDialog;
     IncreaseResolution1: TMenuItem;
+    Shape1: TMenuItem;
+    FillUselessInternalGaps1: TMenuItem;
+    procedure FillUselessInternalGaps1Click(Sender: TObject);
     procedure IncreaseResolution1Click(Sender: TObject);
     procedure Isosurfacesiso1Click(Sender: TObject);
     procedure opologyAnalysis1Click(Sender: TObject);
@@ -3206,6 +3209,32 @@ begin
    Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
    RefreshAll;
    VXLChanged := true;
+end;
+
+procedure TFrmMain.FillUselessInternalGaps1Click(Sender: TObject);
+var
+   Tool: TFillUselessGapsTool;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: FillUselessInternalGaps1Click');
+   {$endif}
+   // ensure the user wants to do this!
+   if MessageDlg('Fill Useless Internal Caves' +#13#13+
+        'This process will add black voxels at caves that are hidden from view.' +#13+
+        'If you choose to do this, you should first save' + #13 +
+        'your model under a different name as a backup.',
+        mtWarning,mbOKCancel,0) = mrCancel then exit;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Tool := TFillUselessGapsTool.Create(Document.ActiveSection^);
+   Tool.Free;
+
+   RefreshAll;
+   VxlChanged := True;
+
 end;
 
 procedure TFrmMain.FlipXswitchRightLeft1Click(Sender: TObject);

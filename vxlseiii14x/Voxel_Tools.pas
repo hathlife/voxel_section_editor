@@ -466,7 +466,7 @@ begin
          end;
    Result.applied := 0;
    // Create the binary map
-   Map := TVoxelMap.Create(Voxel,FullRange);
+   Map := TVoxelMap.CreateQuick(Voxel,FullRange);
    Map.GenerateVolumeMap;
    // 1.32: Solves limit (x,y,z) -> (0,0,0) on cubed normalizer.
    if InfluenceMe then
@@ -521,7 +521,7 @@ begin
             FloatMap[x,y,z].Z := 0;
          end;
    // 1.34: Create Influence map.
-   Map := TVoxelMap.Create(Voxel,FullRange);
+   Map := TVoxelMap.CreateQuick(Voxel,FullRange);
    if ImproveContrast then
    begin
       Map.GenerateInfluenceMap;
@@ -894,7 +894,7 @@ var
    Map : TVoxelMap;
    Values : array of single;
 begin
-   Map := TVoxelMap.Create(Voxel,1);
+   Map := TVoxelMap.CreateQuick(Voxel,1);
    Map.GenerateSurfaceMap;
    SetLength(Values,6);
    Values[0] := 0;

@@ -27,7 +27,7 @@ var
 begin
    Section := _Section;
    Palette := _Palette;
-   FInputMap := TVoxelMap.Create(Section,1);
+   FInputMap := TVoxelMap.CreateQuick(Section,1);
    FInputMap.GenerateSurfaceMap;
    FInputMap.Bias := 0;
    FInputColor := TVoxelMap.Create(Section,0,C_MODE_COLOUR,0);
@@ -41,7 +41,7 @@ begin
    FColor.SynchronizeWithSection(C_MODE_COLOUR,0);
    FNormal.SynchronizeWithSection(C_MODE_NORMAL,0);
    FMap.Free;
-   FMap := TVoxelMap.Create(Section,1);
+   FMap := TVoxelMap.CreateQuick(Section,1);
    FMap.GenerateSurfaceMap;
    SetLength(Values,6);
    Values[0] := 0;

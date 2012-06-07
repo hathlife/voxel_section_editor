@@ -545,7 +545,7 @@ begin
    SetLength(TexCoords,0);
    SetLength(Normals,0);
    // Voxel classification stage
-   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap := TVoxelMap.CreateQuick(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
    VoxelMap.MapSemiSurfaces(SemiSurfacesMap);
    // Colour mapping stage

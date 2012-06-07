@@ -36,6 +36,7 @@ type
          procedure SetMapSize;
       public
          // Constructors and Destructors
+         constructor CreateQuick(const _Voxel: TVoxelSection; _Bias: integer);
          constructor Create(const _Voxel: TVoxelSection; _Bias: integer); overload;
          constructor Create(const _Voxel: TVoxelSection; _Bias: integer; _Mode: integer; _Value : integer); overload;
          constructor Create(const _Map : TVoxelMap); overload;
@@ -46,6 +47,7 @@ type
          function GetMaxY: integer;
          function GetMaxZ: integer;
          // Generates
+         procedure GenerateUsedMap(_Used, _Unused: integer);
          procedure GenerateVolumeMap;
          procedure GenerateInfluenceMap;
          procedure GenerateSurfaceMap;
@@ -53,6 +55,7 @@ type
          procedure GenerateInfluenceMapOnly;
          procedure GenerateFullMap;
          procedure GenerateSurfaceAndRefinementMap;
+         procedure GenerateRayCastingMap(const _FilledMap: TVoxelMap);
          // Copies
          procedure Assign(const _Map : TVoxelMap);
          function CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
@@ -68,6 +71,7 @@ type
          procedure MapTopologicalProblems(_Surface: single);
          procedure MapRefinementZones(_Surface: single);
          procedure MapSkeletonRefinementZones(_Surface: single);
+         procedure CastRayFromVoxel(const _Input: TVoxelMap; const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
          procedure ConvertValues(_Values : array of single);
@@ -93,7 +97,7 @@ begin
    FSection := _Voxel;
    Bias := 2 * _Bias;
    FMap := T3DVolumeGreyData.Create(FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias,FSection.Tailer.ZSize + Bias);
-   FillMap(C_MODE_NONE,C_INSIDE_VOLUME);
+   FillMap(C_MODE_NONE,C_OUTSIDE_VOLUME);
 end;
 
 constructor TVoxelMap.Create(const _Voxel: TVoxelSection; _Bias: Integer; _Mode: integer; _Value: integer);
@@ -110,6 +114,16 @@ end;
 constructor TVoxelMap.Create(const _Map : TVoxelMap);
 begin
    Assign(_Map);
+end;
+
+constructor TVoxelMap.CreateQuick(const _Voxel: TVoxelSection; _Bias: Integer);
+var
+   Bias: longword;
+begin
+   FBias := _Bias;
+   FSection := _Voxel;
+   Bias := 2 * _Bias;
+   FMap := T3DVolumeGreyData.Create(FSection.Tailer.XSize + Bias, FSection.Tailer.YSize + Bias,FSection.Tailer.ZSize + Bias);
 end;
 
 
@@ -310,6 +324,11 @@ end;
 
 // Generates
 
+procedure TVoxelMap.GenerateUsedMap(_Used, _Unused: integer);
+begin
+   FillMap(C_MODE_USED,GenerateFilledDataParam(_Used,_Unused));
+end;
+
 // This procedure generates a map that specifies the voxels that are inside and
 // outside the volume as 0 and 1.
 procedure TVoxelMap.GenerateVolumeMap;
@@ -392,6 +411,22 @@ begin
    MapRefinementZones(511);
    //MapTopologicalProblems(511);
 end;
+
+// Make sure that _FilledMap has bias 1 and it is filled with 0 (transparent) or 1 (solid)
+procedure TVoxelMap.GenerateRayCastingMap(const _FilledMap: TVoxelMap);
+begin
+   FillMap(C_MODE_NONE,C_OUTSIDE_VOLUME);
+   // Cast rays from the 8 corners.
+   CastRayFromVoxel(_FilledMap,SetVectorI(0,0,0),SetVectorI(1,1,1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(0,0,GetMaxZ),SetVectorI(1,1,-1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(0,GetMaxY,0),SetVectorI(1,-1,1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(0,GetMaxY,GetMaxZ),SetVectorI(1,-1,-1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,0,0),SetVectorI(-1,1,1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,0,GetMaxZ),SetVectorI(-1,1,-1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,GetMaxY,0),SetVectorI(-1,-1,1),0,1);
+   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,GetMaxY,GetMaxZ),SetVectorI(-1,-1,-1),0,1);
+end;
+
 
 // Copies
 procedure TVoxelMap.Assign(const _Map : TVoxelMap);
@@ -1290,13 +1325,62 @@ begin
                      if (BitValue = 23) or (BitValue = 43) or (BitValue = 77) or (BitValue = 105) or (BitValue = 113) or (BitValue = 142) or (BitValue = 150) or (BitValue = 178) or (BitValue = 212) or (BitValue = 232) then
                      begin
                         FMap.DataUnsafe[x,y,z] := BitValue;
-                     end;                     
+                     end;
                   end; // End tetrahedron detection.
 
                end;
             end;
    end;
    Cube.Free;
+end;
+
+
+procedure TVoxelMap.CastRayFromVoxel(const _Input: TVoxelMap; const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
+var
+   List : C3DPointList; // Check Class3DPointList.pas;
+   x,y,z,a : integer;
+   VisitedMap : TVoxelMap;
+begin
+   VisitedMap := TVoxelMap.Create(FSection,1);
+   List := C3DPointList.Create;
+   List.UseSmartMemoryManagement(true);
+   List.Add(_Point.X,_Point.Y,_Point.Z);
+   FMap.DataUnsafe[_Point.X,_Point.Y,_Point.Z] := FMap.DataUnsafe[_Point.X,_Point.Y,_Point.Z] + _Increment;
+   VisitedMap[_Point.X,_Point.Y,_Point.Z] := 1;
+   // It will fill the map while there are elements in the list.
+   while List.GetPosition(x,y,z) do
+   begin
+      // Check and add the neighbours (6 faces)
+      a := x+_Direction.X;
+      if IsPointOK(a,y,z) then
+         if VisitedMap.Map[a,y,z] = 0 then
+            if _Input.Map[a,y,z] = _Threshold then
+            begin
+               FMap.DataUnsafe[a,y,z] :=  FMap.DataUnsafe[a,y,z] + _Increment;
+               VisitedMap.Map[a,y,z] := 1;
+               List.Add(a,y,z);
+            end;
+      a := y+_Direction.Y;
+      if IsPointOK(x,a,z) then
+         if VisitedMap.Map[x,a,z] = 0 then
+            if _Input.Map[x,a,z] = _Threshold then
+            begin
+               FMap.DataUnsafe[x,a,z] := FMap.DataUnsafe[x,a,z] + _Increment;
+               VisitedMap.Map[x,a,z] := 1;
+               List.Add(x,a,z);
+            end;
+      a := z+_Direction.Z;
+      if IsPointOK(x,y,a) then
+         if VisitedMap.Map[x,y,a] = 0 then
+            if _Input.Map[x,y,a] = _Threshold then
+            begin
+               FMap.DataUnsafe[x,y,a] := FMap.DataUnsafe[x,y,a] + _Increment;
+               VisitedMap.Map[x,y,a] := 1;
+               List.Add(x,y,a);
+            end;
+   end;
+   List.Free;
+   VisitedMap.Free;
 end;
 
 function TVoxelMap.SynchronizeWithSection(_Mode : integer; _Threshold : single): integer;

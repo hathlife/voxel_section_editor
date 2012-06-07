@@ -81,7 +81,7 @@ end;
 
 procedure CTopologyAnalyzer.LoadVoxel(const _Voxel:TVoxelSection);
 begin
-   FMap := TVoxelMap.Create(_Voxel,1);
+   FMap := TVoxelMap.CreateQuick(_Voxel,1);
    FMap.GenerateSurfaceMap;
    ResetCounters;
    Execute;
@@ -95,7 +95,7 @@ begin
    for i := 0 to (_Voxel.Header.NumSections-1) do
    begin
       Clear;
-      FMap := TVoxelMap.Create(_Voxel.Section[i],1);
+      FMap := TVoxelMap.CreateQuick(_Voxel.Section[i],1);
       FMap.GenerateSurfaceMap;
       Execute;
    end;

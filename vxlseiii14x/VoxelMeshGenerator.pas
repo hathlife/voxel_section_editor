@@ -1334,7 +1334,7 @@ begin
    _Geometry.GoToFirstElement;
    Geometry := PMeshBRepGeometry(_Geometry.Current);
    // Let's map our voxels.
-   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap := TVoxelMap.CreateQuick(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
 
    BuildModelFromVoxelMap(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
@@ -1350,7 +1350,7 @@ begin
    _Geometry.GoToFirstElement;
    Geometry := PMeshBRepGeometry(_Geometry.Current);
    // Let's map our voxels.
-   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap := TVoxelMap.CreateQuick(_Voxel,1);
    VoxelMap.GenerateSurfaceMap;
 
    BuildTriangleModelFromVoxelMap(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
@@ -1372,7 +1372,7 @@ begin
    GlobalVars.MeshFile.Add('Surface Detection Starts now...');
   {$endif}
    VUnit := 2;
-   VoxelMap := TVoxelMap.Create(_Voxel,1);
+   VoxelMap := TVoxelMap.CreateQuick(_Voxel,1);
    VoxelMap.GenerateSurfaceAndRefinementMap;
 
    {$ifdef MESH_TEST}

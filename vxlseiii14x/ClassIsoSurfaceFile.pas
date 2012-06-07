@@ -45,7 +45,7 @@ begin
       BlockWrite(F,PosValue, sizeof(single));
       BlockWrite(F,NegValue, sizeof(single));
       BlockWrite(F,PosValue, sizeof(single));
-      Map := TVoxelMap.Create(_Voxel,1);
+      Map := TVoxelMap.CreateQuick(_Voxel,1);
       Map.GenerateVolumeMap;
       maxx := High(_Voxel.Data) +2;
       maxy := High(_Voxel.Data[0]) + 2;
