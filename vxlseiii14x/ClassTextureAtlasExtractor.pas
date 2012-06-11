@@ -787,7 +787,7 @@ begin
          begin
             if (_FaceSeeds[f] = -1) then
             begin
-               // check if angle is less than 90'
+               // check if angle (which actually receives a cosine) is less than FTextureAngle
                Angle := GetVectorAngle(_FaceNormals[_StartingFace],_FaceNormals[f]);
                if Angle >= FTextureAngle then
                begin

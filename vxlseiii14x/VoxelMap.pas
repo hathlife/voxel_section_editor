@@ -55,7 +55,7 @@ type
          procedure GenerateInfluenceMapOnly;
          procedure GenerateFullMap;
          procedure GenerateSurfaceAndRefinementMap;
-         procedure GenerateRayCastingMap(const _FilledMap: TVoxelMap);
+         procedure GenerateRayCastingMap;
          // Copies
          procedure Assign(const _Map : TVoxelMap);
          function CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
@@ -71,7 +71,7 @@ type
          procedure MapTopologicalProblems(_Surface: single);
          procedure MapRefinementZones(_Surface: single);
          procedure MapSkeletonRefinementZones(_Surface: single);
-         procedure CastRayFromVoxel(const _Input: TVoxelMap; const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
+         procedure CastRayFromVoxel(const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
          function SynchronizeWithSection(_Mode: integer; _Threshold : single): integer; overload;
          function SynchronizeWithSection(_Threshold : single): integer; overload;
          procedure ConvertValues(_Values : array of single);
@@ -413,18 +413,18 @@ begin
 end;
 
 // Make sure that _FilledMap has bias 1 and it is filled with 0 (transparent) or 1 (solid)
-procedure TVoxelMap.GenerateRayCastingMap(const _FilledMap: TVoxelMap);
+procedure TVoxelMap.GenerateRayCastingMap;
 begin
-   FillMap(C_MODE_NONE,C_OUTSIDE_VOLUME);
+   FillMap(C_MODE_USED,GenerateFilledDataParam(16,C_OUTSIDE_VOLUME));
    // Cast rays from the 8 corners.
-   CastRayFromVoxel(_FilledMap,SetVectorI(0,0,0),SetVectorI(1,1,1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(0,0,GetMaxZ),SetVectorI(1,1,-1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(0,GetMaxY,0),SetVectorI(1,-1,1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(0,GetMaxY,GetMaxZ),SetVectorI(1,-1,-1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,0,0),SetVectorI(-1,1,1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,0,GetMaxZ),SetVectorI(-1,1,-1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,GetMaxY,0),SetVectorI(-1,-1,1),0,1);
-   CastRayFromVoxel(_FilledMap,SetVectorI(GetMaxX,GetMaxY,GetMaxZ),SetVectorI(-1,-1,-1),0,1);
+   CastRayFromVoxel(SetVectorI(0,0,0),SetVectorI(1,1,1),16,1);
+   CastRayFromVoxel(SetVectorI(0,0,GetMaxZ),SetVectorI(1,1,-1),16,1);
+   CastRayFromVoxel(SetVectorI(0,GetMaxY,0),SetVectorI(1,-1,1),16,1);
+   CastRayFromVoxel(SetVectorI(0,GetMaxY,GetMaxZ),SetVectorI(1,-1,-1),16,1);
+   CastRayFromVoxel(SetVectorI(GetMaxX,0,0),SetVectorI(-1,1,1),16,1);
+   CastRayFromVoxel(SetVectorI(GetMaxX,0,GetMaxZ),SetVectorI(-1,1,-1),16,1);
+   CastRayFromVoxel(SetVectorI(GetMaxX,GetMaxY,0),SetVectorI(-1,-1,1),16,1);
+   CastRayFromVoxel(SetVectorI(GetMaxX,GetMaxY,GetMaxZ),SetVectorI(-1,-1,-1),16,1);
 end;
 
 
@@ -1335,13 +1335,13 @@ begin
 end;
 
 
-procedure TVoxelMap.CastRayFromVoxel(const _Input: TVoxelMap; const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
+procedure TVoxelMap.CastRayFromVoxel(const _Point: TVector3i; const _Direction: TVector3i; _Threshold, _Increment: integer);
 var
    List : C3DPointList; // Check Class3DPointList.pas;
    x,y,z,a : integer;
    VisitedMap : TVoxelMap;
 begin
-   VisitedMap := TVoxelMap.Create(FSection,1);
+   VisitedMap := TVoxelMap.Create(FSection,FBias);
    List := C3DPointList.Create;
    List.UseSmartMemoryManagement(true);
    List.Add(_Point.X,_Point.Y,_Point.Z);
@@ -1354,7 +1354,7 @@ begin
       a := x+_Direction.X;
       if IsPointOK(a,y,z) then
          if VisitedMap.Map[a,y,z] = 0 then
-            if _Input.Map[a,y,z] = _Threshold then
+            if FMap.DataUnsafe[a,y,z] < _Threshold then
             begin
                FMap.DataUnsafe[a,y,z] :=  FMap.DataUnsafe[a,y,z] + _Increment;
                VisitedMap.Map[a,y,z] := 1;
@@ -1363,7 +1363,7 @@ begin
       a := y+_Direction.Y;
       if IsPointOK(x,a,z) then
          if VisitedMap.Map[x,a,z] = 0 then
-            if _Input.Map[x,a,z] = _Threshold then
+            if FMap.DataUnsafe[x,a,z] < _Threshold then
             begin
                FMap.DataUnsafe[x,a,z] := FMap.DataUnsafe[x,a,z] + _Increment;
                VisitedMap.Map[x,a,z] := 1;
@@ -1372,7 +1372,7 @@ begin
       a := z+_Direction.Z;
       if IsPointOK(x,y,a) then
          if VisitedMap.Map[x,y,a] = 0 then
-            if _Input.Map[x,y,a] = _Threshold then
+            if FMap.DataUnsafe[x,y,a] < _Threshold then
             begin
                FMap.DataUnsafe[x,y,a] := FMap.DataUnsafe[x,y,a] + _Increment;
                VisitedMap.Map[x,y,a] := 1;

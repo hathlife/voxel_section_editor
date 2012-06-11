@@ -377,6 +377,8 @@ type
     IncreaseResolution1: TMenuItem;
     Shape1: TMenuItem;
     FillUselessInternalGaps1: TMenuItem;
+    FillUselessInternalCavesVeryStrict1: TMenuItem;
+    procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
     procedure FillUselessInternalGaps1Click(Sender: TObject);
     procedure IncreaseResolution1Click(Sender: TObject);
     procedure Isosurfacesiso1Click(Sender: TObject);
@@ -3211,6 +3213,32 @@ begin
    VXLChanged := true;
 end;
 
+procedure TFrmMain.FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
+var
+   Tool: TFillUselessGapsTool;
+begin
+   if not isEditable then exit;
+
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: FillUselessInternalGapsVeryStrict1Click');
+   {$endif}
+   // ensure the user wants to do this!
+   if MessageDlg('Fill Useless Internal Caves (Aggressive)' +#13#13+
+        'This process will add black voxels at caves that are hidden from view.' +#13+
+        'If you choose to do this, you should first save' + #13 +
+        'your model under a different name as a backup.',
+        mtWarning,mbOKCancel,0) = mrCancel then exit;
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Tool := TFillUselessGapsTool.Create(Document.ActiveSection^);
+   Tool.FillCaves(Document.ActiveSection^,0,4,63);
+   Tool.Free;
+
+   RefreshAll;
+   VxlChanged := True;
+end;
+
 procedure TFrmMain.FillUselessInternalGaps1Click(Sender: TObject);
 var
    Tool: TFillUselessGapsTool;
@@ -3221,7 +3249,7 @@ begin
    DebugFile.Add('FrmMain: FillUselessInternalGaps1Click');
    {$endif}
    // ensure the user wants to do this!
-   if MessageDlg('Fill Useless Internal Caves' +#13#13+
+   if MessageDlg('Fill Useless Internal Caves (Conservative)' +#13#13+
         'This process will add black voxels at caves that are hidden from view.' +#13+
         'If you choose to do this, you should first save' + #13 +
         'your model under a different name as a backup.',
@@ -3230,6 +3258,7 @@ begin
    UpdateUndo_RedoState;
 
    Tool := TFillUselessGapsTool.Create(Document.ActiveSection^);
+   Tool.FillCaves(Document.ActiveSection^);
    Tool.Free;
 
    RefreshAll;

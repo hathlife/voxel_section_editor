@@ -25,6 +25,7 @@ type
          // Angle Detector
          function GetRotationX(const _Vector: TVector3f): single;
          function GetRotationY(const _Vector: TVector3f): single;
+         function GetRotationXZ(const _Vector: TVector3f): single;
          // Angle Operators
          function CleanAngle(Angle: single): single;
          function CleanAngleRadians(Angle: single): single;
@@ -32,6 +33,8 @@ type
    end;
 
 implementation
+
+uses Math3d;
 
 constructor TVertexTransformationUtils.Create;
 begin
@@ -69,22 +72,31 @@ var
    AngX,AngY : single;
 begin
    // Get the angles from the normal vector.
-   AngX := GetRotationX(_Vector);
+   AngX := GetRotationXZ(_Vector);
    AngY := GetRotationY(_Vector);
    // Now we get the transform matrix
    Result := GetTransformMatrixFromAngles(AngX,AngY);
 end;
 
 function TVertexTransformationUtils.GetTransformMatrixFromAngles(_AngX, _AngY: single): TMatrix;
+const
+   ANG90 = Pi * 0.5;
+var
+   Axis : TAffineFltVector;
+   RotMatrix : TMatrix;
 begin
    Result := IdentityMatrix;
-   if _AngY <> C_ANGLE_NONE then
+   if _AngY <> 0 then
    begin
       Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngY),cos(_AngY)));
    end;
-   if _AngX <> C_ANGLE_NONE then
+   if _AngX <> 0 then
    begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixX(sin(_AngX),cos(_AngX)));
+      Axis[0] := sin(_AngY + ANG90);
+      Axis[1] := 0;
+      Axis[2] := cos(_AngY + ANG90);
+      RotMatrix := CreateRotationMatrix(Axis,_AngX);
+      Result := MatrixMultiply(Result,RotMatrix);
    end;
 end;
 
@@ -95,6 +107,8 @@ begin
 end;
 
 // Angle Detector
+
+// GetRotationX has been deprecated (use XZ instead)
 function TVertexTransformationUtils.GetRotationX(const _Vector: TVector3f): single;
 begin
    if _Vector.Y <> 0 then
@@ -103,7 +117,7 @@ begin
    end
    else
    begin
-      Result := C_ANGLE_NONE;
+      Result := 0;
    end;
 end;
 
@@ -111,13 +125,45 @@ function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): sing
 begin
    if (_Vector.X <> 0) then
    begin
-      Result := CleanAngleRadians((-1 * (_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+   end
+   else if (_Vector.Z >= 0) then
+   begin
+      Result := 0;
    end
    else
    begin
-      Result := C_ANGLE_NONE;
+      Result := Pi;
    end;
 end;
+
+function TVertexTransformationUtils.GetRotationXZ(const _Vector: TVector3f): single;
+begin
+   if _Vector.Y <> 0 then
+   begin
+      if _Vector.Z <> 0 then
+      begin
+         Result := CleanAngleRadians(((_Vector.Z) / (Abs(_Vector.Z))) *  arcsin(_Vector.Y));
+      end
+      else if _Vector.X <> 0 then
+      begin
+         Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) *  arcsin(_Vector.Y));
+      end
+      else if _Vector.Y = 1 then
+      begin
+         Result := Pi * 0.5;
+      end
+      else
+      begin
+         Result := Pi * 1.5;
+      end;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
 
 // Angle Operators
 

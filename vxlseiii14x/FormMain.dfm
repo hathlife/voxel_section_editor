@@ -5071,8 +5071,12 @@ object FrmMain: TFrmMain
       object Shape1: TMenuItem
         Caption = 'Shape'
         object FillUselessInternalGaps1: TMenuItem
-          Caption = 'Fill Useless Internal Caves'
+          Caption = 'Fill Useless Internal Caves (Conservative)'
           OnClick = FillUselessInternalGaps1Click
+        end
+        object FillUselessInternalCavesVeryStrict1: TMenuItem
+          Caption = 'Fill Useless Internal Caves (Aggressive)'
+          OnClick = FillUselessInternalCavesVeryStrict1Click
         end
         object RemoveRedundantVoxelsB1: TMenuItem
           Caption = 'Remove Redundant Voxels (4-Neighbors)'
