@@ -75,7 +75,7 @@ begin
    AngX := GetRotationXZ(_Vector);
    AngY := GetRotationY(_Vector);
    // Now we get the transform matrix
-   Result := GetTransformMatrixFromAngles(AngX,AngY);
+   Result := GetTransformMatrixFromAngles(-AngX,-AngY);
 end;
 
 function TVertexTransformationUtils.GetTransformMatrixFromAngles(_AngX, _AngY: single): TMatrix;
