@@ -34,6 +34,14 @@ type
          procedure OrganizeFaceFace(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure OrganizeFaceFaceFromVertex(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer);
          procedure DefragmentData;
+         // ReOrder
+         procedure ReOrderVertexVertex(const _Vertexes,_VertexNormals: TAVector3f);
+         procedure ReOrderVertexFace(const _Vertexes,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+         procedure ReOrderFaceVertex(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+         procedure ReOrderFaceFace(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+         procedure QuickSortAngles(_min, _max : integer; var _Order: auint32; const _Angles : afloat);
+         function GetTheVertexAfterMe(_VertexID,_VertexesPerFace: integer; const _Faces: auint32): integer;
+         function GetFaceCenterPosition(_Face: integer; const _Faces:auint32; const _Vertexes: TAVector3f; _VertexesPerFace: integer): TVector3f;
          // Adds
          procedure AddElementAtTarget(_Value: integer; _Target: integer);
          procedure AddElementAtTargetWithoutRepetition(_Value: integer; _Target: integer);
@@ -55,6 +63,8 @@ type
          // Executes
          procedure BuildUpData(const _Faces: auint32; _VertexesPerFace,_NumVertexes: integer); overload;
          procedure BuildUpData(var _Geometry: CMeshGeometryList; _NumVertexes: integer); overload;
+         // ReOrder
+         procedure GetStarOrder(const _Vertexes,_FaceNormals,_VertexNormals: TAVector3f;  const _Faces: auint32; _VertexesPerFace: integer);
          // Requests
          function GetNeighborFromID(_ID: integer): integer;
          function GetNextNeighbor: integer;
@@ -62,7 +72,7 @@ type
 
 implementation
 
-uses MeshBRepGeometry;
+uses MeshBRepGeometry, ClassVertexTransformationUtils, math3d;
 
 // Constructors and Destructors
 constructor TNeighborDetector.Create;
@@ -563,6 +573,323 @@ begin
    end;
 end;
 
+// ReOrder
+procedure TNeighborDetector.GetStarOrder(const _Vertexes,_FaceNormals,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+begin
+   Case(NeighborType) of
+      C_NEIGHBTYPE_VERTEX_VERTEX:     // vertex neighbors of vertexes.
+      begin
+         ReOrderVertexVertex(_Vertexes,_VertexNormals);
+      end;
+      C_NEIGHBTYPE_VERTEX_FACE:       // face neighbors of vertexes.
+      begin
+         if VertexVertexNeighbors <> nil then
+         begin
+            VertexVertexNeighbors.GetStarOrder(_Vertexes,_FaceNormals,_VertexNormals,_Faces,_VertexesPerFace);
+         end;
+         ReOrderVertexFace(_Vertexes,_VertexNormals,_Faces,_VertexesPerFace);
+      end;
+      C_NEIGHBTYPE_FACE_VERTEX:       // vertex neighbors of faces.
+      begin
+         if VertexVertexNeighbors <> nil then
+         begin
+            VertexVertexNeighbors.GetStarOrder(_Vertexes,_FaceNormals,_VertexNormals,_Faces,_VertexesPerFace);
+         end;
+         ReOrderFaceVertex(_Vertexes,_FaceNormals,_Faces,_VertexesPerFace);
+      end;
+      else //C_NEIGHBTYPE_FACE_FACE_FROM_EDGE or C_NEIGHBTYPE_FACE_FACE_FROM_VERTEX
+      begin
+         if VertexFaceNeighbors <> nil then
+         begin
+            VertexFaceNeighbors.GetStarOrder(_Vertexes,_FaceNormals,_VertexNormals,_Faces,_VertexesPerFace);
+         end;
+         ReOrderFaceFace(_Vertexes,_FaceNormals,_Faces,_VertexesPerFace);
+      end;
+   end;
+
+end;
+
+procedure TNeighborDetector.ReOrderVertexVertex(const _Vertexes,_VertexNormals: TAVector3f);
+var
+   v,i : integer;
+   Order: auint32;
+   Angles: afloat;
+   Util: TVertexTransformationUtils;
+   Direction,AxisX,AxisY: TVector3f;
+begin
+   // Let's reorder every vertex.
+   Util := TVertexTransformationUtils.Create;
+   for v := 0 to High(FDescriptorData) do
+   begin
+      if FDescriptorData[v].Size > 0 then
+      begin
+         // Setup and Backup Order
+         SetLength(Order,FDescriptorData[v].Size);
+         for i := Low(Order) to High(Order) do
+         begin
+            Order[i] := FNeighborhoodData[FDescriptorData[v].Start + i];
+         end;
+         // Setup Angles
+         SetLength(Angles,FDescriptorData[v].Size);
+         // Obtain tangent plane.
+         i := Order[0];
+         Direction := SetVector(_Vertexes[i].X - _Vertexes[v].X,_Vertexes[i].Y - _Vertexes[v].Y,_Vertexes[i].Z - _Vertexes[v].Z);
+         Util.GetTangentPlaneFromNormalAndDirection(AxisX,AxisY,_VertexNormals[v],Direction);
+         // Now we obtain the angle from each neighbour
+         for i := Low(Order) to High(Order) do
+         begin
+            // Direction starts as the direction of the vertex composed of v
+            // and the neighbour
+            Direction := SetVector(_Vertexes[Order[i]].X - _Vertexes[v].X,_Vertexes[Order[i]].Y - _Vertexes[v].Y,_Vertexes[Order[i]].Z - _Vertexes[v].Z);
+            Direction := Util.ProjectVectorOnTangentPlane(_VertexNormals[v],Direction);
+            Normalize(Direction);
+            // Direction ends up as the projection of that in the tangent plane.
+            // What a mess! Sorry. But I'm lazy to create temp variables.
+
+            // Finally, we obtain the angle from Direction and the Tangent Plane
+            // (AxisX,AxisY).
+            Angles[i] := Util.CleanAngleRadians(Util.GetArcCosineFromTangentPlane(Direction,AxisX,AxisY));
+         end;
+         // ReOrder the angles.
+         QuickSortAngles(0,High(Angles),Order,Angles);
+         // Replace the values.
+         for i := Low(Order) to High(Order) do
+         begin
+            FNeighborhoodData[FDescriptorData[v].Start + i] := Order[i];
+         end;
+      end;
+   end;
+end;
+
+procedure TNeighborDetector.ReOrderVertexFace(const _Vertexes,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+var
+   v,i,c : integer;
+   Order: auint32;
+   Angles: afloat;
+   Util: TVertexTransformationUtils;
+   Direction,AxisX,AxisY: TVector3f;
+begin
+   // Let's reorder every vertex.
+   Util := TVertexTransformationUtils.Create;
+   for v := 0 to High(FDescriptorData) do
+   begin
+      if FDescriptorData[v].Size > 0 then
+      begin
+         // Setup and Backup Order
+         SetLength(Order,FDescriptorData[v].Size);
+         for i := Low(Order) to High(Order) do
+         begin
+            Order[i] := FNeighborhoodData[FDescriptorData[v].Start + i];
+         end;
+         // Setup Angles
+         SetLength(Angles,FDescriptorData[v].Size);
+         // Obtain tangent plane.
+         i := GetTheVertexAfterMe(v,_VertexesPerFace,_Faces);
+         Direction := SetVector(_Vertexes[i].X - _Vertexes[v].X,_Vertexes[i].Y - _Vertexes[v].Y,_Vertexes[i].Z - _Vertexes[v].Z);
+         Util.GetTangentPlaneFromNormalAndDirection(AxisX,AxisY,_VertexNormals[v],Direction);
+         // Now we obtain the angle from each neighbour
+         for i := Low(Order) to High(Order) do
+         begin
+            // Direction starts as the direction of the vertex composed of v
+            // and the neighbour
+            Direction := GetFaceCenterPosition(Order[i],_Faces,_Vertexes,_VertexesPerFace);
+            Direction := SetVector(Direction.X - _Vertexes[v].X,Direction.Y - _Vertexes[v].Y,Direction.Z - _Vertexes[v].Z);
+            Direction := Util.ProjectVectorOnTangentPlane(_VertexNormals[v],Direction);
+            Normalize(Direction);
+            // Direction ends up as the projection of that in the tangent plane.
+            // What a mess! Sorry. But I'm lazy to create temp variables.
+
+            // Finally, we obtain the angle from Direction and the Tangent Plane
+            // (AxisX,AxisY).
+            Angles[i] := Util.CleanAngleRadians(Util.GetArcCosineFromTangentPlane(Direction,AxisX,AxisY));
+         end;
+         // ReOrder the angles.
+         QuickSortAngles(0,High(Angles),Order,Angles);
+         // Replace the values.
+         for i := Low(Order) to High(Order) do
+         begin
+            FNeighborhoodData[FDescriptorData[v].Start + i] := Order[i];
+         end;
+      end;
+   end;
+end;
+
+procedure TNeighborDetector.ReOrderFaceVertex(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+var
+   v,i : integer;
+   Order: auint32;
+   Angles: afloat;
+   Util: TVertexTransformationUtils;
+   Center,Direction,AxisX,AxisY: TVector3f;
+begin
+   // Let's reorder every vertex.
+   Util := TVertexTransformationUtils.Create;
+   for v := 0 to High(FDescriptorData) do
+   begin
+      if FDescriptorData[v].Size > 0 then
+      begin
+         // Setup and Backup Order
+         SetLength(Order,FDescriptorData[v].Size);
+         for i := Low(Order) to High(Order) do
+         begin
+            Order[i] := FNeighborhoodData[FDescriptorData[v].Start + i];
+         end;
+         // Setup Angles
+         SetLength(Angles,FDescriptorData[v].Size);
+         // Obtain tangent plane.
+         Center := GetFaceCenterPosition(v,_Faces,_Vertexes,_VertexesPerFace);
+         i := Order[0];
+         Direction := SubtractVector(_Vertexes[i],Center);
+         Util.GetTangentPlaneFromNormalAndDirection(AxisX,AxisY,_FaceNormals[v],Direction);
+         // Now we obtain the angle from each neighbour
+         for i := Low(Order) to High(Order) do
+         begin
+            // Direction starts as the direction of the vertex composed of v
+            // and the neighbour
+            Direction := SetVector(_Vertexes[Order[i]].X - Center.X,_Vertexes[Order[i]].Y - Center.Y,_Vertexes[Order[i]].Z - Center.Z);
+            Direction := Util.ProjectVectorOnTangentPlane(_FaceNormals[v],Direction);
+            Normalize(Direction);
+            // Direction ends up as the projection of that in the tangent plane.
+            // What a mess! Sorry. But I'm lazy to create temp variables.
+
+            // Finally, we obtain the angle from Direction and the Tangent Plane
+            // (AxisX,AxisY).
+            Angles[i] := Util.CleanAngleRadians(Util.GetArcCosineFromTangentPlane(Direction,AxisX,AxisY));
+         end;
+         // ReOrder the angles.
+         QuickSortAngles(0,High(Angles),Order,Angles);
+         // Replace the values.
+         for i := Low(Order) to High(Order) do
+         begin
+            FNeighborhoodData[FDescriptorData[v].Start + i] := Order[i];
+         end;
+      end;
+   end;
+end;
+
+procedure TNeighborDetector.ReOrderFaceFace(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
+var
+   v,i : integer;
+   Order: auint32;
+   Angles: afloat;
+   Util: TVertexTransformationUtils;
+   Center,Direction,AxisX,AxisY: TVector3f;
+begin
+   // Let's reorder every vertex.
+   Util := TVertexTransformationUtils.Create;
+   for v := 0 to High(FDescriptorData) do
+   begin
+      if FDescriptorData[v].Size > 0 then
+      begin
+         // Setup and Backup Order
+         SetLength(Order,FDescriptorData[v].Size);
+         for i := Low(Order) to High(Order) do
+         begin
+            Order[i] := FNeighborhoodData[FDescriptorData[v].Start + i];
+         end;
+         // Setup Angles
+         SetLength(Angles,FDescriptorData[v].Size);
+         // Obtain tangent plane.
+         Center := GetFaceCenterPosition(v,_Faces,_Vertexes,_VertexesPerFace);
+         i := Order[0];
+         Direction := SubtractVector(GetFaceCenterPosition(i,_Faces,_Vertexes,_VertexesPerFace),Center);
+         Util.GetTangentPlaneFromNormalAndDirection(AxisX,AxisY,_FaceNormals[v],Direction);
+         // Now we obtain the angle from each neighbour
+         for i := Low(Order) to High(Order) do
+         begin
+            // Direction starts as the direction of the vertex composed of v
+            // and the neighbour
+            Direction := SubtractVector(GetFaceCenterPosition(Order[i],_Faces,_Vertexes,_VertexesPerFace),Center);
+            Direction := Util.ProjectVectorOnTangentPlane(_FaceNormals[v],Direction);
+            Normalize(Direction);
+            // Direction ends up as the projection of that in the tangent plane.
+            // What a mess! Sorry. But I'm lazy to create temp variables.
+
+            // Finally, we obtain the angle from Direction and the Tangent Plane
+            // (AxisX,AxisY).
+            Angles[i] := Util.CleanAngleRadians(Util.GetArcCosineFromTangentPlane(Direction,AxisX,AxisY));
+         end;
+         // ReOrder the angles.
+         QuickSortAngles(0,High(Angles),Order,Angles);
+         // Replace the values.
+         for i := Low(Order) to High(Order) do
+         begin
+            FNeighborhoodData[FDescriptorData[v].Start + i] := Order[i];
+         end;
+      end;
+   end;
+end;
+
+procedure TNeighborDetector.QuickSortAngles(_min, _max : integer; var _Order: auint32; const _Angles : afloat);
+var
+   Lo, Hi, Mid, T: Integer;
+   A : real;
+begin
+   Lo := _min;
+   Hi := _max;
+   Mid := (Lo + Hi) div 2;
+   repeat
+      while (_Angles[_Order[Lo]] - _Angles[_Order[Mid]]) > 0 do Inc(Lo);
+      while (_Angles[_Order[Hi]] - _Angles[_Order[Mid]]) < 0 do Dec(Hi);
+      if Lo <= Hi then
+      begin
+         T := _Order[Lo];
+         _Order[Lo] := _Order[Hi];
+         _Order[Hi] := T;
+         A := _Angles[Lo];
+         _Angles[Lo] := _Angles[Hi];
+         _Angles[Hi] := A;
+         if (Lo = Mid) and (Hi <> Mid) then
+            Mid := Hi
+         else if (Hi = Mid) and (Lo <> Mid) then
+            Mid := Lo;
+         Inc(Lo);
+         Dec(Hi);
+      end;
+   until Lo > Hi;
+   if Hi > _min then
+      QuickSortAngles(_min, Hi, _Order, _Angles);
+   if Lo < _max then
+      QuickSortAngles(Lo, _max, _Order, _Angles);
+end;
+
+function TNeighborDetector.GetTheVertexAfterMe(_VertexID,_VertexesPerFace: integer; const _Faces: auint32): integer;
+var
+   i,c : integer;
+begin
+   i := _VertexID * _VertexesPerFace;
+   c := 0;
+   while _Faces[i] <> _VertexID do
+   begin
+      inc(i);
+      inc(c);
+   end;
+   if c = _VertexesPerFace then
+   begin
+      Result := _Faces[_VertexID * _VertexesPerFace];
+   end
+   else
+   begin
+      Result := _Faces[i+1];
+   end;
+end;
+
+function TNeighborDetector.GetFaceCenterPosition(_Face: integer; const _Faces:auint32; const _Vertexes: TAVector3f; _VertexesPerFace: integer): TVector3f;
+var
+   i : integer;
+begin
+   Result := SetVector(0,0,0);
+   for i := 0 to _VertexesPerFace do
+   begin
+      Result.X := Result.X + _Vertexes[_Faces[(_Face*_VertexesPerFace)+i]].X;
+      Result.Y := Result.Y + _Vertexes[_Faces[(_Face*_VertexesPerFace)+i]].Y;
+      Result.Z := Result.Z + _Vertexes[_Faces[(_Face*_VertexesPerFace)+i]].Z;
+   end;
+   Result.X := Result.X / _VertexesPerFace;
+   Result.Y := Result.Y / _VertexesPerFace;
+   Result.Z := Result.Z / _VertexesPerFace;
+end;
+
 // Requests
 function TNeighborDetector.GetNeighborFromID(_ID: integer): integer;
 begin
@@ -571,13 +898,12 @@ begin
       FCurrentID := _ID;
       FRequest := FNeighborhoodData[FDescriptorData[_ID].Start];
       FNeighborID := 0;
-      Result := FRequest;
    end
    else
    begin
       FRequest := -1;
-      Result := -1;
    end;
+   Result := FRequest;
 end;
 
 function TNeighborDetector.GetNextNeighbor: integer;

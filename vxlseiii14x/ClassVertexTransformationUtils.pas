@@ -30,6 +30,10 @@ type
          function CleanAngle(Angle: single): single;
          function CleanAngleRadians(Angle: single): single;
          function CleanAngle90Radians(Angle: single): single;
+         // Tangent Plane Detector
+         procedure GetTangentPlaneFromNormalAndDirection(var _AxisX,_AxisY: TVector3f; const _Normal,_Direction: TVector3f);
+         function ProjectVectorOnTangentPlane(const _Normal,_Vector: TVector3f): TVector3f;
+         function GetArcCosineFromTangentPlane(const _Vector, _AxisX, _AxisY: TVector3f): single;
    end;
 
 implementation
@@ -204,6 +208,41 @@ begin
       Result := Pi - Result
    else if (Result > Pi) and (Result < C_3PIDiv2) then
       Result := C_2Pi - (Result - Pi);
+end;
+
+// Tangent Plane Detector
+procedure TVertexTransformationUtils.GetTangentPlaneFromNormalAndDirection(var _AxisX,_AxisY: TVector3f; const _Normal,_Direction: TVector3f);
+var
+   Direction: TVector3f;
+begin
+   Direction := SetVector(_Direction);
+   Normalize(Direction);
+   _AxisY := CrossProduct(_Normal,Direction);
+   Normalize(_AxisY);
+   _AxisX := CrossProduct(_Normal,_AxisY);
+   Normalize(_AxisX);
+end;
+
+function TVertexTransformationUtils.ProjectVectorOnTangentPlane(const _Normal,_Vector: TVector3f): TVector3f;
+begin
+//   Result := _Vector - Dot(_Vector,_Normal)*_Normal;
+   Result := SubtractVector(_Vector,ScaleVector(_Normal,DotProduct(_Vector,_Normal)));
+end;
+
+function TVertexTransformationUtils.GetArcCosineFromTangentPlane(const _Vector, _AxisX, _AxisY: TVector3f): single;
+var
+   Signal : single;
+begin
+   Signal := DotProduct(_Vector,_AxisY);
+   if Signal > 0 then
+   begin
+      Signal := 1;
+   end
+   else if Signal < 0 then
+   begin
+      Signal := -1;
+   end;
+   Result := Signal * ArcCos(DotProduct(_Vector,_AxisX));
 end;
 
 end.
