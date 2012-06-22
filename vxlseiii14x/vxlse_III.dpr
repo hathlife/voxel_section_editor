@@ -171,7 +171,8 @@ uses
   ClassIsoSurfaceFile in 'ClassIsoSurfaceFile.pas',
   ClassPLYFile in 'ClassPLYFile.pas',
   ClassTopologyFixer in 'ClassTopologyFixer.pas',
-  ClassFillUselessGapsTool in 'ClassFillUselessGapsTool.pas';
+  ClassFillUselessGapsTool in 'ClassFillUselessGapsTool.pas',
+  Histogram in 'Histogram.pas';
 
 {$R *.res}
 

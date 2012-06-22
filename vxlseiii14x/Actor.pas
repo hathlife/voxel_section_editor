@@ -3,7 +3,7 @@ unit Actor;
 interface
 
 uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette, Graphics, Windows, GLConstants, ShaderBank;
+   Palette, Graphics, Windows, GLConstants, ShaderBank,Histogram;
 
 type
    PActor = ^TActor;
@@ -137,6 +137,10 @@ type
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
       procedure ConvertQuadsTo48Tris;
+      // Quality Assurance
+      function GetAspectRatioHistogram(): THistogram;
+      function GetSkewnessHistogram(): THistogram;
+      function GetSmoothnessHistogram(): THistogram;
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
@@ -1264,8 +1268,50 @@ begin
    RequestUpdateWorld := true;
 end;
 
-// Mesh Plugins
+// Quality Assurance
+function TActor.GetAspectRatioHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.FillAspectRatioHistogram(Result);
+      end;
+   end;
+end;
 
+function TActor.GetSkewnessHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.FillSkewnessHistogram(Result);
+      end;
+   end;
+end;
+
+function TActor.GetSmoothnessHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.FillSmoothnessHistogram(Result);
+      end;
+   end;
+end;
+
+// Mesh Plugins
 procedure TActor.AddNormalsPlugin;
 var
    i : integer;

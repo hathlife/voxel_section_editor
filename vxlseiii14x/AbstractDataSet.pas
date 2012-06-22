@@ -11,6 +11,7 @@ type
          function GetData(_pos: integer): pointer; virtual;
          function GetDataLength: integer; virtual;
          function GetLength: integer; virtual;
+         function GetLast: integer; virtual;
          // Sets
          procedure SetData(_pos: integer; _data: pointer); virtual;
          procedure SetLength(_size: integer); virtual;
@@ -23,6 +24,7 @@ type
          procedure Assign(const _Source: TAbstractDataSet); virtual;
          // properties
          property Length: integer read GetLength write SetLength;
+         property Last: integer read GetLast;
    end;
 
 implementation
@@ -58,6 +60,11 @@ end;
 function TAbstractDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
+end;
+
+function TAbstractDataSet.GetLast: integer;
+begin
+   Result := High(FData);
 end;
 
 // Sets

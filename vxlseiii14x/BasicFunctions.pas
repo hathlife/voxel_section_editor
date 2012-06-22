@@ -25,6 +25,9 @@ function Subtract3i(_V1,_V2: TVector3i): TVector3i;
 function RGBA(r, g, b, a: Byte): COLORREF;
 function CopyVector4f(_V: TVector4f): TVector4f;
 
+// Filename related
+function GetFileNameWithNoExt(const _Filename: string): string;
+
 // Program related
 function RunAProgram (const theProgram, itsParameters, defaultDirectory : string): integer;
 function RunProgram (const theProgram, itsParameters, defaultDirectory : string): TShellExecuteInfo;
@@ -179,6 +182,26 @@ end;
 function RGBA(r, g, b, a: Byte): COLORREF;
 begin
   Result := (r or (g shl 8) or (b shl 16) or (a shl 24));
+end;
+
+// Filename related
+function GetFileNameWithNoExt(const _Filename: string): string;
+var
+   i: integer;
+begin
+   i := Length(_Filename);
+   while _Filename[i] <> '.' do
+   begin
+      dec(i);
+   end;
+   if i > 0 then
+   begin
+      Result := copy(_Filename,1,i-1);
+   end
+   else
+   begin
+      Result := copy(_Filename,1,Length(_Filename));
+   end;
 end;
 
 // Program related.

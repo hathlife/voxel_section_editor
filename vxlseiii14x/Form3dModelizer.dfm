@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 878
+  ClientHeight = 897
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 852
+    Height = 871
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 833
+    ExplicitHeight = 852
   end
   object Panel1: TPanel
     Left = 0
@@ -829,6 +829,21 @@ object Frm3DModelizer: TFrm3DModelizer
           Caption = '1'
           OnClick = TextureFX1MipMapsClick
         end
+      end
+    end
+    object QualityAnalysis1: TMenuItem
+      Caption = 'Quality Analysis'
+      object QualityAnalysisAspectRatio: TMenuItem
+        Caption = 'Aspect Ratio'
+        OnClick = QualityAnalysisAspectRatioClick
+      end
+      object QualityAnalysisSkewness: TMenuItem
+        Caption = 'Skewness'
+        OnClick = QualityAnalysisSkewnessClick
+      end
+      object QualityAnalysisSmoothness: TMenuItem
+        Caption = 'Smoothness'
+        OnClick = QualityAnalysisSmoothnessClick
       end
     end
   end

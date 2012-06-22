@@ -5,7 +5,7 @@ interface
 uses BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
    RenderingMachine, ShaderBank, MeshPluginBase, NeighborhoodDataPlugin, Math,
    ClassMeshNormalsTool, SysUtils, ClassIntegerSet, ClassMeshColoursTool,
-   ClassQuadList, ClassTriangleList;
+   ClassQuadList, ClassTriangleList, Histogram, ClassNeighborDetector;
 
 type
    PMeshBRepGeometry = ^TMeshBRepGeometry;
@@ -54,6 +54,14 @@ type
          procedure SetDiffuseMappingShader;
          procedure SetNormalMappingShader;
          procedure SetBumpMappingShader;
+
+         // Gets
+         function GetAspectRatioHistogram(const _Vertices: TAVector3f): THistogram;
+         function GetSkewnessHistogram(const _Vertices: TAVector3f): THistogram;
+         function GetSmoothnessHistogram(const _Vertices: TAVector3f; const _NeighborDetector : TNeighborDetector): THistogram;
+         procedure FillAspectRatioHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f);
+         procedure FillSkewnessHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f);
+         procedure FillSmoothnessHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f; const _NeighborDetector : TNeighborDetector);
 
          // Copies
          procedure Assign(const _Geometry : TMeshGeometryBase); override;
@@ -266,6 +274,150 @@ end;
 procedure TMeshBRepGeometry.ForceRefresh;
 begin
    Renderer.ForceRefresh;
+end;
+
+// Gets
+function TMeshBRepGeometry.GetAspectRatioHistogram(const _Vertices: TAVector3f): THistogram;
+begin
+   Result := THistogram.Create;
+   FillAspectRatioHistogram(Result,_Vertices);
+end;
+
+function TMeshBRepGeometry.GetSkewnessHistogram(const _Vertices: TAVector3f): THistogram;
+begin
+   Result := THistogram.Create;
+   FillSkewnessHistogram(Result,_Vertices);
+end;
+
+function TMeshBRepGeometry.GetSmoothnessHistogram(const _Vertices: TAVector3f; const _NeighborDetector : TNeighborDetector): THistogram;
+begin
+   Result := THistogram.Create;
+   FillSmoothnessHistogram(Result,_Vertices,_NeighborDetector);
+end;
+
+procedure TMeshBRepGeometry.FillAspectRatioHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f);
+var
+   v,i : integer;
+   BiggerEdge,SmallerEdge,Temp : single;
+   EdgeList: array of array of integer;
+begin
+   // Just a helper to check vertexes (0,1), (1,2), (2,0) of a triangle (but works for quads too)
+   SetLength(EdgeList,VerticesPerFace,2);
+   EdgeList[0,0] := 0;
+   EdgeList[0,1] := VerticesPerFace - 1;
+   for v := 1 to VerticesPerFace - 1 do
+   begin
+      EdgeList[v,0] := v-1;
+      EdgeList[v,1] := v;
+   end;
+
+   // Real job is done here.
+   v := 0;
+   while v < High(Faces) do
+   begin
+      SmallerEdge := 999999;
+      BiggerEdge := 0;
+      for i := 0 to High(EdgeList) do
+      begin
+         Temp := VectorDistance(_Vertices[Faces[v+EdgeList[i,0]]],_Vertices[Faces[v+EdgeList[i,1]]]);
+         if Temp > BiggerEdge then
+            BiggerEdge := Temp;
+         if Temp < SmallerEdge then
+            SmallerEdge := Temp;
+      end;
+      _Histogram.AddToHistogram(BiggerEdge / SmallerEdge);
+      inc(v,VerticesPerFace);
+   end;
+end;
+
+procedure TMeshBRepGeometry.FillSkewnessHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f);
+   function GetCircunscribedRadius(_a,_b,_c,_s,_area: single):single;
+   begin
+      Result := (_a * _b * _c) / (4 * _area);
+   end;
+
+   function GetTriangleArea(_a,_b,_c,_s: single): single;
+   begin
+      Result := sqrt(_s * (_s - _a) * (_s - _b) * (_s - _c));
+   end;
+
+const
+   SQRT3 = 1.7320508075688772935274463415059;
+   SQRT3DIV4 = 0.43301270189221932338186158537647;
+var
+   v,i : integer;
+   EdgeSize: array of single;
+   Radius,EqSide,EqArea,TriArea,s : single;
+begin
+   if VerticesPerFace = 3 then
+   begin
+      SetLength(EdgeSize,3);
+      v := 0;
+      while v < High(Faces) do
+      begin
+         EdgeSize[0] := VectorDistance(_Vertices[Faces[v+0]],_Vertices[Faces[v+1]]);
+         EdgeSize[1] := VectorDistance(_Vertices[Faces[v+1]],_Vertices[Faces[v+2]]);
+         EdgeSize[2] := VectorDistance(_Vertices[Faces[v+2]],_Vertices[Faces[v+0]]);
+         s := (EdgeSize[0] + EdgeSize[1] + EdgeSize[2]) / 2;
+         TriArea := GetTriangleArea(EdgeSize[0],EdgeSize[1],EdgeSize[2],s);
+         Radius := GetCircunscribedRadius(EdgeSize[0],EdgeSize[1],EdgeSize[2],s,TriArea);
+         EqSide := Radius * SQRT3;
+         EqArea := (EqSide * EqSide) * SQRT3DIV4;
+         _Histogram.AddToHistogram((EqArea - TriArea) / EqArea);
+         inc(v,VerticesPerFace);
+      end;
+   end;
+end;
+
+procedure TMeshBRepGeometry.FillSmoothnessHistogram(var _Histogram: THistogram; const _Vertices: TAVector3f; const _NeighborDetector : TNeighborDetector);
+   function GetTriangleArea(_a,_b,_c,_s: single): single;
+   begin
+      Result := sqrt(_s * (_s - _a) * (_s - _b) * (_s - _c));
+   end;
+var
+   f,vf,i,vi,n : integer;
+   EdgeSize: array of single;
+   Area,NeighborArea,TriArea,s : single;
+begin
+   if VerticesPerFace = 3 then
+   begin
+      SetLength(EdgeSize,3);
+      f := 0;
+      vf := 0;
+      while vf < High(Faces) do
+      begin
+         EdgeSize[0] := VectorDistance(_Vertices[Faces[vf+0]],_Vertices[Faces[vf+1]]);
+         EdgeSize[1] := VectorDistance(_Vertices[Faces[vf+1]],_Vertices[Faces[vf+2]]);
+         EdgeSize[2] := VectorDistance(_Vertices[Faces[vf+2]],_Vertices[Faces[vf+0]]);
+         s := (EdgeSize[0] + EdgeSize[1] + EdgeSize[2]) / 2;
+         TriArea := GetTriangleArea(EdgeSize[0],EdgeSize[1],EdgeSize[2],s);
+         i := _NeighborDetector.GetNeighborFromID(f); // get face neighbor from face
+         Area := 0;
+         n := 0;
+         while i <> -1 do
+         begin
+            vi := i * 3;
+            EdgeSize[0] := VectorDistance(_Vertices[Faces[vi+0]],_Vertices[Faces[vi+1]]);
+            EdgeSize[1] := VectorDistance(_Vertices[Faces[vi+1]],_Vertices[Faces[vi+2]]);
+            EdgeSize[2] := VectorDistance(_Vertices[Faces[vi+2]],_Vertices[Faces[vi+0]]);
+            s := (EdgeSize[0] + EdgeSize[1] + EdgeSize[2]) / 2;
+            NeighborArea := GetTriangleArea(EdgeSize[0],EdgeSize[1],EdgeSize[2],s);
+            Area := Area + abs(NeighborArea - TriArea);
+            inc(n);
+            i := _NeighborDetector.GetNextNeighbor;
+         end;
+         if n > 0 then
+         begin
+            _Histogram.AddToHistogram(Area / n);
+         end
+         else
+         begin
+            _Histogram.AddToHistogram(0);
+         end;
+         inc(vf,VerticesPerFace);
+         inc(f);
+      end;
+   end;
 end;
 
 // Sets

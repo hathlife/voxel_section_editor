@@ -15,6 +15,7 @@ type
          FData : packed array of longword;
          // Gets
          function GetDataLength: integer; override;
+         function GetLast: integer; override;
          // Sets
          procedure SetLength(_size: integer); override;
       public
@@ -35,6 +36,11 @@ end;
 function TLongDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
+end;
+
+function TLongDataSet.GetLast: integer;
+begin
+   Result := High(FData);
 end;
 
 // Sets

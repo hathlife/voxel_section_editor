@@ -15,6 +15,7 @@ type
          FData : packed array of single;
          // Gets
          function GetDataLength: integer; override;
+         function GetLast: integer; override;
          // Sets
          procedure SetLength(_size: integer); override;
       public
@@ -37,6 +38,10 @@ begin
    Result := High(FData) + 1;
 end;
 
+function TSingleDataSet.GetLast: integer;
+begin
+   Result := High(FData);
+end;
 
 // Sets
 procedure TSingleDataSet.SetData(_pos: integer; _data: single);

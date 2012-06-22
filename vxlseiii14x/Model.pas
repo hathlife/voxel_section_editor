@@ -3,7 +3,7 @@ unit Model;
 interface
 
 uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
-   SysUtils, Graphics, GlConstants, ShaderBank;
+   SysUtils, Graphics, GlConstants, ShaderBank, Histogram;
 
 type
    PModel = ^TModel;
@@ -114,6 +114,13 @@ type
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
       procedure ConvertQuadsTo48Tris;
+      // Quality Assurance
+      function GetAspectRatioHistogram(): THistogram;
+      function GetSkewnessHistogram(): THistogram;
+      function GetSmoothnessHistogram(): THistogram;
+      procedure FillAspectRatioHistogram(var _Histogram: THistogram);
+      procedure FillSkewnessHistogram(var _Histogram: THistogram);
+      procedure FillSmoothnessHistogram(var _Histogram: THistogram);
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
@@ -669,6 +676,37 @@ end;
 procedure TModel.ConvertQuadsTo48Tris;
 begin
    LOD[CurrentLOD].ConvertQuadsTo48Tris;
+end;
+
+// Quality Assurance
+function TModel.GetAspectRatioHistogram(): THistogram;
+begin
+   Result := LOD[CurrentLOD].GetAspectRatioHistogram;
+end;
+
+function TModel.GetSkewnessHistogram(): THistogram;
+begin
+   Result := LOD[CurrentLOD].GetSkewnessHistogram;
+end;
+
+function TModel.GetSmoothnessHistogram(): THistogram;
+begin
+   Result := LOD[CurrentLOD].GetSmoothnessHistogram;
+end;
+
+procedure TModel.FillAspectRatioHistogram(var _Histogram: THistogram);
+begin
+   LOD[CurrentLOD].FillAspectRatioHistogram(_Histogram);
+end;
+
+procedure TModel.FillSkewnessHistogram(var _Histogram: THistogram);
+begin
+   LOD[CurrentLOD].FillSkewnessHistogram(_Histogram);
+end;
+
+procedure TModel.FillSmoothnessHistogram(var _Histogram: THistogram);
+begin
+   LOD[CurrentLOD].FillSmoothnessHistogram(_Histogram);
 end;
 
 // Mesh Plugins

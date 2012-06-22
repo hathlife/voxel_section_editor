@@ -7,7 +7,8 @@ uses
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
   Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
   HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture, FormBumpMapping;
+  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture, FormBumpMapping,
+  Histogram;
 
 type
   PFrm3DModelizer = ^TFrm3DModelizer;
@@ -163,6 +164,13 @@ type
     RenderManifolds: TMenuItem;
     FaceFXConvertQuadsto48Triangles: TMenuItem;
     RenderSmoothManifolds: TMenuItem;
+    QualityAnalysis1: TMenuItem;
+    QualityAnalysisAspectRatio: TMenuItem;
+    QualityAnalysisSkewness: TMenuItem;
+    QualityAnalysisSmoothness: TMenuItem;
+    procedure QualityAnalysisSmoothnessClick(Sender: TObject);
+    procedure QualityAnalysisSkewnessClick(Sender: TObject);
+    procedure QualityAnalysisAspectRatioClick(Sender: TObject);
     procedure RenderSmoothManifoldsClick(Sender: TObject);
     procedure FaceFXConvertQuadsto48TrianglesClick(Sender: TObject);
     procedure RenderManifoldsClick(Sender: TObject);
@@ -642,6 +650,36 @@ begin
       Env.ForceRefresh;
       SpFrame.Value := Actor.Frame + 1;
    end;
+end;
+
+procedure TFrm3DModelizer.QualityAnalysisAspectRatioClick(Sender: TObject);
+var
+   Histogram: THistogram;
+begin
+   Histogram := Actor.GetAspectRatioHistogram();
+   Histogram.ReOrderByElementsAscendently;
+   Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_AspectRatio.csv','Aspect Ratio','Quantity','%','Overall Aspect Ratio:');
+   Histogram.Free;
+end;
+
+procedure TFrm3DModelizer.QualityAnalysisSkewnessClick(Sender: TObject);
+var
+   Histogram: THistogram;
+begin
+   Histogram := Actor.GetSkewnessHistogram();
+   Histogram.ReOrderByElementsAscendently;
+   Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_Skewness.csv','Skewness','Quantity','%','Overall Skewness:');
+   Histogram.Free;
+end;
+
+procedure TFrm3DModelizer.QualityAnalysisSmoothnessClick(Sender: TObject);
+var
+   Histogram: THistogram;
+begin
+   Histogram := Actor.GetSmoothnessHistogram();
+   Histogram.ReOrderByElementsAscendently;
+   Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_Smoothness.csv','Smoothness','Quantity','%','Overall Smoothness:');
+   Histogram.Free;
 end;
 
 procedure TFrm3DModelizer.SpFrameChange(Sender: TObject);

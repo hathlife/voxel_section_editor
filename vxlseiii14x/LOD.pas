@@ -10,7 +10,7 @@ uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, ClassTextureGenerator, Windows, Graphics, TextureBankItem,
    ClassIntegerSet, ClassStopWatch, ClassTextureAtlasExtractor, ImageIOUtils,
    ImageRGBAByteData, ImageRGBAData, ImageRGBByteData, ImageGreyData,
-   Abstract2DImageData, ImageRGBData;
+   Abstract2DImageData, ImageRGBData, Histogram;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -100,7 +100,13 @@ type
       procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
       procedure ConvertQuadsToTris;
       procedure ConvertQuadsTo48Tris;
-
+      // Quality Assurance
+      function GetAspectRatioHistogram(): THistogram;
+      function GetSkewnessHistogram(): THistogram;
+      function GetSmoothnessHistogram(): THistogram;
+      procedure FillAspectRatioHistogram(var _Histogram: THistogram);
+      procedure FillSkewnessHistogram(var _Histogram: THistogram);
+      procedure FillSmoothnessHistogram(var _Histogram: THistogram);
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
@@ -908,6 +914,70 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].ConvertQuadsTo48Tris;
+   end;
+end;
+
+// Quality Assurance
+function TLOD.GetAspectRatioHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillAspectRatioHistogram(Result);
+   end;
+end;
+
+function TLOD.GetSkewnessHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillSkewnessHistogram(Result);
+   end;
+end;
+
+function TLOD.GetSmoothnessHistogram(): THistogram;
+var
+   i : integer;
+begin
+   Result := THistogram.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillSmoothnessHistogram(Result);
+   end;
+end;
+
+procedure TLOD.FillAspectRatioHistogram(var _Histogram: THistogram);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillAspectRatioHistogram(_Histogram);
+   end;
+end;
+
+procedure TLOD.FillSkewnessHistogram(var _Histogram: THistogram);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillSkewnessHistogram(_Histogram);
+   end;
+end;
+
+procedure TLOD.FillSmoothnessHistogram(var _Histogram: THistogram);
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].FillSmoothnessHistogram(_Histogram);
    end;
 end;
 

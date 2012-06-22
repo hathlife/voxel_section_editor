@@ -11,7 +11,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
       ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool,
       ClassTextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData,
-      ClassMeshGeometryList, MeshBRepGeometry, MeshGeometryBase;
+      ClassMeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -185,6 +185,11 @@ type
          function GetLastTextureID(_MaterialID: integer): integer;
          function GetNextTextureID(_MaterialID: integer): integer;
          function GetTextureSize(_MaterialID,_TextureID: integer): integer;
+
+         // Quality Assurance
+         procedure FillAspectRatioHistogram(var _Histogram: THistogram);
+         procedure FillSkewnessHistogram(var _Histogram: THistogram);
+         procedure FillSmoothnessHistogram(var _Histogram: THistogram);
 
          // Plugins
          procedure AddNormalsPlugin;
@@ -1915,6 +1920,61 @@ begin
    for mat := Low(Materials) to High(Materials) do
    begin
       Materials[mat].SetTextureNumMipmaps(_NumMipMaps,_TextureType);
+   end;
+end;
+
+// Quality Assurance
+procedure TMesh.FillAspectRatioHistogram(var _Histogram: THistogram);
+var
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).FillAspectRatioHistogram(_Histogram,Vertices);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
+end;
+
+procedure TMesh.FillSkewnessHistogram(var _Histogram: THistogram);
+var
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).FillSkewnessHistogram(_Histogram,Vertices);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
+end;
+
+procedure TMesh.FillSmoothnessHistogram(var _Histogram: THistogram);
+var
+   CurrentGeometry: PMeshGeometryBase;
+   NeighborhoodPlugin: PMeshPluginBase;
+   FaceNeighbors: TNeighborDetector;
+begin
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   if NeighborhoodPlugin <> nil then
+   begin
+      FaceNeighbors := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceFaceNeighbors;
+   end
+   else
+   begin
+      FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
+      FaceNeighbors.BuildUpData((CurrentGeometry^ as TMeshBRepGeometry).Faces,(CurrentGeometry^ as TMeshBRepGeometry).VerticesPerFace,High(Vertices)+1);
+   end;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).FillSmoothnessHistogram(_Histogram,Vertices,FaceNeighbors);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
    end;
 end;
 

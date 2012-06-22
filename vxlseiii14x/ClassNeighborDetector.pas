@@ -820,6 +820,7 @@ begin
    end;
 end;
 
+// Ascending Quick Sort (To make it descending, change the > and < in both whiles)
 procedure TNeighborDetector.QuickSortAngles(_min, _max : integer; var _Order: auint32; const _Angles : afloat);
 var
    Lo, Hi, Mid, T: Integer;
@@ -829,8 +830,8 @@ begin
    Hi := _max;
    Mid := (Lo + Hi) div 2;
    repeat
-      while (_Angles[_Order[Lo]] - _Angles[_Order[Mid]]) > 0 do Inc(Lo);
-      while (_Angles[_Order[Hi]] - _Angles[_Order[Mid]]) < 0 do Dec(Hi);
+      while (_Angles[_Order[Lo]] - _Angles[_Order[Mid]]) < 0 do Inc(Lo);
+      while (_Angles[_Order[Hi]] - _Angles[_Order[Mid]]) > 0 do Dec(Hi);
       if Lo <= Hi then
       begin
          T := _Order[Lo];

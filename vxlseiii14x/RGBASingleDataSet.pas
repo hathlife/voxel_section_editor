@@ -24,6 +24,7 @@ type
          // Gets
          function GetDataLength: integer; override;
          function GetLength: integer; override;
+         function GetLast: integer; override;
          // Sets
          procedure SetLength(_size: integer); override;
       public
@@ -71,6 +72,11 @@ end;
 function TRGBASingleDataSet.GetDataLength: integer;
 begin
    Result := High(FData) + 1;
+end;
+
+function TRGBASingleDataSet.GetLast: integer;
+begin
+   Result := FLength - 1;
 end;
 
 
