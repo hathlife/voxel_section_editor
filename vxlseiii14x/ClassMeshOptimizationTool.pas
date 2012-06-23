@@ -36,7 +36,7 @@ type
          constructor Create(_IgnoreColors: boolean; _Angle: single);
          destructor Destroy; override;
          // Executes
-         procedure Execute(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _Colours : TAVector4f; var _TexCoords : TAVector2f; var _Faces : auint32; _VerticesPerFace,_ColoursType,_NormalsType : integer; var _NumFaces: longword);
+         procedure Execute(var _Vertices, _VertexNormals, _FaceNormals : TAVector3f; var _VertexColours,_FaceColours : TAVector4f; var _TexCoords : TAVector2f; var _Faces : auint32; _VerticesPerFace,_ColoursType,_NormalsType : integer; var _NumFaces: longword);
    end;
 
 implementation
@@ -59,7 +59,7 @@ begin
    FaceNeighbors.Free;
 end;
 
-procedure TMeshOptimizationTool.Execute(var _Vertices, _Normals, _FaceNormals : TAVector3f; var _Colours : TAVector4f; var _TexCoords : TAVector2f; var _Faces : auint32; _VerticesPerFace,_ColoursType,_NormalsType : integer; var _NumFaces: longword);
+procedure TMeshOptimizationTool.Execute(var _Vertices, _VertexNormals, _FaceNormals : TAVector3f; var _VertexColours,_FaceColours : TAVector4f; var _TexCoords : TAVector2f; var _Faces : auint32; _VerticesPerFace,_ColoursType,_NormalsType : integer; var _NumFaces: longword);
 var
    VertexTransformation : aint32;
    v, Value,HitCounter : integer;
@@ -90,11 +90,11 @@ begin
    // Step 1: check vertexes that can be removed.
    if FIgnoreColours then
    begin
-      DetectUselessVertexesIgnoringColours(_Vertices,_Normals,_FaceNormals,_TexCoords,VertexTransformation);
+      DetectUselessVertexesIgnoringColours(_Vertices,_VertexNormals,_FaceNormals,_TexCoords,VertexTransformation);
    end
    else
    begin
-      DetectUselessVertexes(_Vertices,_Normals,_FaceNormals,_Colours,VertexTransformation);
+      DetectUselessVertexes(_Vertices,_VertexNormals,_FaceNormals,_VertexColours,VertexTransformation);
    end;
    {$ifdef OPTIMIZATION_INFO}
    RemovableVertexCount := 0;
@@ -121,11 +121,11 @@ begin
    // Step 2: Find edges from potentialy removed vertexes.
    if High(_TexCoords) < 0 then
    begin
-      MergeVertexes(_Vertices,_Normals,VertexTransformation);
+      MergeVertexes(_Vertices,_VertexNormals,VertexTransformation);
    end
    else
    begin
-      MergeVertexesWithTextures(_Vertices,_Normals,_FaceNormals,_TexCoords,VertexTransformation,_Faces,_VerticesPerFace);
+      MergeVertexesWithTextures(_Vertices,_VertexNormals,_FaceNormals,_TexCoords,VertexTransformation,_Faces,_VerticesPerFace);
    end;
    // Step 3: Convert the vertexes from the faces to the new values.
    for v := Low(_Faces) to High(_Faces) do
@@ -154,35 +154,26 @@ begin
       VertexBackup[v].Y := _Vertices[v].Y;
       VertexBackup[v].Z := _Vertices[v].Z;
    end;
-   if (_NormalsType = C_NORMALS_PER_VERTEX) then
+   SetLength(NormalsBackup,High(_Vertices)+1);
+   for v := Low(_Vertices) to High(_Vertices) do
    begin
-      SetLength(NormalsBackup,High(_Vertices)+1);
-      for v := Low(_Vertices) to High(_Vertices) do
-      begin
-         NormalsBackup[v].X := _Normals[v].X;
-         NormalsBackup[v].Y := _Normals[v].Y;
-         NormalsBackup[v].Z := _Normals[v].Z;
-      end;
+      NormalsBackup[v].X := _VertexNormals[v].X;
+      NormalsBackup[v].Y := _VertexNormals[v].Y;
+      NormalsBackup[v].Z := _VertexNormals[v].Z;
    end;
-   if (_ColoursType >= C_COLOURS_PER_VERTEX) then
+   SetLength(ColoursBackup,High(_Vertices)+1);
+   for v := Low(_Vertices) to High(_Vertices) do
    begin
-      SetLength(ColoursBackup,High(_Vertices)+1);
-      for v := Low(_Vertices) to High(_Vertices) do
-      begin
-         ColoursBackup[v].X := _Colours[v].X;
-         ColoursBackup[v].Y := _Colours[v].Y;
-         ColoursBackup[v].Z := _Colours[v].Z;
-         ColoursBackup[v].W := _Colours[v].W;
-      end;
+      ColoursBackup[v].X := _VertexColours[v].X;
+      ColoursBackup[v].Y := _VertexColours[v].Y;
+      ColoursBackup[v].Z := _VertexColours[v].Z;
+      ColoursBackup[v].W := _VertexColours[v].W;
    end;
-   if (_ColoursType = C_COLOURS_FROM_TEXTURE) then
+   SetLength(TextureBackup,High(_Vertices)+1);
+   for v := Low(_Vertices) to High(_Vertices) do
    begin
-      SetLength(TextureBackup,High(_Vertices)+1);
-      for v := Low(_Vertices) to High(_Vertices) do
-      begin
-         TextureBackup[v].U := _TexCoords[v].U;
-         TextureBackup[v].V := _TexCoords[v].V;
-      end;
+      TextureBackup[v].U := _TexCoords[v].U;
+      TextureBackup[v].V := _TexCoords[v].V;
    end;
    // Step 6: Now we rewrite the vertex list.
    SetLength(_Vertices,HitCounter);
@@ -196,48 +187,39 @@ begin
       end;
    end;
    SetLength(VertexBackup,0);
-   if (_NormalsType = C_NORMALS_PER_VERTEX) then
+   SetLength(_VertexNormals,HitCounter);
+   for v := Low(VertexTransformation) to High(VertexTransformation) do
    begin
-      SetLength(_Normals,HitCounter);
-      for v := Low(VertexTransformation) to High(VertexTransformation) do
+      if VertexTransformation[v] <> -1 then
       begin
-         if VertexTransformation[v] <> -1 then
-         begin
-            _Normals[VertexTransformation[v]].X := NormalsBackup[v].X;
-            _Normals[VertexTransformation[v]].Y := NormalsBackup[v].Y;
-            _Normals[VertexTransformation[v]].Z := NormalsBackup[v].Z;
-         end;
+         _VertexNormals[VertexTransformation[v]].X := NormalsBackup[v].X;
+         _VertexNormals[VertexTransformation[v]].Y := NormalsBackup[v].Y;
+         _VertexNormals[VertexTransformation[v]].Z := NormalsBackup[v].Z;
       end;
-      SetLength(NormalsBackup,0);
    end;
-   if (_ColoursType >= C_COLOURS_PER_VERTEX) then
+   SetLength(NormalsBackup,0);
+   SetLength(_VertexColours,HitCounter);
+   for v := Low(VertexTransformation) to High(VertexTransformation) do
    begin
-      SetLength(_Colours,HitCounter);
-      for v := Low(VertexTransformation) to High(VertexTransformation) do
+      if VertexTransformation[v] <> -1 then
       begin
-         if VertexTransformation[v] <> -1 then
-         begin
-            _Colours[VertexTransformation[v]].X := ColoursBackup[v].X;
-            _Colours[VertexTransformation[v]].Y := ColoursBackup[v].Y;
-            _Colours[VertexTransformation[v]].Z := ColoursBackup[v].Z;
-            _Colours[VertexTransformation[v]].W := ColoursBackup[v].W;
-         end;
+         _VertexColours[VertexTransformation[v]].X := ColoursBackup[v].X;
+         _VertexColours[VertexTransformation[v]].Y := ColoursBackup[v].Y;
+         _VertexColours[VertexTransformation[v]].Z := ColoursBackup[v].Z;
+         _VertexColours[VertexTransformation[v]].W := ColoursBackup[v].W;
       end;
-      SetLength(ColoursBackup,0);
    end;
-   if (_ColoursType = C_COLOURS_FROM_TEXTURE) then
+   SetLength(ColoursBackup,0);
+   SetLength(_TexCoords,HitCounter);
+   for v := Low(VertexTransformation) to High(VertexTransformation) do
    begin
-      SetLength(_TexCoords,HitCounter);
-      for v := Low(VertexTransformation) to High(VertexTransformation) do
+      if VertexTransformation[v] <> -1 then
       begin
-         if VertexTransformation[v] <> -1 then
-         begin
-            _TexCoords[VertexTransformation[v]].U := TextureBackup[v].U;
-            _TexCoords[VertexTransformation[v]].V := TextureBackup[v].V;
-         end;
+         _TexCoords[VertexTransformation[v]].U := TextureBackup[v].U;
+         _TexCoords[VertexTransformation[v]].V := TextureBackup[v].V;
       end;
-      SetLength(TextureBackup,0);
    end;
+   SetLength(TextureBackup,0);
    // Step 7: Reconvert the vertexes from the faces to the new values.
    for v := Low(_Faces) to High(_Faces) do
    begin
@@ -249,26 +231,20 @@ begin
    begin
       FacesBackup[v] := _Faces[v];
    end;
-   if (_NormalsType = C_NORMALS_PER_FACE) then
+   SetLength(NormalsBackup,High(_FaceNormals)+1);
+   for v := Low(_FaceNormals) to High(_FaceNormals) do
    begin
-      SetLength(NormalsBackup,High(_Normals)+1);
-      for v := Low(_Normals) to High(_Normals) do
-      begin
-         NormalsBackup[v].X := _Normals[v].X;
-         NormalsBackup[v].Y := _Normals[v].Y;
-         NormalsBackup[v].Z := _Normals[v].Z;
-      end;
+      NormalsBackup[v].X := _FaceNormals[v].X;
+      NormalsBackup[v].Y := _FaceNormals[v].Y;
+      NormalsBackup[v].Z := _FaceNormals[v].Z;
    end;
-   if (_ColoursType = C_COLOURS_PER_FACE) then
+   SetLength(ColoursBackup,High(_FaceColours)+1);
+   for v := Low(_FaceColours) to High(_FaceColours) do
    begin
-      SetLength(ColoursBackup,High(_Colours)+1);
-      for v := Low(_Colours) to High(_Colours) do
-      begin
-         ColoursBackup[v].X := _Colours[v].X;
-         ColoursBackup[v].Y := _Colours[v].Y;
-         ColoursBackup[v].Z := _Colours[v].Z;
-         ColoursBackup[v].W := _Colours[v].W;
-      end;
+      ColoursBackup[v].X := _FaceColours[v].X;
+      ColoursBackup[v].Y := _FaceColours[v].Y;
+      ColoursBackup[v].Z := _FaceColours[v].Z;
+      ColoursBackup[v].W := _FaceColours[v].W;
    end;
    // Step 9: Check for faces with two or more equal vertexes and mark
    // them for elimination.
@@ -331,19 +307,13 @@ begin
             _Faces[HitCounter+Value] := FacesBackup[v+Value];
             inc(Value);
          end;
-         if (_NormalsType = C_NORMALS_PER_FACE) then
-         begin
-            _Normals[HitCounter div _VerticesPerFace].X := NormalsBackup[v div _VerticesPerFace].X;
-            _Normals[HitCounter div _VerticesPerFace].Y := NormalsBackup[v div _VerticesPerFace].Y;
-            _Normals[HitCounter div _VerticesPerFace].Z := NormalsBackup[v div _VerticesPerFace].Z;
-         end;
-         if (_ColoursType = C_COLOURS_PER_FACE) then
-         begin
-            _Colours[HitCounter div _VerticesPerFace].X := ColoursBackup[v div _VerticesPerFace].X;
-            _Colours[HitCounter div _VerticesPerFace].Y := ColoursBackup[v div _VerticesPerFace].Y;
-            _Colours[HitCounter div _VerticesPerFace].Z := ColoursBackup[v div _VerticesPerFace].Z;
-            _Colours[HitCounter div _VerticesPerFace].W := ColoursBackup[v div _VerticesPerFace].W;
-         end;
+         _FaceNormals[HitCounter div _VerticesPerFace].X := NormalsBackup[v div _VerticesPerFace].X;
+         _FaceNormals[HitCounter div _VerticesPerFace].Y := NormalsBackup[v div _VerticesPerFace].Y;
+         _FaceNormals[HitCounter div _VerticesPerFace].Z := NormalsBackup[v div _VerticesPerFace].Z;
+         _FaceColours[HitCounter div _VerticesPerFace].X := ColoursBackup[v div _VerticesPerFace].X;
+         _FaceColours[HitCounter div _VerticesPerFace].Y := ColoursBackup[v div _VerticesPerFace].Y;
+         _FaceColours[HitCounter div _VerticesPerFace].Z := ColoursBackup[v div _VerticesPerFace].Z;
+         _FaceColours[HitCounter div _VerticesPerFace].W := ColoursBackup[v div _VerticesPerFace].W;
          inc(HitCounter,_VerticesPerFace);
       end;
       inc(v,_VerticesPerFace);

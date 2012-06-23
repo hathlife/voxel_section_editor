@@ -1055,7 +1055,7 @@ end;
 // Workaround for Mesh Optimization.
 procedure TMeshBRepGeometry.UpdateNumFaces;
 begin
-   FNumFaces := High(Faces)+1;
+   FNumFaces := (High(Faces)+1) div VerticesPerFace;
 end;
 
 end.

@@ -2183,14 +2183,7 @@ begin
    // Check ClassMeshOptimizationTool.pas. Note: _Angle is actually the value of the cosine
    Geometry.GoToFirstElement;
    OptimizationTool := TMeshOptimizationTool.Create(_IgnoreColours,_Angle);
-   if ColoursType >= C_COLOURS_PER_VERTEX then
-   begin
-      OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
-   end
-   else
-   begin
-      OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,(Geometry.Current^ as TMeshBRepGeometry).Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
-   end;
+   OptimizationTool.Execute(Vertices,Normals,(Geometry.Current^ as TMeshBRepGeometry).Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,ColoursType,NormalsType,NumFaces);
    (Geometry.Current^ as TMeshBRepGeometry).UpdateNumFaces;
    OptimizationTool.Free;
 
