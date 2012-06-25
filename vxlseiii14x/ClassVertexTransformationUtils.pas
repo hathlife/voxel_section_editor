@@ -9,6 +9,8 @@ interface
 
 uses Geometry, BasicDataTypes, GLConstants;
 
+{$INCLUDE Global_Conditionals.inc}
+
 type
    TVertexTransformationUtils = class
       public
@@ -34,11 +36,12 @@ type
          procedure GetTangentPlaneFromNormalAndDirection(var _AxisX,_AxisY: TVector3f; const _Normal,_Direction: TVector3f);
          function ProjectVectorOnTangentPlane(const _Normal,_Vector: TVector3f): TVector3f;
          function GetArcCosineFromTangentPlane(const _Vector, _AxisX, _AxisY: TVector3f): single;
+         function GetArcCosineFromAngleOnTangentSpace(_VI,_V1,_V2: TVector3f; _VertexNormal: TVector3f): single;
    end;
 
 implementation
 
-uses Math3d;
+uses GlobalVars, SysUtils, Math3d;
 
 constructor TVertexTransformationUtils.Create;
 begin
@@ -243,6 +246,38 @@ begin
       Signal := -1;
    end;
    Result := Signal * ArcCos(DotProduct(_Vector,_AxisX));
+end;
+
+function TVertexTransformationUtils.GetArcCosineFromAngleOnTangentSpace(_VI,_V1,_V2: TVector3f; _VertexNormal: TVector3f): single;
+var
+   Direction1,Direction2: TVector3f;
+begin
+   // Get the projection of the edges on Tangent Plane
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('VI: (' + FloatToStr(_VI.X) + ', ' + FloatToStr(_VI.Y) + ', ' + FloatToStr(_VI.Z) + '), V1: (' + FloatToStr(_V1.X) + ', ' + FloatToStr(_V1.Y) + ', ' + FloatToStr(_V1.Z) + ') and V2: (' + FloatToStr(_V2.X) + ', ' + FloatToStr(_V2.Y) + ', ' + FloatToStr(_V2.Z) + ').');
+   {$endif}
+   Direction1 := SubtractVector(_V1,_VI);
+   Normalize(Direction1);
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('Direction 1: (' + FloatToStr(Direction1.X) + ', ' + FloatToStr(Direction1.Y) + ', ' + FloatToStr(Direction1.Z) + ')');
+   {$endif}
+   Direction1 := ProjectVectorOnTangentPlane(_VertexNormal,Direction1);
+   Normalize(Direction1);
+   Direction2 := SubtractVector(_V2,_VI);
+   Normalize(Direction2);
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('Direction 2: (' + FloatToStr(Direction2.X) + ', ' + FloatToStr(Direction2.Y) + ', ' + FloatToStr(Direction2.Z) + ')');
+   {$endif}
+   Direction2 := ProjectVectorOnTangentPlane(_VertexNormal,Direction2);
+   Normalize(Direction2);
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('Projected Direction 1: (' + FloatToStr(Direction1.X) + ', ' + FloatToStr(Direction1.Y) + ', ' + FloatToStr(Direction1.Z) + ') and Projected Direction 2: (' + FloatToStr(Direction2.X) + ', ' + FloatToStr(Direction2.Y) + ', ' + FloatToStr(Direction2.Z) + ') at VertexNormal: (' + FloatToStr(_VertexNormal.X) + ', ' + FloatToStr(_VertexNormal.Y) + ', ' + FloatToStr(_VertexNormal.Z) + ')');
+   {$endif}
+   // Return dot product.
+   Result := CleanAngleRadians(ArcCos(DotProduct(Direction1,Direction2)));
+   {$ifdef MESH_TEST}
+//   GlobalVars.MeshFile.Add('Resulting Angle is: ' + FloatToStr(Result) + '.');
+   {$endif}
 end;
 
 end.

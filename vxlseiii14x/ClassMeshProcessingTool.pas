@@ -14,6 +14,7 @@ type
          procedure MeshSmooth(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector : TNeighborDetector; const _VertexEquivalences: auint32);
          procedure MeshSmoothOperation(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector : TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
          procedure LimitedMeshSmoothOperation(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
+         procedure VolumetricMeshSmoothOperation(var _Vertices,_VertexNormals,_FaceNormals: TAVector3f; const _Faces:auint32; _NumVertices,_VerticesPerFace: integer; const _VertexNeighborDetector,_FaceNeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
          procedure MeshGaussianSmooth(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector : TNeighborDetector; const _VertexEquivalences: auint32);
          procedure MeshUnsharpMasking(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector : TNeighborDetector; const _VertexEquivalences: auint32);
          procedure MeshDeflate(var _Vertices: TAVector3f);
@@ -21,11 +22,12 @@ type
 
          function FindMeshCenter(var _Vertices: TAVector3f): TVector3f;
          procedure BackupVector3f(const _Source: TAVector3f; var _Destination: TAVector3f);
+         function IsVertexConvex(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): boolean;
    end;
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, Math3d, ClassVertexTransformationUtils;
 
 function TMeshProcessingTool.GetEquivalentVertex(_VertexID,_MaxVertexID: integer; const _VertexEquivalences: auint32): integer;
 begin
@@ -199,6 +201,136 @@ begin
    end;
    // Free memory
    SetLength(OriginalVertexes,0);
+end;
+
+procedure TMeshProcessingTool.VolumetricMeshSmoothOperation(var _Vertices,_VertexNormals,_FaceNormals: TAVector3f; const _Faces: auint32; _NumVertices,_VerticesPerFace: integer; const _VertexNeighborDetector,_FaceNeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
+const
+   C_2Pi = Pi * 2;
+var
+   HitCounter,Weight: single;
+   OriginalVertexes : TAVector3f;
+   v,v1,i,mini,maxi : integer;
+   nv : array[0..1] of integer;
+   IsConcave,Found: boolean;
+   CossineAngle: single;
+   Direction,LaplacianDirection: TVector3f;
+   CurrentScale,MaxScale,Frequency: single;
+   Util : TVertexTransformationUtils;
+begin
+   Util := TVertexTransformationUtils.Create;
+   SetLength(OriginalVertexes,High(_Vertices)+1);
+   BackupVector3f(_Vertices,OriginalVertexes);
+   // Sum up vertices with its neighbours, using the desired distance formula.
+   for v := Low(_Vertices) to (_NumVertices-1) do
+   begin
+      HitCounter := 0;
+      MaxScale := 999999;
+      IsConcave := false;
+      v1 := _VertexNeighborDetector.GetNeighborFromID(v);
+      while v1 <> -1 do
+      begin
+         // Check if the vertex is concave or conves to determine the direction
+         // of the final vertex translation.
+         Direction := SubtractVector(OriginalVertexes[v1],OriginalVertexes[v]);
+         Normalize(Direction);
+         CossineAngle := DotProduct(_VertexNormals[v],Direction);
+         IsConcave := IsConcave or (CossineAngle < 0);
+         // Check the maximum possible scale of the final vertex translation
+         Direction := SubtractVector(OriginalVertexes[v],OriginalVertexes[v1]);
+         Normalize(Direction);
+         CurrentScale := Abs(DotProduct(Direction,_VertexNormals[v]));
+         if CurrentScale < MaxScale then
+         begin
+            MaxScale := CurrentScale;
+         end;
+         v1 := _VertexNeighborDetector.GetNextNeighbor;
+      end;
+      if IsConcave then
+      begin
+         LaplacianDirection := ScaleVector(_VertexNormals[v],-1);
+      end
+      else
+      begin
+         LaplacianDirection := SetVector(_VertexNormals[v]);
+      end;
+      // Finally, we do an average for all vertices.
+      Frequency := 0;
+      v1 := _FaceNeighborDetector.GetNeighborFromID(v); // face neighbour of the vertex v
+      if MaxScale > 0 then
+      begin
+         while v1 <> -1 do
+         begin
+            // Obtain both edges of the face that has v
+            mini := v1 * _VerticesPerFace;
+            maxi := mini + _VerticesPerFace - 1;
+            Found := false;
+            // Find v in the face.
+            i := 0;
+            while (i < _VerticesPerFace) and (not Found) do
+            begin
+               if _Faces[mini + i] = v then
+               begin
+                  Found := true;
+               end
+               else
+               begin
+                  inc(i);
+               end;
+            end;
+            // Now we obtain both edges (actually vertexes that have edges with v)
+            if i = 0 then
+            begin
+               nv[0] := _Faces[maxi];
+               nv[1] := _Faces[mini + 1];
+            end
+            else if i = (_VerticesPerFace-1) then
+            begin
+               nv[0] := _Faces[maxi - 1];
+               nv[1] := _Faces[mini];
+            end
+            else
+            begin
+               nv[0] := _Faces[mini + i - 1];
+               nv[1] := _Faces[mini + i + 1];
+            end;
+            // Obtain the percentage of angle from the triangle at tangent space level
+            Weight := Util.GetArcCosineFromAngleOnTangentSpace(OriginalVertexes[v],OriginalVertexes[nv[0]],OriginalVertexes[nv[1]],_VertexNormals[v]) / C_2Pi;
+            HitCounter := HitCounter + Weight;
+            // Obtain dot product of face normal and vertex normal
+            Frequency := Frequency + ((1 - abs(DotProduct(_VertexNormals[v],_FaceNormals[v1]))) * Weight);
+
+            v1 := _FaceNeighborDetector.GetNextNeighbor;
+         end;
+         {$ifdef MESH_TEST}
+         GlobalVars.MeshFile.Add('v = ' + IntToStr(v) +  ', Weight Value: ' + FloatToStr(Weight) + ', MaxScale: ' + FloatToStr(MaxScale) + ', Frequency: ' +FloatToStr(Frequency) + ') with ' + FloatToStr(HitCounter) + ' % of the neighbourhood. Expected frequency: (' + FloatToStr(Frequency / HitCounter) + ')');
+         {$endif}
+      end;
+      if HitCounter > 0 then
+      begin
+         CurrentScale := MaxScale * _DistanceFunction(Frequency / HitCounter);
+         _Vertices[v].X := OriginalVertexes[v].X + CurrentScale * LaplacianDirection.X;
+         _Vertices[v].Y := OriginalVertexes[v].Y + CurrentScale * LaplacianDirection.Y;
+         _Vertices[v].Z := OriginalVertexes[v].Z + CurrentScale * LaplacianDirection.Z;
+      end
+      else
+      begin
+         _Vertices[v].X := OriginalVertexes[v].X;
+         _Vertices[v].Y := OriginalVertexes[v].Y;
+         _Vertices[v].Z := OriginalVertexes[v].Z;
+      end;
+   end;
+   v := _NumVertices;
+   while v <= High(_Vertices) do
+   begin
+      v1 := GetEquivalentVertex(v,_NumVertices,_VertexEquivalences);
+      _Vertices[v].X := _Vertices[v1].X;
+      _Vertices[v].Y := _Vertices[v1].Y;
+      _Vertices[v].Z := _Vertices[v1].Z;
+      inc(v);
+   end;
+   // Free memory
+   SetLength(OriginalVertexes,0);
+   Util.Free;
 end;
 
 procedure TMeshProcessingTool.MeshGaussianSmooth(var _Vertices: TAVector3f; _NumVertices: integer; const _NeighborDetector : TNeighborDetector; const _VertexEquivalences: auint32);
@@ -444,6 +576,29 @@ begin
       _Destination[i].Y := _Source[i].Y;
       _Destination[i].Z := _Source[i].Z;
    end;
+end;
+
+// New Discrete 'Laplacian' Operator (not really laplacian)
+function TMeshProcessingTool.IsVertexConvex(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): boolean;
+var
+   v : integer;
+   Direction: TVector3f;
+   CossineAngle: single;
+begin
+   v := _NeighborDetector.GetNeighborFromID(_ID);
+   while v <> -1 do
+   begin
+      Direction := SubtractVector(_Vertices[v],_Vertices[_ID]);
+      Normalize(Direction);
+      CossineAngle := DotProduct(_VertexNormals[_ID],Direction);
+      if CossineAngle < 0 then
+      begin
+         Result := false; // it is concave.
+         exit;
+      end;
+      v := _NeighborDetector.GetNextNeighbor;
+   end;
+   Result := true; // if all angles are smaller than 90', it's convex.
 end;
 
 end.

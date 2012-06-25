@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 897
+  ClientHeight = 916
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 871
+    Height = 890
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 852
+    ExplicitHeight = 871
   end
   object Panel1: TPanel
     Left = 0
@@ -582,37 +582,75 @@ object Frm3DModelizer: TFrm3DModelizer
     end
     object ModelEffects1: TMenuItem
       Caption = 'Model Effects'
-      object ModelFXSmooth: TMenuItem
-        Caption = 'Smooth'
-        OnClick = ModelFXSmoothClick
+      object QuickandRestrictedMeshOperator1: TMenuItem
+        Caption = 'Quick and Restricted Mesh Operations'
+        object ModelFXSmooth: TMenuItem
+          Caption = 'Smooth'
+          OnClick = ModelFXSmoothClick
+        end
+        object ModelFXSquaredSmooth: TMenuItem
+          Caption = 'Squared Smooth'
+          OnClick = ModelFXSquaredSmoothClick
+        end
+        object ModelFXHeavySmooth: TMenuItem
+          Caption = 'Cubic Smooth'
+          OnClick = ModelFXHeavySmoothClick
+        end
+        object ModelFXLanczos: TMenuItem
+          Caption = 'Lanczos Smooth'
+          OnClick = ModelFXLanczosClick
+        end
+        object ModelFXSincErosion: TMenuItem
+          Caption = 'Sinc Smooth'
+          OnClick = ModelFXSincErosionClick
+        end
+        object ModelFXEulerErosion: TMenuItem
+          Caption = 'Euler Smooth'
+          OnClick = ModelFXEulerErosionClick
+        end
+        object ModelFXHeavyEulerErosion: TMenuItem
+          Caption = 'Heavy Euler Smooth'
+          OnClick = ModelFXHeavyEulerErosionClick
+        end
+        object ModelFXSincInfiniteErosion: TMenuItem
+          Caption = 'Sinc Infinite Smooth'
+          OnClick = ModelFXSincInfiniteErosionClick
+        end
       end
-      object ModelFXSquaredSmooth: TMenuItem
-        Caption = 'Squared Smooth'
-        OnClick = ModelFXSquaredSmoothClick
-      end
-      object ModelFXHeavySmooth: TMenuItem
-        Caption = 'Cubic Smooth'
-        OnClick = ModelFXHeavySmoothClick
-      end
-      object ModelFXLanczos: TMenuItem
-        Caption = 'Lanczos Smooth'
-        OnClick = ModelFXLanczosClick
-      end
-      object ModelFXSincErosion: TMenuItem
-        Caption = 'Sinc Smooth'
-        OnClick = ModelFXSincErosionClick
-      end
-      object ModelFXEulerErosion: TMenuItem
-        Caption = 'Euler Smooth'
-        OnClick = ModelFXEulerErosionClick
-      end
-      object ModelFXHeavyEulerErosion: TMenuItem
-        Caption = 'Heavy Euler Smooth'
-        OnClick = ModelFXHeavyEulerErosionClick
-      end
-      object ModelFXSincInfiniteErosion: TMenuItem
-        Caption = 'Sinc Infinite Smooth'
-        OnClick = ModelFXSincInfiniteErosionClick
+      object SlowandFlexibleMeshOperations1: TMenuItem
+        Caption = 'Slow and Flexible Mesh Operations'
+        object ModelFXSmooth2: TMenuItem
+          Caption = 'Smooth'
+          OnClick = ModelFXSmooth2Click
+        end
+        object ModelFXSquaredSmooth2: TMenuItem
+          Caption = 'Squared Smooth'
+          OnClick = ModelFXSquaredSmooth2Click
+        end
+        object ModelFXCubicSmooth2: TMenuItem
+          Caption = 'Cubic Smooth'
+          OnClick = ModelFXCubicSmooth2Click
+        end
+        object ModelFXLanczosSmooth2: TMenuItem
+          Caption = 'Lanczos Smooth'
+          OnClick = ModelFXLanczosSmooth2Click
+        end
+        object ModelFXSincSmooth2: TMenuItem
+          Caption = 'Sinc Smooth'
+          OnClick = ModelFXSincSmooth2Click
+        end
+        object ModelFXEulerSmooth2: TMenuItem
+          Caption = 'Euler Smooth'
+          OnClick = ModelFXEulerSmooth2Click
+        end
+        object ModelFXHeavyEulerSmooth2: TMenuItem
+          Caption = 'Heavy Euler Smooth'
+          OnClick = ModelFXHeavyEulerSmooth2Click
+        end
+        object ModelFXSincInfiniteSmooth2: TMenuItem
+          Caption = 'Sinc Infinite Smooth'
+          OnClick = ModelFXSincInfiniteSmooth2Click
+        end
       end
       object ModelFXGaussianSmooth: TMenuItem
         Caption = 'Gaussian Smooth'

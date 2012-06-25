@@ -963,10 +963,6 @@ begin
                // exists, we'll fill every vertex in its face. A similar
                // approach applies to neighbour edges and vertexes.
 
-               {$ifdef MESH_TEST}
-               GlobalVars.MeshFile.Add('...');
-               GlobalVars.MeshFile.Add('Next refinement region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
-               {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                Tool.DetectPotentialRefinementVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
@@ -990,20 +986,9 @@ begin
                if _VoxelMap.MapSafe[x,y,z+1] < 512 then
                   FaceConfig := FaceConfig or 1;
 
-               {$ifdef MESH_TEST}
-               GlobalVars.MeshFile.Add('...');
-               GlobalVars.MeshFile.Add('Next surface region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), FaceConfig = ' + IntToStr(FaceConfig) + ' taken from (' + FloatToStr(_VoxelMap.MapSafe[x-1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x+1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y-1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y+1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z-1]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z+1]) + ') and it will be subdivided!');
-               {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                Tool.DetectPotentialSurfaceVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                Tool.AddSurfaceFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
-            end
-            else
-            begin
-               {$ifdef MESH_TEST}
-               GlobalVars.MeshFile.Add('...');
-               GlobalVars.MeshFile.Add('Next region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it has been detected as ' + FloatToStr(_VoxelMap.Map[x,y,z]));
-               {$endif}
             end;
          end;
    QuadList.CleanUpBadQuads;
@@ -1014,10 +999,6 @@ begin
       if _NumVertices > OldNumVertices then
       begin
          SetLength(_Vertices,_NumVertices);
-         {$ifdef MESH_TEST}
-         GlobalVars.MeshFile.Add('...');
-         GlobalVars.MeshFile.Add('We have ' + IntToStr(_NumVertices) + ' distributed in the following way:');
-         {$endif}
          x := 0;
          while x <= _VertexMap.MaxX do
          begin
@@ -1033,9 +1014,6 @@ begin
                      _Vertices[id].X := x / VUnit;
                      _Vertices[id].Y := y / VUnit;
                      _Vertices[id].Z := z / VUnit;
-                    {$ifdef MESH_TEST}
-                    GlobalVars.MeshFile.Add('Vertex ' + IntToStr(id) + ' Location: (' + FloatToStr(_Vertices[id].X) + ';' + FloatToStr(_Vertices[id].Y) + ';' + FloatToStr(_Vertices[id].Z) + ').');
-                    {$endif}
                   end;
                   inc(z,1);
                end;
@@ -1366,22 +1344,11 @@ begin
    _Geometry.GoToFirstElement;
    Geometry := PMeshBRepGeometry(_Geometry.Current);
    // Let's map our voxels.
-   {$ifdef MESH_TEST}
-   GlobalVars.MeshFile.Add('Initializing Mesh Extraction');
-   GlobalVars.MeshFile.Add('...');
-   GlobalVars.MeshFile.Add('Surface Detection Starts now...');
-  {$endif}
    VUnit := 2;
    VoxelMap := TVoxelMap.CreateQuick(_Voxel,1);
    VoxelMap.GenerateSurfaceAndRefinementMap;
 
-   {$ifdef MESH_TEST}
-   GlobalVars.MeshFile.Add('Model Generation Starts now...');
-  {$endif}
    BuildModelFromVoxelMapWithRefinementZones(_Voxel,_Palette,_Vertices,Geometry^,_TexCoords,_NumVoxels,VoxelMap);
-   {$ifdef MESH_TEST}
-   GlobalVars.MeshFile.Add('Mesh Extraction has been terminated...');
-  {$endif}
 
    VoxelMap.Free;
 end;

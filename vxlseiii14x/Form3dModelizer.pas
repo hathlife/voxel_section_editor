@@ -168,6 +168,24 @@ type
     QualityAnalysisAspectRatio: TMenuItem;
     QualityAnalysisSkewness: TMenuItem;
     QualityAnalysisSmoothness: TMenuItem;
+    QuickandRestrictedMeshOperator1: TMenuItem;
+    SlowandFlexibleMeshOperations1: TMenuItem;
+    ModelFXSmooth2: TMenuItem;
+    ModelFXSquaredSmooth2: TMenuItem;
+    ModelFXCubicSmooth2: TMenuItem;
+    ModelFXLanczosSmooth2: TMenuItem;
+    ModelFXSincSmooth2: TMenuItem;
+    ModelFXEulerSmooth2: TMenuItem;
+    ModelFXHeavyEulerSmooth2: TMenuItem;
+    ModelFXSincInfiniteSmooth2: TMenuItem;
+    procedure ModelFXSincInfiniteSmooth2Click(Sender: TObject);
+    procedure ModelFXHeavyEulerSmooth2Click(Sender: TObject);
+    procedure ModelFXEulerSmooth2Click(Sender: TObject);
+    procedure ModelFXSincSmooth2Click(Sender: TObject);
+    procedure ModelFXLanczosSmooth2Click(Sender: TObject);
+    procedure ModelFXCubicSmooth2Click(Sender: TObject);
+    procedure ModelFXSquaredSmooth2Click(Sender: TObject);
+    procedure ModelFXSmooth2Click(Sender: TObject);
     procedure QualityAnalysisSmoothnessClick(Sender: TObject);
     procedure QualityAnalysisSkewnessClick(Sender: TObject);
     procedure QualityAnalysisAspectRatioClick(Sender: TObject);
@@ -628,6 +646,11 @@ begin
    Frm.Release;
 end;
 
+procedure TFrm3DModelizer.ModelFXSquaredSmooth2Click(Sender: TObject);
+begin
+   Actor.QuadricSmoothModel2;
+end;
+
 procedure TFrm3DModelizer.ModelFXSquaredSmoothClick(Sender: TObject);
 begin
    Actor.QuadricSmoothModel;
@@ -715,6 +738,11 @@ end;
 procedure TFrm3DModelizer.ModelFXLanczosClick(Sender: TObject);
 begin
    Actor.LanczosSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXLanczosSmooth2Click(Sender: TObject);
+begin
+   Actor.LanczosSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.LanczosDilatation1Click(Sender: TObject);
@@ -1072,6 +1100,11 @@ begin
    Actor.EulerSquaredSmoothModel;
 end;
 
+procedure TFrm3DModelizer.ModelFXHeavyEulerSmooth2Click(Sender: TObject);
+begin
+   Actor.EulerSquaredSmoothModel2;
+end;
+
 procedure TFrm3DModelizer.ModelFXHeavySmoothClick(Sender: TObject);
 begin
    Actor.CubicSmoothModel;
@@ -1130,6 +1163,11 @@ begin
    SetMeshMode(1);
 end;
 
+procedure TFrm3DModelizer.ModelFXCubicSmooth2Click(Sender: TObject);
+begin
+   Actor.CubicSmoothModel2;
+end;
+
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);
 begin
    Actor.DeflateModel;
@@ -1138,6 +1176,11 @@ end;
 procedure TFrm3DModelizer.ModelFXEulerErosionClick(Sender: TObject);
 begin
    Actor.EulerSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXEulerSmooth2Click(Sender: TObject);
+begin
+   Actor.EulerSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXGaussianSmoothClick(Sender: TObject);
@@ -1153,6 +1196,21 @@ end;
 procedure TFrm3DModelizer.ModelFXSincInfiniteErosionClick(Sender: TObject);
 begin
    Actor.SincInfiniteSmoothModel;
+end;
+
+procedure TFrm3DModelizer.ModelFXSincInfiniteSmooth2Click(Sender: TObject);
+begin
+   Actor.SincInfiniteSmoothModel2;
+end;
+
+procedure TFrm3DModelizer.ModelFXSincSmooth2Click(Sender: TObject);
+begin
+   Actor.SincSmoothModel2;
+end;
+
+procedure TFrm3DModelizer.ModelFXSmooth2Click(Sender: TObject);
+begin
+   Actor.SmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXSmoothClick(Sender: TObject);

@@ -53,6 +53,14 @@ type
       procedure EulerSmoothLOD;
       procedure EulerSquaredSmoothLOD;
       procedure SincInfiniteSmoothLOD;
+      procedure SmoothLOD2;
+      procedure QuadricSmoothLOD2;
+      procedure CubicSmoothLOD2;
+      procedure LanczosSmoothLOD2;
+      procedure SincSmoothLOD2;
+      procedure EulerSmoothLOD2;
+      procedure EulerSquaredSmoothLOD2;
+      procedure SincInfiniteSmoothLOD2;
       procedure GaussianSmoothLOD;
       procedure UnsharpLOD;
       procedure InflateLOD;
@@ -352,6 +360,86 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       Mesh[i].MeshSincInfiniteSmooth;
+   end;
+end;
+
+procedure TLOD.SmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSmooth2;
+   end;
+end;
+
+procedure TLOD.QuadricSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshQuadricSmooth2;
+   end;
+end;
+
+procedure TLOD.CubicSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshCubicSmooth2;
+   end;
+end;
+
+procedure TLOD.LanczosSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshLanczosSmooth2;
+   end;
+end;
+
+procedure TLOD.SincSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSincSmooth2;
+   end;
+end;
+
+procedure TLOD.EulerSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshEulerSmooth2;
+   end;
+end;
+
+procedure TLOD.EulerSquaredSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshEulerSquaredSmooth2;
+   end;
+end;
+
+procedure TLOD.SincInfiniteSmoothLOD2;
+var
+   i : integer;
+begin
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].MeshSincInfiniteSmooth2;
    end;
 end;
 

@@ -659,6 +659,7 @@ begin
          end;
       end;
    end;
+   Util.Free;
 end;
 
 procedure TNeighborDetector.ReOrderVertexFace(const _Vertexes,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
@@ -712,6 +713,7 @@ begin
          end;
       end;
    end;
+   Util.Free;
 end;
 
 procedure TNeighborDetector.ReOrderFaceVertex(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
@@ -765,6 +767,7 @@ begin
          end;
       end;
    end;
+   Util.Free;
 end;
 
 procedure TNeighborDetector.ReOrderFaceFace(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
@@ -818,6 +821,7 @@ begin
          end;
       end;
    end;
+   Util.Free;
 end;
 
 // Ascending Quick Sort (To make it descending, change the > and < in both whiles)

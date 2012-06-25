@@ -97,6 +97,14 @@ type
       procedure EulerSmoothModel;
       procedure EulerSquaredSmoothModel;
       procedure SincInfiniteSmoothModel;
+      procedure SmoothModel2;
+      procedure QuadricSmoothModel2;
+      procedure CubicSmoothModel2;
+      procedure LanczosSmoothModel2;
+      procedure SincSmoothModel2;
+      procedure EulerSmoothModel2;
+      procedure EulerSquaredSmoothModel2;
+      procedure SincInfiniteSmoothModel2;
       procedure GaussianSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
@@ -777,6 +785,118 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.SincInfiniteSmoothModel;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.QuadricSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.QuadricSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.CubicSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.CubicSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.LanczosSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.LanczosSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SincSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SincSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.EulerSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.EulerSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.EulerSquaredSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.EulerSquaredSmoothModel2;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.SincInfiniteSmoothModel2;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.SincInfiniteSmoothModel2;
       end;
    end;
    RequestUpdateWorld := true;

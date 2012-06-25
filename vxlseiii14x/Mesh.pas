@@ -37,6 +37,7 @@ type
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          procedure LimitedMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+         procedure VolumeMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
          // Normals
          procedure RebuildFaceNormals;
          procedure SmoothNormalsOperation(_DistanceFunction: TDistanceFunc);
@@ -116,6 +117,7 @@ type
          function IsOpened: boolean;
 
          // Mesh Effects
+         // Mesh Smooth (Taubin + distance 1)
          procedure MeshSmooth;
          procedure MeshQuadricSmooth;
          procedure MeshCubicSmooth;
@@ -124,6 +126,16 @@ type
          procedure MeshEulerSmooth;
          procedure MeshEulerSquaredSmooth;
          procedure MeshSincInfiniteSmooth;
+         // Mesh Smooth (Curvature Tensor Operator)
+         procedure MeshSmooth2;
+         procedure MeshQuadricSmooth2;
+         procedure MeshCubicSmooth2;
+         procedure MeshLanczosSmooth2;
+         procedure MeshSincSmooth2;
+         procedure MeshEulerSmooth2;
+         procedure MeshEulerSquaredSmooth2;
+         procedure MeshSincInfiniteSmooth2;
+         // Other Mesh Operators
          procedure MeshGaussianSmooth;
          procedure MeshUnsharpMasking;
          procedure MeshInflate;
@@ -602,7 +614,7 @@ end;
 // Mesh Effects.
 procedure TMesh.MeshQuadricSmooth;
 begin
-   LimitedMeshSmoothOperation(GetQuadric1DDistance);
+   MeshSmoothOperation(GetQuadric1DDistance);
 end;
 
 procedure TMesh.MeshCubicSmooth;
@@ -633,6 +645,46 @@ end;
 procedure TMesh.MeshSincInfiniteSmooth;
 begin
    MeshSmoothOperation(GetSincInfinite1DDistance);
+end;
+
+procedure TMesh.MeshQuadricSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetQuadric1DDistance);
+end;
+
+procedure TMesh.MeshCubicSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetCubic1DDistance);
+end;
+
+procedure TMesh.MeshLanczosSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetLanczos1DACDistance);
+end;
+
+procedure TMesh.MeshSincSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetSinc1DDistance);
+end;
+
+procedure TMesh.MeshEulerSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetEuler1DDistance);
+end;
+
+procedure TMesh.MeshEulerSquaredSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetEulerSquared1DDistance);
+end;
+
+procedure TMesh.MeshSincInfiniteSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetSincInfinite1DDistance);
+end;
+
+procedure TMesh.MeshSmooth2;
+begin
+   VolumeMeshSmoothOperation(GetLinearDistance);
 end;
 
 procedure TMesh.MeshSmooth;
@@ -719,6 +771,66 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Mesh Smooth Operation for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TMesh.VolumeMeshSmoothOperation(_DistanceFunction : TDistanceFunc);
+var
+   Tool : TMeshProcessingTool;
+   VertexNeighborDetector,FaceNeighborDetector : TNeighborDetector;
+   NeighborhoodPlugin : PMeshPluginBase;
+   NumVertices: integer;
+   VertexEquivalences: auint32;
+   MyFaces: auint32;
+   MyFaceNormals: TAVector3f;
+   MyVerticesPerFace: integer;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   Geometry.GoToFirstElement;
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   if NeighborhoodPlugin <> nil then
+   begin
+      VertexNeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexNeighbors;
+      FaceNeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
+      NumVertices := TNeighborhoodDataPlugin(NeighborhoodPlugin^).InitialVertexCount;
+      VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
+   end
+   else
+   begin
+      VertexNeighborDetector := TNeighborDetector.Create;
+      VertexNeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
+      Geometry.GoToFirstElement;
+      FaceNeighborDetector := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);
+      FaceNeighborDetector.BuildUpData(Geometry,High(Vertices)+1);
+      NumVertices := High(Vertices)+1;
+      VertexEquivalences := nil;
+   end;
+   MyFaces := (Geometry.Current^ as TMeshBRepGeometry).Faces;
+   MyFaceNormals := (Geometry.Current^ as TMeshBRepGeometry).Normals;
+   MyVerticesPerFace := (Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
+   if Length(Normals) = 0 then
+   begin
+      TransformFaceToVertexNormals;
+   end;
+   Tool := TMeshProcessingTool.Create;
+   Tool.VolumetricMeshSmoothOperation(Vertices,Normals,MyFaceNormals,MyFaces,NumVertices,MyVerticesPerFace,VertexNeighborDetector,FaceNeighborDetector,VertexEquivalences,_DistanceFunction);
+   // Free memory
+   if NeighborhoodPlugin = nil then
+   begin
+      VertexNeighborDetector.Free;
+      FaceNeighborDetector.Free;
+   end;
+   ForceRefresh;
+   Tool.Free;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Mesh Smooth Operation (Method #2) for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;

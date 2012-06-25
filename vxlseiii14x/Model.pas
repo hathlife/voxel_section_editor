@@ -67,6 +67,14 @@ type
       procedure EulerSmoothModel;
       procedure EulerSquaredSmoothModel;
       procedure SincInfiniteSmoothModel;
+      procedure SmoothModel2;
+      procedure QuadricSmoothModel2;
+      procedure CubicSmoothModel2;
+      procedure LanczosSmoothModel2;
+      procedure SincSmoothModel2;
+      procedure EulerSmoothModel2;
+      procedure EulerSquaredSmoothModel2;
+      procedure SincInfiniteSmoothModel2;
       procedure GaussianSmoothModel;
       procedure UnsharpModel;
       procedure InflateModel;
@@ -442,6 +450,46 @@ end;
 procedure TModel.SincInfiniteSmoothModel;
 begin
    LOD[CurrentLOD].SincInfiniteSmoothLOD;
+end;
+
+procedure TModel.SmoothModel2;
+begin
+   LOD[CurrentLOD].SmoothLOD2;
+end;
+
+procedure TModel.QuadricSmoothModel2;
+begin
+   LOD[CurrentLOD].QuadricSmoothLOD2;
+end;
+
+procedure TModel.CubicSmoothModel2;
+begin
+   LOD[CurrentLOD].CubicSmoothLOD2;
+end;
+
+procedure TModel.LanczosSmoothModel2;
+begin
+   LOD[CurrentLOD].LanczosSmoothLOD2;
+end;
+
+procedure TModel.SincSmoothModel2;
+begin
+   LOD[CurrentLOD].SincSmoothLOD2;
+end;
+
+procedure TModel.EulerSmoothModel2;
+begin
+   LOD[CurrentLOD].EulerSmoothLOD2;
+end;
+
+procedure TModel.EulerSquaredSmoothModel2;
+begin
+   LOD[CurrentLOD].EulerSquaredSmoothLOD2;
+end;
+
+procedure TModel.SincInfiniteSmoothModel2;
+begin
+   LOD[CurrentLOD].SincInfiniteSmoothLOD2;
 end;
 
 procedure TModel.GaussianSmoothModel;
