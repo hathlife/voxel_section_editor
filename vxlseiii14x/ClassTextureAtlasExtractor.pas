@@ -21,6 +21,7 @@ type
          FTextureAngle: single;
          // Seeds
          function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+         function MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
          // Angle stuff
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
@@ -30,6 +31,7 @@ type
          procedure QuickSortSeeds(_min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction);
          procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
+         procedure ObtainCommonEdgeFromFaces(const _Faces: auint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2: integer);
       public
          // Constructors and Destructors
          constructor Create; overload;
@@ -47,6 +49,8 @@ type
    end;
 
 implementation
+
+uses Math3d;
 
 constructor CTextureAtlasExtractor.Create;
 begin
@@ -810,6 +814,293 @@ begin
    end;
    List.Free;
    VertexUtil.Free;
+end;
+
+function CTextureAtlasExtractor.MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+const
+   C_MIN_ANGLE = 0.001; // approximately cos 90'
+var
+   v,f,Value,vertex,FaceIndex,PreviousFace : integer;
+   CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1: integer;
+   FaceList,PreviousFaceList : CIntegerList;
+   Angle: single;
+   Position: TVector3f;
+   VertexUtil : TVertexTransformationUtils;
+begin
+   VertexUtil := TVertexTransformationUtils.Create;
+   // Setup neighbor detection list
+   FaceList := CIntegerList.Create;
+   FaceList.UseSmartMemoryManagement(true);
+   PreviousFaceList := CIntegerList.Create;
+   PreviousFaceList.UseSmartMemoryManagement(true);
+   // Setup VertsLocation
+   for v := Low(_VertsLocation) to High(_VertsLocation) do
+   begin
+      _VertsLocation[v] := -1;
+   end;
+   // Avoid unlimmited loop
+   for f := Low(_CheckFace) to High(_CheckFace) do
+      _CheckFace[f] := false;
+
+   // Add starting face
+   _FaceSeeds[Value] := _ID;
+   _CheckFace[_StartingFace] := true;
+   Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
+   Result.MinBounds.U := 999999;
+   Result.MaxBounds.U := -999999;
+   Result.MinBounds.V := 999999;
+   Result.MaxBounds.V := -999999;
+   Result.MeshID := _MeshID;
+
+   // The first triangle is dealt in a different way.
+   // We'll project it in the plane XY and the first vertex is on (0,0,0).
+   FaceIndex := _StartingFace * _VerticesPerFace;
+   for v := 0 to _VerticesPerFace - 1 do
+   begin
+      vertex := _Faces[FaceIndex+v];
+      Position := SubtractVector(_Vertices[vertex],_Vertices[_Faces[FaceIndex]]);
+      if _VertsSeed[vertex] <> -1 then
+      begin
+         // this vertex was used by a previous seed, therefore, we'll clone it
+         SetLength(_Vertices,High(_Vertices)+2);
+         SetLength(_VertsSeed,High(_Vertices)+1);
+         _VertsSeed[High(_VertsSeed)] := _ID;
+         _VertsLocation[vertex] := High(_Vertices);
+         _Faces[FaceIndex+v] := _VertsLocation[vertex];
+         _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
+         _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
+         _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
+         SetLength(_VertsNormals,High(_Vertices)+1);
+         _VertsNormals[High(_Vertices)].X := _VertsNormals[vertex].X;
+         _VertsNormals[High(_Vertices)].Y := _VertsNormals[vertex].Y;
+         _VertsNormals[High(_Vertices)].Z := _VertsNormals[vertex].Z;
+         SetLength(_VertsColours,High(_Vertices)+1);
+         _VertsColours[High(_Vertices)].X := _VertsColours[vertex].X;
+         _VertsColours[High(_Vertices)].Y := _VertsColours[vertex].Y;
+         _VertsColours[High(_Vertices)].Z := _VertsColours[vertex].Z;
+         _VertsColours[High(_Vertices)].W := _VertsColours[vertex].W;
+         // Get temporarily texture coordinates.
+         SetLength(_TextCoords,High(_Vertices)+1);
+         _TextCoords[High(_Vertices)] := VertexUtil.GetUVCoordinates(Position,Result.TransformMatrix);
+         // Now update the bounds of the seed.
+         if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
+            Result.MinBounds.U := _TextCoords[High(_Vertices)].U;
+         if _TextCoords[High(_Vertices)].U > Result.MaxBounds.U then
+            Result.MaxBounds.U := _TextCoords[High(_Vertices)].U;
+         if _TextCoords[High(_Vertices)].V < Result.MinBounds.V then
+            Result.MinBounds.V := _TextCoords[High(_Vertices)].V;
+         if _TextCoords[High(_Vertices)].V > Result.MaxBounds.V then
+            Result.MaxBounds.V := _TextCoords[High(_Vertices)].V;
+      end
+      else
+      begin
+         // This seed is the first seed to use this vertex.
+         _VertsSeed[vertex] := _ID;
+         _VertsLocation[vertex] := vertex;
+         // Get temporary texture coordinates.
+         _TextCoords[vertex] := VertexUtil.GetUVCoordinates(Position,Result.TransformMatrix);
+         // Now update the bounds of the seed.
+         if _TextCoords[vertex].U < Result.MinBounds.U then
+            Result.MinBounds.U := _TextCoords[vertex].U;
+         if _TextCoords[vertex].U > Result.MaxBounds.U then
+            Result.MaxBounds.U := _TextCoords[vertex].U;
+         if _TextCoords[vertex].V < Result.MinBounds.V then
+            Result.MinBounds.V := _TextCoords[vertex].V;
+         if _TextCoords[vertex].V > Result.MaxBounds.V then
+            Result.MaxBounds.V := _TextCoords[vertex].V;
+      end;
+   end;
+
+   // Add neighbour faces to the list.
+   f := _FaceNeighbors.GetNeighborFromID(_StartingFace);
+   while f <> -1 do
+   begin
+      // do some verification here
+      if not _CheckFace[f] then
+      begin
+         if (_FaceSeeds[f] = -1) then
+         begin
+            PreviousFaceList.Add(_StartingFace);
+            FaceList.Add(f);
+            _CheckFace[f] := true;
+         end;
+      end;
+      f := _FaceNeighbors.GetNextNeighbor;
+   end;
+
+
+   // Neighbour Face Scanning starts here.
+   // Wel'll check face by face and add the vertexes that were not added
+   while FaceList.GetValue(Value) do
+   begin
+      PreviousFaceList.GetValue(PreviousFace);
+      // Add the face and its vertexes
+      _FaceSeeds[Value] := _ID;
+      FaceIndex := Value * _VerticesPerFace;
+      // The first idea is to get the vertex that wasn't added yet.
+      ObtainCommonEdgeFromFaces(_Faces,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1);
+      // If we find the vertex...
+      if _VertsSeed[CurrentVertex] = -1 then
+      begin
+         // This seed is the first seed to use this vertex.
+         _VertsSeed[vertex] := _ID;
+         _VertsLocation[vertex] := vertex;
+         // Get temporary texture coordinates. -----Change the next line-----
+         //_TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+         // Now update the bounds of the seed.
+         if _TextCoords[vertex].U < Result.MinBounds.U then
+            Result.MinBounds.U := _TextCoords[vertex].U;
+         if _TextCoords[vertex].U > Result.MaxBounds.U then
+            Result.MaxBounds.U := _TextCoords[vertex].U;
+         if _TextCoords[vertex].V < Result.MinBounds.V then
+            Result.MinBounds.V := _TextCoords[vertex].V;
+         if _TextCoords[vertex].V > Result.MaxBounds.V then
+            Result.MaxBounds.V := _TextCoords[vertex].V;
+      end
+      else // sometimes we may not find the vertex, because all of them might
+      // have been added previously.
+      begin
+
+
+      end;
+      // This part is old code and it will be eventually removed.
+      for v := 0 to _VerticesPerFace - 1 do
+      begin
+         vertex := _Faces[FaceIndex+v];
+         if _VertsSeed[vertex] <> -1 then
+         begin
+            if _VertsLocation[vertex] = -1 then
+            begin
+               // this vertex was used by a previous seed, therefore, we'll clone it
+               SetLength(_Vertices,High(_Vertices)+2);
+               SetLength(_VertsSeed,High(_Vertices)+1);
+               _VertsSeed[High(_VertsSeed)] := _ID;
+               _VertsLocation[vertex] := High(_Vertices);
+               _Faces[FaceIndex+v] := _VertsLocation[vertex];
+               _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
+               _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
+               _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
+               SetLength(_VertsNormals,High(_Vertices)+1);
+               _VertsNormals[High(_Vertices)].X := _VertsNormals[vertex].X;
+               _VertsNormals[High(_Vertices)].Y := _VertsNormals[vertex].Y;
+               _VertsNormals[High(_Vertices)].Z := _VertsNormals[vertex].Z;
+               SetLength(_VertsColours,High(_Vertices)+1);
+               _VertsColours[High(_Vertices)].X := _VertsColours[vertex].X;
+               _VertsColours[High(_Vertices)].Y := _VertsColours[vertex].Y;
+               _VertsColours[High(_Vertices)].Z := _VertsColours[vertex].Z;
+               _VertsColours[High(_Vertices)].W := _VertsColours[vertex].W;
+               // Get temporarily texture coordinates.
+               SetLength(_TextCoords,High(_Vertices)+1);
+               //_TextCoords[High(_Vertices)] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+               // Now update the bounds of the seed.
+               if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
+                  Result.MinBounds.U := _TextCoords[High(_Vertices)].U;
+               if _TextCoords[High(_Vertices)].U > Result.MaxBounds.U then
+                  Result.MaxBounds.U := _TextCoords[High(_Vertices)].U;
+               if _TextCoords[High(_Vertices)].V < Result.MinBounds.V then
+                  Result.MinBounds.V := _TextCoords[High(_Vertices)].V;
+               if _TextCoords[High(_Vertices)].V > Result.MaxBounds.V then
+                  Result.MaxBounds.V := _TextCoords[High(_Vertices)].V;
+            end
+            else
+            begin
+               // This vertex is already used by this seed.
+               _Faces[FaceIndex+v] := _VertsLocation[vertex];
+            end;
+         end
+         else
+         begin
+            // This seed is the first seed to use this vertex.
+            _VertsSeed[vertex] := _ID;
+            _VertsLocation[vertex] := vertex;
+            // Get temporary texture coordinates.
+            _TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+            // Now update the bounds of the seed.
+            if _TextCoords[vertex].U < Result.MinBounds.U then
+               Result.MinBounds.U := _TextCoords[vertex].U;
+            if _TextCoords[vertex].U > Result.MaxBounds.U then
+               Result.MaxBounds.U := _TextCoords[vertex].U;
+            if _TextCoords[vertex].V < Result.MinBounds.V then
+               Result.MinBounds.V := _TextCoords[vertex].V;
+            if _TextCoords[vertex].V > Result.MaxBounds.V then
+               Result.MaxBounds.V := _TextCoords[vertex].V;
+         end;
+      end;
+
+
+      // Check if other neighbors are elegible for this partition/seed.
+      f := _FaceNeighbors.GetNeighborFromID(Value);
+      while f <> -1 do
+      begin
+         // do some verification here
+         if not _CheckFace[f] then
+         begin
+            if (_FaceSeeds[f] = -1) then
+            begin
+               PreviousFaceList.Add(Value);
+               FaceList.Add(f);
+            end;
+            _CheckFace[f] := true;
+         end;
+         f := _FaceNeighbors.GetNextNeighbor;
+      end;
+   end;
+
+   if _NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalences(_VertsLocation);
+   end;
+   FaceList.Free;
+   PreviousFaceList.Free;
+   VertexUtil.Free;
+end;
+
+// That's the time of the day that we miss a half edge structure (even if a
+// fragmented memory makes Delphi go wild)
+procedure CTextureAtlasExtractor.ObtainCommonEdgeFromFaces(const _Faces: auint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2: integer);
+var
+   i,j,mincface,minpface : integer;
+   Found: boolean;
+begin
+   mincface := _CurrentFace * _VerticesPerFace;
+   minpface := _PreviousFace * _VerticesPerFace;
+
+   // Real code starts here.
+   i := 0;
+   Found := false;
+   while (i < _VerticesPerFace) and (not Found) do
+   begin
+      j := 0;
+      while (j < _VerticesPerFace) and (not Found) do
+      begin
+         if _Faces[mincface+i] = _Faces[minpface+j] then
+         begin
+            _CommonVertex1 := _Faces[mincface+i];
+            Found := true;
+         end
+         else
+         begin
+            inc(j);
+         end;
+      end;
+      if not Found then
+      begin
+         inc(i);
+      end;
+   end;
+   // Try the next element
+   if _Faces[mincface + ((i + 1) mod _VerticesPerFace)] = _Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)] then
+   begin
+      _CommonVertex2 := _Faces[mincface + ((i + 1) mod _VerticesPerFace)];
+      _CurrentVertex := _Faces[mincface + ((i + _VerticesPerFace - 1) mod _VerticesPerFace)];
+      _PreviousVertex := _Faces[minpface + ((j + 1) mod _VerticesPerFace)];
+   end
+   else // Then, it is the previous element.
+   begin
+      _CommonVertex2 := _Faces[mincface + ((i + _VerticesPerFace - 1) mod _VerticesPerFace)];
+      _CurrentVertex := _Faces[mincface + ((i + 1) mod _VerticesPerFace)];
+      _PreviousVertex := _Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)];
+   end;
 end;
 
 // Sort
