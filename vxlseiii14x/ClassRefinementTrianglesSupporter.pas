@@ -51,12 +51,12 @@ procedure CRefinementTrianglesSupporter.AddRefinementFaces(_LeftBottomBack,_Left
 const
    QuadSet: array[1..24,0..3] of byte = ((0,4,5,1),(0,1,3,2),(0,2,6,4),(1,5,7,3),(2,3,7,6),(4,6,7,5),(0,2,3,1),(0,1,5,4),(2,3,5,4),(0,4,6,2),(1,4,6,3),(1,5,6,2),(1,3,7,5),(0,2,7,5),(0,3,7,4),(2,6,7,3),(0,6,7,1),(0,4,7,3),(1,2,6,5),(4,5,7,6),(0,1,7,6),(0,5,7,2),(1,3,6,4),(2,4,5,3));
    QuadFaces: array[1..24] of shortint = (2,0,4,5,3,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
-   QuadConfigStart: array[0..256] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,11,11,12,12,12,12,12,12,13,13,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,18,18,19,19,22,22,22,22,23,23,24,24,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,31,31,31,32,35,35,35,35,36,36,36,36,37,37,37,38,41,41,41,42,45,45,45,45,45,45,45,45,45,45,45,45,45,46,47,48,51,51,51,51,51,51,52,52,53,53,53,53,53,54,57,58,61,61,61,61,61,61,61,61,61,61,61,62,63,64,65,68,71,72,73,74,77,78,81,82,85,86,87,90,93,96,99,102,108);
-   QuadConfigData: array[0..107] of byte = (7,2,2,8,1,1,1,2,9,2,10,3,3,2,3,11,2,1,3,1,3,12,1,3,1,2,3,2,2,13,4,4,2,4,14,1,1,4,1,4,15,4,1,2,4,16,5,5,2,5,17,3,3,5,3,5,18,5,2,3,5,4,4,5,5,4,5,19,2,4,5,20,6,6,1,6,21,6,3,6,22,6,1,3,6,6,6,4,6,23,1,4,6,5,6,24,3,5,6,4,5,6,1,2,3,4,5,6);
+   QuadConfigStart: array[0..255] of byte = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,11,11,12,12,12,12,12,12,13,13,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,18,18,19,19,22,22,22,22,23,23,24,24,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,31,31,31,32,35,35,35,35,36,36,36,36,37,37,37,38,41,41,41,42,45,45,45,45,45,45,45,45,45,45,45,45,45,46,47,48,51,51,51,51,51,51,52,52,53,53,53,53,53,54,57,58,61,61,61,61,61,61,61,61,61,61,61,62,63,64,65,68,71,72,73,74,77,78,81,82,85,86,87,90,93,96,99,102);
+   QuadConfigData: array[0..101] of byte = (7,2,2,8,1,1,1,2,9,2,10,3,3,2,3,11,2,1,3,1,3,12,1,3,1,2,3,2,2,13,4,4,2,4,14,1,1,4,1,4,15,4,1,2,4,16,5,5,2,5,17,3,3,5,3,5,18,5,2,3,5,4,4,5,5,4,5,19,2,4,5,20,6,6,1,6,21,6,3,6,22,6,1,3,6,6,6,4,6,23,1,4,6,5,6,24,3,5,6,4,5,6);
 
    TriangleSet: array[1..92,0..2] of byte = ((0,1,2),(0,2,4),(0,4,1),(1,4,2),(1,4,3),(2,3,4),(0,1,3),(1,3,5),(0,3,5),(0,5,1),(0,2,5),(1,5,3),(2,3,5),(1,5,2),(2,5,4),(0,3,4),(3,5,4),(0,3,2),(0,2,6),(2,3,6),(0,6,3),(0,6,1),(1,6,3),(1,6,2),(1,4,6),(0,4,3),(3,4,6),(0,5,3),(0,6,5),(3,5,6),(0,3,6),(0,4,5),(0,6,4),(4,6,5),(0,5,6),(0,1,6),(1,5,6),(0,5,2),(2,5,6),(1,3,2),(1,7,3),(2,3,7),(1,2,7),(0,7,1),(0,2,7),(1,4,7),(2,7,4),(1,7,2),(1,2,4),(0,7,5),(0,3,7),(1,2,5),(2,7,5),(1,5,7),(4,7,5),(1,4,5),(1,7,4),(0,7,4),(0,1,7),(1,3,4),(1,5,4),(3,7,4),(1,2,3),(4,5,7),(0,7,3),(0,6,7),(1,2,6),(1,6,7),(2,7,6),(4,6,7),(2,6,4),(2,4,7),(0,7,2),(0,4,7),(2,4,3),(3,4,7),(3,5,7),(5,6,7),(3,7,6),(3,6,5),(1,6,5),(1,3,6),(2,5,3),(2,6,5),(0,7,6),(0,5,7),(1,6,4),(1,7,6),(2,4,5),(2,5,7),(3,4,5),(3,6,4));
    TriConfigStart: array[0..256] of word = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,8,8,8,8,8,8,8,8,8,8,8,8,12,12,12,12,16,16,16,16,16,16,16,16,20,20,20,20,24,24,24,24,26,26,26,26,26,26,26,26,26,26,26,26,26,26,30,30,34,34,34,34,34,34,34,34,38,38,38,38,38,38,42,42,44,44,44,44,44,44,44,44,44,44,48,48,48,48,48,48,54,54,58,58,62,62,66,66,68,68,68,68,74,74,80,80,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,88,92,92,92,92,92,92,92,96,96,96,96,96,96,96,96,96,102,102,102,102,102,102,102,102,102,102,102,102,106,106,106,110,112,112,112,116,120,120,120,120,126,126,126,130,132,132,132,138,142,142,142,142,142,142,142,142,142,142,142,142,142,142,146,150,152,152,152,152,152,156,160,160,166,166,166,166,166,170,172,178,182,182,182,182,182,182,182,182,182,186,186,190,196,200,206,208,212,212,216,220,222,226,228,234,238,242,248,250,254,256,260,264,264);
-   TriConfigData: array[0..263] of byte = (1,2,3,4,3,2,5,6,7,8,9,10,10,11,12,13,1,2,14,15,7,16,12,17,2,12,18,19,20,21,22,19,23,20,3,1,24,25,18,26,20,27,3,20,28,29,30,31,10,29,19,12,20,30,32,33,34,35,33,36,37,34,38,32,39,34,1,34,7,33,31,12,30,34,18,28,32,20,30,34,12,20,30,34,40,41,42,43,44,45,41,42,46,47,48,49,3,2,41,46,47,42,10,7,50,51,40,52,53,42,10,42,54,55,56,57,58,59,54,55,1,2,14,47,48,55,60,61,62,55,7,55,63,49,56,47,42,64,2,47,42,55,18,65,19,66,40,67,41,68,19,41,69,70,71,72,73,74,69,70,3,1,46,69,48,70,75,71,76,70,18,70,40,41,49,46,71,70,3,41,46,70,77,78,79,80,81,82,79,78,10,7,29,31,79,78,83,84,77,78,18,28,29,19,77,78,40,78,10,29,19,78,33,32,85,86,87,56,88,54,33,54,89,71,69,90,32,69,48,49,56,54,71,69,1,48,54,69,91,92,79,77,28,33,32,31,79,77,56,79,7,33,31,79,71,77,18,28,32,77,40,49,56,71);
+   TriConfigData: array[0..263] of byte = (1,2,3,4,3,2,5,6,7,8,9,10,10,11,12,13,1,2,14,15,7,16,12,17,2,12,18,19,20,21,22,19,23,20,3,1,24,25,18,26,20,27,3,20,28,29,30,31,10,29,19,12,20,30,32,33,34,35,33,36,37,34,38,32,39,34,1,34,7,33,31,12,30,34,18,28,32,20,30,34,12,20,30,34,40,41,42,43,44,45,41,42,46,47,48,49,3,2,41,46,47,42,10,7,50,51,40,52,53,42,10,42,54,55,56,57,58,59,54,55,1,2,54,47,48,55,60,61,62,55,7,55,63,49,56,47,42,64,2,47,42,55,18,65,19,66,40,67,41,68,19,41,69,70,71,72,73,74,69,70,3,1,46,69,48,70,75,71,76,70,18,70,40,41,49,46,71,70,3,41,46,70,77,78,79,80,81,82,79,78,10,7,29,31,79,78,83,84,77,78,18,28,29,19,77,78,40,78,10,29,19,78,33,32,85,86,87,56,88,54,33,54,89,71,69,90,32,69,48,49,56,54,71,69,1,48,54,69,91,92,79,77,28,33,32,31,79,77,56,79,7,33,31,79,71,77,18,28,32,77,40,49,56,71);
    TriangleFaces: array[1..92] of shortint = (0,4,2,-1,-1,-1,0,5,-1,2,-1,5,-1,-1,-1,-1,-1,0,4,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,2,4,1,-1,-1,-1,-1,-1,0,5,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,5,1,2,-1,-1,-1,-1,2,-1,0,1,-1,-1,-1,-1,3,1,4,-1,-1,-1,-1,-1,5,1,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
 var
    Vertexes: array [0..7] of integer;
@@ -91,22 +91,46 @@ begin
       end;
       Mult2 := Mult2 * 2;
    end;
+   {$ifdef MESH_TEST}
+      if QuadConfigStart[config] = QuadConfigStart[config+1] then
+    	   GlobalVars.MeshFile.Add('Configuration detected and not calculated: ' + IntToStr(Config) + '. The vertexes are respectively: (' + IntToStr(Vertexes[0]) + ',' + IntToStr(Vertexes[1]) + ',' + IntToStr(Vertexes[2]) + ',' + IntToStr(Vertexes[3]) + ',' + IntToStr(Vertexes[4]) + ',' + IntToStr(Vertexes[5]) + ',' + IntToStr(Vertexes[6]) + ',' + IntToStr(Vertexes[7]) + ').');
+   {$endif}
    // Add the new quads.
    i := QuadConfigStart[config];
    while i < QuadConfigStart[config+1] do // config will always be below 255
    begin
       if (QuadFaces[QuadConfigData[i]] = -1) then
       begin
+         {$ifdef MESH_TEST}
+ 	         if (Vertexes[QuadSet[QuadConfigData[i],0]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] < 0) then
+ 	         begin
+ 	            GlobalVars.MeshFile.Add('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
+ 	         end;
+ 	         GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') has been constructed.');
+         {$endif}
          // Add face.
          _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
       end
       else if AllowedFaces[QuadFaces[QuadConfigData[i]]] then
       begin
          // This condition was splitted to avoid access violations.
+         {$ifdef MESH_TEST}
+ 	         if (Vertexes[QuadSet[QuadConfigData[i],0]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],1]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],2]] < 0) or (Vertexes[QuadSet[QuadConfigData[i],3]] < 0) then
+ 	         begin
+ 	            GlobalVars.MeshFile.Add('Invalid face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ').');
+ 	         end;
+ 	         GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been constructed.');
+ 	         {$endif}
          // Add face.
          _QuadList.Add(Vertexes[QuadSet[QuadConfigData[i],0]],Vertexes[QuadSet[QuadConfigData[i],1]],Vertexes[QuadSet[QuadConfigData[i],2]],Vertexes[QuadSet[QuadConfigData[i],3]],_Color);
          _QuadList.GoToLastElement;
          _FaceVerifier.AddQuadUnsafe(_QuadList.SaveState(),_x,_y,_z,QuadFaces[QuadConfigData[i]]);
+      end
+      else
+      begin
+         {$ifdef MESH_TEST}
+            GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],0]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],1]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],2]]) + ',' + IntToStr(Vertexes[QuadSet[QuadConfigData[i],3]]) + ') of the type (' + IntToStr(QuadSet[QuadConfigData[i],0]) + ',' + IntToStr(QuadSet[QuadConfigData[i],1]) + ',' + IntToStr(QuadSet[QuadConfigData[i],2]) + ',' + IntToStr(QuadSet[QuadConfigData[i],3]) + ') from the side ' + IntToStr(QuadFaces[QuadConfigData[i]]) +  ' has been rejected.');
+ 	     {$endif}
       end;
 
       // else does not add face.
@@ -119,14 +143,26 @@ begin
       if (TriangleFaces[TriConfigData[i]] = -1) then
       begin
          // Add face.
+         {$ifdef MESH_TEST}
+ 	         GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') has been constructed.');
+         {$endif}
          _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
       end
       else if AllowedFaces[TriangleFaces[TriConfigData[i]]] then
       begin
+         {$ifdef MESH_TEST}
+ 	         GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') from the side ' + IntToStr(TriangleFaces[TriConfigData[i]]) +  ' has been constructed.');
+         {$endif}
          // Add face.
          _TriangleList.Add(Vertexes[TriangleSet[TriConfigData[i],0]],Vertexes[TriangleSet[TriConfigData[i],1]],Vertexes[TriangleSet[TriConfigData[i],2]],_Color);
          _TriangleList.GoToLastElement;
          _FaceVerifier.AddTriangleUnsafe(_TriangleList.SaveState(),_x,_y,_z,TriangleFaces[TriConfigData[i]]);
+     end
+     else
+     begin
+ 	     {$ifdef MESH_TEST}
+ 	         GlobalVars.MeshFile.Add('Face ' + IntToStr(i) + ' from config ' + IntToStr(Config) + ' formed by (' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],0]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],1]]) + ',' + IntToStr(Vertexes[TriangleSet[TriConfigData[i],2]]) + ') of the type (' + IntToStr(TriangleSet[TriConfigData[i],0]) + ',' + IntToStr(TriangleSet[TriConfigData[i],1]) + ',' + IntToStr(TriangleSet[TriConfigData[i],2]) + ') from the side ' + IntToStr(TriangleFaces[TriConfigData[i]]) +  ' has been rejected.');
+        {$endif}
       end;
       inc(i);
    end;
@@ -948,20 +984,44 @@ begin
    // 8, like an octree.
 
    // (0,0,0) -> (1,1,1), left bottom back side
+  {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0], _NeighbourVertexIDs[1,1,1],_AllowedFaces,xVM,yVM,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[0]));
    // (0,0,1) -> (1,1,2), left bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1], _NeighbourVertexIDs[1,1,2],_AllowedFaces,xVM,yVM,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[1]));
    // (0,1,0) -> (1,2,1), left top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0], _NeighbourVertexIDs[1,2,1],_AllowedFaces,xVM,yVM+1,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[2]));
    // (0,1,1) -> (1,2,2), left top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1], _NeighbourVertexIDs[1,2,2],_AllowedFaces,xVM,yVM+1,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[3]));
    // (1,0,0) -> (2,1,1), right bottom back side
+   {$ifdef MESH_TEST}
+ 	      GlobalVars.MeshFile.Add('Region: Right bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0], _NeighbourVertexIDs[2,1,1],_AllowedFaces,xVM+1,yVM,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[4]));
    // (1,0,1) -> (2,1,2), right bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,1,1], _NeighbourVertexIDs[2,1,2],_AllowedFaces,xVM+1,yVM,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[5]));
    // (1,1,0) -> (2,2,1), right top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,2,0], _NeighbourVertexIDs[2,2,1],_AllowedFaces,xVM+1,yVM+1,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[6]));
    // (1,1,1) -> (2,2,2), right top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,2,1], _NeighbourVertexIDs[2,2,2],_AllowedFaces,xVM+1,yVM+1,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourRefinement(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[7]));
 end;
 
@@ -981,20 +1041,44 @@ begin
    // 8, like an octree.
 
    // (0,0,0) -> (1,1,1), left bottom back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[0]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,0,0],_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0], _NeighbourVertexIDs[1,1,1],_AllowedFaces or FaceConfigLimits[0],xVM,yVM,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[0]));
    // (0,0,1) -> (1,1,2), left bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[1]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,0,1],_NeighbourVertexIDs[0,0,2],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1], _NeighbourVertexIDs[1,1,2],_AllowedFaces or FaceConfigLimits[1],xVM,yVM,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[1]));
    // (0,1,0) -> (1,2,1), left top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[2]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,1,0],_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,2,0],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0], _NeighbourVertexIDs[1,2,1],_AllowedFaces or FaceConfigLimits[2],xVM,yVM+1,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[2]));
    // (0,1,1) -> (1,2,2), left top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Left top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[3]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[0,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[0,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[0,1,1],_NeighbourVertexIDs[0,1,2],_NeighbourVertexIDs[0,2,1],_NeighbourVertexIDs[0,2,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1], _NeighbourVertexIDs[1,2,2],_AllowedFaces or FaceConfigLimits[3],xVM,yVM+1,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[3]));
    // (1,0,0) -> (2,1,1), right bottom back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right bottom back, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[4]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,0,0],_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[2,0,0],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,1,0], _NeighbourVertexIDs[2,1,1],_AllowedFaces or FaceConfigLimits[4],xVM+1,yVM,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[4]));
    // (1,0,1) -> (2,1,2), right bottom front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right bottom front, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[5]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,0,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,0,1],_NeighbourVertexIDs[1,0,2],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[2,0,1],_NeighbourVertexIDs[2,0,2],_NeighbourVertexIDs[2,1,1], _NeighbourVertexIDs[2,1,2],_AllowedFaces or FaceConfigLimits[5],xVM+1,yVM,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[5]));
    // (1,1,0) -> (2,2,1), right top back side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top back, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[6]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,0]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,1,0],_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,2,0],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[2,1,0],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,2,0], _NeighbourVertexIDs[2,2,1],_AllowedFaces or FaceConfigLimits[6],xVM+1,yVM+1,zVM,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[6]));
    // (1,1,1) -> (2,2,2), right top front side
+   {$ifdef MESH_TEST}
+      GlobalVars.MeshFile.Add('Region: Right top front, Allowed Faces: ' + IntToStr(_AllowedFaces) + '//' + IntToStr(_AllowedFaces or FaceConfigLimits[7]) + ' and the vertexes are: (' + IntToStr(_NeighbourVertexIDs[1,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[1,2,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,1,2]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,1]) + ',' + IntToStr(_NeighbourVertexIDs[2,2,2]) + ')');
+   {$endif}
    AddRefinementFaces(_NeighbourVertexIDs[1,1,1],_NeighbourVertexIDs[1,1,2],_NeighbourVertexIDs[1,2,1],_NeighbourVertexIDs[1,2,2],_NeighbourVertexIDs[2,1,1],_NeighbourVertexIDs[2,1,2],_NeighbourVertexIDs[2,2,1], _NeighbourVertexIDs[2,2,2],_AllowedFaces or FaceConfigLimits[7],xVM+1,yVM+1,zVM+1,_TriangleList,_QuadList,_FaceVerifier,GetColourSurface(_Voxel,_Palette,_x,_y,_z,FaceColorConfig[7]));
 end;
 

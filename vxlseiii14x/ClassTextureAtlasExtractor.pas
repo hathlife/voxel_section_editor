@@ -32,6 +32,10 @@ type
          procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
          procedure ObtainCommonEdgeFromFaces(const _Faces: auint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2: integer);
+         // Oriogami helper functions
+         procedure WriteUVCoordinatesOrigami(const _Vertices: TAVector3f; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer);
+         function Get90RotDirectionFromVector(const _V1,_V2: TVector2f): TVector2f;
+         function Get90RotDirectionFromDirection(const _Direction: TVector2f): TVector2f;
       public
          // Constructors and Destructors
          constructor Create; overload;
@@ -816,6 +820,72 @@ begin
    VertexUtil.Free;
 end;
 
+function GetOuterProduct(const _Source,_V1, _V2: TVector2f): single;
+begin
+   Result := (_Source.U * _V1.V) + (_Source.V * _V2.U) + (_V1.U * _V2.V) - (_Source.U * _V2.V) - (_Source.V * _V1.U) - (_V1.V * _V2.U);
+end;
+
+function CTextureAtlasExtractor.Get90RotDirectionFromVector(const _V1,_V2: TVector2f): TVector2f;
+begin
+   Result.U := _V1.V - _V2.V;
+   Result.V := _V2.U - _V1.U;
+   Normalize(Result);
+end;
+
+function CTextureAtlasExtractor.Get90RotDirectionFromDirection(const _Direction: TVector2f): TVector2f;
+begin
+   Result.U := -1 * _Direction.V;
+   Result.V := _Direction.U;
+   Normalize(Result);
+end;
+
+// The objective is to write the UV coordinates from _Target.
+procedure CTextureAtlasExtractor.WriteUVCoordinatesOrigami(const _Vertices: TAVector3f; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer);
+var
+   OriginalEdgeSize,FinalEdgeSize,Scale,SinProjectionSizeInMesh,SinProjectionSizeInParameter,ProjectionSizeInMesh,ProjectionSizeInParameter: single;
+   EdgeDirectionInParameter,EdgeDirectionInMesh,SinDirectionInParameter: TVector2f;
+   PositionOfTargetatEdgeInMesh,PositionOfTargetatEdgeInParameter: TVector3f;
+   SourceSide: single;
+begin
+   // Get edge size in mesh
+   OriginalEdgeSize := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
+   if OriginalEdgeSize > 0 then
+   begin
+      // Get the direction of the edge (Edge0 to Edge1) in Mesh and UV space
+//      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge0],_Vertices[_Edge1]);
+      EdgeDirectionInParameter := SubtractVector(_TexCoords[_Edge0],_TexCoords[_Edge1]);
+      // Get edge size in UV space.
+      FinalEdgeSize := Sqrt((EdgeDirectionInParameter.U * EdgeDirectionInParameter.U) + (EdgeDirectionInParameter.V * EdgeDirectionInParameter.V));
+      // Directions must be normalized.
+      Normalize(EdgeDirectionInMesh);
+      Normalize(EdgeDirectionInParameter);
+      Scale := FinalEdgeSize / OriginalEdgeSize;
+      // Get the size of projection of (Vertex - Edge0) at the Edge, in mesh
+//      ProjectionSizeInMesh := DotProduct(SubtractVector(_Vertices[_Target],_Vertices[_Edge0]),EdgeDirectionInMesh);
+      // Obtain the position of this projection at the edge, in mesh
+//      PositionOfTargetatEdgeInMesh := AddVector(_Vertices[_Edge0],ScaleVector(EdgeDirectionInMesh,ProjectionSizeInMesh));
+      // Now we can use the position obtained previously to find out the
+      // distance between that and the _Target in mesh.
+      SinProjectionSizeInMesh := VectorDistance(_Vertices[_Target],PositionOfTargetatEdgeInMesh);
+      // Rotate the edge in 90' in UV space.
+      SinDirectionInParameter := Get90RotDirectionFromDirection(EdgeDirectionInParameter);
+      // We need to make sure that _Target and _OriginVert are at opposite sides
+      // the universe, if it is divided by the Edge0 to Edge1.
+      SourceSide := GetOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
+      if SourceSide > 0 then
+      begin
+         SinDirectionInParameter := ScaleVector(SinDirectionInParameter,-1);
+      end;
+      // Now we use the same logic applied in mesh to find out the final position
+      // in UV space
+      ProjectionSizeInParameter := ProjectionSizeInMesh * Scale;
+//      PositionOfTargetatEdgeInParameter := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInParameter,ProjectionSizeInParameter));
+      SinProjectionSizeInParameter := SinProjectionSizeInMesh * Scale;
+      // Write the UV Position
+//      _TexCoords[_Target] := AddVector(PositionOfTargetatEdgeInParameter,ScaleVector(SinDirectionInParameter,SinProjectionSizeInParameter));
+   end;
+end;
+
 function CTextureAtlasExtractor.MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
 const
    C_MIN_ANGLE = 0.001; // approximately cos 90'
@@ -945,8 +1015,8 @@ begin
          // This seed is the first seed to use this vertex.
          _VertsSeed[vertex] := _ID;
          _VertsLocation[vertex] := vertex;
-         // Get temporary texture coordinates. -----Change the next line-----
-         //_TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+         // Get temporary texture coordinates.
+         WriteUVCoordinatesOrigami(_Vertices,_TextCoords,vertex,SharedEdge0,SharedEdge1,PreviousVertex);
          // Now update the bounds of the seed.
          if _TextCoords[vertex].U < Result.MinBounds.U then
             Result.MinBounds.U := _TextCoords[vertex].U;
@@ -991,7 +1061,7 @@ begin
                _VertsColours[High(_Vertices)].W := _VertsColours[vertex].W;
                // Get temporarily texture coordinates.
                SetLength(_TextCoords,High(_Vertices)+1);
-               //_TextCoords[High(_Vertices)] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
                // Now update the bounds of the seed.
                if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
                   Result.MinBounds.U := _TextCoords[High(_Vertices)].U;

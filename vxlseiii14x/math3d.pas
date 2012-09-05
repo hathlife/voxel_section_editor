@@ -71,8 +71,8 @@ end;
 
 function SetVector(const v : TVector2f) : TVector2f;
 begin
-  result.u := v.u;
-  result.v := v.v;
+   result.u := v.u;
+   result.v := v.v;
 end;
 
 

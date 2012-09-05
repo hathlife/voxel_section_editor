@@ -962,7 +962,10 @@ begin
                // according to the following criteria. If a face neighbour
                // exists, we'll fill every vertex in its face. A similar
                // approach applies to neighbour edges and vertexes.
-
+               {$ifdef MESH_TEST}
+ 	               GlobalVars.MeshFile.Add('...');
+ 	               GlobalVars.MeshFile.Add('Next refinement region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + ') and it will be subdivided!');
+               {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                Tool.DetectPotentialRefinementVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                Tool.AddRefinementFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
@@ -986,6 +989,10 @@ begin
                if _VoxelMap.MapSafe[x,y,z+1] < 512 then
                   FaceConfig := FaceConfig or 1;
 
+               {$ifdef MESH_TEST}
+ 	               GlobalVars.MeshFile.Add('...');
+                  GlobalVars.MeshFile.Add('Next surface region is: (' + IntToStr(x-1) + ',' + IntToStr(y-1) + ',' + IntToStr(z-1) + '), FaceConfig = ' + IntToStr(FaceConfig) + ' taken from (' + FloatToStr(_VoxelMap.MapSafe[x-1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x+1,y,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y-1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y+1,z]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z-1]) + ',' + FloatToStr(_VoxelMap.MapSafe[x,y,z+1]) + ') and it will be subdivided!');
+               {$endif}
                Tool.InitializeNeighbourVertexIDsSize(NeighbourVertexIDs,_VertexMap,_VoxelMap,x-1,y-1,z-1,VUnit,_VertexTransformation,_NumVertices);
                Tool.DetectPotentialSurfaceVertexes(_VoxelMap,_VertexMap,NeighbourVertexIDs,x,y,z,VUnit,_NumVertices);
                Tool.AddSurfaceFacesFromRegions(_Voxel,_Palette,NeighbourVertexIDs,TriangleList,QuadList,FaceVerifier,x-1,y-1,z-1,FaceConfig,VUnit);
