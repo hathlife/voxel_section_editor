@@ -9,6 +9,8 @@ interface
 
 uses BasicDataTypes, BasicConstants;
 
+{$INCLUDE Global_Conditionals.inc}
+
 type
    CVolumeFaceVerifier = class
       private
@@ -28,6 +30,11 @@ type
    end;
 
 implementation
+
+{$ifdef MESH_TEST}
+   uses GlobalVars, SysUtils;
+{$endif}
+
 
 constructor CVolumeFaceVerifier.Create(_xSize, _ySize, _zSize: integer);
 var
@@ -100,6 +107,9 @@ begin
       _Triangle^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Triangles[_face]^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Triangles[_face] := nil;
+      {$ifdef MESH_TEST}
+ 	      GlobalVars.MeshFile.Add('Triangle construction has been aborted due to a triangle.');
+      {$endif}
       if isPixelValid(xSF,ySF,zSF) then
       begin
          Items[xSF,ySF,zSF].Triangles[SymmetricFaces[_face]]^.v1 := C_VMG_NO_VERTEX;
@@ -112,6 +122,9 @@ begin
       _Triangle^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Quads[_face]^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Quads[_face] := nil;
+      {$ifdef MESH_TEST}
+ 	      GlobalVars.MeshFile.Add('Triangle construction has been aborted due to a quad.');
+      {$endif}
       if isPixelValid(xSF,ySF,zSF) then
       begin
          Items[xSF,ySF,zSF].Quads[SymmetricFaces[_face]]^.v1 := C_VMG_NO_VERTEX;
@@ -162,6 +175,9 @@ begin
       _Quad^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Triangles[_face]^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Triangles[_face] := nil;
+      {$ifdef MESH_TEST}
+ 	      GlobalVars.MeshFile.Add('Quad construction has been aborted due to a triangle.');
+      {$endif}
       if isPixelValid(xSF,ySF,zSF) then
       begin
          Items[xSF, ySF, zSF].Triangles[SymmetricFaces[_face]]^.v1 := C_VMG_NO_VERTEX;
@@ -173,6 +189,9 @@ begin
       _Quad^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Quads[_face]^.v1 := C_VMG_NO_VERTEX;
       Items[_x,_y,_z].Quads[_face] := nil;
+      {$ifdef MESH_TEST}
+ 	      GlobalVars.MeshFile.Add('Quad construction has been aborted due to a quad.');
+      {$endif}
       if isPixelValid(xSF,ySF,zSF) then
       begin
          Items[xSF, ySF, zSF].Quads[SymmetricFaces[_face]]^.v1 := C_VMG_NO_VERTEX;
