@@ -85,6 +85,7 @@ begin
    Application.ProcessMessages;
 end;
 
+
 function GetWebContent (const _FileURL: String): string;
 const
    BufferSize = 1024;

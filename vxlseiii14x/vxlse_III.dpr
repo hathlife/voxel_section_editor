@@ -172,7 +172,8 @@ uses
   ClassPLYFile in 'ClassPLYFile.pas',
   ClassTopologyFixer in 'ClassTopologyFixer.pas',
   ClassFillUselessGapsTool in 'ClassFillUselessGapsTool.pas',
-  Histogram in 'Histogram.pas';
+  Histogram in 'Histogram.pas',
+  SysInfo in 'SysInfo.pas';
 
 {$R *.res}
 

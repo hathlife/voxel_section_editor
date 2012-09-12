@@ -843,8 +843,8 @@ end;
 procedure CTextureAtlasExtractor.WriteUVCoordinatesOrigami(const _Vertices: TAVector3f; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer);
 var
    OriginalEdgeSize,FinalEdgeSize,Scale,SinProjectionSizeInMesh,SinProjectionSizeInParameter,ProjectionSizeInMesh,ProjectionSizeInParameter: single;
-   EdgeDirectionInParameter,EdgeDirectionInMesh,SinDirectionInParameter: TVector2f;
-   PositionOfTargetatEdgeInMesh,PositionOfTargetatEdgeInParameter: TVector3f;
+   EdgeDirectionInParameter,PositionOfTargetatEdgeInParameter,SinDirectionInParameter: TVector2f;
+   EdgeDirectionInMesh,PositionOfTargetatEdgeInMesh: TVector3f;
    SourceSide: single;
 begin
    // Get edge size in mesh
@@ -852,7 +852,7 @@ begin
    if OriginalEdgeSize > 0 then
    begin
       // Get the direction of the edge (Edge0 to Edge1) in Mesh and UV space
-//      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge0],_Vertices[_Edge1]);
+      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge0],_Vertices[_Edge1]);
       EdgeDirectionInParameter := SubtractVector(_TexCoords[_Edge0],_TexCoords[_Edge1]);
       // Get edge size in UV space.
       FinalEdgeSize := Sqrt((EdgeDirectionInParameter.U * EdgeDirectionInParameter.U) + (EdgeDirectionInParameter.V * EdgeDirectionInParameter.V));
@@ -861,9 +861,9 @@ begin
       Normalize(EdgeDirectionInParameter);
       Scale := FinalEdgeSize / OriginalEdgeSize;
       // Get the size of projection of (Vertex - Edge0) at the Edge, in mesh
-//      ProjectionSizeInMesh := DotProduct(SubtractVector(_Vertices[_Target],_Vertices[_Edge0]),EdgeDirectionInMesh);
+      ProjectionSizeInMesh := DotProduct(SubtractVector(_Vertices[_Target],_Vertices[_Edge0]),EdgeDirectionInMesh);
       // Obtain the position of this projection at the edge, in mesh
-//      PositionOfTargetatEdgeInMesh := AddVector(_Vertices[_Edge0],ScaleVector(EdgeDirectionInMesh,ProjectionSizeInMesh));
+      PositionOfTargetatEdgeInMesh := AddVector(_Vertices[_Edge0],ScaleVector(EdgeDirectionInMesh,ProjectionSizeInMesh));
       // Now we can use the position obtained previously to find out the
       // distance between that and the _Target in mesh.
       SinProjectionSizeInMesh := VectorDistance(_Vertices[_Target],PositionOfTargetatEdgeInMesh);
@@ -879,10 +879,10 @@ begin
       // Now we use the same logic applied in mesh to find out the final position
       // in UV space
       ProjectionSizeInParameter := ProjectionSizeInMesh * Scale;
-//      PositionOfTargetatEdgeInParameter := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInParameter,ProjectionSizeInParameter));
+      PositionOfTargetatEdgeInParameter := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInParameter,ProjectionSizeInParameter));
       SinProjectionSizeInParameter := SinProjectionSizeInMesh * Scale;
       // Write the UV Position
-//      _TexCoords[_Target] := AddVector(PositionOfTargetatEdgeInParameter,ScaleVector(SinDirectionInParameter,SinProjectionSizeInParameter));
+      _TexCoords[_Target] := AddVector(PositionOfTargetatEdgeInParameter,ScaleVector(SinDirectionInParameter,SinProjectionSizeInParameter));
    end;
 end;
 

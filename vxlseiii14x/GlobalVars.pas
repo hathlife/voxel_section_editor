@@ -3,7 +3,7 @@ unit GlobalVars;
 interface
 
 uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank, Render, Debug,
-   SysUtils, TextureBank, ShaderBank;
+   SysUtils, TextureBank, ShaderBank, SysInfo;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -14,6 +14,7 @@ var
    Documents : TVoxelDocumentBank;
    TextureBank : TTextureBank;
    Render : TRender;
+   SysInfo: TSysInfo;
    {$ifdef SPEED_TEST}
    SpeedFile: TDebugFile;
    {$endif}
@@ -30,4 +31,5 @@ begin
    {$ifdef MESH_TEST}
    MeshFile := TDebugFile.Create(ExtractFilePath(ParamStr(0)) + 'meshtest.txt');
    {$endif}
+   SysInfo := TSysInfo.Create;
 end.
