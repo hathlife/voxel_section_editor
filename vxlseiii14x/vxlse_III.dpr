@@ -173,7 +173,8 @@ uses
   ClassTopologyFixer in 'ClassTopologyFixer.pas',
   ClassFillUselessGapsTool in 'ClassFillUselessGapsTool.pas',
   Histogram in 'Histogram.pas',
-  SysInfo in 'SysInfo.pas';
+  SysInfo in 'SysInfo.pas',
+  GenericThread in 'GenericThread.pas';
 
 {$R *.res}
 

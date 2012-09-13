@@ -6,6 +6,17 @@ uses Palette, HVA, Voxel, Mesh, BasicFunctions, BasicDataTypes, dglOpenGL, LOD,
    SysUtils, Graphics, GlConstants, ShaderBank, Histogram;
 
 type
+   TVoxelCreationStruct = record
+      Mesh: PMesh;
+      i : integer;
+      Section : TVoxelSection;
+      Palette: TPalette;
+      ShaderBank: PShaderBank;
+      Quality: integer;
+   end;
+   PVoxelCreationStruct = ^TVoxelCreationStruct;
+
+
    PModel = ^TModel;
    TModel = class
    private
@@ -138,7 +149,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, GenericThread;
 
 constructor TModel.Create(const _Filename: string; _ShaderBank : PShaderBank);
 begin
@@ -257,19 +268,59 @@ begin
 end;
 
 // I/O
-procedure TModel.OpenVoxel;
+function ThreadCreateFromVoxel(const _args: pointer): integer;
 var
-   i : integer;
+   Data: TVoxelCreationStruct;
+begin
+   if _args <> nil then
+   begin
+      Data := PVoxelCreationStruct(_args)^;
+      (Data.Mesh)^ := TMesh.CreateFromVoxel(Data.i,Data.Section,Data.Palette,Data.ShaderBank,Data.Quality);
+      (Data.Mesh)^.Next := Data.i+1;
+   end;
+end;
+
+
+procedure TModel.OpenVoxel;
+   function CreatePackageForThreadCall(const _Mesh: PMesh; _i : integer; const _Section: TVoxelSection; const _Palette: TPalette; _ShaderBank: PShaderBank; _Quality: integer): TVoxelCreationStruct;
+   begin
+      Result.Mesh := _Mesh;
+      Result.i := _i;
+      Result.Section := _Section;
+      Result.Palette := _Palette;
+      Result.ShaderBank := _ShaderBank;
+      Result.Quality := _Quality;
+   end;
+
+   procedure LoadSections;
+   var
+      i : integer;
+      Packages: array of TVoxelCreationStruct;
+      Threads: array of TGenericThread;
+      MyFunction : TGenericFunction;
+   begin
+      SetLength(Threads,Voxel^.Header.NumSections);
+      SetLength(Packages,Voxel^.Header.NumSections);
+      MyFunction := ThreadCreateFromVoxel;
+      for i := 0 to (Voxel^.Header.NumSections-1) do
+      begin
+         Packages[i] := CreatePackageForThreadCall(Addr(LOD[0].Mesh[i]),i,Voxel^.Section[i],Palette^,ShaderBank,Quality);
+         Threads[i] := TGenericThread.Create(MyFunction,Addr(Packages[i]));
+      end;
+      for i := 0 to (Voxel^.Header.NumSections-1) do
+      begin
+         Threads[i].WaitFor;
+         Threads[i].Free;
+      end;
+      SetLength(Threads,0);
+      SetLength(Packages,0);
+   end;
 begin
    // We may use an existing voxel.
    SetLength(LOD,1);
    LOD[0] := TLOD.Create;
    SetLength(LOD[0].Mesh,Voxel^.Header.NumSections);
-   for i := 0 to (Voxel^.Header.NumSections-1) do
-   begin
-      LOD[0].Mesh[i] := TMesh.CreateFromVoxel(i,Voxel^.Section[i],Palette^,ShaderBank,Quality);
-      LOD[0].Mesh[i].Next := i+1;
-   end;
+   LoadSections;
    LOD[0].Mesh[High(LOD[0].Mesh)].Next := -1;
    CurrentLOD := 0;
    Opened := true;
