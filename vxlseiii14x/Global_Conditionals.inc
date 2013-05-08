@@ -6,6 +6,7 @@
 //{$DEFINE DEBUG_FILE}
 {$DEFINE SPEED_TEST}       // to check speed for UFF's final graduation project
 //{$DEFINE MESH_TEST}       // to mesh values for UFF's final graduation project
+{$DEFINE SMOOTH_TEST}      // to smooth values for UFF's master dissertation project
 //{$DEFINE OPTIMIZATION_INFO} // it adds analysis for the mesh optimization operations.
 //{$DEFINE TEXTURE_DEBUG}
 

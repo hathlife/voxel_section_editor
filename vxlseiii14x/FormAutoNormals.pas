@@ -49,6 +49,8 @@ type
       EdSmooth: TEdit;
       Label8: TLabel;
       RbTangent: TRadioButton;
+    RbHBD: TRadioButton;
+    procedure RbHBDClick(Sender: TObject);
       procedure RbTangentClick(Sender: TObject);
       procedure BtTipsClick(Sender: TObject);
       procedure BtOKClick(Sender: TObject);
@@ -78,12 +80,12 @@ begin
    GbInfluenceOptions.Enabled := value;
    LbRange.Enabled := value;
    EdRange.Enabled := value and (LbRange.ItemIndex = RANGE_CUSTOM);
-   CbSmoothMe.Enabled := value and (not RbTangent.Checked);
+   CbSmoothMe.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
    CbInfluenceMap.Enabled := value and RbCubed.Checked;
    CbIncreaseContrast.Enabled := value and RbInfluence.Checked;
-   EdContrast.Enabled := value and (not RbTangent.Checked);
+   EdContrast.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
    EdSmooth.Enabled := value and (not RbTangent.Checked);
-   CbNewPixelsOnly.Enabled := value and (not RbTangent.Checked);
+   CbNewPixelsOnly.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
    if RbInfluence.Checked then
    begin
       CbIncreaseContrast.Caption := 'Stretch Influence Map';
@@ -112,6 +114,7 @@ begin
    RbInfluence.Caption := 'Influence Auto Normals (v' + AUTONORMALS_INFLUENCE + ')';
    RbCubed.Caption := 'Cubed Auto Normals (v' + AUTONORMALS_CUBED + ')';
    Rb6Faced.Caption := '6-Faced Auto Normals (v' + AUTONORMALS_6FACED + ')';
+   RbHBD.Caption := 'HBD AutoNormals (Quick`n`Good.)';
 end;
 
 procedure TFrmAutoNormals.LbRangeClick(Sender: TObject);
@@ -155,6 +158,12 @@ procedure TFrmAutoNormals.RbCubedClick(Sender: TObject);
 begin
    ShowInfluenceOptions(RbCubed.Checked);
    GbInfluenceOptions.Caption := 'Smooth Cubed Normalizer Options..';
+end;
+
+procedure TFrmAutoNormals.RbHBDClick(Sender: TObject);
+begin
+   ShowInfluenceOptions(RbHBD.Checked);
+   GbInfluenceOptions.Caption := 'HBD Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.Rb6FacedClick(Sender: TObject);
@@ -242,6 +251,25 @@ begin
       end;
       Res := ApplyCubedNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbInfluenceMap.Checked,CbNewPixelsOnly.checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_CUBED + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
+   end
+   else if RbHBD.Checked then
+   begin
+      Range := StrToFloatDef(EdRange.Text,0);
+      if Range < 1 then
+      begin
+         MessageBox(0,pchar('Range Value Is Invalid. It Must Be Positive and Higher Than 1. Using 3.54 (Default).'),'Auto Normals Warning',0);
+         Range := RA2_MAGIC_NUMBER;
+      end;
+      Smooth := StrToFloatDef(EdSmooth.Text,1);
+      if (Smooth < 1) then
+      begin
+         MessageBox(0,pchar('Smooth Value Is Invalid. It Must Be Positive, Integer and Higher Or Equal Than 1. Using 1 (Default).'),'Auto Normals Warning',0);
+         Smooth := 1;
+      end
+      else
+         Smooth := Range;
+      velAutoNormals2(MyVoxel, Range, Smooth);
+      ShowMessage('AutoNormals HBD' + #13#13 + 'Operation Completed!');
    end
    else
    begin

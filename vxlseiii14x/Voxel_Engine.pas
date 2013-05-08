@@ -1143,11 +1143,14 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: RefreshViews');
    {$endif}
-   with FrmMain.Document.ActiveSection^ do
+   if FrmMain.Document.ActiveSection <> nil then
    begin
-      View[0].Refresh;
-      View[1].Refresh;
-      View[2].Refresh;
+      with FrmMain.Document.ActiveSection^ do
+      begin
+         View[0].Refresh;
+         View[1].Refresh;
+         View[2].Refresh;
+      end;
    end;
 end;
 

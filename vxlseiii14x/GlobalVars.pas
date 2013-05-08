@@ -21,6 +21,9 @@ var
    {$ifdef MESH_TEST}
    MeshFile: TDebugFile;
    {$endif}
+   {$ifdef SMOOTH_TEST}
+   SmoothFile: TDebugFile;
+   {$endif}
 
 implementation
 
@@ -30,6 +33,9 @@ begin
    {$endif}
    {$ifdef MESH_TEST}
    MeshFile := TDebugFile.Create(ExtractFilePath(ParamStr(0)) + 'meshtest.txt');
+   {$endif}
+   {$ifdef SMOOTH_TEST}
+   SmoothFile := TDebugFile.Create(ExtractFilePath(ParamStr(0)) + 'smoothtest.txt');
    {$endif}
    SysInfo := TSysInfo.Create;
 end.

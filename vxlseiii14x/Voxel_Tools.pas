@@ -46,6 +46,11 @@ function RemoveRedundantVoxels(Voxel : TVoxelSection) : integer;
 function SmoothNormals(var Vxl : TVoxelSection) : TApplyNormalsResult;
 function GetSmoothNormal(var Vxl : TVoxelSection; X,Y,Z,Normal : integer) : integer;
 
+// HBD functions (based in a modified old voxel engine, so somethings might be replicated)
+procedure velFloodFillMark3D(_X, _Y, _Z, _XSize, _YSize, _ZSize: Byte; var _Map: T3DIntGrid);
+procedure CreateSurfaceMap(_Sect: TVoxelSection; var _Map: T3DIntGrid);
+procedure velAutoNormals2(_Sect: TVoxelSection; _Range, _Smooth: Single);
+
 // Random functions
 procedure GetPreliminaryNormals(const Map: TVoxelMap; var FloatMap : TVector3fMap; const Dist: TDistanceArray; var V : TVoxelUnpacked; MidPoint,Range,_x,_y,_z : integer);
 function GetNonZeroSign(const value : single) : shortint;
@@ -978,6 +983,314 @@ begin
    end
    else
       Result := Normal;
+end;
+
+// Adapted code from HBD starts here
+// ----------------------------------------------
+
+procedure velFloodFillMark3D(_X, _Y, _Z, _XSize, _YSize, _ZSize: Byte; var _Map: T3DIntGrid);
+var
+   Q: array of TVector3i;
+   p0, p1: Cardinal;
+   // I know, byte is not enough... -- HBD
+   // Ok, changed to integer... -- Banshee.
+   procedure NewNode(_X, _Y, _Z: Integer);
+   begin
+      Q[p1].X := _X;
+      Q[p1].Y := _Y;
+      Q[p1].Z := _Z;
+      _Map[_X,_Y,_Z] := 2;
+      Inc(p1)
+   end;
+begin
+   SetLength(Q, _XSize * _YSize * _ZSize);
+   p0 := 0;
+   p1 := 0;
+   NewNode(_X,_Y,_Z);
+   while p0 <> p1 do
+   begin
+      if (Q[p0].X > 0) and (_Map[Q[p0].X-1, Q[p0].Y, Q[p0].Z] = 0) then
+         NewNode(Q[p0].X-1, Q[p0].Y, Q[p0].Z);
+      if (Q[p0].Y > 0) and (_Map[Q[p0].X, Q[p0].Y-1, Q[p0].Z] = 0) then
+         NewNode(Q[p0].X, Q[p0].Y-1, Q[p0].Z);
+      if (Q[p0].Z > 0) and (_Map[Q[p0].X, Q[p0].Y, Q[p0].Z-1] = 0) then
+         NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z-1);
+      if (Q[p0].X < _XSize-1) and (_Map[Q[p0].X+1, Q[p0].Y, Q[p0].Z] = 0) then
+         NewNode(Q[p0].X+1, Q[p0].Y, Q[p0].Z);
+      if (Q[p0].Y < _YSize-1) and (_Map[Q[p0].X, Q[p0].Y+1, Q[p0].Z] = 0) then
+         NewNode(Q[p0].X, Q[p0].Y+1, Q[p0].Z);
+      if (Q[p0].Z < _ZSize-1) and (_Map[Q[p0].X, Q[p0].Y, Q[p0].Z+1] = 0) then
+         NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z+1);
+      Inc(p0)
+   end;
+   SetLength(Q, 0);
+end;
+
+procedure CreateSurfaceMap(_Sect: TVoxelSection; var _Map: T3DIntGrid);
+var
+   x, y, z: Byte;
+   v : TVoxelUnPacked;
+begin
+   SetLength(_Map, _Sect.Tailer.XSize+2,_Sect.Tailer.YSize+2,_Sect.Tailer.ZSize+2);
+   for x:=0 to _Sect.Tailer.XSize-1 do
+      for y:=0 to _Sect.Tailer.YSize-1 do
+         for z:=0 to _Sect.Tailer.ZSize-1 do
+         begin
+            _Sect.GetVoxel(x,y,z,v);
+            if v.Used then
+            begin
+               _Map[x+1,y+1,z+1] := 1;
+            end;
+         end;
+   velFloodFillMark3D(0,0,0,_Sect.Tailer.XSize+2,_Sect.Tailer.YSize+2,_Sect.Tailer.ZSize+2,_Map);
+end;
+
+
+// HBD's latest invention!
+// 6-faced method extended.
+procedure velAutoNormals2(_Sect: TVoxelSection; _Range, _Smooth: Single);
+type
+   TArray3i = array[0..2] of Integer;
+   TOrient = record
+      CM: array[0..2] of Integer;
+      SignC, SignA: Integer;
+   end;
+   TFaceMap = array of array of array of array[0..2] of TArray3i;
+var
+   Map: T3DIntGrid;
+   FaceMap,FaceMap2: TFaceMap;
+   S,D, temp: ^TFaceMap;
+   PointList: array of TVector3b;
+   N: TArray3i;
+   Orient1,Orient2: TOrient;
+   A, NPoint, i, j, x,y,z: Integer;
+
+   // Find adjacent face
+   procedure Succeed(var P: TArray3i; var O: TOrient);
+   var
+      temp: Integer;
+   begin
+      with O do
+      begin
+         Inc(P[CM[0]],SignA);
+         Inc(P[CM[2]],SignC);
+         if Map[P[0],P[1],P[2]] = 1 then
+         begin
+            temp := CM[0]; CM[0] := CM[2]; CM[2] := temp;
+            temp := SignA; SignA := SignC; SignC := -temp;
+         end
+         else
+         begin
+            Dec(P[CM[2]],SignC);
+            if Map[P[0],P[1],P[2]]<>1 then
+            begin
+               Dec(P[CM[0]],SignA);
+               temp := CM[0]; CM[0] := CM[2]; CM[2] := temp;
+               temp := SignA; SignA := -SignC; SignC := temp;
+            end
+         end
+      end
+   end;
+
+   procedure DoBranch2(IC,IA,IB,SC,SA: Integer);
+   var
+      P1,P2: TArray3i;
+      i,j: Cardinal;
+   begin
+      P1[0] := x;
+      P1[1] := y;
+      P1[2] := z;
+      with Orient1 do
+      begin
+         CM[0] := IA;
+         CM[1] := IB;
+         CM[2] := IC;
+         SignC := SC;
+         SignA := SA;
+      end;
+      i := Trunc(_Range);
+      while not (i=0) do
+      begin
+         Succeed(P1,Orient1);
+         with Orient1 do
+         begin
+            Dec(P1[CM[2]],SignC shr 31);
+            Inc(N[0],S^[P1[0],P1[1],P1[2],CM[2],0]*2);
+            Inc(N[1],S^[P1[0],P1[1],P1[2],CM[2],1]*2);
+            Inc(N[2],S^[P1[0],P1[1],P1[2],CM[2],2]*2);
+            Inc(P1[CM[2]],SignC shr 31);
+         end;
+         //Inc(N[CM[2]],SignC+SignC);
+
+         j := Trunc(_Range);
+         P2 := P1;
+         with Orient2 do
+         begin
+            CM[0] := IB;
+            CM[1] := IA;
+            CM[2] := IC;
+            SignC := SC;
+            SignA := -1;
+         end;
+
+         while not (j=0) do
+         begin
+            Succeed(P2,Orient2);
+            with Orient2 do
+            begin
+               Dec(P2[CM[2]],SignC shr 31);
+               Inc(N[0],S^[P2[0],P2[1],P2[2],CM[2],0]);
+               Inc(N[1],S^[P2[0],P2[1],P2[2],CM[2],1]);
+               Inc(N[2],S^[P2[0],P2[1],P2[2],CM[2],2]);
+               Inc(P2[CM[2]],SignC shr 31);
+            end;
+            // Inc(N[CM[2]],SignC);
+            Dec(j);
+         end;
+
+         j := Trunc(_Range);
+         P2 := P1;
+         with Orient2 do
+         begin
+            CM[0] := IB;
+            CM[1] := IA;
+            CM[2] := IC;
+            SignC := SC;
+            SignA := +1;
+         end;
+
+         while not (j=0) do
+         begin
+            Succeed(P2,Orient2);
+            with Orient2 do
+            begin
+               Dec(P2[CM[2]],SignC shr 31);
+               Inc(N[0],S^[P2[0],P2[1],P2[2],CM[2],0]);
+               Inc(N[1],S^[P2[0],P2[1],P2[2],CM[2],1]);
+               Inc(N[2],S^[P2[0],P2[1],P2[2],CM[2],2]);
+               Inc(P2[CM[2]],SignC shr 31);
+            end;
+            Dec(j);
+         end;
+
+         Dec(i);
+      end;
+   end;
+
+   procedure DoBranch1(IC,IA,IB:Integer);
+   var
+      P: TArray3i; o: Integer;
+   begin
+      P[0] := x;
+      P[1] := y;
+      P[2] := z;
+      o := P[IC];
+
+      P[IC] := o-1;
+      if Map[P[0],P[1],P[2]]>1 then
+      begin
+         N[0] := 0;
+         N[1] := 0;
+         N[2] := 0;
+         DoBranch2(IC,IA,IB,-1,-1);
+         DoBranch2(IC,IA,IB,-1,+1);
+         DoBranch2(IC,IB,IA,-1,-1);
+         DoBranch2(IC,IB,IA,-1,+1);
+         Inc(N[0],S^[P[0],P[1],P[2],IC,0]*2);
+         Inc(N[1],S^[P[0],P[1],P[2],IC,1]*2);
+         Inc(N[2],S^[P[0],P[1],P[2],IC,2]*2);
+         D^[P[0],P[1],P[2],IC] := N;
+      end;
+
+      P[IC] := o+1;
+      if Map[P[0],P[1],P[2]]>1 then
+      begin
+         N[0] := 0;
+         N[1] := 0;
+         N[2] := 0;
+         DoBranch2(IC,IA,IB,+1,-1);
+         DoBranch2(IC,IA,IB,+1,+1);
+         DoBranch2(IC,IB,IA,+1,-1);
+         DoBranch2(IC,IB,IA,+1,+1);
+         P[IC] := o;
+         Inc(N[0],S^[P[0],P[1],P[2],IC,0]*2);
+         Inc(N[1],S^[P[0],P[1],P[2],IC,1]*2);
+         Inc(N[2],S^[P[0],P[1],P[2],IC,2]*2);
+         D^[P[0],P[1],P[2],IC] := N;
+      end;
+   end;
+
+   procedure MergeFaces(X,Y,Z: Integer);
+   var
+      i: Cardinal;
+      v : TVoxelUnPacked;
+   begin
+      for i := 0 to 2 do
+      begin
+         N[i] := D^[X-1,Y,Z,0,i] + D^[X,Y,Z,0,i] + D^[X,Y-1,Z,1,i] + D^[X,Y,Z,1,i] + D^[X,Y,Z-1,2,i] + D^[X,Y,Z,2,i];
+      end;
+      _Sect.GetVoxel(x-1,y-1,z-1,v);
+      v.Normal := _Sect.Normals.GetIDFromNormal(SetVector(N[0],N[1],N[2]));
+      _Sect.SetVoxel(x-1,y-1,z-1,v);
+  end;
+
+begin
+   CreateSurfaceMap(_Sect,Map);
+   SetLength(FaceMap,_Sect.Tailer.XSize+1,_Sect.Tailer.YSize+1,_Sect.Tailer.ZSize+1);
+   SetLength(FaceMap2,_Sect.Tailer.XSize+1,_Sect.Tailer.YSize+1,_Sect.Tailer.ZSize+1);
+   SetLength(PointList,_Sect.Tailer.XSize*_Sect.Tailer.YSize*_Sect.Tailer.ZSize);
+   NPoint := 0;
+   for x:=1 to _Sect.Tailer.XSize do
+   begin
+      for y:=1 to _Sect.Tailer.YSize do
+      begin
+         for z:=1 to _Sect.Tailer.ZSize do
+         begin
+            if map[x,y,z]<>1 then
+               Continue;
+            PointList[NPoint].R := x;
+            PointList[NPoint].G := y;
+            PointList[NPoint].B := z;
+            Inc(NPoint);
+            if map[x-1,y,z]=2 then
+               FaceMap[x-1,y,z,0,0] := -1;
+            if map[x+1,y,z]=2 then
+               FaceMap[x  ,y,z,0,0] := +1;
+            if map[x,y-1,z]=2 then
+               FaceMap[x,y-1,z,1,1] := -1;
+            if map[x,y+1,z]=2 then
+               FaceMap[x,y  ,z,1,1] := +1;
+            if map[x,y,z-1]=2 then
+               FaceMap[x,y,z-1,2,2] := -1;
+            if map[x,y,z+1]=2 then
+               FaceMap[x,y,z  ,2,2] := +1;
+         end;
+      end;
+   end;
+   S := @FaceMap2;
+   D := @FaceMap;
+   j := Trunc(_Smooth)+1;
+   while not (j=0) do
+   begin
+      temp := S; S := D; D := temp;
+      for i:=0 to NPoint-1 do
+      begin
+         x := PointList[i].R;
+         y := PointList[i].G;
+         z := PointList[i].B;
+         DoBranch1(0,1,2);
+         DoBranch1(1,2,0);
+         DoBranch1(2,0,1);
+      end;
+      Dec(j)
+   end;
+   for i:=0 to NPoint-1 do
+      with PointList[i] do
+         MergeFaces(X,Y,Z);
+   SetLength(PointList,0);
+   SetLength(FaceMap2,0);
+   SetLength(FaceMap,0);
+   SetLength(Map,0);
 end;
 
 end.

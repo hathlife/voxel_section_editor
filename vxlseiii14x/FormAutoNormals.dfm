@@ -4,7 +4,7 @@ object FrmAutoNormals: TFrmAutoNormals
   BorderIcons = [biSystemMenu]
   BorderStyle = bsToolWindow
   Caption = 'Auto Normals 7.0'
-  ClientHeight = 557
+  ClientHeight = 584
   ClientWidth = 378
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,7 @@ object FrmAutoNormals: TFrmAutoNormals
   OnShow = FormShow
   DesignSize = (
     378
-    557)
+    584)
   PixelsPerInch = 96
   TextHeight = 13
   object Label4: TLabel
@@ -63,7 +63,7 @@ object FrmAutoNormals: TFrmAutoNormals
     Left = 8
     Top = 216
     Width = 363
-    Height = 121
+    Height = 148
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Normalization Method:'
     TabOrder = 0
@@ -137,15 +137,25 @@ object FrmAutoNormals: TFrmAutoNormals
       TabStop = True
       OnClick = RbTangentClick
     end
+    object RbHBD: TRadioButton
+      Left = 16
+      Top = 119
+      Width = 313
+      Height = 17
+      Caption = 'HBD AutoNormals (Fast and it has good results)'
+      TabOrder = 4
+      OnClick = RbHBDClick
+    end
   end
   object GbInfluenceOptions: TGroupBox
     Left = 8
-    Top = 350
+    Top = 377
     Width = 363
     Height = 170
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Influence Normalizer Options...'
     TabOrder = 1
+    ExplicitTop = 350
     object Label1: TLabel
       Left = 8
       Top = 24
@@ -283,32 +293,35 @@ object FrmAutoNormals: TFrmAutoNormals
   end
   object BtOK: TButton
     Left = 216
-    Top = 528
+    Top = 555
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
     Caption = 'OK'
     TabOrder = 2
     OnClick = BtOKClick
+    ExplicitTop = 528
   end
   object BtCancel: TButton
     Left = 298
-    Top = 528
+    Top = 555
     Width = 75
     Height = 25
     Anchors = [akRight, akBottom]
     Caption = 'Cancel'
     TabOrder = 3
     OnClick = BtCancelClick
+    ExplicitTop = 528
   end
   object BtTips: TButton
     Left = 8
-    Top = 528
+    Top = 555
     Width = 75
     Height = 25
     Anchors = [akLeft, akBottom]
     Caption = 'Tips'
     TabOrder = 4
     OnClick = BtTipsClick
+    ExplicitTop = 528
   end
 end

@@ -174,8 +174,8 @@ begin
          v1 := _NeighborDetector.GetNextNeighbor;
       end;
       // Finally, we do an average for all vertices.
-      {$ifdef MESH_TEST}
-      GlobalVars.MeshFile.Add('Mesh Value (' + FloatToStr(_Vertices[v].X) + ', ' + FloatToStr(_Vertices[v].Y) + ', ' +FloatToStr(_Vertices[v].Z) + ') with ' + FloatToStr(HitCounter) + ' neighbours. Expected frequencies: (' + FloatToStr(_Vertices[v].X / HitCounter) + ', ' + FloatToStr(_Vertices[v].Y / HitCounter) + ', ' + FloatToStr(_Vertices[v].Z / HitCounter) + ')');
+      {$ifdef SMOOTH_TEST}
+      GlobalVars.SmoothFile.Add('Mesh Value (' + FloatToStr(_Vertices[v].X) + ', ' + FloatToStr(_Vertices[v].Y) + ', ' +FloatToStr(_Vertices[v].Z) + ') with ' + FloatToStr(HitCounter) + ' neighbours. Expected frequencies: (' + FloatToStr(_Vertices[v].X / HitCounter) + ', ' + FloatToStr(_Vertices[v].Y / HitCounter) + ', ' + FloatToStr(_Vertices[v].Z / HitCounter) + ')');
       {$endif}
       if HitCounter > 0 then
       begin
@@ -239,20 +239,41 @@ begin
          Direction := SubtractVector(OriginalVertexes[v],OriginalVertexes[v1]);
          Normalize(Direction);
          CurrentScale := Abs(DotProduct(Direction,_VertexNormals[v]));
-         if CurrentScale < MaxScale then
+//         if (CurrentScale <> 0) and (CurrentScale < MaxScale) then
+         if (CurrentScale < MaxScale) then
          begin
             MaxScale := CurrentScale;
          end;
+         {$ifdef SMOOTH_TEST}
+         {
+         if CurrentScale = 0 then
+         begin
+            GlobalVars.SmoothFile.Add('v1 = ' + IntToStr(v1) +  ' = (' + FloatToStr(OriginalVertexes[v1].X) + ', ' + FloatToStr(OriginalVertexes[v1].Y) + ', ' + FloatToStr(OriginalVertexes[v1].Z) + ') forces MaxScale 0 with v = ' + IntToStr(v));
+         end;
+         }
+         {$endif}
          v1 := _VertexNeighborDetector.GetNextNeighbor;
       end;
+      if MaxScale = 999999 then
+         MaxScale := 0;
       if IsConcave then
       begin
          LaplacianDirection := ScaleVector(_VertexNormals[v],-1);
+         {$ifdef SMOOTH_TEST}
+         GlobalVars.SmoothFile.Add('vertex ' + IntToStr(v) +  ' is concave.');
+         {$endif}
       end
       else
       begin
          LaplacianDirection := SetVector(_VertexNormals[v]);
+         {$ifdef SMOOTH_TEST}
+         GlobalVars.SmoothFile.Add('vertex ' + IntToStr(v) +  ' is convex.');
+         {$endif}
       end;
+      {$ifdef SMOOTH_TEST}
+      GlobalVars.SmoothFile.Add('v = ' + IntToStr(v) +  ' = (' + FloatToStr(OriginalVertexes[v].X) + ', ' + FloatToStr(OriginalVertexes[v].Y) + ', ' + FloatToStr(OriginalVertexes[v].Z) + ') , MaxScale: ' + FloatToStr(MaxScale));
+      {$endif}
+
       // Finally, we do an average for all vertices.
       Frequency := 0;
       v1 := _FaceNeighborDetector.GetNeighborFromID(v); // face neighbour of the vertex v
@@ -301,8 +322,8 @@ begin
 
             v1 := _FaceNeighborDetector.GetNextNeighbor;
          end;
-         {$ifdef MESH_TEST}
-         GlobalVars.MeshFile.Add('v = ' + IntToStr(v) +  ', Weight Value: ' + FloatToStr(Weight) + ', MaxScale: ' + FloatToStr(MaxScale) + ', Frequency: ' +FloatToStr(Frequency) + ') with ' + FloatToStr(HitCounter) + ' % of the neighbourhood. Expected frequency: (' + FloatToStr(Frequency / HitCounter) + ')');
+         {$ifdef SMOOTH_TEST}
+         GlobalVars.SmoothFile.Add('v = ' + IntToStr(v) +  ', Weight Value: ' + FloatToStr(Weight) + ', MaxScale: ' + FloatToStr(MaxScale) + ', Frequency: ' +FloatToStr(Frequency) + ') with ' + FloatToStr(HitCounter*100) + ' % of the neighbourhood. Expected frequency: (' + FloatToStr(Frequency / HitCounter) + ')');
          {$endif}
       end;
       if HitCounter > 0 then
@@ -311,12 +332,18 @@ begin
          _Vertices[v].X := OriginalVertexes[v].X + CurrentScale * LaplacianDirection.X;
          _Vertices[v].Y := OriginalVertexes[v].Y + CurrentScale * LaplacianDirection.Y;
          _Vertices[v].Z := OriginalVertexes[v].Z + CurrentScale * LaplacianDirection.Z;
+         {$ifdef SMOOTH_TEST}
+         GlobalVars.SmoothFile.Add('New position for vertex ' + IntToStr(v) +  ' = (' + FloatToStr(_Vertices[v].X) + ', ' + FloatToStr(_Vertices[v].Y) + ', ' + FloatToStr(_Vertices[v].Z) + ') , Intensity: ' + FloatToStr(CurrentScale));
+         {$endif}
       end
       else
       begin
          _Vertices[v].X := OriginalVertexes[v].X;
          _Vertices[v].Y := OriginalVertexes[v].Y;
          _Vertices[v].Z := OriginalVertexes[v].Z;
+         {$ifdef SMOOTH_TEST}
+         GlobalVars.SmoothFile.Add('Vertex ' + IntToStr(v) +  ' = (' + FloatToStr(_Vertices[v].X) + ', ' + FloatToStr(_Vertices[v].Y) + ', ' + FloatToStr(_Vertices[v].Z) + ') was not moved.');
+         {$endif}
       end;
    end;
    v := _NumVertices;
