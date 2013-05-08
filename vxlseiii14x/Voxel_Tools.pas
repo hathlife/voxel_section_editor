@@ -18,7 +18,7 @@ unit Voxel_Tools;
 interface
 
 Uses BasicDataTypes,Voxel,normals,Voxel_Engine,math,math3d,Dialogs,Sysutils,
-   VoxelMap, BasicFunctions;
+   VoxelMap, BasicFunctions, BasicConstants;
 
 type
    TApplyNormalsResult = record
@@ -47,8 +47,6 @@ function SmoothNormals(var Vxl : TVoxelSection) : TApplyNormalsResult;
 function GetSmoothNormal(var Vxl : TVoxelSection; X,Y,Z,Normal : integer) : integer;
 
 // HBD functions (based in a modified old voxel engine, so somethings might be replicated)
-procedure velFloodFillMark3D(_X, _Y, _Z, _XSize, _YSize, _ZSize: Byte; var _Map: T3DIntGrid);
-procedure CreateSurfaceMap(_Sect: TVoxelSection; var _Map: T3DIntGrid);
 procedure velAutoNormals2(_Sect: TVoxelSection; _Range, _Smooth: Single);
 
 // Random functions
@@ -988,64 +986,6 @@ end;
 // Adapted code from HBD starts here
 // ----------------------------------------------
 
-procedure velFloodFillMark3D(_X, _Y, _Z, _XSize, _YSize, _ZSize: Byte; var _Map: T3DIntGrid);
-var
-   Q: array of TVector3i;
-   p0, p1: Cardinal;
-   // I know, byte is not enough... -- HBD
-   // Ok, changed to integer... -- Banshee.
-   procedure NewNode(_X, _Y, _Z: Integer);
-   begin
-      Q[p1].X := _X;
-      Q[p1].Y := _Y;
-      Q[p1].Z := _Z;
-      _Map[_X,_Y,_Z] := 2;
-      Inc(p1)
-   end;
-begin
-   SetLength(Q, _XSize * _YSize * _ZSize);
-   p0 := 0;
-   p1 := 0;
-   NewNode(_X,_Y,_Z);
-   while p0 <> p1 do
-   begin
-      if (Q[p0].X > 0) and (_Map[Q[p0].X-1, Q[p0].Y, Q[p0].Z] = 0) then
-         NewNode(Q[p0].X-1, Q[p0].Y, Q[p0].Z);
-      if (Q[p0].Y > 0) and (_Map[Q[p0].X, Q[p0].Y-1, Q[p0].Z] = 0) then
-         NewNode(Q[p0].X, Q[p0].Y-1, Q[p0].Z);
-      if (Q[p0].Z > 0) and (_Map[Q[p0].X, Q[p0].Y, Q[p0].Z-1] = 0) then
-         NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z-1);
-      if (Q[p0].X < _XSize-1) and (_Map[Q[p0].X+1, Q[p0].Y, Q[p0].Z] = 0) then
-         NewNode(Q[p0].X+1, Q[p0].Y, Q[p0].Z);
-      if (Q[p0].Y < _YSize-1) and (_Map[Q[p0].X, Q[p0].Y+1, Q[p0].Z] = 0) then
-         NewNode(Q[p0].X, Q[p0].Y+1, Q[p0].Z);
-      if (Q[p0].Z < _ZSize-1) and (_Map[Q[p0].X, Q[p0].Y, Q[p0].Z+1] = 0) then
-         NewNode(Q[p0].X, Q[p0].Y, Q[p0].Z+1);
-      Inc(p0)
-   end;
-   SetLength(Q, 0);
-end;
-
-procedure CreateSurfaceMap(_Sect: TVoxelSection; var _Map: T3DIntGrid);
-var
-   x, y, z: Byte;
-   v : TVoxelUnPacked;
-begin
-   SetLength(_Map, _Sect.Tailer.XSize+2,_Sect.Tailer.YSize+2,_Sect.Tailer.ZSize+2);
-   for x:=0 to _Sect.Tailer.XSize-1 do
-      for y:=0 to _Sect.Tailer.YSize-1 do
-         for z:=0 to _Sect.Tailer.ZSize-1 do
-         begin
-            _Sect.GetVoxel(x,y,z,v);
-            if v.Used then
-            begin
-               _Map[x+1,y+1,z+1] := 1;
-            end;
-         end;
-   velFloodFillMark3D(0,0,0,_Sect.Tailer.XSize+2,_Sect.Tailer.YSize+2,_Sect.Tailer.ZSize+2,_Map);
-end;
-
-
 // HBD's latest invention!
 // 6-faced method extended.
 procedure velAutoNormals2(_Sect: TVoxelSection; _Range, _Smooth: Single);
@@ -1057,7 +997,7 @@ type
    end;
    TFaceMap = array of array of array of array[0..2] of TArray3i;
 var
-   Map: T3DIntGrid;
+   Map: TVoxelMap; //T3DIntGrid;
    FaceMap,FaceMap2: TFaceMap;
    S,D, temp: ^TFaceMap;
    PointList: array of TVector3b;
@@ -1074,19 +1014,27 @@ var
       begin
          Inc(P[CM[0]],SignA);
          Inc(P[CM[2]],SignC);
-         if Map[P[0],P[1],P[2]] = 1 then
+         if Map[P[0],P[1],P[2]] = C_SURFACE then
          begin
-            temp := CM[0]; CM[0] := CM[2]; CM[2] := temp;
-            temp := SignA; SignA := SignC; SignC := -temp;
+            temp := CM[0];
+            CM[0] := CM[2];
+            CM[2] := temp;
+            temp := SignA;
+            SignA := SignC;
+            SignC := -temp;
          end
          else
          begin
             Dec(P[CM[2]],SignC);
-            if Map[P[0],P[1],P[2]]<>1 then
+            if Map[P[0],P[1],P[2]]<> C_SURFACE then
             begin
                Dec(P[CM[0]],SignA);
-               temp := CM[0]; CM[0] := CM[2]; CM[2] := temp;
-               temp := SignA; SignA := -SignC; SignC := temp;
+               temp := CM[0];
+               CM[0] := CM[2];
+               CM[2] := temp;
+               temp := SignA;
+               SignA := -SignC;
+               SignC := temp;
             end
          end
       end
@@ -1187,7 +1135,7 @@ var
       o := P[IC];
 
       P[IC] := o-1;
-      if Map[P[0],P[1],P[2]]>1 then
+      if Map[P[0],P[1],P[2]] = C_OUTSIDE_VOLUME then
       begin
          N[0] := 0;
          N[1] := 0;
@@ -1203,7 +1151,7 @@ var
       end;
 
       P[IC] := o+1;
-      if Map[P[0],P[1],P[2]]>1 then
+      if Map[P[0],P[1],P[2]] = C_OUTSIDE_VOLUME then
       begin
          N[0] := 0;
          N[1] := 0;
@@ -1235,7 +1183,8 @@ var
   end;
 
 begin
-   CreateSurfaceMap(_Sect,Map);
+   Map := TVoxelMap.CreateQuick(_Sect,1);
+   Map.GenerateSurfaceMap;
    SetLength(FaceMap,_Sect.Tailer.XSize+1,_Sect.Tailer.YSize+1,_Sect.Tailer.ZSize+1);
    SetLength(FaceMap2,_Sect.Tailer.XSize+1,_Sect.Tailer.YSize+1,_Sect.Tailer.ZSize+1);
    SetLength(PointList,_Sect.Tailer.XSize*_Sect.Tailer.YSize*_Sect.Tailer.ZSize);
@@ -1246,24 +1195,25 @@ begin
       begin
          for z:=1 to _Sect.Tailer.ZSize do
          begin
-            if map[x,y,z]<>1 then
-               Continue;
-            PointList[NPoint].R := x;
-            PointList[NPoint].G := y;
-            PointList[NPoint].B := z;
-            Inc(NPoint);
-            if map[x-1,y,z]=2 then
-               FaceMap[x-1,y,z,0,0] := -1;
-            if map[x+1,y,z]=2 then
-               FaceMap[x  ,y,z,0,0] := +1;
-            if map[x,y-1,z]=2 then
-               FaceMap[x,y-1,z,1,1] := -1;
-            if map[x,y+1,z]=2 then
-               FaceMap[x,y  ,z,1,1] := +1;
-            if map[x,y,z-1]=2 then
-               FaceMap[x,y,z-1,2,2] := -1;
-            if map[x,y,z+1]=2 then
-               FaceMap[x,y,z  ,2,2] := +1;
+            if map[x,y,z] = C_SURFACE then
+            begin
+               PointList[NPoint].R := x;
+               PointList[NPoint].G := y;
+               PointList[NPoint].B := z;
+               Inc(NPoint);
+               if Map[x-1,y,z]=C_OUTSIDE_VOLUME then
+                  FaceMap[x-1,y,z,0,0] := -1;
+               if Map[x+1,y,z]=C_OUTSIDE_VOLUME then
+                  FaceMap[x  ,y,z,0,0] := +1;
+               if Map[x,y-1,z]=C_OUTSIDE_VOLUME then
+                  FaceMap[x,y-1,z,1,1] := -1;
+               if Map[x,y+1,z]=C_OUTSIDE_VOLUME then
+                  FaceMap[x,y  ,z,1,1] := +1;
+               if Map[x,y,z-1]=C_OUTSIDE_VOLUME then
+                  FaceMap[x,y,z-1,2,2] := -1;
+               if Map[x,y,z+1]=C_OUTSIDE_VOLUME then
+                  FaceMap[x,y,z  ,2,2] := +1;
+            end;
          end;
       end;
    end;
@@ -1290,7 +1240,7 @@ begin
    SetLength(PointList,0);
    SetLength(FaceMap2,0);
    SetLength(FaceMap,0);
-   SetLength(Map,0);
+   Map.Free;
 end;
 
 end.
