@@ -19,6 +19,10 @@ const
    VXLTool_SmoothNormal = 9;
    VXLTool_FloodFillErase = 10;
    VXLTool_Measure = 11;
+   VXLTool_FrameEllipse = 12;
+   VXLTool_FillEllipse = 13;
+
+
    ViewName: array[0..5] of string = (
       ' Right',
       ' Left',

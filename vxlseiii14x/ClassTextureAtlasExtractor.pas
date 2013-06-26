@@ -4,7 +4,9 @@ interface
 
 uses GLConstants, BasicDataTypes, Geometry, ClassNeighborDetector,
    ClassIntegerList, Math, ClassVertexTransformationUtils, NeighborhoodDataPlugin,
-   MeshPluginBase;
+   MeshPluginBase, SysUtils;
+
+{$INCLUDE Global_Conditionals.inc}
 
 type
    TTextureSeed = record
@@ -21,7 +23,7 @@ type
          FTextureAngle: single;
          // Seeds
          function MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
-         function MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+         function MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _CheckFace: abool): TTextureSeed;
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
          // Angle stuff
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
@@ -31,11 +33,13 @@ type
          procedure QuickSortSeeds(_min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction);
          procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
-         procedure ObtainCommonEdgeFromFaces(const _Faces: auint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2: integer);
+         procedure ObtainCommonEdgeFromFaces(var _Faces: auint32; const _VertsLocation : aint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2,_inFaceCurrVertPosition: integer);
          // Oriogami helper functions
          procedure WriteUVCoordinatesOrigami(const _Vertices: TAVector3f; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer);
+         function IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
          function Get90RotDirectionFromVector(const _V1,_V2: TVector2f): TVector2f;
          function Get90RotDirectionFromDirection(const _Direction: TVector2f): TVector2f;
+         function GetVertexLocationID(const _VertsLocation : aint32; _ID: integer): integer;
       public
          // Constructors and Destructors
          constructor Create; overload;
@@ -48,13 +52,14 @@ type
          function GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace: integer): TAVector2f;
          // Texture atlas buildup: step by step.
          function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
+         function GetMeshSeedsOrigami(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
          procedure MergeSeeds(var _Seeds: TSeedSet);
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexCoords: TAVector2f);
    end;
 
 implementation
 
-uses Math3d;
+uses Math3d, GlobalVars;
 
 constructor CTextureAtlasExtractor.Create;
 begin
@@ -451,6 +456,101 @@ begin
    SetLength(VertsLocation,0);
 end;
 
+function CTextureAtlasExtractor.GetMeshSeedsOrigami(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
+var
+   i, MaxVerts: integer;
+   FaceSeed : aint32;
+   FacePriority: AFloat;
+   FaceOrder : auint32;
+   CheckFace: abool;
+   FaceNeighbors: TNeighborDetector;
+   {$ifdef ORIGAMI_TEST}
+   Temp: string;
+   {$endif}
+begin
+   // Get the neighbours of each face.
+   FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_FACE_FACE_FROM_EDGE);
+   FaceNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
+
+   // Setup FaceSeed, FaceOrder and FacePriority.
+   SetLength(FaceSeed,High(_FaceNormals)+1);
+   SetLength(FaceOrder,High(FaceSeed)+1);
+   SetLength(FacePriority,High(FaceSeed)+1);
+   SetLength(CheckFace,High(_FaceNormals)+1);
+   for i := Low(FaceSeed) to High(FaceSeed) do
+   begin
+      FaceSeed[i] := -1;
+      FaceOrder[i] := i;
+      FacePriority[i] := Max(Max(abs(_FaceNormals[i].X),abs(_FaceNormals[i].Y)),abs(_FaceNormals[i].Z));
+   end;
+   {$ifdef ORIGAMI_TEST}
+   Temp := 'FaceOrder before sort = [';
+   for i := Low(FaceOrder) to High(FaceOrder) do
+   begin
+      Temp := Temp + IntToStr(FaceOrder[i]) + ' ';
+   end;
+   Temp := Temp + ']';
+   GlobalVars.OrigamiFile.Add(Temp);
+   {$endif}
+   QuickSortPriority(Low(FaceOrder),High(FaceOrder),FaceOrder,FacePriority);
+   {$ifdef ORIGAMI_TEST}
+   Temp := 'FaceOrder after sort = [';
+   for i := Low(FaceOrder) to High(FaceOrder) do
+   begin
+      Temp := Temp + IntToStr(FaceOrder[i]) + ' ';
+   end;
+   Temp := Temp + ']';
+   GlobalVars.OrigamiFile.Add(Temp);
+   {$endif}
+
+   // Setup VertsSeed.
+   MaxVerts := High(_Vertices)+1;
+   SetLength(_VertsSeed,MaxVerts);
+   for i := Low(_VertsSeed) to High(_VertsSeed) do
+   begin
+      _VertsSeed[i] := -1;
+   end;
+   // Setup Texture Coordinates (Result)
+   SetLength(Result,MaxVerts);
+
+   // Let's build the seeds.
+   for i := Low(FaceSeed) to High(FaceSeed) do
+   begin
+      if FaceSeed[FaceOrder[i]] = -1 then
+      begin
+         // Make new seed.
+         SetLength(_Seeds,High(_Seeds)+2);
+         {$ifdef ORIGAMI_TEST}
+         GlobalVars.OrigamiFile.Add('Seed = ' + IntToStr(High(_Seeds)) + ' and i = ' + IntToStr(i));
+         {$endif}
+         _Seeds[High(_Seeds)] := MakeNewSeedOrigami(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
+      end;
+   end;
+
+   // Re-align vertexes and seed bounds to start at (0,0)
+   for i := Low(_VertsSeed) to High(_VertsSeed) do
+   begin
+      Result[i].U := Result[i].U - _Seeds[_VertsSeed[i]].MinBounds.U;
+      Result[i].V := Result[i].V - _Seeds[_VertsSeed[i]].MinBounds.V;
+   end;
+
+   for i := Low(_Seeds) to High(_Seeds) do
+   begin
+      _Seeds[i].MaxBounds.U := _Seeds[i].MaxBounds.U - _Seeds[i].MinBounds.U;
+      _Seeds[i].MinBounds.U := 0;
+      _Seeds[i].MaxBounds.V := _Seeds[i].MaxBounds.V - _Seeds[i].MinBounds.V;
+      _Seeds[i].MinBounds.V := 0;
+   end;
+
+   if _NeighborhoodPlugin = nil then
+   begin
+      FaceNeighbors.Free;
+   end;
+   SetLength(FacePriority,0);
+   SetLength(FaceOrder,0);
+   SetLength(CheckFace,0);
+end;
+
 procedure CTextureAtlasExtractor.MergeSeeds(var _Seeds: TSeedSet);
 var
    i, x, Current, Previous: integer;
@@ -622,6 +722,7 @@ begin
    end;
 
    // The texture must be a square, so we'll centralize the smallest dimension.
+{
    if (_Seeds[High(_Seeds)].MaxBounds.U > _Seeds[High(_Seeds)].MaxBounds.V) then
    begin
       PushValue := (_Seeds[High(_Seeds)].MaxBounds.U - _Seeds[High(_Seeds)].MaxBounds.V) / 2;
@@ -642,6 +743,7 @@ begin
       end;
       _Seeds[High(_Seeds)].MaxBounds.U := _Seeds[High(_Seeds)].MaxBounds.V;
    end;
+}
 
    // Clean up memory.
    SetLength(SeedTree,0);
@@ -653,12 +755,24 @@ end;
 procedure CTextureAtlasExtractor.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexCoords: TAVector2f);
 var
    i : integer;
+   ScaleU, ScaleV: real;
 begin
+   // We'll ensure that our main seed spreads from (0,0) to (1,1) for both axis.
+   ScaleU := (max(_Seeds[High(_Seeds)].MaxBounds.U,_Seeds[High(_Seeds)].MaxBounds.V)) / _Seeds[High(_Seeds)].MaxBounds.U;
+   ScaleV := (max(_Seeds[High(_Seeds)].MaxBounds.U,_Seeds[High(_Seeds)].MaxBounds.V)) / _Seeds[High(_Seeds)].MaxBounds.V;
+   for i := Low(_Seeds) to High(_Seeds) do
+   begin
+      _Seeds[i].MinBounds.U := _Seeds[i].MinBounds.U * ScaleU;
+      _Seeds[i].MaxBounds.U := _Seeds[i].MaxBounds.U * ScaleU;
+      _Seeds[i].MinBounds.V := _Seeds[i].MinBounds.V * ScaleV;
+      _Seeds[i].MaxBounds.V := _Seeds[i].MaxBounds.V * ScaleV;
+   end;
+
    // Let's get the final texture coordinates for each vertex now.
    for i := Low(_TexCoords) to High(_TexCoords) do
    begin
-      _TexCoords[i].U := (_Seeds[_VertsSeed[i]].MinBounds.U + _TexCoords[i].U) / _Seeds[High(_Seeds)].MaxBounds.U;
-      _TexCoords[i].V := (_Seeds[_VertsSeed[i]].MinBounds.V + _TexCoords[i].V) / _Seeds[High(_Seeds)].MaxBounds.V;
+      _TexCoords[i].U := (_Seeds[_VertsSeed[i]].MinBounds.U + (_TexCoords[i].U * ScaleU)) / _Seeds[High(_Seeds)].MaxBounds.U;
+      _TexCoords[i].V := (_Seeds[_VertsSeed[i]].MinBounds.V + (_TexCoords[i].V * ScaleV)) / _Seeds[High(_Seeds)].MaxBounds.V;
    end;
 end;
 
@@ -820,7 +934,8 @@ begin
    VertexUtil.Free;
 end;
 
-function GetOuterProduct(const _Source,_V1, _V2: TVector2f): single;
+// Determinant from a matrix where first line is _Source, second is _V1 and 3rd is _V2.
+function Get2DOuterProduct(const _Source,_V1, _V2: TVector2f): single;
 begin
    Result := (_Source.U * _V1.V) + (_Source.V * _V2.U) + (_V1.U * _V2.V) - (_Source.U * _V2.V) - (_Source.V * _V1.U) - (_V1.V * _V2.U);
 end;
@@ -842,24 +957,24 @@ end;
 // The objective is to write the UV coordinates from _Target.
 procedure CTextureAtlasExtractor.WriteUVCoordinatesOrigami(const _Vertices: TAVector3f; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer);
 var
-   OriginalEdgeSize,FinalEdgeSize,Scale,SinProjectionSizeInMesh,SinProjectionSizeInParameter,ProjectionSizeInMesh,ProjectionSizeInParameter: single;
-   EdgeDirectionInParameter,PositionOfTargetatEdgeInParameter,SinDirectionInParameter: TVector2f;
-   EdgeDirectionInMesh,PositionOfTargetatEdgeInMesh: TVector3f;
+   EdgeSizeInMesh,EdgeSizeInUV,Scale,SinProjectionSizeInMesh,SinProjectionSizeInUV,ProjectionSizeInMesh,ProjectionSizeInUV: single;
+   EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
+   EdgeDirectionInMesh,PositionOfTargetAtEdgeInMesh: TVector3f;
    SourceSide: single;
 begin
    // Get edge size in mesh
-   OriginalEdgeSize := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
-   if OriginalEdgeSize > 0 then
+   EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
+   if EdgeSizeInMesh > 0 then
    begin
       // Get the direction of the edge (Edge0 to Edge1) in Mesh and UV space
-      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge0],_Vertices[_Edge1]);
-      EdgeDirectionInParameter := SubtractVector(_TexCoords[_Edge0],_TexCoords[_Edge1]);
+      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge1],_Vertices[_Edge0]);
+      EdgeDirectionInUV := SubtractVector(_TexCoords[_Edge1],_TexCoords[_Edge0]);
       // Get edge size in UV space.
-      FinalEdgeSize := Sqrt((EdgeDirectionInParameter.U * EdgeDirectionInParameter.U) + (EdgeDirectionInParameter.V * EdgeDirectionInParameter.V));
+      EdgeSizeInUV := Sqrt((EdgeDirectionInUV.U * EdgeDirectionInUV.U) + (EdgeDirectionInUV.V * EdgeDirectionInUV.V));
       // Directions must be normalized.
       Normalize(EdgeDirectionInMesh);
-      Normalize(EdgeDirectionInParameter);
-      Scale := FinalEdgeSize / OriginalEdgeSize;
+      Normalize(EdgeDirectionInUV);
+      Scale := EdgeSizeInUV / EdgeSizeInMesh;
       // Get the size of projection of (Vertex - Edge0) at the Edge, in mesh
       ProjectionSizeInMesh := DotProduct(SubtractVector(_Vertices[_Target],_Vertices[_Edge0]),EdgeDirectionInMesh);
       // Obtain the position of this projection at the edge, in mesh
@@ -868,25 +983,106 @@ begin
       // distance between that and the _Target in mesh.
       SinProjectionSizeInMesh := VectorDistance(_Vertices[_Target],PositionOfTargetatEdgeInMesh);
       // Rotate the edge in 90' in UV space.
-      SinDirectionInParameter := Get90RotDirectionFromDirection(EdgeDirectionInParameter);
+      SinDirectionInUV := Get90RotDirectionFromDirection(EdgeDirectionInUV);
       // We need to make sure that _Target and _OriginVert are at opposite sides
       // the universe, if it is divided by the Edge0 to Edge1.
-      SourceSide := GetOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
+      SourceSide := Get2DOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
       if SourceSide > 0 then
       begin
-         SinDirectionInParameter := ScaleVector(SinDirectionInParameter,-1);
+         SinDirectionInUV := ScaleVector(SinDirectionInUV,-1);
       end;
       // Now we use the same logic applied in mesh to find out the final position
       // in UV space
-      ProjectionSizeInParameter := ProjectionSizeInMesh * Scale;
-      PositionOfTargetatEdgeInParameter := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInParameter,ProjectionSizeInParameter));
-      SinProjectionSizeInParameter := SinProjectionSizeInMesh * Scale;
+      ProjectionSizeInUV := ProjectionSizeInMesh * Scale;
+      PositionOfTargetatEdgeInUV := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInUV,ProjectionSizeInUV));
+      SinProjectionSizeInUV := SinProjectionSizeInMesh * Scale;
       // Write the UV Position
-      _TexCoords[_Target] := AddVector(PositionOfTargetatEdgeInParameter,ScaleVector(SinDirectionInParameter,SinProjectionSizeInParameter));
+      _TexCoords[_Target] := AddVector(PositionOfTargetatEdgeInUV,ScaleVector(SinDirectionInUV,SinProjectionSizeInUV));
    end;
 end;
 
-function CTextureAtlasExtractor.MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _VertsLocation : aint32; var _CheckFace: abool): TTextureSeed;
+function CTextureAtlasExtractor.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
+var
+   EdgeSizeInMesh,EdgeSizeInUV,Scale,SinProjectionSizeInMesh,SinProjectionSizeInUV,ProjectionSizeInMesh,ProjectionSizeInUV: single;
+   EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
+   EdgeDirectionInMesh,PositionOfTargetAtEdgeInMesh: TVector3f;
+   SourceSide: single;
+   i,v: integer;
+   VertexUtil : TVertexTransformationUtils;
+begin
+   VertexUtil := TVertexTransformationUtils.Create;
+   // Get edge size in mesh
+   EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
+   if EdgeSizeInMesh > 0 then
+   begin
+      // Get the direction of the edge (Edge0 to Edge1) in Mesh and UV space
+      EdgeDirectionInMesh := SubtractVector(_Vertices[_Edge1],_Vertices[_Edge0]);
+      EdgeDirectionInUV := SubtractVector(_TexCoords[_Edge1],_TexCoords[_Edge0]);
+      // Get edge size in UV space.
+      EdgeSizeInUV := Sqrt((EdgeDirectionInUV.U * EdgeDirectionInUV.U) + (EdgeDirectionInUV.V * EdgeDirectionInUV.V));
+      // Directions must be normalized.
+      Normalize(EdgeDirectionInMesh);
+      Normalize(EdgeDirectionInUV);
+      Scale := EdgeSizeInUV / EdgeSizeInMesh;
+      // Get the size of projection of (Vertex - Edge0) at the Edge, in mesh
+      ProjectionSizeInMesh := DotProduct(SubtractVector(_Vertices[_Target],_Vertices[_Edge0]),EdgeDirectionInMesh);
+      // Obtain the position of this projection at the edge, in mesh
+      PositionOfTargetatEdgeInMesh := AddVector(_Vertices[_Edge0],ScaleVector(EdgeDirectionInMesh,ProjectionSizeInMesh));
+      // Now we can use the position obtained previously to find out the
+      // distance between that and the _Target in mesh.
+      SinProjectionSizeInMesh := VectorDistance(_Vertices[_Target],PositionOfTargetatEdgeInMesh);
+      // Rotate the edge in 90' in UV space.
+      SinDirectionInUV := Get90RotDirectionFromDirection(EdgeDirectionInUV);
+      // We need to make sure that _Target and _OriginVert are at opposite sides
+      // the universe, if it is divided by the Edge0 to Edge1.
+      SourceSide := Get2DOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
+      if SourceSide > 0 then
+      begin
+         SinDirectionInUV := ScaleVector(SinDirectionInUV,-1);
+      end;
+      // Now we use the same logic applied in mesh to find out the final position
+      // in UV space
+      ProjectionSizeInUV := ProjectionSizeInMesh * Scale;
+      PositionOfTargetatEdgeInUV := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInUV,ProjectionSizeInUV));
+      SinProjectionSizeInUV := SinProjectionSizeInMesh * Scale;
+      // Write the UV Position
+      _UVPosition := AddVector(PositionOfTargetatEdgeInUV,ScaleVector(SinDirectionInUV,SinProjectionSizeInUV));
+
+
+      // Let's check if this UV Position will hit another UV project face.
+      Result := true;
+      // the change in the _AddedFace temporary optimization for the upcoming loop.
+      _CheckFace[_PreviousFace] := false;
+      v := 0;
+      for i := Low(_CheckFace) to High(_CheckFace) do
+      begin
+         // If the face was projected in the UV domain.
+         if _CheckFace[i] then
+         begin
+            {$ifdef ORIGAMI_TEST}
+            //GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
+            {$endif}
+            // Check if the candidate position is inside this triangle.
+            // If it is inside the triangle, then point is not validated. Exit.
+            if VertexUtil.IsPointInsideTriangle(_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]],_UVPosition) then
+            begin
+               {$ifdef ORIGAMI_TEST}
+               GlobalVars.OrigamiFile.Add('Vertex textured coordinate (' + FloatToStr(_UVPosition.U) + ', ' + FloatToStr(_UVPosition.V) + ') conflicts with face ' + IntToStr(i) + '.');
+               {$endif}
+               Result := false;
+               _CheckFace[_PreviousFace] := true;
+               VertexUtil.Free;
+               exit;
+            end;
+         end;
+         inc(v,_VerticesPerFace);
+      end;
+      _CheckFace[_PreviousFace] := true;
+   end;
+   VertexUtil.Free;
+end;
+
+function CTextureAtlasExtractor.MakeNewSeedOrigami(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _CheckFace: abool): TTextureSeed;
 const
    C_MIN_ANGLE = 0.001; // approximately cos 90'
 var
@@ -896,6 +1092,12 @@ var
    Angle: single;
    Position: TVector3f;
    VertexUtil : TVertexTransformationUtils;
+   VertsLocation : aint32;
+   CandidateUVPosition: TVector2f;
+   AddedFace: abool;
+   {$ifdef ORIGAMI_TEST}
+   Temp: string;
+   {$endif}
 begin
    VertexUtil := TVertexTransformationUtils.Create;
    // Setup neighbor detection list
@@ -904,39 +1106,74 @@ begin
    PreviousFaceList := CIntegerList.Create;
    PreviousFaceList.UseSmartMemoryManagement(true);
    // Setup VertsLocation
-   for v := Low(_VertsLocation) to High(_VertsLocation) do
+   SetLength(VertsLocation,High(_Vertices)+1);
+   for v := Low(VertsLocation) to High(VertsLocation) do
    begin
-      _VertsLocation[v] := -1;
+      VertsLocation[v] := -1;
    end;
    // Avoid unlimmited loop
+   SetLength(AddedFace,High(_CheckFace)+1);
    for f := Low(_CheckFace) to High(_CheckFace) do
+   begin
+      AddedFace[f] := false;
       _CheckFace[f] := false;
+   end;
 
    // Add starting face
-   _FaceSeeds[Value] := _ID;
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Starting Face of the seed is ' + IntToStr(_StartingFace));
+   {$endif}
+   _FaceSeeds[_StartingFace] := _ID;
    _CheckFace[_StartingFace] := true;
+   AddedFace[_StartingFace] := true;
    Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;
    Result.MinBounds.V := 999999;
    Result.MaxBounds.V := -999999;
    Result.MeshID := _MeshID;
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Transform Matrix is described below: ');
+   for v := 0 to 3 do
+   begin
+      Temp := '|';
+      for f := 0 to 3 do
+      begin
+         Temp := Temp + FloatToStr(Result.TransformMatrix[v,f]) + ' ';
+      end;
+      Temp := Temp + '|';
+      GlobalVars.OrigamiFile.Add(Temp);
+   end;
+   {$endif}
 
    // The first triangle is dealt in a different way.
    // We'll project it in the plane XY and the first vertex is on (0,0,0).
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Starting Face is ' + IntToStr(_StartingFace) + ' and it is being added now');
+   {$endif}
    FaceIndex := _StartingFace * _VerticesPerFace;
    for v := 0 to _VerticesPerFace - 1 do
    begin
       vertex := _Faces[FaceIndex+v];
       Position := SubtractVector(_Vertices[vertex],_Vertices[_Faces[FaceIndex]]);
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Vertex is ' + IntToStr(vertex) + ' and Position is: [' + FloatToStr(Position.X) + ' ' + FloatToStr(Position.Y) + ' ' + FloatToStr(Position.Z) + ']');
+      {$endif}
       if _VertsSeed[vertex] <> -1 then
       begin
+         {$ifdef ORIGAMI_TEST}
+         GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(_StartingFace) + ' is used and it is being cloned as ' + IntToStr(High(_Vertices)+2));
+         {$endif}
          // this vertex was used by a previous seed, therefore, we'll clone it
          SetLength(_Vertices,High(_Vertices)+2);
          SetLength(_VertsSeed,High(_Vertices)+1);
          _VertsSeed[High(_VertsSeed)] := _ID;
-         _VertsLocation[vertex] := High(_Vertices);
-         _Faces[FaceIndex+v] := _VertsLocation[vertex];
+         SetLength(VertsLocation,High(_Vertices)+1);
+         VertsLocation[High(_Vertices)] := vertex;  // _VertsLocation works slightly different here than in the non-origami version.
+         {$ifdef ORIGAMI_TEST}
+         GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed to ' + IntToStr(High(_Vertices)));
+         {$endif}
+         _Faces[FaceIndex+v] := High(_Vertices);
          _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
          _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
          _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
@@ -964,9 +1201,12 @@ begin
       end
       else
       begin
+         {$ifdef ORIGAMI_TEST}
+         GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(vertex) + ' is new.');
+         {$endif}
          // This seed is the first seed to use this vertex.
          _VertsSeed[vertex] := _ID;
-         _VertsLocation[vertex] := vertex;
+         VertsLocation[vertex] := vertex;
          // Get temporary texture coordinates.
          _TextCoords[vertex] := VertexUtil.GetUVCoordinates(Position,Result.TransformMatrix);
          // Now update the bounds of the seed.
@@ -985,15 +1225,21 @@ begin
    f := _FaceNeighbors.GetNeighborFromID(_StartingFace);
    while f <> -1 do
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Face ' + IntToStr(f) + ' is neighbour of ' + IntToStr(_StartingFace));
+      {$endif}
       // do some verification here
-      if not _CheckFace[f] then
+      if not AddedFace[f] then
       begin
          if (_FaceSeeds[f] = -1) then
          begin
             PreviousFaceList.Add(_StartingFace);
             FaceList.Add(f);
-            _CheckFace[f] := true;
+            {$ifdef ORIGAMI_TEST}
+            GlobalVars.OrigamiFile.Add('Face ' + IntToStr(f) + ' has been added to the list');
+            {$endif}
          end;
+         AddedFace[f] := true;
       end;
       f := _FaceNeighbors.GetNextNeighbor;
    end;
@@ -1004,64 +1250,63 @@ begin
    while FaceList.GetValue(Value) do
    begin
       PreviousFaceList.GetValue(PreviousFace);
-      // Add the face and its vertexes
-      _FaceSeeds[Value] := _ID;
-      FaceIndex := Value * _VerticesPerFace;
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' that was added by previous face ' + IntToStr(PreviousFace));
+      {$endif}
       // The first idea is to get the vertex that wasn't added yet.
-      ObtainCommonEdgeFromFaces(_Faces,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1);
-      // If we find the vertex...
-      if _VertsSeed[CurrentVertex] = -1 then
+      ObtainCommonEdgeFromFaces(_Faces,VertsLocation,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1,v);
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Current Vertex = ' + IntToStr(CurrentVertex) + '; Previous Vertex = ' + IntToStr(PreviousVertex) + '; Share Edge = [' + IntToStr(SharedEdge0) + ', ' + IntToStr(SharedEdge1) + ']');
+      {$endif}
+      // Find coordinates and check if we won't hit another face.
+      if IsValidUVPoint(_Vertices,_Faces,_TextCoords,CurrentVertex,SharedEdge0,SharedEdge1,PreviousVertex,_CheckFace,CandidateUVPosition,Value,PreviousFace,_VerticesPerFace) then
       begin
-         // This seed is the first seed to use this vertex.
-         _VertsSeed[vertex] := _ID;
-         _VertsLocation[vertex] := vertex;
-         // Get temporary texture coordinates.
-         WriteUVCoordinatesOrigami(_Vertices,_TextCoords,vertex,SharedEdge0,SharedEdge1,PreviousVertex);
-         // Now update the bounds of the seed.
-         if _TextCoords[vertex].U < Result.MinBounds.U then
-            Result.MinBounds.U := _TextCoords[vertex].U;
-         if _TextCoords[vertex].U > Result.MaxBounds.U then
-            Result.MaxBounds.U := _TextCoords[vertex].U;
-         if _TextCoords[vertex].V < Result.MinBounds.V then
-            Result.MinBounds.V := _TextCoords[vertex].V;
-         if _TextCoords[vertex].V > Result.MaxBounds.V then
-            Result.MaxBounds.V := _TextCoords[vertex].V;
-      end
-      else // sometimes we may not find the vertex, because all of them might
-      // have been added previously.
-      begin
-
-
-      end;
-      // This part is old code and it will be eventually removed.
-      for v := 0 to _VerticesPerFace - 1 do
-      begin
-         vertex := _Faces[FaceIndex+v];
-         if _VertsSeed[vertex] <> -1 then
+         {$ifdef ORIGAMI_TEST}
+         GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been validated.');
+         {$endif}
+         // Add the face and its vertexes
+         FaceIndex := Value * _VerticesPerFace;
+         _CheckFace[Value] := true;
+         _FaceSeeds[Value] := _ID;
+         // If the vertex wasn't used yet
+         if _VertsSeed[CurrentVertex] = -1 then
          begin
-            if _VertsLocation[vertex] = -1 then
+            // This seed is the first seed to use this vertex.
+
+            // Does this vertex has coordinates already?
+            if VertsLocation[CurrentVertex] <> -1 then
             begin
-               // this vertex was used by a previous seed, therefore, we'll clone it
+               {$ifdef ORIGAMI_TEST}
+               GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(CurrentVertex) + ' is being cloned as ' + IntToStr(High(_Vertices)+1));
+               {$endif}
+
+               // Clone vertex
                SetLength(_Vertices,High(_Vertices)+2);
                SetLength(_VertsSeed,High(_Vertices)+1);
                _VertsSeed[High(_VertsSeed)] := _ID;
-               _VertsLocation[vertex] := High(_Vertices);
-               _Faces[FaceIndex+v] := _VertsLocation[vertex];
-               _Vertices[High(_Vertices)].X := _Vertices[vertex].X;
-               _Vertices[High(_Vertices)].Y := _Vertices[vertex].Y;
-               _Vertices[High(_Vertices)].Z := _Vertices[vertex].Z;
+               SetLength(VertsLocation,High(_Vertices)+1);
+               VertsLocation[High(_Vertices)] := CurrentVertex;
+               {$ifdef ORIGAMI_TEST}
+               GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed from ' + IntToStr(CurrentVertex) + ' to ' + IntToStr(High(_Vertices)));
+               {$endif}
+               _Faces[FaceIndex+v] := High(_Vertices);
+               _Vertices[High(_Vertices)].X := _Vertices[CurrentVertex].X;
+               _Vertices[High(_Vertices)].Y := _Vertices[CurrentVertex].Y;
+               _Vertices[High(_Vertices)].Z := _Vertices[CurrentVertex].Z;
                SetLength(_VertsNormals,High(_Vertices)+1);
-               _VertsNormals[High(_Vertices)].X := _VertsNormals[vertex].X;
-               _VertsNormals[High(_Vertices)].Y := _VertsNormals[vertex].Y;
-               _VertsNormals[High(_Vertices)].Z := _VertsNormals[vertex].Z;
+               _VertsNormals[High(_Vertices)].X := _VertsNormals[CurrentVertex].X;
+               _VertsNormals[High(_Vertices)].Y := _VertsNormals[CurrentVertex].Y;
+               _VertsNormals[High(_Vertices)].Z := _VertsNormals[CurrentVertex].Z;
                SetLength(_VertsColours,High(_Vertices)+1);
-               _VertsColours[High(_Vertices)].X := _VertsColours[vertex].X;
-               _VertsColours[High(_Vertices)].Y := _VertsColours[vertex].Y;
-               _VertsColours[High(_Vertices)].Z := _VertsColours[vertex].Z;
-               _VertsColours[High(_Vertices)].W := _VertsColours[vertex].W;
-               // Get temporarily texture coordinates.
+               _VertsColours[High(_Vertices)].X := _VertsColours[CurrentVertex].X;
+               _VertsColours[High(_Vertices)].Y := _VertsColours[CurrentVertex].Y;
+               _VertsColours[High(_Vertices)].Z := _VertsColours[CurrentVertex].Z;
+               _VertsColours[High(_Vertices)].W := _VertsColours[CurrentVertex].W;
+               // Get temporary texture coordinates.
                SetLength(_TextCoords,High(_Vertices)+1);
-               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
+//               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
+               _TextCoords[High(_Vertices)].U := CandidateUVPosition.U;
+               _TextCoords[High(_Vertices)].V := CandidateUVPosition.V;
                // Now update the bounds of the seed.
                if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
                   Result.MinBounds.U := _TextCoords[High(_Vertices)].U;
@@ -1074,68 +1319,149 @@ begin
             end
             else
             begin
-               // This vertex is already used by this seed.
-               _Faces[FaceIndex+v] := _VertsLocation[vertex];
+               {$ifdef ORIGAMI_TEST}
+               GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(CurrentVertex) + ' is being used.');
+               {$endif}
+               // Write the vertex coordinates.
+               _VertsSeed[CurrentVertex] := _ID;
+               VertsLocation[CurrentVertex] := CurrentVertex;
+               // Get temporary texture coordinates.
+//               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,CurrentVertex,SharedEdge0,SharedEdge1,PreviousVertex);
+               _TextCoords[CurrentVertex].U := CandidateUVPosition.U;
+               _TextCoords[CurrentVertex].V := CandidateUVPosition.V;
+               // Now update the bounds of the seed.
+               if _TextCoords[CurrentVertex].U < Result.MinBounds.U then
+                  Result.MinBounds.U := _TextCoords[CurrentVertex].U;
+               if _TextCoords[CurrentVertex].U > Result.MaxBounds.U then
+                  Result.MaxBounds.U := _TextCoords[CurrentVertex].U;
+               if _TextCoords[CurrentVertex].V < Result.MinBounds.V then
+                  Result.MinBounds.V := _TextCoords[CurrentVertex].V;
+               if _TextCoords[CurrentVertex].V > Result.MaxBounds.V then
+                  Result.MaxBounds.V := _TextCoords[CurrentVertex].V;
             end;
          end
-         else
+         else // if the vertex has been added previously.
          begin
-            // This seed is the first seed to use this vertex.
-            _VertsSeed[vertex] := _ID;
-            _VertsLocation[vertex] := vertex;
+            {$ifdef ORIGAMI_TEST}
+            GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(CurrentVertex) + ' is being cloned as ' + IntToStr(High(_Vertices)+1) + ' due to another seed.');
+            {$endif}
+            // Clone the vertex.
+            SetLength(_Vertices,High(_Vertices)+2);
+            SetLength(_VertsSeed,High(_Vertices)+1);
+            _VertsSeed[High(_VertsSeed)] := _ID;
+            SetLength(VertsLocation,High(_Vertices)+1);
+            VertsLocation[High(_Vertices)] := CurrentVertex;
+            {$ifdef ORIGAMI_TEST}
+            GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed from ' + IntToStr(CurrentVertex) + ' to ' + IntToStr(High(_Vertices)));
+            {$endif}
+            _Faces[FaceIndex+v] := High(_Vertices);
+            _Vertices[High(_Vertices)].X := _Vertices[CurrentVertex].X;
+            _Vertices[High(_Vertices)].Y := _Vertices[CurrentVertex].Y;
+            _Vertices[High(_Vertices)].Z := _Vertices[CurrentVertex].Z;
+            SetLength(_VertsNormals,High(_Vertices)+1);
+            _VertsNormals[High(_Vertices)].X := _VertsNormals[CurrentVertex].X;
+            _VertsNormals[High(_Vertices)].Y := _VertsNormals[CurrentVertex].Y;
+            _VertsNormals[High(_Vertices)].Z := _VertsNormals[CurrentVertex].Z;
+            SetLength(_VertsColours,High(_Vertices)+1);
+            _VertsColours[High(_Vertices)].X := _VertsColours[CurrentVertex].X;
+            _VertsColours[High(_Vertices)].Y := _VertsColours[CurrentVertex].Y;
+            _VertsColours[High(_Vertices)].Z := _VertsColours[CurrentVertex].Z;
+            _VertsColours[High(_Vertices)].W := _VertsColours[CurrentVertex].W;
             // Get temporary texture coordinates.
-            _TextCoords[vertex] := VertexUtil.GetUVCoordinates(_Vertices[vertex],Result.TransformMatrix);
+            SetLength(_TextCoords,High(_Vertices)+1);
+            //WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
+            _TextCoords[High(_Vertices)].U := CandidateUVPosition.U;
+            _TextCoords[High(_Vertices)].V := CandidateUVPosition.V;
             // Now update the bounds of the seed.
-            if _TextCoords[vertex].U < Result.MinBounds.U then
-               Result.MinBounds.U := _TextCoords[vertex].U;
-            if _TextCoords[vertex].U > Result.MaxBounds.U then
-               Result.MaxBounds.U := _TextCoords[vertex].U;
-            if _TextCoords[vertex].V < Result.MinBounds.V then
-               Result.MinBounds.V := _TextCoords[vertex].V;
-            if _TextCoords[vertex].V > Result.MaxBounds.V then
-               Result.MaxBounds.V := _TextCoords[vertex].V;
+            if _TextCoords[High(_Vertices)].U < Result.MinBounds.U then
+               Result.MinBounds.U := _TextCoords[High(_Vertices)].U;
+            if _TextCoords[High(_Vertices)].U > Result.MaxBounds.U then
+               Result.MaxBounds.U := _TextCoords[High(_Vertices)].U;
+            if _TextCoords[High(_Vertices)].V < Result.MinBounds.V then
+               Result.MinBounds.V := _TextCoords[High(_Vertices)].V;
+            if _TextCoords[High(_Vertices)].V > Result.MaxBounds.V then
+               Result.MaxBounds.V := _TextCoords[High(_Vertices)].V;
          end;
-      end;
 
 
-      // Check if other neighbors are elegible for this partition/seed.
-      f := _FaceNeighbors.GetNeighborFromID(Value);
-      while f <> -1 do
-      begin
-         // do some verification here
-         if not _CheckFace[f] then
+         // Check if other neighbors are elegible for this partition/seed.
+         f := _FaceNeighbors.GetNeighborFromID(Value);
+         while f <> -1 do
          begin
-            if (_FaceSeeds[f] = -1) then
+            {$ifdef ORIGAMI_TEST}
+            GlobalVars.OrigamiFile.Add('Face ' + IntToStr(f) + ' is neighbour of ' + IntToStr(Value));
+            {$endif}
+            // do some verification here
+            if not AddedFace[f] then
             begin
-               PreviousFaceList.Add(Value);
-               FaceList.Add(f);
+               if (_FaceSeeds[f] = -1) then
+               begin
+                  PreviousFaceList.Add(Value);
+                  FaceList.Add(f);
+                  {$ifdef ORIGAMI_TEST}
+                  GlobalVars.OrigamiFile.Add('Face ' + IntToStr(f) + ' has been added to the list');
+                  {$endif}
+               end;
+               AddedFace[f] := true;
             end;
-            _CheckFace[f] := true;
+            f := _FaceNeighbors.GetNextNeighbor;
          end;
-         f := _FaceNeighbors.GetNextNeighbor;
+         {$ifdef ORIGAMI_TEST}
+      end
+      else // Face has been rejected.
+      begin
+         GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been rejected.');
+         {$endif}
       end;
    end;
 
    if _NeighborhoodPlugin <> nil then
    begin
-      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalences(_VertsLocation);
+      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalencesOrigami(VertsLocation);
    end;
+   SetLength(VertsLocation,0);
    FaceList.Free;
    PreviousFaceList.Free;
    VertexUtil.Free;
 end;
 
+function CTextureAtlasExtractor.GetVertexLocationID(const _VertsLocation : aint32; _ID: integer): integer;
+begin
+   if _VertsLocation[_ID] = -1 then
+   begin
+      Result := _ID;
+   end
+   else
+   begin
+      Result := _VertsLocation[_ID];
+   end;
+end;
+
 // That's the time of the day that we miss a half edge structure (even if a
 // fragmented memory makes Delphi go wild)
-procedure CTextureAtlasExtractor.ObtainCommonEdgeFromFaces(const _Faces: auint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2: integer);
+procedure CTextureAtlasExtractor.ObtainCommonEdgeFromFaces(var _Faces: auint32; const _VertsLocation : aint32; const _VerticesPerFace,_CurrentFace,_PreviousFace: integer; var _CurrentVertex,_PreviousVertex,_CommonVertex1,_CommonVertex2,_inFaceCurrVertPosition: integer);
 var
    i,j,mincface,minpface : integer;
    Found: boolean;
+   {$ifdef ORIGAMI_TEST}
+   Temp: String;
+   {$endif}
 begin
    mincface := _CurrentFace * _VerticesPerFace;
    minpface := _PreviousFace * _VerticesPerFace;
 
+   {$ifdef ORIGAMI_TEST}
+   Temp := 'VertexLocation = [';
+   for i := Low(_VertsLocation) to High(_VertsLocation) do
+   begin
+      Temp := Temp + IntToStr(_VertsLocation[i]) + ' ';
+   end;
+   Temp := Temp + ']';
+   GlobalVars.OrigamiFile.Add(Temp);
+   {$endif}
+
    // Real code starts here.
+   // Find a vertex that is in both faces and call it _CommonVertex1
    i := 0;
    Found := false;
    while (i < _VerticesPerFace) and (not Found) do
@@ -1143,9 +1469,10 @@ begin
       j := 0;
       while (j < _VerticesPerFace) and (not Found) do
       begin
-         if _Faces[mincface+i] = _Faces[minpface+j] then
+         if GetVertexLocationID(_VertsLocation,_Faces[mincface+i]) = GetVertexLocationID(_VertsLocation,_Faces[minpface+j]) then
          begin
-            _CommonVertex1 := _Faces[mincface+i];
+            _CommonVertex1 := _Faces[minpface+j];
+            _Faces[mincface+i] := _CommonVertex1; // ensure synchornization
             Found := true;
          end
          else
@@ -1159,16 +1486,21 @@ begin
       end;
    end;
    // Try the next element
-   if _Faces[mincface + ((i + 1) mod _VerticesPerFace)] = _Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)] then
+   if GetVertexLocationID(_VertsLocation,_Faces[mincface + ((i + 1) mod _VerticesPerFace)]) = GetVertexLocationID(_VertsLocation,_Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)]) then
    begin
-      _CommonVertex2 := _Faces[mincface + ((i + 1) mod _VerticesPerFace)];
-      _CurrentVertex := _Faces[mincface + ((i + _VerticesPerFace - 1) mod _VerticesPerFace)];
+      _CommonVertex2 := _Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)];
+      _Faces[mincface + ((i + 1) mod _VerticesPerFace)] := _CommonVertex2; // ensure synchronization
+      _inFaceCurrVertPosition := (i + _VerticesPerFace - 1) mod _VerticesPerFace;
+      _CurrentVertex := _Faces[mincface + _inFaceCurrVertPosition];
       _PreviousVertex := _Faces[minpface + ((j + 1) mod _VerticesPerFace)];
    end
    else // Then, it is the previous element.
    begin
-      _CommonVertex2 := _Faces[mincface + ((i + _VerticesPerFace - 1) mod _VerticesPerFace)];
-      _CurrentVertex := _Faces[mincface + ((i + 1) mod _VerticesPerFace)];
+      // PS: I'm not sure if _CommonVertex2 may have orientation problems here. To do: Check it out later.
+      _CommonVertex2 := _Faces[minpface + ((j + 1) mod _VerticesPerFace)];
+      _Faces[mincface + ((i + _VerticesPerFace - 1) mod _VerticesPerFace)] := _CommonVertex2;
+      _inFaceCurrVertPosition := (i + 1) mod _VerticesPerFace;
+      _CurrentVertex := _Faces[mincface + _inFaceCurrVertPosition];
       _PreviousVertex := _Faces[minpface + ((j + _VerticesPerFace - 1) mod _VerticesPerFace)];
    end;
 end;

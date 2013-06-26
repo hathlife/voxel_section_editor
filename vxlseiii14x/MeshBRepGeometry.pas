@@ -5,7 +5,7 @@ interface
 uses BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
    RenderingMachine, ShaderBank, MeshPluginBase, NeighborhoodDataPlugin, Math,
    ClassMeshNormalsTool, SysUtils, ClassIntegerSet, ClassMeshColoursTool,
-   ClassQuadList, ClassTriangleList, Histogram, ClassNeighborDetector;
+   ClassQuadList, ClassTriangleList, Histogram, ClassNeighborDetector, Debug;
 
 type
    PMeshBRepGeometry = ^TMeshBRepGeometry;
@@ -81,6 +81,11 @@ type
          procedure ConvertQuadsToTris(); overload;
          procedure ConvertQuadsTo48Tris(_Mesh : Pointer); overload;
          procedure UpdateNumFaces;
+         // Debug
+         procedure Debug(const _Debug:TDebugFile);
+         procedure DebugFaces(const _Debug:TDebugFile);
+         procedure DebugFaceNormals(const _Debug:TDebugFile);
+         procedure DebugFaceColours(const _Debug:TDebugFile);
    end;
 
 implementation
@@ -1056,6 +1061,102 @@ end;
 procedure TMeshBRepGeometry.UpdateNumFaces;
 begin
    FNumFaces := (High(Faces)+1) div VerticesPerFace;
+end;
+
+// Debug related
+procedure TMeshBRepGeometry.Debug(const _Debug:TDebugFile);
+var
+   i,j,v : integer;
+   Temp: String;
+begin
+   _Debug.Add('Geometric Support Description Starts Here:' + #13#10);
+   _Debug.Add('Vertices Per Face: ' + IntToStr(VerticesPerFace) + #13#10);
+   v := 0;
+   if High(Normals) > 0 then
+   begin
+      _Debug.Add(IntToStr(FNumFaces) + ' faces:' + #13#10);
+      for i := Low(Normals) to High(Normals) do
+      begin
+         j := 0;
+         Temp := IntToStr(i) + ' = [';
+         while j < VerticesPerFace do
+         begin
+            Temp := Temp + IntToStr(Faces[v]) + ' ';
+            inc(j);
+            inc(v);
+         end;
+         Temp := Temp + ']';
+         _Debug.Add(Temp);
+      end;
+      _Debug.Add(#13#10 + 'Face normals:' + #13#10);
+      for i := Low(Normals) to High(Normals) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Normals[i].X) + ' ' + FloatToStr(Normals[i].Y) + ' ' + FloatToStr(Normals[i].Z) + ']');
+      end;
+   end;
+   if High(Colours) > 0 then
+   begin
+      _Debug.Add(#13#10 + 'Face colours:' + #13#10);
+      for i := Low(Colours) to High(Colours) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Colours[i].X) + ' ' + FloatToStr(Colours[i].Y) + ' ' + FloatToStr(Colours[i].Z) + ' ' + FloatToStr(Colours[i].W) + ']');
+      end;
+   end;
+end;
+
+procedure TMeshBRepGeometry.DebugFaces(const _Debug:TDebugFile);
+var
+   i,j,v : integer;
+   Temp: String;
+begin
+   _Debug.Add('Geometric Support Description Starts Here:' + #13#10);
+   _Debug.Add('Vertices Per Face: ' + IntToStr(VerticesPerFace) + #13#10);
+   v := 0;
+   if High(Normals) > 0 then
+   begin
+      _Debug.Add(IntToStr(FNumFaces) + ' faces:' + #13#10);
+      for i := Low(Normals) to High(Normals) do
+      begin
+         j := 0;
+         Temp := IntToStr(i) + ' = [';
+         while j < VerticesPerFace do
+         begin
+            Temp := Temp + IntToStr(Faces[v]) + ' ';
+            inc(j);
+            inc(v);
+         end;
+         Temp := Temp + ']';
+         _Debug.Add(Temp);
+      end;
+   end;
+end;
+
+procedure TMeshBRepGeometry.DebugFaceNormals(const _Debug:TDebugFile);
+var
+   i : integer;
+begin
+   if High(Normals) > 0 then
+   begin
+      _Debug.Add('Geometry has ' + IntToStr(FNumFaces) + ' faces normals:' + #13#10);
+      for i := Low(Normals) to High(Normals) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Normals[i].X) + ' ' + FloatToStr(Normals[i].Y) + ' ' + FloatToStr(Normals[i].Z) + ']');
+      end;
+   end;
+end;
+
+procedure TMeshBRepGeometry.DebugFaceColours(const _Debug:TDebugFile);
+var
+   i : integer;
+begin
+   if High(Colours) > 0 then
+   begin
+      _Debug.Add('Geometry has ' + IntToStr(FNumFaces) + 'face colours:' + #13#10);
+      for i := Low(Colours) to High(Colours) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Colours[i].X) + ' ' + FloatToStr(Colours[i].Y) + ' ' + FloatToStr(Colours[i].Z) + ' ' + FloatToStr(Colours[i].W) + ']');
+      end;
+   end;
 end;
 
 end.

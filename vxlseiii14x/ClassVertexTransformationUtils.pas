@@ -7,7 +7,7 @@ unit ClassVertexTransformationUtils;
 
 interface
 
-uses Geometry, BasicDataTypes, GLConstants;
+uses Geometry, BasicDataTypes, GLConstants, Math;
 
 {$INCLUDE Global_Conditionals.inc}
 
@@ -37,6 +37,8 @@ type
          function ProjectVectorOnTangentPlane(const _Normal,_Vector: TVector3f): TVector3f;
          function GetArcCosineFromTangentPlane(const _Vector, _AxisX, _AxisY: TVector3f): single;
          function GetArcCosineFromAngleOnTangentSpace(_VI,_V1,_V2: TVector3f; _VertexNormal: TVector3f): single;
+         // Misc
+         function IsPointInsideTriangle(const _V1,_V2,_V3,_P : TVector2f): boolean;
    end;
 
 implementation
@@ -79,32 +81,31 @@ var
    AngX,AngY : single;
 begin
    // Get the angles from the normal vector.
-   AngX := GetRotationXZ(_Vector);
-   AngY := GetRotationY(_Vector);
+   AngX := GetRotationY(_Vector);
+   AngY := GetRotationXZ(_Vector);
    // Now we get the transform matrix
-   Result := GetTransformMatrixFromAngles(-AngX,-AngY);
+   Result := GetTransformMatrixFromAngles(CleanAngleRadians(-AngX),CleanAngleRadians(-AngY));
 end;
 
 function TVertexTransformationUtils.GetTransformMatrixFromAngles(_AngX, _AngY: single): TMatrix;
 const
    ANG90 = Pi * 0.5;
 var
-   Axis : TAffineFltVector;
    RotMatrix : TMatrix;
 begin
    Result := IdentityMatrix;
-   if _AngY <> 0 then
-   begin
-      Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngY),cos(_AngY)));
-   end;
+   // first of all, we align our world with the direction z = 1.
    if _AngX <> 0 then
    begin
-      Axis[0] := sin(_AngY + ANG90);
-      Axis[1] := 0;
-      Axis[2] := cos(_AngY + ANG90);
-      RotMatrix := CreateRotationMatrix(Axis,_AngX);
+      Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngX),cos(_AngX)));
+   end;
+   // now we vertically rotate our world to y = 0.
+   if _AngY <> 0 then
+   begin
+      RotMatrix := CreateRotationMatrixX(sin(_AngY),cos(_AngY));
       Result := MatrixMultiply(Result,RotMatrix);
    end;
+
 end;
 
 function TVertexTransformationUtils.GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
@@ -128,6 +129,7 @@ begin
    end;
 end;
 
+// Horizontal rotation. (Rotation is 0 if it points to z = 1)
 function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): single;
 begin
    if (_Vector.X <> 0) then
@@ -144,25 +146,29 @@ begin
    end;
 end;
 
+// Vertical rotation. (Rotation is 0 if y = 0)
 function TVertexTransformationUtils.GetRotationXZ(const _Vector: TVector3f): single;
 begin
    if _Vector.Y <> 0 then
    begin
-      if _Vector.Z <> 0 then
-      begin
-         Result := CleanAngleRadians(((_Vector.Z) / (Abs(_Vector.Z))) *  arcsin(_Vector.Y));
-      end
-      else if _Vector.X <> 0 then
-      begin
-         Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) *  arcsin(_Vector.Y));
-      end
-      else if _Vector.Y = 1 then
+      if _Vector.Y = 1 then
       begin
          Result := Pi * 0.5;
       end
-      else
+      else if _Vector.Y = -1 then
       begin
          Result := Pi * 1.5;
+      end
+      else
+      begin
+         if _Vector.Z = max(abs(_Vector.Z),abs(_Vector.X)) then
+         begin
+            Result := CleanAngleRadians(((_Vector.Z) / (Abs(_Vector.Z))) *  arcsin(_Vector.Y / sqrt((_Vector.Y * _Vector.Y) + (_Vector.Z * _Vector.Z))));
+         end
+         else
+         begin
+            Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) *  arcsin(_Vector.Y / sqrt((_Vector.X * _Vector.X) + (_Vector.Y * _Vector.Y))));
+         end;
       end;
    end
    else
@@ -278,6 +284,35 @@ begin
    {$ifdef SMOOTH_TEST}
    //GlobalVars.SmoothFile.Add('Resulting Angle is: ' + FloatToStr(Result) + '.');
    {$endif}
+end;
+
+function TVertexTransformationUtils.IsPointInsideTriangle(const _V1,_V2,_V3,_P : TVector2f): boolean;
+var
+   V0,V1,V2: TVector2f;
+   dot00,dot01,dot02,dot11,dot12,invDenom,u,v: single;
+begin
+   // Compute vectors
+   v0.U := _V3.U - _V1.U;
+   v0.V := _V3.V - _V1.V;
+   v1.U := _V2.U - _V1.U;
+   v1.V := _V2.V - _V1.V;
+   v2.U := _P.U - _V1.U;
+   v2.V := _P.V - _V1.V;
+
+   // Compute dot products
+   dot00 := DotProduct(v0, v0);
+   dot01 := DotProduct(v0, v1);
+   dot02 := DotProduct(v0, v2);
+   dot11 := DotProduct(v1, v1);
+   dot12 := DotProduct(v1, v2);
+
+   // Compute barycentric coordinates
+   invDenom := 1 / ((dot00 * dot11) - (dot01 * dot01));
+   u := ((dot11 * dot02) - (dot01 * dot12)) * invDenom;
+   v := ((dot00 * dot12) - (dot01 * dot02)) * invDenom;
+
+   // Check if point is in triangle
+   Result := ((u > 0) and (v > 0) and ((u + v) < 1));
 end;
 
 end.

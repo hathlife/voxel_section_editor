@@ -11,7 +11,7 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
       ClassMeshNormalsTool, ClassMeshColoursTool, ClassMeshProcessingTool,
       ClassTextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData,
-      ClassMeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram;
+      ClassMeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram, Debug;
 
 {$INCLUDE Global_Conditionals.inc}
 type
@@ -165,6 +165,7 @@ type
          // Texture related.
          procedure GenerateDiffuseTexture;
          procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+         procedure GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
@@ -214,6 +215,13 @@ type
 
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
+
+         // Debug
+         procedure Debug(const _Debug:TDebugFile);
+         procedure DebugVertexPositions(const _Debug:TDebugFile);
+         procedure DebugVertexNormals(const _Debug:TDebugFile);
+         procedure DebugVertexColours(const _Debug:TDebugFile);
+         procedure DebugVertexTexCoordss(const _Debug:TDebugFile);
    end;
    PMesh = ^TMesh;
 
@@ -1627,10 +1635,37 @@ begin
    end;
 end;
 
+// This function gets a temporary set of coordinates that might become real texture coordinates later on.
+procedure TMesh.GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+var
+   NeighborhoodPlugin: PMeshPluginBase;
+begin
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('The input mesh is:');
+   Debug(GlobalVars.OrigamiFile);
+   {$endif}
+   //RebuildFaceNormals;
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   Geometry.GoToFirstElement;
+   TexCoords := _TexExtractor.GetMeshSeedsOrigami(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('The output mesh is:');
+   Debug(GlobalVars.OrigamiFile);
+   {$endif}
+   if NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+   end;
+end;
+
 // This one really acquires the final texture coordinates values.
 procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
 begin
    _TexExtractor.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('The output texture coordinates are:');
+   DebugVertexTexCoordss(GlobalVars.OrigamiFile);
+   {$endif}
 end;
 
 procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
@@ -2481,6 +2516,110 @@ begin
    Result := 1 - Result;
    if _Distance < 0 then
       Result := -Result;
+end;
+
+procedure TMesh.Debug(const _Debug:TDebugFile);
+var
+   i: integer;
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   _Debug.Add('Mesh ' + Name + ' with ID ' + IntToStr(ID) + ' Starts Here:' + #13#10);
+   if High(Vertices) > 0 then
+   begin
+      _Debug.Add(IntToStr(High(Vertices)+1) + ' vertices:' + #13#10);
+      for i := Low(Vertices) to High(Vertices) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Vertices[i].X) + ' ' + FloatToStr(Vertices[i].Y) + ' ' + FloatToStr(Vertices[i].Z) + ']');
+      end;
+      if (High(Normals) > 0) then
+      begin
+         _Debug.Add(#13#10 + 'Vertex normals:' + #13#10);
+         for i := Low(Normals) to High(Normals) do
+         begin
+            _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Normals[i].X) + ' ' + FloatToStr(Normals[i].Y) + ' ' + FloatToStr(Normals[i].Z) + ']');
+         end;
+      end;
+      if (High(Colours) > 0) then
+      begin
+         _Debug.Add(#13#10 + 'Vertex colours:' + #13#10);
+         for i := Low(Colours) to High(Colours) do
+         begin
+            _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Colours[i].X) + ' ' + FloatToStr(Colours[i].Y) + ' ' + FloatToStr(Colours[i].Z) + ' ' + FloatToStr(Colours[i].W) + ']');
+         end;
+      end;
+      if (High(TexCoords) > 0) then
+      begin
+         _Debug.Add(#13#10 + 'Texture coordinates:' + #13#10);
+         for i := Low(TexCoords) to High(TexCoords) do
+         begin
+            _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(TexCoords[i].U) + ' ' + FloatToStr(TexCoords[i].V) + ']');
+         end;
+      end;
+   end;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      (CurrentGeometry^ as TMeshBRepGeometry).Debug(_Debug);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
+end;
+
+procedure TMesh.DebugVertexPositions(const _Debug:TDebugFile);
+var
+   i: integer;
+begin
+   if High(Vertices) > 0 then
+   begin
+      _Debug.Add('Mesh ' + Name + ' with ID ' + IntToStr(ID) + ' has the following ' + IntToStr(High(Vertices)+1) + ' vertices:' + #13#10);
+      for i := Low(Vertices) to High(Vertices) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Vertices[i].X) + ' ' + FloatToStr(Vertices[i].Y) + ' ' + FloatToStr(Vertices[i].Z) + ']');
+      end;
+   end;
+end;
+
+procedure TMesh.DebugVertexNormals(const _Debug:TDebugFile);
+var
+   i: integer;
+begin
+   if High(Normals) > 0 then
+   begin
+      _Debug.Add('Mesh ' + Name + ' with ID ' + IntToStr(ID) + ' has the following ' + IntToStr(High(Vertices)+1) + ' normals:' + #13#10);
+      for i := Low(Normals) to High(Normals) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Normals[i].X) + ' ' + FloatToStr(Normals[i].Y) + ' ' + FloatToStr(Normals[i].Z) + ']');
+      end;
+   end;
+end;
+
+procedure TMesh.DebugVertexColours(const _Debug:TDebugFile);
+var
+   i: integer;
+begin
+   if High(Colours) > 0 then
+   begin
+      _Debug.Add('Mesh ' + Name + ' with ID ' + IntToStr(ID) + ' has the following ' + IntToStr(High(Vertices)+1) + ' colours:' + #13#10);
+      for i := Low(Colours) to High(Colours) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(Colours[i].X) + ' ' + FloatToStr(Colours[i].Y) + ' ' + FloatToStr(Colours[i].Z) + ' ' + FloatToStr(Colours[i].W) + ']');
+      end;
+   end;
+end;
+
+procedure TMesh.DebugVertexTexCoordss(const _Debug:TDebugFile);
+var
+   i: integer;
+begin
+   if High(TexCoords) > 0 then
+   begin
+      _Debug.Add('Mesh ' + Name + ' with ID ' + IntToStr(ID) + ' has the following ' + IntToStr(High(Vertices)+1) + ' texture coordinates:' + #13#10);
+      for i := Low(TexCoords) to High(TexCoords) do
+      begin
+         _Debug.Add(IntToStr(i) + ' = [' + FloatToStr(TexCoords[i].U) + ' ' + FloatToStr(TexCoords[i].V) + ']');
+      end;
+   end;
 end;
 
 

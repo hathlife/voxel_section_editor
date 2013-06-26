@@ -178,6 +178,8 @@ type
     ModelFXEulerSmooth2: TMenuItem;
     ModelFXHeavyEulerSmooth2: TMenuItem;
     ModelFXSincInfiniteSmooth2: TMenuItem;
+    TextureFXDiffuseOrigami: TMenuItem;
+    procedure TextureFXDiffuseOrigamiClick(Sender: TObject);
     procedure ModelFXSincInfiniteSmooth2Click(Sender: TObject);
     procedure ModelFXHeavyEulerSmooth2Click(Sender: TObject);
     procedure ModelFXEulerSmooth2Click(Sender: TObject);
@@ -644,6 +646,13 @@ begin
       SetColoursMode(2);
    end;
    Frm.Release;
+end;
+
+procedure TFrm3DModelizer.TextureFXDiffuseOrigamiClick(Sender: TObject);
+begin
+   Actor.GenerateDiffuseTextureOrigami;
+   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   SetColoursMode(2);
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmooth2Click(Sender: TObject);
@@ -1798,6 +1807,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := true;
          TextureFXDiffuse.Enabled := false;
          TextureFXDiffuseCustom.Enabled := false;
+         TextureFXDiffuseOrigami.Enabled := false;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
@@ -1816,6 +1826,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := false;
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
+         TextureFXDiffuseOrigami.Enabled := true;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
          TextureFXNormal.Enabled := false;
@@ -1834,6 +1845,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := false;
          TextureFXDiffuse.Enabled := false;
          TextureFXDiffuseCustom.Enabled := false;
+         TextureFXDiffuseOrigami.Enabled := false;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
@@ -1852,6 +1864,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := true;
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
+         TextureFXDiffuseOrigami.Enabled := true;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
          TextureFXNormal.Enabled := true;

@@ -33,7 +33,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 825
     object Splitter1: TSplitter
       Left = 653
       Top = 26
@@ -50,7 +49,6 @@ object FrmMain: TFrmMain
       Height = 817
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 798
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -87,7 +85,7 @@ object FrmMain: TFrmMain
       end
       object lblpalette: TLabel
         Left = 1
-        Top = 257
+        Top = 281
         Width = 150
         Height = 13
         Align = alTop
@@ -104,16 +102,17 @@ object FrmMain: TFrmMain
       end
       object cnvPalette: TPaintBox
         Left = 1
-        Top = 270
+        Top = 294
         Width = 150
         Height = 236
         Align = alTop
         OnMouseUp = cnvPaletteMouseUp
         OnPaint = cnvPalettePaint
+        ExplicitTop = 270
       end
       object lblLayer: TLabel
         Left = 1
-        Top = 177
+        Top = 201
         Width = 150
         Height = 13
         Align = alTop
@@ -130,7 +129,7 @@ object FrmMain: TFrmMain
       end
       object lblBrush: TLabel
         Left = 1
-        Top = 129
+        Top = 153
         Width = 150
         Height = 13
         Align = alTop
@@ -164,11 +163,11 @@ object FrmMain: TFrmMain
           OnChange = SectionComboChange
         end
       end
-      object Panel4: TPanel
+      object PnlTools: TPanel
         Left = 1
         Top = 68
         Width = 150
-        Height = 61
+        Height = 85
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 1
@@ -381,8 +380,8 @@ object FrmMain: TFrmMain
           OnClick = SpeedButton6Click
         end
         object SpeedButton9: TSpeedButton
-          Left = 128
-          Top = 8
+          Left = 56
+          Top = 57
           Width = 23
           Height = 22
           Hint = 'Smooth Normal'
@@ -442,8 +441,8 @@ object FrmMain: TFrmMain
           OnClick = SpeedButton9Click
         end
         object SpeedButton7: TSpeedButton
-          Left = 80
-          Top = 32
+          Left = 8
+          Top = 57
           Width = 23
           Height = 22
           Hint = 'Darken'
@@ -646,8 +645,8 @@ object FrmMain: TFrmMain
           OnClick = SpeedButton11Click
         end
         object SpeedButton12: TSpeedButton
-          Left = 104
-          Top = 32
+          Left = 32
+          Top = 57
           Width = 23
           Height = 22
           Hint = 'Lighten'
@@ -727,8 +726,8 @@ object FrmMain: TFrmMain
           OnClick = SpeedButton13Click
         end
         object SpeedButton14: TSpeedButton
-          Left = 128
-          Top = 32
+          Left = 79
+          Top = 57
           Width = 23
           Height = 22
           Hint = 'Measure'
@@ -790,7 +789,7 @@ object FrmMain: TFrmMain
       end
       object pnlPalette: TPanel
         Left = 1
-        Top = 506
+        Top = 530
         Width = 150
         Height = 21
         Align = alTop
@@ -812,9 +811,9 @@ object FrmMain: TFrmMain
           TabOrder = 0
         end
       end
-      object pnlLayer: TPanel
+      object PnlLayer: TPanel
         Left = 1
-        Top = 190
+        Top = 214
         Width = 150
         Height = 67
         Align = alTop
@@ -986,9 +985,9 @@ object FrmMain: TFrmMain
           OnUpClick = SpinButton2UpClick
         end
       end
-      object Panel8: TPanel
+      object PnlBrushOptions: TPanel
         Left = 1
-        Top = 142
+        Top = 166
         Width = 150
         Height = 35
         Align = alTop
@@ -1276,7 +1275,6 @@ object FrmMain: TFrmMain
       Height = 817
       Align = alRight
       TabOrder = 1
-      ExplicitHeight = 798
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1599,7 +1597,6 @@ object FrmMain: TFrmMain
       Height = 817
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 798
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4324,7 +4321,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 767
       end
       object Panel5: TPanel
         Left = 1
@@ -4334,7 +4330,6 @@ object FrmMain: TFrmMain
         Align = alBottom
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 781
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4556,7 +4551,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 825
   end
   object MainMenu1: TMainMenu
     Images = ImageList1

@@ -24,6 +24,9 @@ var
    {$ifdef SMOOTH_TEST}
    SmoothFile: TDebugFile;
    {$endif}
+   {$ifdef ORIGAMI_TEST}
+   OrigamiFile: TDebugFile;
+   {$endif}
 
 implementation
 
@@ -36,6 +39,9 @@ begin
    {$endif}
    {$ifdef SMOOTH_TEST}
    SmoothFile := TDebugFile.Create(ExtractFilePath(ParamStr(0)) + 'smoothtest.txt');
+   {$endif}
+   {$ifdef ORIGAMI_TEST}
+   OrigamiFile := TDebugFile.Create(ExtractFilePath(ParamStr(0)) + 'origamitest.txt');
    {$endif}
    SysInfo := TSysInfo.Create;
 end.

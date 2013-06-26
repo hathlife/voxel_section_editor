@@ -31,6 +31,7 @@ type
          procedure UpdateQuadsToTriangleColours(const _Colours: TAVector4f);
          procedure DeactivateQuadFaces;
          procedure UpdateEquivalences(const _VertsLocation: aint32);
+         procedure UpdateEquivalencesOrigami(const _VertsLocation: aint32);
          procedure ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
          // Gets
          function GetEquivalentVertex(_VertexID: integer): integer;
@@ -244,6 +245,21 @@ implementation
       begin
          SetLength(VertexEquivalences,maxV+1);
       end;
+      for v  := Low(_VertsLocation) to High(_VertsLocation) do
+      begin
+         if _VertsLocation[v] > v then
+         begin
+            VertexEquivalences[_VertsLocation[v]] := VertexEquivalences[v];
+            VertexEquivalences[v] := _VertsLocation[v];
+         end;
+      end;
+   end;
+
+   procedure TNeighborhoodDataPlugin.UpdateEquivalencesOrigami(const _VertsLocation: aint32);
+   var
+      v : integer;
+   begin
+      SetLength(VertexEquivalences,High(_VertsLocation)+1);
       for v  := Low(_VertsLocation) to High(_VertsLocation) do
       begin
          if _VertsLocation[v] > v then

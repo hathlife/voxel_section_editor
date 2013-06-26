@@ -36,7 +36,6 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 871
   end
   object Panel1: TPanel
     Left = 0
@@ -741,6 +740,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object TextureFXDiffuseCustom: TMenuItem
         Caption = 'Generate Diffuse Texture...'
         OnClick = TextureFXDiffuseCustomClick
+      end
+      object TextureFXDiffuseOrigami: TMenuItem
+        Caption = 'Generate Diffuse Texture (Origami)'
+        OnClick = TextureFXDiffuseOrigamiClick
       end
       object TextureFXNormal: TMenuItem
         Caption = 'Generate Normal Map'

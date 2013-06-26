@@ -84,6 +84,7 @@ type
       // Textures
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single; _Size: integer = 1024); overload;
+      procedure ExtractTextureAtlasOrigami(_Size: integer = 1024);
       procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
       procedure GenerateNormalMapTexture; overload;
       procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
@@ -655,6 +656,52 @@ begin
    begin
       SetLength(VertsSeed[i],0);
       Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],TexExtractor);
+   end;
+   TexExtractor.MergeSeeds(Seeds);
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexExtractor);
+   end;
+   // Now we build the diffuse texture.
+   GenerateDiffuseTexture(_Size,0,0);
+   // Free memory.
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+   end;
+   SetLength(VertsSeed,0);
+   TexExtractor.Free;
+   TexGenerator.Free;
+   {$ifdef SPEED_TEST}
+   StopWatch.Stop;
+   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   StopWatch.Free;
+   {$endif}
+end;
+
+procedure TLOD.ExtractTextureAtlasOrigami(_Size: integer = 1024);
+var
+   i : integer;
+   Seeds: TSeedSet;
+   VertsSeed : TInt32Map;
+   TexExtractor : CTextureAtlasExtractor;
+   TexGenerator: CTextureGenerator;
+   {$ifdef SPEED_TEST}
+   StopWatch : TStopWatch;
+   {$endif}
+begin
+   {$ifdef SPEED_TEST}
+   StopWatch := TStopWatch.Create(true);
+   {$endif}
+   // First, we'll build the texture atlas.
+   SetLength(VertsSeed,High(Mesh)+1);
+   SetLength(Seeds,0);
+   TexGenerator := CTextureGenerator.Create;
+   TexExtractor := CTextureAtlasExtractor.Create;
+   for i := Low(Mesh) to High(Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+      Mesh[i].GetMeshSeedsOrigami(i,Seeds,VertsSeed[i],TexExtractor);
    end;
    TexExtractor.MergeSeeds(Seeds);
    for i := Low(Mesh) to High(Mesh) do

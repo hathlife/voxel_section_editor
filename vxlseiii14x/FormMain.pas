@@ -23,7 +23,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.146';
+   APPLICATION_VER = '1.39.147';
    APPLICATION_BETA = true;
 
 type
@@ -70,7 +70,7 @@ type
     Panel3: TPanel;
     SectionCombo: TComboBox;
     lblTools: TLabel;
-    Panel4: TPanel;
+    PnlTools: TPanel;
     lblpalette: TLabel;
     cnvPalette: TPaintBox;
     pnlPalette: TPanel;
@@ -126,7 +126,7 @@ type
     extColour1: TMenuItem;
     N5: TMenuItem;
     lblLayer: TLabel;
-    pnlLayer: TPanel;
+    PnlLayer: TPanel;
     XCursorBar: TTrackBar;
     Label2: TLabel;
     Label3: TLabel;
@@ -140,7 +140,7 @@ type
     mnuDirAway: TMenuItem;
     mnuCancel1: TMenuItem;
     lblBrush: TLabel;
-    Panel8: TPanel;
+    PnlBrushOptions: TPanel;
     Brush_5: TSpeedButton;
     Brush_4: TSpeedButton;
     Brush_3: TSpeedButton;

@@ -2,7 +2,7 @@ unit MeshGeometryBase;
 
 interface
 
-uses BasicDataTypes, ShaderBank;
+uses BasicDataTypes, ShaderBank, Debug;
 
 type
    PMeshGeometryBase = ^TMeshGeometryBase;
@@ -40,6 +40,11 @@ type
          function GetTextureSize(_MaterialID,_TextureID: integer): integer; virtual;
          // Copies
          procedure Assign(const _Geometry : TMeshGeometryBase); virtual;
+         // Debug
+         procedure Debug(const _Debug:TDebugFile); virtual;
+         procedure DebugFaces(const _Debug:TDebugFile); virtual;
+         procedure DebugFaceNormals(const _Debug:TDebugFile); virtual;
+         procedure DebugFaceColours(const _Debug:TDebugFile); virtual;
          // Properties
          property NumFaces:longword read GetNumFaces write SetNumFaces;
    end;
@@ -165,6 +170,27 @@ end;
 procedure TMeshGeometryBase.Assign(const _Geometry : TMeshGeometryBase);
 begin
    FNumFaces := _Geometry.NumFaces;
+end;
+
+// Debug
+procedure TMeshGeometryBase.Debug(const _Debug:TDebugFile);
+begin
+   // do nothing
+end;
+
+procedure TMeshGeometryBase.DebugFaces(const _Debug:TDebugFile);
+begin
+   // do nothing
+end;
+
+procedure TMeshGeometryBase.DebugFaceNormals(const _Debug:TDebugFile);
+begin
+   // do nothing
+end;
+
+procedure TMeshGeometryBase.DebugFaceColours(const _Debug:TDebugFile);
+begin
+   // do nothing
 end;
 
 

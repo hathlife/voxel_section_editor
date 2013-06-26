@@ -109,6 +109,8 @@ type
       // Textures
       procedure ExtractTextureAtlas; overload;
       procedure ExtractTextureAtlas(_Angle: single; _Size: integer); overload;
+      procedure ExtractTextureAtlasOrigami; overload;
+      procedure ExtractTextureAtlasOrigami(_Size: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
@@ -644,6 +646,16 @@ end;
 procedure TModel.ExtractTextureAtlas(_Angle: single; _Size : integer);
 begin
    LOD[CurrentLOD].ExtractTextureAtlas(_Angle,_Size);
+end;
+
+procedure TModel.ExtractTextureAtlasOrigami;
+begin
+   LOD[CurrentLOD].ExtractTextureAtlasOrigami;
+end;
+
+procedure TModel.ExtractTextureAtlasOrigami(_Size : integer);
+begin
+   LOD[CurrentLOD].ExtractTextureAtlasOrigami(_Size);
 end;
 
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
