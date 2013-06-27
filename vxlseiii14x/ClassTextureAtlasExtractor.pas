@@ -1304,7 +1304,6 @@ begin
                _VertsColours[High(_Vertices)].W := _VertsColours[CurrentVertex].W;
                // Get temporary texture coordinates.
                SetLength(_TextCoords,High(_Vertices)+1);
-//               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
                _TextCoords[High(_Vertices)].U := CandidateUVPosition.U;
                _TextCoords[High(_Vertices)].V := CandidateUVPosition.V;
                // Now update the bounds of the seed.
@@ -1326,7 +1325,6 @@ begin
                _VertsSeed[CurrentVertex] := _ID;
                VertsLocation[CurrentVertex] := CurrentVertex;
                // Get temporary texture coordinates.
-//               WriteUVCoordinatesOrigami(_Vertices,_TextCoords,CurrentVertex,SharedEdge0,SharedEdge1,PreviousVertex);
                _TextCoords[CurrentVertex].U := CandidateUVPosition.U;
                _TextCoords[CurrentVertex].V := CandidateUVPosition.V;
                // Now update the bounds of the seed.
@@ -1369,7 +1367,6 @@ begin
             _VertsColours[High(_Vertices)].W := _VertsColours[CurrentVertex].W;
             // Get temporary texture coordinates.
             SetLength(_TextCoords,High(_Vertices)+1);
-            //WriteUVCoordinatesOrigami(_Vertices,_TextCoords,High(_Vertices),SharedEdge0,SharedEdge1,PreviousVertex);
             _TextCoords[High(_Vertices)].U := CandidateUVPosition.U;
             _TextCoords[High(_Vertices)].V := CandidateUVPosition.V;
             // Now update the bounds of the seed.

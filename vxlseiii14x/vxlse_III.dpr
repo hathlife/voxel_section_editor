@@ -174,7 +174,14 @@ uses
   ClassFillUselessGapsTool in 'ClassFillUselessGapsTool.pas',
   Histogram in 'Histogram.pas',
   SysInfo in 'SysInfo.pas',
-  GenericThread in 'GenericThread.pas';
+  GenericThread in 'GenericThread.pas',
+  MultiVector in 'source\geometric_algebra\MultiVector.pas',
+  GeometricAlgebra in 'source\geometric_algebra\GeometricAlgebra.pas',
+  Metric in 'source\geometric_algebra\Metric.pas',
+  GAConstants in 'source\geometric_algebra\GAConstants.pas',
+  GADataTypes in 'source\geometric_algebra\GADataTypes.pas',
+  GABasicFunctions in 'source\geometric_algebra\GABasicFunctions.pas',
+  EigenValues in 'source\geometric_algebra\EigenValues.pas';
 
 {$R *.res}
 
