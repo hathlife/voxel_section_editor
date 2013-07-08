@@ -15,7 +15,7 @@ type
       function GetDimension: Cardinal;
       function GetData(_x: Cardinal): single;
       function QuickGetData(_x: Cardinal): single;
-      function GetMaxElement: Cardinal;
+      function GetMaxElement: Cardinal; overload;
       // Sets
       procedure SetDimension(_Dimension: cardinal);
       procedure SetData(_x: Cardinal; _Value: single);
@@ -23,14 +23,14 @@ type
    public
       // Constructors and Destructors
       constructor Create(_Dimension: integer); overload;
-      constructor Create(_Source: TMultiVector); overload;
-      constructor Create(_Vector: TVector3f); overload;
+      constructor Create(const _Source: TMultiVector); overload;
       destructor Destroy; override;
       // Gets
       function GetTheFirstNonZeroBitmap: cardinal;
       function GetTheNextNonZeroBitmap(_Current: cardinal): cardinal;
+      function GetMaxElementForGrade(_MaxGrade: cardinal): Cardinal; overload;
       // Clone/Copy/Assign
-      procedure Assign(_Source: TMultiVector);
+      procedure Assign(const _Source: TMultiVector);
       // Properties
       property Dimension: cardinal read GetDimension write SetDimension;
       property MaxElement: cardinal read GetMaxElement;
@@ -48,20 +48,12 @@ begin
    Dimension := _Dimension; // SetDimension(_Dimension);
 end;
 
-constructor TMultiVector.Create(_Source: TMultiVector);
+constructor TMultiVector.Create(const _Source: TMultiVector);
 begin
    FData := nil;
    FDimension := 0;
    Assign(_Source);
 end;
-
-constructor TMultiVector.Create(_Vector: TVector3f);
-begin
-   FData := nil;
-   Dimension := 3;
-
-end;
-
 
 destructor TMultiVector.Destroy;
 begin
@@ -79,6 +71,19 @@ function TMultiVector.GetMaxElement: cardinal;
 begin
    Result := FSize - 1;
 end;
+
+function TMultiVector.GetMaxElementForGrade(_MaxGrade: cardinal): Cardinal;
+begin
+   if _MaxGrade < FDimension then
+   begin
+      Result := (1 shl _MaxGrade) - 1;
+   end
+   else
+   begin
+      Result := FSize - 1;
+   end;
+end;
+
 
 function TMultiVector.GetData(_x: Cardinal): single;
 begin
@@ -171,7 +176,7 @@ begin
 end;
 
 // Clone/Copy/Assign
-procedure TMultiVector.Assign(_Source: TMultiVector);
+procedure TMultiVector.Assign(const _Source: TMultiVector);
 var
    i : cardinal;
 begin

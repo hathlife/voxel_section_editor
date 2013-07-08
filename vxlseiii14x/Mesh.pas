@@ -166,6 +166,7 @@ type
          procedure GenerateDiffuseTexture;
          procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+         procedure GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
          procedure PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
@@ -1648,6 +1649,29 @@ begin
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    Geometry.GoToFirstElement;
    TexCoords := _TexExtractor.GetMeshSeedsOrigami(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('The output mesh is:');
+   Debug(GlobalVars.OrigamiFile);
+   {$endif}
+   if NeighborhoodPlugin <> nil then
+   begin
+      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+   end;
+end;
+
+// This function gets a temporary set of coordinates that might become real texture coordinates later on.
+procedure TMesh.GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+var
+   NeighborhoodPlugin: PMeshPluginBase;
+begin
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('The input mesh is:');
+   Debug(GlobalVars.OrigamiFile);
+   {$endif}
+   //RebuildFaceNormals;
+   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
+   Geometry.GoToFirstElement;
+   TexCoords := _TexExtractor.GetMeshSeedsOrigamiGA(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('The output mesh is:');
    Debug(GlobalVars.OrigamiFile);

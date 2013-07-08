@@ -130,6 +130,8 @@ type
       procedure GenerateDiffuseTexture(_Angle: single; _Size: integer); overload;
       procedure GenerateDiffuseTextureOrigami; overload;
       procedure GenerateDiffuseTextureOrigami(_Size: integer); overload;
+      procedure GenerateDiffuseTextureOrigamiGA; overload;
+      procedure GenerateDiffuseTextureOrigamiGA(_Size: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure GenerateNormalMapTexture;
@@ -1188,6 +1190,20 @@ begin
    RequestUpdateWorld := true;
 end;
 
+procedure TActor.GenerateDiffuseTextureOrigamiGA;
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ExtractTextureAtlasOrigamiGA;
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
 procedure TActor.GenerateNormalMapTexture;
 var
    i : integer;
@@ -1267,6 +1283,20 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.ExtractTextureAtlasOrigami(_Size);
+      end;
+   end;
+   RequestUpdateWorld := true;
+end;
+
+procedure TActor.GenerateDiffuseTextureOrigamiGA(_Size: integer);
+var
+   i : integer;
+begin
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ExtractTextureAtlasOrigamiGA(_Size);
       end;
    end;
    RequestUpdateWorld := true;
