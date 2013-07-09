@@ -627,7 +627,7 @@ begin
          {$ifdef ORIGAMI_TEST}
          GlobalVars.OrigamiFile.Add('Seed = ' + IntToStr(High(_Seeds)) + ' and i = ' + IntToStr(i));
          {$endif}
-         _Seeds[High(_Seeds)] := MakeNewSeedOrigami(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
+         _Seeds[High(_Seeds)] := MakeNewSeedOrigamiGA(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
       end;
    end;
 
@@ -1556,6 +1556,13 @@ begin
    Triangle := _GA.NewEuclideanBiVector(_Normal);
    Screen := _GA.NewEuclideanBiVector(SetVector(0,0,1));
    FullRotation := _GA.GeometricProduct(Triangle,Screen);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Normal: (' + FloatToStr(_Normal.X) + ', ' + FloatToStr(_Normal.Y) + ', ' + FloatToStr(_Normal.Z) + ').');
+   Triangle.Debug(GlobalVars.OrigamiFile,'Triangle (Normal)');
+   Screen.Debug(GlobalVars.OrigamiFile,'Screen (0,0,1)');
+   FullRotation.Debug(GlobalVars.OrigamiFile,'Full Rotation');
+   {$endif}
+
    // Obtain the versor that will be used to do this projection.
    Result := _GA.Euclidean3DLogarithm(FullRotation);
 
@@ -1573,6 +1580,9 @@ begin
    Position := _GA.ApplyRotor(Vector,_Versor,_Inverse);
    Result.U := Vector.UnsafeData[1];
    Result.V := Vector.UnsafeData[2];
+   {$ifdef ORIGAMI_TEST}
+   Vector.Debug(GlobalVars.OrigamiFile,'Triangle Positions');
+   {$endif}
 
    Position.Free;
    Vector.Free;
@@ -1704,11 +1714,24 @@ begin
    PCenterTriangle := _PGA.NewHomogeneousFlat(GetTriangleCenterPosition(_Vertices[_Edge0],_Vertices[_Edge1],_Vertices[_Target]));
    PEdge0UV := _PGA.NewHomogeneousFlat(_TexCoords[_Edge0]);
    PEdge1UV := _PGA.NewHomogeneousFlat(_TexCoords[_Edge1]);
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget');
+   PCenterTriangle.Debug(GlobalVars.OrigamiFile,'PCenterTriangle');
+   PEdge0UV.Debug(GlobalVars.OrigamiFile,'PEdge0UV');
+   PEdge1UV.Debug(GlobalVars.OrigamiFile,'PEdge1UV');
+   {$endif}
 
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0,PCenterTriangle);
    _PGA.HomogeneousOppositeTranslation(PEdge1,PCenterTriangle);
    _PGA.HomogeneousOppositeTranslation(PTarget,PCenterTriangle);
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 moved to the center of the triangle');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 moved to the center of the triangle');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget moved to the center of the triangle');
+   {$endif}
 
    // Get line segments.
    LSEdge := _PGA.OuterProduct(PEdge0,PEdge1);
@@ -1717,21 +1740,57 @@ begin
    DirEdge := _PGA.GetFlatDirection(LSEdge,e0);
    DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
 
+   {$ifdef ORIGAMI_TEST}
+   LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
+   LSEdgeUV.Debug(GlobalVars.OrigamiFile,'LSEdgeUV');
+   DirEdge.Debug(GlobalVars.OrigamiFile,'DirEdge');
+   DirEdgeUV.Debug(GlobalVars.OrigamiFile,'DirEdgeUV');
+   {$endif}
+
    // Let's do the scale first.
    EdgeSizeInMesh := _PGA.GetNorm(DirEdge);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Norm of DirEdge is ' + FloatToStr(EdgeSizeInMesh) + '.');
+   {$endif}
    if EdgeSizeInMesh = 0 then
    begin
+      e0.Free;
+      PEdge0.Free;
+      PEdge1.Free;
+      PTarget.Free;
+      PEdge0UV.Free;
+      PEdge1UV.Free;
+      LSEdge.Free;
+      LSEdgeUV.Free;
+      DirEdge.Free;
+      DirEdgeUV.Free;
+      PCenterTriangle.Free;
       exit;
    end;
    EdgeSizeInUV := _PGA.GetNorm(DirEdgeUV);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Norm of DirEdgeUV is ' + FloatToStr(EdgeSizeInUV) + '.');
+   {$endif}
 
    Scale := EdgeSizeInUV / EdgeSizeInMesh;
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Scale is ' + FloatToStr(Scale) + '.');
+   {$endif}
    _PGA.ScaleEuclideanDataFromVector(PEdge0,Scale);
    _PGA.ScaleEuclideanDataFromVector(PEdge1,Scale);
    _PGA.ScaleEuclideanDataFromVector(PTarget,Scale);
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after scale');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after scale');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after scale');
+   {$endif}
 
    // Project the triangle (Edge0,Edge1,Target) at the UV plane.
    PlaneRotation := GetVersorForTriangleProjectionGA(_EGA,_FaceNormal);
+   {$ifdef ORIGAMI_TEST}
+   PlaneRotation.Debug(GlobalVars.OrigamiFile,'PlaneRotation');
+   {$endif}
+
    // This part is not very practical, but it should avoid problems.
    PTemp := TMultiVector.Create(PEdge0);
    PEdge0.Free;
@@ -1745,19 +1804,41 @@ begin
    PTarget.Free;
    PTarget := _PGA.ApplyRotor(PTemp,PlaneRotation);
    PTemp.Free;
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after plane projection');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after plane projection');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after plane projection');
+   {$endif}
 
    // Let's center our triangle at the center of the Edge0-Edge1 line segment.
    PCenterSegment := _PGA.NewEuclideanVector(SetVector((PEdge0.UnsafeData[1] + PEdge1.UnsafeData[1])*0.5,(PEdge0.UnsafeData[2] + PEdge1.UnsafeData[2])*0.5));
+   {$ifdef ORIGAMI_TEST}
+   PCenterSegment.Debug(GlobalVars.OrigamiFile,'PCenterSegment');
+   {$endif}
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0,PCenterSegment);
    _PGA.HomogeneousOppositeTranslation(PEdge1,PCenterSegment);
    _PGA.HomogeneousOppositeTranslation(PTarget,PCenterSegment);
 
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 moved to the center of the segment');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 moved to the center of the segment');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget moved to the center of the segment');
+   {$endif}
+
    // Let's center our UV triangle at the center of the Edge0UV-Edge1UV line segment.
    PCenterSegmentUV := _PGA.NewEuclideanVector(SetVector((PEdge0UV.UnsafeData[1] + PEdge1UV.UnsafeData[1])*0.5,(PEdge0UV.UnsafeData[2] + PEdge1UV.UnsafeData[2])*0.5));
+   {$ifdef ORIGAMI_TEST}
+   PCenterSegmentUV.Debug(GlobalVars.OrigamiFile,'PCenterSegmentUV');
+   {$endif}
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0UV,PCenterSegmentUV);
    _PGA.HomogeneousOppositeTranslation(PEdge1UV,PCenterSegmentUV);
+
+   {$ifdef ORIGAMI_TEST}
+   PEdge0UV.Debug(GlobalVars.OrigamiFile,'PEdge0UV moved to the center of the UV segment');
+   PEdge1UV.Debug(GlobalVars.OrigamiFile,'PEdge1UV moved to the center of the UV segment');
+   {$endif}
 
    // Now we have to recalculate the line segments and directions.
    // Get line segments.
@@ -1770,13 +1851,21 @@ begin
    DirEdge := _PGA.GetFlatDirection(LSEdge,e0);
    DirEdgeUV.Free;
    DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
+   {$ifdef ORIGAMI_TEST}
+   LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
+   LSEdgeUV.Debug(GlobalVars.OrigamiFile,'LSEdgeUV');
+   DirEdge.Debug(GlobalVars.OrigamiFile,'DirEdge');
+   DirEdgeUV.Debug(GlobalVars.OrigamiFile,'DirEdgeUV');
+   {$endif}
 
    // Let's rotate our vectors.
-   PTemp.Free;
    PTemp := _PGA.GeometricProduct(DirEdge,DirEdgeUV);
 
    // Rotate the triangle (Edge0,Edge1,Target) at the UV plane.
    SegmentRotation := _PGA.Euclidean3DLogarithm(PTemp);
+   {$ifdef ORIGAMI_TEST}
+   SegmentRotation.Debug(GlobalVars.OrigamiFile,'SegmentRotation');
+   {$endif}
    // This part is not very practical, but it should avoid problems.
    PTemp.Free;
    PTemp := TMultiVector.Create(PEdge0);
@@ -1792,10 +1881,22 @@ begin
    PTarget := _PGA.ApplyRotor(PTemp,SegmentRotation);
    PTemp.Free;
 
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after rotation at the center of the segment');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after rotation at the center of the segment');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after rotation at the center of the segment');
+   {$endif}
+
    // Translate PCenterSegmentUV units.
    _PGA.HomogeneousTranslation(PEdge0,PCenterSegmentUV);
    _PGA.HomogeneousTranslation(PEdge1,PCenterSegmentUV);
    _PGA.HomogeneousTranslation(PTarget,PCenterSegmentUV);
+
+   {$ifdef ORIGAMI_TEST}
+   PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 at its final position');
+   PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 at its final position');
+   PTarget.Debug(GlobalVars.OrigamiFile,'PTarget at its final position');
+   {$endif}
 
    // Now we have the UV position (at PTarget)
    // Let's clear up some RAM before we continue.
@@ -1920,6 +2021,10 @@ begin
    AddedFace[_StartingFace] := true;
    TriangleTransform := GetVersorForTriangleProjectionGA(EuclideanGA,_FaceNormals[_StartingFace]);
    TriangleTransformInv := EuclideanGA.GetInverse(TriangleTransform);
+   {$ifdef ORIGAMI_TEST}
+   TriangleTransform.Debug(GlobalVars.OrigamiFile,'TriangleTransform');
+   TriangleTransformInv.Debug(GlobalVars.OrigamiFile,'TriangleTransformInv');
+   {$endif}
 //   Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;

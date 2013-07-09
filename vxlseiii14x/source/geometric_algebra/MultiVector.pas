@@ -2,12 +2,12 @@ unit MultiVector;
 
 interface
 
-uses BasicDataTypes, Math, GAConstants, GABasicFunctions;
+uses BasicDataTypes, Math, GAConstants, GABasicFunctions, Debug, SysUtils;
 
 type
    TMultiVector = class
    private
-      FData: PSingle;
+      FData: array of Single;
       FDimension: Cardinal;
       FSize: Cardinal;
    protected
@@ -31,6 +31,9 @@ type
       function GetMaxElementForGrade(_MaxGrade: cardinal): Cardinal; overload;
       // Clone/Copy/Assign
       procedure Assign(const _Source: TMultiVector);
+      // Debug
+      procedure Debug(var _DebugFile: TDebugFile); overload;
+      procedure Debug(var _DebugFile: TDebugFile; const _VectorName: string); overload;
       // Properties
       property Dimension: cardinal read GetDimension write SetDimension;
       property MaxElement: cardinal read GetMaxElement;
@@ -43,21 +46,19 @@ implementation
 // Constructors and Destructors
 constructor TMultiVector.Create(_Dimension: Integer);
 begin
-   FData := nil;
    FDimension := 0;
    Dimension := _Dimension; // SetDimension(_Dimension);
 end;
 
 constructor TMultiVector.Create(const _Source: TMultiVector);
 begin
-   FData := nil;
    FDimension := 0;
    Assign(_Source);
 end;
 
 destructor TMultiVector.Destroy;
 begin
-   FreeMem(FData);
+   SetLength(FData,0);
    inherited Destroy;
 end;
 
@@ -89,7 +90,7 @@ function TMultiVector.GetData(_x: Cardinal): single;
 begin
    if (_x < FSize) then
    begin
-      Result := PSingle(Cardinal(FData)+_x)^;
+      Result := FData[_x];
    end
    else
    begin
@@ -99,7 +100,7 @@ end;
 
 function TMultiVector.QuickGetData(_x: Cardinal): single;
 begin
-   Result := PSingle(Cardinal(FData)+_x)^;
+   Result := FData[_x];
 end;
 
 function TMultiVector.GetTheFirstNonZeroBitmap: cardinal;
@@ -107,7 +108,7 @@ begin
    Result := 0;
    while (Result < FSize) do
    begin
-      if (PSingle(Cardinal(FData)+Result)^ <> 0) then
+      if (UnsafeData[Result] <> 0) then
       begin
          exit;
       end;
@@ -121,7 +122,7 @@ begin
    Result := _Current + 1;
    while (Result < FSize) do
    begin
-      if (PSingle(Cardinal(FData)+Result)^ <> 0) then
+      if (UnsafeData[Result] <> 0) then
       begin
          exit;
       end;
@@ -134,30 +135,28 @@ end;
 // Sets
 procedure TMultiVector.SetDimension(_Dimension: cardinal);
 var
-   NewData: PSingle;
+   NewData: array of Single;
    NewSize,i : cardinal;
 begin
    if FDimension > 0 then
    begin
-      NewSize := PowerBase2(_Dimension);
-      GetMem(NewData,NewSize);
-      for i := 0 to Min(FSize,NewSize) - 1 do
+      NewSize := 1 shl _Dimension;
+      SetLength(FData,NewSize);
+      for i := Min(FSize,NewSize) to High(FData) do
       begin
-         PSingle(Cardinal(NewData)+i)^ := PSingle(Cardinal(FData)+i)^;
+         FData[i] := 0;
       end;
-      FreeMem(FData);
       FDimension := _Dimension;
       FSize := NewSize;
-      FData := NewData;
    end
    else
    begin
       FDimension := _Dimension;
-      FSize := PowerBase2(_Dimension);
-      GetMem(FData,FSize);
+      FSize := 1 shl _Dimension;
+      SetLength(FData,FSize);
       for i := 0 to FSize - 1 do
       begin
-         PSingle(Cardinal(FData)+i)^ := 0;
+         FData[i] := 0;
       end;
    end;
 end;
@@ -166,13 +165,13 @@ procedure TMultiVector.SetData(_x: Cardinal; _Value: single);
 begin
    if (_x < FSize) then
    begin
-      PSingle(Cardinal(FData)+_x)^ := _Value;
+      FData[_x] := _Value;
    end;
 end;
 
 procedure TMultiVector.QuickSetData(_x: Cardinal; _Value: single);
 begin
-   PSingle(Cardinal(FData)+_x)^ := _Value;
+   FData[_x] := _Value;
 end;
 
 // Clone/Copy/Assign
@@ -185,6 +184,60 @@ begin
    begin
       QuickSetData(i,_Source.QuickGetData(i));
    end;
+end;
+
+// Debug
+procedure TMultiVector.Debug(var _DebugFile: TDebugFile);
+begin
+   Debug(_DebugFile,'MultiVector');
+end;
+
+procedure TMultiVector.Debug(var _DebugFile: TDebugFile; const _VectorName: string);
+var
+   i,countElem,countBitmap,bitmap,numBase : cardinal;
+   temp: string;
+begin
+   temp := _VectorName + ' contents: ';
+   countElem := 0;
+   for i := 0 to MaxElement do
+   begin
+      if UnsafeData[i] <> 0 then
+      begin
+         if countElem <> 0 then
+         begin
+            temp := temp + ' + ';
+         end;
+         // Write value.
+         temp := temp + FloatToStr(UnsafeData[i]);
+         // Write bases.
+         countBitmap := 0;
+         numBase := 1;
+         bitmap := 1;
+         while i >= bitmap do
+         begin
+            if (i and bitmap) <> 0 then
+            begin
+               if countBitmap = 0 then
+               begin
+                  temp := temp + ' e' + IntToStr(NumBase);
+               end
+               else
+               begin
+                  temp := temp + '^e' + IntToStr(NumBase);
+               end;
+               inc(countBitmap);
+            end;
+            bitmap := bitmap shl 1;
+            inc(numBase);
+         end;
+          inc(countElem);
+      end;
+   end;
+   if countElem = 0 then
+   begin
+      temp := temp + '0';
+   end;
+   _DebugFile.Add(temp);
 end;
 
 end.

@@ -7,7 +7,7 @@ uses Math;
 type
    TMetric = class
    private
-      FData: PSingle;
+      FData: array of Single;
       FDimension: Cardinal;
       FSize: Cardinal;
       FOrthogonal: boolean;
@@ -46,28 +46,25 @@ implementation
 // Constructors and Destructors
 constructor TMetric.Create;
 begin
-   FData := nil;
    FDimension := 0;
    Dimension := 4; // SetDimension(4);
 end;
 
 constructor TMetric.Create(_Dimension: Integer);
 begin
-   FData := nil;
    FDimension := 0;
    Dimension := _Dimension; // SetDimension(_Dimension);
 end;
 
 constructor TMetric.Create(_Source: TMetric);
 begin
-   FData := nil;
    FDimension := 0;
    Assign(_Source);
 end;
 
 destructor TMetric.Destroy;
 begin
-   FreeMem(FData);
+   SetLength(FData,0);
    inherited Destroy;
 end;
 
@@ -91,7 +88,7 @@ function TMetric.GetData(_x,_y: Cardinal): single;
 begin
    if (_x < FDimension) and (_y < FDimension) then
    begin
-      Result := PSingle(Cardinal(FData)+_x+(FDimension * _y))^;
+      Result := FData[_x+(FDimension * _y)];
    end
    else
    begin
@@ -101,7 +98,7 @@ end;
 
 function TMetric.QuickGetData(_x,_y: Cardinal): single;
 begin
-   Result := PSingle(Cardinal(FData)+_x+(FDimension * _y))^;
+   Result := FData[_x+(FDimension * _y)];
 end;
 
 {
@@ -131,7 +128,7 @@ end;
 // Sets
 procedure TMetric.SetDimension(_Dimension: cardinal);
 var
-   NewData: PSingle;
+   BackupData: array of Single;
    NewSize,i,j : cardinal;
 begin
    if _Dimension <> FDimension then
@@ -139,29 +136,33 @@ begin
       if FDimension > 0 then
       begin
          NewSize := _Dimension * _Dimension;
-         GetMem(NewData,NewSize);
+         SetLength(BackupData,FSize);
+         for i := Low(FData) to High(FData) do
+         begin
+            BackupData[i] := FData[i];
+         end;
+         SetLength(FData,NewSize);
          for i := 0 to Min(FDimension,_Dimension) - 1 do
             for j := 0 to Min(FDimension,_Dimension) - 1 do
             begin
-               PSingle(Cardinal(NewData)+i+(_Dimension * j))^ := PSingle(Cardinal(FData)+i+(FDimension*j))^;
+               FData[i+(_Dimension * j)] := BackupData[i+(FDimension*j)];
             end;
-         FreeMem(FData);
+         SetLength(BackupData,0);
          FDimension := _Dimension;
          FSize := NewSize;
-         FData := NewData;
       end
       else
       begin
          FDimension := _Dimension;
          FSize := _Dimension * _Dimension;
-         GetMem(FData,FSize);
+         SetLength(FData,FSize);
          for i := 0 to FSize - 1 do
          begin
-            PSingle(Cardinal(FData)+i)^ := 0;
+            FData[i] := 0;
          end;
          for i := 0 to FDimension - 1 do
          begin
-            PSingle(Cardinal(FData)+(i*i))^ := 1;
+            FData[i + (i*FDimension)] := 1;
          end;
       end;
    end;
@@ -171,13 +172,13 @@ procedure TMetric.SetData(_x,_y: Cardinal; _Value: single);
 begin
    if (_x < FDimension) and (_y < FDimension) then
    begin
-      PSingle(Cardinal(FData)+_x+(FDimension * _y))^ := _Value;
+      FData[_x+(FDimension * _y)] := _Value;
    end;
 end;
 
 procedure TMetric.QuickSetData(_x,_y: Cardinal; _Value: single);
 begin
-   PSingle(Cardinal(FData)+_x+(FDimension * _y))^ := _Value;
+   FData[_x+(FDimension * _y)] := _Value;
 end;
 
 // Clone/Copy/Assign

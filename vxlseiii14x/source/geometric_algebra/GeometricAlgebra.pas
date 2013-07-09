@@ -2,7 +2,9 @@ unit GeometricAlgebra;
 
 interface
 
-uses MultiVector, Metric, Math, BasicDataTypes, GADataTypes, GAConstants;
+uses MultiVector, Metric, Math, BasicDataTypes, GADataTypes, GAConstants, SysUtils;
+
+{$INCLUDE Global_Conditionals.inc}
 
 type
    TVecOperationMethod = function (const _Vec1, _Vec2 : TMultiVector): TMultiVector of object;
@@ -81,6 +83,7 @@ type
       function NewHomogeneousFlat(const _Vector:TVector3f): TMultiVector; overload;
       function NewEuclideanRotationVersor(const _Vector: TMultiVector; _angle: single): TMultiVector; overload;
       function GetBladeOfGradeFromVector(const _Vec:TMultiVector; _Grade: cardinal): TMultiVector; overload;
+      function GetEuclideanPartFromVector(const _Vec:TMultiVector): TMultiVector; overload;
       // Gets
       function GetMaxGrade(const _Vec: TMultiVector):cardinal;
       function GetNorm(const _Vec: TMultiVector):single;
@@ -107,12 +110,16 @@ type
       // Operations
       function OuterProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector; overload;
       function RegressiveProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function Sum(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function Subtraction(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      procedure Sum(var _Vec1: TMultiVector; const _Vec2: TMultiVector); overload;
+      function GetSum(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      procedure Subtraction(var _Vec1:TMultiVector; const _Vec2: TMultiVector); overload;
+      function GetSubtraction(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
       function ApplyRotor(const _Blade, _Rotor: TMultiVector):TMultiVector; overload;
       function ApplyRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector; overload;
-      function HomogeneousTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
-      function HomogeneousOppositeTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
+      procedure HomogeneousTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
+      function GetHomogeneousTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
+      procedure HomogeneousOppositeTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
+      function GetHomogeneousOppositeTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
 
       // Individual operations.
       function GetReverse(const _Vec: TMultiVector):TMultiVector; overload;
@@ -145,9 +152,12 @@ type
 
 implementation
 
+uses GlobalVars;
+
 // Constructor
 constructor TGeometricAlgebra.Create;
 begin
+   FSystemDimension := 0;
    FDimension := 3;
    FMetric := TMetric.Create();
    SetEuclideanMetric;
@@ -155,6 +165,7 @@ end;
 
 constructor TGeometricAlgebra.Create(_Dimension: cardinal);
 begin
+   FSystemDimension := 0;
    FDimension := _Dimension;
    FMetric := TMetric.Create();
    SetEuclideanMetric;
@@ -162,6 +173,7 @@ end;
 
 constructor TGeometricAlgebra.CreateHomogeneous;
 begin
+   FSystemDimension := 0;
    FDimension := 3;
    FMetric := TMetric.Create();
    SetHomogeneousMetric;
@@ -169,6 +181,7 @@ end;
 
 constructor TGeometricAlgebra.CreateHomogeneous(_Dimension: cardinal);
 begin
+   FSystemDimension := 0;
    FDimension := _Dimension;
    FMetric := TMetric.Create();
    SetHomogeneousMetric;
@@ -176,6 +189,7 @@ end;
 
 constructor TGeometricAlgebra.CreateConformal;
 begin
+   FSystemDimension := 0;
    FDimension := 3;
    FMetric := TMetric.Create();
    SetConformalMetric;
@@ -183,6 +197,7 @@ end;
 
 constructor TGeometricAlgebra.CreateConformal(_Dimension: cardinal);
 begin
+   FSystemDimension := 0;
    FDimension := _Dimension;
    FMetric := TMetric.Create();
    SetConformalMetric;
@@ -200,27 +215,29 @@ end;
 function TGeometricAlgebra.NewEuclideanVector(const _Vector:TVector2f): TMultiVector;
 begin
    Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[1] := _Vector.U;
-   Result.Data[2] := _Vector.V;
+   Result.UnsafeData[1] := _Vector.U;
+   Result.UnsafeData[2] := _Vector.V;
 end;
 
 function TGeometricAlgebra.NewEuclideanVector(const _Vector:TVector3f): TMultiVector;
 begin
    Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[1] := _Vector.X;
-   Result.Data[2] := _Vector.Y;
-   Result.Data[4] := _Vector.Z;
+   Result.UnsafeData[1] := _Vector.X;
+   Result.UnsafeData[2] := _Vector.Y;
+   Result.UnsafeData[4] := _Vector.Z;
 end;
 
 // Euclidean rotation direction.
 function TGeometricAlgebra.NewEuclideanBiVector(const _Vector:TVector2f): TMultiVector;
 begin
-   Result := GetUndual(NewEuclideanVector(_Vector));
+   Result := NewEuclideanVector(_Vector);
+   Undual(Result);
 end;
 
 function TGeometricAlgebra.NewEuclideanBiVector(const _Vector:TVector3f): TMultiVector;
 begin
-   Result := GetUndual(NewEuclideanVector(_Vector));
+   Result := NewEuclideanVector(_Vector);
+   Undual(Result);
 end;
 
 // Homogeneous Flat
@@ -228,25 +245,25 @@ function TGeometricAlgebra.NewHomogeneousFlat(const _Vector:TVector2f): TMultiVe
 var
    AuxBit: cardinal;
 begin
-   AuxBit := 1 shl (FDimension + 1);
+   AuxBit := 1 shl FDimension;
 
    Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[1] := _Vector.U;
-   Result.Data[2] := _Vector.V;
-   Result.Data[AuxBit] := 1;
+   Result.UnsafeData[1] := _Vector.U;
+   Result.UnsafeData[2] := _Vector.V;
+   Result.UnsafeData[AuxBit] := 1;
 end;
 
 function TGeometricAlgebra.NewHomogeneousFlat(const _Vector:TVector3f): TMultiVector;
 var
    AuxBit: cardinal;
 begin
-   AuxBit := 1 shl (FDimension + 1);
+   AuxBit := 1 shl FDimension;
 
    Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[1] := _Vector.X;
-   Result.Data[2] := _Vector.Y;
-   Result.Data[4] := _Vector.Z;
-   Result.Data[AuxBit] := 1;
+   Result.UnsafeData[1] := _Vector.X;
+   Result.UnsafeData[2] := _Vector.Y;
+   Result.UnsafeData[4] := _Vector.Z;
+   Result.UnsafeData[AuxBit] := 1;
 end;
 
 // Rotation Versor in euclidean space from a Blade<2>.
@@ -257,13 +274,13 @@ var
    i: cardinal;
 begin
    Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[0] := _Vector.Data[0] * cos(_Angle);
+   Result.UnsafeData[0] := cos(_Angle);
    sinAngle := (-1) * sin(_Angle);
-   for i := 0 to Result.GetMaxElementForGrade(FDimension) do
+   for i := 3 to Result.GetMaxElementForGrade(FDimension) do
    begin
       if FBitCountTable[i] = 2 then
       begin
-         Result.Data[i] := _Vector.Data[i] * sinAngle;
+         Result.UnsafeData[i] := _Vector.UnsafeData[i] * sinAngle;
       end;
    end;
 end;
@@ -286,6 +303,26 @@ begin
    end;
 end;
 
+function TGeometricAlgebra.GetEuclideanPartFromVector(const _Vec:TMultiVector): TMultiVector;
+var
+   i,maxi : cardinal;
+begin
+   Result := TMultiVector.Create(_Vec.Dimension);
+   i := 0;
+   maxi := Result.GetMaxElementForGrade(FDimension);
+   while i < maxi do
+   begin
+      Result.UnsafeData[i] := _Vec.UnsafeData[i];
+      inc(i);
+   end;
+   maxi := _Vec.MaxElement;
+   while i < maxi do
+   begin
+      Result.UnsafeData[i] := 0;
+      inc(i);
+   end;
+
+end;
 
 // Gets
 function TGeometricAlgebra.GetDimension: Cardinal;
@@ -374,7 +411,7 @@ function TGeometricAlgebra.GetHomogeneousE0: TMultiVector;
 var
    AuxBit: cardinal;
 begin
-   AuxBit := 1 shl (FDimension + 1);
+   AuxBit := 1 shl FDimension;
 
    Result := TMultiVector.Create(FSystemDimension);
    Result.Data[AuxBit] := 1;
@@ -570,7 +607,7 @@ end;
 
 procedure TGeometricAlgebra.SetEuclideanMetric;
 var
-   i,j: cardinal;
+   i,j,maxElem: cardinal;
 begin
    // Set dimension
    FAuxDimension := 0;
@@ -590,9 +627,10 @@ begin
    end;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   for i := 0 to FSystemDimension - 1 do
+   maxElem := (1 shl FSystemDimension) - 1;
+   for i := 0 to maxElem do
    begin
-      for j := 0 to FSystemDimension -1 do
+      for j := 0 to maxElem do
       begin
          SetCannonicalOrderTable(i,j,canonical_reordering_euclidean(i,j));
       end;
@@ -603,7 +641,7 @@ end;
 
 procedure TGeometricAlgebra.SetHomogeneousMetric;
 var
-   i,j: cardinal;
+   i,j,maxElem: cardinal;
 begin
    // Set dimension
    FAuxDimension := 1;
@@ -627,9 +665,10 @@ begin
    FMetric.UnsafeData[FDimension,FDimension] := 1;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   for i := 0 to FSystemDimension - 1 do
+   maxElem := (1 shl FSystemDimension) - 1;
+   for i := 0 to maxElem do
    begin
-      for j := 0 to FSystemDimension -1 do
+      for j := 0 to maxElem do
       begin
          SetCannonicalOrderTable(i,j,canonical_reordering_homogeneous(i,j));
       end;
@@ -640,7 +679,7 @@ end;
 
 procedure TGeometricAlgebra.SetConformalMetric;
 var
-   i,j: cardinal;
+   i,j,maxElem: cardinal;
 begin
    // Set dimension
    FAuxDimension := 2;
@@ -669,9 +708,10 @@ begin
    FMetric.UnsafeData[FDimension+1,FDimension+1] := 0;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   for i := 0 to FSystemDimension - 1 do
+   maxElem := (1 shl FSystemDimension) - 1;
+   for i := 0 to maxElem do
    begin
-      for j := 0 to FSystemDimension -1 do
+      for j := 0 to maxElem do
       begin
          SetCannonicalOrderTable(i,j,canonical_reordering_conformal(i,j));
       end;
@@ -682,7 +722,7 @@ end;
 
 procedure TGeometricAlgebra.SetMinkowskiConformalMetric;
 var
-   i,j: cardinal;
+   i,j,maxElem: cardinal;
 begin
    // Set dimension
    FAuxDimension := 2;
@@ -709,9 +749,10 @@ begin
    FMetric.UnsafeData[FDimension+1,FDimension+1] := -1;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   for i := 0 to FSystemDimension - 1 do
+   maxElem := (1 shl FSystemDimension) - 1;
+   for i := 0 to maxElem do
    begin
-      for j := 0 to FSystemDimension -1 do
+      for j := 0 to maxElem do
       begin
          SetCannonicalOrderTable(i,j,canonical_reordering_conformal(i,j));
       end;
@@ -752,7 +793,7 @@ end;
 
 function TGeometricAlgebra.OuterProduct(const _Base1, _Base2: TBaseElement):TBaseElement;
 begin
-   if (_Base1.Bitmap and _Base2.Bitmap) = 0 then
+   if (_Base1.Bitmap and _Base2.Bitmap) <> 0 then
    begin
       Result.Coeficient := 0;
       Result.Bitmap := 0;
@@ -802,7 +843,28 @@ begin
    end;
 end;
 
-function TGeometricAlgebra.Sum(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+procedure TGeometricAlgebra.Sum(var _Vec1: TMultiVector; const _Vec2: TMultiVector);
+var
+   i,j: cardinal;
+   Sum: TMultiVector;
+begin
+   Sum := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   i := 0;
+   while i <= Min(_Vec1.MaxElement,_Vec2.MaxElement) do
+   begin
+      Sum.UnsafeData[i] := _Vec1.UnsafeData[i] + _Vec2.UnsafeData[i];
+      inc(i);
+   end;
+   while i <= Max(_Vec1.MaxElement,_Vec2.MaxElement) do
+   begin
+      Sum.UnsafeData[i] := _Vec1.Data[i] + _Vec2.Data[i];
+      inc(i);
+   end;
+   _Vec1.Free;
+   _Vec1 := TMultiVector.Create(Sum);
+end;
+
+function TGeometricAlgebra.GetSum(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
    i,j: cardinal;
 begin
@@ -820,7 +882,28 @@ begin
    end;
 end;
 
-function TGeometricAlgebra.Subtraction(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+procedure TGeometricAlgebra.Subtraction(var _Vec1: TMultiVector; const _Vec2: TMultiVector);
+var
+   i,j: cardinal;
+   Subtraction: TMultiVector;
+begin
+   Subtraction := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   i := 0;
+   while i <= Min(_Vec1.MaxElement,_Vec2.MaxElement) do
+   begin
+      Subtraction.UnsafeData[i] := _Vec1.UnsafeData[i] - _Vec2.UnsafeData[i];
+      inc(i);
+   end;
+   while i <= Max(_Vec1.MaxElement,_Vec2.MaxElement) do
+   begin
+      Subtraction.UnsafeData[i] := _Vec1.Data[i] - _Vec2.Data[i];
+      inc(i);
+   end;
+   _Vec1.Free;
+   _Vec1 := TMultiVector.Create(Subtraction);
+end;
+
+function TGeometricAlgebra.GetSubtraction(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
    i,j: cardinal;
 begin
@@ -914,16 +997,17 @@ begin
    end;
 end;
 
+// Right (_Vec2) is bigger than Left (_Vec1).
 function TGeometricAlgebra.OrthogonalLeftContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
    i,j: cardinal;
    Grade : integer;
    ElemRes,Elem1,Elem2: TBaseElement;
 begin
-   Grade := GetMaxGrade(_Vec1) - GetMaxGrade(_Vec2);
+   Grade := GetMaxGrade(_Vec2) - GetMaxGrade(_Vec1);
    if Grade < 0 then
       Grade := 0;
-   Result := TMultiVector.Create(Grade);
+   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
    i := _Vec1.GetTheFirstNonZeroBitmap;
    while i <> C_INFINITY do
    begin
@@ -1023,29 +1107,66 @@ begin
    Result := GeometricProduct(GeometricProduct(_Rotor,_Blade),_InverseRotor);
 end;
 
-// Result := _Vec + (_Offset ^ (e0 l _Vec))    ... where l is left contraction.
-function TGeometricAlgebra.HomogeneousTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
+// _Vec := _Vec + (_Offset ^ (e0 l _Vec))    ... where l is left contraction.
+procedure TGeometricAlgebra.HomogeneousTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
 var
-   Offset,Direction: TMultiVector;
+   Offset,EuclideanOffset,Direction: TMultiVector;
 begin
    Direction := GetFlatDirection(_Vec);
-   Offset := OuterProduct(_Offset,Direction);
-   Result := Sum(_Vec,Offset);
+   EuclideanOffset := GetEuclideanPartFromVector(_Offset);
+   Offset := OuterProduct(EuclideanOffset,Direction);
+   Sum(_Vec,Offset);
 
    // Free memory.
+   EuclideanOffset.Free;
    Offset.Free;
    Direction.Free;
 end;
 
-function TGeometricAlgebra.HomogeneousOppositeTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
+// Result := _Vec + (_Offset ^ (e0 l _Vec))    ... where l is left contraction.
+function TGeometricAlgebra.GetHomogeneousTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
 var
-   Offset,Direction: TMultiVector;
+   Offset,EuclideanOffset,Direction: TMultiVector;
 begin
    Direction := GetFlatDirection(_Vec);
-   Offset := OuterProduct(_Offset,Direction);
-   Result := Subtraction(_Vec,Offset);
+   EuclideanOffset := GetEuclideanPartFromVector(_Offset);
+   Offset := OuterProduct(EuclideanOffset,Direction);
+   Result := GetSum(_Vec,Offset);
 
    // Free memory.
+   EuclideanOffset.Free;
+   Offset.Free;
+   Direction.Free;
+end;
+
+// _Vec := _Vec - (_Offset ^ (e0 l _Vec))    ... where l is left contraction. Warning: _Offset must be euclidean
+procedure TGeometricAlgebra.HomogeneousOppositeTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
+var
+   Offset,EuclideanOffset,Direction: TMultiVector;
+begin
+   Direction := GetFlatDirection(_Vec);
+   EuclideanOffset := GetEuclideanPartFromVector(_Offset);
+   Offset := OuterProduct(EuclideanOffset,Direction);
+   Subtraction(_Vec,Offset);
+
+   // Free memory.
+   EuclideanOffset.Free;
+   Offset.Free;
+   Direction.Free;
+end;
+
+// Result := _Vec - (_Offset ^ (e0 l _Vec))    ... where l is left contraction.
+function TGeometricAlgebra.GetHomogeneousOppositeTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
+var
+   Offset,EuclideanOffset,Direction: TMultiVector;
+begin
+   Direction := GetFlatDirection(_Vec);
+   EuclideanOffset := GetEuclideanPartFromVector(_Offset);
+   Offset := OuterProduct(EuclideanOffset,Direction);
+   Result := GetSubtraction(_Vec,Offset);
+
+   // Free memory.
+   EuclideanOffset.Free;
    Offset.Free;
    Direction.Free;
 end;
@@ -1197,10 +1318,13 @@ end;
 
 procedure TGeometricAlgebra.Undual(var _Vec:TMultiVector);
 var
-   I : TMultiVector;
+   I,Answer : TMultiVector;
 begin
    I := GetI();
-   _Vec := OrthogonalLeftContractionProduct(_Vec,I);
+   Answer := OrthogonalLeftContractionProduct(_Vec,I);
+   _Vec.Free;
+   _Vec := TMultiVector.Create(Answer);
+   Answer.Free;
    I.Free;
 end;
 
@@ -1273,10 +1397,20 @@ var
 begin
    // Get rotation base.
    RotBase := GetBladeOfGradeFromVector(_Vec,2);
+   {$ifdef ORIGAMI_TEST}
+   RotBase.Debug(GlobalVars.OrigamiFile,'RotBase');
+   {$endif}
    Grade2SqrtNorm := sqrt(GetSquaredNorm(RotBase));
    ScaleVector(RotBase,1/Grade2SqrtNorm);
+   {$ifdef ORIGAMI_TEST}
+   RotBase.Debug(GlobalVars.OrigamiFile,'Scaled by ' + FloatToStr(Grade2SqrtNorm) +  ' RotBase');
+   {$endif}
+
    // Get rotation angle.
    HalfAngle := arctan2(Grade2SqrtNorm,_Vec.UnsafeData[0]);
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Half Angle is: ' + FloatToStr(HalfAngle));
+   {$endif}
    // Get the versor required to do the transformation.
    Result := NewEuclideanRotationVersor(RotBase,HalfAngle);
 
@@ -1348,9 +1482,9 @@ end;
 
 function TGeometricAlgebra.GetMetricMultiplier(_bitmap1, _bitmap2: cardinal): single;
 var
-   i,j,bitmap: cardinal;
+   i,j,Bitmap: cardinal;
 begin
-   bitmap := _bitmap1 and _bitmap2;
+   Bitmap := _bitmap1 and _bitmap2;
    Result := 1;
    i := 1;
    j := 0;
@@ -1360,7 +1494,7 @@ begin
       begin
          Result := Result * FMetric.Data[j,j];
       end;
-      i := i * 2;
+      i := i shl 1;
       inc(j);
    end;
 end;
