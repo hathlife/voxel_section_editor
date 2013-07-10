@@ -1578,10 +1578,10 @@ var
 begin
    Vector := _GA.NewEuclideanVector(_V1);
    Position := _GA.ApplyRotor(Vector,_Versor,_Inverse);
-   Result.U := Vector.UnsafeData[1];
-   Result.V := Vector.UnsafeData[2];
+   Result.U := Position.UnsafeData[1];
+   Result.V := Position.UnsafeData[2];
    {$ifdef ORIGAMI_TEST}
-   Vector.Debug(GlobalVars.OrigamiFile,'Triangle Positions');
+   Position.Debug(GlobalVars.OrigamiFile,'Triangle Positions');
    {$endif}
 
    Position.Free;
@@ -1591,104 +1591,168 @@ end;
 // _TLS1,2,3 are line segments of one of the triangles. _TV1,2,3 are the vertexes (flats) from the other triangle.
 // It requires homogeneous/projective model from the geometric algebra.
 function CTextureAtlasExtractor.AreTrianglesColiding(var _PGA: TGeometricAlgebra; const _TLS1, _TLS2, _TLS3, _TV1, _TV2, _TV3: TMultiVector): boolean;
+   function Epsilon(_value: single):single;
+   begin
+      Result := _Value;
+      if abs(_Value) < 0.000001 then
+         Result := 0;
+   end;
 var
    VertexConfig1,VertexConfig2,VertexConfig3: byte;
    SegConfig1,SegConfig2,SegConfig3: byte;
    Temp: TMultiVector;
 begin
    Result := true; // assume true for optimization
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Colision detection starts here.');
+   _TLS1.Debug(GlobalVars.OrigamiFile,'Triangle A Line Segment 1');
+   _TLS2.Debug(GlobalVars.OrigamiFile,'Triangle A Line Segment 2');
+   _TLS3.Debug(GlobalVars.OrigamiFile,'Triangle A Line Segment 3');
+   _TV1.Debug(GlobalVars.OrigamiFile,'Triangle B Vertex 1');
+   _TV2.Debug(GlobalVars.OrigamiFile,'Triangle B Vertex 2');
+   _TV3.Debug(GlobalVars.OrigamiFile,'Triangle B Vertex 3');
+   {$endif}
+
    // Collect vertex configurations. 1 is outside and 0 is inside.
    // Vertex 1
    VertexConfig1 := 0;
-   Temp := _PGA.OuterProduct(_TV1,_TLS1);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS1,_TV1);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV1');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig1 := VertexConfig1 or 1;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV1,_TLS2);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS2,_TV1);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV1');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig1 := VertexConfig1 or 2;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV1,_TLS3);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS3,_TV1);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV1');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig1 := VertexConfig1 or 4;
    end;
    Temp.Free;
    if VertexConfig1 = 0 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Vertex 1 is inside the Triangle');
+      {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
    // Vertex 2
    VertexConfig2 := 0;
-   Temp := _PGA.OuterProduct(_TV2,_TLS1);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS1,_TV2);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV2');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig2 := VertexConfig2 or 1;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV2,_TLS2);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS2,_TV2);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV2');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig2 := VertexConfig2 or 2;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV2,_TLS3);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS3,_TV2);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV2');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig2 := VertexConfig2 or 4;
    end;
    Temp.Free;
    if VertexConfig2 = 0 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Vertex 2 is inside the Triangle');
+      {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
    // Vertex 3
    VertexConfig3 := 0;
-   Temp := _PGA.OuterProduct(_TV3,_TLS1);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS1,_TV3);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV3');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig3 := VertexConfig3 or 1;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV3,_TLS2);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS2,_TV3);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV3');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig3 := VertexConfig3 or 2;
    end;
    Temp.Free;
-   Temp := _PGA.OuterProduct(_TV3,_TLS3);
-   if _PGA.GetSquaredNorm(Temp) <= 0 then
+   Temp := _PGA.OuterProduct(_TLS3,_TV3);
+   {$ifdef ORIGAMI_TEST}
+   Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV3');
+   {$endif}
+   if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
       VertexConfig3 := VertexConfig3 or 4;
    end;
    Temp.Free;
    if VertexConfig3 = 0 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Vertex 3 is inside the Triangle');
+      {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
    // Now let's check the line segments
    SegConfig1 := VertexConfig1 xor (VertexConfig2 and VertexConfig1);
    if SegConfig1 = VertexConfig1 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Segment 12 is inside the Triangle');
+      {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
    SegConfig2 := VertexConfig2 xor (VertexConfig3 and VertexConfig2);
    if SegConfig2 = VertexConfig2 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Segment 23 is inside the Triangle');
+      {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
    SegConfig3 := VertexConfig3 xor (VertexConfig1 and VertexConfig3);
    if SegConfig3 = VertexConfig3 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Segment 31 is inside the Triangle');
+      {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
    // Now let's check the triangle, if it contains the other or not.
-   if (SegConfig1 and SegConfig2 and SegConfig3) = 0 then
+   if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
    begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Triangle is inside the Triangle');
+      {$endif}
       exit; // return true, the triangle contains the other triangle.
    end;
    Result := false; // return false. There is no colision between the two triangles.
@@ -1748,7 +1812,7 @@ begin
    {$endif}
 
    // Let's do the scale first.
-   EdgeSizeInMesh := _PGA.GetNorm(DirEdge);
+   EdgeSizeInMesh := _PGA.GetLength(DirEdge);
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('Norm of DirEdge is ' + FloatToStr(EdgeSizeInMesh) + '.');
    {$endif}
@@ -1767,7 +1831,7 @@ begin
       PCenterTriangle.Free;
       exit;
    end;
-   EdgeSizeInUV := _PGA.GetNorm(DirEdgeUV);
+   EdgeSizeInUV := _PGA.GetLength(DirEdgeUV);
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('Norm of DirEdgeUV is ' + FloatToStr(EdgeSizeInUV) + '.');
    {$endif}
@@ -1795,14 +1859,17 @@ begin
    PTemp := TMultiVector.Create(PEdge0);
    PEdge0.Free;
    PEdge0 := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   _PGA.BladeOfGradeFromVector(PEdge0,1);
    PTemp.Free;
    PTemp := TMultiVector.Create(PEdge1);
    PEdge1.Free;
    PEdge1 := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   _PGA.BladeOfGradeFromVector(PEdge1,1);
    PTemp.Free;
    PTemp := TMultiVector.Create(PTarget);
    PTarget.Free;
    PTarget := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   _PGA.BladeOfGradeFromVector(PTarget,1);
    PTemp.Free;
    {$ifdef ORIGAMI_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after plane projection');
@@ -1871,14 +1938,17 @@ begin
    PTemp := TMultiVector.Create(PEdge0);
    PEdge0.Free;
    PEdge0 := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   _PGA.BladeOfGradeFromVector(PEdge0,1);
    PTemp.Free;
    PTemp := TMultiVector.Create(PEdge1);
    PEdge1.Free;
    PEdge1 := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   _PGA.BladeOfGradeFromVector(PEdge1,1);
    PTemp.Free;
    PTemp := TMultiVector.Create(PTarget);
    PTarget.Free;
    PTarget := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   _PGA.BladeOfGradeFromVector(PTarget,1);
    PTemp.Free;
 
    {$ifdef ORIGAMI_TEST}
@@ -1936,7 +2006,7 @@ begin
       if _CheckFace[i] then
       begin
          {$ifdef ORIGAMI_TEST}
-         //GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
+         GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
          {$endif}
          // Check if the candidate position is inside this triangle.
          // If it is inside the triangle, then point is not validated. Exit.

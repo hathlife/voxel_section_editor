@@ -82,7 +82,10 @@ type
       function NewHomogeneousFlat(const _Vector:TVector2f): TMultiVector; overload;
       function NewHomogeneousFlat(const _Vector:TVector3f): TMultiVector; overload;
       function NewEuclideanRotationVersor(const _Vector: TMultiVector; _angle: single): TMultiVector; overload;
+      procedure BladeOfGradeFromVector(var _Vec:TMultiVector; _Grade: cardinal); overload;
       function GetBladeOfGradeFromVector(const _Vec:TMultiVector; _Grade: cardinal): TMultiVector; overload;
+      procedure MultiplesGradeFromVector(var _Vec:TMultiVector; _GradesIDBitmap: cardinal);
+      function GetMultiplesGradeFromVector(const _Vec:TMultiVector; _GradesIDBitmap: cardinal): TMultiVector;
       function GetEuclideanPartFromVector(const _Vec:TMultiVector): TMultiVector; overload;
       // Gets
       function GetMaxGrade(const _Vec: TMultiVector):cardinal;
@@ -90,6 +93,7 @@ type
       function GetSquaredNorm(const _Vec: TMultiVector):single; overload;
       function GetSquaredNorm(const _Vec,_Reverse: TMultiVector):single; overload;
       function GetSquaredNormOfGrade(const _Vec: TMultiVector; _Grade: cardinal): single;
+      function GetLength(const _Vec: TMultiVector): single;
       function GetFlatDirection(const _Vec: TMultiVector): TMultiVector; overload;
       function GetFlatDirection(const _Vec,_e0: TMultiVector): TMultiVector; overload;
       function GetFlatMoment(const _Vec: TMultiVector): TMultiVector; overload;
@@ -285,6 +289,23 @@ begin
    end;
 end;
 
+procedure TGeometricAlgebra.BladeOfGradeFromVector(var _Vec:TMultiVector; _Grade: cardinal);
+var
+   i : cardinal;
+begin
+   for i := 0 to _Vec.MaxElement do
+   begin
+      if FBitCountTable[i] = _Grade then
+      begin
+         _Vec.UnsafeData[i] := _Vec.UnsafeData[i];
+      end
+      else
+      begin
+         _Vec.UnsafeData[i] := 0;
+      end;
+   end;
+end;
+
 function TGeometricAlgebra.GetBladeOfGradeFromVector(const _Vec:TMultiVector; _Grade: cardinal): TMultiVector;
 var
    i : cardinal;
@@ -293,6 +314,47 @@ begin
    for i := 0 to Result.MaxElement do
    begin
       if FBitCountTable[i] = _Grade then
+      begin
+         Result.UnsafeData[i] := _Vec.UnsafeData[i];
+      end
+      else
+      begin
+         Result.UnsafeData[i] := 0;
+      end;
+   end;
+end;
+
+// Does the same thing as BladeOfGradeFromVector, but it allows you to extract
+// multiples grades. I.e.: to extract grades 0 and 2, _GradesIDBitmap = 5
+// (in binary: 101)
+procedure TGeometricAlgebra.MultiplesGradeFromVector(var _Vec:TMultiVector; _GradesIDBitmap: cardinal);
+var
+   i : cardinal;
+begin
+   for i := 0 to _Vec.MaxElement do
+   begin
+      if FBitCountTable[i] and _GradesIDBitmap <> 0 then
+      begin
+         _Vec.UnsafeData[i] := _Vec.UnsafeData[i];
+      end
+      else
+      begin
+         _Vec.UnsafeData[i] := 0;
+      end;
+   end;
+end;
+
+// Does the same thing as GetBladeOfGradeFromVector, but it allows you to extract
+// multiples grades. I.e.: to extract grades 0 and 2, _GradesIDBitmap = 5
+// (in binary: 101)
+function TGeometricAlgebra.GetMultiplesGradeFromVector(const _Vec:TMultiVector; _GradesIDBitmap: cardinal): TMultiVector;
+var
+   i : cardinal;
+begin
+   Result := TMultiVector.Create(_Vec.Dimension);
+   for i := 0 to Result.MaxElement do
+   begin
+      if FBitCountTable[i] and _GradesIDBitmap <> 0 then
       begin
          Result.UnsafeData[i] := _Vec.UnsafeData[i];
       end
@@ -368,7 +430,7 @@ var
 begin
    Vec := GetBladeOfGradeFromVector(_Vec,_Grade);
    Rev := GetReverse(Vec);
-   Result := OrthogonalScalarProduct(Vec,Rev);
+   Result := OrthogonalScalarProduct(Rev,Vec);
    Vec.Free;
    Rev.Free;
 end;
@@ -378,13 +440,19 @@ var
    Rev: TMultiVector;
 begin
    Rev := GetReverse(_Vec);
-   Result := OrthogonalScalarProduct(_Vec,Rev);
+   Result := OrthogonalScalarProduct(Rev,_Vec);
    Rev.Free;
 end;
 
 function TGeometricAlgebra.GetSquaredNorm(const _Vec,_Reverse: TMultiVector): single;
 begin
-   Result := OrthogonalScalarProduct(_Vec,_Reverse);
+   Result := OrthogonalScalarProduct(_Reverse,_Vec);
+end;
+
+// The good old Norm2 from linear algebra at Geometric Algebra, for positive norms.
+function TGeometricAlgebra.GetLength(const _Vec: TMultiVector): single;
+begin
+   Result := sqrt(OrthogonalScalarProduct(_Vec,_Vec));
 end;
 
 function TGeometricAlgebra.GetI:TMultiVector;
@@ -419,7 +487,7 @@ end;
 
 function TGeometricAlgebra.GetCannonicalOrderTable(_X,_Y: cardinal): integer;
 begin
-   Result := FCannonicalOrderTable[_X+((1 shl FDimension) * _Y)];
+   Result := FCannonicalOrderTable[_X+((1 shl FSystemDimension) * _Y)];
 end;
 
 // A<t - 1>
@@ -763,7 +831,7 @@ end;
 
 procedure TGeometricAlgebra.SetCannonicalOrderTable(_X,_Y: cardinal; _Value: integer);
 begin
-   FCannonicalOrderTable[_X+((1 shl FDimension) * _Y)] := _Value;
+   FCannonicalOrderTable[_X+((1 shl FSystemDimension) * _Y)] := _Value;
 end;
 
 // Operations
@@ -1103,8 +1171,12 @@ begin
 end;
 
 function TGeometricAlgebra.ApplyRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector;
+var
+   GpRotBlade : TMultiVector;
 begin
-   Result := GeometricProduct(GeometricProduct(_Rotor,_Blade),_InverseRotor);
+   GpRotBlade := GeometricProduct(_Rotor,_Blade);
+   Result := GeometricProduct(GpRotBlade,_InverseRotor);
+   GpRotBlade.Free;
 end;
 
 // _Vec := _Vec + (_Offset ^ (e0 l _Vec))    ... where l is left contraction.
@@ -1182,10 +1254,9 @@ procedure TGeometricAlgebra.Reverse(var _Vec: TMultiVector);
 var
    i,Grade: cardinal;
 begin
-   Grade := GetMaxGrade(_Vec);
-   if (Grade mod 4) > 1 then
+   for i := 0 to _Vec.MaxElement do
    begin
-      for i := 0 to _Vec.MaxElement do
+      if (FBitCountTable[i] mod 4) > 1 then
       begin
          _Vec.UnsafeData[i] := -1 * _Vec.UnsafeData[i];
       end;
@@ -1407,7 +1478,7 @@ begin
    {$endif}
 
    // Get rotation angle.
-   HalfAngle := arctan2(Grade2SqrtNorm,_Vec.UnsafeData[0]);
+   HalfAngle := arctan2(Grade2SqrtNorm,_Vec.UnsafeData[0])*0.5;
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('Half Angle is: ' + FloatToStr(HalfAngle));
    {$endif}
@@ -1451,10 +1522,11 @@ end;
 // before e1, e2, e3, etc...
 function TGeometricAlgebra.canonical_reordering_homogeneous(_bitmap1, _bitmap2: Cardinal): integer;
 var
-   bitmap: cardinal;
+   bitmap1,bitmap2: cardinal;
 begin
-   bitmap := ((_bitmap1 and ((1 shl FDimension) - 1)) shl 1) + (_bitmap1 shr FDimension);
-   Result := canonical_reordering_euclidean(bitmap,_bitmap2);
+   bitmap1 := ((_bitmap1 and ((1 shl FDimension) - 1)) shl 1) + (_bitmap1 shr FDimension);
+   bitmap2 := ((_bitmap2 and ((1 shl FDimension) - 1)) shl 1) + (_bitmap2 shr FDimension);
+   Result := canonical_reordering_euclidean(bitmap1,bitmap2);
 end;
 
 // Our base eFDimension is the e0 from this model. It should actually go
@@ -1464,10 +1536,11 @@ end;
 // go after e1, e2, e3, etc...
 function TGeometricAlgebra.canonical_reordering_conformal(_bitmap1, _bitmap2: Cardinal): integer;
 var
-   bitmap: cardinal;
+   bitmap1,bitmap2: cardinal;
 begin
-   bitmap := ((_bitmap1 and ((1 shl FDimension) - 1)) shl 1) + ((_bitmap1 shr FDimension) and 1) + (_bitmap1 and (1 shl (FDimension + 1)));
-   Result := canonical_reordering_euclidean(bitmap,_bitmap2);
+   bitmap1 := ((_bitmap1 and ((1 shl FDimension) - 1)) shl 1) + ((_bitmap1 shr FDimension) and 1) + (_bitmap1 and (1 shl (FDimension + 1)));
+   bitmap2 := ((_bitmap2 and ((1 shl FDimension) - 1)) shl 1) + ((_bitmap2 shr FDimension) and 1) + (_bitmap2 and (1 shl (FDimension + 1)));
+   Result := canonical_reordering_euclidean(bitmap1,bitmap2);
 end;
 
 function TGeometricAlgebra.bit_count(_bitmap: Cardinal): word;
