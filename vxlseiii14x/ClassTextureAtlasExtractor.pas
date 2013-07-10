@@ -825,6 +825,19 @@ begin
       end;
    end;
 
+   // Force a seed separator space at the left of the seeds.
+   for i := Low(_Seeds) to High(_Seeds) do
+   begin
+      _Seeds[i].MinBounds.U := _Seeds[i].MinBounds.U + SeedSeparatorSpace;
+      _Seeds[i].MinBounds.V := _Seeds[i].MinBounds.V + SeedSeparatorSpace;
+      _Seeds[i].MaxBounds.U := _Seeds[i].MaxBounds.U + SeedSeparatorSpace;
+      _Seeds[i].MaxBounds.V := _Seeds[i].MaxBounds.V + SeedSeparatorSpace;
+   end;
+
+   // Force seeds separator space at the end of the main seed.
+   _Seeds[High(_Seeds)].MaxBounds.U := _Seeds[High(_Seeds)].MaxBounds.U + SeedSeparatorSpace;
+   _Seeds[High(_Seeds)].MaxBounds.V := _Seeds[High(_Seeds)].MaxBounds.V + SeedSeparatorSpace;
+
    // The texture must be a square, so we'll centralize the smallest dimension.
 {
    if (_Seeds[High(_Seeds)].MaxBounds.U > _Seeds[High(_Seeds)].MaxBounds.V) then
@@ -1219,11 +1232,13 @@ var
    VertsLocation : aint32;
    CandidateUVPosition: TVector2f;
    AddedFace: abool;
+   FaceBackup: auint32;
    {$ifdef ORIGAMI_TEST}
    Temp: string;
    {$endif}
 begin
    VertexUtil := TVertexTransformationUtils.Create;
+   SetLength(FaceBackup,_VerticesPerFace);
    // Setup neighbor detection list
    FaceList := CIntegerList.Create;
    FaceList.UseSmartMemoryManagement(true);
@@ -1375,6 +1390,15 @@ begin
    while FaceList.GetValue(Value) do
    begin
       PreviousFaceList.GetValue(PreviousFace);
+      // Backup current face just in case the face gets rejected
+      FaceIndex := Value * _VerticesPerFace;
+      v := 0;
+      while v < _VerticesPerFace do
+      begin
+         FaceBackup[v] := _Faces[FaceIndex + v];
+         inc(v);
+      end;
+
       {$ifdef ORIGAMI_TEST}
       GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' that was added by previous face ' + IntToStr(PreviousFace));
       {$endif}
@@ -1390,7 +1414,6 @@ begin
          GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been validated.');
          {$endif}
          // Add the face and its vertexes
-         FaceIndex := Value * _VerticesPerFace;
          _CheckFace[Value] := true;
          _FaceSeeds[Value] := _ID;
          // If the vertex wasn't used yet
@@ -1528,12 +1551,19 @@ begin
             end;
             f := _FaceNeighbors.GetNextNeighbor;
          end;
-         {$ifdef ORIGAMI_TEST}
       end
       else // Face has been rejected.
       begin
+         {$ifdef ORIGAMI_TEST}
          GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been rejected.');
          {$endif}
+         // Restore current face due to rejection
+         v := 0;
+         while v < _VerticesPerFace do
+         begin
+            _Faces[FaceIndex + v] := FaceBackup[v];
+            inc(v);
+         end;
       end;
    end;
 
@@ -1557,10 +1587,12 @@ begin
    Screen := _GA.NewEuclideanBiVector(SetVector(0,0,1));
    FullRotation := _GA.GeometricProduct(Triangle,Screen);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_ROTATION_TEST}
    GlobalVars.OrigamiFile.Add('Normal: (' + FloatToStr(_Normal.X) + ', ' + FloatToStr(_Normal.Y) + ', ' + FloatToStr(_Normal.Z) + ').');
    Triangle.Debug(GlobalVars.OrigamiFile,'Triangle (Normal)');
    Screen.Debug(GlobalVars.OrigamiFile,'Screen (0,0,1)');
    FullRotation.Debug(GlobalVars.OrigamiFile,'Full Rotation');
+   {$endif}
    {$endif}
 
    // Obtain the versor that will be used to do this projection.
@@ -1581,7 +1613,9 @@ begin
    Result.U := Position.UnsafeData[1];
    Result.V := Position.UnsafeData[2];
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_ROTATION_TEST}
    Position.Debug(GlobalVars.OrigamiFile,'Triangle Positions');
+   {$endif}
    {$endif}
 
    Position.Free;
@@ -1604,6 +1638,7 @@ var
 begin
    Result := true; // assume true for optimization
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    GlobalVars.OrigamiFile.Add('Colision detection starts here.');
    _TLS1.Debug(GlobalVars.OrigamiFile,'Triangle A Line Segment 1');
    _TLS2.Debug(GlobalVars.OrigamiFile,'Triangle A Line Segment 2');
@@ -1612,13 +1647,16 @@ begin
    _TV2.Debug(GlobalVars.OrigamiFile,'Triangle B Vertex 2');
    _TV3.Debug(GlobalVars.OrigamiFile,'Triangle B Vertex 3');
    {$endif}
+   {$endif}
 
    // Collect vertex configurations. 1 is outside and 0 is inside.
    // Vertex 1
    VertexConfig1 := 0;
    Temp := _PGA.OuterProduct(_TLS1,_TV1);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV1');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1627,7 +1665,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS2,_TV1);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV1');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1636,7 +1676,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS3,_TV1);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV1');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1646,7 +1688,9 @@ begin
    if VertexConfig1 = 0 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Vertex 1 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
@@ -1654,7 +1698,9 @@ begin
    VertexConfig2 := 0;
    Temp := _PGA.OuterProduct(_TLS1,_TV2);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV2');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1663,7 +1709,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS2,_TV2);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV2');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1672,7 +1720,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS3,_TV2);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV2');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1682,7 +1732,9 @@ begin
    if VertexConfig2 = 0 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Vertex 2 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
@@ -1690,7 +1742,9 @@ begin
    VertexConfig3 := 0;
    Temp := _PGA.OuterProduct(_TLS1,_TV3);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL1 ^ _TV3');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1699,7 +1753,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS2,_TV3);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL2 ^ _TV3');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1708,7 +1764,9 @@ begin
    Temp.Free;
    Temp := _PGA.OuterProduct(_TLS3,_TV3);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_COLISION_TEST}
    Temp.Debug(GlobalVars.OrigamiFile,'_TSL3 ^ _TV3');
+   {$endif}
    {$endif}
    if Epsilon(Temp.UnsafeData[11]) <= 0 then
    begin
@@ -1718,7 +1776,9 @@ begin
    if VertexConfig3 = 0 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Vertex 3 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the vertex is inside the triangle.
    end;
@@ -1727,7 +1787,9 @@ begin
    if SegConfig1 = VertexConfig1 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Segment 12 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
@@ -1735,7 +1797,9 @@ begin
    if SegConfig2 = VertexConfig2 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Segment 23 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
@@ -1743,7 +1807,9 @@ begin
    if SegConfig3 = VertexConfig3 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Segment 31 is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the line segment crosses the triangle.
    end;
@@ -1751,7 +1817,9 @@ begin
    if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
    begin
       {$ifdef ORIGAMI_TEST}
+      {$ifdef ORIGAMI_COLISION_TEST}
       GlobalVars.OrigamiFile.Add('Triangle is inside the Triangle');
+      {$endif}
       {$endif}
       exit; // return true, the triangle contains the other triangle.
    end;
@@ -1779,6 +1847,7 @@ begin
    PEdge0UV := _PGA.NewHomogeneousFlat(_TexCoords[_Edge0]);
    PEdge1UV := _PGA.NewHomogeneousFlat(_TexCoords[_Edge1]);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget');
@@ -1786,15 +1855,18 @@ begin
    PEdge0UV.Debug(GlobalVars.OrigamiFile,'PEdge0UV');
    PEdge1UV.Debug(GlobalVars.OrigamiFile,'PEdge1UV');
    {$endif}
+   {$endif}
 
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0,PCenterTriangle);
    _PGA.HomogeneousOppositeTranslation(PEdge1,PCenterTriangle);
    _PGA.HomogeneousOppositeTranslation(PTarget,PCenterTriangle);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 moved to the center of the triangle');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 moved to the center of the triangle');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget moved to the center of the triangle');
+   {$endif}
    {$endif}
 
    // Get line segments.
@@ -1805,16 +1877,20 @@ begin
    DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
 
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
    LSEdgeUV.Debug(GlobalVars.OrigamiFile,'LSEdgeUV');
    DirEdge.Debug(GlobalVars.OrigamiFile,'DirEdge');
    DirEdgeUV.Debug(GlobalVars.OrigamiFile,'DirEdgeUV');
    {$endif}
+   {$endif}
 
    // Let's do the scale first.
    EdgeSizeInMesh := _PGA.GetLength(DirEdge);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    GlobalVars.OrigamiFile.Add('Norm of DirEdge is ' + FloatToStr(EdgeSizeInMesh) + '.');
+   {$endif}
    {$endif}
    if EdgeSizeInMesh = 0 then
    begin
@@ -1833,26 +1909,34 @@ begin
    end;
    EdgeSizeInUV := _PGA.GetLength(DirEdgeUV);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    GlobalVars.OrigamiFile.Add('Norm of DirEdgeUV is ' + FloatToStr(EdgeSizeInUV) + '.');
+   {$endif}
    {$endif}
 
    Scale := EdgeSizeInUV / EdgeSizeInMesh;
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    GlobalVars.OrigamiFile.Add('Scale is ' + FloatToStr(Scale) + '.');
+   {$endif}
    {$endif}
    _PGA.ScaleEuclideanDataFromVector(PEdge0,Scale);
    _PGA.ScaleEuclideanDataFromVector(PEdge1,Scale);
    _PGA.ScaleEuclideanDataFromVector(PTarget,Scale);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after scale');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after scale');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after scale');
+   {$endif}
    {$endif}
 
    // Project the triangle (Edge0,Edge1,Target) at the UV plane.
    PlaneRotation := GetVersorForTriangleProjectionGA(_EGA,_FaceNormal);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PlaneRotation.Debug(GlobalVars.OrigamiFile,'PlaneRotation');
+   {$endif}
    {$endif}
 
    // This part is not very practical, but it should avoid problems.
@@ -1872,15 +1956,19 @@ begin
    _PGA.BladeOfGradeFromVector(PTarget,1);
    PTemp.Free;
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after plane projection');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after plane projection');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after plane projection');
+   {$endif}
    {$endif}
 
    // Let's center our triangle at the center of the Edge0-Edge1 line segment.
    PCenterSegment := _PGA.NewEuclideanVector(SetVector((PEdge0.UnsafeData[1] + PEdge1.UnsafeData[1])*0.5,(PEdge0.UnsafeData[2] + PEdge1.UnsafeData[2])*0.5));
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PCenterSegment.Debug(GlobalVars.OrigamiFile,'PCenterSegment');
+   {$endif}
    {$endif}
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0,PCenterSegment);
@@ -1888,23 +1976,29 @@ begin
    _PGA.HomogeneousOppositeTranslation(PTarget,PCenterSegment);
 
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 moved to the center of the segment');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 moved to the center of the segment');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget moved to the center of the segment');
+   {$endif}
    {$endif}
 
    // Let's center our UV triangle at the center of the Edge0UV-Edge1UV line segment.
    PCenterSegmentUV := _PGA.NewEuclideanVector(SetVector((PEdge0UV.UnsafeData[1] + PEdge1UV.UnsafeData[1])*0.5,(PEdge0UV.UnsafeData[2] + PEdge1UV.UnsafeData[2])*0.5));
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PCenterSegmentUV.Debug(GlobalVars.OrigamiFile,'PCenterSegmentUV');
+   {$endif}
    {$endif}
    // Do translation to get center in (0,0,0).
    _PGA.HomogeneousOppositeTranslation(PEdge0UV,PCenterSegmentUV);
    _PGA.HomogeneousOppositeTranslation(PEdge1UV,PCenterSegmentUV);
 
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0UV.Debug(GlobalVars.OrigamiFile,'PEdge0UV moved to the center of the UV segment');
    PEdge1UV.Debug(GlobalVars.OrigamiFile,'PEdge1UV moved to the center of the UV segment');
+   {$endif}
    {$endif}
 
    // Now we have to recalculate the line segments and directions.
@@ -1919,10 +2013,12 @@ begin
    DirEdgeUV.Free;
    DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
    LSEdgeUV.Debug(GlobalVars.OrigamiFile,'LSEdgeUV');
    DirEdge.Debug(GlobalVars.OrigamiFile,'DirEdge');
    DirEdgeUV.Debug(GlobalVars.OrigamiFile,'DirEdgeUV');
+   {$endif}
    {$endif}
 
    // Let's rotate our vectors.
@@ -1931,7 +2027,9 @@ begin
    // Rotate the triangle (Edge0,Edge1,Target) at the UV plane.
    SegmentRotation := _PGA.Euclidean3DLogarithm(PTemp);
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    SegmentRotation.Debug(GlobalVars.OrigamiFile,'SegmentRotation');
+   {$endif}
    {$endif}
    // This part is not very practical, but it should avoid problems.
    PTemp.Free;
@@ -1952,9 +2050,11 @@ begin
    PTemp.Free;
 
    {$ifdef ORIGAMI_TEST}
+   {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after rotation at the center of the segment');
    PEdge1.Debug(GlobalVars.OrigamiFile,'PEdge1 after rotation at the center of the segment');
    PTarget.Debug(GlobalVars.OrigamiFile,'PTarget after rotation at the center of the segment');
+   {$endif}
    {$endif}
 
    // Translate PCenterSegmentUV units.
@@ -2006,7 +2106,9 @@ begin
       if _CheckFace[i] then
       begin
          {$ifdef ORIGAMI_TEST}
+         {$ifdef ORIGAMI_COLISION_TEST}
          GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
+         {$endif}
          {$endif}
          // Check if the candidate position is inside this triangle.
          // If it is inside the triangle, then point is not validated. Exit.
@@ -2057,12 +2159,15 @@ var
    AddedFace: abool;
    TriangleTransform,TriangleTransformInv: TMultiVector;
    EuclideanGA,ProjectiveGA: TGeometricAlgebra;
+   FaceBackup: auint32;
    {$ifdef ORIGAMI_TEST}
    Temp: string;
    {$endif}
 begin
    EuclideanGA := TGeometricAlgebra.Create(3);
    ProjectiveGA := TGeometricAlgebra.CreateHomogeneous(3);
+   SetLength(FaceBackup,_VerticesPerFace);
+
    // Setup neighbor detection list
    FaceList := CIntegerList.Create;
    FaceList.UseSmartMemoryManagement(true);
@@ -2209,6 +2314,15 @@ begin
    while FaceList.GetValue(Value) do
    begin
       PreviousFaceList.GetValue(PreviousFace);
+      // Backup current face just in case the face gets rejected
+      FaceIndex := Value * _VerticesPerFace;
+      v := 0;
+      while v < _VerticesPerFace do
+      begin
+         FaceBackup[v] := _Faces[FaceIndex + v];
+         inc(v);
+      end;
+
       {$ifdef ORIGAMI_TEST}
       GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' that was added by previous face ' + IntToStr(PreviousFace));
       {$endif}
@@ -2224,7 +2338,6 @@ begin
          GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been validated.');
          {$endif}
          // Add the face and its vertexes
-         FaceIndex := Value * _VerticesPerFace;
          _CheckFace[Value] := true;
          _FaceSeeds[Value] := _ID;
          // If the vertex wasn't used yet
@@ -2362,12 +2475,19 @@ begin
             end;
             f := _FaceNeighbors.GetNextNeighbor;
          end;
-         {$ifdef ORIGAMI_TEST}
       end
       else // Face has been rejected.
       begin
+         {$ifdef ORIGAMI_TEST}
          GlobalVars.OrigamiFile.Add('Face ' + IntToStr(Value) + ' has been rejected.');
          {$endif}
+         // Restore current face due to rejection
+         v := 0;
+         while v < _VerticesPerFace do
+         begin
+            _Faces[FaceIndex + v] := FaceBackup[v];
+            inc(v);
+         end;
       end;
    end;
 
@@ -2377,6 +2497,7 @@ begin
    end;
    SetLength(VertsLocation,0);
    SetLength(AddedFace,0);
+   SetLength(FaceBackup,0);
    TriangleTransform.Free;
    TriangleTransformInv.Free;
    FaceList.Free;

@@ -1468,20 +1468,11 @@ var
 begin
    // Get rotation base.
    RotBase := GetBladeOfGradeFromVector(_Vec,2);
-   {$ifdef ORIGAMI_TEST}
-   RotBase.Debug(GlobalVars.OrigamiFile,'RotBase');
-   {$endif}
    Grade2SqrtNorm := sqrt(GetSquaredNorm(RotBase));
    ScaleVector(RotBase,1/Grade2SqrtNorm);
-   {$ifdef ORIGAMI_TEST}
-   RotBase.Debug(GlobalVars.OrigamiFile,'Scaled by ' + FloatToStr(Grade2SqrtNorm) +  ' RotBase');
-   {$endif}
 
    // Get rotation angle.
    HalfAngle := arctan2(Grade2SqrtNorm,_Vec.UnsafeData[0])*0.5;
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('Half Angle is: ' + FloatToStr(HalfAngle));
-   {$endif}
    // Get the versor required to do the transformation.
    Result := NewEuclideanRotationVersor(RotBase,HalfAngle);
 

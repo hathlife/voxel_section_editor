@@ -8,6 +8,9 @@
 //{$DEFINE MESH_TEST}       // to mesh values for UFF's final graduation project
 {$DEFINE SMOOTH_TEST}      // to smooth values for UFF's master dissertation project
 //{$DEFINE ORIGAMI_TEST}     // to test the origami texture atlas extraction.
+//{$DEFINE ORIGAMI_COLISION_TEST} // to test origami colision with GA.
+//{$DEFINE ORIGAMI_PROJECTION_TEST} // to test origami projection with GA.
+//{$DEFINE ORIGAMI_ROTATION_TEST} // to test origami projection with GA.
 //{$DEFINE OPTIMIZATION_INFO} // it adds analysis for the mesh optimization operations.
 //{$DEFINE TEXTURE_DEBUG}
 
