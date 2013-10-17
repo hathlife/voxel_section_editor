@@ -187,7 +187,11 @@ uses
   Palette in 'source\document\Palette.pas',
   Voxel in 'source\document\Voxel.pas',
   Config in 'source\control\Config.pas',
-  Pause in 'source\utils\Pause.pas';
+  Pause in 'source\utils\Pause.pas',
+  TextureAtlasExtractorBase in 'source\control\mesh\TextureAtlasExtractorBase.pas',
+  TextureAtlasExtractorOrigami in 'source\control\mesh\TextureAtlasExtractorOrigami.pas',
+  TextureAtlasExtractorOrigamiGA in 'source\control\mesh\TextureAtlasExtractorOrigamiGA.pas',
+  ColisionCheckGA in 'source\maths\geometric_algebra\ColisionCheckGA.pas';
 
 {$R *.res}
 

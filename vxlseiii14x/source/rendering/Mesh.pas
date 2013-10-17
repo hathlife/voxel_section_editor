@@ -10,8 +10,9 @@ uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
       MeshOptimizationTool, Material, VoxelMeshGenerator, Vector3fSet,
       MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
       MeshNormalsTool, MeshColoursTool, MeshProcessingTool,
-      TextureAtlasExtractor, Abstract2DImageData, ImageRGBAByteData,
-      MeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram, Debug;
+      TextureAtlasExtractorBase, Abstract2DImageData, ImageRGBAByteData,
+      MeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram, Debug,
+      TextureAtlasExtractor, TextureAtlasExtractorOrigami, TextureAtlasExtractorOrigamiGA;
 
 {$INCLUDE source/Global_Conditionals.inc}
 type
@@ -163,10 +164,10 @@ type
 
          // Texture related.
          procedure GenerateDiffuseTexture;
-         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
-         procedure GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
-         procedure GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
-         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractor);
+         procedure GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigami);
+         procedure GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigamiGA);
+         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorBase);
          procedure PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
@@ -1564,7 +1565,7 @@ begin
 end;
 
 // This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractor);
 var
    NeighborhoodPlugin: PMeshPluginBase;
 begin
@@ -1579,7 +1580,7 @@ begin
 end;
 
 // This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+procedure TMesh.GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigami);
 var
    NeighborhoodPlugin: PMeshPluginBase;
 begin
@@ -1590,7 +1591,7 @@ begin
    //RebuildFaceNormals;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeedsOrigami(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('The output mesh is:');
    Debug(GlobalVars.OrigamiFile);
@@ -1602,7 +1603,7 @@ begin
 end;
 
 // This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+procedure TMesh.GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigamiGA);
 var
    NeighborhoodPlugin: PMeshPluginBase;
 begin
@@ -1613,7 +1614,7 @@ begin
    //RebuildFaceNormals;
    NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
    Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeedsOrigamiGA(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
+   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('The output mesh is:');
    Debug(GlobalVars.OrigamiFile);
@@ -1625,7 +1626,7 @@ begin
 end;
 
 // This one really acquires the final texture coordinates values.
-procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _TexExtractor: CTextureAtlasExtractor);
+procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorBase);
 begin
    _TexExtractor.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
    {$ifdef ORIGAMI_TEST}

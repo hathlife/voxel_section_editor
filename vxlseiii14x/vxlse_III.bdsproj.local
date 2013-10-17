@@ -328,5 +328,10 @@
     <Transaction>2013/10/09 13:56:40.307.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\deprecated\VoxelModelizer.pas=</Transaction>
     <Transaction>2013/10/09 13:56:43.401.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\deprecated\VoxelModelizerItem.pas=</Transaction>
     <Transaction>2013/10/09 16:43:05.166.inc,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Global_Conditionals.inc=</Transaction>
+    <Transaction>2013/10/11 12:19:20.620.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorBase.pas</Transaction>
+    <Transaction>2013/10/11 12:52:26.041.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigami.pas</Transaction>
+    <Transaction>2013/10/11 12:57:10.401.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit2.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigamiGA.pas</Transaction>
+    <Transaction>2013/10/17 10:24:34.048.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\maths\geometric_algebra\ColisionCheck.pas</Transaction>
+    <Transaction>2013/10/17 11:08:03.423.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\maths\geometric_algebra\ColisionCheck.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\maths\geometric_algebra\ColisionCheckGA.pas</Transaction>
   </Transactions>
 </BorlandProject>

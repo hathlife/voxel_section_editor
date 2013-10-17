@@ -10,7 +10,8 @@ uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
    SysUtils, TextureGenerator, Windows, Graphics, TextureBankItem,
    IntegerSet, StopWatch, TextureAtlasExtractor, ImageIOUtils,
    ImageRGBAByteData, ImageRGBAData, ImageRGBByteData, ImageGreyData,
-   Abstract2DImageData, ImageRGBData, Histogram;
+   Abstract2DImageData, ImageRGBData, Histogram, TextureAtlasExtractorBase,
+   TextureAtlasExtractorOrigami, TextureAtlasExtractorOrigamiGA;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -639,7 +640,7 @@ var
    i : integer;
    Seeds: TSeedSet;
    VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractor;
+   TexExtractor : CTextureAtlasExtractorBase;
    TexGenerator: CTextureGenerator;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
@@ -656,7 +657,7 @@ begin
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],TexExtractor);
+      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractor));
    end;
    TexExtractor.MergeSeeds(Seeds);
    for i := Low(Mesh) to High(Mesh) do
@@ -685,7 +686,7 @@ var
    i : integer;
    Seeds: TSeedSet;
    VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractor;
+   TexExtractor : CTextureAtlasExtractorBase;
    TexGenerator: CTextureGenerator;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
@@ -698,11 +699,11 @@ begin
    SetLength(VertsSeed,High(Mesh)+1);
    SetLength(Seeds,0);
    TexGenerator := CTextureGenerator.Create;
-   TexExtractor := CTextureAtlasExtractor.Create;
+   TexExtractor := CTextureAtlasExtractorOrigami.Create;
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeedsOrigami(i,Seeds,VertsSeed[i],TexExtractor);
+      Mesh[i].GetMeshSeedsOrigami(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractorOrigami));
    end;
    TexExtractor.MergeSeeds(Seeds);
    for i := Low(Mesh) to High(Mesh) do
@@ -731,7 +732,7 @@ var
    i : integer;
    Seeds: TSeedSet;
    VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractor;
+   TexExtractor : CTextureAtlasExtractorBase;
    TexGenerator: CTextureGenerator;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
@@ -744,11 +745,11 @@ begin
    SetLength(VertsSeed,High(Mesh)+1);
    SetLength(Seeds,0);
    TexGenerator := CTextureGenerator.Create;
-   TexExtractor := CTextureAtlasExtractor.Create;
+   TexExtractor := CTextureAtlasExtractorOrigamiGA.Create;
    for i := Low(Mesh) to High(Mesh) do
    begin
       SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeedsOrigamiGA(i,Seeds,VertsSeed[i],TexExtractor);
+      Mesh[i].GetMeshSeedsOrigamiGA(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractorOrigamiGA));
    end;
    TexExtractor.MergeSeeds(Seeds);
    for i := Low(Mesh) to High(Mesh) do
