@@ -593,7 +593,9 @@ var
 begin
    // Reseta elementos
    Lista := C3DPointList.Create;
+   Lista.UseSmartMemoryManagement(true);
    Direcao := C3DPointList.Create;
+   Direcao.UseSmartMemoryManagement(true);
    SetLength(MapaDeVisitas,High(Filtro)+1,High(Filtro[0])+1,High(Filtro[0,0])+1);
    for xx := Low(Filtro) to High(Filtro) do
       for yy := Low(Filtro[0]) to High(Filtro[0]) do

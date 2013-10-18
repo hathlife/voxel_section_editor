@@ -644,7 +644,8 @@ var
    x,y,z : integer;
 begin
    List := C3DPointList.Create;
-   List.UseSmartMemoryManagement(true);     // Chuck Norris strikes here!
+   //List.UseSmartMemoryManagement(true);     // Chuck Norris strikes here!
+   List.UseFixedRAM(6* (GetMaxX + 1) * (GetMaxY + 1) * (GetMaxZ + 1));
    List.Add(_Point.X,_Point.Y,_Point.Z);
    FMap[_Point.X,_Point.Y,_Point.Z] := _value;
    // It will fill the map while there are elements in the list.
