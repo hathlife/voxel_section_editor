@@ -52,7 +52,7 @@ end;
 // Executes
 function CTextureAtlasExtractor.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
 var
-   i, MaxVerts: integer;
+   i, MaxVerts,NumSeeds: integer;
    VertsLocation,FaceSeed : aint32;
    FacePriority: AFloat;
    FaceOrder : auint32;
@@ -63,15 +63,18 @@ begin
    SetupMeshSeeds(_Vertices,_FaceNormals,_Faces,_VerticesPerFace,_Seeds,_VertsSeed,FaceNeighbors,Result,MaxVerts,FaceSeed,FacePriority,FaceOrder,CheckFace);
 
    // Let's build the seeds.
+   NumSeeds := High(_Seeds)+1;
+   SetLength(_Seeds,NumSeeds + High(FaceSeed)+1);
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
       if FaceSeed[FaceOrder[i]] = -1 then
       begin
          // Make new seed.
-         SetLength(_Seeds,High(_Seeds)+2);
-         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
+         _Seeds[NumSeeds] := MakeNewSeed(NumSeeds,_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,VertsLocation,CheckFace);
+         inc(NumSeeds);
       end;
    end;
+   SetLength(_Seeds,NumSeeds);
 
    // Re-align vertexes and seed bounds to start at (0,0)
    ReAlignSeedsToCenter(_Seeds,_VertsSeed,FaceNeighbors,Result,FacePriority,FaceOrder,CheckFace,_NeighborhoodPlugin);
@@ -90,7 +93,7 @@ begin
    VertexUtil := TVertexTransformationUtils.Create;
    // Setup neighbor detection list
    List := CIntegerList.Create;
-   List.UseSmartMemoryManagement(true);
+   List.UseFixedRAM((High(_CheckFace) + 1));
    // Setup VertsLocation
    for v := Low(_VertsLocation) to High(_VertsLocation) do
    begin

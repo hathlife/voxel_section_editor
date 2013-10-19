@@ -28,7 +28,7 @@ uses GlobalVars;
 // Geometric Algebra edition.
 function CTextureAtlasExtractorOrigamiGA.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
 var
-   i, MaxVerts: integer;
+   i, MaxVerts, NumSeeds: integer;
    FaceSeed : aint32;
    FacePriority: AFloat;
    FaceOrder : auint32;
@@ -41,18 +41,21 @@ begin
    SetupMeshSeeds(_Vertices,_FaceNormals,_Faces,_VerticesPerFace,_Seeds,_VertsSeed,FaceNeighbors,Result,MaxVerts,FaceSeed,FacePriority,FaceOrder,CheckFace);
 
    // Let's build the seeds.
+   NumSeeds := High(_Seeds) + 1;
+   SetLength(_Seeds,NumSeeds + High(FaceSeed)+1);
    for i := Low(FaceSeed) to High(FaceSeed) do
    begin
       if FaceSeed[FaceOrder[i]] = -1 then
       begin
          // Make new seed.
-         SetLength(_Seeds,High(_Seeds)+2);
          {$ifdef ORIGAMI_TEST}
-         GlobalVars.OrigamiFile.Add('Seed = ' + IntToStr(High(_Seeds)) + ' and i = ' + IntToStr(i));
+         GlobalVars.OrigamiFile.Add('Seed = ' + IntToStr(NumSeeds) + ' and i = ' + IntToStr(i));
          {$endif}
-         _Seeds[High(_Seeds)] := MakeNewSeed(High(_Seeds),_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
+         _Seeds[NumSeeds] := MakeNewSeed(NumSeeds,_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
+         inc(NumSeeds);
       end;
    end;
+   SetLength(_Seeds,NumSeeds);
 
    // Re-align vertexes and seed bounds to start at (0,0)
    ReAlignSeedsToCenter(_Seeds,_VertsSeed,FaceNeighbors,Result,FacePriority,FaceOrder,CheckFace,_NeighborhoodPlugin);
@@ -65,7 +68,7 @@ begin
    // Get rotation from _Normal to (0,0,1).
    Triangle := _GA.NewEuclideanBiVector(_Normal);
    Screen := _GA.NewEuclideanBiVector(SetVector(0,0,1));
-   FullRotation := _GA.GeometricProduct(Triangle,Screen);
+   FullRotation := _GA.GetGeometricProduct(Triangle,Screen);
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_ROTATION_TEST}
    GlobalVars.OrigamiFile.Add('Normal: (' + FloatToStr(_Normal.X) + ', ' + FloatToStr(_Normal.Y) + ', ' + FloatToStr(_Normal.Z) + ').');
@@ -89,7 +92,7 @@ var
    Vector,Position: TMultiVector;
 begin
    Vector := _GA.NewEuclideanVector(_V1);
-   Position := _GA.ApplyRotor(Vector,_Versor,_Inverse);
+   Position := _GA.GetAppliedRotor(Vector,_Versor,_Inverse);
    Result.U := Position.UnsafeData[1];
    Result.V := Position.UnsafeData[2];
    {$ifdef ORIGAMI_TEST}
@@ -113,7 +116,7 @@ var
    e0: TMultiVector; // constants.
    ColisionCheck : CColisionCheckGA;
 begin
-   ColisionCheck := CColisionCheckGA.Create;
+   ColisionCheck := CColisionCheckGA.Create(_PGA);
    // Get constants that will be required in our computation.
    e0 := _PGA.GetHomogeneousE0();
 
@@ -148,8 +151,8 @@ begin
    {$endif}
 
    // Get line segments.
-   LSEdge := _PGA.OuterProduct(PEdge0,PEdge1);
-   LSEdgeUV := _PGA.OuterProduct(PEdge0UV,PEdge1UV);
+   LSEdge := _PGA.GetOuterProduct(PEdge0,PEdge1);
+   LSEdgeUV := _PGA.GetOuterProduct(PEdge0UV,PEdge1UV);
    // Get Directions.
    DirEdge := _PGA.GetFlatDirection(LSEdge,e0);
    DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
@@ -183,6 +186,7 @@ begin
       DirEdge.Free;
       DirEdgeUV.Free;
       PCenterTriangle.Free;
+      ColisionCheck.Free;
       exit;
    end;
    EdgeSizeInUV := _PGA.GetLength(DirEdgeUV);
@@ -219,20 +223,14 @@ begin
 
    // This part is not very practical, but it should avoid problems.
    PTemp := TMultiVector.Create(PEdge0);
-   PEdge0.Free;
-   PEdge0 := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   _PGA.ApplyRotor(PEdge0,PTemp,PlaneRotation);
    _PGA.BladeOfGradeFromVector(PEdge0,1);
-   PTemp.Free;
-   PTemp := TMultiVector.Create(PEdge1);
-   PEdge1.Free;
-   PEdge1 := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   PTemp.Assign(PEdge1);
+   _PGA.ApplyRotor(PEdge1,PTemp,PlaneRotation);
    _PGA.BladeOfGradeFromVector(PEdge1,1);
-   PTemp.Free;
-   PTemp := TMultiVector.Create(PTarget);
-   PTarget.Free;
-   PTarget := _PGA.ApplyRotor(PTemp,PlaneRotation);
+   PTemp.Assign(PTarget);
+   _PGA.ApplyRotor(PTarget,PTemp,PlaneRotation);
    _PGA.BladeOfGradeFromVector(PTarget,1);
-   PTemp.Free;
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_PROJECTION_TEST}
    PEdge0.Debug(GlobalVars.OrigamiFile,'PEdge0 after plane projection');
@@ -281,15 +279,11 @@ begin
 
    // Now we have to recalculate the line segments and directions.
    // Get line segments.
-   LSEdge.Free;
-   LSEdge := _PGA.OuterProduct(PEdge0,PEdge1);
-   LSEdgeUV.Free;
-   LSEdgeUV := _PGA.OuterProduct(PEdge0UV,PEdge1UV);
+   _PGA.OuterProduct(LSEdge,PEdge0,PEdge1);
+   _PGA.OuterProduct(LSEdgeUV,PEdge0UV,PEdge1UV);
    // Get Directions.
-   DirEdge.Free;
-   DirEdge := _PGA.GetFlatDirection(LSEdge,e0);
-   DirEdgeUV.Free;
-   DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
+   _PGA.FlatDirection(DirEdge,LSEdge,e0);
+   _PGA.FlatDirection(DirEdgeUV,LSEdgeUV,e0);
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_PROJECTION_TEST}
    LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
@@ -300,7 +294,7 @@ begin
    {$endif}
 
    // Let's rotate our vectors.
-   PTemp := _PGA.GeometricProduct(DirEdge,DirEdgeUV);
+   _PGA.GeometricProduct(PTemp,DirEdge,DirEdgeUV);
 
    // Rotate the triangle (Edge0,Edge1,Target) at the UV plane.
    SegmentRotation := _PGA.Euclidean3DLogarithm(PTemp);
@@ -310,22 +304,15 @@ begin
    {$endif}
    {$endif}
    // This part is not very practical, but it should avoid problems.
-   PTemp.Free;
-   PTemp := TMultiVector.Create(PEdge0);
-   PEdge0.Free;
-   PEdge0 := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   PTemp.Assign(PEdge0);
+   _PGA.ApplyRotor(PEdge0,PTemp,SegmentRotation);
    _PGA.BladeOfGradeFromVector(PEdge0,1);
-   PTemp.Free;
-   PTemp := TMultiVector.Create(PEdge1);
-   PEdge1.Free;
-   PEdge1 := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   PTemp.Assign(PEdge1);
+   _PGA.ApplyRotor(PEdge1,PTemp,SegmentRotation);
    _PGA.BladeOfGradeFromVector(PEdge1,1);
-   PTemp.Free;
-   PTemp := TMultiVector.Create(PTarget);
-   PTarget.Free;
-   PTarget := _PGA.ApplyRotor(PTemp,SegmentRotation);
+   PTemp.Assign(PTarget);
+   _PGA.ApplyRotor(PTarget,PTemp,SegmentRotation);
    _PGA.BladeOfGradeFromVector(PTarget,1);
-   PTemp.Free;
 
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_PROJECTION_TEST}
@@ -348,11 +335,14 @@ begin
 
    // Now we have the UV position (at PTarget)
    // Let's clear up some RAM before we continue.
+   PTemp.Free;
    PEdge0UV.Free;
    PEdge1UV.Free;
    PCenterTriangle.Free;
    PCenterSegment.Free;
    PCenterSegmentUV.Free;
+   LSEdge.Free;
+   LSEdgeUV.Free;
    DirEdge.Free;
    DirEdgeUV.Free;
    PlaneRotation.Free;
@@ -360,9 +350,9 @@ begin
    e0.Free;
 
    // Get the line segments for colision detection.
-   LSEdge0 := _PGA.OuterProduct(PEdge0,PEdge1);
-   LSEdge1 := _PGA.OuterProduct(PEdge1,PTarget);
-   LSEdge2 := _PGA.OuterProduct(PTarget,PEdge0);
+   LSEdge0 := _PGA.GetOuterProduct(PEdge0,PEdge1);
+   LSEdge1 := _PGA.GetOuterProduct(PEdge1,PTarget);
+   LSEdge2 := _PGA.GetOuterProduct(PTarget,PEdge0);
 
    // Write UV coordinates.
    _UVPosition.U := PTarget.UnsafeData[1];
@@ -378,6 +368,9 @@ begin
    // the change in the _AddedFace temporary optimization for the upcoming loop.
    _CheckFace[_PreviousFace] := false;
    v := 0;
+   V0 := TMultiVector.Create(_PGA.SystemDimension);
+   V1 := TMultiVector.Create(_PGA.SystemDimension);
+   V2 := TMultiVector.Create(_PGA.SystemDimension);
    for i := Low(_CheckFace) to High(_CheckFace) do
    begin
       // If the face was projected in the UV domain.
@@ -390,9 +383,9 @@ begin
          {$endif}
          // Check if the candidate position is inside this triangle.
          // If it is inside the triangle, then point is not validated. Exit.
-         V0 := _PGA.NewHomogeneousFlat(_TexCoords[_Faces[v]]);
-         V1 := _PGA.NewHomogeneousFlat(_TexCoords[_Faces[v+1]]);
-         V2 := _PGA.NewHomogeneousFlat(_TexCoords[_Faces[v+2]]);
+         _PGA.SetHomogeneousFlat(V0,_TexCoords[_Faces[v]]);
+         _PGA.SetHomogeneousFlat(V1,_TexCoords[_Faces[v+1]]);
+         _PGA.SetHomogeneousFlat(V2,_TexCoords[_Faces[v+2]]);
          if ColisionCheck.Are2DTrianglesColiding(_PGA,LSEdge0,LSEdge1,LSEdge2,V0,V1,V2) then
          begin
             {$ifdef ORIGAMI_TEST}
@@ -407,18 +400,18 @@ begin
             V2.Free;
             V1.Free;
             V0.Free;
-
+            ColisionCheck.Free;
             exit;
          end;
-         V2.Free;
-         V1.Free;
-         V0.Free;
       end;
       inc(v,_VerticesPerFace);
    end;
    _CheckFace[_PreviousFace] := true;
 
    // Free RAM.
+   V2.Free;
+   V1.Free;
+   V0.Free;
    LSEdge2.Free;
    LSEdge1.Free;
    LSEdge0.Free;
@@ -449,9 +442,9 @@ begin
 
    // Setup neighbor detection list
    FaceList := CIntegerList.Create;
-   FaceList.UseSmartMemoryManagement(true);
+   FaceList.UseFixedRAM(High(_CheckFace)+1);
    PreviousFaceList := CIntegerList.Create;
-   PreviousFaceList.UseSmartMemoryManagement(true);
+   PreviousFaceList.UseFixedRAM(High(_CheckFace)+1);
    // Setup VertsLocation
    SetLength(VertsLocation,High(_Vertices)+1);
    for v := Low(VertsLocation) to High(VertsLocation) do

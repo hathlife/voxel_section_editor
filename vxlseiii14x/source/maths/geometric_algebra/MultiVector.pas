@@ -25,6 +25,7 @@ type
       constructor Create(_Dimension: integer); overload;
       constructor Create(const _Source: TMultiVector); overload;
       destructor Destroy; override;
+      procedure ClearValues;
       // Gets
       function GetTheFirstNonZeroBitmap: cardinal;
       function GetTheNextNonZeroBitmap(_Current: cardinal): cardinal;
@@ -60,6 +61,16 @@ destructor TMultiVector.Destroy;
 begin
    SetLength(FData,0);
    inherited Destroy;
+end;
+
+procedure TMultiVector.ClearValues;
+var
+   i: integer;
+begin
+   for i := 0 to High(FData) do
+   begin
+      FData[i] := 0;
+   end;   
 end;
 
 // Gets

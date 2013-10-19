@@ -8,6 +8,7 @@ uses MultiVector, Metric, Math, BasicDataTypes, GADataTypes, GAConstants, SysUti
 
 type
    TVecOperationMethod = function (const _Vec1, _Vec2 : TMultiVector): TMultiVector of object;
+   TVecOperationProcedure = procedure (var _Dest: TMultiVector; const _Vec1, _Vec2 : TMultiVector) of object;
    TSingleOperationMethod = function (const _Vec1, _Vec2 : TMultiVector): single of object;
 
    TGeometricAlgebra = class
@@ -33,23 +34,31 @@ type
       procedure SetCannonicalOrderTable(_X,_Y: cardinal; _Value: integer);
 
       // MultiVector Operations
-      function OrthogonalGeometricProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetOrthogonalGeometricProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
       function OrthogonalScalarProduct(const _Vec1, _Vec2: TMultiVector):single; overload;
-      function OrthogonalLeftContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function OrthogonalRightContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function OrthogonalGeometricDivision(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function NonOrthogonalGeometricProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetOrthogonalLeftContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetOrthogonalRightContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetOrthogonalGeometricDivision(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetNonOrthogonalGeometricProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
       function NonOrthogonalScalarProduct(const _Vec1, _Vec2: TMultiVector):single; overload;
-      function NonOrthogonalLeftContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function NonOrthogonalRightContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function NonOrthogonalGeometricDivision(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetNonOrthogonalLeftContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetNonOrthogonalRightContractionProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetNonOrthogonalGeometricDivision(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      procedure OrthogonalGeometricProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure OrthogonalLeftContractionProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure OrthogonalRightContractionProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure OrthogonalGeometricDivision(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure NonOrthogonalGeometricProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure NonOrthogonalLeftContractionProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure NonOrthogonalRightContractionProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
+      procedure NonOrthogonalGeometricDivision(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
 
       // Base Operations
       function OuterProduct(const _Base1, _Base2: TBaseElement):TBaseElement; overload;
       function RegressiveProduct(const _Base1, _Base2: TBaseElement):TBaseElement; overload;
-      function OrthogonalGeometricProduct(const _Base1, _Base2: TBaseElement):TBaseElement; overload;
+      function GetOrthogonalGeometricProduct(const _Base1, _Base2: TBaseElement):TBaseElement; overload;
       function OrthogonalScalarProduct(const _Base1, _Base2: TBaseElement):Single; overload;
-      function OrthogonalXContractionProduct(const _Base1, _Base2: TBaseElement; _MaxGrade: cardinal):TBaseElement;
+      function GetOrthogonalXContractionProduct(const _Base1, _Base2: TBaseElement; _MaxGrade: cardinal):TBaseElement;
 
       // Misc
       function canonical_reordering(_bitmap1, _bitmap2: cardinal): integer;
@@ -60,11 +69,15 @@ type
       function GetMetricMultiplier(_bitmap1, _bitmap2: cardinal): single;
    public
       // The following operations are dependent on metrics
-      GeometricProduct: TVecOperationMethod;
-      ScalarProduct: TSingleOperationMethod;
-      LeftContraction: TVecOperationMethod;
-      RightContraction: TVecOperationMethod;
-      GeometricDivision: TVecOperationMethod;
+      GetGeometricProduct: TVecOperationMethod;
+      GetScalarProduct: TSingleOperationMethod;
+      GetLeftContraction: TVecOperationMethod;
+      GetRightContraction: TVecOperationMethod;
+      GetGeometricDivision: TVecOperationMethod;
+      GeometricProduct: TVecOperationProcedure;
+      LeftContraction: TVecOperationProcedure;
+      RightContraction: TVecOperationProcedure;
+      GeometricDivision: TVecOperationProcedure;
 
       // Constructor
       constructor Create; overload;
@@ -111,15 +124,22 @@ type
       procedure SetHomogeneousMetric;
       procedure SetConformalMetric;
       procedure SetMinkowskiConformalMetric;
+      procedure SetHomogeneousFlat(var _Dest: TMultiVector; const _Vector:TVector2f); overload;
+      procedure SetHomogeneousFlat(var _Dest: TMultiVector; const _Vector:TVector3f); overload;
+
       // Operations
-      function OuterProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector; overload;
-      function RegressiveProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      function GetOuterProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector; overload;
+      procedure OuterProduct(const _Dest,_Vec1,_Vec2: TMultiVector); overload;
+      function GetRegressiveProduct(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
+      procedure RegressiveProduct(var _Dest: TMultiVector; const _Vec1, _Vec2: TMultiVector); overload;
       procedure Sum(var _Vec1: TMultiVector; const _Vec2: TMultiVector); overload;
       function GetSum(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
       procedure Subtraction(var _Vec1:TMultiVector; const _Vec2: TMultiVector); overload;
       function GetSubtraction(const _Vec1, _Vec2: TMultiVector):TMultiVector; overload;
-      function ApplyRotor(const _Blade, _Rotor: TMultiVector):TMultiVector; overload;
-      function ApplyRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector; overload;
+      procedure ApplyRotor(var _Dest: TMultiVector; const _Blade, _Rotor: TMultiVector); overload;
+      procedure ApplyRotor(var _Dest: TMultiVector; const _Blade, _Rotor,_InverseRotor: TMultiVector); overload;
+      function GetAppliedRotor(const _Blade, _Rotor: TMultiVector):TMultiVector; overload;
+      function GetAppliedRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector; overload;
       procedure HomogeneousTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
       function GetHomogeneousTranslation(const _Vec,_Offset: TMultiVector): TMultiVector;
       procedure HomogeneousOppositeTranslation(var _Vec: TMultiVector; const _Offset: TMultiVector);
@@ -147,6 +167,14 @@ type
       procedure ScaleEuclideanDataFromVector(var _Vec: TMultiVector; _Scale: single);
       procedure ScaleHomogeneousDataFromVector(var _Vec: TMultiVector; _Scale: single);
       function Euclidean3DLogarithm(const _Vec: TMultiVector): TMultiVector;
+      procedure FlatDirection(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
+      procedure FlatDirection(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
+      procedure FlatMoment(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
+      procedure FlatMoment(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
+      procedure FlatSupportVector(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
+      procedure FlatSupportVector(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
+      procedure FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
+      procedure FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
 
       // Properties
       property SystemDimension: cardinal read GetSystemDimension;
@@ -497,61 +525,162 @@ var
 begin
    e0 := GetHomogeneousE0();
 
-   Result := LeftContraction(e0,_Vec);
+   Result := GetLeftContraction(e0,_Vec);
    e0.Free;
 end;
 
 function TGeometricAlgebra.GetFlatDirection(const _Vec,_e0: TMultiVector): TMultiVector;
 begin
-   Result := LeftContraction(_e0,_Vec);
+   Result := GetLeftContraction(_e0,_Vec);
+end;
+
+procedure TGeometricAlgebra.FlatDirection(var _Dest: TMultiVector; const _Vec: TMultiVector);
+var
+   e0: TMultiVector;
+begin
+   e0 := GetHomogeneousE0();
+
+   LeftContraction(_Dest,e0,_Vec);
+   e0.Free;
+end;
+
+procedure TGeometricAlgebra.FlatDirection(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
+begin
+   LeftContraction(_Dest,_e0,_Vec);
 end;
 
 // M<t>
 function TGeometricAlgebra.GetFlatMoment(const _Vec: TMultiVector): TMultiVector;
 var
-   e0: TMultiVector;
+   e0,e0opVec: TMultiVector;
 begin
    e0 := GetHomogeneousE0();
-
-   Result := LeftContraction(e0,OuterProduct(e0,_Vec));
+   e0opVec := GetOuterProduct(e0,_Vec);
+   Result := GetLeftContraction(e0,e0opVec);
    e0.Free;
+   e0opVec.Free;
 end;
 
 function TGeometricAlgebra.GetFlatMoment(const _Vec,_e0: TMultiVector): TMultiVector;
+var
+   e0opVec: TMultiVector;
 begin
-   Result := LeftContraction(_e0,OuterProduct(_e0,_Vec));
+   e0opVec := GetOuterProduct(_e0,_Vec);
+   Result := GetLeftContraction(_e0,e0opVec);
+   e0opVec.Free;
+end;
+
+procedure TGeometricAlgebra.FlatMoment(var _Dest: TMultiVector; const _Vec: TMultiVector);
+var
+   e0,e0opVec: TMultiVector;
+begin
+   e0 := GetHomogeneousE0();
+   e0opVec := GetOuterProduct(e0,_Vec);
+   LeftContraction(_Dest,e0,e0opVec);
+   e0.Free;
+   e0opVec.Free;
+end;
+
+procedure TGeometricAlgebra.FlatMoment(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
+var
+   e0opVec: TMultiVector;
+begin
+   e0opVec := GetOuterProduct(_e0,_Vec);
+   LeftContraction(_Dest,_e0,e0opVec);
+   e0opVec.Free;
 end;
 
 // s
 function TGeometricAlgebra.GetFlatSupportVector(const _Vec: TMultiVector): TMultiVector;
 var
-   e0: TMultiVector;
+   e0,Moment,Direction: TMultiVector;
 begin
    e0 := GetHomogeneousE0();
-
-   Result := GeometricDivision(GetFlatMoment(_Vec,e0),GetFlatDirection(_Vec,e0));
+   Moment := GetFlatMoment(_Vec,e0);
+   Direction := GetFlatDirection(_Vec,e0);
+   Result := GetGeometricDivision(Moment,Direction);
+   Moment.Free;
+   Direction.Free;
    e0.Free;
 end;
 
 function TGeometricAlgebra.GetFlatSupportVector(const _Vec,_e0: TMultiVector): TMultiVector;
+var
+   Moment,Direction: TMultiVector;
 begin
-   Result := GeometricDivision(GetFlatMoment(_Vec,_e0),GetFlatDirection(_Vec,_e0));
+   Moment := GetFlatMoment(_Vec,_e0);
+   Direction := GetFlatDirection(_Vec,_e0);
+   Result := GetGeometricDivision(Moment,Direction);
+   Moment.Free;
+   Direction.Free;
+end;
+
+procedure TGeometricAlgebra.FlatSupportVector(var _Dest: TMultiVector; const _Vec: TMultiVector);
+var
+   e0,Moment,Direction: TMultiVector;
+begin
+   e0 := GetHomogeneousE0();
+   Moment := GetFlatMoment(_Vec,e0);
+   Direction := GetFlatDirection(_Vec,e0);
+
+   GeometricDivision(_Dest,Moment,Direction);
+   e0.Free;
+   Moment.Free;
+   Direction.Free;
+end;
+
+procedure TGeometricAlgebra.FlatSupportVector(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
+var
+   Moment,Direction: TMultiVector;
+begin
+   Moment := GetFlatMoment(_Vec,_e0);
+   Direction := GetFlatDirection(_Vec,_e0);
+   GeometricDivision(_Dest,Moment,Direction);
+   Moment.Free;
+   Direction.Free;
 end;
 
 // e0 + s
 function TGeometricAlgebra.GetFlatUnitSupportPoint(const _Vec: TMultiVector): TMultiVector;
 var
-   e0: TMultiVector;
+   e0,Direction: TMultiVector;
 begin
    e0 := GetHomogeneousE0();
+   Direction := GetFlatDirection(_Vec,e0);
 
-   Result := GeometricDivision(_Vec,GetFlatDirection(_Vec,e0));
+   Result := GetGeometricDivision(_Vec,Direction);
+   Direction.Free;
    e0.Free;
 end;
 
 function TGeometricAlgebra.GetFlatUnitSupportPoint(const _Vec,_e0: TMultiVector): TMultiVector;
+var
+   Direction: TMultiVector;
 begin
-   Result := GeometricDivision(_Vec,GetFlatDirection(_Vec,_e0));
+   Direction := GetFlatDirection(_Vec,_e0);
+   Result := GetGeometricDivision(_Vec,Direction);
+   Direction.Free;
+end;
+
+procedure TGeometricAlgebra.FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec: TMultiVector);
+var
+   e0,Direction: TMultiVector;
+begin
+   e0 := GetHomogeneousE0();
+   Direction := GetFlatDirection(_Vec,e0);
+
+   GeometricDivision(_Dest,_Vec,Direction);
+   Direction.Free;
+   e0.Free;
+end;
+
+procedure TGeometricAlgebra.FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
+var
+   Direction: TMultiVector;
+begin
+   Direction := GetFlatDirection(_Vec,_e0);
+   GeometricDivision(_Dest,_Vec,Direction);
+   Direction.Free;
 end;
 
 // Sets
@@ -656,8 +785,12 @@ end;
 procedure TGeometricAlgebra.SetOrthogonalMetric;
 begin
    FMetric.Orthogonal := true;
+   GetGeometricProduct := GetOrthogonalGeometricProduct;
+   GetScalarProduct := OrthogonalScalarProduct;
+   GetLeftContraction := GetOrthogonalLeftContractionProduct;
+   GetRightContraction := GetOrthogonalRightContractionProduct;
+   GetGeometricDivision := GetOrthogonalGeometricDivision;
    GeometricProduct := OrthogonalGeometricProduct;
-   ScalarProduct := OrthogonalScalarProduct;
    LeftContraction := OrthogonalLeftContractionProduct;
    RightContraction := OrthogonalRightContractionProduct;
    GeometricDivision := OrthogonalGeometricDivision;
@@ -666,8 +799,12 @@ end;
 procedure TGeometricAlgebra.SetNonOrthogonalMetric;
 begin
    FMetric.Orthogonal := false;
+   GetGeometricProduct := GetNonOrthogonalGeometricProduct;
+   GetScalarProduct := NonOrthogonalScalarProduct;
+   GetLeftContraction := GetNonOrthogonalLeftContractionProduct;
+   GetRightContraction := GetNonOrthogonalRightContractionProduct;
+   GetGeometricDivision := GetNonOrthogonalGeometricDivision;
    GeometricProduct := NonOrthogonalGeometricProduct;
-   ScalarProduct := NonOrthogonalScalarProduct;
    LeftContraction := NonOrthogonalLeftContractionProduct;
    RightContraction := NonOrthogonalRightContractionProduct;
    GeometricDivision := NonOrthogonalGeometricDivision;
@@ -834,13 +971,52 @@ begin
    FCannonicalOrderTable[_X+((1 shl FSystemDimension) * _Y)] := _Value;
 end;
 
+procedure TGeometricAlgebra.SetHomogeneousFlat(var _Dest: TMultiVector; const _Vector:TVector2f);
+var
+   AuxBit: cardinal;
+begin
+   AuxBit := 1 shl FDimension;
+
+   _Dest.ClearValues;
+   _Dest.UnsafeData[1] := _Vector.U;
+   _Dest.UnsafeData[2] := _Vector.V;
+   _Dest.UnsafeData[AuxBit] := 1;
+end;
+
+procedure TGeometricAlgebra.SetHomogeneousFlat(var _Dest: TMultiVector; const _Vector:TVector3f);
+var
+   AuxBit: cardinal;
+begin
+   AuxBit := 1 shl FDimension;
+
+   _Dest.ClearValues;
+   _Dest.UnsafeData[1] := _Vector.X;
+   _Dest.UnsafeData[2] := _Vector.Y;
+   _Dest.UnsafeData[4] := _Vector.Z;
+   _Dest.UnsafeData[AuxBit] := 1;
+end;
+
+
 // Operations
-function TGeometricAlgebra.OuterProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetOuterProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   OuterProduct(Result,_Vec1,_Vec2);
+end;
+
+procedure TGeometricAlgebra.OuterProduct(const _Dest: TMultiVector; const _Vec1: TMultiVector; const _Vec2: TMultiVector);
 var
    i,j: cardinal;
    ElemRes,Elem1,Elem2: TBaseElement;
 begin
-   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   if _Dest.Dimension <> Max(_Vec1.Dimension,_Vec2.Dimension) then
+   begin
+      _Dest.Dimension := Max(_Vec1.Dimension,_Vec2.Dimension);
+   end
+   else
+   begin
+      _Dest.ClearValues;
+   end;
    i := _Vec1.GetTheFirstNonZeroBitmap;
    while i <> C_INFINITY do
    begin
@@ -852,7 +1028,7 @@ begin
          Elem2.Coeficient := _Vec2.UnsafeData[j];
          Elem2.Bitmap := j;
          ElemRes := OuterProduct(Elem1,Elem2);
-         Result.UnsafeData[ElemRes.Bitmap] := Result.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
+         _Dest.UnsafeData[ElemRes.Bitmap] := _Dest.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
          j := _Vec2.GetTheNextNonZeroBitmap(j);
       end;
       i := _Vec1.GetTheNextNonZeroBitmap(i);
@@ -873,12 +1049,25 @@ begin
    end;
 end;
 
-function TGeometricAlgebra.RegressiveProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetRegressiveProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   RegressiveProduct(Result,_Vec1,_Vec2);
+end;
+
+procedure TGeometricAlgebra.RegressiveProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
 var
    i,j: cardinal;
    ElemRes,Elem1,Elem2: TBaseElement;
 begin
-   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   if _Dest.Dimension <> Max(_Vec1.Dimension,_Vec2.Dimension) then
+   begin
+      _Dest.Dimension := Max(_Vec1.Dimension,_Vec2.Dimension);
+   end
+   else
+   begin
+      _Dest.ClearValues;
+   end;
    i := _Vec1.GetTheFirstNonZeroBitmap;
    while i <> C_INFINITY do
    begin
@@ -890,7 +1079,7 @@ begin
          Elem2.Coeficient := _Vec2.UnsafeData[j];
          Elem2.Bitmap := j;
          ElemRes := RegressiveProduct(Elem1,Elem2);
-         Result.UnsafeData[ElemRes.Bitmap] := Result.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
+         _Dest.UnsafeData[ElemRes.Bitmap] := _Dest.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
          j := _Vec2.GetTheNextNonZeroBitmap(j);
       end;
       i := _Vec1.GetTheNextNonZeroBitmap(i);
@@ -989,12 +1178,25 @@ begin
    end;
 end;
 
-function TGeometricAlgebra.OrthogonalGeometricProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetOrthogonalGeometricProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   OrthogonalGeometricProduct(Result,_Vec1,_Vec2);
+end;
+
+procedure TGeometricAlgebra.OrthogonalGeometricProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
 var
    i,j: cardinal;
    ElemRes,Elem1,Elem2: TBaseElement;
 begin
-   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   if _Dest.Dimension <> Max(_Vec1.Dimension,_Vec2.Dimension) then
+   begin
+      _Dest.Dimension := Max(_Vec1.Dimension,_Vec2.Dimension);
+   end
+   else
+   begin
+      _Dest.ClearValues;
+   end;
    i := _Vec1.GetTheFirstNonZeroBitmap;
    while i <> C_INFINITY do
    begin
@@ -1005,26 +1207,35 @@ begin
       begin
          Elem2.Coeficient := _Vec2.UnsafeData[j];
          Elem2.Bitmap := j;
-         ElemRes := OrthogonalGeometricProduct(Elem1,Elem2);
-         Result.UnsafeData[ElemRes.Bitmap] := Result.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
+         ElemRes := GetOrthogonalGeometricProduct(Elem1,Elem2);
+         _Dest.UnsafeData[ElemRes.Bitmap] := _Dest.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
          j := _Vec2.GetTheNextNonZeroBitmap(j);
       end;
       i := _Vec1.GetTheNextNonZeroBitmap(i);
    end;
 end;
 
-function TGeometricAlgebra.OrthogonalGeometricProduct(const _Base1, _Base2: TBaseElement):TBaseElement;
+function TGeometricAlgebra.GetOrthogonalGeometricProduct(const _Base1, _Base2: TBaseElement):TBaseElement;
 begin
    Result.Bitmap := _Base1.Bitmap xor _Base2.Bitmap;
    Result.Coeficient := canonical_reordering(_Base1.Bitmap,_Base2.Bitmap) * _Base1.Coeficient * _Base2.Coeficient * GetMetricMultiplier(_Base1.Bitmap,_Base2.Bitmap);
 end;
 
-function TGeometricAlgebra.OrthogonalGeometricDivision(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetOrthogonalGeometricDivision(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
    Inverse: TMultiVector;
 begin
    Inverse := GetInverse(_Vec2);
-   Result := GeometricProduct(_Vec1,Inverse);
+   Result := GetGeometricProduct(_Vec1,Inverse);
+   Inverse.Free;
+end;
+
+procedure TGeometricAlgebra.OrthogonalGeometricDivision(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
+var
+   Inverse: TMultiVector;
+begin
+   Inverse := GetInverse(_Vec2);
+   GeometricProduct(_Dest,_Vec1,Inverse);
    Inverse.Free;
 end;
 
@@ -1066,7 +1277,13 @@ begin
 end;
 
 // Right (_Vec2) is bigger than Left (_Vec1).
-function TGeometricAlgebra.OrthogonalLeftContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetOrthogonalLeftContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   OrthogonalLeftContractionProduct(Result,_Vec1,_Vec2);
+end;
+
+procedure TGeometricAlgebra.OrthogonalLeftContractionProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
 var
    i,j: cardinal;
    Grade : integer;
@@ -1075,7 +1292,14 @@ begin
    Grade := GetMaxGrade(_Vec2) - GetMaxGrade(_Vec1);
    if Grade < 0 then
       Grade := 0;
-   Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
+   if _Dest.Dimension <> Max(_Vec1.Dimension,_Vec2.Dimension) then
+   begin
+      _Dest.Dimension := Max(_Vec1.Dimension,_Vec2.Dimension);
+   end
+   else
+   begin
+      _Dest.ClearValues;
+   end;
    i := _Vec1.GetTheFirstNonZeroBitmap;
    while i <> C_INFINITY do
    begin
@@ -1086,20 +1310,25 @@ begin
       begin
          Elem2.Coeficient := _Vec2.UnsafeData[j];
          Elem2.Bitmap := j;
-         ElemRes := OrthogonalXContractionProduct(Elem1,Elem2,Grade);
-         Result.UnsafeData[ElemRes.Bitmap] := Result.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
+         ElemRes := GetOrthogonalXContractionProduct(Elem1,Elem2,Grade);
+         _Dest.UnsafeData[ElemRes.Bitmap] := _Dest.UnsafeData[ElemRes.Bitmap] + ElemRes.Coeficient;
          j := _Vec2.GetTheNextNonZeroBitmap(j);
       end;
       i := _Vec1.GetTheNextNonZeroBitmap(i);
    end;
 end;
 
-function TGeometricAlgebra.OrthogonalRightContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetOrthogonalRightContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 begin
-   OrthogonalLeftContractionProduct(_Vec2,_Vec1);
+   Result := GetOrthogonalLeftContractionProduct(_Vec2,_Vec1);
 end;
 
-function TGeometricAlgebra.OrthogonalXContractionProduct(const _Base1, _Base2: TBaseElement; _MaxGrade: cardinal):TBaseElement;
+procedure TGeometricAlgebra.OrthogonalRightContractionProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
+begin
+   OrthogonalLeftContractionProduct(_Dest,_Vec2,_Vec1);
+end;
+
+function TGeometricAlgebra.GetOrthogonalXContractionProduct(const _Base1, _Base2: TBaseElement; _MaxGrade: cardinal):TBaseElement;
 var
    bitmap : cardinal;
 begin
@@ -1116,20 +1345,38 @@ begin
    end;
 end;
 
-function TGeometricAlgebra.NonOrthogonalGeometricProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetNonOrthogonalGeometricProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 begin
    // Do some pre-processing here.
    // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
-   Result := OrthogonalGeometricProduct(_Vec1, _Vec2);
+   Result := GetOrthogonalGeometricProduct(_Vec1, _Vec2);
    // Do some post-processing here.
    // Convert it back to non-ortoghonal
 end;
 
-function TGeometricAlgebra.NonOrthogonalGeometricDivision(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+procedure TGeometricAlgebra.NonOrthogonalGeometricProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
 begin
    // Do some pre-processing here.
    // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
-   Result := OrthogonalGeometricDivision(_Vec1, _Vec2);
+   OrthogonalGeometricProduct(_Dest,_Vec1, _Vec2);
+   // Do some post-processing here.
+   // Convert it back to non-ortoghonal
+end;
+
+function TGeometricAlgebra.GetNonOrthogonalGeometricDivision(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   // Do some pre-processing here.
+   // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
+   Result := GetOrthogonalGeometricDivision(_Vec1, _Vec2);
+   // Do some post-processing here.
+   // Convert it back to non-ortoghonal
+end;
+
+procedure TGeometricAlgebra.NonOrthogonalGeometricDivision(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
+begin
+   // Do some pre-processing here.
+   // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
+   OrthogonalGeometricDivision(_Dest,_Vec1, _Vec2);
    // Do some post-processing here.
    // Convert it back to non-ortoghonal
 end;
@@ -1143,39 +1390,75 @@ begin
    // Convert it back to non-ortoghonal
 end;
 
-function TGeometricAlgebra.NonOrthogonalLeftContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetNonOrthogonalLeftContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 begin
    // Do some pre-processing here.
    // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
-   Result := OrthogonalLeftContractionProduct(_Vec1, _Vec2);
+   Result := GetOrthogonalLeftContractionProduct(_Vec1, _Vec2);
    // Do some post-processing here.
    // Convert it back to non-ortoghonal
 end;
 
-function TGeometricAlgebra.NonOrthogonalRightContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+procedure TGeometricAlgebra.NonOrthogonalLeftContractionProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
 begin
    // Do some pre-processing here.
    // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
-   Result := OrthogonalRightContractionProduct(_Vec1, _Vec2);
+   OrthogonalLeftContractionProduct(_Dest,_Vec1, _Vec2);
    // Do some post-processing here.
    // Convert it back to non-ortoghonal
 end;
 
-function TGeometricAlgebra.ApplyRotor(const _Blade, _Rotor: TMultiVector):TMultiVector;
+function TGeometricAlgebra.GetNonOrthogonalRightContractionProduct(const _Vec1,_Vec2: TMultiVector):TMultiVector;
+begin
+   // Do some pre-processing here.
+   // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
+   Result := GetOrthogonalRightContractionProduct(_Vec1, _Vec2);
+   // Do some post-processing here.
+   // Convert it back to non-ortoghonal
+end;
+
+procedure TGeometricAlgebra.NonOrthogonalRightContractionProduct(var _Dest: TMultiVector; const _Vec1,_Vec2: TMultiVector);
+begin
+   // Do some pre-processing here.
+   // Convert data to an orthogonal metric. Needs eigenvalues, eigenvectors and stuff.
+   OrthogonalRightContractionProduct(_Dest,_Vec1, _Vec2);
+   // Do some post-processing here.
+   // Convert it back to non-ortoghonal
+end;
+
+procedure TGeometricAlgebra.ApplyRotor(var _Dest: TMultiVector; const _Blade, _Rotor: TMultiVector);
 var
    Inverse: TMultiVector;
 begin
    Inverse := GetInverse(_Rotor);
-   Result := ApplyRotor(_Blade,_Rotor,Inverse);
+   ApplyRotor(_Dest,_Blade,_Rotor,Inverse);
    Inverse.Free;
 end;
 
-function TGeometricAlgebra.ApplyRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector;
+procedure TGeometricAlgebra.ApplyRotor(var _Dest: TMultiVector; const _Blade, _Rotor,_InverseRotor: TMultiVector);
 var
    GpRotBlade : TMultiVector;
 begin
-   GpRotBlade := GeometricProduct(_Rotor,_Blade);
-   Result := GeometricProduct(GpRotBlade,_InverseRotor);
+   GpRotBlade := GetGeometricProduct(_Rotor,_Blade);
+   GeometricProduct(_Dest,GpRotBlade,_InverseRotor);
+   GpRotBlade.Free;
+end;
+
+function TGeometricAlgebra.GetAppliedRotor(const _Blade, _Rotor: TMultiVector):TMultiVector;
+var
+   Inverse: TMultiVector;
+begin
+   Inverse := GetInverse(_Rotor);
+   Result := GetAppliedRotor(_Blade,_Rotor,Inverse);
+   Inverse.Free;
+end;
+
+function TGeometricAlgebra.GetAppliedRotor(const _Blade, _Rotor,_InverseRotor: TMultiVector):TMultiVector;
+var
+   GpRotBlade : TMultiVector;
+begin
+   GpRotBlade := GetGeometricProduct(_Rotor,_Blade);
+   Result := GetGeometricProduct(GpRotBlade,_InverseRotor);
    GpRotBlade.Free;
 end;
 
@@ -1186,7 +1469,7 @@ var
 begin
    Direction := GetFlatDirection(_Vec);
    EuclideanOffset := GetEuclideanPartFromVector(_Offset);
-   Offset := OuterProduct(EuclideanOffset,Direction);
+   Offset := GetOuterProduct(EuclideanOffset,Direction);
    Sum(_Vec,Offset);
 
    // Free memory.
@@ -1202,7 +1485,7 @@ var
 begin
    Direction := GetFlatDirection(_Vec);
    EuclideanOffset := GetEuclideanPartFromVector(_Offset);
-   Offset := OuterProduct(EuclideanOffset,Direction);
+   Offset := GetOuterProduct(EuclideanOffset,Direction);
    Result := GetSum(_Vec,Offset);
 
    // Free memory.
@@ -1218,7 +1501,7 @@ var
 begin
    Direction := GetFlatDirection(_Vec);
    EuclideanOffset := GetEuclideanPartFromVector(_Offset);
-   Offset := OuterProduct(EuclideanOffset,Direction);
+   Offset := GetOuterProduct(EuclideanOffset,Direction);
    Subtraction(_Vec,Offset);
 
    // Free memory.
@@ -1234,7 +1517,7 @@ var
 begin
    Direction := GetFlatDirection(_Vec);
    EuclideanOffset := GetEuclideanPartFromVector(_Offset);
-   Offset := OuterProduct(EuclideanOffset,Direction);
+   Offset := GetOuterProduct(EuclideanOffset,Direction);
    Result := GetSubtraction(_Vec,Offset);
 
    // Free memory.
@@ -1372,7 +1655,7 @@ var
    IInverse: TMultiVector;
 begin
    IInverse := GetIInverse();
-   _Vec := OrthogonalLeftContractionProduct(_Vec,IInverse);
+   _Vec := GetOrthogonalLeftContractionProduct(_Vec,IInverse);
    IInverse.Free;
 end;
 
@@ -1381,7 +1664,7 @@ var
    IInverse: TMultiVector;
 begin
    IInverse := GetIInverse();
-   Result := OrthogonalLeftContractionProduct(_Vec,IInverse);
+   Result := GetOrthogonalLeftContractionProduct(_Vec,IInverse);
    IInverse.Free;
 end;
 
@@ -1390,9 +1673,8 @@ var
    I,Answer : TMultiVector;
 begin
    I := GetI();
-   Answer := OrthogonalLeftContractionProduct(_Vec,I);
-   _Vec.Free;
-   _Vec := TMultiVector.Create(Answer);
+   Answer := GetOrthogonalLeftContractionProduct(_Vec,I);
+   _Vec.Assign(Answer);
    Answer.Free;
    I.Free;
 end;
@@ -1402,7 +1684,7 @@ var
    I : TMultiVector;
 begin
    I := GetI();
-   Result := OrthogonalLeftContractionProduct(_Vec,I);
+   Result := GetOrthogonalLeftContractionProduct(_Vec,I);
    I.Free;
 end;
 
