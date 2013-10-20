@@ -52,7 +52,7 @@ object FrmMain: TFrmMain
       object lblSection: TLabel
         Left = 1
         Top = 1
-        Width = 150
+        Width = 42
         Height = 13
         Align = alTop
         Caption = '  Section'
@@ -64,12 +64,11 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 42
       end
       object lblTools: TLabel
         Left = 1
         Top = 55
-        Width = 150
+        Width = 32
         Height = 13
         Align = alTop
         Caption = '  Tools'
@@ -81,12 +80,11 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 32
       end
       object lblpalette: TLabel
         Left = 1
         Top = 281
-        Width = 150
+        Width = 39
         Height = 13
         Align = alTop
         Caption = '  Palette'
@@ -98,7 +96,6 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 39
       end
       object cnvPalette: TPaintBox
         Left = 1
@@ -113,7 +110,7 @@ object FrmMain: TFrmMain
       object lblLayer: TLabel
         Left = 1
         Top = 201
-        Width = 150
+        Width = 37
         Height = 13
         Align = alTop
         Caption = '  Layers'
@@ -125,12 +122,11 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 37
       end
       object lblBrush: TLabel
         Left = 1
         Top = 153
-        Width = 150
+        Width = 33
         Height = 13
         Align = alTop
         Caption = '  Brush'
@@ -142,7 +138,6 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 33
       end
       object Panel3: TPanel
         Left = 1
@@ -158,7 +153,7 @@ object FrmMain: TFrmMain
           Width = 137
           Height = 21
           Style = csDropDownList
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 0
           OnChange = SectionComboChange
         end
@@ -1301,7 +1296,7 @@ object FrmMain: TFrmMain
       object lblView1: TLabel
         Left = 1
         Top = 1
-        Width = 203
+        Width = 63
         Height = 13
         Align = alTop
         Caption = '  View : Right'
@@ -1315,12 +1310,11 @@ object FrmMain: TFrmMain
         ParentFont = False
         PopupMenu = mnuDirectionPopup
         OnClick = lblView1Click
-        ExplicitWidth = 63
       end
       object lblView2: TLabel
         Left = 1
         Top = 220
-        Width = 203
+        Width = 57
         Height = 13
         Align = alTop
         Caption = '  View : Top'
@@ -1334,12 +1328,11 @@ object FrmMain: TFrmMain
         ParentFont = False
         PopupMenu = mnuDirectionPopup
         OnClick = lblView2Click
-        ExplicitWidth = 57
       end
       object lbl3dview: TLabel
         Left = 1
         Top = 439
-        Width = 203
+        Width = 46
         Height = 13
         Align = alTop
         Caption = '  3D View'
@@ -1351,7 +1344,6 @@ object FrmMain: TFrmMain
         Font.Style = []
         ParentColor = False
         ParentFont = False
-        ExplicitWidth = 46
       end
       object Splitter2: TSplitter
         Left = 1
@@ -1600,7 +1592,7 @@ object FrmMain: TFrmMain
       object lblView0: TLabel
         Left = 1
         Top = 1
-        Width = 498
+        Width = 98
         Height = 13
         Align = alTop
         Caption = '  Editing View : Back'
@@ -1613,7 +1605,6 @@ object FrmMain: TFrmMain
         ParentColor = False
         ParentFont = False
         PopupMenu = mnuDirectionPopup
-        ExplicitWidth = 98
       end
       object CnvView0: TPaintBox
         Left = 1

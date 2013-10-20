@@ -113,12 +113,10 @@ var
    LSEdge,LSEdgeUV,LSEdge0,LSEdge1,LSEdge2: TMultiVector; // Line segments.
    DirEdge,DirEdgeUV: TMultiVector; // Directions.
    PlaneRotation,SegmentRotation: TMultiVector; // Versors
-   e0: TMultiVector; // constants.
    ColisionCheck : CColisionCheckGA;
 begin
    ColisionCheck := CColisionCheckGA.Create(_PGA);
    // Get constants that will be required in our computation.
-   e0 := _PGA.GetHomogeneousE0();
 
    // Bring our points to Geometric Algebra.
    PEdge0 := _PGA.NewHomogeneousFlat(_Vertices[_Edge0]);
@@ -154,8 +152,8 @@ begin
    LSEdge := _PGA.GetOuterProduct(PEdge0,PEdge1);
    LSEdgeUV := _PGA.GetOuterProduct(PEdge0UV,PEdge1UV);
    // Get Directions.
-   DirEdge := _PGA.GetFlatDirection(LSEdge,e0);
-   DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV,e0);
+   DirEdge := _PGA.GetFlatDirection(LSEdge);
+   DirEdgeUV := _PGA.GetFlatDirection(LSEdgeUV);
 
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_PROJECTION_TEST}
@@ -175,7 +173,6 @@ begin
    {$endif}
    if EdgeSizeInMesh = 0 then
    begin
-      e0.Free;
       PEdge0.Free;
       PEdge1.Free;
       PTarget.Free;
@@ -282,8 +279,8 @@ begin
    _PGA.OuterProduct(LSEdge,PEdge0,PEdge1);
    _PGA.OuterProduct(LSEdgeUV,PEdge0UV,PEdge1UV);
    // Get Directions.
-   _PGA.FlatDirection(DirEdge,LSEdge,e0);
-   _PGA.FlatDirection(DirEdgeUV,LSEdgeUV,e0);
+   _PGA.FlatDirection(DirEdge,LSEdge);
+   _PGA.FlatDirection(DirEdgeUV,LSEdgeUV);
    {$ifdef ORIGAMI_TEST}
    {$ifdef ORIGAMI_PROJECTION_TEST}
    LSEdge.Debug(GlobalVars.OrigamiFile,'LSEdge');
@@ -347,7 +344,6 @@ begin
    DirEdgeUV.Free;
    PlaneRotation.Free;
    SegmentRotation.Free;
-   e0.Free;
 
    // Get the line segments for colision detection.
    LSEdge0 := _PGA.GetOuterProduct(PEdge0,PEdge1);

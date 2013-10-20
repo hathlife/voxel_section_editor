@@ -19,7 +19,11 @@ type
       FDimension: Cardinal;
       FAuxDimension: Cardinal;
       FSystemDimension: Cardinal;
+      FRowCount: cardinal;
+      Fe0Position: cardinal;
    protected
+      e0: TMultiVector;
+
       // Gets
       function GetDimension: Cardinal;
       function GetAuxDimension: Cardinal;
@@ -29,6 +33,7 @@ type
       // Sets
       procedure SetDimension(_Dimension: cardinal);
       procedure QuickSetDimension(_Dimension: cardinal);
+      procedure CommonSetDimensionTasks(_Dimension, _SystemDimension: Cardinal);
       procedure SetOrthogonalMetric;
       procedure SetNonOrthogonalMetric;
       procedure SetCannonicalOrderTable(_X,_Y: cardinal; _Value: integer);
@@ -108,13 +113,9 @@ type
       function GetSquaredNormOfGrade(const _Vec: TMultiVector; _Grade: cardinal): single;
       function GetLength(const _Vec: TMultiVector): single;
       function GetFlatDirection(const _Vec: TMultiVector): TMultiVector; overload;
-      function GetFlatDirection(const _Vec,_e0: TMultiVector): TMultiVector; overload;
       function GetFlatMoment(const _Vec: TMultiVector): TMultiVector; overload;
-      function GetFlatMoment(const _Vec,_e0: TMultiVector): TMultiVector; overload;
       function GetFlatSupportVector(const _Vec: TMultiVector): TMultiVector; overload;
-      function GetFlatSupportVector(const _Vec,_e0: TMultiVector): TMultiVector; overload;
       function GetFlatUnitSupportPoint(const _Vec: TMultiVector): TMultiVector; overload;
-      function GetFlatUnitSupportPoint(const _Vec,_e0: TMultiVector): TMultiVector; overload;
 
       function GetI:TMultiVector;
       function GetIInverse:TMultiVector;
@@ -168,13 +169,9 @@ type
       procedure ScaleHomogeneousDataFromVector(var _Vec: TMultiVector; _Scale: single);
       function Euclidean3DLogarithm(const _Vec: TMultiVector): TMultiVector;
       procedure FlatDirection(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
-      procedure FlatDirection(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
       procedure FlatMoment(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
-      procedure FlatMoment(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
       procedure FlatSupportVector(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
-      procedure FlatSupportVector(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
       procedure FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec: TMultiVector); overload;
-      procedure FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector); overload;
 
       // Properties
       property SystemDimension: cardinal read GetSystemDimension;
@@ -239,6 +236,7 @@ destructor TGeometricAlgebra.Destroy;
 begin
    SetLength(FBitCountTable,0);
    FMetric.Free;
+   e0.Free;
    inherited Destroy;
 end;
 
@@ -274,28 +272,20 @@ end;
 
 // Homogeneous Flat
 function TGeometricAlgebra.NewHomogeneousFlat(const _Vector:TVector2f): TMultiVector;
-var
-   AuxBit: cardinal;
 begin
-   AuxBit := 1 shl FDimension;
-
    Result := TMultiVector.Create(FSystemDimension);
    Result.UnsafeData[1] := _Vector.U;
    Result.UnsafeData[2] := _Vector.V;
-   Result.UnsafeData[AuxBit] := 1;
+   Result.UnsafeData[Fe0Position] := 1;
 end;
 
 function TGeometricAlgebra.NewHomogeneousFlat(const _Vector:TVector3f): TMultiVector;
-var
-   AuxBit: cardinal;
 begin
-   AuxBit := 1 shl FDimension;
-
    Result := TMultiVector.Create(FSystemDimension);
    Result.UnsafeData[1] := _Vector.X;
    Result.UnsafeData[2] := _Vector.Y;
    Result.UnsafeData[4] := _Vector.Z;
-   Result.UnsafeData[AuxBit] := 1;
+   Result.UnsafeData[Fe0Position] := 1;
 end;
 
 // Rotation Versor in euclidean space from a Blade<2>.
@@ -323,11 +313,7 @@ var
 begin
    for i := 0 to _Vec.MaxElement do
    begin
-      if FBitCountTable[i] = _Grade then
-      begin
-         _Vec.UnsafeData[i] := _Vec.UnsafeData[i];
-      end
-      else
+      if FBitCountTable[i] <> _Grade then
       begin
          _Vec.UnsafeData[i] := 0;
       end;
@@ -361,11 +347,7 @@ var
 begin
    for i := 0 to _Vec.MaxElement do
    begin
-      if FBitCountTable[i] and _GradesIDBitmap <> 0 then
-      begin
-         _Vec.UnsafeData[i] := _Vec.UnsafeData[i];
-      end
-      else
+      if FBitCountTable[i] and _GradesIDBitmap = 0 then
       begin
          _Vec.UnsafeData[i] := 0;
       end;
@@ -504,112 +486,52 @@ end;
 
 //e0, which is eFDimension in our case.
 function TGeometricAlgebra.GetHomogeneousE0: TMultiVector;
-var
-   AuxBit: cardinal;
 begin
-   AuxBit := 1 shl FDimension;
-
-   Result := TMultiVector.Create(FSystemDimension);
-   Result.Data[AuxBit] := 1;
+   Result := e0;
 end;
 
 function TGeometricAlgebra.GetCannonicalOrderTable(_X,_Y: cardinal): integer;
 begin
-   Result := FCannonicalOrderTable[_X+((1 shl FSystemDimension) * _Y)];
+   Result := FCannonicalOrderTable[_X+(FRowCount * _Y)];
 end;
 
 // A<t - 1>
 function TGeometricAlgebra.GetFlatDirection(const _Vec: TMultiVector): TMultiVector;
-var
-   e0: TMultiVector;
 begin
-   e0 := GetHomogeneousE0();
-
    Result := GetLeftContraction(e0,_Vec);
-   e0.Free;
-end;
-
-function TGeometricAlgebra.GetFlatDirection(const _Vec,_e0: TMultiVector): TMultiVector;
-begin
-   Result := GetLeftContraction(_e0,_Vec);
 end;
 
 procedure TGeometricAlgebra.FlatDirection(var _Dest: TMultiVector; const _Vec: TMultiVector);
-var
-   e0: TMultiVector;
 begin
-   e0 := GetHomogeneousE0();
-
    LeftContraction(_Dest,e0,_Vec);
-   e0.Free;
-end;
-
-procedure TGeometricAlgebra.FlatDirection(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
-begin
-   LeftContraction(_Dest,_e0,_Vec);
 end;
 
 // M<t>
 function TGeometricAlgebra.GetFlatMoment(const _Vec: TMultiVector): TMultiVector;
 var
-   e0,e0opVec: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   e0opVec := GetOuterProduct(e0,_Vec);
-   Result := GetLeftContraction(e0,e0opVec);
-   e0.Free;
-   e0opVec.Free;
-end;
-
-function TGeometricAlgebra.GetFlatMoment(const _Vec,_e0: TMultiVector): TMultiVector;
-var
    e0opVec: TMultiVector;
 begin
-   e0opVec := GetOuterProduct(_e0,_Vec);
-   Result := GetLeftContraction(_e0,e0opVec);
+   e0opVec := GetOuterProduct(e0,_Vec);
+   Result := GetLeftContraction(e0,e0opVec);
    e0opVec.Free;
 end;
 
 procedure TGeometricAlgebra.FlatMoment(var _Dest: TMultiVector; const _Vec: TMultiVector);
 var
-   e0,e0opVec: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   e0opVec := GetOuterProduct(e0,_Vec);
-   LeftContraction(_Dest,e0,e0opVec);
-   e0.Free;
-   e0opVec.Free;
-end;
-
-procedure TGeometricAlgebra.FlatMoment(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
-var
    e0opVec: TMultiVector;
 begin
-   e0opVec := GetOuterProduct(_e0,_Vec);
-   LeftContraction(_Dest,_e0,e0opVec);
+   e0opVec := GetOuterProduct(e0,_Vec);
+   LeftContraction(_Dest,e0,e0opVec);
    e0opVec.Free;
 end;
 
 // s
 function TGeometricAlgebra.GetFlatSupportVector(const _Vec: TMultiVector): TMultiVector;
 var
-   e0,Moment,Direction: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   Moment := GetFlatMoment(_Vec,e0);
-   Direction := GetFlatDirection(_Vec,e0);
-   Result := GetGeometricDivision(Moment,Direction);
-   Moment.Free;
-   Direction.Free;
-   e0.Free;
-end;
-
-function TGeometricAlgebra.GetFlatSupportVector(const _Vec,_e0: TMultiVector): TMultiVector;
-var
    Moment,Direction: TMultiVector;
 begin
-   Moment := GetFlatMoment(_Vec,_e0);
-   Direction := GetFlatDirection(_Vec,_e0);
+   Moment := GetFlatMoment(_Vec);
+   Direction := GetFlatDirection(_Vec);
    Result := GetGeometricDivision(Moment,Direction);
    Moment.Free;
    Direction.Free;
@@ -617,24 +539,11 @@ end;
 
 procedure TGeometricAlgebra.FlatSupportVector(var _Dest: TMultiVector; const _Vec: TMultiVector);
 var
-   e0,Moment,Direction: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   Moment := GetFlatMoment(_Vec,e0);
-   Direction := GetFlatDirection(_Vec,e0);
-
-   GeometricDivision(_Dest,Moment,Direction);
-   e0.Free;
-   Moment.Free;
-   Direction.Free;
-end;
-
-procedure TGeometricAlgebra.FlatSupportVector(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
-var
    Moment,Direction: TMultiVector;
 begin
-   Moment := GetFlatMoment(_Vec,_e0);
-   Direction := GetFlatDirection(_Vec,_e0);
+   Moment := GetFlatMoment(_Vec);
+   Direction := GetFlatDirection(_Vec);
+
    GeometricDivision(_Dest,Moment,Direction);
    Moment.Free;
    Direction.Free;
@@ -643,42 +552,20 @@ end;
 // e0 + s
 function TGeometricAlgebra.GetFlatUnitSupportPoint(const _Vec: TMultiVector): TMultiVector;
 var
-   e0,Direction: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   Direction := GetFlatDirection(_Vec,e0);
-
-   Result := GetGeometricDivision(_Vec,Direction);
-   Direction.Free;
-   e0.Free;
-end;
-
-function TGeometricAlgebra.GetFlatUnitSupportPoint(const _Vec,_e0: TMultiVector): TMultiVector;
-var
    Direction: TMultiVector;
 begin
-   Direction := GetFlatDirection(_Vec,_e0);
+   Direction := GetFlatDirection(_Vec);
+
    Result := GetGeometricDivision(_Vec,Direction);
    Direction.Free;
 end;
 
 procedure TGeometricAlgebra.FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec: TMultiVector);
 var
-   e0,Direction: TMultiVector;
-begin
-   e0 := GetHomogeneousE0();
-   Direction := GetFlatDirection(_Vec,e0);
-
-   GeometricDivision(_Dest,_Vec,Direction);
-   Direction.Free;
-   e0.Free;
-end;
-
-procedure TGeometricAlgebra.FlatUnitSupportPoint(var _Dest: TMultiVector; const _Vec,_e0: TMultiVector);
-var
    Direction: TMultiVector;
 begin
-   Direction := GetFlatDirection(_Vec,_e0);
+   Direction := GetFlatDirection(_Vec);
+
    GeometricDivision(_Dest,_Vec,Direction);
    Direction.Free;
 end;
@@ -757,8 +644,7 @@ begin
       end;
       FMetric.Dimension := SystemDimension;
    end;
-   FDimension := _Dimension;
-   FSystemDimension := SystemDimension;
+   CommonSetDimensionTasks(_Dimension,SystemDimension);
 end;
 
 procedure TGeometricAlgebra.QuickSetDimension(_Dimension: Cardinal);
@@ -777,9 +663,19 @@ begin
          inc(i);
       end;
    end;
-   FDimension := _Dimension;
-   FSystemDimension := SystemDimension;
+   CommonSetDimensionTasks(_Dimension,SystemDimension);
    FMetric.Dimension := FSystemDimension;
+end;
+
+procedure TGeometricAlgebra.CommonSetDimensionTasks(_Dimension, _SystemDimension: Cardinal);
+begin
+   FDimension := _Dimension;
+   FSystemDimension := _SystemDimension;
+   Fe0Position := 1 shl FDimension;
+   FRowCount := 1 shl FSystemDimension;
+   e0 := TMultiVector.Create(FSystemDimension);
+   if (Fe0Position <> FRowCount) then
+      e0.UnsafeData[Fe0Position] := 1;
 end;
 
 procedure TGeometricAlgebra.SetOrthogonalMetric;
@@ -832,7 +728,7 @@ begin
    end;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   maxElem := (1 shl FSystemDimension) - 1;
+   maxElem := FRowCount - 1;
    for i := 0 to maxElem do
    begin
       for j := 0 to maxElem do
@@ -870,7 +766,7 @@ begin
    FMetric.UnsafeData[FDimension,FDimension] := 1;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   maxElem := (1 shl FSystemDimension) - 1;
+   maxElem := FRowCount - 1;
    for i := 0 to maxElem do
    begin
       for j := 0 to maxElem do
@@ -913,7 +809,7 @@ begin
    FMetric.UnsafeData[FDimension+1,FDimension+1] := 0;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   maxElem := (1 shl FSystemDimension) - 1;
+   maxElem := FRowCount - 1;
    for i := 0 to maxElem do
    begin
       for j := 0 to maxElem do
@@ -954,7 +850,7 @@ begin
    FMetric.UnsafeData[FDimension+1,FDimension+1] := -1;
    // Build cannonical ordering cache.
    SetLength(FCannonicalOrderTable,1 shl (2 * FSystemDimension));
-   maxElem := (1 shl FSystemDimension) - 1;
+   maxElem := FRowCount - 1;
    for i := 0 to maxElem do
    begin
       for j := 0 to maxElem do
@@ -968,7 +864,7 @@ end;
 
 procedure TGeometricAlgebra.SetCannonicalOrderTable(_X,_Y: cardinal; _Value: integer);
 begin
-   FCannonicalOrderTable[_X+((1 shl FSystemDimension) * _Y)] := _Value;
+   FCannonicalOrderTable[_X+(FRowCount * _Y)] := _Value;
 end;
 
 procedure TGeometricAlgebra.SetHomogeneousFlat(var _Dest: TMultiVector; const _Vector:TVector2f);
@@ -1117,8 +1013,8 @@ begin
       Sum.UnsafeData[i] := _Vec1.Data[i] + _Vec2.Data[i];
       inc(i);
    end;
-   _Vec1.Free;
-   _Vec1 := TMultiVector.Create(Sum);
+   _Vec1.Assign(Sum);
+   Sum.Free;
 end;
 
 function TGeometricAlgebra.GetSum(const _Vec1,_Vec2: TMultiVector):TMultiVector;
@@ -1156,8 +1052,8 @@ begin
       Subtraction.UnsafeData[i] := _Vec1.Data[i] - _Vec2.Data[i];
       inc(i);
    end;
-   _Vec1.Free;
-   _Vec1 := TMultiVector.Create(Subtraction);
+   _Vec1.Assign(Subtraction);
+   Subtraction.Free;
 end;
 
 function TGeometricAlgebra.GetSubtraction(const _Vec1,_Vec2: TMultiVector):TMultiVector;
