@@ -69,10 +69,10 @@ begin
    l := MAX_PATH;
    GetSystemDirectoryA(@SysDir[0], l);
 
-   if FileExists(String(String(SysDir) + '\' + ATI_AMD_DRIVER)) then
-      Result := ATI_AMD_DRIVER
+   if FileExists(String(String(SysDir) + '\' + NV_DRIVER)) then
+      Result := NV_DRIVER
    else
-      Result := NV_DRIVER;
+      Result := ATI_AMD_DRIVER;
 end;
 
 constructor TOpenCLLauncher.Create;
