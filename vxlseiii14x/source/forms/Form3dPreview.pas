@@ -9,9 +9,9 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
-  Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
-  HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions;
+  Buttons, FTGifAnimate, GIFImage, Palette, BasicMathsTypes, BasicDataTypes,
+  BasicRenderingTypes, Voxel_Engine, Normals, HVA,JPEG,PNGImage, math3d,
+  RenderEnvironment, Render, Actor, Camera, GlConstants, BasicFunctions;
 
 type
   PFrm3DPReview = ^TFrm3DPReview;
@@ -190,7 +190,7 @@ type
     AnimationState : boolean;
     EnvP : PRenderEnvironment;
     Env : TRenderEnvironment;
-    Actor : TActor;
+    Actor : PActor;
     Camera : TCamera;
     Procedure SetRotationAdders;
     procedure SetActorModelTransparency;
@@ -201,7 +201,7 @@ type
 
 implementation
 
-uses FormMain, GlobalVars;
+uses FormMain, GlobalVars, DistanceFormulas;
 
 {$R *.DFM}
 
@@ -224,8 +224,11 @@ begin
    SpFrame.MaxValue := FrmMain.Document.ActiveHVA^.Header.N_Frames;
    AnimationTimer.Enabled := false;
 
-   Actor := (Env.AddActor)^;
-   Actor.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
+   new(Actor);
+   Actor^ := (Env.AddActor)^;
+   Actor^.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
+   GlobalVars.ActorController.DoLoadModel(Actor, GetQualityModel);
+   GlobalVars.ActorController.SetBaseObject(Actor);
    SetActorModelTransparency;
 end;
 
@@ -247,6 +250,8 @@ end;
 {------------------------------------------------------------------}
 procedure TFrm3DPReview.FormDestroy(Sender: TObject);
 begin
+   GlobalVars.ModelUndoEngine.Remove(Actor^.Models[0]^.ID);
+   GlobalVars.ActorController.TerminateObject(Actor);
    GlobalVars.Render.RemoveEnvironment(EnvP);
    FrmMain.p_Frm3DPreview := nil;
 end;
@@ -405,7 +410,8 @@ end;
 
 procedure TFrm3DPReview.ModelFXUnsharpClick(Sender: TObject);
 begin
-   Actor.UnsharpModel;
+   //Actor.UnsharpModel;
+   GlobalVars.ActorController.DoMeshUnsharpMasking(Actor);
 end;
 
 procedure TFrm3DPReview.AnimationTimerTimer(Sender: TObject);
@@ -416,9 +422,9 @@ begin
    end
    else
    begin
-      Actor.Frame := (Actor.Frame + 1) mod SpFrame.MaxValue;
+      Actor^.Frame := (Actor^.Frame + 1) mod SpFrame.MaxValue;
       Env.ForceRefresh;
-      SpFrame.Value := Actor.Frame + 1;
+      SpFrame.Value := Actor^.Frame + 1;
    end;
 end;
 
@@ -430,7 +436,7 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-      Actor.Frame := SpFrame.Value-1;
+      Actor^.Frame := SpFrame.Value-1;
       Env.ForceRefresh;
    end;
 end;
@@ -454,7 +460,8 @@ end;
 
 procedure TFrm3DPReview.ModelFXLanczosClick(Sender: TObject);
 begin
-   Actor.LanczosSmoothModel;
+   //Actor.LanczosSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_LANCZOS_INV_AC);
 end;
 
 procedure TFrm3DPReview.LEft1Click(Sender: TObject);
@@ -616,56 +623,64 @@ begin
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
-   Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
+   //Actor^.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B));
 end;
 
 procedure TFrm3DPReview.Render4TrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    Render4Triangles.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+//   Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderCubesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderCubes.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderManifoldsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderManifolds.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderModelClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderModel.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderQuadsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderQuads.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderSmoothManifoldsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderSmoothManifolds.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.RenderTrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderTriangles.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor^.SetQuality(GetQualityModel);
 end;
 
 procedure TFrm3DPReview.Blue1Click(Sender: TObject);
@@ -675,7 +690,8 @@ begin
    RemapColour.X := RemapColourMap[1].R /255;
    RemapColour.Y := RemapColourMap[1].G /255;
    RemapColour.Z := RemapColourMap[1].B /255;
-   Actor.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
+   //Actor^.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B));
 end;
 
 procedure TFrm3DPReview.Green1Click(Sender: TObject);
@@ -685,7 +701,8 @@ begin
    RemapColour.X := RemapColourMap[2].R /255;
    RemapColour.Y := RemapColourMap[2].G /255;
    RemapColour.Z := RemapColourMap[2].B /255;
-   Actor.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
+   //Actor^.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B));
 end;
 
 procedure TFrm3DPReview.White1Click(Sender: TObject);
@@ -695,7 +712,8 @@ begin
    RemapColour.X := RemapColourMap[3].R /255;
    RemapColour.Y := RemapColourMap[3].G /255;
    RemapColour.Z := RemapColourMap[3].B /255;
-   Actor.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
+   //Actor^.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B));
 end;
 
 procedure TFrm3DPReview.Orange1Click(Sender: TObject);
@@ -705,7 +723,8 @@ begin
    RemapColour.X := RemapColourMap[4].R /255;
    RemapColour.Y := RemapColourMap[4].G /255;
    RemapColour.Z := RemapColourMap[4].B /255;
-   Actor.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
+   //Actor^.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B));
 end;
 
 procedure TFrm3DPReview.Magenta1Click(Sender: TObject);
@@ -715,32 +734,38 @@ begin
    RemapColour.X := RemapColourMap[5].R /255;
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
-   Actor.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+   //Actor^.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B));
 end;
 
 procedure TFrm3DPReview.ModelFXHeavySmoothClick(Sender: TObject);
 begin
-   Actor.CubicSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_CUBIC);
+   //Actor^.CubicSmoothModel;
 end;
 
 procedure TFrm3DPReview.ModelFXInflateClick(Sender: TObject);
 begin
-   Actor.InflateModel;
+   GlobalVars.ActorController.DoMeshInflate(Actor);
+   //Actor^.InflateModel;
 end;
 
 procedure TFrm3DPReview.ModelFXNormalizeClick(Sender: TObject);
 begin
-   Actor.ReNormalizeModel;
+   GlobalVars.ActorController.DoRecalculateNormals(Actor);
+   //Actor^.ReNormalizeModel;
 end;
 
 procedure TFrm3DPReview.ModelFXDeflateClick(Sender: TObject);
 begin
-   Actor.DeflateModel;
+   GlobalVars.ActorController.DoMeshDeflate(Actor);
+   //Actor^.DeflateModel;
 end;
 
 procedure TFrm3DPReview.ModelFXSmoothClick(Sender: TObject);
 begin
-   Actor.SmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_LINEAR_INV);
+   //Actor^.SmoothModel;
 end;
 
 procedure TFrm3DPReview.Purple1Click(Sender: TObject);
@@ -750,7 +775,8 @@ begin
    RemapColour.X := RemapColourMap[6].R /255;
    RemapColour.Y := RemapColourMap[6].G /255;
    RemapColour.Z := RemapColourMap[6].B /255;
-   Actor.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
+   //Actor^.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B));
 end;
 
 procedure TFrm3DPReview.Gold1Click(Sender: TObject);
@@ -760,7 +786,8 @@ begin
    RemapColour.X := RemapColourMap[7].R /255;
    RemapColour.Y := RemapColourMap[7].G /255;
    RemapColour.Z := RemapColourMap[7].B /255;
-   Actor.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
+   //Actor^.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B));
 end;
 
 procedure TFrm3DPReview.DarkSky1Click(Sender: TObject);
@@ -770,7 +797,8 @@ begin
    RemapColour.X := RemapColourMap[8].R /255;
    RemapColour.Y := RemapColourMap[8].G /255;
    RemapColour.Z := RemapColourMap[8].B /255;
-   Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
+   //Actor^.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B));
 end;
 
 procedure TFrm3DPReview.DisplayFMPointCloudClick(Sender: TObject);
@@ -799,11 +827,11 @@ begin
    DisplayNormalVectors1.Checked := not DisplayNormalVectors1.Checked;
    if DisplayNormalVectors1.Checked then
    begin
-      Actor.AddNormalsPlugin;
+      Actor^.AddNormalsPlugin;
    end
    else
    begin
-      Actor.RemoveNormalsPlugin;
+      Actor^.RemoveNormalsPlugin;
    end;
 end;
 
@@ -811,7 +839,7 @@ procedure TFrm3DPReview.DoDisplayNormals();
 begin
    if DisplayNormalVectors1.Checked then
    begin
-      Actor.AddNormalsPlugin;
+      Actor^.AddNormalsPlugin;
    end;
 end;
 
@@ -854,7 +882,7 @@ begin
    SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
    if SaveModelDialog.Execute then
    begin
-      Actor.SaveToFile(SaveModelDialog.FileName,'dds',0);
+      Actor^.SaveToFile(SaveModelDialog.FileName,'dds',0);
    end;
 end;
 
@@ -862,11 +890,11 @@ procedure TFrm3DPReview.SetActorModelTransparency;
 begin
    if WholeVoxel1.Checked then
    begin
-      Actor.ForceTransparency(C_TRP_OPAQUE);
+      Actor^.ForceTransparency(C_TRP_OPAQUE);
    end
    else
    begin
-      Actor.ForceTransparencyExceptOnAMesh(C_TRP_GHOST,0,FrmMain.Document.ActiveSection^.Header.Number);
+      Actor^.ForceTransparencyExceptOnAMesh(C_TRP_GHOST,0,FrmMain.Document.ActiveSection^.Header.Number);
    end;
 end;
 

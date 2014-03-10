@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, ExtCtrls, Voxel_Engine, BasicDataTypes, palette, voxel,
-  mouse, undo_engine;
+  mouse, VoxelUndoEngine;
 
 Type
 TReplaceColourData = record
@@ -71,7 +71,7 @@ var
 
 implementation
 
-uses FormMain, GlobalVars;
+uses FormMain, GlobalVars, BasicVXLSETypes;
 
 {$R *.dfm}
 

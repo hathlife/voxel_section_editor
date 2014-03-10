@@ -2,9 +2,9 @@ unit RefinementTrianglesSupporter;
 
 interface
 
-uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
+uses BasicMathsTypes, BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
    VolumeGreyIntData, VertexList, TriangleList, QuadList, Normals, Windows,
-   MeshNormalsTool, Dialogs, SysUtils, VolumeFaceVerifier;
+   Dialogs, SysUtils, VolumeFaceVerifier;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -32,7 +32,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, BasicVXLSETypes;
 
 procedure CRefinementTrianglesSupporter.InitializeNeighbourVertexIDsSize(var _NeighbourVertexIDs:T3DIntGrid; const _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap; _x, _y, _z, _VUnit: integer; const _VertexTransformation: aint32; var _NumVertices: longword);
 var

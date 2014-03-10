@@ -3,7 +3,8 @@ unit Voxel;
 interface
 
 uses
-   Classes, dglOpenGL, Normals, BasicDataTypes, BasicFunctions, BasicConstants;
+   Classes, dglOpenGL, Normals, BasicMathsTypes, BasicDataTypes, BasicVXLSETypes,
+   BasicFunctions, BasicConstants;
 
 {$INCLUDE source/Global_Conditionals.inc}
 

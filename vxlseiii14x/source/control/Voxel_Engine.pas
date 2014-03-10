@@ -2,9 +2,9 @@ unit Voxel_Engine;
 
 interface
 
-uses Windows,BasicDataTypes,Palette,StdCtrls,ExtCtrls,Graphics,Math,SysUtils,Types,
-   Config,Constants,Menus,Clipbrd,mouse, forms, Dialogs, Voxel, VoxelDocument,
-   BasicConstants, NormalsConstants;
+uses Windows, BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, Palette, StdCtrls,
+   ExtCtrls, Graphics, Math, SysUtils, Types, Config, Constants, Menus, Clipbrd,
+   mouse, forms, Dialogs, Voxel, VoxelDocument, BasicConstants, NormalsConstants;
 
 {$INCLUDE source/Global_Conditionals.inc}
 Var
@@ -101,7 +101,7 @@ Procedure SetNormals(Normal : Integer);
 
 implementation
 
-uses Voxel_Tools,undo_engine, Controls, FormMain, GlobalVars;
+uses Voxel_Tools,VoxelUndoEngine, Controls, FormMain, GlobalVars;
 
 Function HasNormalsBug : Boolean;
 var

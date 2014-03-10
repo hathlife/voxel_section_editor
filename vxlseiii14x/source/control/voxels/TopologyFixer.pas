@@ -19,7 +19,7 @@ type
 
 implementation
 
-uses Windows,BasicConstants, BasicDataTypes, Normals, Math3D;
+uses Windows, BasicConstants, BasicMathsTypes, Normals, Math3D;
 
 constructor CTopologyFixer.Create(const _Section: TVoxelSection; const _Palette: TPalette);
 var

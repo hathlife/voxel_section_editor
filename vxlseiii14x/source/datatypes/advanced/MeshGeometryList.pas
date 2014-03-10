@@ -2,7 +2,7 @@ unit MeshGeometryList;
 
 interface
 
-uses BasicDataTypes, BasicConstants, MeshGeometryBase;
+uses BasicDataTypes, MeshGeometryBase;
 
 type
    CMeshGeometryList = class
@@ -34,7 +34,7 @@ type
 
 implementation
 
-uses MeshBRepGeometry;
+uses MeshBRepGeometry, GlConstants;
 
 constructor CMeshGeometryList.Create;
 begin

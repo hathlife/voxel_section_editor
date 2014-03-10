@@ -7,7 +7,7 @@ unit VoxelMap;
 
 interface
 
-uses BasicDataTypes, ThreeDPointList, Voxel, Normals, BasicConstants,
+uses BasicMathsTypes, BasicDataTypes, ThreeDPointList, Voxel, Normals, BasicConstants,
    BasicFunctions, VolumeGreyData, Dialogs, SysUtils;
 
 {$INCLUDE source/Global_Conditionals.inc}
@@ -86,7 +86,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, BasicVXLSETypes;
 
 // Constructors and Destructors
 constructor TVoxelMap.Create(const _Voxel: TVoxelSection; _Bias: Integer);

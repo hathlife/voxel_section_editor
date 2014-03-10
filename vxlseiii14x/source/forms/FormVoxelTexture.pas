@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls,voxel, ExtDlgs,math, ComCtrls, BasicDataTypes,
-  Voxel_Engine, Palette, undo_engine;
+  Voxel_Engine, Palette, VoxelUndoEngine;
 
 type
   TFrmVoxelTexture = class(TForm)
@@ -52,7 +52,7 @@ var
 
 implementation
 
-uses FormMain, GlobalVars;
+uses FormMain, GlobalVars, BasicVXLSETypes;
 
 {$R *.dfm}
 

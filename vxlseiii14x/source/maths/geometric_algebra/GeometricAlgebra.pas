@@ -2,7 +2,7 @@ unit GeometricAlgebra;
 
 interface
 
-uses MultiVector, Metric, Math, BasicDataTypes, GADataTypes, GAConstants, SysUtils;
+uses MultiVector, Metric, Math, BasicMathsTypes, BasicDataTypes, GADataTypes, GAConstants, SysUtils;
 
 {$INCLUDE source/Global_Conditionals.inc}
 

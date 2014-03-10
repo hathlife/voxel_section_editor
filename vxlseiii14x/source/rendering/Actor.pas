@@ -2,7 +2,7 @@ unit Actor;
 
 interface
 
-uses Voxel_engine, BasicDataTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
+uses BasicMathsTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
    Palette, Graphics, Windows, GLConstants, ShaderBank,Histogram;
 
 type
@@ -156,6 +156,8 @@ type
       // Mesh Plugins
       procedure AddNormalsPlugin;
       procedure RemoveNormalsPlugin;
+      // Assign
+      procedure AssignForBackup(const _Source: TActor);
    end;
 
 implementation
@@ -1170,7 +1172,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlas;
+         //Models[i]^.ExtractTextureAtlas;
       end;
    end;
    RequestUpdateWorld := true;
@@ -1184,7 +1186,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlasOrigami;
+         //Models[i]^.ExtractTextureAtlasOrigami;
       end;
    end;
    RequestUpdateWorld := true;
@@ -1198,7 +1200,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlasOrigamiGA;
+         //Models[i]^.ExtractTextureAtlasOrigamiGA;
       end;
    end;
    RequestUpdateWorld := true;
@@ -1212,7 +1214,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.GenerateNormalMapTexture;
+         //Models[i]^.GenerateNormalMapTexture;
       end;
    end;
    RequestUpdateWorld := true;
@@ -1226,7 +1228,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.GenerateBumpMapTexture;
+         //Models[i]^.GenerateBumpMapTexture;
       end;
    end;
    RequestUpdateWorld := true;
@@ -1240,7 +1242,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.GenerateBumpMapTexture(_Scale);
+         //Models[i]^.GenerateBumpMapTexture(_Scale);
       end;
    end;
    RequestUpdateWorld := true;
@@ -1268,7 +1270,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlas(_Angle, _Size);
+         //Models[i]^.ExtractTextureAtlas(_Angle, _Size);
       end;
    end;
    RequestUpdateWorld := true;
@@ -1282,7 +1284,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlasOrigami(_Size);
+         //Models[i]^.ExtractTextureAtlasOrigami(_Size);
       end;
    end;
    RequestUpdateWorld := true;
@@ -1296,7 +1298,7 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.ExtractTextureAtlasOrigamiGA(_Size);
+         //Models[i]^.ExtractTextureAtlasOrigamiGA(_Size);
       end;
    end;
    RequestUpdateWorld := true;
@@ -1520,5 +1522,43 @@ begin
    RequestUpdateWorld := true;
 end;
 
+// Assign
+procedure TActor.AssignForBackup(const _Source: TActor);
+var
+   i : integer;
+begin
+   RequestUpdateWorld := _Source.RequestUpdateWorld;
+   Next := _Source.Next;
+   SetLength(Models, High(_Source.Models) + 1);
+   for i := Low(Models) to High(Models) do
+   begin
+      new(Models[i]);
+      Models[i]^ := TModel.Create(_Source.Models[i]^);
+      Models[i]^.ID := _Source.Models[i]^.ID;
+   end;
+   Frame := _Source.Frame;
+   PositionAcceleration.X := _Source.PositionAcceleration.X;
+   PositionAcceleration.Y := _Source.PositionAcceleration.Y;
+   PositionAcceleration.Z := _Source.PositionAcceleration.Z;
+   PositionSpeed.X := _Source.PositionSpeed.X;
+   PositionSpeed.Y := _Source.PositionSpeed.Y;
+   PositionSpeed.Z := _Source.PositionSpeed.Z;
+   Position.X := _Source.Position.X;
+   Position.Y := _Source.Position.Y;
+   Position.Z := _Source.Position.Z;
+   RotationAcceleration.X := _Source.RotationAcceleration.X;
+   RotationAcceleration.Y := _Source.RotationAcceleration.Y;
+   RotationAcceleration.Z := _Source.RotationAcceleration.Z;
+   RotationSpeed.X := _Source.RotationSpeed.X;
+   RotationSpeed.Y := _Source.RotationSpeed.Y;
+   RotationSpeed.Z := _Source.RotationSpeed.Z;
+   Rotation.X := _Source.Rotation.X;
+   Rotation.Y := _Source.Rotation.Y;
+   Rotation.Z := _Source.Rotation.Z;
+   IsSelected := _Source.IsSelected;
+   ColoursType := _Source.ColoursType;
+   FactionColour := _Source.FactionColour;
+   ShaderBank := _Source.ShaderBank;
+end;
 
 end.

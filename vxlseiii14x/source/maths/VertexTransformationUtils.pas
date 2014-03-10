@@ -7,7 +7,7 @@ unit VertexTransformationUtils;
 
 interface
 
-uses Geometry, BasicDataTypes, GLConstants, Math;
+uses Geometry, BasicMathsTypes, GLConstants, Math;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -23,6 +23,7 @@ type
          // Transform Matrix Operations
          function GetTransformMatrixFromVector(_Vector: TVector3f): TMatrix;
          function GetTransformMatrixFromAngles(_AngX, _AngY: single): TMatrix;
+         function GetRotationMatrixFromVector(_Vector: TVector3f): TMatrix;
          function GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
          // Angle Detector
          function GetRotationX(const _Vector: TVector3f): single;
@@ -73,6 +74,8 @@ begin
 end;
 
 // Transform Matrix Operations
+
+// This function should be deprecated as it is inaucurate.
 function TVertexTransformationUtils.GetTransformMatrixFromVector(_Vector: TVector3f): TMatrix;
 const
    C_ANG_X = 0;
@@ -90,11 +93,9 @@ end;
 function TVertexTransformationUtils.GetTransformMatrixFromAngles(_AngX, _AngY: single): TMatrix;
 const
    ANG90 = Pi * 0.5;
-var
-   RotMatrix : TMatrix;
 begin
    Result := IdentityMatrix;
-   // first of all, we align our world with the direction z = 1.
+   // first of all, we align our world with the direction z = -1.
    if _AngX <> 0 then
    begin
       Result := MatrixMultiply(Result,CreateRotationMatrixY(sin(_AngX),cos(_AngX)));
@@ -102,11 +103,41 @@ begin
    // now we vertically rotate our world to y = 0.
    if _AngY <> 0 then
    begin
-      RotMatrix := CreateRotationMatrixX(sin(_AngY),cos(_AngY));
-      Result := MatrixMultiply(Result,RotMatrix);
+      Result := MatrixMultiply(Result,CreateRotationMatrixX(sin(_AngY),cos(_AngY)));
    end;
-
 end;
+
+// This should be used instead. Based on glRotate.
+function TVertexTransformationUtils.GetRotationMatrixFromVector(_Vector: TVector3f): TMatrix;
+var
+   Ang, Cossine, Sine : single;
+   OrtogonalVector: TVector3f;
+begin
+   if _Vector.Z <> 0 then
+   begin
+      Ang := CleanAngleRadians(arccos(-_Vector.Z));
+   end
+   else
+   begin
+      Ang := 0.5 * pi;
+   end;
+   OrtogonalVector := CrossProduct(_Vector,SetVector(0,0,-1));
+   Normalize(OrtogonalVector);
+   Cossine := Cos(Ang);
+   Sine := Sin(Ang);
+
+   Result := IdentityMatrix;
+   Result[0,0] := (OrtogonalVector.X * OrtogonalVector.X)*(1 - Cossine) + Cossine;
+   Result[0,1] := (OrtogonalVector.X * OrtogonalVector.Y)*(1 - Cossine) - (OrtogonalVector.Z * Sine);
+   Result[0,2] := (OrtogonalVector.X * OrtogonalVector.Z)*(1 - Cossine) + (OrtogonalVector.Y * Sine);
+   Result[1,0] := (OrtogonalVector.Y * OrtogonalVector.X)*(1 - Cossine) + (OrtogonalVector.Z * Sine);
+   Result[1,1] := (OrtogonalVector.Y * OrtogonalVector.Y)*(1 - Cossine) + Cossine;
+   Result[1,2] := (OrtogonalVector.Y * OrtogonalVector.Z)*(1 - Cossine) - (OrtogonalVector.X * Sine);
+   Result[2,0] := (OrtogonalVector.Z * OrtogonalVector.X)*(1 - Cossine) - (OrtogonalVector.Y * Sine);
+   Result[2,1] := (OrtogonalVector.Z * OrtogonalVector.Y)*(1 - Cossine) + (OrtogonalVector.X * Sine);
+   Result[2,2] := (OrtogonalVector.Z * OrtogonalVector.Z)*(1 - Cossine) + Cossine;
+end;
+
 
 function TVertexTransformationUtils.GetUVCoordinates(const _Position: TVector3f; _TransformMatrix: TMatrix): TVector2f;
 begin
@@ -134,7 +165,7 @@ function TVertexTransformationUtils.GetRotationY(const _Vector: TVector3f): sing
 begin
    if (_Vector.X <> 0) then
    begin
-      Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) * arccos(_Vector.Z / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
+      Result := CleanAngleRadians(((_Vector.X) / (Abs(_Vector.X))) * arccos(abs(_Vector.Z) / sqrt((_Vector.X * _Vector.X) + (_Vector.Z * _Vector.Z))));
    end
    else if (_Vector.Z >= 0) then
    begin

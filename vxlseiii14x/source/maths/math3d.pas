@@ -2,7 +2,7 @@ unit math3d;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 const
   M_PI = 3.1415926535897932384626433832795;		// matches value in gcc v2 math.h
@@ -11,7 +11,9 @@ const
   M_PI_180 = 0.017453292519943295769236907684886;
 
 
-function VectorDistance(const v1, v2 : TVector3f) : Single;
+function GetVectorLength(const _v: TVector3f): single;
+function VectorDistance(const v1, v2 : TVector2f) : Single; overload;
+function VectorDistance(const v1, v2 : TVector3f) : Single; overload;
 function DEG2RAD(a : single) : single;
 function RAD2DEG(a : single) : single;
 function Normalize(var v : TVector2f) : single; overload;
@@ -50,6 +52,21 @@ function CleanAngle(Angle: single): single;
 
 implementation
 
+function VectorDistance(const v1, v2 : TVector2f) : Single; register;
+// EAX contains address of v1
+// EDX contains highest of v2
+// Result  is passed on the stack
+asm
+      FLD  DWORD PTR [EAX]
+      FSUB DWORD PTR [EDX]
+      FMUL ST, ST
+      FLD  DWORD PTR [EAX+4]
+      FSUB DWORD PTR [EDX+4]
+      FMUL ST, ST
+      FADD
+      FSQRT
+end;
+
 function VectorDistance(const v1, v2 : TVector3f) : Single; register;
 // EAX contains address of v1
 // EDX contains highest of v2
@@ -67,6 +84,11 @@ asm
       FMUL ST, ST
       FADD
       FSQRT
+end;
+
+function GetVectorLength(const _v: TVector3f): single;
+begin
+   Result := sqrt((_v.X * _v.X) + (_v.Y * _v.Y) + (_v.Z * _v.Z));
 end;
 
 function SetVector(const v : TVector2f) : TVector2f;

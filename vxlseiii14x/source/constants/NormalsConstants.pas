@@ -2,7 +2,7 @@ unit NormalsConstants;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 const
    RA2_NORMAL_CNT = 244;

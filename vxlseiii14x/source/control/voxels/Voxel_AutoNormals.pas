@@ -14,7 +14,8 @@ unit Voxel_AutoNormals;
 interface
 
 uses Voxel, Voxel_Tools, math, Voxel_Engine, math3d, ThreeDPointList, SysUtils,
-      BasicDataTypes, Dialogs, VoxelMap, BasicFunctions;
+      BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, Dialogs, VoxelMap,
+      BasicFunctions;
 
 {$define LIMITES}
 //{$define RAY_LIMIT}

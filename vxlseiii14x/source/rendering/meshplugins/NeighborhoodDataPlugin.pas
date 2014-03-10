@@ -2,8 +2,8 @@ unit NeighborhoodDataPlugin;
 
 interface
 
-uses BasicDataTypes, MeshPluginBase, NeighborDetector, Math3d, GLConstants,
-   MeshNormalsTool, MeshGeometryList;
+uses BasicMathsTypes, BasicDataTypes, MeshPluginBase, NeighborDetector, Math3d, GLConstants,
+   MeshNormalVectorCalculator, MeshGeometryList;
 
 type
    TNeighborhoodDataPlugin = class (TMeshPluginBase)
@@ -132,7 +132,7 @@ implementation
    procedure TNeighborhoodDataPlugin.UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
    var
       vf,vq,incf,incq: integer;
-      Tool: TMeshNormalsTool;
+      Calculator: TMeshNormalVectorCalculator;
    begin
       // Build QuadFaces from _Faces.
       SetLength(QuadFaces,2*(High(_Faces)+1));
@@ -164,9 +164,9 @@ implementation
          inc(vq,incq);
       end;
       // Now we detect the normal vectors from all these faces.
-      Tool := TMeshNormalsTool.Create;
-      Tool.RebuildFaceNormals(QuadFaceNormals,_VerticesPerFace,_Vertices,QuadFaces);
-      Tool.Free;
+      Calculator := TMeshNormalVectorCalculator.Create;
+      Calculator.GetFaceNormals(QuadFaceNormals,_VerticesPerFace,_Vertices,QuadFaces);
+      Calculator.Free;
 
       // Now we setup QuadFaceNeighbors
       QuadFaceNeighbors.SetType(C_NEIGHBTYPE_VERTEX_FACE);

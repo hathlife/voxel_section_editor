@@ -2,7 +2,7 @@ unit RenderEnvironment;
 
 interface
 
-uses Windows, Graphics, dglOpenGL, Voxel_Engine, BasicDataTypes, Camera, SysUtils,
+uses Windows, Graphics, dglOpenGL, BasicMathsTypes, BasicRenderingTypes, Camera, SysUtils,
    Model, Actor, BasicFunctions, JPEG, PNGImage, GIFImage, FTGifAnimate, DDS,
    ShaderBank;
 

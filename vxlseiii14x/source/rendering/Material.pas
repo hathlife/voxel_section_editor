@@ -2,7 +2,7 @@ unit Material;
 
 interface
 
-uses dglOpenGL, BasicDataTypes, TextureBank, TextureBankItem, ShaderBank, ShaderBankItem,
+uses dglOpenGL, BasicMathsTypes, TextureBank, TextureBankItem, ShaderBank, ShaderBankItem,
    BasicFunctions, GlConstants, IntegerSet, SysUtils, Windows, Graphics,
    Dialogs, Abstract2DImageData;
 

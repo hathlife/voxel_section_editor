@@ -2,9 +2,9 @@ unit MeshBRepGeometry;
 
 interface
 
-uses BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
+uses BasicMathsTypes, BasicDataTypes, MeshGeometryBase, Material, dglOpenGl, GlConstants,
    RenderingMachine, ShaderBank, MeshPluginBase, NeighborhoodDataPlugin, Math,
-   MeshNormalsTool, SysUtils, IntegerSet, MeshColoursTool,
+   MeshNormalVectorCalculator, SysUtils, IntegerSet, MeshColoursTool,
    QuadList, TriangleList, Histogram, NeighborDetector, Debug;
 
 type
@@ -48,6 +48,7 @@ type
 
          // Sets
          procedure SetColoursType(_ColoursType: integer); override;
+         procedure SetColourGenStructure(_ColoursType: integer); override;
          procedure SetNormalsType(_NormalsType: integer); override;
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer); override;
          procedure ForceColoursRendering; override;
@@ -432,6 +433,11 @@ begin
    Renderer.SetRenderingProcedure(NormalsType, ColoursType);
 end;
 
+procedure TMeshBRepGeometry.SetColourGenStructure(_ColoursType: integer);
+begin
+   ColourGenStructure := _ColoursType and 3;
+end;
+
 procedure TMeshBRepGeometry.SetNormalsType(_NormalsType: integer);
 begin
    NormalsType := _NormalsType and 3;
@@ -536,14 +542,14 @@ end;
 procedure TMeshBRepGeometry.AddTrianglesFromList(var _TriangleList: CTriangleList; const _Vertices: TAVector3f);
 var
    x,y: integer;
-   Tool : TMeshNormalsTool;
+   Calculator : TMeshNormalVectorCalculator;
 begin
    // Build new quads (faces, normals, colours).
    if VerticesPerFace = 3 then
    begin
       if _TriangleList.Count > 0 then
       begin
-         Tool := TMeshNormalsTool.Create;
+         Calculator := TMeshNormalVectorCalculator.Create;
          x := NumFaces * 3;
          y := NumFaces;
          NumFaces := NumFaces + _TriangleList.Count;
@@ -557,12 +563,12 @@ begin
             Colours[y].Y := GetGValue(_TriangleList.Colour) / 255;
             Colours[y].Z := GetBValue(_TriangleList.Colour) / 255;
             Colours[y].W := 0;
-            Normals[y] := Tool.GetNormalsValue(_Vertices[_TriangleList.V1],_Vertices[_TriangleList.V2],_Vertices[_TriangleList.V3]);
+            Normals[y] := Calculator.GetNormalsValue(_Vertices[_TriangleList.V1],_Vertices[_TriangleList.V2],_Vertices[_TriangleList.V3]);
             _TriangleList.GoToNextElement;
             inc(y);
             inc(x,3);
          end;
-         Tool.Free;
+         Calculator.Free;
       end;
    end;
 end;
@@ -570,14 +576,14 @@ end;
 procedure TMeshBRepGeometry.AddQuadsFromList(var _QuadList: CQuadList; const _Vertices: TAVector3f);
 var
    x,y: integer;
-   Tool : TMeshNormalsTool;
+   Calculator : TMeshNormalVectorCalculator;
 begin
    // Build new quads (faces, normals, colours).
    if VerticesPerFace = 4 then
    begin
       if _QuadList.Count > 0 then
       begin
-         Tool := TMeshNormalsTool.Create;
+         Calculator := TMeshNormalVectorCalculator.Create;
          x := NumFaces * 4;
          y := NumFaces;
          NumFaces := NumFaces + _QuadList.Count;
@@ -592,12 +598,12 @@ begin
             Colours[y].Y := GetGValue(_QuadList.Colour) / 255;
             Colours[y].Z := GetBValue(_QuadList.Colour) / 255;
             Colours[y].W := 0;
-            Normals[y] := Tool.GetQuadNormalValue(_Vertices[_QuadList.V1],_Vertices[_QuadList.V2],_Vertices[_QuadList.V3],_Vertices[_QuadList.V4]);
+            Normals[y] := Calculator.GetQuadNormalValue(_Vertices[_QuadList.V1],_Vertices[_QuadList.V2],_Vertices[_QuadList.V3],_Vertices[_QuadList.V4]);
             _QuadList.GoToNextElement;
             inc(y);
             inc(x,4);
          end;
-         Tool.Free;
+         Calculator.Free;
       end;
    end;
 end;
@@ -605,13 +611,13 @@ end;
 // Miscellaneous
 procedure TMeshBRepGeometry.RebuildNormals(_Mesh : Pointer);
 var
-   Tool : TMeshNormalsTool;
+   Calculator : TMeshNormalVectorCalculator;
    MyMesh: PMesh;
 begin
    MyMesh := PMesh(_Mesh);
-   Tool := TMeshNormalsTool.Create;
-   Tool.RebuildFaceNormals(Normals,VerticesPerFace,MyMesh^.Vertices,Faces);
-   Tool.Free;
+   Calculator := TMeshNormalVectorCalculator.Create;
+   Calculator.GetFaceNormals(Normals,VerticesPerFace,MyMesh^.Vertices,Faces);
+   Calculator.Free;
 end;
 
 procedure TMeshBRepGeometry.RemoveInvisibleFaces(_Mesh : Pointer);
@@ -619,13 +625,13 @@ var
    iRead,iWrite,v: integer;
    MarkForRemoval: boolean;
    Normal : TVector3f;
-   Tool: TMeshNormalsTool;
+   Calculator : TMeshNormalVectorCalculator;
    MyMesh: PMesh;
 begin
    MyMesh := PMesh(_Mesh);
    iRead := 0;
    iWrite := 0;
-   Tool := TMeshNormalsTool.Create;
+   Calculator := TMeshNormalVectorCalculator.Create;
    while iRead <= High(Faces) do
    begin
       MarkForRemoval := false;
@@ -642,12 +648,12 @@ begin
       if not MarkForRemoval then
       begin
          // check if normal is 0,0,0.
-         Normal := Tool.GetNormalsValue(MyMesh^.Vertices[Faces[iRead]],MyMesh^.Vertices[Faces[iRead+1]],MyMesh^.Vertices[Faces[iRead+2]]);
+         Normal := Calculator.GetNormalsValue(MyMesh^.Vertices[Faces[iRead]],MyMesh^.Vertices[Faces[iRead+1]],MyMesh^.Vertices[Faces[iRead+2]]);
          if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
             MarkForRemoval := true;
          if VerticesPerFace = 4 then
          begin
-            Normal := Tool.GetNormalsValue(MyMesh^.Vertices[Faces[iRead+2]],MyMesh^.Vertices[Faces[iRead+3]],MyMesh^.Vertices[Faces[iRead]]);
+            Normal := Calculator.GetNormalsValue(MyMesh^.Vertices[Faces[iRead+2]],MyMesh^.Vertices[Faces[iRead+3]],MyMesh^.Vertices[Faces[iRead]]);
             if (Normal.X = 0) and (Normal.Y = 0) and (Normal.Z = 0) then
                MarkForRemoval := true;
           end;
@@ -678,7 +684,7 @@ begin
    SetLength(Normals,NumFaces);
    SetLength(Colours,NumFaces);
    ForceRefresh;
-   Tool.Free;
+   Calculator.Free;
 end;
 
 procedure TMeshBRepGeometry.ConvertQuadsToTris(_Mesh : Pointer);

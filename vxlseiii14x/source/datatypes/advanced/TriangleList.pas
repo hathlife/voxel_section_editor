@@ -2,7 +2,7 @@ unit TriangleList;
 
 interface
 
-uses BasicDataTypes, BasicConstants;
+uses BasicRenderingTypes, BasicConstants;
 
 type
    CTriangleList = class

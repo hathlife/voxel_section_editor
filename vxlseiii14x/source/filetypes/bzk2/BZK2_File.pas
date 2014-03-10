@@ -2,8 +2,8 @@ unit BZK2_File;
 
 interface
 
-uses  Windows, SysUtils, Voxel, BasicDataTypes, BasicFunctions, BZK2_Sector,
-      BZK2_Camera, BZK2_Actor, Palette, Normals;
+uses  Windows, SysUtils, Voxel, BasicMathsTypes, BasicDataTypes, BasicVXLSETypes,
+      BasicFunctions, BZK2_Sector, BZK2_Camera, BZK2_Actor, Palette, Normals;
 
 type
    TSectorMap = array of array of array of integer;

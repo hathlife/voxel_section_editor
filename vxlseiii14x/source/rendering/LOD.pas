@@ -6,12 +6,7 @@ unit LOD;
 
 interface
 
-uses Mesh, HVA, BasicDataTypes, BasicFunctions, dglOpenGL, GlConstants, ObjFile,
-   SysUtils, TextureGenerator, Windows, Graphics, TextureBankItem,
-   IntegerSet, StopWatch, TextureAtlasExtractor, ImageIOUtils,
-   ImageRGBAByteData, ImageRGBAData, ImageRGBByteData, ImageGreyData,
-   Abstract2DImageData, ImageRGBData, Histogram, TextureAtlasExtractorBase,
-   TextureAtlasExtractorOrigami, TextureAtlasExtractorOrigamiGA;
+uses Mesh, HVA, BasicDataTypes, dglOpenGL, SysUtils, Windows, Graphics, Histogram;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -83,16 +78,6 @@ type
       procedure NormalCubicSmoothLOD;
       procedure NormalLanczosSmoothLOD;
       // Textures
-      procedure ExtractTextureAtlas; overload;
-      procedure ExtractTextureAtlas(_Angle: single; _Size: integer = 1024); overload;
-      procedure ExtractTextureAtlasOrigami(_Size: integer = 1024);
-      procedure ExtractTextureAtlasOrigamiGA(_Size: integer = 1024);
-      procedure GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
-      procedure GenerateNormalMapTexture; overload;
-      procedure GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer); overload;
-      procedure GenerateBumpMapTexture; overload;
-      procedure GenerateBumpMapTexture(_Scale: single); overload;
-      procedure GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer; _Scale: single); overload;
       procedure ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
@@ -125,7 +110,9 @@ type
 
 implementation
 
-uses GlobalVars, PLYFile, MeshBRepGeometry;
+uses GlobalVars, PLYFile, MeshBRepGeometry, GlConstants, ObjFile, IntegerSet,
+   StopWatch, ImageIOUtils, ImageRGBAByteData, ImageRGBAData, ImageRGBByteData, ImageGreyData, Abstract2DImageData,
+   ImageRGBData, BasicFunctions, TextureBankItem;
 
 // Constructors and Destructors
 constructor TLOD.Create;
@@ -585,7 +572,7 @@ var
 begin
    for i := Low(Mesh) to High(Mesh) do
    begin
-      Mesh[i].ConvertFaceToVertexNormals;
+      Mesh[i].SetVertexNormals;
    end;
 end;
 
@@ -630,309 +617,6 @@ begin
 end;
 
 // Textures
-procedure TLOD.ExtractTextureAtlas;
-begin
-   ExtractTextureAtlas(C_TEX_MIN_ANGLE);
-end;
-
-procedure TLOD.ExtractTextureAtlas(_Angle: single; _Size: integer = 1024);
-var
-   i : integer;
-   Seeds: TSeedSet;
-   VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractorBase;
-   TexGenerator: CTextureGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   // First, we'll build the texture atlas.
-   SetLength(VertsSeed,High(Mesh)+1);
-   SetLength(Seeds,0);
-   TexGenerator := CTextureGenerator.Create;
-   TexExtractor := CTextureAtlasExtractor.Create(_Angle);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeeds(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractor));
-   end;
-   TexExtractor.MergeSeeds(Seeds);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexExtractor);
-   end;
-   // Now we build the diffuse texture.
-   GenerateDiffuseTexture(_Size,0,0);
-   // Free memory.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-   end;
-   SetLength(VertsSeed,0);
-   TexExtractor.Free;
-   TexGenerator.Free;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TLOD.ExtractTextureAtlasOrigami(_Size: integer = 1024);
-var
-   i : integer;
-   Seeds: TSeedSet;
-   VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractorBase;
-   TexGenerator: CTextureGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   // First, we'll build the texture atlas.
-   SetLength(VertsSeed,High(Mesh)+1);
-   SetLength(Seeds,0);
-   TexGenerator := CTextureGenerator.Create;
-   TexExtractor := CTextureAtlasExtractorOrigami.Create;
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeedsOrigami(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractorOrigami));
-   end;
-   TexExtractor.MergeSeeds(Seeds);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexExtractor);
-   end;
-   // Now we build the diffuse texture.
-   GenerateDiffuseTexture(_Size,0,0);
-   // Free memory.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-   end;
-   SetLength(VertsSeed,0);
-   TexExtractor.Free;
-   TexGenerator.Free;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TLOD.ExtractTextureAtlasOrigamiGA(_Size: integer = 1024);
-var
-   i : integer;
-   Seeds: TSeedSet;
-   VertsSeed : TInt32Map;
-   TexExtractor : CTextureAtlasExtractorBase;
-   TexGenerator: CTextureGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   // First, we'll build the texture atlas.
-   SetLength(VertsSeed,High(Mesh)+1);
-   SetLength(Seeds,0);
-   TexGenerator := CTextureGenerator.Create;
-   TexExtractor := CTextureAtlasExtractorOrigamiGA.Create;
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-      Mesh[i].GetMeshSeedsOrigamiGA(i,Seeds,VertsSeed[i],(TexExtractor as CTextureAtlasExtractorOrigamiGA));
-   end;
-   TexExtractor.MergeSeeds(Seeds);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].GetFinalTextureCoordinates(Seeds,VertsSeed[i],TexExtractor);
-   end;
-   // Now we build the diffuse texture.
-   GenerateDiffuseTexture(_Size,0,0);
-   // Free memory.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      SetLength(VertsSeed[i],0);
-   end;
-   SetLength(VertsSeed,0);
-   TexExtractor.Free;
-   TexGenerator.Free;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TLOD.GenerateDiffuseTexture(_Size, _MaterialID, _TextureID: integer);
-var
-   i : integer;
-   TexGenerator: CTextureGenerator;
-   Buffer: TAbstract2DImageData;
-   WeightBuffer: TAbstract2DImageData;
-   TextureImage : TAbstract2DImageData;
-   DiffuseTexture : PTextureBankItem;
-begin
-   TexGenerator := CTextureGenerator.Create;
-   Buffer := T2DImageRGBAData.Create(_Size,_Size);
-   WeightBuffer := T2DImageGreyData.Create(_Size,_Size);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].PaintMeshDiffuseTexture(Buffer,WeightBuffer,TexGenerator);
-   end;
-   TextureImage := TexGenerator.GetColouredImageDataFromBuffer(Buffer,WeightBuffer);
-   Buffer.Free;
-   WeightBuffer.Free;
-   // Now we generate a texture that will be used by all meshes.
-   glActiveTexture(GL_TEXTURE0 + _TextureID);
-   DiffuseTexture := GlobalVars.TextureBank.Add(TextureImage);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
-   end;
-   // Free memory.
-   GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
-   TextureImage.Free;
-   TexGenerator.Free;
-end;
-
-procedure TLOD.GenerateNormalMapTexture;
-var
-   Size,TextureID: integer;
-begin
-   if High(Mesh) >= 0 then
-   begin
-      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
-      TextureID := Mesh[0].GetNextTextureID(0);
-      GenerateNormalMapTexture(Size,0,TextureID);
-   end;
-end;
-
-procedure TLOD.GenerateNormalMapTexture(_Size, _MaterialID, _TextureID: integer);
-var
-   i : integer;
-   TexGenerator: CTextureGenerator;
-   Buffer: TAbstract2DImageData;
-   WeightBuffer: TAbstract2DImageData;
-   TextureImage : TAbstract2DImageData;
-   NormalTexture : PTextureBankItem;
-begin
-   TexGenerator := CTextureGenerator.Create;
-   Buffer := T2DImageRGBData.Create(_Size,_Size);
-   WeightBuffer := T2DImageGreyData.Create(_Size,_Size);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].PaintMeshNormalMapTexture(Buffer,WeightBuffer,TexGenerator);
-   end;
-   TextureImage := TexGenerator.GetPositionedImageDataFromBuffer(Buffer,WeightBuffer);
-   Buffer.Free;
-   WeightBuffer.Free;
-   // Now we generate a texture that will be used by all meshes.
-   glActiveTexture(GL_TEXTURE0 + _TextureID);
-   NormalTexture := GlobalVars.TextureBank.Add(TextureImage);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_NORMAL,C_SHD_PHONG_2TEX,NormalTexture);
-   end;
-   // Free memory.
-   GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   TextureImage.Free;
-   TexGenerator.Free;
-end;
-
-procedure TLOD.GenerateBumpMapTexture;
-var
-   Size,TextureID: integer;
-begin
-   if High(Mesh) >= 0 then
-   begin
-      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
-      TextureID := Mesh[0].GetNextTextureID(0);
-      GenerateBumpMapTexture(Size,0,TextureID,C_BUMP_DEFAULTSCALE);
-   end;
-end;
-
-procedure TLOD.GenerateBumpMapTexture(_Scale: single);
-var
-   Size,TextureID: integer;
-begin
-   if High(Mesh) >= 0 then
-   begin
-      Size := Mesh[0].GetTextureSize(0,Mesh[0].Materials[0].GetTextureID(C_TTP_DIFFUSE));
-      TextureID := Mesh[0].GetNextTextureID(0);
-      GenerateBumpMapTexture(Size,0,TextureID,_Scale);
-   end;
-end;
-
-procedure TLOD.GenerateBumpMapTexture(_Size, _MaterialID, _TextureID: integer; _Scale: single);
-var
-   i : integer;
-   TexGenerator: CTextureGenerator;
-   DiffuseMap: TAbstract2DImageData;
-   BumpMap : TAbstract2DImageData;
-   NormalTexture : PTextureBankItem;
-begin
-   TexGenerator := CTextureGenerator.Create;
-   DiffuseMap := T2DImageRGBAByteData.Create(0,0);
-   Mesh[0].Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
-   BumpMap := TexGenerator.GetBumpMapTexture(DiffuseMap,_Scale);
-   // Now we generate a texture that will be used by all meshes.
-   glActiveTexture(GL_TEXTURE0 + _TextureID);
-   NormalTexture := GlobalVars.TextureBank.Add(BumpMap);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DOT3BUMP,C_SHD_PHONG_DOT3TEX,NormalTexture);
-   end;
-   // Free memory.
-   GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   DiffuseMap.Free;
-   BumpMap.Free;
-   TexGenerator.Free;
-
-{
-var
-   i : integer;
-   TexGenerator: CTextureGenerator;
-   Buffer: T2DFrameBuffer;
-   Bitmap : TBitmap;
-   NormalTexture : PTextureBankItem;
-begin
-   TexGenerator := CTextureGenerator.Create;
-   TexGenerator.SetupFrameBuffer(Buffer,_Size);
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].PaintMeshBumpMapTexture(Buffer,TexGenerator);
-   end;
-   Bitmap := TexGenerator.GetPositionedBitmapFromFrameBuffer(Buffer);
-   TexGenerator.DisposeFrameBuffer(Buffer);
-   // Now we generate a texture that will be used by all meshes.
-   glActiveTexture(GL_TEXTURE0 + _TextureID);
-   Bitmap.SaveToFile('last_bumpmapping_texture.bmp');
-   NormalTexture := GlobalVars.TextureBank.Add(Bitmap);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(Mesh) to High(Mesh) do
-   begin
-      Mesh[i].AddTextureToMesh(_MaterialID,C_TTP_DOT3BUMP,C_SHD_PHONG_DOT3TEX,NormalTexture);
-   end;
-   // Free memory.
-   GlobalVars.TextureBank.Delete(NormalTexture^.GetID);
-   Bitmap.Free;
-   TexGenerator.Free;
-}
-end;
-
 procedure TLOD.ExportTextures(const _BaseDir, _Ext : string; _previewTextures: boolean);
 var
    i : integer;
@@ -949,17 +633,17 @@ end;
 procedure TLOD.ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
 var
    DiffuseBitmap,HeightmapBitmap: TBitmap;
-   TexGenerator: CTextureGenerator;
+//   TexGenerator: CTextureGenerator;
 begin
    DiffuseBitmap := Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE);
-   TexGenerator := CTextureGenerator.Create;
-   HeightmapBitmap := TexGenerator.GenerateHeightMap(DiffuseBitmap);
+//   TexGenerator := CTextureGenerator.Create;
+//   HeightmapBitmap := TexGenerator.GenerateHeightMap(DiffuseBitmap);
    SaveImage(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,HeightMapBitmap);
    if (_previewTextures) then
    begin
       RunAProgram(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,'','');
    end;
-   TexGenerator.Free;
+//   TexGenerator.Free;
    DiffuseBitmap.Free;
    HeightmapBitmap.Free;
 end;

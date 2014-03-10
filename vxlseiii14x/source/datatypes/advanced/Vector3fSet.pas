@@ -1,7 +1,8 @@
 unit Vector3fSet;
+
 interface
 
-uses BasicDataTypes, BaseSet;
+uses BasicMathsTypes, BaseSet;
 
 type
    CVector3fSet = class (CBaseSet)

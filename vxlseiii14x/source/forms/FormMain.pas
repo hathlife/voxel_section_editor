@@ -7,23 +7,23 @@ unit FormMain;
 interface
 
 uses
-  Windows, BasicDataTypes, Messages, SysUtils, Variants, Classes, Graphics, Controls,
-  Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls, Voxel, ComCtrls,
-  ToolWin, ImgList, Math, palette, Spin, Buttons, FTGifAnimate, undo_engine,
-  ShellAPI,Constants,pause,FormNewVxlUnit, mouse,Registry,Form3dpreview,
-  Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL, HVABank,
-  ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
+  Windows, BasicMathsTypes, BasicDataTypes, Messages, SysUtils, Variants, Classes,
+  Graphics, Controls, Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls,
+  Voxel, ComCtrls, ToolWin, ImgList, Math, palette, Spin, Buttons, FTGifAnimate,
+  VoxelUndoEngine, ShellAPI, Constants, pause, FormNewVxlUnit, mouse, Registry,
+  Form3dpreview, Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
+  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
   RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
   Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
   FormHeightmap, ImageIOUtils, FormTopologyAnalysis, IsoSurfaceFile,
-  TopologyFixer, FillUselessGapsTool;
+  TopologyFixer, FillUselessGapsTool, BasicVXLSETypes;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.150';
+   APPLICATION_VER = '1.39.200';
    APPLICATION_BETA = true;
 
 type
@@ -668,7 +668,8 @@ implementation
 
 uses FormHeaderUnit, LoadForm, FormNewSectionSizeUnit, FormPalettePackAbout, HVA,
    FormReplaceColour, FormVoxelTexture, FormBoundsManager, FormImportSection,
-   FormFullResize, FormPreferences, FormVxlError, Config;
+   FormFullResize, FormPreferences, FormVxlError, Config, ActorActionController,
+   ModelUndoEngine;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -712,6 +713,11 @@ begin
    begin
       AutoRepair(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
    end;
+   // ensure that ocl scripts exists
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/opencl/origami.cl')) then
+   begin
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '/opencl/origami.cl');
+   end;
 
    GlobalVars.Render := TRender.Create(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'shaders');
    GlobalVars.Documents := TVoxelDocumentBank.Create;
@@ -728,6 +734,10 @@ begin
    end;
 
    // 1.4x New Render starts here.
+   GlobalVars.ActorController := TActorActionController.Create;
+   GlobalVars.ModelUndoEngine := TModelUndoRedo.Create;
+   GlobalVars.ModelRedoEngine := TModelUndoRedo.Create;
+
    Env := (GlobalVars.Render.AddEnvironment(OGL3DPreview.Handle,OGL3DPreview.Width,OGL3DPreview.Height))^;
    Actor := Env.AddActor;
    Camera := Env.CurrentCamera^;
@@ -1103,11 +1113,15 @@ begin
    Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
    if p_Frm3DPreview <> nil then
    begin
-      if High(p_Frm3DPreview^.Actor.Models) >= 0 then
+      if High(p_Frm3DPreview^.Actor^.Models) >= 0 then
       begin
-         p_Frm3DPreview^.Actor.Clear;
+         GlobalVars.ModelUndoEngine.Remove(p_Frm3DPreview^.Actor.Models[0]^.ID);
+         p_Frm3DPreview^.Actor^.Clear;
+         GlobalVars.ActorController.TerminateObject(p_Frm3DPreview^.Actor);
       end;
-      p_Frm3DPreview^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
+      p_Frm3DPreview^.Actor^.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DPreview^.GetQualityModel);
+      GlobalVars.ActorController.DoLoadModel(p_Frm3DPreview^.Actor, p_Frm3DPreview^.GetQualityModel);
+      GlobalVars.ActorController.SetBaseObject(p_Frm3DPreview^.Actor);
       p_Frm3DPreview^.SetActorModelTransparency;
       p_Frm3DPreview^.UpdateQualityUI;
 
@@ -1116,11 +1130,15 @@ begin
    end;
    if p_Frm3DModelizer <> nil then
    begin
-      if High(p_Frm3DModelizer^.Actor.Models) >= 0 then
+      if High(p_Frm3DModelizer^.Actor^.Models) >= 0 then
       begin
-         p_Frm3DModelizer^.Actor.Clear;
+         GlobalVars.ModelUndoEngine.Remove(p_Frm3DModelizer^.Actor.Models[0]^.ID);
+         p_Frm3DModelizer^.Actor^.Clear;
+         GlobalVars.ActorController.TerminateObject(p_Frm3DModelizer^.Actor);
       end;
-      p_Frm3DModelizer^.Actor.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
+      p_Frm3DModelizer^.Actor^.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
+      GlobalVars.ActorController.DoLoadModel(p_Frm3DModelizer^.Actor, p_Frm3DModelizer^.GetQualityModel);
+      GlobalVars.ActorController.SetBaseObject(p_Frm3DModelizer^.Actor);
       p_Frm3DModelizer^.SetActorModelTransparency;
       p_Frm3DModelizer^.UpdateQualityUI;
 
@@ -1161,6 +1179,9 @@ procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
    VoxelOpen := false;
    IsEditable := false;
+   GlobalVars.ModelUndoEngine.Free;
+   GlobalVars.ModelRedoEngine.Free;
+   GlobalVars.ActorController.Free;
    GlobalVars.Render.Free;
    GlobalVars.Documents.Free;
    GlobalVars.VoxelBank.Free;
@@ -1194,7 +1215,8 @@ begin
       Actor^.RebuildActor;
    if p_Frm3DPreview <> nil then
    begin
-      p_Frm3DPreview^.Actor.RebuildActor;
+      GlobalVars.ActorController.DoRebuildModel(p_Frm3DPreview^.Actor, p_Frm3DPreview^.GetQualityModel);
+      //p_Frm3DPreview^.Actor^.RebuildActor;
    end;
 end;
 
@@ -3676,7 +3698,7 @@ begin
       Actor^.ChangePalette(_Filename);
    if p_Frm3DPreview <> nil then
    begin
-      p_Frm3DPreview^.Actor.ChangePalette(_Filename);
+      p_Frm3DPreview^.Actor^.ChangePalette(_Filename);
    end;
    cnvPalette.Repaint;
    RefreshAll;

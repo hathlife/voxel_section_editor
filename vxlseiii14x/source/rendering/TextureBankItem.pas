@@ -2,8 +2,8 @@ unit TextureBankItem;
 
 interface
 
-uses dglOpenGL, BasicDataTypes, BasicFunctions, Windows, Graphics, JPEG,
-   PNGImage, DDS, SysUtils, Abstract2DImageData, Dialogs;
+uses dglOpenGL, BasicMathsTypes, BasicDataTypes, BasicFunctions, Windows, Graphics,
+   JPEG, PNGImage, DDS, SysUtils, Abstract2DImageData, Dialogs;
 
 type
    TTextureBankItem = class

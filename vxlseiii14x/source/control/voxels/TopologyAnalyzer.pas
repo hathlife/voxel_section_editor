@@ -36,7 +36,7 @@ type
 
 implementation
 
-uses SysUtils, Normals, BasicDataTypes, BasicConstants, GLConstants;
+uses SysUtils, Normals, BasicMathsTypes, BasicConstants, GLConstants;
 
 // Constructors and Destructors.
 constructor CTopologyAnalyzer.Create(const _Map: TVoxelMap);

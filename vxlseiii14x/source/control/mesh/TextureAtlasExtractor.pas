@@ -2,7 +2,7 @@ unit TextureAtlasExtractor;
 
 interface
 
-uses GLConstants, BasicDataTypes, Geometry, NeighborDetector,
+uses GLConstants, BasicMathsTypes, BasicDataTypes, Geometry, NeighborDetector, LOD,
    IntegerList, Math, VertexTransformationUtils, NeighborhoodDataPlugin,
    MeshPluginBase, SysUtils, GeometricAlgebra, Multivector, TextureAtlasExtractorBase;
 
@@ -19,9 +19,12 @@ type
          function GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
       public
          // Constructors and Destructors
-         constructor Create; overload;
-         constructor Create(_TextureAngle: single); overload;
+         constructor Create(var _LOD: TLOD); overload;
+         constructor Create(var _LOD: TLOD; _TextureAngle: single); overload;
          // Executes
+         procedure Execute(); override;
+         procedure ExecuteWithDiffuseTexture(_Size: integer); override;
+
          function GetTextureCoordinates(var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace: integer): TAVector2f;
          // Texture atlas buildup: step by step.
          function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
@@ -29,19 +32,96 @@ type
 
 implementation
 
-uses Math3d, GlobalVars;
+uses Math3d, GlobalVars, TextureGeneratorBase, DiffuseTextureGenerator, StopWatch,
+   MeshBRepGeometry;
 
-constructor CTextureAtlasExtractor.Create;
+constructor CTextureAtlasExtractor.Create(var _LOD: TLOD);
 begin
+   FLOD := _LOD;
    FTextureAngle := C_TEX_MIN_ANGLE;
    Initialize;
 end;
 
-constructor CTextureAtlasExtractor.Create(_TextureAngle : single);
+constructor CTextureAtlasExtractor.Create(var _LOD: TLOD; _TextureAngle : single);
 begin
+   FLOD := _LOD;
    FTextureAngle := _TextureAngle;
    Initialize;
 end;
+
+procedure CTextureAtlasExtractor.Execute();
+var
+   i : integer;
+   Seeds: TSeedSet;
+   VertsSeed : TInt32Map;
+   NeighborhoodPlugin: PMeshPluginBase;
+begin
+   // First, we'll build the texture atlas.
+   SetLength(VertsSeed,High(FLOD.Mesh)+1);
+   SetLength(Seeds,0);
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+      NeighborhoodPlugin := FLOD.Mesh[i].GetPlugin(C_MPL_NEIGHBOOR);
+      FLOD.Mesh[i].Geometry.GoToFirstElement;
+      FLOD.Mesh[i].TexCoords := GetMeshSeeds(i,FLOD.Mesh[i].Vertices,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).Normals,FLOD.Mesh[i].Normals,FLOD.Mesh[i].Colours,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).Faces,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,Seeds,VertsSeed[i],NeighborhoodPlugin);
+      if NeighborhoodPlugin <> nil then
+      begin
+         TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+      end;
+   end;
+   MergeSeeds(Seeds);
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      GetFinalTextureCoordinates(Seeds,VertsSeed[i],FLOD.Mesh[i].TexCoords);
+   end;
+   // Free memory.
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+   end;
+   SetLength(VertsSeed,0);
+end;
+
+procedure CTextureAtlasExtractor.ExecuteWithDiffuseTexture(_Size: integer);
+var
+   i : integer;
+   Seeds: TSeedSet;
+   VertsSeed : TInt32Map;
+   TexGenerator: CTextureGeneratorBase;
+   NeighborhoodPlugin: PMeshPluginBase;
+begin
+   // First, we'll build the texture atlas.
+   SetLength(VertsSeed,High(FLOD.Mesh)+1);
+   SetLength(Seeds,0);
+   TexGenerator := CDiffuseTextureGenerator.Create(FLOD,_Size,0,0);
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+      NeighborhoodPlugin := FLOD.Mesh[i].GetPlugin(C_MPL_NEIGHBOOR);
+      FLOD.Mesh[i].Geometry.GoToFirstElement;
+      FLOD.Mesh[i].TexCoords := GetMeshSeeds(i,FLOD.Mesh[i].Vertices,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).Normals,FLOD.Mesh[i].Normals,FLOD.Mesh[i].Colours,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).Faces,(FLOD.Mesh[i].Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,Seeds,VertsSeed[i],NeighborhoodPlugin);
+      if NeighborhoodPlugin <> nil then
+      begin
+         TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
+      end;
+   end;
+   MergeSeeds(Seeds);
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      GetFinalTextureCoordinates(Seeds,VertsSeed[i],FLOD.Mesh[i].TexCoords);
+   end;
+   // Now we build the diffuse texture.
+   TexGenerator.Execute();
+   // Free memory.
+   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   begin
+      SetLength(VertsSeed[i],0);
+   end;
+   SetLength(VertsSeed,0);
+   TexGenerator.Free;
+end;
+
 
 // Angle operations
 function CTextureAtlasExtractor.GetVectorAngle(_Vec1, _Vec2: TVector3f): single;
@@ -106,7 +186,7 @@ begin
    // Add starting face
    List.Add(_StartingFace);
    _CheckFace[_StartingFace] := true;
-   Result.TransformMatrix := VertexUtil.GetTransformMatrixFromVector(_FaceNormals[_StartingFace]);
+   Result.TransformMatrix := VertexUtil.GetRotationMatrixFromVector(_FaceNormals[_StartingFace]);
    Result.MinBounds.U := 999999;
    Result.MaxBounds.U := -999999;
    Result.MinBounds.V := 999999;

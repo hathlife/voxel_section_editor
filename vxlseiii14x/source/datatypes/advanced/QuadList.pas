@@ -2,7 +2,7 @@ unit QuadList;
 
 interface
 
-uses BasicDataTypes, BasicConstants;
+uses BasicRenderingTypes, BasicConstants;
 
 type
    CQuadList = class

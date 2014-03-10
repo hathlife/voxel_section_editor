@@ -6,7 +6,7 @@ unit HVA;
 
 interface
 
-uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, BasicDataTypes, math3d,
+uses dialogs,sysutils,dglOpenGL, Voxel, Geometry, BasicMathsTypes, math3d,
    BasicFunctions;
 
 type

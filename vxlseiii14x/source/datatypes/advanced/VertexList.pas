@@ -2,7 +2,7 @@ unit VertexList;
 
 interface
 
-uses BasicDataTypes;
+uses BasicRenderingTypes;
 
 type
    CVertexList = class

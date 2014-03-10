@@ -7,6 +7,7 @@ uses Model, ModelBankItem, SysUtils, Voxel, HVA, Palette, GlConstants, ShaderBan
 type
    TModelBank = class
       private
+         FNextID: integer;
          Items : array of TModelBankItem;
          // Constructors and Destructors
          procedure Clear;
@@ -17,7 +18,7 @@ type
          function SearchReadOnly(const _Filename: string): integer; overload;
          function SearchReadOnly(const _Model: PModel): integer; overload;
          function SearchReadOnly(const _Voxel: PVoxel): integer; overload;
-         function SearchEditable(const _Model: PModel): integer;
+         function SearchEditable(const _Model: PModel): integer; overload;
       public
          // Constructors and Destructors
          constructor Create;
@@ -39,6 +40,13 @@ type
          function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          // Deletes
          procedure Delete(const _Model : PModel);
+         // Search
+         function Search(const _ID: integer): TModel; overload;
+         function SearchReadOnly(const _ID: integer): TModel; overload;
+         function SearchEditable(const _ID: integer): TModel; overload;
+
+         // Properties
+         property NextID: integer read FNextID;
    end;
 
 
@@ -50,6 +58,7 @@ uses GlobalVars;
 constructor TModelBank.Create;
 begin
    SetLength(Items,0);
+   FNextID := 0;
 end;
 
 destructor TModelBank.Destroy;
@@ -83,6 +92,7 @@ begin
          Items[i].Free;
          Items[i] := TModelBankItem.Create(_Filename,_ShaderBank);
          Items[i].SetEditable(true);
+         inc(FNextID);
          Result := Items[i].GetModel;
       end
       else
@@ -90,6 +100,7 @@ begin
          SetLength(Items,High(Items)+2);
          Items[High(Items)] := TModelBankItem.Create(_Filename,_ShaderBank);
          Items[High(Items)].SetEditable(true);
+         inc(FNextID);
          Result := Items[High(Items)].GetModel;
       end;
    end
@@ -98,6 +109,7 @@ begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Filename,_ShaderBank);
       Items[High(Items)].SetEditable(true);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -183,6 +195,27 @@ begin
    end;
 end;
 
+function TModelBank.Search(const _ID: integer): TModel;
+var
+   i : integer;
+begin
+   Result := nil;
+   if (_ID < 0) then
+      exit;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if Items[i].GetModel <> nil then
+      begin
+         if _ID = Items[i].GetModel^.ID then
+         begin
+            Result := Items[i].GetModel^;
+            exit;
+         end;
+      end;
+      inc(i);
+   end;
+end;
 
 function TModelBank.SearchReadOnly(const _filename: string): integer;
 var
@@ -253,6 +286,30 @@ begin
    end;
 end;
 
+function TModelBank.SearchReadOnly(const _ID: integer): TModel;
+var
+   i : integer;
+begin
+   Result := nil;
+   if _ID < 0 then
+      exit;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if not Items[i].GetEditable then
+      begin
+         if Items[i].GetModel <> nil then
+         begin
+            if _ID = Items[i].GetModel^.ID then
+            begin
+               Result := Items[i].GetModel^;
+               exit;
+            end;
+         end;
+      end;
+      inc(i);
+   end;
+end;
 
 function TModelBank.SearchEditable(const _Model: PModel): integer;
 var
@@ -276,6 +333,29 @@ begin
    end;
 end;
 
+function TModelBank.SearchEditable(const _ID: integer): TModel;
+var
+   i : integer;
+begin
+   Result := nil;
+   if _ID < 0 then
+      exit;
+   i := Low(Items);
+   while i <= High(Items) do
+   begin
+      if Items[i].GetEditable then
+      begin
+         if _ID = Items[i].GetModel^.ID then
+         begin
+            Result := Items[i].GetModel^;
+            exit;
+         end;
+      end;
+      inc(i);
+   end;
+end;
+
+
 
 
 function TModelBank.Add(const _filename: string; _ShaderBank : PShaderBank): PModel;
@@ -292,6 +372,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Filename,_ShaderBank);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -310,6 +391,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Model);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -328,6 +410,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_ShaderBank,_Quality);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -336,6 +419,7 @@ function TModelBank.Add(const _VoxelSection: PVoxelSection; const _Palette: PPal
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_ShaderBank,_Quality);
+   inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -353,6 +437,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Filename,_ShaderBank);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -371,6 +456,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Model);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -389,6 +475,7 @@ begin
    begin
       SetLength(Items,High(Items)+2);
       Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_ShaderBank,_Quality);
+      inc(FNextID);
       Result := Items[High(Items)].GetModel;
    end;
 end;
@@ -397,6 +484,7 @@ function TModelBank.AddReadOnly(const _VoxelSection: PVoxelSection; const _Palet
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_VoxelSection,_Palette,_ShaderBank,_Quality);
+   inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -405,6 +493,7 @@ function TModelBank.Clone(const _filename: string; _ShaderBank : PShaderBank): P
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_Filename,_ShaderBank);
+   inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -412,6 +501,7 @@ function TModelBank.Clone(const _Model: PModel): PModel;
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_Model);
+   inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
 
@@ -419,6 +509,7 @@ function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette
 begin
    SetLength(Items,High(Items)+2);
    Items[High(Items)] := TModelBankItem.Create(_Voxel,_HVA,_Palette,_ShaderBank,_Quality);
+   inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
 

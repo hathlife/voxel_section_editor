@@ -2,7 +2,7 @@ unit VertexQueue;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 type
    PVertexData = ^TVertexData;

@@ -7,7 +7,7 @@ unit ThreeDMap;
 
 interface
 
-uses BasicDataTypes, ThreeDPointList, Normals, BasicConstants, Voxel_Engine,
+uses BasicMathsTypes, BasicDataTypes, ThreeDPointList, Normals, BasicConstants, Voxel_Engine,
    Math, Dialogs, SysUtils, BasicFunctions;
 
 type

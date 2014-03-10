@@ -2,7 +2,7 @@ unit BumpMapDataPlugin;
 
 interface
 
-uses BasicDataTypes, MeshPluginBase, Math3d, GlConstants;
+uses BasicMathsTypes, BasicDataTypes, MeshPluginBase, Math3d, GlConstants;
 
 type
    TBumpMapDataPlugin = class (TMeshPluginBase)

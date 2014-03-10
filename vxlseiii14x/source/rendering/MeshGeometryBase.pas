@@ -28,6 +28,7 @@ type
          procedure ForceRefresh; virtual;
          // Sets
          procedure SetColoursType(_ColoursType: integer); virtual;
+         procedure SetColourGenStructure(_ColoursType: integer); virtual;
          procedure SetNormalsType(_NormalsType: integer); virtual;
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer); virtual;
          procedure ForceColoursRendering; virtual;
@@ -115,6 +116,11 @@ begin
 end;
 
 procedure TMeshGeometryBase.SetColoursType(_ColoursType: integer);
+begin
+   // do nothing
+end;
+
+procedure TMeshGeometryBase.SetColourGenStructure(_ColoursType: integer);
 begin
    // do nothing
 end;

@@ -3,7 +3,7 @@ unit GlobalVars;
 interface
 
 uses Palette, HVA, VoxelBank, HVABank, ModelBank, VoxelDocumentBank, Render, Debug,
-   SysUtils, TextureBank, ShaderBank, SysInfo;
+   SysUtils, TextureBank, ShaderBank, SysInfo, ModelUndoEngine, ActorActionController;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -15,6 +15,9 @@ var
    TextureBank : TTextureBank;
    Render : TRender;
    SysInfo: TSysInfo;
+   ModelUndoEngine: TModelUndoRedo;
+   ModelRedoEngine: TModelUndoRedo;
+   ActorController: TActorActionController;
    {$ifdef SPEED_TEST}
    SpeedFile: TDebugFile;
    {$endif}

@@ -2,7 +2,7 @@ unit NeighborDetector;
 
 interface
 
-uses BasicDataTypes, SysUtils, Windows, MeshGeometryList;
+uses BasicMathsTypes, BasicDataTypes, BasicRenderingTypes, SysUtils, Windows, MeshGeometryList;
 
 const
    C_NEIGHBTYPE_VERTEX_VERTEX = 0;     // vertex neighbors of vertexes.

@@ -2,37 +2,33 @@ unit Mesh;
 
 interface
 
-uses math3d, voxel_engine, dglOpenGL, GLConstants, Graphics, Voxel, Normals,
-      BasicDataTypes, BasicFunctions, Palette, VoxelMap, Dialogs, SysUtils,
-      BasicConstants, Math, NeighborDetector,
-      IntegerList, StopWatch, ShaderBank, ShaderBankItem, TextureBank,
-      TextureBankItem, TextureGenerator, IntegerSet,
-      MeshOptimizationTool, Material, VoxelMeshGenerator, Vector3fSet,
-      MeshPluginBase, NormalsMeshPlugin, NeighborhoodDataPlugin, BumpMapDataPlugin,
-      MeshNormalsTool, MeshColoursTool, MeshProcessingTool,
-      TextureAtlasExtractorBase, Abstract2DImageData, ImageRGBAByteData,
-      MeshGeometryList, MeshBRepGeometry, MeshGeometryBase, Histogram, Debug,
-      TextureAtlasExtractor, TextureAtlasExtractorOrigami, TextureAtlasExtractorOrigamiGA;
+uses dglOpenGL, GLConstants, Graphics, Voxel, Normals, BasicMathsTypes, BasicDataTypes,
+      BasicRenderingTypes, Palette, Dialogs, SysUtils, IntegerList, StopWatch,
+      ShaderBank, ShaderBankItem, TextureBank, TextureBankItem, IntegerSet,
+      Material, Vector3fSet, MeshPluginBase, MeshGeometryList, MeshGeometryBase,
+      Histogram, Debug;
 
 {$INCLUDE source/Global_Conditionals.inc}
 type
+   TGetCardinalAttr = function: cardinal of object;
    TMesh = class
       private
-         ColoursType : byte;
          ColourGenStructure : byte;
          TransparencyLevel : single;
          Opened : boolean;
-         // For multi-texture rendering purposes
-//         CurrentPass : integer;
-         // SetShaderAttributes procedure for rendering bump maps
-//         SetShaderAttributes : TSetShaderAttributesFunc;
-//         SetShaderUniform : TSetShaderUniformFunc;
+         NumVertices: cardinal;
+         LastVertex: cardinal;
          // I/O
          procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
          procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
+         // Gets
+         function GetNumVerticesCompressed: cardinal;
+         function GetNumVerticesUnCompressed: cardinal;
+         function GetLastVertexCompressed: cardinal;
+         function GetLastVertexUnCompressed: cardinal;
          // Sets
          // Mesh
          procedure MeshSmoothOperation(_DistanceFunction : TDistanceFunc);
@@ -44,21 +40,6 @@ type
          // Colours
          procedure ApplyColourSmooth(_DistanceFunction : TDistanceFunc);
          procedure ConvertFaceToVertexColours(_DistanceFunction : TDistanceFunc); overload;
-         // Distance Functions
-         function GetIgnoredDistance(_Distance : single): single;
-         function GetLinearDistance(_Distance : single): single;
-         function GetLinear1DDistance(_Distance : single): single;
-         function GetCubicDistance(_Distance : single): single;
-         function GetCubic1DDistance(_Distance : single): single;
-         function GetQuadric1DDistance(_Distance : single): single;
-         function GetLanczosDistance(_Distance : single): single;
-         function GetLanczos1DA1Distance(_Distance : single): single;
-         function GetLanczos1DA3Distance(_Distance : single): single;
-         function GetLanczos1DACDistance(_Distance : single): single;
-         function GetSinc1DDistance(_Distance : single): single;
-         function GetEuler1DDistance(_Distance : single): single;
-         function GetEulerSquared1DDistance(_Distance : single): single;
-         function GetSincInfinite1DDistance(_Distance : single): single;
          // Materials
          procedure AddMaterial;
          procedure DeleteMaterial(_ID: integer);
@@ -74,6 +55,7 @@ type
          // Graphical atributes goes here
 //         FaceType : GLINT; // GL_QUADS for quads, and GL_TRIANGLES for triangles
 //         VerticesPerFace : byte; // for optimization purposes only.
+         ColoursType : byte;
          NormalsType : byte;
          NumFaces : longword;
          NumVoxels : longword; // for statistic purposes.
@@ -83,6 +65,8 @@ type
 //         Faces : auint32;
          TexCoords : TAVector2f;
          Geometry: CMeshGeometryList;
+         GetNumVertices: TGetCardinalAttr;
+         GetLastVertex: TGetCardinalAttr;
 //         FaceNormals : TAVector3f;
          Materials : TAMeshMaterial;
          // Graphical and colision
@@ -110,6 +94,7 @@ type
          procedure RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
          // Sets
          procedure SetColoursType(_ColoursType: integer);
+         procedure SetColourGenStructure(_ColoursType: integer);
          procedure SetNormalsType(_NormalsType: integer);
          procedure SetColoursAndNormalsType(_ColoursType, _NormalsType: integer);
          procedure ForceColoursRendering;
@@ -155,7 +140,7 @@ type
          // Normals related
          procedure ReNormalizeMesh;
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
-         procedure ConvertFaceToVertexNormals;
+         procedure SetVertexNormals;
          procedure TransformFaceToVertexNormals;
          procedure NormalSmooth;
          procedure NormalLinearSmooth;
@@ -163,14 +148,6 @@ type
          procedure NormalLanczosSmooth;
 
          // Texture related.
-         procedure GenerateDiffuseTexture;
-         procedure GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractor);
-         procedure GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigami);
-         procedure GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigamiGA);
-         procedure GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorBase);
-         procedure PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
-         procedure PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
-         procedure PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
          procedure AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
          procedure ExportTextures(const _BaseDir, _Ext : string; var _UsedTextures : CIntegerSet; _previewTextures: boolean);
          procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
@@ -217,6 +194,11 @@ type
          // Miscelaneous
          procedure ForceTransparencyLevel(_TransparencyLevel : single);
 
+         // Uncompres to let it add vertices faster. Compress (default) to make it more compact.
+         procedure UncompressMesh;
+         procedure CompressMesh;
+         procedure AddVertices(_NumVertices: cardinal);
+
          // Debug
          procedure Debug(const _Debug:TDebugFile);
          procedure DebugVertexPositions(const _Debug:TDebugFile);
@@ -228,7 +210,10 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, DistanceFormulas, VoxelMeshGenerator, NormalsMeshPlugin,
+   NeighborhoodDataPlugin, MeshBRepGeometry, BumpMapDataPlugin, BasicConstants,
+   MeshOptimizationTool, MeshColoursTool, MeshProcessingTool, BasicFunctions,
+   NeighborDetector, MeshNormalsTool, Math3D;
 
 constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank);
 begin
@@ -265,11 +250,15 @@ begin
    Next := -1;
    Son := -1;
    SetLength(Plugins,0);
+   GetNumVertices := GetNumVerticesCompressed;
+   GetLastVertex := GetLastVertexCompressed;
 end;
 
 constructor TMesh.Create(const _Mesh : TMesh);
 begin
    Assign(_Mesh);
+   GetNumVertices := GetNumVerticesCompressed;
+   GetLastVertex := GetLastVertexCompressed;
 end;
 
 constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _ShaderBank: PShaderBank; _Quality: integer = C_QUALITY_CUBED);
@@ -310,31 +299,31 @@ begin
       C_QUALITY_LANCZOS_QUADS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
+//         MeshLanczosSmooth;
       end;
       C_QUALITY_2LANCZOS_4TRIS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
-         RebuildFaceNormals;
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
-         ConvertQuadsTo48Tris;
+//         MeshLanczosSmooth;
+//         RebuildFaceNormals;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
+//         ConvertQuadsTo48Tris;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
-         ConvertQuadsToTris;
-         RebuildFaceNormals;
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
+//         MeshLanczosSmooth;
+//         ConvertQuadsToTris;
+//         RebuildFaceNormals;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
       end;
       C_QUALITY_SMOOTH_MANIFOLD:
       begin
          LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
       end;
    end;
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
@@ -342,6 +331,8 @@ begin
    IsSelected := false;
    Next := -1;
    Son := -1;
+   GetNumVertices := GetNumVerticesCompressed;
+   GetLastVertex := GetLastVertexCompressed;
 end;
 
 destructor TMesh.Destroy;
@@ -395,31 +386,31 @@ begin
       C_QUALITY_LANCZOS_QUADS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
+//         MeshLanczosSmooth;
       end;
       C_QUALITY_2LANCZOS_4TRIS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
-         RebuildFaceNormals;
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
-         ConvertQuadsTo48Tris;
+//         MeshLanczosSmooth;
+//         RebuildFaceNormals;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
+//         ConvertQuadsTo48Tris;
       end;
       C_QUALITY_LANCZOS_TRIS:
       begin
          LoadFromVisibleVoxels(_Voxel,_Palette);
-         MeshLanczosSmooth;
-         ConvertQuadsToTris;
-         RebuildFaceNormals;
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
+//         MeshLanczosSmooth;
+//         ConvertQuadsToTris;
+//         RebuildFaceNormals;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
       end;
       C_QUALITY_SMOOTH_MANIFOLD:
       begin
          LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-         ConvertFaceToVertexNormals;
-         ConvertFaceToVertexColours;
+//         SetVertexNormals;
+//         ConvertFaceToVertexColours;
       end;
    end;
    if HasNormalsMeshPlugin then
@@ -566,72 +557,72 @@ end;
 // Mesh Effects.
 procedure TMesh.MeshQuadricSmooth;
 begin
-   MeshSmoothOperation(GetQuadric1DDistance);
+   MeshSmoothOperation(GetQuadricDistance);
 end;
 
 procedure TMesh.MeshCubicSmooth;
 begin
-   MeshSmoothOperation(GetCubic1DDistance);
+   MeshSmoothOperation(GetCubicDistance);
 end;
 
 procedure TMesh.MeshLanczosSmooth;
 begin
-   LimitedMeshSmoothOperation(GetLanczos1DACDistance);
+   LimitedMeshSmoothOperation(GetLanczosInvACDistance);
 end;
 
 procedure TMesh.MeshSincSmooth;
 begin
-   MeshSmoothOperation(GetSinc1DDistance);
+   MeshSmoothOperation(GetSincInvDistance);
 end;
 
 procedure TMesh.MeshEulerSmooth;
 begin
-   MeshSmoothOperation(GetEuler1DDistance);
+   MeshSmoothOperation(GetEulerDistance);
 end;
 
 procedure TMesh.MeshEulerSquaredSmooth;
 begin
-   MeshSmoothOperation(GetEulerSquared1DDistance);
+   MeshSmoothOperation(GetEulerSquaredDistance);
 end;
 
 procedure TMesh.MeshSincInfiniteSmooth;
 begin
-   MeshSmoothOperation(GetSincInfinite1DDistance);
+   MeshSmoothOperation(GetSincInfiniteInvDistance);
 end;
 
 procedure TMesh.MeshQuadricSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetQuadric1DDistance);
+   VolumeMeshSmoothOperation(GetQuadricDistance);
 end;
 
 procedure TMesh.MeshCubicSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetCubic1DDistance);
+   VolumeMeshSmoothOperation(GetCubicDistance);
 end;
 
 procedure TMesh.MeshLanczosSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetLanczos1DACDistance);
+   VolumeMeshSmoothOperation(GetLanczosInvACDistance);
 end;
 
 procedure TMesh.MeshSincSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetSinc1DDistance);
+   VolumeMeshSmoothOperation(GetSincInvDistance);
 end;
 
 procedure TMesh.MeshEulerSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetEuler1DDistance);
+   VolumeMeshSmoothOperation(GetEulerDistance);
 end;
 
 procedure TMesh.MeshEulerSquaredSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetEulerSquared1DDistance);
+   VolumeMeshSmoothOperation(GetEulerSquaredDistance);
 end;
 
 procedure TMesh.MeshSincInfiniteSmooth2;
 begin
-   VolumeMeshSmoothOperation(GetSincInfinite1DDistance);
+   VolumeMeshSmoothOperation(GetSincInfiniteInvDistance);
 end;
 
 procedure TMesh.MeshSmooth2;
@@ -1282,7 +1273,7 @@ end;
 
 procedure TMesh.NormalCubicSmooth;
 begin
-   SmoothNormalsOperation(GetCubic1DDistance);
+   SmoothNormalsOperation(GetCubicDistance);
 end;
 
 procedure TMesh.NormalLanczosSmooth;
@@ -1307,7 +1298,7 @@ begin
    {$endif}
    Tool := TMeshNormalsTool.Create;
    Geometry.GoToFirstElement;
-   Tool.RebuildFaceNormals((Geometry.Current^ as TMeshBRepGeometry).Normals,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces);
+   Tool.GetFaceNormals((Geometry.Current^ as TMeshBRepGeometry).Normals,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces);
    // If it uses vertex normals, it will normalize vertexes.
    if (NormalsType and C_NORMALS_PER_VERTEX) <> 0 then
    begin
@@ -1336,7 +1327,7 @@ begin
          VertexEquivalences := nil;
          NumVertices := High(Vertices)+1;
       end;
-      Tool.TransformFaceToVertexNormals(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
+      Tool.GetVertexNormalsFromFaces(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
       // Free Memory
       if NeighborhoodPlugin = nil then
       begin
@@ -1403,7 +1394,7 @@ begin
       NumVertices := High(Vertices)+1;
    end;
    SetLength(Normals,High(Vertices)+1);
-   Tool.TransformFaceToVertexNormals(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
+   Tool.GetVertexNormalsFromFaces(Normals,MyNormals,Vertices,NumVertices,NeighborDetector,VertexEquivalences);
    // Free memory
    Tool.Free;
    if NeighborhoodPlugin = nil then
@@ -1412,27 +1403,13 @@ begin
    end;
 end;
 
-procedure TMesh.ConvertFaceToVertexNormals;
-   {$ifdef SPEED_TEST}
-var
-   StopWatch : TStopWatch;
-   {$endif}
+procedure TMesh.SetVertexNormals;
 begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
    if (NormalsType and C_NORMALS_PER_VERTEX) = 0 then
    begin
       NormalsType := C_NORMALS_PER_VERTEX;
-      SetLength(Normals,High(Vertices)+1);
-      TransformFaceToVertexNormals;
       SetNormalsType(C_NORMALS_PER_VERTEX);
    end;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Face To Vertex Normals Conversion for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
 end;
 
 function TMesh.GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
@@ -1516,159 +1493,6 @@ begin
 end;
 
 // Texture related.
-// -- DEPRECATED (still works, but avoid using it). Check LOD.pas instead.
-procedure TMesh.GenerateDiffuseTexture;
-var
-   AtlasExtractor: CTextureAtlasExtractor;
-   TexGenerator: CTextureGenerator;
-   Bitmap : TBitmap;
-   AlphaMap : TByteMap;
-   NeighborhoodPlugin: PMeshPluginBase;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   RebuildFaceNormals;
-   AtlasExtractor := CTextureAtlasExtractor.Create;
-   TexGenerator := CTextureGenerator.Create;
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   Geometry.GoToFirstElement;
-   TexCoords := AtlasExtractor.GetTextureCoordinates(Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,NeighborhoodPlugin,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace);
-   if NeighborhoodPlugin <> nil then
-   begin
-      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
-   end;
-   ClearMaterials;
-   AddMaterial;
-   SetLength(Materials[0].Texture,1);
-   glActiveTexture(GL_TEXTURE0);
-   Bitmap := TexGenerator.GenerateDiffuseTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,1024,AlphaMap);
-   Materials[0].Texture[0] := GlobalVars.TextureBank.Add(Bitmap,AlphaMap);
-   Materials[0].Texture[0]^.TextureType := C_TTP_DIFFUSE;
-   SetLength(AlphaMap,0,0);
-   Bitmap.Free;
-   if ShaderBank <> nil then
-      Materials[0].Shader := ShaderBank^.Get(C_SHD_PHONG_1TEX)
-   else
-      Materials[0].Shader := nil;
-   SetColoursType(C_COLOURS_FROM_TEXTURE);
-   AtlasExtractor.Free;
-   TexGenerator.Free;
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Texture atlas extraction for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-// This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeeds(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractor);
-var
-   NeighborhoodPlugin: PMeshPluginBase;
-begin
-   //RebuildFaceNormals;
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
-   if NeighborhoodPlugin <> nil then
-   begin
-      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
-   end;
-end;
-
-// This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeedsOrigami(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigami);
-var
-   NeighborhoodPlugin: PMeshPluginBase;
-begin
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('The input mesh is:');
-   Debug(GlobalVars.OrigamiFile);
-   {$endif}
-   //RebuildFaceNormals;
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('The output mesh is:');
-   Debug(GlobalVars.OrigamiFile);
-   {$endif}
-   if NeighborhoodPlugin <> nil then
-   begin
-      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
-   end;
-end;
-
-// This function gets a temporary set of coordinates that might become real texture coordinates later on.
-procedure TMesh.GetMeshSeedsOrigamiGA(_MeshID: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorOrigamiGA);
-var
-   NeighborhoodPlugin: PMeshPluginBase;
-begin
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('The input mesh is:');
-   Debug(GlobalVars.OrigamiFile);
-   {$endif}
-   //RebuildFaceNormals;
-   NeighborhoodPlugin := GetPlugin(C_MPL_NEIGHBOOR);
-   Geometry.GoToFirstElement;
-   TexCoords := _TexExtractor.GetMeshSeeds(_MeshID,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Normals,Normals,Colours,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Seeds,_VertsSeed,NeighborhoodPlugin);
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('The output mesh is:');
-   Debug(GlobalVars.OrigamiFile);
-   {$endif}
-   if NeighborhoodPlugin <> nil then
-   begin
-      TNeighborhoodDataPlugin(NeighborhoodPlugin^).DeactivateQuadFaces;
-   end;
-end;
-
-// This one really acquires the final texture coordinates values.
-procedure TMesh.GetFinalTextureCoordinates(var _Seeds: TSeedSet; var _VertsSeed : aint32; const _TexExtractor: CTextureAtlasExtractorBase);
-begin
-   _TexExtractor.GetFinalTextureCoordinates(_Seeds,_VertsSeed,TexCoords);
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('The output texture coordinates are:');
-   DebugVertexTexCoordss(GlobalVars.OrigamiFile);
-   {$endif}
-end;
-
-procedure TMesh.PaintMeshDiffuseTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
-begin
-   Geometry.GoToFirstElement;
-   _TexGenerator.PaintMeshDiffuseTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Colours,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Buffer,_WeightBuffer);
-end;
-
-procedure TMesh.PaintMeshNormalMapTexture(var _Buffer: TAbstract2DImageData; var _WeightBuffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
-begin
-   Geometry.GoToFirstElement;
-   _TexGenerator.PaintMeshNormalMapTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Normals,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Buffer,_WeightBuffer);
-   while Geometry.Current <> nil do
-   begin
-      (Geometry.Current^ as TMeshBRepGeometry).SetNormalMappingShader;
-      Geometry.GoToNextElement;
-   end;
-end;
-
-procedure TMesh.PaintMeshBumpMapTexture(var _Buffer: TAbstract2DImageData; var _TexGenerator: CTextureGenerator);
-var
-   DiffuseMap: TAbstract2DImageData;
-begin
-   DiffuseMap := T2DImageRGBAByteData.Create(0,0);
-   Geometry.GoToFirstElement;
-   Materials[0].GetTextureData(C_TTP_DIFFUSE,DiffuseMap);
-   _TexGenerator.PaintMeshBumpMapTexture((Geometry.Current^ as TMeshBRepGeometry).Faces,Normals,TexCoords,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,_Buffer,DiffuseMap);
-   DiffuseMap.Free;
-   AddBumpMapDataPlugin;
-   while Geometry.Current <> nil do
-   begin
-      (Geometry.Current^ as TMeshBRepGeometry).SetBumpMappingShader;
-      Geometry.GoToNextElement;
-   end;
-end;
-
 procedure TMesh.AddTextureToMesh(_MaterialID, _TextureType, _ShaderID: integer; _Texture:PTextureBankItem);
 begin
    while High(Materials) < _MaterialID do
@@ -1704,6 +1528,21 @@ begin
    while CurrentGeometry <> nil do
    begin
       CurrentGeometry^.SetColoursType(ColoursType);
+      Geometry.GoToNextElement;
+      CurrentGeometry := Geometry.Current;
+   end;
+end;
+
+procedure TMesh.SetColourGenStructure(_ColoursType: integer);
+var
+   CurrentGeometry: PMeshGeometryBase;
+begin
+   ColourGenStructure := _ColoursType and 3;
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      CurrentGeometry^.SetColourGenStructure(ColoursType);
       Geometry.GoToNextElement;
       CurrentGeometry := Geometry.Current;
    end;
@@ -2291,7 +2130,7 @@ begin
    {$endif}
    if (NormalsType = C_NORMALS_PER_FACE) then
    begin
-      ConvertFaceToVertexNormals;
+      SetVertexNormals;
    end;
    RebuildFaceNormals;
    // Check ClassMeshOptimizationTool.pas. Note: _Angle is actually the value of the cosine
@@ -2331,160 +2170,68 @@ begin
    MeshOptimizationIgnoreColours(1);
 end;
 
-// Distance Formulas
-function TMesh.GetIgnoredDistance(_Distance : single): single;
+// Mesh compression and uncompression
+function TMesh.GetNumVerticesCompressed: cardinal;
 begin
-   Result := 1;
+   Result := High(Vertices) + 1;
 end;
 
-function TMesh.GetLinearDistance(_Distance : single): single;
+function TMesh.GetNumVerticesUnCompressed: cardinal;
 begin
-   Result := 1 / (abs(_Distance) + 1);
+   Result := NumVertices;
 end;
 
-function TMesh.GetCubicDistance(_Distance : single): single;
+function TMesh.GetLastVertexCompressed: cardinal;
 begin
-   Result := 1 / (1 + Power(_Distance,3));
+   Result := High(Vertices);
 end;
 
-function TMesh.GetQuadric1DDistance(_Distance : single): single;
-const
-   FREQ_NORMALIZER = 4/3;
+function TMesh.GetLastVertexUnCompressed: cardinal;
 begin
-   Result := Power(FREQ_NORMALIZER * _Distance,2);
-   if _Distance < 0 then
-      Result := Result * -1;
+   Result := LastVertex;
 end;
 
-function TMesh.GetLinear1DDistance(_Distance : single): single;
+procedure TMesh.UncompressMesh;
 begin
-   Result := _Distance;
+   NumVertices := High(Vertices)+1;
+   LastVertex := High(Vertices);
+   GetNumVertices := GetNumVerticesUncompressed;
+   GetLastVertex := GetLastVertexUncompressed;
 end;
 
-function TMesh.GetCubic1DDistance(_Distance : single): single;
-const
-   FREQ_NORMALIZER = 1.5;
+procedure TMesh.CompressMesh;
 begin
-   Result := Power(FREQ_NORMALIZER * _Distance,3);
+   if High(TexCoords) = High(Vertices) then
+      SetLength(TexCoords, NumVertices);
+   if High(Normals) = High(Vertices) then
+      SetLength(Normals, NumVertices);
+   if High(Colours) = High(Vertices) then
+      SetLength(Colours, NumVertices);
+   SetLength(Vertices, NumVertices);
+   GetNumVertices := GetNumVerticesCompressed;
+   GetLastVertex := GetLastVertexCompressed;
 end;
 
-function TMesh.GetLanczosDistance(_Distance : single): single;
-const
-   PIDIV3 = Pi / 3;
-begin
-   Result := ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DA1Distance(_Distance : single): single;
-begin
-   Result := 0;
-   if _Distance <> 0 then
-      Result := 1 - (Power(sin(Pi * _Distance),2) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DA3Distance(_Distance : single): single;
-const
-   PIDIV3 = Pi / 3;
-begin
-   Result := 0;
-   if _Distance <> 0 then
-     Result := 1 - ((3 * sin(Pi * _Distance) * sin(PIDIV3 * _Distance)) / Power(Pi * _Distance,2));
-   if _Distance < 0 then
-     Result := Result * -1;
-end;
-
-function TMesh.GetLanczos1DACDistance(_Distance : single): single;
-const
-   CONST_A = 3;//15;
-   NORMALIZER = 2 * Pi;
-   PIDIVA = Pi / CONST_A;
+procedure TMesh.AddVertices(_NumVertices: Cardinal);
 var
-   Distance: single;
+   NewSize: cardinal;
 begin
-   Result := 0;
-   Distance := _Distance * C_FREQ_NORMALIZER;
-   if _Distance <> 0 then
-//     Result := NORMALIZER * (1 - ((CONST_A * sin(Distance) * sin(Distance / CONST_A)) / Power(Distance,2)));
-     Result := (1 - ((CONST_A * sin(Pi * Distance) * sin(PIDIVA * Distance)) / Power(Pi * Distance,2)));
-   if _Distance < 0 then
-     Result := Result * -1;
-end;
-
-function TMesh.GetSinc1DDistance(_Distance : single): single;
-const
-   NORMALIZER = 2 * Pi; //6.307993515;
-var
-   Distance: single;
-begin
-   Result := 0;
-   Distance := _Distance * C_FREQ_NORMALIZER;
-   if _Distance <> 0 then
-      Result := NORMALIZER * (1 - (sin(Distance) / Distance));
-   if _Distance < 0 then
-      Result := Result * -1;
-end;
-
-function TMesh.GetEuler1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-   Distance : single;
-begin
-   i := 2;
-   Result := 1;
-   c := 0;
-   Distance := abs(_Distance);
-   while c <= 30 do
+   NumVertices := NumVertices + _NumVertices;
+   LastVertex := NumVertices - 1;
+   if NumVertices >= High(Vertices) then
    begin
-      Result := Result * cos(Distance / i);
-      i := i * 2;
-      inc(c);
+      NewSize := NumVertices * 2;
+      if High(TexCoords) = High(Vertices) then
+         SetLength(TexCoords, NewSize);
+      if High(Normals) = High(Vertices) then
+         SetLength(Normals, NewSize);
+      if High(Colours) = High(Vertices) then
+         SetLength(Colours, NewSize);
+      SetLength(Vertices, NewSize);
    end;
-   if _Distance < 0 then
-      Result := -Result;
 end;
 
-function TMesh.GetEulerSquared1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-begin
-   i := 2;
-   Result := 1;
-   c := 0;
-   while c <= 30 do
-   begin
-      Result := Result * cos(_Distance / i);
-      i := i * 2;
-      inc(c);
-   end;
-   Result := Result * Result;
-   if _Distance < 0 then
-      Result := -Result;
-end;
-
-function TMesh.GetSincInfinite1DDistance(_Distance : single): single;
-var
-   i,c : integer;
-   Distance2: single;
-begin
-   c := 0;
-   i := 1;
-   Distance2 := _Distance * _Distance;
-   Result := 1;
-   while c <= 100 do
-   begin
-      Result := Result * (1 - (Distance2 / (i * i)));
-      inc(c);
-      inc(i);
-   end;
-   Result := 1 - Result;
-   if _Distance < 0 then
-      Result := -Result;
-end;
-
+// Debug
 procedure TMesh.Debug(const _Debug:TDebugFile);
 var
    i: integer;

@@ -2,9 +2,9 @@ unit VoxelMeshGenerator;
 
 interface
 
-uses BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
+uses BasicMathsTypes, BasicDataTypes, BasicConstants, GLConstants, VoxelMap, Voxel, Palette,
    VolumeGreyIntData, VertexList, TriangleList, QuadList,Normals, Windows,
-   MeshNormalsTool, DifferentMeshFaceTypePlugin, MeshGeometryBase, MeshBRepGeometry,
+   DifferentMeshFaceTypePlugin, MeshGeometryBase, MeshBRepGeometry,
    MeshGeometryList, RefinementTrianglesSupporter, Dialogs, SysUtils, VolumeFaceVerifier;
 
 {$INCLUDE source/Global_Conditionals.inc}
@@ -41,7 +41,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, BasicVXLSETypes;
 
 constructor TVoxelMeshGenerator.Create;
 begin

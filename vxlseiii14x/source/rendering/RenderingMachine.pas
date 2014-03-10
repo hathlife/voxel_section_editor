@@ -2,7 +2,7 @@ unit RenderingMachine;
 
 interface
 
-uses BasicDataTypes, BasicConstants, BasicFunctions, DglOpenGL, GlConstants,
+uses BasicMathsTypes, BasicDataTypes, BasicConstants, BasicFunctions, DglOpenGL, GlConstants,
    Material, ShaderBank, ShaderBankItem, MeshPluginBase, BumpMapDataPlugin;
 
 type

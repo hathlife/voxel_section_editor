@@ -1,8 +1,8 @@
-unit undo_engine;
+unit VoxelUndoEngine;
 
 interface
 
-uses BasicDataTypes,Voxel,dialogs,sysutils, Voxel_Engine;
+uses BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, Voxel, Voxel_Engine;
 
 Type
    TUndo_Redo_data = record

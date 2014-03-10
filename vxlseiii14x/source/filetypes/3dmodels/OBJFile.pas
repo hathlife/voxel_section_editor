@@ -2,8 +2,8 @@ unit OBJFile;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, SysUtils, Mesh, GlConstants, TextureBankItem,
-   IntegerSet, Material, MeshBRepGeometry;
+uses BasicDataTypes, BasicMathsTypes, BasicFunctions, SysUtils, Mesh, GlConstants,
+   TextureBankItem, IntegerSet, Material, MeshBRepGeometry;
 
 type
    PObjMeshUnit = ^TObjMeshUnit;

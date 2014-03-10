@@ -2,7 +2,7 @@ unit DifferentMeshFaceTypePlugin;
 
 interface
 
-uses MeshPluginBase, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
+uses MeshPluginBase, BasicMathsTypes, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
    dglOpenGL, RenderingMachine, Material, MeshBRepGeometry;
 
 type

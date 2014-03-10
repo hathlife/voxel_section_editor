@@ -2,7 +2,7 @@ unit BZK2_Sector;
 
 interface
 
-uses SysUtils,BasicDataTypes, BasicFunctions;
+uses SysUtils,BasicMathsTypes, BasicFunctions;
 
 type
    TBZKFacesDirection = (bfdNorth,bfdEast,bfdSouth,bfdWest,bfdFloor,bfdCeiling);

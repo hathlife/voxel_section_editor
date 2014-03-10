@@ -25,6 +25,7 @@ type
       procedure OpenVoxel;
       procedure OpenVoxelSection(const _VoxelSection: PVoxelSection);
    public
+      ID: integer;
       Palette : PPalette;
       IsVisible : boolean;
       // Skeleton:
@@ -107,17 +108,8 @@ type
       procedure NormalCubicSmoothModel;
       procedure NormalLanczosSmoothModel;
       // Textures
-      procedure ExtractTextureAtlas; overload;
-      procedure ExtractTextureAtlas(_Angle: single; _Size: integer); overload;
-      procedure ExtractTextureAtlasOrigami; overload;
-      procedure ExtractTextureAtlasOrigami(_Size: integer); overload;
-      procedure ExtractTextureAtlasOrigamiGA; overload;
-      procedure ExtractTextureAtlasOrigamiGA(_Size: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
-      procedure GenerateNormalMapTexture;
-      procedure GenerateBumpMapTexture; overload;
-      procedure GenerateBumpMapTexture(_Scale: single); overload;
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -208,6 +200,7 @@ procedure TModel.CommonCreationProcedures;
 begin
    CurrentLOD := 0;
    Opened := false;
+   ID := GlobalVars.ModelBank.NextID;
    Reset;
 end;
 
@@ -640,36 +633,6 @@ begin
 end;
 
 // Textures
-procedure TModel.ExtractTextureAtlas;
-begin
-   LOD[CurrentLOD].ExtractTextureAtlas;
-end;
-
-procedure TModel.ExtractTextureAtlas(_Angle: single; _Size : integer);
-begin
-   LOD[CurrentLOD].ExtractTextureAtlas(_Angle,_Size);
-end;
-
-procedure TModel.ExtractTextureAtlasOrigami;
-begin
-   LOD[CurrentLOD].ExtractTextureAtlasOrigami;
-end;
-
-procedure TModel.ExtractTextureAtlasOrigami(_Size : integer);
-begin
-   LOD[CurrentLOD].ExtractTextureAtlasOrigami(_Size);
-end;
-
-procedure TModel.ExtractTextureAtlasOrigamiGA;
-begin
-   LOD[CurrentLOD].ExtractTextureAtlasOrigamiGA;
-end;
-
-procedure TModel.ExtractTextureAtlasOrigamiGA(_Size : integer);
-begin
-   LOD[CurrentLOD].ExtractTextureAtlasOrigamiGA(_Size);
-end;
-
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
 begin
    LOD[CurrentLOD].ExportTextures(_BaseDir,_Ext,_previewTextures);
@@ -678,21 +641,6 @@ end;
 procedure TModel.ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
 begin
    LOD[CurrentLOD].ExportHeightMap(_BaseDir,_Ext,_previewTextures);
-end;
-
-procedure TModel.GenerateNormalMapTexture;
-begin
-   LOD[CurrentLOD].GenerateNormalMapTexture;
-end;
-
-procedure TModel.GenerateBumpMapTexture;
-begin
-   LOD[CurrentLOD].GenerateBumpMapTexture;
-end;
-
-procedure TModel.GenerateBumpMapTexture(_Scale: single);
-begin
-   LOD[CurrentLOD].GenerateBumpMapTexture(_Scale);
 end;
 
 procedure TModel.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);

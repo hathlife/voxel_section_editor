@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, Voxel_Engine, Voxel_Tools, Voxel, Undo_Engine, Voxel_AutoNormals;
+  Dialogs, StdCtrls, Voxel_Engine, Voxel_Tools, Voxel, VoxelUndoEngine, Voxel_AutoNormals;
 
 const
    // I've found these magic numbers in the sphere area:

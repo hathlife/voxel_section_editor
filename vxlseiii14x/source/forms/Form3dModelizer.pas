@@ -5,10 +5,10 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
-  Buttons, FTGifAnimate, GIFImage,Palette,BasicDataTypes, Voxel_Engine, Normals,
-  HVA,JPEG,PNGImage, math3d, RenderEnvironment, Render, Actor, Camera, GlConstants,
-  BasicFunctions, FormOptimizeMesh, FormGenerateDiffuseTexture, FormBumpMapping,
-  Histogram;
+  Buttons, FTGifAnimate, GIFImage, Palette, BasicMathsTypes, BasicDataTypes,
+  BasicRenderingTypes, Voxel_Engine, Normals, HVA,JPEG,PNGImage, math3d,
+  RenderEnvironment, Render, Actor, Camera, GlConstants, BasicFunctions,
+  FormOptimizeMesh, FormGenerateDiffuseTexture, FormBumpMapping, Histogram;
 
 type
   PFrm3DModelizer = ^TFrm3DModelizer;
@@ -180,6 +180,11 @@ type
     ModelFXSincInfiniteSmooth2: TMenuItem;
     TextureFXDiffuseOrigami: TMenuItem;
     TextureFXDiffuseOrigamiGA: TMenuItem;
+    TextureFXDebug: TMenuItem;
+    N8: TMenuItem;
+    TextureFXDiffuseTexture: TMenuItem;
+    procedure TextureFXDebugClick(Sender: TObject);
+    procedure TextureFXDiffuseTextureClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiGAClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiClick(Sender: TObject);
     procedure ModelFXSincInfiniteSmooth2Click(Sender: TObject);
@@ -343,7 +348,7 @@ type
     AnimationState : boolean;
     EnvP : PRenderEnvironment;
     Env : TRenderEnvironment;
-    Actor : TActor;
+    Actor : PActor;
     Camera : TCamera;
     TextureFileExt: string;
     MeshMode,NormalsMode,ColoursMode: integer;
@@ -360,7 +365,7 @@ type
 
 implementation
 
-uses FormMain, GlobalVars;
+uses FormMain, GlobalVars, DistanceFormulas;
 
 {$R *.DFM}
 
@@ -383,9 +388,13 @@ begin
    SpFrame.MaxValue := FrmMain.Document.ActiveHVA^.Header.N_Frames;
    AnimationTimer.Enabled := false;
 
-   Actor := (Env.AddActor)^;
-   Actor.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
-   Actor.Models[0].MakeVoxelHVAIndependent;
+   new(Actor);
+   Actor^ := (Env.AddActor)^;
+   Actor^.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
+   // Actor.Models[0].MakeVoxelHVAIndependent;
+   GlobalVars.ActorController.DoLoadModel(Actor, GetQualityModel);
+   GlobalVars.ActorController.SetBaseObject(Actor);
+
    SetActorModelTransparency;
    TextureFSFTDDSClick(sender);
    SetMeshMode(1);
@@ -413,6 +422,8 @@ end;
 {------------------------------------------------------------------}
 procedure TFrm3DModelizer.FormDestroy(Sender: TObject);
 begin
+   GlobalVars.ModelUndoEngine.Remove(Actor^.Models[0]^.ID);
+   GlobalVars.ActorController.TerminateObject(Actor);
    GlobalVars.Render.RemoveEnvironment(EnvP);
    FrmMain.p_Frm3DModelizer := nil;
 end;
@@ -480,13 +491,13 @@ end;
 
 procedure TFrm3DModelizer.TextureFSExportHeightMapClick(Sender: TObject);
 begin
-   Actor.ExportHeightmap(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
+   Actor^.ExportHeightmap(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
 end;
 
 procedure TFrm3DModelizer.TextureFSExportClick(Sender: TObject);
 begin
    // Export every single texture...
-   Actor.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
+   Actor^.ExportTextures(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))),TextureFileExt,true);
 end;
 
 procedure TFrm3DModelizer.TextureFSFTBMPClick(Sender: TObject);
@@ -628,10 +639,16 @@ begin
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
 end;
 
+procedure TFrm3DModelizer.TextureFXDebugClick(Sender: TObject);
+begin
+   GlobalVars.ActorController.DoDiffuseDebugTextureGeneration(Actor, TextureSize, 0, 0);
+end;
+
 procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
 begin
-   Actor.GenerateDiffuseTexture;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   //Actor.GenerateDiffuseTexture;
+   GlobalVars.ActorController.DoTextureAtlasExtraction(Actor, TextureSize, C_TEX_MIN_ANGLE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps, C_TTP_DIFFUSE);
    SetColoursMode(2);
 end;
 
@@ -643,8 +660,9 @@ begin
    Frm.ShowModal;
    if Frm.Apply then
    begin
-      Actor.GenerateDiffuseTexture(Frm.Threshold,TextureSize);
-      Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+      GlobalVars.ActorController.DoTextureAtlasExtraction(Actor, TextureSize, Frm.Threshold);
+//      Actor.GenerateDiffuseTexture(Frm.Threshold,TextureSize);
+      Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
       SetColoursMode(2);
    end;
    Frm.Release;
@@ -652,31 +670,41 @@ end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseOrigamiClick(Sender: TObject);
 begin
-   Actor.GenerateDiffuseTextureOrigami;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   GlobalVars.ActorController.DoTextureAtlasExtractionOrigami(Actor, TextureSize);
+   //Actor.GenerateDiffuseTextureOrigami;
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    SetColoursMode(2);
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseOrigamiGAClick(Sender: TObject);
 begin
-   Actor.GenerateDiffuseTextureOrigamiGA;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   GlobalVars.ActorController.DoTextureAtlasExtractionOrigamiGA(Actor, TextureSize);
+   //Actor.GenerateDiffuseTextureOrigamiGA;
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    SetColoursMode(2);
+end;
+
+procedure TFrm3DModelizer.TextureFXDiffuseTextureClick(Sender: TObject);
+begin
+   GlobalVars.ActorController.DoDiffuseTextureGeneration(Actor, TextureSize, 0, 0);
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmooth2Click(Sender: TObject);
 begin
-   Actor.QuadricSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_QUADRIC_INV);
+   //Actor.QuadricSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmoothClick(Sender: TObject);
 begin
-   Actor.QuadricSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_QUADRIC);
+   //Actor.QuadricSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXUnsharpClick(Sender: TObject);
 begin
-   Actor.UnsharpModel;
+   GlobalVars.ActorController.DoMeshUnsharpMasking(Actor);
+   //Actor.UnsharpModel;
 end;
 
 procedure TFrm3DModelizer.AnimationTimerTimer(Sender: TObject);
@@ -687,9 +715,9 @@ begin
    end
    else
    begin
-      Actor.Frame := (Actor.Frame + 1) mod SpFrame.MaxValue;
+      Actor^.Frame := (Actor^.Frame + 1) mod SpFrame.MaxValue;
       Env.ForceRefresh;
-      SpFrame.Value := Actor.Frame + 1;
+      SpFrame.Value := Actor^.Frame + 1;
    end;
 end;
 
@@ -697,7 +725,7 @@ procedure TFrm3DModelizer.QualityAnalysisAspectRatioClick(Sender: TObject);
 var
    Histogram: THistogram;
 begin
-   Histogram := Actor.GetAspectRatioHistogram();
+   Histogram := Actor^.GetAspectRatioHistogram();
    Histogram.ReOrderByElementsAscendently;
    Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_AspectRatio.csv','Aspect Ratio','Quantity','%','Overall Aspect Ratio:');
    Histogram.Free;
@@ -707,7 +735,7 @@ procedure TFrm3DModelizer.QualityAnalysisSkewnessClick(Sender: TObject);
 var
    Histogram: THistogram;
 begin
-   Histogram := Actor.GetSkewnessHistogram();
+   Histogram := Actor^.GetSkewnessHistogram();
    Histogram.ReOrderByElementsAscendently;
    Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_Skewness.csv','Skewness','Quantity','%','Overall Skewness:');
    Histogram.Free;
@@ -717,7 +745,7 @@ procedure TFrm3DModelizer.QualityAnalysisSmoothnessClick(Sender: TObject);
 var
    Histogram: THistogram;
 begin
-   Histogram := Actor.GetSmoothnessHistogram();
+   Histogram := Actor^.GetSmoothnessHistogram();
    Histogram.ReOrderByElementsAscendently;
    Histogram.SaveAsCSV(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + GetFileNameWithNoExt(extractfilename(VXLFilename)) + '_Smoothness.csv','Smoothness','Quantity','%','Overall Smoothness:');
    Histogram.Free;
@@ -731,7 +759,7 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-      Actor.Frame := SpFrame.Value-1;
+      Actor^.Frame := SpFrame.Value-1;
       Env.ForceRefresh;
    end;
 end;
@@ -755,17 +783,27 @@ end;
 
 procedure TFrm3DModelizer.ModelFXLanczosClick(Sender: TObject);
 begin
-   Actor.LanczosSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_LANCZOS_INV_AC);
+   //Actor.LanczosSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXLanczosSmooth2Click(Sender: TObject);
 begin
-   Actor.LanczosSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_LANCZOS);
+//   Actor.LanczosSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.LanczosDilatation1Click(Sender: TObject);
 begin
-   Actor.ColourLanczosSmoothModel;
+   if ColoursMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceColours(Actor, CDF_LANCZOS_INV_AC);
+   end
+   else if ColoursMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexColours(Actor, CDF_LANCZOS_INV_AC);
+   end;
+//   Actor.ColourLanczosSmoothModel;
 end;
 
 procedure TFrm3DModelizer.LEft1Click(Sender: TObject);
@@ -894,45 +932,65 @@ begin
    DarkSky1.Checked := false;
 end;
 
-procedure TFrm3DModelizer.ColourFXConvertFacetoVertexClick(
-  Sender: TObject);
+procedure TFrm3DModelizer.ColourFXConvertFacetoVertexClick(Sender: TObject);
 begin
-   Actor.ConvertFaceToVertexColours;
+   GlobalVars.ActorController.DoSetVertexColours(Actor, CDF_IGNORED);
+//   Actor.ConvertFaceToVertexColours;
    SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexHSClick(Sender: TObject);
 begin
-   Actor.ConvertFaceToVertexColoursCubic;
+   GlobalVars.ActorController.DoSetVertexColours(Actor, CDF_CUBIC);
+//   Actor.ConvertFaceToVertexColoursCubic;
    SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexLSClick(Sender: TObject);
 begin
-   Actor.ConvertFaceToVertexColoursLanczos;
+   GlobalVars.ActorController.DoSetVertexColours(Actor, CDF_LANCZOS_INV_AC);
+//   Actor.ConvertFaceToVertexColoursLanczos;
    SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertFaceToVertexSClick(Sender: TObject);
 begin
-   Actor.ConvertFaceToVertexColoursLinear;
+   GlobalVars.ActorController.DoSetVertexColours(Actor, CDF_LINEAR);
+//   Actor.ConvertFaceToVertexColoursLinear;
    SetColoursMode(1);
 end;
 
 procedure TFrm3DModelizer.ColourFXConvertVertexToFaceClick(Sender: TObject);
 begin
-   Actor.ConvertVertexToFaceColours;
+   GlobalVars.ActorController.DoSetFaceColours(Actor, CDF_IGNORED);
+//   Actor.ConvertVertexToFaceColours;
    SetColoursMode(0);
 end;
 
 procedure TFrm3DModelizer.ColourFXHeavySmoothClick(Sender: TObject);
 begin
-   Actor.ColourCubicSmoothModel
+   if ColoursMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceColours(Actor, CDF_CUBIC);
+   end
+   else if ColoursMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexColours(Actor, CDF_CUBIC);
+   end;
+//   Actor.ColourCubicSmoothModel
 end;
 
 procedure TFrm3DModelizer.ColourFXSmoothClick(Sender: TObject);
 begin
-   Actor.ColourSmoothModel;
+   if ColoursMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceColours(Actor, CDF_LINEAR);
+   end
+   else if ColoursMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexColours(Actor, CDF_LINEAR);
+   end;
+//   Actor.ColourSmoothModel;
 end;
 
 
@@ -943,14 +1001,16 @@ begin
    RemapColour.X := RemapColourMap[0].R /255;
    RemapColour.Y := RemapColourMap[0].G /255;
    RemapColour.Z := RemapColourMap[0].B /255;
-   Actor.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B));
+   //Actor^.ChangeRemappable(RemapColourMap[0].R,RemapColourMap[0].G,RemapColourMap[0].B);
 end;
 
 procedure TFrm3DModelizer.Render4TrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    Render4Triangles.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(1);
    SetColoursMode(1);
@@ -960,7 +1020,8 @@ procedure TFrm3DModelizer.RenderCubesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderCubes.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(0);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -970,7 +1031,8 @@ procedure TFrm3DModelizer.RenderManifoldsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderManifolds.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -980,7 +1042,8 @@ procedure TFrm3DModelizer.RenderModelClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderModel.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -990,7 +1053,8 @@ procedure TFrm3DModelizer.RenderQuadsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderQuads.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(0);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -1000,7 +1064,8 @@ procedure TFrm3DModelizer.RenderSmoothManifoldsClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderSmoothManifolds.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(1);
    SetColoursMode(1);
@@ -1010,7 +1075,8 @@ procedure TFrm3DModelizer.RenderTrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderTriangles.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(1);
    SetColoursMode(1);
@@ -1020,7 +1086,8 @@ procedure TFrm3DModelizer.RenderVisibleCubesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderVisibleCubes.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(0);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -1030,7 +1097,8 @@ procedure TFrm3DModelizer.RenderVisibleTrianglesClick(Sender: TObject);
 begin
    UncheckModelQuality;
    RenderVisibleTriangles.Checked := true;
-   Actor.SetQuality(GetQualityModel);
+   GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   //Actor.SetQuality(GetQualityModel);
    SetMeshMode(1);
    SetNormalsMode(0);
    SetColoursMode(0);
@@ -1043,7 +1111,8 @@ begin
    RemapColour.X := RemapColourMap[1].R /255;
    RemapColour.Y := RemapColourMap[1].G /255;
    RemapColour.Z := RemapColourMap[1].B /255;
-   Actor.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
+//   Actor^.ChangeRemappable(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[1].R,RemapColourMap[1].G,RemapColourMap[1].B));
 end;
 
 procedure TFrm3DModelizer.Green1Click(Sender: TObject);
@@ -1053,7 +1122,8 @@ begin
    RemapColour.X := RemapColourMap[2].R /255;
    RemapColour.Y := RemapColourMap[2].G /255;
    RemapColour.Z := RemapColourMap[2].B /255;
-   Actor.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
+   //Actor^.ChangeRemappable(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[2].R,RemapColourMap[2].G,RemapColourMap[2].B));
 end;
 
 procedure TFrm3DModelizer.White1Click(Sender: TObject);
@@ -1063,12 +1133,14 @@ begin
    RemapColour.X := RemapColourMap[3].R /255;
    RemapColour.Y := RemapColourMap[3].G /255;
    RemapColour.Z := RemapColourMap[3].B /255;
-   Actor.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
+   //Actor^.ChangeRemappable(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[3].R,RemapColourMap[3].G,RemapColourMap[3].B));
 end;
 
 procedure TFrm3DModelizer.FaceFXOptimizeMeshClick(Sender: TObject);
 begin
-   Actor.OptimizeMeshMaxQuality;
+   GlobalVars.ActorController.DoMeshOptimization2009(Actor,false,1);
+//   Actor^.OptimizeMeshMaxQuality;
    SetMeshMode(2);
 end;
 
@@ -1080,7 +1152,8 @@ begin
    FrmOptimizeMesh.ShowModal;
    if FrmOptimizeMesh.Apply then
    begin
-      Actor.OptimizeMesh(FrmOptimizeMesh.Threshold,FrmOptimizeMesh.cbIgnoreColours.Checked);
+      GlobalVars.ActorController.DoMeshOptimization2009(Actor,FrmOptimizeMesh.cbIgnoreColours.Checked,FrmOptimizeMesh.Threshold);
+//      Actor^.OptimizeMesh(FrmOptimizeMesh.Threshold,FrmOptimizeMesh.cbIgnoreColours.Checked);
       SetMeshMode(2);
    end;
    FrmOptimizeMesh.Release;
@@ -1089,7 +1162,8 @@ end;
 procedure TFrm3DModelizer.FaceFXOptimizeMeshIgnoringColoursClick(
   Sender: TObject);
 begin
-   Actor.OptimizeMeshMaxQualityIgnoreColours;
+   GlobalVars.ActorController.DoMeshOptimization2009(Actor,true,1);
+//   Actor^.OptimizeMeshMaxQualityIgnoreColours;
    SetMeshMode(2);
 end;
 
@@ -1100,7 +1174,8 @@ begin
    RemapColour.X := RemapColourMap[4].R /255;
    RemapColour.Y := RemapColourMap[4].G /255;
    RemapColour.Z := RemapColourMap[4].B /255;
-   Actor.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
+   //Actor^.ChangeRemappable(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[4].R,RemapColourMap[4].G,RemapColourMap[4].B));
 end;
 
 procedure TFrm3DModelizer.Magenta1Click(Sender: TObject);
@@ -1110,130 +1185,182 @@ begin
    RemapColour.X := RemapColourMap[5].R /255;
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
-   Actor.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+   //Actor^.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B));
 end;
 
 procedure TFrm3DModelizer.ModelFXHeavyEulerErosionClick(Sender: TObject);
 begin
-   Actor.EulerSquaredSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_EULERSQUARED);
+//   Actor.EulerSquaredSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXHeavyEulerSmooth2Click(Sender: TObject);
 begin
-   Actor.EulerSquaredSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_EULERSQUARED);
+//   Actor.EulerSquaredSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXHeavySmoothClick(Sender: TObject);
 begin
-   Actor.CubicSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_CUBIC);
+//   Actor.CubicSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXInflateClick(Sender: TObject);
 begin
-   Actor.InflateModel;
+   GlobalVars.ActorController.DoMeshInflate(Actor);
+//   Actor.InflateModel;
 end;
 
 procedure TFrm3DModelizer.NormalFXNormalizeClick(Sender: TObject);
 begin
-   Actor.ReNormalizeModel;
+   GlobalVars.ActorController.DoRecalculateNormals(Actor);
+//   Actor.ReNormalizeModel;
 end;
 
 procedure TFrm3DModelizer.NormalsFXConvertFaceToVertexNormalsClick( Sender: TObject);
 begin
-   Actor.ConvertFaceToVertexNormals;
+   GlobalVars.ActorController.DoSetFaceNormals(Actor);
+//   Actor.ConvertFaceToVertexNormals;
    SetNormalsMode(1);
 end;
 
 procedure TFrm3DModelizer.NormalsFXCubicSmoothNormalsClick(Sender: TObject);
 begin
-   Actor.NormalCubicSmoothModel;
+   if NormalsMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceNormals(Actor, CDF_CUBIC);
+   end
+   else if NormalsMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexNormals(Actor, CDF_CUBIC);
+   end;
+//   Actor.NormalCubicSmoothModel;
 end;
 
 procedure TFrm3DModelizer.NormalsFXLanczosSmoothNormalsClick(Sender: TObject);
 begin
-   Actor.NormalLanczosSmoothModel;
+   if NormalsMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceNormals(Actor, CDF_LANCZOS_INV_AC);
+   end
+   else if NormalsMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexNormals(Actor, CDF_LANCZOS_INV_AC);
+   end;
+   //Actor.NormalLanczosSmoothModel;
 end;
 
 procedure TFrm3DModelizer.NormalsFXQuickSmoothNormalsClick(Sender: TObject);
 begin
-   Actor.NormalSmoothModel;
+   if NormalsMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceNormals(Actor, CDF_IGNORED);
+   end
+   else if NormalsMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexNormals(Actor, CDF_IGNORED);
+   end;
+   //Actor.NormalSmoothModel;
 end;
 
 procedure TFrm3DModelizer.NormalsFXSmoothNormalsClick(Sender: TObject);
 begin
-   Actor.NormalLinearSmoothModel;
+   if NormalsMode = 0 then
+   begin
+      GlobalVars.ActorController.DoSmoothFaceNormals(Actor, CDF_LINEAR);
+   end
+   else if NormalsMode = 1 then
+   begin
+      GlobalVars.ActorController.DoSmoothVertexNormals(Actor, CDF_LINEAR);
+   end;
+   //Actor.NormalLinearSmoothModel;
 end;
 
 procedure TFrm3DModelizer.FaceFXCleanupInvisibleFacesClick(Sender: TObject);
 begin
-   Actor.RemoveInvisibleFaces;
+   Actor^.RemoveInvisibleFaces;
 end;
 
 procedure TFrm3DModelizer.FaceFXConvertQuadstoTrianglesClick(Sender: TObject);
 begin
-   Actor.ConvertQuadsToTris;
+   GlobalVars.ActorController.DoConvertQuadsToTris(Actor);
+   //Actor.ConvertQuadsToTris;
    SetMeshMode(1);
 end;
 
 procedure TFrm3DModelizer.FaceFXConvertQuadsto48TrianglesClick( Sender: TObject);
 begin
-   Actor.ConvertQuadsTo48Tris;
+   GlobalVars.ActorController.DoConvertQuadsToTris48(Actor);
+   //Actor.ConvertQuadsTo48Tris;
    SetMeshMode(1);
 end;
 
 procedure TFrm3DModelizer.ModelFXCubicSmooth2Click(Sender: TObject);
 begin
-   Actor.CubicSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_CUBIC_INV);
+   //Actor.CubicSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXDeflateClick(Sender: TObject);
 begin
-   Actor.DeflateModel;
+   GlobalVars.ActorController.DoMeshDeflate(Actor);
+   //Actor.DeflateModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXEulerErosionClick(Sender: TObject);
 begin
-   Actor.EulerSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_EULER);
+   //Actor.EulerSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXEulerSmooth2Click(Sender: TObject);
 begin
-   Actor.EulerSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_EULER);
+   //Actor.EulerSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXGaussianSmoothClick(Sender: TObject);
 begin
-   Actor.GaussianSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothGaussian(Actor);
+   //Actor.GaussianSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincErosionClick(Sender: TObject);
 begin
-   Actor.SincSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_SINC_INV);
+   //Actor.SincSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincInfiniteErosionClick(Sender: TObject);
 begin
-   Actor.SincInfiniteSmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_SINCINFINITE_INV);
+   //Actor.SincInfiniteSmoothModel;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincInfiniteSmooth2Click(Sender: TObject);
 begin
-   Actor.SincInfiniteSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_SINCINFINITE);
+   //Actor.SincInfiniteSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXSincSmooth2Click(Sender: TObject);
 begin
-   Actor.SincSmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_SINC);
+   //Actor.SincSmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXSmooth2Click(Sender: TObject);
 begin
-   Actor.SmoothModel2;
+   GlobalVars.ActorController.DoMeshSmoothMasters(Actor, CDF_LINEAR_INV);
+   //Actor.SmoothModel2;
 end;
 
 procedure TFrm3DModelizer.ModelFXSmoothClick(Sender: TObject);
 begin
-   Actor.SmoothModel;
+   GlobalVars.ActorController.DoMeshSmoothSBGames(Actor, CDF_LINEAR);
+   //Actor.SmoothModel;
 end;
 
 procedure TFrm3DModelizer.Purple1Click(Sender: TObject);
@@ -1243,7 +1370,8 @@ begin
    RemapColour.X := RemapColourMap[6].R /255;
    RemapColour.Y := RemapColourMap[6].G /255;
    RemapColour.Z := RemapColourMap[6].B /255;
-   Actor.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
+   //Actor^.ChangeRemappable(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[6].R,RemapColourMap[6].G,RemapColourMap[6].B));
 end;
 
 procedure TFrm3DModelizer.Gold1Click(Sender: TObject);
@@ -1253,7 +1381,8 @@ begin
    RemapColour.X := RemapColourMap[7].R /255;
    RemapColour.Y := RemapColourMap[7].G /255;
    RemapColour.Z := RemapColourMap[7].B /255;
-   Actor.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
+   //Actor^.ChangeRemappable(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[7].R,RemapColourMap[7].G,RemapColourMap[7].B));
 end;
 
 procedure TFrm3DModelizer.DarkSky1Click(Sender: TObject);
@@ -1263,7 +1392,8 @@ begin
    RemapColour.X := RemapColourMap[8].R /255;
    RemapColour.Y := RemapColourMap[8].G /255;
    RemapColour.Z := RemapColourMap[8].B /255;
-   Actor.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
+   //Actor^.ChangeRemappable(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B);
+   GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B));
 end;
 
 procedure TFrm3DModelizer.DisplayFMPointCloudClick(Sender: TObject);
@@ -1292,11 +1422,11 @@ begin
    DisplayNormalVectors1.Checked := not DisplayNormalVectors1.Checked;
    if DisplayNormalVectors1.Checked then
    begin
-      Actor.AddNormalsPlugin;
+      Actor^.AddNormalsPlugin;
    end
    else
    begin
-      Actor.RemoveNormalsPlugin;
+      Actor^.RemoveNormalsPlugin;
    end;
 end;
 
@@ -1304,7 +1434,7 @@ procedure TFrm3DModelizer.DoDisplayNormals();
 begin
    if DisplayNormalVectors1.Checked then
    begin
-      Actor.AddNormalsPlugin;
+      Actor^.AddNormalsPlugin;
    end;
 end;
 
@@ -1352,7 +1482,7 @@ begin
    SaveModelDialog.InitialDir := ExtractFileDir(ParamStr(0));
    if SaveModelDialog.Execute then
    begin
-      Actor.SaveToFile(SaveModelDialog.FileName,TextureFileExt,0);
+      Actor^.SaveToFile(SaveModelDialog.FileName,TextureFileExt,0);
    end;
 end;
 
@@ -1360,11 +1490,11 @@ procedure TFrm3DModelizer.SetActorModelTransparency;
 begin
    if WholeVoxel1.Checked then
    begin
-      Actor.ForceTransparency(C_TRP_OPAQUE);
+      Actor^.ForceTransparency(C_TRP_OPAQUE);
    end
    else
    begin
-      Actor.ForceTransparencyExceptOnAMesh(C_TRP_GHOST,0,FrmMain.Document.ActiveSection^.Header.Number);
+      Actor^.ForceTransparencyExceptOnAMesh(C_TRP_GHOST,0,FrmMain.Document.ActiveSection^.Header.Number);
    end;
 end;
 
@@ -1385,7 +1515,7 @@ begin
    UncheckNumMipMaps;
    TextureFX10MipMaps.Checked := true;
    NumMipMaps := 10;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX1MipMapsClick(Sender: TObject);
@@ -1393,7 +1523,7 @@ begin
    UncheckNumMipMaps;
    TextureFX1MipMaps.Checked := true;
    NumMipMaps := 1;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX2MipMapsClick(Sender: TObject);
@@ -1401,7 +1531,7 @@ begin
    UncheckNumMipMaps;
    TextureFX2MipMaps.Checked := true;
    NumMipMaps := 2;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX3MipMapsClick(Sender: TObject);
@@ -1409,7 +1539,7 @@ begin
    UncheckNumMipMaps;
    TextureFX3MipMaps.Checked := true;
    NumMipMaps := 3;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX4MipMapsClick(Sender: TObject);
@@ -1417,7 +1547,7 @@ begin
    UncheckNumMipMaps;
    TextureFX4MipMaps.Checked := true;
    NumMipMaps := 4;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX5MipMapsClick(Sender: TObject);
@@ -1425,7 +1555,7 @@ begin
    UncheckNumMipMaps;
    TextureFX5MipMaps.Checked := true;
    NumMipMaps := 5;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX6MipMapsClick(Sender: TObject);
@@ -1433,7 +1563,7 @@ begin
    UncheckNumMipMaps;
    TextureFX6MipMaps.Checked := true;
    NumMipMaps := 6;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX7MipMapsClick(Sender: TObject);
@@ -1441,7 +1571,7 @@ begin
    UncheckNumMipMaps;
    TextureFX7MipMaps.Checked := true;
    NumMipMaps := 7;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX8MipMapsClick(Sender: TObject);
@@ -1449,7 +1579,7 @@ begin
    UncheckNumMipMaps;
    TextureFX8MipMaps.Checked := true;
    NumMipMaps := 8;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFX9MipMapsClick(Sender: TObject);
@@ -1457,12 +1587,13 @@ begin
    UncheckNumMipMaps;
    TextureFX9MipMaps.Checked := true;
    NumMipMaps := 9;
-   Actor.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
 end;
 
 procedure TFrm3DModelizer.TextureFXBumpClick(Sender: TObject);
 begin
-   Actor.GenerateBumpMapTexture;
+   GlobalVars.ActorController.DoBumpMappingTextureGeneration(Actor, TextureSize, 0, 0, C_BUMP_DEFAULTSCALE);
+   //Actor.GenerateBumpMapTexture;
    SetNormalsMode(2);
 end;
 
@@ -1474,14 +1605,16 @@ begin
    Form.ShowModal;
    if Form.Apply then
    begin
-      Actor.GenerateBumpMapTexture(StrToFloatDef(Form.EdBump.Text,2.2));
+      GlobalVars.ActorController.DoBumpMappingTextureGeneration(Actor, TextureSize, 0, 0, StrToFloatDef(Form.EdBump.Text, C_BUMP_DEFAULTSCALE));
+      //Actor.GenerateBumpMapTexture(StrToFloatDef(Form.EdBump.Text, C_BUMP_DEFAULTSCALE));
       SetNormalsMode(2);
    end;
 end;
 
 procedure TFrm3DModelizer.TextureFXNormalClick(Sender: TObject);
 begin
-   Actor.GenerateNormalMapTexture;
+   GlobalVars.ActorController.DoNormalMappingTextureGeneration(Actor, TextureSize, 0, 0);
+   //Actor.GenerateNormalMapTexture;
    SetNormalsMode(2);
 end;
 
@@ -1820,6 +1953,8 @@ begin
          TextureFXDiffuseOrigamiGA.Enabled := false;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
+         TextureFXDiffuseTexture.Enabled := false;
+         TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
          TextureFXBumpCustom.Enabled := false;
@@ -1840,6 +1975,8 @@ begin
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
+         TextureFXDiffuseTexture.Enabled := false;
+         TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
          TextureFXBumpCustom.Enabled := false;
@@ -1860,6 +1997,8 @@ begin
          TextureFXDiffuseOrigamiGA.Enabled := false;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
+         TextureFXDiffuseTexture.Enabled := true;
+         TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
          TextureFXBumpCustom.Enabled := (NormalsMode = 1);
@@ -1880,6 +2019,8 @@ begin
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
+         TextureFXDiffuseTexture.Enabled := true;
+         TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
          TextureFXBumpCustom.Enabled := true;

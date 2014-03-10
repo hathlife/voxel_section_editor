@@ -2,8 +2,8 @@ unit UI2DEditView;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, VoxelView, Windows, Graphics, Math,
-   BasicConstants;
+uses BasicDataTypes, BasicVXLSETypes, BasicFunctions, VoxelView, Windows, Graphics,
+   Math, BasicConstants;
 
 type
    TUIEditView = class

@@ -2,20 +2,22 @@ unit MeshColoursTool;
 
 interface
 
-uses BasicDataTypes, NeighborDetector, Math, MeshGeometryList;
+uses BasicMathsTypes, BasicDataTypes, NeighborDetector, Math, MeshGeometryList;
 
 type
    TMeshColoursTool = class
       private
          function GetEquivalentVertex(_VertexID,_MaxVertexID: integer; const _VertexEquivalences: auint32): integer;
       public
-         procedure ApplyFaceColourSmooth(var _Colours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
-         procedure ApplyVertexColourSmooth(var _Colours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _NumFaces,_VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
          procedure FilterAndFixColours(var _Colours: TAVector4f);
          procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc); overload;
          procedure TransformFaceToVertexColours(var _VertColours: TAVector4f; const _Geometry: CMeshGeometryList; const _Vertices: TAVector3f; _NumVertices: integer; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc); overload;
          procedure TransformVertexToFaceColours(const _VertColours: TAVector4f; var _FaceColours: TAVector4f; const _Faces: auint32; _VerticesPerFace: integer);
          procedure BackupColourVector(const _Source: TAVector4f; var _Destination: TAVector4f);
+
+         // Deprecated.
+         procedure ApplyFaceColourSmooth(var _Colours: TAVector4f; const _FaceColours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
+         procedure ApplyVertexColourSmooth(var _Colours: TAVector4f; const _Vertices: TAVector3f; _NumVertices: integer; const _Faces: auint32; _NumFaces,_VerticesPerFace: integer; const _NeighborDetector: TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction : TDistanceFunc);
    end;
 
 implementation

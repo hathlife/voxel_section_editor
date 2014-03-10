@@ -2,7 +2,7 @@ unit ShaderBankItem;
 
 interface
 
-uses BasicFunctions, BasicDataTypes, dglOpenGL, SysUtils, Classes;
+uses BasicFunctions, BasicMathsTypes, BasicDataTypes, dglOpenGL, SysUtils, Classes;
 
 type
    TShaderBankItem = class

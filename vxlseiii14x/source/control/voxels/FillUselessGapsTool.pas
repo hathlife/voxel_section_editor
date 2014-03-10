@@ -19,7 +19,7 @@ type
 
 implementation
 
-uses BasicConstants;
+uses BasicConstants, BasicVXLSETypes;
 
 // Constructors and Destructors
 constructor TFillUselessGapsTool.Create(var _Voxel: TVoxelSection);

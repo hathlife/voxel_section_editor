@@ -2,7 +2,7 @@ unit PLYFile;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes, BasicDataTypes;
 
 type
    CPLYFile = class

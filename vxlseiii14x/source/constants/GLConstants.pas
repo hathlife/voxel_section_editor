@@ -2,7 +2,7 @@ unit GLConstants;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 const
    // For Mesh.NormalsType
@@ -78,6 +78,7 @@ const
    C_MPL_MESH = 4;
 
    // Distance Functions
+{*
    C_DSF_IGNORE = 0;
    C_DSF_LINEAR = 1;
    C_DSF_CUBIC = 2;
@@ -92,7 +93,7 @@ const
    C_DSF_EULER1D = 11;
    C_DSF_EULERSQUARED1D = 12;
    C_DSF_SINCINFINITE1D = 13;
-
+*}
    // To clean topological problems
    C_TOPO_DOESNT_EXIST = -2;
    C_TOPO_MAKRED_TO_DIE = -1;
@@ -167,6 +168,11 @@ const
          B : 255;
       )
   );
+
+   // From MeshGeometryList
+   C_GEO_BREP = 1;
+   C_GEO_BREP3 = 2;
+   C_GEO_BREP4 = 3;
 
 
 implementation

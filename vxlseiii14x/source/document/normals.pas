@@ -5,7 +5,7 @@ unit normals;
 
 interface
 
-uses BasicDataTypes, NormalsConstants, BasicFunctions;
+uses BasicMathsTypes, NormalsConstants, BasicFunctions;
 
 const
    C_RES_INFINITE = -1;
@@ -64,8 +64,6 @@ var
    CubeNormals : TNormals;
 
 implementation
-
-uses Voxel_Engine;
 
 // Constructors
 constructor TNormals.Create;

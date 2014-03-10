@@ -2,7 +2,7 @@ unit VoxelView;
 
 interface
 
-uses BasicDataTypes, BasicFunctions, Voxel, BasicConstants;
+uses BasicDataTypes, BasicVXLSETypes, BasicFunctions, Voxel, BasicConstants;
 
 type
    T2DVoxelView = class

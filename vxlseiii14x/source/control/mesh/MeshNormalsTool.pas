@@ -2,7 +2,7 @@ unit MeshNormalsTool;
 
 interface
 
-uses BasicDataTypes, Math3d, NeighborDetector, Math, Vector3fSet;
+uses BasicMathsTypes, BasicDataTypes, Math3d, NeighborDetector, Math, Vector3fSet;
 
 type
    TMeshNormalsTool = class
@@ -11,10 +11,12 @@ type
       public
          function GetNormalsValue(const _V1,_V2,_V3: TVector3f): TVector3f;
          function GetQuadNormalValue(const _V1,_V2,_V3,_V4: TVector3f): TVector3f;
+         procedure GetVertexNormalsFromFaces(var _VertexNormals: TAVector3f; const _FaceNormals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; _NeighborDetector : TNeighborDetector;  const _VertexEquivalences: auint32);
+         procedure GetFaceNormals(var _FaceNormals: TAVector3f; _VerticesPerFace : integer; const _Vertices: TAVector3f; const _Faces: auint32);
+
+         // Deprecated.
          procedure SmoothVertexNormalsOperation(var _Normals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; const _Neighbors : TNeighborDetector; const _VertexEquivalences: auint32; _DistanceFunction: TDistanceFunc);
          procedure SmoothFaceNormalsOperation(var _FaceNormals: TAVector3f; const _Vertices: TAVector3f; const _Neighbors : TNeighborDetector; _DistanceFunction: TDistanceFunc);
-         procedure TransformFaceToVertexNormals(var _VertexNormals: TAVector3f; const _FaceNormals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; _NeighborDetector : TNeighborDetector;  const _VertexEquivalences: auint32);
-         procedure RebuildFaceNormals(var _FaceNormals: TAVector3f; _VerticesPerFace : integer; const _Vertices: TAVector3f; const _Faces: auint32);
    end;
 
 implementation
@@ -152,7 +154,7 @@ begin
    SetLength(NormalsHandicap,0);
 end;
 
-procedure TMeshNormalsTool.TransformFaceToVertexNormals(var _VertexNormals: TAVector3f; const _FaceNormals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; _NeighborDetector : TNeighborDetector;  const _VertexEquivalences: auint32);
+procedure TMeshNormalsTool.GetVertexNormalsFromFaces(var _VertexNormals: TAVector3f; const _FaceNormals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; _NeighborDetector : TNeighborDetector;  const _VertexEquivalences: auint32);
 var
    DifferentNormalsList: CVector3fSet;
    v,Value : integer;
@@ -200,7 +202,7 @@ begin
    DifferentNormalsList.Free;
 end;
 
-procedure TMeshNormalsTool.RebuildFaceNormals(var _FaceNormals: TAVector3f; _VerticesPerFace : integer; const _Vertices: TAVector3f; const _Faces: auint32);
+procedure TMeshNormalsTool.GetFaceNormals(var _FaceNormals: TAVector3f; _VerticesPerFace : integer; const _Vertices: TAVector3f; const _Faces: auint32);
 var
    f,face : integer;
    temp : TVector3f;

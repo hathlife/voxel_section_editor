@@ -92,7 +92,7 @@ var
 
 implementation
 
-uses FormMain;
+uses FormMain, BasicVXLSETypes;
 
 {$R *.DFM}
 

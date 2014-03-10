@@ -2,7 +2,7 @@ unit MeshOptimizationTool;
 
 interface
 
-uses Geometry, BasicDataTypes, NeighborDetector, StopWatch, IntegerList,
+uses Geometry, BasicMathsTypes, BasicDataTypes, BasicRenderingTypes, NeighborDetector, StopWatch, IntegerList,
 GLConstants, Dialogs, SysUtils, BasicFunctions, VertexTransformationUtils,
 IntegerSet, TriangleNeighbourSet, math3d;
 

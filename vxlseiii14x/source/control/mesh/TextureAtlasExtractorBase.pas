@@ -2,8 +2,8 @@ unit TextureAtlasExtractorBase;
 
 interface
 
-uses BasicDataTypes, Geometry, NeighborhoodDataPlugin, MeshPluginBase, Math,
-      NeighborDetector, IntegerList;
+uses BasicMathsTypes, BasicDataTypes, Geometry, NeighborhoodDataPlugin, MeshPluginBase, Math,
+      NeighborDetector, IntegerList, LOD;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -19,6 +19,7 @@ type
 
    CTextureAtlasExtractorBase = class
       protected
+         FLOD: TLOD;
          // Get Mesh Seeds related functions.
          procedure SetupMeshSeeds(var _Vertices : TAVector3f; var _FaceNormals : TAVector3f; var _Faces : auint32;_VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _FaceNeighbors: TNeighborDetector; var _TexCoords: TAVector2f; var _MaxVerts: integer; var _FaceSeed : aint32; var _FacePriority: AFloat; var _FaceOrder : auint32; var _CheckFace: abool);
          procedure ReAlignSeedsToCenter(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _FaceNeighbors: TNeighborDetector; var _TexCoords: TAVector2f; var _FacePriority: AFloat; var _FaceOrder : auint32; var _CheckFace: abool; var _NeighborhoodPlugin: PMeshPluginBase);
@@ -29,15 +30,17 @@ type
          procedure QuickSortSeeds(_min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction);
          procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
-         
+
       public
          // Constructors and Destructors
-         constructor Create;
+         constructor Create(var _LOD: TLOD);
          destructor Destroy; override;
-         procedure Initialize;
+         procedure Initialize; virtual;
          procedure Reset;
          procedure Clear;
          // Executes
+         procedure Execute(); virtual; abstract;
+         procedure ExecuteWithDiffuseTexture(_Size: integer); virtual; abstract;
          // Texture atlas buildup: step by step.
          function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f; virtual; abstract;
          procedure MergeSeeds(var _Seeds: TSeedSet); virtual;
@@ -46,8 +49,9 @@ type
 
 implementation
 
-constructor CTextureAtlasExtractorBase.Create;
+constructor CTextureAtlasExtractorBase.Create(var _LOD: TLOD);
 begin
+   FLOD := _LOD;
    Initialize;
 end;
 

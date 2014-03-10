@@ -7,7 +7,7 @@ unit VolumeFaceVerifier;
 
 interface
 
-uses BasicDataTypes, BasicConstants;
+uses BasicRenderingTypes, BasicConstants;
 
 {$INCLUDE source/Global_Conditionals.inc}
 

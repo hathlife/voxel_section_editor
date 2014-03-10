@@ -2,7 +2,7 @@ unit TriangleNeighbourSet;
 
 interface
 
-uses BasicDataTypes, BaseSet;
+uses BasicRenderingTypes, BaseSet;
 
 type
    CTriangleNeighbourSet = class (CBaseSet)

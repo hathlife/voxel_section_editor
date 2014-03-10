@@ -2,7 +2,7 @@ unit MeshProcessingTool;
 
 interface
 
-uses BasicDataTypes, NeighborDetector, SysUtils, Math, GlConstants;
+uses BasicMathsTypes, BasicDataTypes, NeighborDetector, SysUtils, Math, GlConstants;
 
 {$INCLUDE source/Global_Conditionals.inc}
 

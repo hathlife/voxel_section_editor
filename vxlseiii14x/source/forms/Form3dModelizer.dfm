@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 935
+  ClientHeight = 992
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 909
+    Height = 966
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 890
+    ExplicitHeight = 947
   end
   object Panel1: TPanel
     Left = 0
@@ -735,20 +735,27 @@ object Frm3DModelizer: TFrm3DModelizer
     object TextureEffects1: TMenuItem
       Caption = 'Texture Effects'
       object TextureFXDiffuse: TMenuItem
-        Caption = 'Generate Diffuse Texture'
+        Caption = 'Extract Texture Atlas (SBGAMES2010)'
         OnClick = TextureFXDiffuseClick
       end
       object TextureFXDiffuseCustom: TMenuItem
-        Caption = 'Generate Diffuse Texture...'
+        Caption = 'Extract Texture Atlas (SBGAMES2010)...'
         OnClick = TextureFXDiffuseCustomClick
       end
       object TextureFXDiffuseOrigami: TMenuItem
-        Caption = 'Generate Diffuse Texture (Origami)'
+        Caption = 'Extract Texture Atlas (Origami)'
         OnClick = TextureFXDiffuseOrigamiClick
       end
       object TextureFXDiffuseOrigamiGA: TMenuItem
-        Caption = 'Generate Diffuse Texture (Origami GA)'
+        Caption = 'Extract Texture Atlas (Origami GA)'
         OnClick = TextureFXDiffuseOrigamiGAClick
+      end
+      object N8: TMenuItem
+        Caption = '-'
+      end
+      object TextureFXDiffuseTexture: TMenuItem
+        Caption = 'Generate Diffuse Texture'
+        OnClick = TextureFXDiffuseTextureClick
       end
       object TextureFXNormal: TMenuItem
         Caption = 'Generate Normal Map'
@@ -761,6 +768,10 @@ object Frm3DModelizer: TFrm3DModelizer
       object TextureFXBumpCustom: TMenuItem
         Caption = 'Generate Bump Mapping...'
         OnClick = TextureFXBumpCustomClick
+      end
+      object TextureFXDebug: TMenuItem
+        Caption = 'Debug Texture Atlas'
+        OnClick = TextureFXDebugClick
       end
       object N5: TMenuItem
         Caption = '-'

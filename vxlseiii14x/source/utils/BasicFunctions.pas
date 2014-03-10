@@ -2,7 +2,7 @@ unit BasicFunctions;
 
 interface
 
-uses BasicDataTypes,SysUtils, Classes, Math, Windows, Graphics, ShellAPI;
+uses BasicMathsTypes,SysUtils, Classes, Math, Windows, Graphics, ShellAPI;
 
 // String related
 function WriteStringToStream(const _String: string; var _Stream : TStream): boolean;
@@ -24,6 +24,10 @@ Function TColorToTVector3f(Color : TColor) : TVector3f;
 function Subtract3i(_V1,_V2: TVector3i): TVector3i;
 function RGBA(r, g, b, a: Byte): COLORREF;
 function CopyVector4f(_V: TVector4f): TVector4f;
+
+// Numeric related
+function epsilon(_value: single): single;
+function absCeil(_value: single): single;
 
 // Filename related
 function GetFileNameWithNoExt(const _Filename: string): string;
@@ -182,6 +186,31 @@ end;
 function RGBA(r, g, b, a: Byte): COLORREF;
 begin
   Result := (r or (g shl 8) or (b shl 16) or (a shl 24));
+end;
+
+// Numeric related
+function epsilon(_value: single): single;
+begin
+   if abs(_value) < 0.00001 then
+   begin
+      Result := 0;
+   end
+   else
+   begin
+      Result := _value;
+   end;
+end;
+
+function absCeil(_value: single): single;
+begin
+   if _value < 0 then
+   begin
+      Result := ceil(abs(_value)) * -1;
+   end
+   else
+   begin
+      Result := ceil(_value);
+   end;
 end;
 
 // Filename related

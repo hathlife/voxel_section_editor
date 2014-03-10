@@ -8,7 +8,7 @@ unit ThreeDPointsDetector;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 type
    P3DPositionDet = ^T3DPositionDet;

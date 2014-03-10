@@ -2,7 +2,7 @@ unit TextureAtlasExtractorOrigamiGA;
 
 interface
 
-uses BasicDataTypes, TextureAtlasExtractorBase, TextureAtlasExtractorOrigami,
+uses BasicMathsTypes, BasicDataTypes, TextureAtlasExtractorBase, TextureAtlasExtractorOrigami,
    NeighborDetector, MeshPluginBase, Math, SysUtils, GeometricAlgebra, Multivector,
    IntegerList, math3d, NeighborhoodDataPlugin, ColisionCheckGA;
 

@@ -6,7 +6,7 @@ unit Palette;
 
 interface
 
-uses Graphics, Windows, SysUtils, math, BasicDataTypes;
+uses Graphics, Windows, SysUtils, math, BasicMathsTypes;
 
 const
 	TRANSPARENT = 0;

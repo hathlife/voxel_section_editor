@@ -2,7 +2,8 @@ unit VH_SurfaceGen;
 
 interface
 
-uses Voxel, BasicDataTypes, math3d, Voxel_Engine, math, Dialogs,Sysutils;
+uses Voxel, BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, math3d, Voxel_Engine,
+   math, Dialogs,Sysutils;
 
 type
    TArrayVector3i = array of TVector3i;

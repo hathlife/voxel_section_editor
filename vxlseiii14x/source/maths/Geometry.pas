@@ -44,7 +44,7 @@ unit Geometry;
 
 interface
 
-uses BasicDataTypes;
+uses BasicMathsTypes;
 
 type
   // data types needed for 3D graphics calculation,
@@ -209,6 +209,7 @@ type
   // some simplified names
   PMatrix = ^TMatrix;
   TMatrix = THomogeneousFltMatrix;
+  TAMatrix = array of TMatrix;
 
   PHomogeneousMatrix = ^THomogeneousMatrix;
   THomogeneousMatrix = THomogeneousFltMatrix;
@@ -844,9 +845,8 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorDotProduct(V1, V2: TVector): Single; register;
-
 begin
-  Result := V1[X] * V2[X] + V1[Y] * V2[Y] + V1[Z] * V2[Z] + V1[W] * V2[W];
+   Result := V1[X] * V2[X] + V1[Y] * V2[Y] + V1[Z] * V2[Z] + V1[W] * V2[W];
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -882,7 +882,8 @@ function VectorCrossProduct(V1, V2: TAffineVector): TAffineVector;
 // EDX contains address of V2
 // ECX contains address of result
 
-var Temp: TAffineVector;
+var
+   Temp: TAffineVector;
 
 asm
   {Temp[X] := V1[Y] * V2[Z]-V1[Z] * V2[Y];
@@ -935,12 +936,10 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorPerpendicular(V, N: TAffineVector): TAffineVector;
-
 // calculates a vector perpendicular to N (N is assumed to be of unit length)
 // subtract out any component parallel to N
-
-var Dot: Single;
-
+var
+   Dot: Single;
 begin
    Dot := VectorAffineDotProduct(V, N);
    Result[X] := V[X]-Dot * N[X];
@@ -951,73 +950,65 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorTransform(V: TVector4f; M: TMatrix): TVector4f; register;
-
 // transforms a homogeneous vector by multiplying it with a matrix
-
-var TV: TVector4f;
-
+var
+   TV: TVector4f;
 begin
-  TV[X] := V[X] * M[X, X] + V[Y] * M[Y, X] + V[Z] * M[Z, X] + V[W] * M[W, X];
-  TV[Y] := V[X] * M[X, Y] + V[Y] * M[Y, Y] + V[Z] * M[Z, Y] + V[W] * M[W, Y];
-  TV[Z] := V[X] * M[X, Z] + V[Y] * M[Y, Z] + V[Z] * M[Z, Z] + V[W] * M[W, Z];
-  TV[W] := V[X] * M[X, W] + V[Y] * M[Y, W] + V[Z] * M[Z, W] + V[W] * M[W, W];
-  Result := TV
+   TV[X] := V[X] * M[X, X] + V[Y] * M[Y, X] + V[Z] * M[Z, X] + V[W] * M[W, X];
+   TV[Y] := V[X] * M[X, Y] + V[Y] * M[Y, Y] + V[Z] * M[Z, Y] + V[W] * M[W, Y];
+   TV[Z] := V[X] * M[X, Z] + V[Y] * M[Y, Z] + V[Z] * M[Z, Z] + V[W] * M[W, Z];
+   TV[W] := V[X] * M[X, W] + V[Y] * M[Y, W] + V[Z] * M[Z, W] + V[W] * M[W, W];
+   Result := TV
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function  VectorTransform(V: TVector3f; M: TMatrix): TVector3f;
-
 // transforms an affine vector by multiplying it with a (homogeneous) matrix
-
-var TV: TVector3f;
-
+var
+   TV: TVector3f;
 begin
-  TV.X := V.X * M[X, X] + V.Y * M[Y, X] + V.Z * M[Z, X] + M[W, X];
-  TV.Y := V.X * M[X, Y] + V.Y * M[Y, Y] + V.Z * M[Z, Y] + M[W, Y];
-  TV.Z := V.X * M[X, Z] + V.Y * M[Y, Z] + V.Z * M[Z, Z] + M[W, Z];
-  Result := TV;
+   TV.X := V.X * M[X, X] + V.Y * M[Y, X] + V.Z * M[Z, X] + M[W, X];
+   TV.Y := V.X * M[X, Y] + V.Y * M[Y, Y] + V.Z * M[Z, Y] + M[W, Y];
+   TV.Z := V.X * M[X, Z] + V.Y * M[Y, Z] + V.Z * M[Z, Z] + M[W, Z];
+   Result := TV;
 end;
 
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorAffineTransform(V: TAffineVector; M: TAffineMatrix): TAffineVector; register;
-
 // transforms an affine vector by multiplying it with a matrix
-
-var TV: TAffineVector;
-
+var
+   TV: TAffineVector;
 begin
-  TV[X] := V[X] * M[X, X] + V[Y] * M[Y, X] + V[Z] * M[Z, X];
-  TV[Y] := V[X] * M[X, Y] + V[Y] * M[Y, Y] + V[Z] * M[Z, Y];
-  TV[Z] := V[X] * M[X, Z] + V[Y] * M[Y, Z] + V[Z] * M[Z, Z];
-  Result := TV;
+   TV[X] := V[X] * M[X, X] + V[Y] * M[Y, X] + V[Z] * M[Z, X];
+   TV[Y] := V[X] * M[X, Y] + V[Y] * M[Y, Y] + V[Z] * M[Z, Y];
+   TV[Z] := V[X] * M[X, Z] + V[Y] * M[Y, Z] + V[Z] * M[Z, Z];
+   Result := TV;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function PointInPolygon(xp, yp : array of Single; x, y: Single): Boolean;
-
 // The code below is from Wm. Randolph Franklin <wrf@ecse.rpi.edu>
 // with some minor modifications for speed.  It returns 1 for strictly
 // interior points, 0 for strictly exterior, and 0 or 1 for points on
 // the boundary.
 // This code is not yet tested!
-
-var I, J: Integer;
-
+var
+   I, J: Integer;
 begin
-  Result := False;
-  if High(XP) <> High(YP) then Exit;
-  J := High(XP);
-  for I := 0 to High(XP) do
-  begin
-    if ((((yp[I] <= y) and (y < yp[J])) or ((yp[J] <= y) and (y < yp[I]))) and
-        (x < (xp[J] - xp[I]) * (y - yp[I]) / (yp[J] - yp[I]) + xp[I]))
-    then Result := not Result;
-    J := I + 1;
-  end;
+   Result := False;
+   if High(XP) <> High(YP) then
+      Exit;
+   J := High(XP);
+   for I := 0 to High(XP) do
+   begin
+      if ((((yp[I] <= y) and (y < yp[J])) or ((yp[J] <= y) and (y < yp[I]))) and (x < (xp[J] - xp[I]) * (y - yp[I]) / (yp[J] - yp[I]) + xp[I])) then
+         Result := not Result;
+      J := I + 1;
+   end;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1074,23 +1065,17 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function QuaternionMultiply(qL, qR: TQuaternion): TQuaternion;
-
 // Returns quaternion product qL * qR.  Note: order is important!
 // To combine rotations, use the product QuaternionMuliply(qSecond, qFirst),
 // which gives the effect of rotating by qFirst then qSecond.
-
-var Temp : TQuaternion;
-
+var
+   Temp : TQuaternion;
 begin
-  Temp.RealPart := qL.RealPart * qR.RealPart - qL.ImagPart[X] * qR.ImagPart[X] -
-                   qL.ImagPart[Y] * qR.ImagPart[Y] - qL.ImagPart[Z] * qR.ImagPart[Z];
-  Temp.ImagPart[X] := qL.RealPart * qR.ImagPart[X] + qL.ImagPart[X] * qR.RealPart +
-                      qL.ImagPart[Y] * qR.ImagPart[Z] - qL.ImagPart[Z] * qR.ImagPart[Y];
-  Temp.ImagPart[Y] := qL.RealPart * qR.ImagPart[Y] + qL.ImagPart[Y] * qR.RealPart +
-                      qL.ImagPart[Z] * qR.ImagPart[X] - qL.ImagPart[X] * qR.ImagPart[Z];
-  Temp.ImagPart[Z] := qL.RealPart * qR.ImagPart[Z] + qL.ImagPart[Z] * qR.RealPart +
-                      qL.ImagPart[X] * qR.ImagPart[Y] - qL.ImagPart[Y] * qR.ImagPart[X];
-  Result := Temp;
+   Temp.RealPart := qL.RealPart * qR.RealPart - qL.ImagPart[X] * qR.ImagPart[X] - qL.ImagPart[Y] * qR.ImagPart[Y] - qL.ImagPart[Z] * qR.ImagPart[Z];
+   Temp.ImagPart[X] := qL.RealPart * qR.ImagPart[X] + qL.ImagPart[X] * qR.RealPart + qL.ImagPart[Y] * qR.ImagPart[Z] - qL.ImagPart[Z] * qR.ImagPart[Y];
+   Temp.ImagPart[Y] := qL.RealPart * qR.ImagPart[Y] + qL.ImagPart[Y] * qR.RealPart + qL.ImagPart[Z] * qR.ImagPart[X] - qL.ImagPart[X] * qR.ImagPart[Z];
+   Temp.ImagPart[Z] := qL.RealPart * qR.ImagPart[Z] + qL.ImagPart[Z] * qR.RealPart + qL.ImagPart[X] * qR.ImagPart[Y] - qL.ImagPart[Y] * qR.ImagPart[X];
+   Result := Temp;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1127,30 +1112,30 @@ begin
   Result[X, W] := 0;             Result[Y, W] := 0;             Result[Z, W] := 0;             Result[W, W] := 1;}
 
 var
-  V: TAffineVector;
-  SinA, CosA,
-  A, B, C: Extended;
+   V: TAffineVector;
+   SinA, CosA,
+   A, B, C: Extended;
 
 begin
-  V := Q.ImagPart;
-  VectorNormalize(V);
-  SinCos(Q.RealPart / 2, SinA, CosA);
-  A := V[X] * SinA;
-  B := V[Y] * SinA;
-  C := V[Z] * SinA;
+   V := Q.ImagPart;
+   VectorNormalize(V);
+   SinCos(Q.RealPart / 2, SinA, CosA);
+   A := V[X] * SinA;
+   B := V[Y] * SinA;
+   C := V[Z] * SinA;
 
-  Result := IdentityMatrix;
-  Result[X, X] := 1 - 2 * B * B - 2 * C * C;
-  Result[X, Y] := 2 * A * B - 2 * CosA * C;
-  Result[X, Z] := 2 * A * C + 2 * CosA * B;
+   Result := IdentityMatrix;
+   Result[X, X] := 1 - 2 * B * B - 2 * C * C;
+   Result[X, Y] := 2 * A * B - 2 * CosA * C;
+   Result[X, Z] := 2 * A * C + 2 * CosA * B;
 
-  Result[Y, X] := 2 * A * B + 2 * CosA * C;
-  Result[Y, Y] := 1 - 2 * A * A - 2 * C * C;
-  Result[Y, Z] := 2 * B * C - 2 * CosA * A;
+   Result[Y, X] := 2 * A * B + 2 * CosA * C;
+   Result[Y, Y] := 1 - 2 * A * A - 2 * C * C;
+   Result[Y, Z] := 2 * B * C - 2 * CosA * A;
 
-  Result[Z, X] := 2 * A * C - 2 * CosA * B;
-  Result[Z, Y] := 2 * B * C + 2 * CosA * A;
-  Result[Z, Z] := 1 - 2 * A * A - 2 * B * B;
+   Result[Z, X] := 2 * A * C - 2 * CosA * B;
+   Result[Z, Y] := 2 * B * C + 2 * CosA * A;
+   Result[Z, Z] := 1 - 2 * A * A - 2 * B * B;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1434,85 +1419,83 @@ function ConvertRotation(Angles: TAffineVector): TVector; register;
 	2 Z Sin(t) = M[0][1] - M[1][0]
 }
 
-var Axis1, Axis2: TAffineFltVector;
-    M, M1, M2: TMatrix;
-    cost, cost1,
-    sint,
-    s1, s2, s3: Single;
-    I: Integer;
-
-
+var
+   Axis1, Axis2: TAffineFltVector;
+   M, M1, M2: TMatrix;
+   cost, cost1,
+   sint,
+   s1, s2, s3: Single;
+   I: Integer;
 begin
-  // see if we are only rotating about a single Axis
-  if Abs(Angles[X]) < EPSILON then
-  begin
-    if Abs(Angles[Y]) < EPSILON then
-    begin
-      Result := MakeVector([0, 0, 1, Angles[Z]]);
-      Exit;
-    end
-    else
-      if Abs(Angles[Z]) < EPSILON then
+   // see if we are only rotating about a single Axis
+   if Abs(Angles[X]) < EPSILON then
+   begin
+      if Abs(Angles[Y]) < EPSILON then
       begin
-        Result := MakeVector([0, 1, 0, Angles[Y]]);
-        Exit;
+         Result := MakeVector([0, 0, 1, Angles[Z]]);
+         Exit;
+      end
+      else if Abs(Angles[Z]) < EPSILON then
+      begin
+         Result := MakeVector([0, 1, 0, Angles[Y]]);
+         Exit;
       end
    end
-   else
-     if (Abs(Angles[Y]) < EPSILON) and
-        (Abs(Angles[Z]) < EPSILON) then
-     begin
-       Result := MakeVector([1, 0, 0, Angles[X]]);
-       Exit;
-     end;
+   else if (Abs(Angles[Y]) < EPSILON) and (Abs(Angles[Z]) < EPSILON) then
+   begin
+      Result := MakeVector([1, 0, 0, Angles[X]]);
+      Exit;
+   end;
 
-  // make the rotation matrix
-  Axis1 := MakeAffineVector([1, 0, 0]);
-  M := CreateRotationMatrix(Axis1, Angles[X]);
+   // make the rotation matrix
+   Axis1 := MakeAffineVector([1, 0, 0]);
+   M := CreateRotationMatrix(Axis1, Angles[X]);
 
-  Axis2 := MakeAffineVector([0, 1, 0]);
-  M2 := CreateRotationMatrix(Axis2, Angles[Y]);
-  M1 := MatrixMultiply(M, M2);
+   Axis2 := MakeAffineVector([0, 1, 0]);
+   M2 := CreateRotationMatrix(Axis2, Angles[Y]);
+   M1 := MatrixMultiply(M, M2);
 
-  Axis2 := MakeAffineVector([0, 0, 1]);
-  M2 := CreateRotationMatrix(Axis2, Angles[Z]);
-  M := MatrixMultiply(M1, M2);
+   Axis2 := MakeAffineVector([0, 0, 1]);
+   M2 := CreateRotationMatrix(Axis2, Angles[Z]);
+   M := MatrixMultiply(M1, M2);
 
-  cost := ((M[X, X] + M[Y, Y] + M[Z, Z])-1) / 2;
-  if cost < -1 then cost := -1
-               else
-    if cost > 1 - EPSILON then
-    begin
+   cost := ((M[X, X] + M[Y, Y] + M[Z, Z])-1) / 2;
+   if cost < -1 then
+      cost := -1
+   else if cost > 1 - EPSILON then
+   begin
       // Bad Angle - this would cause a crash
       Result := MakeVector([1, 0, 0, 0]);
       Exit;
-    end;
+   end;
+   cost1 := 1 - cost;
+   Result := Makevector([Sqrt((M[X, X]-cost) / cost1), Sqrt((M[Y, Y]-cost) / cost1), sqrt((M[Z, Z]-cost) / cost1), arccos(cost)]);
+   sint := 2 * Sqrt(1 - cost * cost); // This is actually 2 Sin(t)
 
-  cost1 := 1 - cost;
-  Result := Makevector([Sqrt((M[X, X]-cost) / cost1),
-                      Sqrt((M[Y, Y]-cost) / cost1),
-                      sqrt((M[Z, Z]-cost) / cost1),
-                      arccos(cost)]);
-
-  sint := 2 * Sqrt(1 - cost * cost); // This is actually 2 Sin(t)
-
-  // Determine the proper signs
-  for I := 0 to 7 do
-  begin
-    if (I and 1) > 1 then s1 := -1 else s1 := 1;
-    if (I and 2) > 1 then s2 := -1 else s2 := 1;
-    if (I and 4) > 1 then s3 := -1 else s3 := 1;
-    if (Abs(s1 * Result[X] * sint-M[Y, Z] + M[Z, Y]) < EPSILON2) and
-       (Abs(s2 * Result[Y] * sint-M[Z, X] + M[X, Z]) < EPSILON2) and
-       (Abs(s3 * Result[Z] * sint-M[X, Y] + M[Y, X]) < EPSILON2) then
-        begin
-          // We found the right combination of signs
-          Result[X] := Result[X] * s1;
-          Result[Y] := Result[Y] * s2;
-          Result[Z] := Result[Z] * s3;
-          Exit;
-        end;
-  end;
+   // Determine the proper signs
+   for I := 0 to 7 do
+   begin
+      if (I and 1) > 1 then
+         s1 := -1
+      else
+         s1 := 1;
+      if (I and 2) > 1 then
+         s2 := -1
+      else
+         s2 := 1;
+      if (I and 4) > 1 then
+         s3 := -1
+      else
+         s3 := 1;
+      if (Abs(s1 * Result[X] * sint-M[Y, Z] + M[Z, Y]) < EPSILON2) and (Abs(s2 * Result[Y] * sint-M[Z, X] + M[X, Z]) < EPSILON2) and (Abs(s3 * Result[Z] * sint-M[X, Y] + M[Y, X]) < EPSILON2) then
+      begin
+         // We found the right combination of signs
+         Result[X] := Result[X] * s1;
+         Result[Y] := Result[Y] * s2;
+         Result[Z] := Result[Z] * s3;
+         Exit;
+      end;
+   end;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1522,13 +1505,13 @@ function CreateRotationMatrixX(Sine, Cosine: Single): TMatrix; register;
 // creates matrix for rotation about x-axis
 
 begin
-  Result := EmptyMatrix;
-  Result[X, X] := 1;
-  Result[Y, Y] := Cosine;
-  Result[Y, Z] := Sine;
-  Result[Z, Y] := -Sine;
-  Result[Z, Z] := Cosine;
-  Result[W, W] := 1;
+   Result := EmptyMatrix;
+   Result[X, X] := 1;
+   Result[Y, Y] := Cosine;
+   Result[Y, Z] := Sine;
+   Result[Z, Y] := -Sine;
+   Result[Z, Z] := Cosine;
+   Result[W, W] := 1;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1538,13 +1521,13 @@ function CreateRotationMatrixY(Sine, Cosine: Single): TMatrix; register;
 // creates matrix for rotation about y-axis
 
 begin
-  Result := EmptyMatrix;
-  Result[X, X] := Cosine;
-  Result[X, Z] := -Sine;
-  Result[Y, Y] := 1;
-  Result[Z, X] := Sine;
-  Result[Z, Z] := Cosine;
-  Result[W, W] := 1;
+   Result := EmptyMatrix;
+   Result[X, X] := Cosine;
+   Result[X, Z] := -Sine;
+   Result[Y, Y] := 1;
+   Result[Z, X] := Sine;
+   Result[Z, Z] := Cosine;
+   Result[W, W] := 1;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1554,13 +1537,13 @@ function CreateRotationMatrixZ(Sine, Cosine: Single): TMatrix; register;
 // creates matrix for rotation about z-axis
 
 begin
-  Result := EmptyMatrix;
-  Result[X, X] := Cosine;
-  Result[X, Y] := Sine;
-  Result[Y, X] := -Sine;
-  Result[Y, Y] := Cosine;
-  Result[Z, Z] := 1;
-  Result[W, W] := 1;
+   Result := EmptyMatrix;
+   Result[X, X] := Cosine;
+   Result[X, Y] := Sine;
+   Result[Y, X] := -Sine;
+   Result[Y, Y] := Cosine;
+   Result[Z, Z] := 1;
+   Result[W, W] := 1;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1570,10 +1553,10 @@ function CreateScaleMatrix(V: TAffineVector): TMatrix; register;
 // creates scaling matrix
 
 begin
-  Result := IdentityMatrix;
-  Result[X, X] := V[X];
-  Result[Y, Y] := V[Y];
-  Result[Z, Z] := V[Z];
+   Result := IdentityMatrix;
+   Result[X, X] := V[X];
+   Result[Y, Y] := V[Y];
+   Result[Z, Z] := V[Z];
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1583,11 +1566,11 @@ function CreateTranslationMatrix(V: TVector): TMatrix; register;
 // creates translation matrix
 
 begin
-  Result := IdentityMatrix;
-  Result[W, X] := V[X];
-  Result[W, Y] := V[Y];
-  Result[W, Z] := V[Z];
-  Result[W, W] := V[W];
+   Result := IdentityMatrix;
+   Result[W, X] := V[X];
+   Result[W, Y] := V[Y];
+   Result[W, Z] := V[Z];
+   Result[W, W] := V[W];
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1597,7 +1580,7 @@ function Lerp(Start, Stop, t: Single): Single;
 // calculates linear interpolation between start and stop at point t
 
 begin
-  Result := Start + (Stop - Start) * t;
+   Result := Start + (Stop - Start) * t;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1607,9 +1590,9 @@ function VectorAffineLerp(V1, V2: TAffineVector; t: Single): TAffineVector;
 // calculates linear interpolation between vector1 and vector2 at point t
 
 begin
-  Result[X] := Lerp(V1[X], V2[X], t);
-  Result[Y] := Lerp(V1[Y], V2[Y], t);
-  Result[Z] := Lerp(V1[Z], V2[Z], t);
+   Result[X] := Lerp(V1[X], V2[X], t);
+   Result[Y] := Lerp(V1[Y], V2[Y], t);
+   Result[Z] := Lerp(V1[Z], V2[Z], t);
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1619,10 +1602,10 @@ function VectorLerp(V1, V2: TVector; t: Single): TVector;
 // calculates linear interpolation between vector1 and vector2 at point t
 
 begin
-  Result[X] := Lerp(V1[X], V2[X], t);
-  Result[Y] := Lerp(V1[Y], V2[Y], t);
-  Result[Z] := Lerp(V1[Z], V2[Z], t);
-  Result[W] := Lerp(V1[W], V2[W], t);
+   Result[X] := Lerp(V1[X], V2[X], t);
+   Result[Y] := Lerp(V1[Y], V2[Y], t);
+   Result[Z] := Lerp(V1[Z], V2[Z], t);
+   Result[W] := Lerp(V1[W], V2[W], t);
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1634,72 +1617,70 @@ function QuaternionSlerp(QStart, QEnd: TQuaternion; Spin: Integer; t: Single): T
 // t            - interpolation parameter (0 to 1)
 // Spin         - number of extra spin rotations to involve
 
-var beta,                   // complementary interp parameter
-    theta,                  // Angle between A and B
-    sint, cost,             // sine, cosine of theta
-    phi: Single;            // theta plus spins
-    bflip: Boolean;         // use negativ t?
-
-
+var
+   beta,                   // complementary interp parameter
+   theta,                  // Angle between A and B
+   sint, cost,             // sine, cosine of theta
+   phi: Single;            // theta plus spins
+   bflip: Boolean;         // use negativ t?
 begin
-  // cosine theta
-  cost := VectorAngle(QStart.ImagPart, QEnd.ImagPart);
+   // cosine theta
+   cost := VectorAngle(QStart.ImagPart, QEnd.ImagPart);
 
-  // if QEnd is on opposite hemisphere from QStart, use -QEnd instead
-  if cost < 0 then
-  begin
-    cost := -cost;
-    bflip := True;
-  end
-  else bflip := False;
+   // if QEnd is on opposite hemisphere from QStart, use -QEnd instead
+   if cost < 0 then
+   begin
+      cost := -cost;
+      bflip := True;
+   end
+   else
+      bflip := False;
 
-  // if QEnd is (within precision limits) the same as QStart,
-  // just linear interpolate between QStart and QEnd.
-  // Can't do spins, since we don't know what direction to spin.
+   // if QEnd is (within precision limits) the same as QStart,
+   // just linear interpolate between QStart and QEnd.
+   // Can't do spins, since we don't know what direction to spin.
 
-  if (1 - cost) < EPSILON then beta := 1 - t
-                          else
-  begin
-    // normal case
-    theta := arccos(cost);
-    phi := theta + Spin * Pi;
-    sint := sin(theta);
-    beta := sin(theta - t * phi) / sint;
-    t := sin(t * phi) / sint;
-  end;
+   if (1 - cost) < EPSILON then
+      beta := 1 - t
+   else
+   begin
+      // normal case
+      theta := arccos(cost);
+      phi := theta + Spin * Pi;
+      sint := sin(theta);
+      beta := sin(theta - t * phi) / sint;
+      t := sin(t * phi) / sint;
+   end;
 
-  if bflip then t := -t;
+   if bflip then
+      t := -t;
 
-  // interpolate
-  Result.ImagPart[X] := beta * QStart.ImagPart[X] + t * QEnd.ImagPart[X];
-  Result.ImagPart[Y] := beta * QStart.ImagPart[Y] + t * QEnd.ImagPart[Y];
-  Result.ImagPart[Z] := beta * QStart.ImagPart[Z] + t * QEnd.ImagPart[Z];
-  Result.RealPart := beta * QStart.RealPart + t * QEnd.RealPart;
+   // interpolate
+   Result.ImagPart[X] := beta * QStart.ImagPart[X] + t * QEnd.ImagPart[X];
+   Result.ImagPart[Y] := beta * QStart.ImagPart[Y] + t * QEnd.ImagPart[Y];
+   Result.ImagPart[Z] := beta * QStart.ImagPart[Z] + t * QEnd.ImagPart[Z];
+   Result.RealPart := beta * QStart.RealPart + t * QEnd.RealPart;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorAffineCombine(V1, V2: TAffineVector; F1, F2: Single): TAffineVector;
-
 // makes a linear combination of two vectors and return the result
-
 begin
-  Result[X] := (F1 * V1[X]) + (F2 * V2[X]);
-  Result[Y] := (F1 * V1[Y]) + (F2 * V2[Y]);
-  Result[Z] := (F1 * V1[Z]) + (F2 * V2[Z]);
+   Result[X] := (F1 * V1[X]) + (F2 * V2[X]);
+   Result[Y] := (F1 * V1[Y]) + (F2 * V2[Y]);
+   Result[Z] := (F1 * V1[Z]) + (F2 * V2[Z]);
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorCombine(V1, V2: TVector; F1, F2: Single): TVector;
-
 // makes a linear combination of two vectors and return the result
-
 begin
-  Result[X] := (F1 * V1[X]) + (F2 * V2[X]);
-  Result[Y] := (F1 * V1[Y]) + (F2 * V2[Y]);
-  Result[Z] := (F1 * V1[Z]) + (F2 * V2[Z]);
-  Result[W] := (F1 * V1[W]) + (F2 * V2[W]);
+   Result[X] := (F1 * V1[X]) + (F2 * V2[X]);
+   Result[Y] := (F1 * V1[Y]) + (F2 * V2[Y]);
+   Result[Z] := (F1 * V1[Z]) + (F2 * V2[Z]);
+   Result[W] := (F1 * V1[W]) + (F2 * V2[W]);
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1716,145 +1697,144 @@ function MatrixDecompose(M: TMatrix; var Tran: TTransformations): Boolean; regis
 //
 // Returns true upon success, false if the matrix is singular.
 
-var I, J: Integer;
-    LocMat,
-    pmat,
-    invpmat,
-    tinvpmat: TMatrix;
-    prhs,
-    psol: TVector;
-    Row: array[0..2] of TAffineVector;
-
+var
+   I, J: Integer;
+   LocMat,
+   pmat,
+   invpmat,
+   tinvpmat: TMatrix;
+   prhs,
+   psol: TVector;
+   Row: array[0..2] of TAffineVector;
 begin
-  Result := False;
-  locmat := M;
-  // normalize the matrix
-  if locmat[W, W] = 0 then Exit;
-  for I := 0 to 3 do
-    for J := 0 to 3 do
-      locmat[I, J] := locmat[I, J] / locmat[W, W];
+   Result := False;
+   locmat := M;
+   // normalize the matrix
+   if locmat[W, W] = 0 then
+      Exit;
+   for I := 0 to 3 do
+      for J := 0 to 3 do
+         locmat[I, J] := locmat[I, J] / locmat[W, W];
 
-  // pmat is used to solve for perspective, but it also provides
-  // an easy way to test for singularity of the upper 3x3 component.
+   // pmat is used to solve for perspective, but it also provides
+   // an easy way to test for singularity of the upper 3x3 component.
 
-  pmat := locmat;
-  for I := 0 to 2 do pmat[I, W] := 0;
-  pmat[W, W] := 1;
+   pmat := locmat;
+   for I := 0 to 2 do
+      pmat[I, W] := 0;
+   pmat[W, W] := 1;
 
-  if MatrixDeterminant(pmat) = 0 then Exit;
+   if MatrixDeterminant(pmat) = 0 then
+      Exit;
 
-  // First, isolate perspective.  This is the messiest.
-  if (locmat[X, W] <> 0) or
-     (locmat[Y, W] <> 0) or
-     (locmat[Z, W] <> 0) then
-  begin
-    // prhs is the right hand side of the equation.
-    prhs[X] := locmat[X, W];
-    prhs[Y] := locmat[Y, W];
-    prhs[Z] := locmat[Z, W];
-    prhs[W] := locmat[W, W];
+   // First, isolate perspective.  This is the messiest.
+   if (locmat[X, W] <> 0) or (locmat[Y, W] <> 0) or (locmat[Z, W] <> 0) then
+   begin
+      // prhs is the right hand side of the equation.
+      prhs[X] := locmat[X, W];
+      prhs[Y] := locmat[Y, W];
+      prhs[Z] := locmat[Z, W];
+      prhs[W] := locmat[W, W];
 
-    // Solve the equation by inverting pmat and multiplying
-    // prhs by the inverse.  (This is the easiest way, not
-    // necessarily the best.)
+      // Solve the equation by inverting pmat and multiplying
+      // prhs by the inverse.  (This is the easiest way, not
+      // necessarily the best.)
 
-    invpmat := pmat;
-    MatrixInvert(invpmat);
-    MatrixTranspose(invpmat);
-    psol := VectorTransform(prhs, tinvpmat);
+      invpmat := pmat;
+      MatrixInvert(invpmat);
+      MatrixTranspose(invpmat);
+      psol := VectorTransform(prhs, tinvpmat);
 
-    // stuff the answer away
-    Tran[ttPerspectiveX] := psol[X];
-    Tran[ttPerspectiveY] := psol[Y];
-    Tran[ttPerspectiveZ] := psol[Z];
-    Tran[ttPerspectiveW] := psol[W];
+      // stuff the answer away
+      Tran[ttPerspectiveX] := psol[X];
+      Tran[ttPerspectiveY] := psol[Y];
+      Tran[ttPerspectiveZ] := psol[Z];
+      Tran[ttPerspectiveW] := psol[W];
 
-    // clear the perspective partition
-    locmat[X, W] := 0;
-    locmat[Y, W] := 0;
-    locmat[Z, W] := 0;
-    locmat[W, W] := 1;
-  end
-  else
-  begin
-    // no perspective
-    Tran[ttPerspectiveX] := 0;
-    Tran[ttPerspectiveY] := 0;
-    Tran[ttPerspectiveZ] := 0;
-    Tran[ttPerspectiveW] := 0;
-  end;
+      // clear the perspective partition
+      locmat[X, W] := 0;
+      locmat[Y, W] := 0;
+      locmat[Z, W] := 0;
+      locmat[W, W] := 1;
+   end
+   else
+   begin
+      // no perspective
+      Tran[ttPerspectiveX] := 0;
+      Tran[ttPerspectiveY] := 0;
+      Tran[ttPerspectiveZ] := 0;
+      Tran[ttPerspectiveW] := 0;
+   end;
 
-  // next take care of translation (easy)
-  for I := 0 to 2 do
-  begin
-    Tran[TTransType(Ord(ttTranslateX) + I)] := locmat[W, I];
-    locmat[W, I] := 0;
-  end;
+   // next take care of translation (easy)
+   for I := 0 to 2 do
+   begin
+      Tran[TTransType(Ord(ttTranslateX) + I)] := locmat[W, I];
+      locmat[W, I] := 0;
+   end;
 
-  // now get scale and shear
-  for I := 0 to 2 do
-  begin
-    row[I, X] := locmat[I, X];
-    row[I, Y] := locmat[I, Y];
-    row[I, Z] := locmat[I, Z];
-  end;
+   // now get scale and shear
+   for I := 0 to 2 do
+   begin
+      row[I, X] := locmat[I, X];
+      row[I, Y] := locmat[I, Y];
+      row[I, Z] := locmat[I, Z];
+   end;
 
-  // compute X scale factor and normalize first row
-  Tran[ttScaleX] := Sqr(VectorNormalize(row[0])); // ml: calculation optimized
+   // compute X scale factor and normalize first row
+   Tran[ttScaleX] := Sqr(VectorNormalize(row[0])); // ml: calculation optimized
 
-  // compute XY shear factor and make 2nd row orthogonal to 1st
-  Tran[ttShearXY] := VectorAffineDotProduct(row[0], row[1]);
-  row[1] := VectorAffineCombine(row[1], row[0], 1, -Tran[ttShearXY]);
+   // compute XY shear factor and make 2nd row orthogonal to 1st
+   Tran[ttShearXY] := VectorAffineDotProduct(row[0], row[1]);
+   row[1] := VectorAffineCombine(row[1], row[0], 1, -Tran[ttShearXY]);
 
-  // now, compute Y scale and normalize 2nd row
-  Tran[ttScaleY] := Sqr(VectorNormalize(row[1])); // ml: calculation optimized
-  Tran[ttShearXY] := Tran[ttShearXY]/Tran[ttScaleY];
+   // now, compute Y scale and normalize 2nd row
+   Tran[ttScaleY] := Sqr(VectorNormalize(row[1])); // ml: calculation optimized
+   Tran[ttShearXY] := Tran[ttShearXY]/Tran[ttScaleY];
 
-  // compute XZ and YZ shears, orthogonalize 3rd row
-  Tran[ttShearXZ] := VectorAffineDotProduct(row[0], row[2]);
-  row[2] := VectorAffineCombine(row[2], row[0], 1, -Tran[ttShearXZ]);
-  Tran[ttShearYZ] := VectorAffineDotProduct(row[1], row[2]);
-  row[2] := VectorAffineCombine(row[2], row[1], 1, -Tran[ttShearYZ]);
+   // compute XZ and YZ shears, orthogonalize 3rd row
+   Tran[ttShearXZ] := VectorAffineDotProduct(row[0], row[2]);
+   row[2] := VectorAffineCombine(row[2], row[0], 1, -Tran[ttShearXZ]);
+   Tran[ttShearYZ] := VectorAffineDotProduct(row[1], row[2]);
+   row[2] := VectorAffineCombine(row[2], row[1], 1, -Tran[ttShearYZ]);
 
-  // next, get Z scale and normalize 3rd row
-  Tran[ttScaleZ] := Sqr(VectorNormalize(row[1])); // (ML) calc. optimized
-  Tran[ttShearXZ] := Tran[ttShearXZ] / tran[ttScaleZ];
-  Tran[ttShearYZ] := Tran[ttShearYZ] / Tran[ttScaleZ];
+   // next, get Z scale and normalize 3rd row
+   Tran[ttScaleZ] := Sqr(VectorNormalize(row[1])); // (ML) calc. optimized
+   Tran[ttShearXZ] := Tran[ttShearXZ] / tran[ttScaleZ];
+   Tran[ttShearYZ] := Tran[ttShearYZ] / Tran[ttScaleZ];
 
-  // At this point, the matrix (in rows[]) is orthonormal.
-  // Check for a coordinate system flip.  If the determinant
-  // is -1, then negate the matrix and the scaling factors.
-  if VectorAffineDotProduct(row[0], VectorCrossProduct(row[1], row[2])) < 0 then
-    for I := 0 to 2 do
-    begin
-      Tran[TTransType(Ord(ttScaleX) + I)] := -Tran[TTransType(Ord(ttScaleX) + I)];
-      row[I, X] := -row[I, X];
-      row[I, Y] := -row[I, Y];
-      row[I, Z] := -row[I, Z];
-    end;
+   // At this point, the matrix (in rows[]) is orthonormal.
+   // Check for a coordinate system flip.  If the determinant
+   // is -1, then negate the matrix and the scaling factors.
+   if VectorAffineDotProduct(row[0], VectorCrossProduct(row[1], row[2])) < 0 then
+      for I := 0 to 2 do
+      begin
+         Tran[TTransType(Ord(ttScaleX) + I)] := -Tran[TTransType(Ord(ttScaleX) + I)];
+         row[I, X] := -row[I, X];
+         row[I, Y] := -row[I, Y];
+         row[I, Z] := -row[I, Z];
+      end;
 
-  // now, get the rotations out, as described in the gem
-  Tran[ttRotateY] := arcsin(-row[0, Z]);
-  if cos(Tran[ttRotateY]) <> 0 then
-  begin
-    Tran[ttRotateX] := arctan2(row[1, Z], row[2, Z]);
-    Tran[ttRotateZ] := arctan2(row[0, Y], row[0, X]);
-  end
-  else
-  begin
-    tran[ttRotateX] := arctan2(row[1, X], row[1, Y]);
-    tran[ttRotateZ] := 0;
-  end;
-  // All done!
-  Result := True;
+   // now, get the rotations out, as described in the gem
+   Tran[ttRotateY] := arcsin(-row[0, Z]);
+   if cos(Tran[ttRotateY]) <> 0 then
+   begin
+      Tran[ttRotateX] := arctan2(row[1, Z], row[2, Z]);
+      Tran[ttRotateZ] := arctan2(row[0, Y], row[0, X]);
+   end
+   else
+   begin
+      tran[ttRotateX] := arctan2(row[1, X], row[1, Y]);
+      tran[ttRotateZ] := 0;
+   end;
+   // All done!
+   Result := True;
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorDblToFlt(V: THomogeneousDblVector): THomogeneousVector; assembler;
-
 // converts a vector containing double sized values into a vector with single sized values
-
 asm
               FLD  QWORD PTR [EAX]
               FSTP DWORD PTR [EDX]
@@ -1869,9 +1849,7 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorAffineDblToFlt(V: TAffineDblVector): TAffineVector; assembler;
-
 // converts a vector containing double sized values into a vector with single sized values
-
 asm
               FLD  QWORD PTR [EAX]
               FSTP DWORD PTR [EDX]
@@ -1884,9 +1862,7 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorAffineFltToDbl(V: TAffineVector): TAffineDblVector; assembler;
-
 // converts a vector containing single sized values into a vector with double sized values
-
 asm
               FLD  DWORD PTR [EAX]
               FSTP QWORD PTR [EDX]
@@ -1899,9 +1875,7 @@ end;
 //----------------------------------------------------------------------------------------------------------------------
 
 function VectorFltToDbl(V: TVector): THomogeneousDblVector; assembler;
-
 // converts a vector containing single sized values into a vector with double sized values
-
 asm
               FLD  DWORD PTR [EAX]
               FSTP QWORD PTR [EDX]
@@ -1916,61 +1890,49 @@ end;
 //----------------- coordinate system manipulation functions -----------------------------------------------------------
 
 function Turn(Matrix: TMatrix; Angle: Single): TMatrix;
-
 // rotates the given coordinate system (represented by the matrix) around its Y-axis
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[1]), Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[1]), Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function Turn(Matrix: TMatrix; MasterUp: TAffineVector; Angle: Single): TMatrix;
-
 // rotates the given coordinate system (represented by the matrix) around MasterUp
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterUp, Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterUp, Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function Pitch(Matrix: TMatrix; Angle: Single): TMatrix;
-
 // rotates the given coordinate system (represented by the matrix) around its X-axis
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[0]), Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[0]), Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function Pitch(Matrix: TMatrix; MasterRight: TAffineVector; Angle: Single): TMatrix; overload;
-
 // rotates the given coordinate system (represented by the matrix) around MasterRight
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterRight, Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterRight, Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function Roll(Matrix: TMatrix; Angle: Single): TMatrix;
-
 // rotates the given coordinate system (represented by the matrix) around its Z-axis
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[2]), Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MakeAffineVector(Matrix[2]), Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 function Roll(Matrix: TMatrix; MasterDirection: TAffineVector; Angle: Single): TMatrix; overload;
-
 // rotates the given coordinate system (represented by the matrix) around MasterDirection
-
 begin
-  Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterDirection, Angle));
+   Result := MatrixMultiply(Matrix, CreateRotationMatrix(MasterDirection, Angle));
 end;
 
 //----------------------------------------------------------------------------------------------------------------------

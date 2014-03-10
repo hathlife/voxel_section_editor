@@ -20,6 +20,7 @@ type
          Delete: TDeleteValueMethod;
          GoToFirstElement: TDeleteValueMethod;
          GoToNextElement: TDeleteValueMethod;
+         RebootList: TDeleteValueMethod;
          // Constructors and Destructors
          constructor Create;
          destructor Destroy; override;
@@ -48,6 +49,8 @@ type
          procedure GoToFirstElementFixedRAM;
          procedure GoToNextElementTraditional;
          procedure GoToNextElementFixedRAM;
+         procedure RebootListTraditional;
+         procedure RebootListFixedRAM;
    end;
 
 implementation
@@ -189,6 +192,7 @@ begin
    Delete := DeleteTraditional;
    GoToFirstElement := GoToFirstElementTraditional;
    GoToNextElement := GoToNextElementTraditional;
+   RebootList := RebootListTraditional;
 end;
 
 procedure CIntegerList.UseFixedRAM(_Value: integer);
@@ -204,6 +208,7 @@ begin
       GoToNextElement := GoToNextElementFixedRAM;
       StartPos := 0;
       LastPos := 0;
+      RebootList := RebootListFixedRAM;
    end;
 end;
 
@@ -274,6 +279,17 @@ end;
 procedure CIntegerList.GoToFirstElementFixedRAM;
 begin
    StartPos := 0;
+end;
+
+procedure CIntegerList.RebootListTraditional;
+begin
+   Clear;
+end;
+
+procedure CIntegerList.RebootListFixedRAM;
+begin
+   StartPos := 0;
+   LastPos := 0;
 end;
 
 end.
