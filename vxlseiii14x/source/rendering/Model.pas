@@ -70,43 +70,6 @@ type
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
-      // Model Effects
-      procedure SmoothModel;
-      procedure QuadricSmoothModel;
-      procedure CubicSmoothModel;
-      procedure LanczosSmoothModel;
-      procedure SincSmoothModel;
-      procedure EulerSmoothModel;
-      procedure EulerSquaredSmoothModel;
-      procedure SincInfiniteSmoothModel;
-      procedure SmoothModel2;
-      procedure QuadricSmoothModel2;
-      procedure CubicSmoothModel2;
-      procedure LanczosSmoothModel2;
-      procedure SincSmoothModel2;
-      procedure EulerSmoothModel2;
-      procedure EulerSquaredSmoothModel2;
-      procedure SincInfiniteSmoothModel2;
-      procedure GaussianSmoothModel;
-      procedure UnsharpModel;
-      procedure InflateModel;
-      procedure DeflateModel;
-      // Colour Effects
-      procedure ColourSmoothModel;
-      procedure ColourCubicSmoothModel;
-      procedure ColourLanczosSmoothModel;
-      procedure ConvertVertexToFaceColours;
-      procedure ConvertFaceToVertexColours;
-      procedure ConvertFaceToVertexColoursLinear;
-      procedure ConvertFaceToVertexColoursCubic;
-      procedure ConvertFaceToVertexColoursLanczos;
-      // Normals
-      procedure ReNormalizeModel;
-      procedure ConvertFaceToVertexNormals;
-      procedure NormalSmoothModel;
-      procedure NormalLinearSmoothModel;
-      procedure NormalCubicSmoothModel;
-      procedure NormalLanczosSmoothModel;
       // Textures
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
@@ -124,11 +87,6 @@ type
       procedure Assign(const _Model: TModel);
       // Mesh Optimization
       procedure RemoveInvisibleFaces;
-      procedure OptimizeMeshMaxQuality;
-      procedure OptimizeMeshMaxQualityIgnoreColours;
-      procedure OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
-      procedure ConvertQuadsToTris;
-      procedure ConvertQuadsTo48Tris;
       // Quality Assurance
       function GetAspectRatioHistogram(): THistogram;
       function GetSkewnessHistogram(): THistogram;
@@ -459,179 +417,6 @@ begin
    LOD[CurrentLOD].RefreshMesh(_MeshID);
 end;
 
-// Model Effects
-procedure TModel.SmoothModel;
-begin
-   LOD[CurrentLOD].SmoothLOD;
-end;
-
-procedure TModel.QuadricSmoothModel;
-begin
-   LOD[CurrentLOD].QuadricSmoothLOD;
-end;
-
-procedure TModel.CubicSmoothModel;
-begin
-   LOD[CurrentLOD].CubicSmoothLOD;
-end;
-
-procedure TModel.LanczosSmoothModel;
-begin
-   LOD[CurrentLOD].LanczosSmoothLOD;
-end;
-
-procedure TModel.SincSmoothModel;
-begin
-   LOD[CurrentLOD].SincSmoothLOD;
-end;
-
-procedure TModel.EulerSmoothModel;
-begin
-   LOD[CurrentLOD].EulerSmoothLOD;
-end;
-
-procedure TModel.EulerSquaredSmoothModel;
-begin
-   LOD[CurrentLOD].EulerSquaredSmoothLOD;
-end;
-
-procedure TModel.SincInfiniteSmoothModel;
-begin
-   LOD[CurrentLOD].SincInfiniteSmoothLOD;
-end;
-
-procedure TModel.SmoothModel2;
-begin
-   LOD[CurrentLOD].SmoothLOD2;
-end;
-
-procedure TModel.QuadricSmoothModel2;
-begin
-   LOD[CurrentLOD].QuadricSmoothLOD2;
-end;
-
-procedure TModel.CubicSmoothModel2;
-begin
-   LOD[CurrentLOD].CubicSmoothLOD2;
-end;
-
-procedure TModel.LanczosSmoothModel2;
-begin
-   LOD[CurrentLOD].LanczosSmoothLOD2;
-end;
-
-procedure TModel.SincSmoothModel2;
-begin
-   LOD[CurrentLOD].SincSmoothLOD2;
-end;
-
-procedure TModel.EulerSmoothModel2;
-begin
-   LOD[CurrentLOD].EulerSmoothLOD2;
-end;
-
-procedure TModel.EulerSquaredSmoothModel2;
-begin
-   LOD[CurrentLOD].EulerSquaredSmoothLOD2;
-end;
-
-procedure TModel.SincInfiniteSmoothModel2;
-begin
-   LOD[CurrentLOD].SincInfiniteSmoothLOD2;
-end;
-
-procedure TModel.GaussianSmoothModel;
-begin
-   LOD[CurrentLOD].GaussianSmoothLOD;
-end;
-
-procedure TModel.UnsharpModel;
-begin
-   LOD[CurrentLOD].UnsharpLOD;
-end;
-
-procedure TModel.InflateModel;
-begin
-   LOD[CurrentLOD].InflateLOD;
-end;
-
-procedure TModel.DeflateModel;
-begin
-   LOD[CurrentLOD].DeflateLOD;
-end;
-
-// Colour Effects
-procedure TModel.ColourSmoothModel;
-begin
-   LOD[CurrentLOD].ColourSmoothLOD;
-end;
-
-procedure TModel.ColourCubicSmoothModel;
-begin
-   LOD[CurrentLOD].ColourCubicSmoothLOD;
-end;
-
-procedure TModel.ColourLanczosSmoothModel;
-begin
-   LOD[CurrentLOD].ColourLanczosSmoothLOD;
-end;
-
-procedure TModel.ConvertVertexToFaceColours;
-begin
-   LOD[CurrentLOD].ConvertVertexToFaceColours;
-end;
-
-procedure TModel.ConvertFaceToVertexColours;
-begin
-   LOD[CurrentLOD].ConvertFaceToVertexColours;
-end;
-
-procedure TModel.ConvertFaceToVertexColoursLinear;
-begin
-   LOD[CurrentLOD].ConvertFaceToVertexColoursLinear;
-end;
-
-procedure TModel.ConvertFaceToVertexColoursCubic;
-begin
-   LOD[CurrentLOD].ConvertFaceToVertexColoursCubic;
-end;
-
-procedure TModel.ConvertFaceToVertexColoursLanczos;
-begin
-   LOD[CurrentLOD].ConvertFaceToVertexColoursLanczos;
-end;
-
-// Normals
-procedure TModel.ReNormalizeModel;
-begin
-   LOD[CurrentLOD].RenormalizeLOD;
-end;
-
-procedure TModel.ConvertFaceToVertexNormals;
-begin
-   LOD[CurrentLOD].ConvertFaceToVertexNormals;
-end;
-
-procedure TModel.NormalSmoothModel;
-begin
-   LOD[CurrentLOD].NormalSmoothLOD;
-end;
-
-procedure TModel.NormalLinearSmoothModel;
-begin
-   LOD[CurrentLOD].NormalLinearSmoothLOD;
-end;
-
-procedure TModel.NormalCubicSmoothModel;
-begin
-   LOD[CurrentLOD].NormalCubicSmoothLOD;
-end;
-
-procedure TModel.NormalLanczosSmoothModel;
-begin
-   LOD[CurrentLOD].NormalLanczosSmoothLOD;
-end;
-
 // Textures
 procedure TModel.ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
 begin
@@ -722,31 +507,6 @@ end;
 procedure TModel.RemoveInvisibleFaces;
 begin
    LOD[CurrentLOD].RemoveInvisibleFaces;
-end;
-
-procedure TModel.OptimizeMeshMaxQuality;
-begin
-   LOD[CurrentLOD].OptimizeMeshMaxQuality;
-end;
-
-procedure TModel.OptimizeMeshMaxQualityIgnoreColours;
-begin
-   LOD[CurrentLOD].OptimizeMeshMaxQualityIgnoreColours;
-end;
-
-procedure TModel.OptimizeMesh(_QualityLoss: single; _IgnoreColours: boolean);
-begin
-   LOD[CurrentLOD].OptimizeMesh(_QualityLoss,_IgnoreColours);
-end;
-
-procedure TModel.ConvertQuadsToTris;
-begin
-   LOD[CurrentLOD].ConvertQuadsToTris;
-end;
-
-procedure TModel.ConvertQuadsTo48Tris;
-begin
-   LOD[CurrentLOD].ConvertQuadsTo48Tris;
 end;
 
 // Quality Assurance
