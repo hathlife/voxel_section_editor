@@ -24,6 +24,7 @@ type
          // Constructors and Destructors
          constructor Create(const _Faces: auint32;_VerticesPerFace,_NumVertices: integer); overload;
          constructor Create(var _Geometry: CMeshGeometryList; _NumVertices: integer); overload;
+         constructor Create(const _Source: TNeighborhoodDataPlugin); overload;
          destructor Destroy; override;
          // Updates
          procedure UpdateQuadsToTriangles(const _Faces: auint32; const _Vertices: TAVector3f; _NumVertices,_VerticesPerFace: integer);
@@ -114,6 +115,12 @@ implementation
       begin
          VertexEquivalences[i] := i;
       end;
+   end;
+
+   constructor TNeighborhoodDataPlugin.Create(const _Source: TNeighborhoodDataPlugin);
+   begin
+      FPluginType := C_MPL_NEIGHBOOR;
+      Assign(_Source);
    end;
 
    destructor TNeighborhoodDataPlugin.Destroy;

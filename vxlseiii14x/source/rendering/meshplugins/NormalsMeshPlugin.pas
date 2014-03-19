@@ -29,7 +29,8 @@ type
          procedure DoRender(); override;
          procedure DoUpdate(_MeshAddress: Pointer); override;
       public
-         constructor Create;
+         constructor Create; overload;
+         constructor Create(const _Source: TNormalsMeshPlugin); overload;
          procedure Initialize; override;
          procedure Clear; override;
          // Copy
@@ -47,6 +48,13 @@ begin
    FPluginType := C_MPL_NORMALS;
    FaceType := GL_TRIANGLES;
    Initialize;
+end;
+
+constructor TNormalsMeshPlugin.Create(const _Source: TNormalsMeshPlugin);
+begin
+   FPluginType := C_MPL_NORMALS;
+   Material := TMeshMaterial.Create(nil);
+   Assign(_Source);
 end;
 
 procedure TNormalsMeshPlugin.Initialize;

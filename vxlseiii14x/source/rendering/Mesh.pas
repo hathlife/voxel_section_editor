@@ -748,7 +748,25 @@ begin
       _Mesh.Geometry.GoToNextElement;
       CurrentGeometry := _Mesh.Geometry.Current;
    end;
-
+   SetLength(Plugins, High(_Mesh.Plugins) + 1);
+   for i := Low(Plugins) to High(Plugins) do
+   begin
+      new(Plugins[i]);
+      case _Mesh.Plugins[i]^.PluginType of
+         C_MPL_BUMPMAPDATA:
+         begin
+            Plugins[i]^ := TBumpMapDataPlugin.Create(_Mesh.Plugins[i]^ as TBumpMapDataPlugin);
+         end;
+         C_MPL_NEIGHBOOR:
+         begin
+            Plugins[i]^ := TNeighborhoodDataPlugin.Create(_Mesh.Plugins[i]^ as TNeighborhoodDataPlugin);
+         end;
+         C_MPL_NORMALS:
+         begin
+            Plugins[i]^ := TNormalsMeshPlugin.Create(_Mesh.Plugins[i]^ as TNormalsMeshPlugin);
+         end;
+      end;
+   end;
    Next := _Mesh.Next;
 end;
 

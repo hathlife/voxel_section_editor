@@ -11,7 +11,8 @@ type
          BiTangents : TAVector3f;
          Handedness : aint32;
          // Constructors and destructors
-         constructor Create(const _Vertices: TAVector3f; const _Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; _VerticesPerFace: integer);
+         constructor Create(const _Vertices: TAVector3f; const _Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; _VerticesPerFace: integer); overload;
+         constructor Create(const _Source: TBumpMapDataPlugin); overload;
          destructor Destroy; override;
          // Copy
          procedure Assign(const _Source: TMeshPluginBase); override;
@@ -109,6 +110,13 @@ begin
    SetLength(Tan1,0);
    SetLength(Tan2,0);
 end;
+
+constructor TBumpMapDataPlugin.Create(const _Source: TBumpMapDataPlugin);
+begin
+   FPluginType := C_MPL_BUMPMAPDATA;
+   Assign(_Source);
+end;
+
 
 destructor TBumpMapDataPlugin.Destroy;
 begin
