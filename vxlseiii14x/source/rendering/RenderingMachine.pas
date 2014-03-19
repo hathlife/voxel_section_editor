@@ -15,7 +15,8 @@ type
          SetShaderAttributes : TSetShaderAttributesFunc;
          SetShaderUniform : TSetShaderUniformFunc;
          // constructors and destructors.
-         constructor Create;
+         constructor Create; overload;
+         constructor Create(const _Source: TRenderingMachine); overload;
          destructor Destroy; override;
          // Render basics
          procedure StartRender();
@@ -50,6 +51,8 @@ type
          procedure SetBumpMappingShader;
          // Miscellaneous
          procedure SetRenderingProcedure(_NormalsType, _ColoursType: integer);
+         // Copy
+         procedure Assign(const _Source: TRenderingMachine);
    end;
 
 implementation
@@ -60,6 +63,11 @@ begin
    List := C_LIST_NONE;
    RenderingProcedure := -1;
    SetDiffuseMappingShader;
+end;
+
+constructor TRenderingMachine.Create(const _Source: TRenderingMachine);
+begin
+   Assign(_Source);
 end;
 
 destructor TRenderingMachine.Destroy;
@@ -701,6 +709,16 @@ begin
          // does not render.
       end;
    end;
+end;
+
+// Copy
+// Important: You'll need to set the shader manually and the GL list is not copied.
+procedure TRenderingMachine.Assign(const _Source: TRenderingMachine);
+begin
+   IsGeneratingList := false;
+   List := C_LIST_NONE;
+   SetDiffuseMappingShader;
+   RenderingProcedure := _Source.RenderingProcedure;
 end;
 
 end.

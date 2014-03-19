@@ -32,6 +32,8 @@ type
          constructor Create;
          procedure Initialize; override;
          procedure Clear; override;
+         // Copy
+         procedure Assign(const _Source: TMeshPluginBase); override;
    end;
 
 
@@ -163,7 +165,6 @@ procedure TNormalsMeshPlugin.DoRender;
 var
    PolygonMode: PGLInt;
 begin
-   // do nothing
    Render.StartRender;
    GetMem(PolygonMode,4);
    glDisable(GL_LIGHTING);
@@ -176,6 +177,43 @@ begin
    glPolygonMode(GL_FRONT_AND_BACK,PolygonMode^);
    FreeMem(PolygonMode);
    glEnable(GL_LIGHTING);
+end;
+
+// Copy
+procedure TNormalsMeshPlugin.Assign(const _Source: TMeshPluginBase);
+var
+   i: integer;
+begin
+   if _Source.PluginType = FPluginType then
+   begin
+      //Material := TMeshMaterial.Create(nil);
+      MeshNormalsType := (_Source as TNormalsMeshPlugin).MeshNormalsType;
+      MeshVerticesPerFace := (_Source as TNormalsMeshPlugin).MeshVerticesPerFace;
+      FaceType := (_Source as TNormalsMeshPlugin).FaceType;
+      NumNormals := (_Source as TNormalsMeshPlugin).NumNormals;
+      SetLength(Vertices, High((_Source as TNormalsMeshPlugin).Vertices) + 1);
+      for i := Low(Vertices) to High(Vertices) do
+      begin
+         Vertices[i].X := (_Source as TNormalsMeshPlugin).Vertices[i].X;
+         Vertices[i].Y := (_Source as TNormalsMeshPlugin).Vertices[i].Y;
+         Vertices[i].Z := (_Source as TNormalsMeshPlugin).Vertices[i].Z;
+      end;
+      SetLength(Faces, High((_Source as TNormalsMeshPlugin).Faces) + 1);
+      for i := Low(Faces) to High(Faces) do
+      begin
+         Faces[i] := (_Source as TNormalsMeshPlugin).Faces[i];
+      end;
+      SetLength(Colours, High((_Source as TNormalsMeshPlugin).Colours) + 1);
+      for i := Low(Colours) to High(Colours) do
+      begin
+         Colours[i].X := (_Source as TNormalsMeshPlugin).Colours[i].X;
+         Colours[i].Y := (_Source as TNormalsMeshPlugin).Colours[i].Y;
+         Colours[i].Z := (_Source as TNormalsMeshPlugin).Colours[i].Z;
+         Colours[i].W := (_Source as TNormalsMeshPlugin).Colours[i].W;
+      end;
+      Render := TRenderingMachine.Create((_Source as TNormalsMeshPlugin).Render);
+   end;
+   inherited Assign(_Source);
 end;
 
 end.

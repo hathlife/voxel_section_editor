@@ -25,6 +25,8 @@ type
          // Rendering functions
          procedure Render();
          procedure Update(_MeshAddress: Pointer);
+         // Copy
+         procedure Assign(const _Source: TMeshPluginBase); virtual;
          // properties
          property PluginType: integer read GetPluginType;
    end;
@@ -94,5 +96,13 @@ function TMeshPluginBase.GetPluginType: integer;
 begin
    Result := FPluginType;
 end;
+
+// Copy
+procedure TMeshPluginBase.Assign(const _Source: TMeshPluginBase);
+begin
+   AllowUpdate := _Source.AllowUpdate;
+   AllowRender := _Source.AllowRender;
+end;
+
 
 end.

@@ -244,7 +244,7 @@ begin
          t2 := temp - FoldTime;
       end;
    end;
-   FoldTime := temp;
+   QueryPerformanceCounter(FoldTime);
    FPS := FFrequency/t2;
    wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
 

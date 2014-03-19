@@ -54,12 +54,15 @@ type
          procedure LoadTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure LoadTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
          procedure LoadTexture(const _Data : Pointer; _Format: GLInt; _Height,_Width,_Level: integer); overload;
+         procedure LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt); overload;
          procedure LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt;_Level: integer); overload;
          procedure ReplaceTexture(const _Filename : string); overload;
          procedure ReplaceTexture(const _Bitmaps : TABitmap); overload;
          procedure ReplaceTexture(const _Bitmap : TBitmap; _Level: integer); overload;
          procedure ReplaceTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap); overload;
          procedure ReplaceTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer); overload;
+         procedure ReplaceTexture(const _Image : TAbstract2DImageData); overload;
+         procedure ReplaceTexture(const _Image : TAbstract2DImageData; _Level: integer); overload;
          procedure SaveTexture(const _Filename: string);
          function DownloadTexture(_Level : integer): TBitmap; overload;
          function DownloadTexture(var _AlphaMap: TByteMap; _Level : integer): TBitmap; overload;
@@ -289,6 +292,12 @@ begin
    UploadTexture(_Data,_Format,_Height,_Width,_Level);
 end;
 
+procedure TTextureBankItem.LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt);
+begin
+   UploadTexture(_Image,_Format, 0);
+   SetNumMipMaps(MipMapCount);
+end;
+
 procedure TTextureBankItem.LoadTexture(const _Image : TAbstract2DImageData; _Format: GLInt;_Level: integer);
 begin
    UploadTexture(_Image,_Format,_Level);
@@ -297,33 +306,65 @@ end;
 procedure TTextureBankItem.ReplaceTexture(const _Filename : string);
 begin
    Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
    LoadTexture(_Filename);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Bitmaps : TABitmap);
 begin
    Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
    LoadTexture(_Bitmaps);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Bitmap : TBitmap; _Level: integer);
 begin
    Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
    LoadTexture(_Bitmap,_Level);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Bitmaps : TABitmap; const _AlphaMaps: TAByteMap);
 begin
    Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
    LoadTexture(_Bitmaps,_AlphaMaps);
 end;
 
 procedure TTextureBankItem.ReplaceTexture(const _Bitmap : TBitmap; const _AlphaMap: TByteMap; _Level: integer);
 begin
    Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
    LoadTexture(_Bitmap,_AlphaMap,_Level);
 end;
 
+procedure TTextureBankItem.ReplaceTexture(const _Image : TAbstract2DImageData);
+begin
+   Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
+   LoadTexture(_Image,_Image.GetOpenGLFormat);
+end;
+
+procedure TTextureBankItem.ReplaceTexture(const _Image : TAbstract2DImageData; _Level: integer);
+begin
+   Clear;
+   glEnable(GL_TEXTURE_2D);
+   glGenTextures(1, @ID);
+   glDisable(GL_TEXTURE_2D);
+   LoadTexture(_Image,_Image.GetOpenGLFormat,_Level);
+end;
 
 procedure TTextureBankItem.SaveTexture(const _Filename: string);
 var

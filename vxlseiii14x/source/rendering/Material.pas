@@ -36,6 +36,7 @@ type
          procedure Disable;
          // Adds
          procedure AddTexture(_TextureType: integer; const _Texture:PTextureBankItem);
+         procedure AddOrReplaceTexture(_TextureType: integer; const _Texture:PTextureBankItem);
          // Copies
          procedure Assign(const _MeshMaterial: TMeshMaterial);
          // Misc
@@ -222,6 +223,24 @@ begin
    SetLength(Texture,High(Texture)+2);
    Texture[High(Texture)] := GlobalVars.TextureBank.Add(_Texture^.GetID);
    Texture[High(Texture)]^.TextureType := _TextureType;
+end;
+
+procedure TMeshMaterial.AddOrReplaceTexture(_TextureType: integer; const _Texture:PTextureBankItem);
+var
+   i: integer;
+begin
+   for i := Low(Texture) to High(Texture) do
+   begin
+      if Texture[i] <> nil then
+      begin
+         if Texture[i]^.TextureType = _TextureType then
+         begin
+//            Texture[i]^.
+            exit;
+         end;
+      end;
+   end;
+   AddTexture(_TextureType, _Texture);
 end;
 
 // Copies

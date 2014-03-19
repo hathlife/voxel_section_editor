@@ -3,7 +3,7 @@ object Frm3DModelizer: TFrm3DModelizer
   Top = 264
   BorderStyle = bsSizeToolWin
   Caption = '3D Modelizer'
-  ClientHeight = 992
+  ClientHeight = 1019
   ClientWidth = 363
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object Frm3DModelizer: TFrm3DModelizer
     Left = 0
     Top = 26
     Width = 363
-    Height = 966
+    Height = 993
     Cursor = crCross
     Align = alClient
     BevelOuter = bvLowered
@@ -36,7 +36,7 @@ object Frm3DModelizer: TFrm3DModelizer
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
     OnMouseUp = Panel2MouseUp
-    ExplicitHeight = 947
+    ExplicitHeight = 985
   end
   object Panel1: TPanel
     Left = 0
@@ -754,8 +754,15 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = '-'
       end
       object TextureFXDiffuseTexture: TMenuItem
-        Caption = 'Generate Diffuse Texture'
-        OnClick = TextureFXDiffuseTextureClick
+        Caption = 'Diffuse Texture Type'
+        object TextureFXTraditionalDiffuseTexture: TMenuItem
+          Caption = 'Traditional Diffuse Texture'
+          OnClick = TextureFXDiffuseTextureClick
+        end
+        object TextureFXDebug: TMenuItem
+          Caption = 'Debug Texture Atlas'
+          OnClick = TextureFXDebugClick
+        end
       end
       object TextureFXNormal: TMenuItem
         Caption = 'Generate Normal Map'
@@ -768,10 +775,6 @@ object Frm3DModelizer: TFrm3DModelizer
       object TextureFXBumpCustom: TMenuItem
         Caption = 'Generate Bump Mapping...'
         OnClick = TextureFXBumpCustomClick
-      end
-      object TextureFXDebug: TMenuItem
-        Caption = 'Debug Texture Atlas'
-        OnClick = TextureFXDebugClick
       end
       object N5: TMenuItem
         Caption = '-'

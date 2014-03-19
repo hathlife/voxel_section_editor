@@ -273,7 +273,9 @@ uses
   BasicVXLSETypes in 'source\datatypes\BasicVXLSETypes.pas',
   MeshOptimization2009 in 'source\control\mesh\MeshOptimization2009.pas',
   MeshOptimization2009Command in 'source\control\commands\MeshOptimization2009Command.pas',
-  ModelChangeRemappableCommand in 'source\control\commands\ModelChangeRemappableCommand.pas';
+  ModelChangeRemappableCommand in 'source\control\commands\ModelChangeRemappableCommand.pas',
+  HierarchyAnimation in 'source\rendering\HierarchyAnimation.pas',
+  TransformAnimation in 'source\rendering\TransformAnimation.pas';
 
 {$R *.res}
 

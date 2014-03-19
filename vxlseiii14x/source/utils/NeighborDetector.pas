@@ -53,6 +53,7 @@ type
          // Constructors and Destructors
          constructor Create; overload;
          constructor Create(_Type : byte); overload;
+         constructor Create(const _Source: TNeighborDetector); overload;
          destructor Destroy; override;
          procedure Clear;
          // I/O
@@ -68,6 +69,8 @@ type
          // Requests
          function GetNeighborFromID(_ID: integer): integer;
          function GetNextNeighbor: integer;
+         // Copy
+         procedure Assign(const _Source: TNeighborDetector);
    end;
 
 implementation
@@ -85,6 +88,11 @@ constructor TNeighborDetector.Create(_Type : byte);
 begin
    NeighborType := _Type;
    Initialize;
+end;
+
+constructor TNeighborDetector.Create(const _Source: TNeighborDetector);
+begin
+   Assign(_Source);
 end;
 
 destructor TNeighborDetector.Destroy;
@@ -928,6 +936,63 @@ begin
    end
    else
       Result := -1;
+end;
+
+// Copy
+procedure TNeighborDetector.Assign(const _Source: TNeighborDetector);
+var
+   i: integer;
+   Element, NewElement, PreviousElement: PIntegerItem;
+begin
+   SetLength(FNeighbors, High(_Source.FNeighbors) + 1);
+   for i := Low(FNeighbors) to High(FNeighbors) do
+   begin
+      if _Source.FNeighbors[i] = nil then
+      begin
+         FNeighbors[i] := nil;
+      end
+      else
+      begin
+         Element := _Source.FNeighbors[i];
+         PreviousElement := nil;
+         while Element <> nil do
+         begin
+            new(NewElement);
+            NewElement^.Value := Element^.Value;
+            if PreviousElement <> nil then
+            begin
+               PreviousElement^.Next := NewElement;
+            end
+            else
+            begin
+               FNeighbors[i] := NewElement;
+            end;
+            NewElement^.Next := nil;
+            PreviousElement := NewElement;
+            Element := Element^.Next;
+         end;
+      end;
+   end;
+   FRequest := _Source.FRequest;
+   FNeighborID := _Source.FNeighborID;
+   FCurrentID := _Source.FCurrentID;
+   SetLength(FNeighborhoodData, High(_Source.FNeighborhoodData) + 1);
+   for i := Low(FNeighborhoodData) to High(FNeighborhoodData) do
+   begin
+      FNeighborhoodData[i] := _Source.FNeighborhoodData[i];
+   end;
+   SetLength(FDescriptorData, High(_Source.FDescriptorData) + 1);
+   for i := Low(FDescriptorData) to High(FDescriptorData) do
+   begin
+      FDescriptorData[i].Start := _Source.FDescriptorData[i].Start;
+      FDescriptorData[i].Size := _Source.FDescriptorData[i].Size;
+   end;
+   NeighborType := _Source.NeighborType;
+   IsValid := _Source.IsValid;
+
+   // It's highly recommended to change these ones later.
+   VertexVertexNeighbors := _Source.VertexVertexNeighbors;
+   VertexFaceNeighbors := _Source.VertexFaceNeighbors;
 end;
 
 end.

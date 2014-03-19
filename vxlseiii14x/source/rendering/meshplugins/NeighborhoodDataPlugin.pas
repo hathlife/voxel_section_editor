@@ -35,6 +35,8 @@ type
          procedure ActivateEquivalenceFaces(const _Faces: auint32; _NumVertices,_VerticesPerFace: integer);
          // Gets
          function GetEquivalentVertex(_VertexID: integer): integer;
+         // Copy
+         procedure Assign(const _Source: TMeshPluginBase); override;
    end;
 
 
@@ -302,6 +304,104 @@ implementation
       begin
          Result := VertexEquivalences[Result];
       end;
+   end;
+
+   procedure TNeighborhoodDataPlugin.Assign(const _Source: TMeshPluginBase);
+   var
+      i: integer;
+   begin
+      if _Source.PluginType = FPluginType then
+      begin
+         if (_Source as TNeighborhoodDataPlugin).VertexNeighbors <> nil then
+         begin
+            VertexNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).VertexNeighbors);
+         end
+         else
+         begin
+            VertexNeighbors := nil;
+         end;
+         if (_Source as TNeighborhoodDataPlugin).FaceNeighbors <> nil then
+         begin
+            FaceNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).FaceNeighbors);
+            if VertexNeighbors <> nil then
+               FaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+         end
+         else
+         begin
+            FaceNeighbors := nil;
+         end;
+         if (_Source as TNeighborhoodDataPlugin).FaceFaceNeighbors <> nil then
+         begin
+            FaceFaceNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).FaceFaceNeighbors);
+         end
+         else
+         begin
+            FaceFaceNeighbors := nil;
+            if VertexNeighbors <> nil then
+               FaceFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+            if FaceNeighbors <> nil then
+               FaceFaceNeighbors.VertexFaceNeighbors := FaceNeighbors;
+         end;
+         UseQuadFaces := (_Source as TNeighborhoodDataPlugin).UseQuadFaces;
+         SetLength(QuadFaces, High((_Source as TNeighborhoodDataPlugin).QuadFaces) + 1);
+         for i := Low(QuadFaces) to High(QuadFaces) do
+         begin
+            QuadFaces[i] := (_Source as TNeighborhoodDataPlugin).QuadFaces[i];
+         end;
+         SetLength(QuadFaceNormals, High((_Source as TNeighborhoodDataPlugin).QuadFaceNormals) + 1);
+         for i := Low(QuadFaceNormals) to High(QuadFaceNormals) do
+         begin
+            QuadFaceNormals[i].X := (_Source as TNeighborhoodDataPlugin).QuadFaceNormals[i].X;
+            QuadFaceNormals[i].Y := (_Source as TNeighborhoodDataPlugin).QuadFaceNormals[i].Y;
+            QuadFaceNormals[i].Z := (_Source as TNeighborhoodDataPlugin).QuadFaceNormals[i].Z;
+         end;
+         SetLength(QuadFaceColours, High((_Source as TNeighborhoodDataPlugin).QuadFaceColours) + 1);
+         for i := Low(QuadFaceColours) to High(QuadFaceColours) do
+         begin
+            QuadFaceColours[i].X := (_Source as TNeighborhoodDataPlugin).QuadFaceColours[i].X;
+            QuadFaceColours[i].Y := (_Source as TNeighborhoodDataPlugin).QuadFaceColours[i].Y;
+            QuadFaceColours[i].Z := (_Source as TNeighborhoodDataPlugin).QuadFaceColours[i].Z;
+            QuadFaceColours[i].W := (_Source as TNeighborhoodDataPlugin).QuadFaceColours[i].W;
+         end;
+         if (_Source as TNeighborhoodDataPlugin).QuadFaceNeighbors <> nil then
+         begin
+            QuadFaceNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).QuadFaceNeighbors);
+            if VertexNeighbors <> nil then
+               QuadFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+         end
+         else
+         begin
+            QuadFaceNeighbors := nil;
+         end;
+         if (_Source as TNeighborhoodDataPlugin).EquivalenceFaceNeighbors <> nil then
+         begin
+            EquivalenceFaceNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).EquivalenceFaceNeighbors);
+            if VertexNeighbors <> nil then
+               EquivalenceFaceNeighbors.VertexVertexNeighbors := VertexNeighbors;
+         end
+         else
+         begin
+            EquivalenceFaceNeighbors := nil;
+         end;
+         if (_Source as TNeighborhoodDataPlugin).EquivalenceFaceFromVertexNeighbors <> nil then
+         begin
+            EquivalenceFaceFromVertexNeighbors := TNeighborDetector.Create((_Source as TNeighborhoodDataPlugin).EquivalenceFaceFromVertexNeighbors);
+            if VertexNeighbors <> nil then
+               EquivalenceFaceFromVertexNeighbors.VertexVertexNeighbors := VertexNeighbors;
+         end
+         else
+         begin
+            EquivalenceFaceFromVertexNeighbors := nil;
+         end;
+         SetLength(VertexEquivalences, High((_Source as TNeighborhoodDataPlugin).VertexEquivalences) + 1);
+         for i := Low(VertexEquivalences) to High(VertexEquivalences) do
+         begin
+            VertexEquivalences[i] := (_Source as TNeighborhoodDataPlugin).VertexEquivalences[i];
+         end;
+         UseEquivalenceFaces := (_Source as TNeighborhoodDataPlugin).UseEquivalenceFaces;
+         InitialVertexCount := (_Source as TNeighborhoodDataPlugin).InitialVertexCount;
+      end;
+      inherited Assign(_Source);
    end;
 
 end.

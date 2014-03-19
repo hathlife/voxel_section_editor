@@ -20,7 +20,7 @@ uses GlobalVars, BasicFunctions, TriangleFiller, Abstract2DImageData, TextureBan
 
 procedure CDiffuseTextureGenerator.Execute();
 var
-   i : integer;
+   i, TexIndex : integer;
    Buffer: TAbstract2DImageData;
    WeightBuffer: TAbstract2DImageData;
    TextureImage : TAbstract2DImageData;
@@ -38,14 +38,27 @@ begin
    WeightBuffer.Free;
    // Now we generate a texture that will be used by all meshes.
    glActiveTexture(GL_TEXTURE0 + FTextureID);
-   DiffuseTexture := GlobalVars.TextureBank.Add(TextureImage);
-   // Now we add this diffuse texture to all meshes.
-   for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+   TexIndex := -1;
+   if FMaterialID <= High(FLOD.Mesh[0].Materials) then
    begin
-      FLOD.Mesh[i].AddTextureToMesh(FMaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
+      TexIndex := FLOD.Mesh[0].Materials[FMaterialID].GetTextureID(C_TTP_DIFFUSE);
+   end;
+   if TexIndex = -1 then
+   begin
+      DiffuseTexture := GlobalVars.TextureBank.Add(TextureImage);
+      // Now we add this diffuse texture to all meshes.
+      for i := Low(FLOD.Mesh) to High(FLOD.Mesh) do
+      begin
+         FLOD.Mesh[i].AddTextureToMesh(FMaterialID,C_TTP_DIFFUSE,C_SHD_PHONG_1TEX,DiffuseTexture);
+      end;
+      GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
+   end
+   else
+   begin
+      DiffuseTexture := FLOD.Mesh[0].Materials[FMaterialID].Texture[TexIndex];
+      DiffuseTexture^.ReplaceTexture(TextureImage);
    end;
    // Free memory.
-   GlobalVars.TextureBank.Delete(DiffuseTexture^.GetID);
    TextureImage.Free;
 end;
 

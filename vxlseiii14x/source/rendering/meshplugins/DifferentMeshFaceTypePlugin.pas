@@ -26,6 +26,8 @@ type
          constructor Create;
          procedure Initialize; override;
          procedure Clear; override;
+         // Copy
+         procedure Assign(const _Source: TMeshPluginBase); override;
    end;
 
 
@@ -85,5 +87,34 @@ begin
    Material.Disable;
    Render.FinishRender(SetVector(0,0,0));
 end;
+
+// Copy
+procedure TDifferentMeshFaceTypePlugin.Assign(const _Source: TMeshPluginBase);
+var
+   i: integer;
+begin
+   if _Source.PluginType = FPluginType then
+   begin
+      MeshNormalsType := (_Source as TDifferentMeshFaceTypePlugin).MeshNormalsType;
+      VerticesPerFace := (_Source as TDifferentMeshFaceTypePlugin).VerticesPerFace;
+      FaceType := (_Source as TDifferentMeshFaceTypePlugin).FaceType;
+      NumNormals := (_Source as TDifferentMeshFaceTypePlugin).NumNormals;
+      SetLength(Faces, High((_Source as TDifferentMeshFaceTypePlugin).Faces) + 1);
+      for i := Low(Faces) to High(Faces) do
+      begin
+         Faces[i] := (_Source as TDifferentMeshFaceTypePlugin).Faces[i];
+      end;
+      SetLength(Colours, High((_Source as TDifferentMeshFaceTypePlugin).Colours) + 1);
+      for i := Low(Colours) to High(Colours) do
+      begin
+         Colours[i].X := (_Source as TDifferentMeshFaceTypePlugin).Colours[i].X;
+         Colours[i].Y := (_Source as TDifferentMeshFaceTypePlugin).Colours[i].Y;
+         Colours[i].Z := (_Source as TDifferentMeshFaceTypePlugin).Colours[i].Z;
+         Colours[i].W := (_Source as TDifferentMeshFaceTypePlugin).Colours[i].W;
+      end;
+   end;
+   inherited Assign(_Source);
+end;
+
 
 end.

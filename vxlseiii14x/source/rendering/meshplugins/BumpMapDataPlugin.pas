@@ -13,6 +13,8 @@ type
          // Constructors and destructors
          constructor Create(const _Vertices: TAVector3f; const _Normals: TAVector3f; const _TexCoords: TAVector2f; const _Faces: auint32; _VerticesPerFace: integer);
          destructor Destroy; override;
+         // Copy
+         procedure Assign(const _Source: TMeshPluginBase); override;
    end;
 
 implementation
@@ -116,5 +118,34 @@ begin
    inherited Destroy;
 end;
 
+// Copy
+procedure TBumpMapDataPlugin.Assign(const _Source: TMeshPluginBase);
+var
+   i: integer;
+begin
+   if _Source.PluginType = FPluginType then
+   begin
+      SetLength(Tangents, High((_Source as TBumpMapDataPlugin).Tangents)+1);
+      for i := Low(Tangents) to High(Tangents) do
+      begin
+         Tangents[i].X := (_Source as TBumpMapDataPlugin).Tangents[i].X;
+         Tangents[i].Y := (_Source as TBumpMapDataPlugin).Tangents[i].Y;
+         Tangents[i].Z := (_Source as TBumpMapDataPlugin).Tangents[i].Z;
+      end;
+      SetLength(BiTangents, High((_Source as TBumpMapDataPlugin).BiTangents)+1);
+      for i := Low(BiTangents) to High(BiTangents) do
+      begin
+         BiTangents[i].X := (_Source as TBumpMapDataPlugin).BiTangents[i].X;
+         BiTangents[i].Y := (_Source as TBumpMapDataPlugin).BiTangents[i].Y;
+         BiTangents[i].Z := (_Source as TBumpMapDataPlugin).BiTangents[i].Z;
+      end;
+      SetLength(Handedness, High((_Source as TBumpMapDataPlugin).Handedness)+1);
+      for i := Low(Handedness) to High(Handedness) do
+      begin
+         Handedness[i] := (_Source as TBumpMapDataPlugin).Handedness[i];
+      end;
+   end;
+   inherited Assign(_Source);
+end;
 
 end.

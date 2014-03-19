@@ -183,6 +183,7 @@ type
     TextureFXDebug: TMenuItem;
     N8: TMenuItem;
     TextureFXDiffuseTexture: TMenuItem;
+    TextureFXTraditionalDiffuseTexture: TMenuItem;
     procedure TextureFXDebugClick(Sender: TObject);
     procedure TextureFXDiffuseTextureClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiGAClick(Sender: TObject);
@@ -342,6 +343,7 @@ type
     procedure UncheckFillMode;
     procedure UncheckTextureSize;
     procedure UncheckNumMipMaps;
+    procedure UncheckDiffuseTexture;
     procedure DoDisplayNormals();
   public
     { Public declarations }
@@ -642,6 +644,8 @@ end;
 procedure TFrm3DModelizer.TextureFXDebugClick(Sender: TObject);
 begin
    GlobalVars.ActorController.DoDiffuseDebugTextureGeneration(Actor, TextureSize, 0, 0);
+   UncheckDiffuseTexture;
+   TextureFXDebug.Checked := true;
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseClick(Sender: TObject);
@@ -650,6 +654,8 @@ begin
    GlobalVars.ActorController.DoTextureAtlasExtraction(Actor, TextureSize, C_TEX_MIN_ANGLE);
    Actor^.SetTextureNumMipMaps(NumMipMaps, C_TTP_DIFFUSE);
    SetColoursMode(2);
+   UncheckDiffuseTexture;
+   TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseCustomClick(Sender: TObject);
@@ -664,6 +670,8 @@ begin
 //      Actor.GenerateDiffuseTexture(Frm.Threshold,TextureSize);
       Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
       SetColoursMode(2);
+      UncheckDiffuseTexture;
+      TextureFXTraditionalDiffuseTexture.Checked := true;
    end;
    Frm.Release;
 end;
@@ -674,6 +682,8 @@ begin
    //Actor.GenerateDiffuseTextureOrigami;
    Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    SetColoursMode(2);
+   UncheckDiffuseTexture;
+   TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseOrigamiGAClick(Sender: TObject);
@@ -682,11 +692,15 @@ begin
    //Actor.GenerateDiffuseTextureOrigamiGA;
    Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    SetColoursMode(2);
+   UncheckDiffuseTexture;
+   TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseTextureClick(Sender: TObject);
 begin
    GlobalVars.ActorController.DoDiffuseTextureGeneration(Actor, TextureSize, 0, 0);
+   UncheckDiffuseTexture;
+   TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
 procedure TFrm3DModelizer.ModelFXSquaredSmooth2Click(Sender: TObject);
@@ -1768,6 +1782,12 @@ begin
    DoDisplayNormals();
 end;
 
+procedure TFrm3DModelizer.UncheckDiffuseTexture;
+begin
+   TextureFXTraditionalDiffuseTexture.Checked := false;
+   TextureFXDebug.Checked := false;
+end;
+
 procedure TFrm3DModelizer.UncheckModelQuality;
 begin
    RenderCubes.Checked := false;
@@ -1954,6 +1974,7 @@ begin
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
          TextureFXDiffuseTexture.Enabled := false;
+         TextureFXTraditionalDiffuseTexture.Enabled := false;
          TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
@@ -1976,6 +1997,7 @@ begin
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
          TextureFXDiffuseTexture.Enabled := false;
+         TextureFXTraditionalDiffuseTexture.Enabled := true;
          TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
@@ -1998,6 +2020,7 @@ begin
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
          TextureFXDiffuseTexture.Enabled := true;
+         TextureFXTraditionalDiffuseTexture.Enabled := true;
          TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
@@ -2020,6 +2043,7 @@ begin
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
          TextureFXDiffuseTexture.Enabled := true;
+         TextureFXTraditionalDiffuseTexture.Enabled := true;
          TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
