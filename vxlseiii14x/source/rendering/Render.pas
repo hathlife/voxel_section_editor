@@ -10,6 +10,7 @@ type
          FPSCap : longword;
          FirstRC : HGLRC;
          ShaderDirectory: string;
+         FIsOpenCLAllowed, FEnableOpenCL: boolean;
          // Misc
          procedure ForceFPS;
       public
@@ -23,20 +24,36 @@ type
          procedure Render;
          // Sets
          procedure SetFPS(_FPS: longword);
+         procedure SetEnableOpenCL(_value: boolean);
          // Adds and Removes.
          function AddEnvironment(_Handle : THandle; _width, _height : longword): PRenderEnvironment;
          procedure RemoveEnvironment(var _Environment: PRenderEnvironment);
+         // Properties
+         property IsOpenCLAllowed: boolean read FIsOpenCLAllowed;
+         property EnableOpenCL: boolean read FEnableOpenCL write SetEnableOpenCL; 
    end;
 
 implementation
 
+uses OpenCLLauncher;
 
 constructor TRender.Create(const _ShaderDirectory: string);
+var
+   OCL: TOpenCLLauncher;
 begin
    InitOpenGL;
    FirstRC := 0;
    ShaderDirectory := CopyString(_ShaderDirectory);
    Environment := nil;
+   // OpenCL support starts here
+   try
+      OCL := TOpenCLLauncher.Create;
+      OCL.Free;
+      FIsOpenCLAllowed := true;
+   except;
+      FIsOpenCLAllowed := false;
+   end;
+   FEnableOpenCL := FIsOpenCLAllowed;
 end;
 
 destructor TRender.Destroy;
@@ -50,6 +67,11 @@ procedure TRender.SetFPS(_FPS: longword);
 begin
    FPSCap := _FPS;
    ForceFPS;
+end;
+
+procedure TRender.SetEnableOpenCL(_value: boolean);
+begin
+   FEnableOpenCL := _value and FIsOpenCLAllowed;
 end;
 
 // Adds

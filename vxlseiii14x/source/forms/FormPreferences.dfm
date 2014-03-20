@@ -46,16 +46,12 @@ object FrmPreferences: TFrmPreferences
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = TabSheet3
+      ActivePage = ThreeDOptions_tab
       Style = tsFlatButtons
       TabOrder = 0
       object TabSheet1: TTabSheet
         Caption = 'File_assosiation_tab'
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object AssociateCheck: TCheckBox
           Left = 0
           Top = 8
@@ -105,10 +101,6 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -157,20 +149,20 @@ object FrmPreferences: TFrmPreferences
           Images = FrmMain.ImageList1
         end
       end
-      object TabSheet3: TTabSheet
-        Caption = 'TabSheet3'
+      object ThreeDOptions_tab: TTabSheet
+        Caption = 'ThreeDOptions_tab'
         ImageIndex = 2
         TabVisible = False
         object Label3: TLabel
           Left = 199
-          Top = 3
+          Top = 30
           Width = 65
           Height = 13
           Caption = 'frames p/ sec'
         end
         object CbFPSCap: TCheckBox
           Left = 3
-          Top = 3
+          Top = 29
           Width = 142
           Height = 17
           Caption = 'Limit 3D Viewers FPS to'
@@ -178,13 +170,21 @@ object FrmPreferences: TFrmPreferences
         end
         object SpFPSCap: TSpinEdit
           Left = 141
-          Top = 1
+          Top = 27
           Width = 52
           Height = 22
           MaxValue = 0
           MinValue = 0
           TabOrder = 1
           Value = 0
+        end
+        object CbOpenCL: TCheckBox
+          Left = 3
+          Top = 3
+          Width = 259
+          Height = 17
+          Caption = 'Enable OpenCL Support'
+          TabOrder = 2
         end
       end
     end

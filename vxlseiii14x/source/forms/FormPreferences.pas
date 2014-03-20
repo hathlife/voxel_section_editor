@@ -32,10 +32,11 @@ type
     Panel2: TPanel;
     Button4: TButton;
     Button1: TButton;
-    TabSheet3: TTabSheet;
+    ThreeDOptions_tab: TTabSheet;
     CbFPSCap: TCheckBox;
     SpFPSCap: TSpinEdit;
     Label3: TLabel;
+    CbOpenCL: TCheckBox;
     procedure BtnApplyClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure IconIDChange(Sender: TObject);
@@ -126,6 +127,12 @@ begin
    else
       Configuration.FPSCap := 0;
    GlobalVars.Render.SetFPS(Configuration.FPSCap);
+
+   if cbOpenCL.Checked then
+      Configuration.OpenCL := true
+   else
+      Configuration.OpenCL := false;
+   GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
 
    if Reg.OpenKey('\VXLSe\DefaultIcon\',true) then
    begin
@@ -330,6 +337,8 @@ begin
    // 3D Options
    CbFPSCap.Checked := Configuration.FPSCap <> 0;
    SpFPSCap.Value := Configuration.FPSCap;
+   CbOpenCL.Enabled := GlobalVars.Render.IsOpenCLAllowed;
+   CbOpenCL.Checked := Configuration.OpenCL and GlobalVars.Render.IsOpenCLAllowed;
 end;
 
 end.

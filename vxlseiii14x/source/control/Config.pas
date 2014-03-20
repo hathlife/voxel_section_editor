@@ -24,6 +24,7 @@ type
          Assoc,Palette: Boolean;
          TS,RA2,Location3ds2vxl,INILocation3ds2vxl : string;
          FPSCap : longword;
+         OpenCL: boolean;
          constructor Create();
          destructor Destroy(); override;
          procedure AddFileToHistory(FileName: String);
@@ -113,6 +114,11 @@ begin
          else
             FPSCap := 70;
 
+         if Reg.ValueExists('OpenCL') then
+            OpenCL := Reg.ReadBool('OpenCL')
+         else
+            OpenCL := true;
+
          if Reg.ValueExists('3ds2vxlLocation') then
             Location3ds2vxl := Reg.ReadString('3ds2vxlLocation')
          else
@@ -135,6 +141,7 @@ begin
          TS:='TS';
          RA2:='RA2';
          FPSCap := 70;
+         OpenCL := true;
       end;
 
    finally
@@ -178,6 +185,7 @@ begin
    Reg.WriteInteger('FPSCap',FPSCap);
    Reg.WriteString('3ds2vxlLocation',Location3ds2vxl);
    Reg.WriteString('3ds2vxlINILocation',INILocation3ds2vxl);
+   Reg.WriteBool('OpenCL',OpenCL);
 
    Reg.CloseKey;
    Reg.Free;
