@@ -23,7 +23,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.202';
+   APPLICATION_VER = '1.39.203';
    APPLICATION_BETA = true;
 
 type
@@ -437,14 +437,10 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure ShowUsedColoursNormals1Click(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure OGL3DPreviewMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure OGL3DPreviewMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure OGL3DPreviewMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure OGL3DPreviewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure OGL3DPreviewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure OGL3DPreviewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure DebugMode1Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
     procedure btn3DRotateXClick(Sender: TObject);
@@ -475,27 +471,19 @@ type
     procedure Cameo21Click(Sender: TObject);
     procedure Cameo31Click(Sender: TObject);
     procedure Cameo41Click(Sender: TObject);
-    procedure CnvView2MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure CnvView1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure CnvView1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure CnvView1MouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure CnvView2MouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure CnvView2MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure CnvView0MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure CnvView2MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView1MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView1MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView2MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView2MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure CnvView0MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     Procedure UpdateCursor(P : TVector3i; Repaint : Boolean);
     procedure XCursorBarChange(Sender: TObject);
     Procedure CursorReset;
     Procedure CursorResetNoMAX;
     Procedure SetupStatusBar;
-    procedure CnvView0MouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
+    procedure CnvView0MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure lblView1Click(Sender: TObject);
     procedure lblView2Click(Sender: TObject);
     procedure mnuDirectionPopupPopup(Sender: TObject);
@@ -510,8 +498,7 @@ type
     procedure Brush_5Click(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
     Procedure SetVXLTool(VXLTool_ : Integer);
-    procedure CnvView0MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure CnvView0MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton5Click(Sender: TObject);
     procedure SpeedButton4Click(Sender: TObject);
     procedure SpeedButton10Click(Sender: TObject);
@@ -657,6 +644,7 @@ type
      {$ifdef TEXTURE_DEBUG}
      DebugFile: TDebugFile;
      {$endif}
+     procedure UpdateRenderingCounters;
   end;
 
 var
@@ -669,7 +657,7 @@ implementation
 uses FormHeaderUnit, LoadForm, FormNewSectionSizeUnit, FormPalettePackAbout, HVA,
    FormReplaceColour, FormVoxelTexture, FormBoundsManager, FormImportSection,
    FormFullResize, FormPreferences, FormVxlError, Config, ActorActionController,
-   ModelUndoEngine;
+   ModelUndoEngine, ModelVxt;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -744,6 +732,7 @@ begin
    GlobalVars.Render.SetFPS(Configuration.FPSCap);
    GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
    Env.EnableShaders(false);
+   Env.AddRenderingVariable('Voxels','0');
    SetIsEditable(False);
    //FrmMain.DoubleBuffered := true;
    //MainPaintPanel.DoubleBuffered := true;
@@ -1112,6 +1101,7 @@ begin
       Actor^.Clear;
    end;
    Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
+   UpdateRenderingCounters;
    if p_Frm3DPreview <> nil then
    begin
       if High(p_Frm3DPreview^.Actor^.Models) >= 0 then
@@ -1125,6 +1115,7 @@ begin
       GlobalVars.ActorController.SetBaseObject(p_Frm3DPreview^.Actor);
       p_Frm3DPreview^.SetActorModelTransparency;
       p_Frm3DPreview^.UpdateQualityUI;
+      p_Frm3DPreview^.UpdateRenderingCounters;
 
       p_Frm3DPreview^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DPreview^.SpFrame.Value := 1;
@@ -1139,9 +1130,11 @@ begin
       end;
       p_Frm3DModelizer^.Actor^.Clone(Document.ActiveVoxel,Document.ActiveHVA,Document.Palette,p_Frm3DModelizer^.GetQualityModel);
       GlobalVars.ActorController.DoLoadModel(p_Frm3DModelizer^.Actor, p_Frm3DModelizer^.GetQualityModel);
+      (p_Frm3DModelizer^.Actor^.Models[0]^ as TModelVxt).MakeVoxelHVAIndependent;
       GlobalVars.ActorController.SetBaseObject(p_Frm3DModelizer^.Actor);
       p_Frm3DModelizer^.SetActorModelTransparency;
       p_Frm3DModelizer^.UpdateQualityUI;
+      p_Frm3DModelizer^.UpdateRenderingCounters;
 
       p_Frm3DModelizer^.SpFrame.MaxValue := Document.ActiveHVA^.Header.N_Frames;
       p_Frm3DModelizer^.SpFrame.Value := 1;
@@ -1213,11 +1206,27 @@ begin
    RefreshViews;
    RepaintViews;
    if (Actor <> nil) and (not Display3dView1.Checked) then
+   begin
       Actor^.RebuildActor;
+      UpdateRenderingCounters;
+   end;
    if p_Frm3DPreview <> nil then
    begin
       GlobalVars.ActorController.DoRebuildModel(p_Frm3DPreview^.Actor, p_Frm3DPreview^.GetQualityModel);
       //p_Frm3DPreview^.Actor^.RebuildActor;
+      p_Frm3DPreview^.UpdateRenderingCounters;
+   end;
+end;
+
+procedure TFrmMain.UpdateRenderingCounters;
+begin
+   if Actor^.Models[0]^.ModelType = C_MT_VOXEL then
+   begin
+      Env.RenderingVariableValues[0] := IntToStr((Actor^.Models[0]^ as TModelVxt).GetVoxelCount);
+   end
+   else
+   begin
+      Env.RenderingVariableValues[0] := IntToStr(Actor^.Models[0]^.GetVoxelCount);
    end;
 end;
 
@@ -1287,9 +1296,11 @@ begin
    if High(Actor^.Models) >= 0 then
       Actor^.Clear;
    Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
+   UpdateRenderingCounters;
    if p_Frm3DPreview <> nil then
    begin
       p_Frm3DPreview^.SetActorModelTransparency;
+      p_Frm3DPreview^.UpdateRenderingCounters;
    end;
    ResetUndoRedo;
    UpdateUndo_RedoState;

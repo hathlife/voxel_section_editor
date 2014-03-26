@@ -7,201 +7,198 @@ unit Form3dPreview;
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
-  Buttons, FTGifAnimate, GIFImage, Palette, BasicMathsTypes, BasicDataTypes,
-  BasicRenderingTypes, Voxel_Engine, Normals, HVA,JPEG,PNGImage, math3d,
-  RenderEnvironment, Render, Actor, Camera, GlConstants, BasicFunctions;
+   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+   StdCtrls, ExtCtrls, {model,} dglOpenGL, {Textures,} Menus, voxel, Spin,
+   Buttons, FTGifAnimate, GIFImage, Palette, BasicMathsTypes, BasicDataTypes,
+   BasicRenderingTypes, Voxel_Engine, Normals, HVA,JPEG,PNGImage, math3d,
+   RenderEnvironment, Render, Actor, Camera, GlConstants, BasicFunctions;
 
 type
-  PFrm3DPReview = ^TFrm3DPReview;
-  TFrm3DPReview = class(TForm)
-    Panel2: TPanel;
-    MainMenu1: TMainMenu;
-    File1: TMenuItem;
-    Exit1: TMenuItem;
-    Options1: TMenuItem;
-    BackgroundColour1: TMenuItem;
-    ColorDialog1: TColorDialog;
-    Panel1: TPanel;
-    btn3DRotateX2: TSpeedButton;
-    btn3DRotateY2: TSpeedButton;
-    btn3DRotateY: TSpeedButton;
-    spin3Djmp: TSpinEdit;
-    Bevel1: TBevel;
-    FontColor1: TMenuItem;
-    Popup3d: TPopupMenu;
-    Views1: TMenuItem;
-    Front1: TMenuItem;
-    Back1: TMenuItem;
-    N1: TMenuItem;
-    LEft1: TMenuItem;
-    Right1: TMenuItem;
-    N2: TMenuItem;
-    Bottom1: TMenuItem;
-    op1: TMenuItem;
-    N3: TMenuItem;
-    Cameo1: TMenuItem;
-    SpeedButton1: TSpeedButton;
-    Cameo21: TMenuItem;
-    Cameo31: TMenuItem;
-    Cameo41: TMenuItem;
-    ools1: TMenuItem;
-    akeScreenshot1: TMenuItem;
-    ake360DegScreenshots1: TMenuItem;
-    RemapColour1: TMenuItem;
-    Red1: TMenuItem;
-    Blue1: TMenuItem;
-    Green1: TMenuItem;
-    White1: TMenuItem;
-    Orange1: TMenuItem;
-    Magenta1: TMenuItem;
-    Purple1: TMenuItem;
-    Gold1: TMenuItem;
-    DarkSky1: TMenuItem;
-    SpeedButton2: TSpeedButton;
-    btn3DRotateX: TSpeedButton;
-    akeScreenshotJPG1: TMenuItem;
-    akeScreenshotPNG1: TMenuItem;
-    akeScreenshotBMP1: TMenuItem;
-    Display1: TMenuItem;
-    CurrentSectionOnly1: TMenuItem;
-    WholeVoxel1: TMenuItem;
-    SpPlay: TSpeedButton;
-    SpStop: TSpeedButton;
-    Label1: TLabel;
-    SpFrame: TSpinEdit;
-    AnimationTimer: TTimer;
-    Anim360Timer: TTimer;
-    RenderQuality1: TMenuItem;
-    RenderCubes: TMenuItem;
-    RenderModel: TMenuItem;
-    SaveModelAs: TMenuItem;
-    N4: TMenuItem;
-    SaveModelDialog: TSaveDialog;
-    RenderQuads: TMenuItem;
-    RenderTriangles: TMenuItem;
-    N5: TMenuItem;
-    CameraRotationAngles1: TMenuItem;
-    Render4Triangles: TMenuItem;
-    FillMode1: TMenuItem;
-    DisplayFMSolid: TMenuItem;
-    DisplayFMWireframe: TMenuItem;
-    DisplayFMPointCloud: TMenuItem;
-    akeScreenshotPS1: TMenuItem;
-    akeScreenshotEPS1: TMenuItem;
-    akeScreenshotPDF1: TMenuItem;
-    akeScreenshotSVG1: TMenuItem;
-    akeScreenshotDDS1: TMenuItem;
-    DisplayNormalVectors1: TMenuItem;
-    RenderManifolds: TMenuItem;
-    RenderSmoothManifolds: TMenuItem;
-    procedure RenderSmoothManifoldsClick(Sender: TObject);
-    procedure RenderManifoldsClick(Sender: TObject);
-    procedure DisplayNormalVectors1Click(Sender: TObject);
-    procedure akeScreenshotSVG1Click(Sender: TObject);
-    procedure akeScreenshotPDF1Click(Sender: TObject);
-    procedure akeScreenshotEPS1Click(Sender: TObject);
-    procedure akeScreenshotPS1Click(Sender: TObject);
-    procedure akeScreenshotDDS1Click(Sender: TObject);
-    procedure DisplayFMSolidClick(Sender: TObject);
-    procedure DisplayFMWireframeClick(Sender: TObject);
-    procedure DisplayFMPointCloudClick(Sender: TObject);
-    procedure CameraRotationAngles1Click(Sender: TObject);
-    procedure RenderTrianglesClick(Sender: TObject);
-    procedure RenderQuadsClick(Sender: TObject);
-    procedure SaveModelAsClick(Sender: TObject);
-    procedure ModelFXLanczosClick(Sender: TObject);
-    procedure ModelFXNormalizeClick(Sender: TObject);
-    procedure ModelFXInflateClick(Sender: TObject);
-    procedure ModelFXDeflateClick(Sender: TObject);
-    procedure ModelFXHeavySmoothClick(Sender: TObject);
-    procedure ModelFXUnsharpClick(Sender: TObject);
-    procedure ModelFXSmoothClick(Sender: TObject);
-    procedure RenderModelClick(Sender: TObject);
-    procedure RenderCubesClick(Sender: TObject);
-    procedure Anim360TimerTimer(Sender: TObject);
-    procedure AnimationTimerTimer(Sender: TObject);
-    procedure SpPlayClick(Sender: TObject);
-    procedure SpStopClick(Sender: TObject);
-    procedure SpFrameChange(Sender: TObject);
-    procedure FormDeactivate(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
-    procedure CurrentSectionOnly1Click(Sender: TObject);
-    procedure akeScreenshotBMP1Click(Sender: TObject);
-    procedure akeScreenshotPNG1Click(Sender: TObject);
-    procedure akeScreenshotJPG1Click(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormCreate(Sender: TObject);
-    procedure FormResize(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
-    procedure Panel2MouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure Panel2MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure Panel2MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure Exit1Click(Sender: TObject);
-    procedure BackgroundColour1Click(Sender: TObject);
-    procedure btn3DRotateX2Click(Sender: TObject);
-    procedure btn3DRotateXClick(Sender: TObject);
-    procedure btn3DRotateY2Click(Sender: TObject);
-    procedure btn3DRotateYClick(Sender: TObject);
-    procedure spin3DjmpChange(Sender: TObject);
-    procedure FontColor1Click(Sender: TObject);
-    procedure Front1Click(Sender: TObject);
-    procedure Back1Click(Sender: TObject);
-    procedure LEft1Click(Sender: TObject);
-    procedure Right1Click(Sender: TObject);
-    procedure Bottom1Click(Sender: TObject);
-    procedure op1Click(Sender: TObject);
-    procedure Cameo1Click(Sender: TObject);
-    procedure SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure Cameo21Click(Sender: TObject);
-    procedure Cameo31Click(Sender: TObject);
-    procedure Cameo41Click(Sender: TObject);
-    procedure ake360DegScreenshots1Click(Sender: TObject);
-    procedure akeScreenshot1Click(Sender: TObject);
-    procedure Red1Click(Sender: TObject);
-    procedure Blue1Click(Sender: TObject);
-    procedure Green1Click(Sender: TObject);
-    procedure White1Click(Sender: TObject);
-    procedure Orange1Click(Sender: TObject);
-    procedure Magenta1Click(Sender: TObject);
-    procedure Purple1Click(Sender: TObject);
-    procedure Gold1Click(Sender: TObject);
-    procedure DarkSky1Click(Sender: TObject);
-    procedure SpeedButton2Click(Sender: TObject);
-    procedure Render4TrianglesClick(Sender: TObject);
-  private
-    { Private declarations }
-    RemapColour : TVector3f;
-    Xcoord, Ycoord, Zcoord : Integer;
-    MouseButton : Integer;
-    // These are for Take 360 Animation
-    btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
-    procedure ClearRemapClicks;
-    procedure UncheckModelQuality;
-    procedure UncheckFillMode;
-    procedure DoDisplayNormals;
-  public
-    { Public declarations }
-    AnimationState : boolean;
-    EnvP : PRenderEnvironment;
-    Env : TRenderEnvironment;
-    Actor : PActor;
-    Camera : TCamera;
-    Procedure SetRotationAdders;
-    procedure SetActorModelTransparency;
-    function GetQualityModel: integer;
-    procedure UpdateQualityUI;
-    Procedure Reset3DView;
-  end;
+   PFrm3DPReview = ^TFrm3DPReview;
+   TFrm3DPReview = class(TForm)
+      Panel2: TPanel;
+      MainMenu1: TMainMenu;
+      File1: TMenuItem;
+      Exit1: TMenuItem;
+      Options1: TMenuItem;
+      BackgroundColour1: TMenuItem;
+      ColorDialog1: TColorDialog;
+      Panel1: TPanel;
+      btn3DRotateX2: TSpeedButton;
+      btn3DRotateY2: TSpeedButton;
+      btn3DRotateY: TSpeedButton;
+      spin3Djmp: TSpinEdit;
+      Bevel1: TBevel;
+      FontColor1: TMenuItem;
+      Popup3d: TPopupMenu;
+      Views1: TMenuItem;
+      Front1: TMenuItem;
+      Back1: TMenuItem;
+      N1: TMenuItem;
+      LEft1: TMenuItem;
+      Right1: TMenuItem;
+      N2: TMenuItem;
+      Bottom1: TMenuItem;
+      op1: TMenuItem;
+      N3: TMenuItem;
+      Cameo1: TMenuItem;
+      SpeedButton1: TSpeedButton;
+      Cameo21: TMenuItem;
+      Cameo31: TMenuItem;
+      Cameo41: TMenuItem;
+      ools1: TMenuItem;
+      akeScreenshot1: TMenuItem;
+      ake360DegScreenshots1: TMenuItem;
+      RemapColour1: TMenuItem;
+      Red1: TMenuItem;
+      Blue1: TMenuItem;
+      Green1: TMenuItem;
+      White1: TMenuItem;
+      Orange1: TMenuItem;
+      Magenta1: TMenuItem;
+      Purple1: TMenuItem;
+      Gold1: TMenuItem;
+      DarkSky1: TMenuItem;
+      SpeedButton2: TSpeedButton;
+      btn3DRotateX: TSpeedButton;
+      akeScreenshotJPG1: TMenuItem;
+      akeScreenshotPNG1: TMenuItem;
+      akeScreenshotBMP1: TMenuItem;
+      Display1: TMenuItem;
+      CurrentSectionOnly1: TMenuItem;
+      WholeVoxel1: TMenuItem;
+      SpPlay: TSpeedButton;
+      SpStop: TSpeedButton;
+      Label1: TLabel;
+      SpFrame: TSpinEdit;
+      AnimationTimer: TTimer;
+      Anim360Timer: TTimer;
+      RenderQuality1: TMenuItem;
+      RenderCubes: TMenuItem;
+      RenderModel: TMenuItem;
+      SaveModelAs: TMenuItem;
+      N4: TMenuItem;
+      SaveModelDialog: TSaveDialog;
+      RenderQuads: TMenuItem;
+      RenderTriangles: TMenuItem;
+      N5: TMenuItem;
+      CameraRotationAngles1: TMenuItem;
+      Render4Triangles: TMenuItem;
+      FillMode1: TMenuItem;
+      DisplayFMSolid: TMenuItem;
+      DisplayFMWireframe: TMenuItem;
+      DisplayFMPointCloud: TMenuItem;
+      akeScreenshotPS1: TMenuItem;
+      akeScreenshotEPS1: TMenuItem;
+      akeScreenshotPDF1: TMenuItem;
+      akeScreenshotSVG1: TMenuItem;
+      akeScreenshotDDS1: TMenuItem;
+      DisplayNormalVectors1: TMenuItem;
+      RenderManifolds: TMenuItem;
+      RenderSmoothManifolds: TMenuItem;
+      procedure RenderSmoothManifoldsClick(Sender: TObject);
+      procedure RenderManifoldsClick(Sender: TObject);
+      procedure DisplayNormalVectors1Click(Sender: TObject);
+      procedure akeScreenshotSVG1Click(Sender: TObject);
+      procedure akeScreenshotPDF1Click(Sender: TObject);
+      procedure akeScreenshotEPS1Click(Sender: TObject);
+      procedure akeScreenshotPS1Click(Sender: TObject);
+      procedure akeScreenshotDDS1Click(Sender: TObject);
+      procedure DisplayFMSolidClick(Sender: TObject);
+      procedure DisplayFMWireframeClick(Sender: TObject);
+      procedure DisplayFMPointCloudClick(Sender: TObject);
+      procedure CameraRotationAngles1Click(Sender: TObject);
+      procedure RenderTrianglesClick(Sender: TObject);
+      procedure RenderQuadsClick(Sender: TObject);
+      procedure SaveModelAsClick(Sender: TObject);
+      procedure ModelFXLanczosClick(Sender: TObject);
+      procedure ModelFXNormalizeClick(Sender: TObject);
+      procedure ModelFXInflateClick(Sender: TObject);
+      procedure ModelFXDeflateClick(Sender: TObject);
+      procedure ModelFXHeavySmoothClick(Sender: TObject);
+      procedure ModelFXUnsharpClick(Sender: TObject);
+      procedure ModelFXSmoothClick(Sender: TObject);
+      procedure RenderModelClick(Sender: TObject);
+      procedure RenderCubesClick(Sender: TObject);
+      procedure Anim360TimerTimer(Sender: TObject);
+      procedure AnimationTimerTimer(Sender: TObject);
+      procedure SpPlayClick(Sender: TObject);
+      procedure SpStopClick(Sender: TObject);
+      procedure SpFrameChange(Sender: TObject);
+      procedure FormDeactivate(Sender: TObject);
+      procedure FormActivate(Sender: TObject);
+      procedure CurrentSectionOnly1Click(Sender: TObject);
+      procedure akeScreenshotBMP1Click(Sender: TObject);
+      procedure akeScreenshotPNG1Click(Sender: TObject);
+      procedure akeScreenshotJPG1Click(Sender: TObject);
+      procedure FormClose(Sender: TObject; var Action: TCloseAction);
+      procedure FormCreate(Sender: TObject);
+      procedure FormResize(Sender: TObject);
+      procedure FormDestroy(Sender: TObject);
+      procedure Panel2MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+      procedure Panel2MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure Panel2MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure Exit1Click(Sender: TObject);
+      procedure BackgroundColour1Click(Sender: TObject);
+      procedure btn3DRotateX2Click(Sender: TObject);
+      procedure btn3DRotateXClick(Sender: TObject);
+      procedure btn3DRotateY2Click(Sender: TObject);
+      procedure btn3DRotateYClick(Sender: TObject);
+      procedure spin3DjmpChange(Sender: TObject);
+      procedure FontColor1Click(Sender: TObject);
+      procedure Front1Click(Sender: TObject);
+      procedure Back1Click(Sender: TObject);
+      procedure LEft1Click(Sender: TObject);
+      procedure Right1Click(Sender: TObject);
+      procedure Bottom1Click(Sender: TObject);
+      procedure op1Click(Sender: TObject);
+      procedure Cameo1Click(Sender: TObject);
+      procedure SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure Cameo21Click(Sender: TObject);
+      procedure Cameo31Click(Sender: TObject);
+      procedure Cameo41Click(Sender: TObject);
+      procedure ake360DegScreenshots1Click(Sender: TObject);
+      procedure akeScreenshot1Click(Sender: TObject);
+      procedure Red1Click(Sender: TObject);
+      procedure Blue1Click(Sender: TObject);
+      procedure Green1Click(Sender: TObject);
+      procedure White1Click(Sender: TObject);
+      procedure Orange1Click(Sender: TObject);
+      procedure Magenta1Click(Sender: TObject);
+      procedure Purple1Click(Sender: TObject);
+      procedure Gold1Click(Sender: TObject);
+      procedure DarkSky1Click(Sender: TObject);
+      procedure SpeedButton2Click(Sender: TObject);
+      procedure Render4TrianglesClick(Sender: TObject);
+   private
+      { Private declarations }
+      RemapColour : TVector3f;
+      Xcoord, Ycoord, Zcoord : Integer;
+      MouseButton : Integer;
+      // These are for Take 360 Animation
+      btn3DRotateY_d, btn3DRotateY2_d, btn3DRotateX_d, btn3DRotateX2_d : boolean;
+      procedure ClearRemapClicks;
+      procedure UncheckModelQuality;
+      procedure UncheckFillMode;
+      procedure DoDisplayNormals;
+   public
+      { Public declarations }
+      AnimationState : boolean;
+      EnvP : PRenderEnvironment;
+      Env : TRenderEnvironment;
+      Actor : PActor;
+      Camera : TCamera;
+      Procedure SetRotationAdders;
+      procedure SetActorModelTransparency;
+      function GetQualityModel: integer;
+      procedure UpdateQualityUI;
+      procedure UpdateRenderingCounters;
+      Procedure Reset3DView;
+   end;
 
 implementation
 
-uses FormMain, GlobalVars, DistanceFormulas;
+uses FormMain, GlobalVars, DistanceFormulas, ModelVxt;
 
 {$R *.DFM}
 
@@ -213,6 +210,8 @@ begin
    Env := EnvP^;
    Env.BackgroundColour := SetVector(140/255,170/255,235/255);
    Env.FontColour := SetVector(1,1,1);
+   Env.AddRenderingVariable('Faces','0');
+   Env.AddRenderingVariable('Voxels','0');
    Camera := Env.CurrentCamera^;
    Env.EnableShaders(false);
 
@@ -226,9 +225,10 @@ begin
 
    new(Actor);
    Actor^ := (Env.AddActor)^;
-   Actor^.Clone(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
+   Actor^.Add(FrmMain.Document.ActiveVoxel,FrmMain.Document.ActiveHVA,FrmMain.Document.Palette,GetQualityModel);
    GlobalVars.ActorController.DoLoadModel(Actor, GetQualityModel);
    GlobalVars.ActorController.SetBaseObject(Actor);
+   UpdateRenderingCounters;
    SetActorModelTransparency;
 end;
 
@@ -259,8 +259,23 @@ end;
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.Panel2MouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
+procedure TFrm3DPreview.UpdateRenderingCounters;
+begin
+   Env.RenderingVariableValues[0] := IntToStr(Actor^.Models[0]^.GetPolyCount);
+   if Actor^.Models[0]^.ModelType = C_MT_VOXEL then
+   begin
+      Env.RenderingVariableValues[1] := IntToStr((Actor^.Models[0]^ as TModelVxt).GetVoxelCount);
+   end
+   else
+   begin
+      Env.RenderingVariableValues[1] := IntToStr(Actor^.Models[0]^.GetVoxelCount);
+   end;
+end;
+
+
+{------------------------------------------------------------------}
+{------------------------------------------------------------------}
+procedure TFrm3DPReview.Panel2MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
    if MouseButton = 1 then
    begin
@@ -278,8 +293,7 @@ end;
 
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
-procedure TFrm3DPReview.Panel2MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TFrm3DPReview.Panel2MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    if Button = mbLeft  then
    begin
@@ -294,8 +308,7 @@ begin
    end;
 end;
 
-procedure TFrm3DPReview.Panel2MouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TFrm3DPReview.Panel2MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    MouseButton :=0;
 end;
@@ -632,6 +645,7 @@ begin
    UncheckModelQuality;
    Render4Triangles.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
 //   Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -640,6 +654,7 @@ begin
    UncheckModelQuality;
    RenderCubes.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -648,6 +663,7 @@ begin
    UncheckModelQuality;
    RenderManifolds.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -656,6 +672,7 @@ begin
    UncheckModelQuality;
    RenderModel.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -664,6 +681,7 @@ begin
    UncheckModelQuality;
    RenderQuads.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -672,6 +690,7 @@ begin
    UncheckModelQuality;
    RenderSmoothManifolds.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 
@@ -680,6 +699,7 @@ begin
    UncheckModelQuality;
    RenderTriangles.Checked := true;
    GlobalVars.ActorController.DoRebuildModel(Actor, GetQualityModel);
+   UpdateRenderingCounters;
    //Actor^.SetQuality(GetQualityModel);
 end;
 

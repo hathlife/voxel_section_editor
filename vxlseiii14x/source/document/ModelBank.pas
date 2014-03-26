@@ -2,7 +2,10 @@ unit ModelBank;
 
 interface
 
-uses Model, ModelBankItem, SysUtils, Voxel, HVA, Palette, GlConstants, ShaderBank;
+{$INCLUDE source/Global_Conditionals.inc}
+
+uses Model, ModelBankItem, SysUtils, {$IFDEF VOXEL_SUPPORT}Voxel, HVA,{$ENDIF} Palette,
+   GlConstants, ShaderBank;
 
 type
    TModelBank = class
@@ -14,10 +17,14 @@ type
          // Adds
          function Search(const _Filename: string): integer; overload;
          function Search(const _Model: PModel): integer; overload;
+{$IFDEF VOXEL_SUPPORT}
          function Search(const _Voxel: PVoxel): integer; overload;
+{$ENDIF}
          function SearchReadOnly(const _Filename: string): integer; overload;
          function SearchReadOnly(const _Model: PModel): integer; overload;
+{$IFDEF VOXEL_SUPPORT}
          function SearchReadOnly(const _Voxel: PVoxel): integer; overload;
+{$ENDIF}
          function SearchEditable(const _Model: PModel): integer; overload;
       public
          // Constructors and Destructors
@@ -29,15 +36,21 @@ type
          // Adds
          function Add(const _filename: string; _ShaderBank : PShaderBank): PModel; overload;
          function Add(const _Model: PModel): PModel; overload;
+{$IFDEF VOXEL_SUPPORT}
          function Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          function Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
+{$ENDIF}
          function AddReadOnly(const _filename: string; _ShaderBank : PShaderBank): PModel; overload;
          function AddReadOnly(const _Model: PModel): PModel; overload;
+{$IFDEF VOXEL_SUPPORT}
          function AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
          function AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
+{$ENDIF}
          function Clone(const _filename: string; _ShaderBank : PShaderBank): PModel; overload;
          function Clone(const _Model: PModel): PModel; overload;
+{$IFDEF VOXEL_SUPPORT}
          function Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel; overload;
+{$ENDIF}
          // Deletes
          procedure Delete(const _Model : PModel);
          // Search
@@ -52,7 +65,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars {$ifdef VOXEL_SUPPORT}, ModelVxt{$endif};
 
 // Constructors and Destructors
 constructor TModelBank.Create;
@@ -173,9 +186,11 @@ begin
    end;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 function TModelBank.Search(const _Voxel: PVoxel): integer;
 var
    i : integer;
+   Model: PModel;
 begin
    Result := -1;
    if _Voxel = nil then
@@ -183,17 +198,22 @@ begin
    i := Low(Items);
    while i <= High(Items) do
    begin
-      if Items[i].GetModel <> nil then
+      Model := Items[i].GetModel;
+      if Model <> nil then
       begin
-         if _Voxel = Items[i].GetModel^.Voxel then
+         if Model^.ModelType = C_MT_VOXEL then
          begin
-            Result := i;
-            exit;
+            if _Voxel = (Model^ as TModelVxt).Voxel then
+            begin
+               Result := i;
+               exit;
+            end;
          end;
       end;
       inc(i);
    end;
 end;
+{$ENDIF}
 
 function TModelBank.Search(const _ID: integer): TModel;
 var
@@ -261,9 +281,11 @@ begin
    end;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 function TModelBank.SearchReadOnly(const _Voxel: PVoxel): integer;
 var
    i : integer;
+   Model: PModel;
 begin
    Result := -1;
    if _Voxel = nil then
@@ -273,18 +295,23 @@ begin
    begin
       if not Items[i].GetEditable then
       begin
-         if Items[i].GetModel <> nil then
+         Model := Items[i].GetModel;
+         if Model <> nil then
          begin
-            if _Voxel = Items[i].GetModel^.Voxel then
+            if Model^.ModelType = C_MT_VOXEL then
             begin
-               Result := i;
-               exit;
+               if _Voxel = (Model^ as TModelVxt).Voxel then
+               begin
+                  Result := i;
+                  exit;
+               end;
             end;
          end;
       end;
       inc(i);
    end;
 end;
+{$ENDIF}
 
 function TModelBank.SearchReadOnly(const _ID: integer): TModel;
 var
@@ -396,6 +423,7 @@ begin
    end;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 function TModelBank.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel;
 var
    i : integer;
@@ -422,6 +450,7 @@ begin
    inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
+{$ENDIF}
 
 function TModelBank.AddReadOnly(const _filename: string; _ShaderBank : PShaderBank): PModel;
 var
@@ -461,6 +490,7 @@ begin
    end;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 function TModelBank.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel;
 var
    i : integer;
@@ -487,7 +517,7 @@ begin
    inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
-
+{$ENDIF}
 
 function TModelBank.Clone(const _filename: string; _ShaderBank : PShaderBank): PModel;
 begin
@@ -505,6 +535,7 @@ begin
    Result := Items[High(Items)].GetModel;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 function TModelBank.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED): PModel;
 begin
    SetLength(Items,High(Items)+2);
@@ -512,8 +543,7 @@ begin
    inc(FNextID);
    Result := Items[High(Items)].GetModel;
 end;
-
-
+{$ENDIF}
 
 // Deletes
 procedure TModelBank.Delete(const _Model : PModel);

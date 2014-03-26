@@ -268,7 +268,7 @@ begin
          begin
             for k:=1 to 4 do
             begin
-               M[j,k]:=StrToFloat(grdTrans.Cells[k-1,j-1]);
+               M[j,k]:=StrToFloatDef(grdTrans.Cells[k-1,j-1],1);
             end;
          end;
          HVA^.SetMatrix(M,Frame-1,i);

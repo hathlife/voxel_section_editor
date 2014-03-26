@@ -2,9 +2,10 @@ unit ModelRebuildCommand;
 
 interface
 
-uses ControllerDataTypes, ActorActionCommandBase, Actor;
-
 {$INCLUDE source/Global_Conditionals.inc}
+{$ifdef VOXEL_SUPPORT}
+
+uses ControllerDataTypes, ActorActionCommandBase, Actor;
 
 type
    TModelRebuildCommand = class (TActorActionCommandBase)
@@ -15,9 +16,12 @@ type
          procedure Execute; override;
    end;
 
+{$endif}
 implementation
 
-uses StopWatch, GlobalVars, SysUtils, GLConstants, LODPostProcessing;
+{$ifdef VOXEL_SUPPORT}
+
+uses StopWatch, GlobalVars, SysUtils, GLConstants, LODPostProcessing, ModelVxt;
 
 constructor TModelRebuildCommand.Create(var _Actor: TActor; var _Params: TCommandParams);
 begin
@@ -37,19 +41,23 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   FActor.Models[0]^.Quality := FQuality;
-   FActor.Models[0]^.RebuildModel;
-   LODProcessor := TLODPostProcessing.Create(FQuality);
-   for i := Low(FActor.Models[0]^.LOD) to High(FActor.Models[0]^.LOD) do
+   if FActor.Models[0]^.ModelType = C_MT_VOXEL then
    begin
-      LODProcessor.Execute(FActor.Models[0]^.LOD[i]);
+      (FActor.Models[0]^ as TModelVxt).Quality := FQuality;
+      (FActor.Models[0]^ as TModelVxt).RebuildModel;
+      LODProcessor := TLODPostProcessing.Create(FQuality);
+      for i := Low(FActor.Models[0]^.LOD) to High(FActor.Models[0]^.LOD) do
+      begin
+         LODProcessor.Execute(FActor.Models[0]^.LOD[i]);
+      end;
+      LODProcessor.Free;
    end;
-   LODProcessor.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Model rebuilt in: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;
+{$endif}
 
 end.

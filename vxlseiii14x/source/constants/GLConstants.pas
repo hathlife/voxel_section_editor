@@ -5,6 +5,10 @@ interface
 uses BasicMathsTypes;
 
 const
+   // Model Types
+   C_MT_STANDARD = 0;
+   C_MT_VOXEL = 1;
+
    // For Mesh.NormalsType
    C_NORMALS_DISABLED = 0;
    C_NORMALS_PER_VERTEX = 1;

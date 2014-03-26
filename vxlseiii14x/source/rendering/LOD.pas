@@ -6,7 +6,8 @@ unit LOD;
 
 interface
 
-uses Mesh, HVA, BasicDataTypes, dglOpenGL, SysUtils, Windows, Graphics, Histogram;
+uses Mesh, BasicDataTypes, dglOpenGL, SysUtils, Windows, Graphics, Histogram,
+   HierarchyAnimation;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -17,8 +18,8 @@ type
       procedure SaveToOBJFile(const _Filename,_TexExt: string);
       procedure SaveToPLYFile(const _Filename: string);
       // Rendering Methods
-      procedure RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
-      procedure RenderMeshVectorial(_i :integer; const _HVA: PHVA; _Frame: integer);
+      procedure RenderMesh(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
+      procedure RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
    public
       InitialMesh : integer;
       Name : string;
@@ -33,8 +34,8 @@ type
       // Gets
       function GetNumMeshes: longword;
       // Rendering Methods
-      procedure Render(var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
-      procedure RenderVectorial(const _HVA: PHVA; _Frame: integer);
+      procedure Render(const _HA: PHierarchyAnimation; _Frame: integer);
+      procedure RenderVectorial(const _HA: PHierarchyAnimation; _Frame: integer);
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
       // Refresh OpenGL List
@@ -151,39 +152,41 @@ begin
 end;
 
 // Rendering Methods
-procedure TLOD.Render(var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
+procedure TLOD.Render(const _HA: PHierarchyAnimation; _Frame: integer);
 begin
-   RenderMesh(InitialMesh,_PolyCount,_VoxelCount,_HVA, _Frame);
+   RenderMesh(InitialMesh,_HA, _Frame);
 end;
 
-procedure TLOD.RenderVectorial(const _HVA: PHVA; _Frame: integer);
+procedure TLOD.RenderVectorial(const _HA: PHierarchyAnimation; _Frame: integer);
 begin
-   RenderMeshVectorial(InitialMesh,_HVA, _Frame);
+   RenderMeshVectorial(InitialMesh,_HA, _Frame);
 end;
 
-procedure TLOD.RenderMesh(_i :integer; var _PolyCount,_VoxelCount: longword; const _HVA: PHVA; _Frame: integer);
+procedure TLOD.RenderMesh(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
 begin
    if _i <> -1 then
    begin
       glPushMatrix();
-         _HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
-         RenderMesh(Mesh[_i].Son,_PolyCount,_VoxelCount,_HVA, _Frame);
-         Mesh[_i].Render(_PolyCount,_VoxelCount);
+         //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
+         _HA^.ExecuteAnimation(_i);
+         RenderMesh(Mesh[_i].Son,_HA, _Frame);
+         Mesh[_i].Render();
       glPopMatrix();
-      RenderMesh(Mesh[_i].Next,_PolyCount,_VoxelCount,_HVA, _Frame);
+      RenderMesh(Mesh[_i].Next,_HA, _Frame);
    end;
 end;
 
-procedure TLOD.RenderMeshVectorial(_i :integer; const _HVA: PHVA; _Frame: integer);
+procedure TLOD.RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
 begin
    if _i <> -1 then
    begin
       glPushMatrix();
-         _HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
-         RenderMeshVectorial(Mesh[_i].Son,_HVA, _Frame);
+         //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
+         _HA^.ExecuteAnimation(_i);
+         RenderMeshVectorial(Mesh[_i].Son,_HA, _Frame);
          Mesh[_i].RenderVectorial();
       glPopMatrix();
-      RenderMeshVectorial(Mesh[_i].Next,_HVA, _Frame);
+      RenderMeshVectorial(Mesh[_i].Next,_HA, _Frame);
    end;
 end;
 

@@ -2,7 +2,7 @@ unit Mesh;
 
 interface
 
-uses dglOpenGL, GLConstants, Graphics, Voxel, Normals, BasicMathsTypes, BasicDataTypes,
+uses dglOpenGL, GLConstants, Graphics, Normals, BasicMathsTypes, BasicDataTypes,
       BasicRenderingTypes, Palette, Dialogs, SysUtils, IntegerList, StopWatch,
       ShaderBank, ShaderBankItem, TextureBank, TextureBankItem, IntegerSet,
       Material, Vector3fSet, MeshPluginBase, MeshGeometryList, MeshGeometryBase,
@@ -12,24 +12,20 @@ uses dglOpenGL, GLConstants, Graphics, Voxel, Normals, BasicMathsTypes, BasicDat
 type
    TGetCardinalAttr = function: cardinal of object;
    TMesh = class
-      private
+      protected
          ColourGenStructure : byte;
          TransparencyLevel : single;
-         Opened : boolean;
+         FOpened : boolean;
          NumVertices: cardinal;
          LastVertex: cardinal;
-         // I/O
-         procedure LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
-         procedure LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-         procedure LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-         procedure LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-         procedure CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
          // Gets
          function GetNumVerticesCompressed: cardinal;
          function GetNumVerticesUnCompressed: cardinal;
          function GetLastVertexCompressed: cardinal;
          function GetLastVertexUnCompressed: cardinal;
          // Sets
+         // Render
+         procedure CommonRenderingProcedure;
          // Materials
          procedure AddMaterial;
          procedure DeleteMaterial(_ID: integer);
@@ -48,7 +44,6 @@ type
          ColoursType : byte;
          NormalsType : byte;
          NumFaces : longword;
-         NumVoxels : longword; // for statistic purposes.
          Vertices : TAVector3f;
          Normals : TAVector3f;
          Colours : TAVector4f;
@@ -77,11 +72,8 @@ type
          // Constructors And Destructors
          constructor Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank); overload;
          constructor Create(const _Mesh : TMesh); overload;
-         constructor CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED);
          destructor Destroy; override;
          procedure Clear;
-         // I/O
-         procedure RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
          // Sets
          procedure SetColoursType(_ColoursType: integer);
          procedure SetColourGenStructure(_ColoursType: integer);
@@ -97,12 +89,13 @@ type
          procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 
          // Rendering methods
-         procedure Render(var _Polycount, _VoxelCount: longword);
+         procedure Render; overload;
+         procedure Render(var _Polycount: longword); overload;
          procedure RenderVectorial;
          procedure ForceRefresh;
 
          // Copies
-         procedure Assign(const _Mesh : TMesh);
+         procedure Assign(const _Mesh : TMesh); virtual;
 
          // Texture related
          function CollectColours(var _ColourMap: auint32): TAVector4f;
@@ -143,6 +136,8 @@ type
          procedure DebugVertexNormals(const _Debug:TDebugFile);
          procedure DebugVertexColours(const _Debug:TDebugFile);
          procedure DebugVertexTexCoordss(const _Debug:TDebugFile);
+
+         property Opened: boolean read FOpened;
    end;
    PMesh = ^TMesh;
 
@@ -158,7 +153,6 @@ begin
    ID := _ID;
 //   VerticesPerFace := _VerticesPerFace;
    NumFaces := _NumFaces;
-   NumVoxels := 0;
    SetColoursAndNormalsType(_ColoursType,_NormalsType);
    ColourGenStructure := _ColoursType;
    Geometry := CMeshGeometryList.Create();
@@ -180,7 +174,7 @@ begin
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    TransparencyLevel := C_TRP_OPAQUE;
-   Opened := false;
+   FOpened := false;
    IsSelected := false;
    AddMaterial;
    Next := -1;
@@ -197,80 +191,6 @@ begin
    GetLastVertex := GetLastVertexCompressed;
 end;
 
-constructor TMesh.CreateFromVoxel(_ID : longword; const _Voxel : TVoxelSection; const _Palette : TPalette; _ShaderBank: PShaderBank; _Quality: integer = C_QUALITY_CUBED);
-var
-   c : integer;
-begin
-   ShaderBank := _ShaderBank;
-   Geometry := CMeshGeometryList.Create;
-   Clear;
-   ColoursType := C_COLOURS_PER_FACE;
-   ColourGenStructure := C_COLOURS_PER_FACE;
-   ID := _ID;
-   TransparencyLevel := C_TRP_OPAQUE;
-   NumVoxels := 0;
-   c := 1;
-   while (c <= 16) and (_Voxel.Header.Name[c] <> #0) do
-   begin
-      Name := Name + _Voxel.Header.Name[c];
-      inc(c);
-   end;
-   case _Quality of
-      C_QUALITY_CUBED:
-      begin
-         LoadFromVoxel(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_CUBED:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_TRIS:
-      begin
-         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_MANIFOLD:
-      begin
-         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_LANCZOS_QUADS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-      end;
-      C_QUALITY_2LANCZOS_4TRIS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-//         RebuildFaceNormals;
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-//         ConvertQuadsTo48Tris;
-      end;
-      C_QUALITY_LANCZOS_TRIS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-//         ConvertQuadsToTris;
-//         RebuildFaceNormals;
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-      end;
-      C_QUALITY_SMOOTH_MANIFOLD:
-      begin
-         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-      end;
-   end;
-   IsColisionEnabled := false; // Temporarily, until colision is implemented.
-   IsVisible := true;
-   IsSelected := false;
-   Next := -1;
-   Son := -1;
-   GetNumVertices := GetNumVerticesCompressed;
-   GetLastVertex := GetLastVertexCompressed;
-end;
-
 destructor TMesh.Destroy;
 begin
    Clear;
@@ -279,7 +199,7 @@ end;
 
 procedure TMesh.Clear;
 begin
-   Opened := false;
+   FOpened := false;
    ForceRefresh;
    SetLength(Vertices,0);
    SetLength(Colours,0);
@@ -288,206 +208,6 @@ begin
    Geometry.Clear;
    ClearMaterials;
    ClearPlugins;
-end;
-
-// I/O;
-procedure TMesh.RebuildVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette; _Quality: integer = C_QUALITY_CUBED);
-var
-   HasNormalsMeshPlugin: boolean;
-begin
-   HasNormalsMeshPlugin := IsPluginEnabled(C_MPL_NORMALS);
-   Clear;
-   ColourGenStructure := C_COLOURS_PER_FACE;
-   if ColoursType <> C_COLOURS_PER_FACE then
-   begin
-      SetColoursType(C_COLOURS_PER_FACE);
-   end;
-   case _Quality of
-      C_QUALITY_CUBED:
-      begin
-         LoadFromVoxel(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_CUBED:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_TRIS:
-      begin
-         LoadTrisFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_VISIBLE_MANIFOLD:
-      begin
-         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-      end;
-      C_QUALITY_LANCZOS_QUADS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-      end;
-      C_QUALITY_2LANCZOS_4TRIS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-//         RebuildFaceNormals;
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-//         ConvertQuadsTo48Tris;
-      end;
-      C_QUALITY_LANCZOS_TRIS:
-      begin
-         LoadFromVisibleVoxels(_Voxel,_Palette);
-//         MeshLanczosSmooth;
-//         ConvertQuadsToTris;
-//         RebuildFaceNormals;
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-      end;
-      C_QUALITY_SMOOTH_MANIFOLD:
-      begin
-         LoadManifoldsFromVisibleVoxels(_Voxel,_Palette);
-//         SetVertexNormals;
-//         ConvertFaceToVertexColours;
-      end;
-   end;
-   if HasNormalsMeshPlugin then
-   begin
-      AddNormalsPlugin;
-   end;
-   OverrideTransparency;
-end;
-
-
-procedure TMesh.LoadFromVoxel(const _Voxel : TVoxelSection; const _Palette : TPalette);
-var
-   MeshGen: TVoxelMeshGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   SetNormalsType(C_NORMALS_PER_FACE);
-   Geometry.Add(C_GEO_BREP4);
-
-//   Geometry.Current^ := TMeshBRepGeometry.Create(0,4,ColoursType,NormalsType);
-   // This is the complex part of the thing. We'll map all vertices and faces
-   // and make a model out of it.
-   MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadFromVoxels(_Voxel,_Palette,Vertices,TexCoords,Geometry,NumVoxels);
-   NumFaces := Geometry.Current^.NumFaces;
-   MeshGen.Free;
-
-   CommonVoxelLoadingActions(_Voxel);
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('LoadFromVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TMesh.LoadFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-var
-   MeshGen: TVoxelMeshGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   SetNormalsType(C_NORMALS_PER_FACE);
-   Geometry.Add(C_GEO_BREP4);
-
-   // This is the complex part of the thing. We'll map all vertices and faces
-   // and make a model out of it.
-   MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadFromVisibleVoxels(_Voxel,_Palette,Vertices,TexCoords,Geometry,NumVoxels);
-   NumFaces := Geometry.Current^.NumFaces;
-   MeshGen.Free;
-
-   AddNeighborhoodPlugin;
-   CommonVoxelLoadingActions(_Voxel);
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('LoadFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TMesh.LoadManifoldsFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-var
-   MeshGen: TVoxelMeshGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   SetNormalsType(C_NORMALS_PER_FACE);
-   Geometry.Add(C_GEO_BREP4);
-
-   // This is the complex part of the thing. We'll map all vertices and faces
-   // and make a model out of it.
-   MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadManifoldsFromVisibleVoxels(_Voxel,_Palette,Vertices,Geometry,TexCoords,NumVoxels);
-   NumFaces := Geometry.Current^.NumFaces;
-   MeshGen.Free;
-
-   CommonVoxelLoadingActions(_Voxel);
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('LoadManifoldsFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TMesh.LoadTrisFromVisibleVoxels(const _Voxel : TVoxelSection; const _Palette : TPalette);
-var
-   MeshGen: TVoxelMeshGenerator;
-   {$ifdef SPEED_TEST}
-   StopWatch : TStopWatch;
-   {$endif}
-begin
-   {$ifdef SPEED_TEST}
-   StopWatch := TStopWatch.Create(true);
-   {$endif}
-   SetNormalsType(C_NORMALS_PER_FACE);
-   Geometry.Add(C_GEO_BREP3);
-
-   // This is the complex part of the thing. We'll map all vertices and faces
-   // and make a model out of it.
-   MeshGen := TVoxelMeshGenerator.Create;
-   MeshGen.LoadTrianglesFromVisibleVoxels(_Voxel,_Palette,Vertices,TexCoords,Geometry,NumVoxels);
-   NumFaces := Geometry.Current^.NumFaces;
-   MeshGen.Free;
-
-   CommonVoxelLoadingActions(_Voxel);
-   {$ifdef SPEED_TEST}
-   StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('LoadTrisFromVisibleVoxels for ' + Name + ' takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
-   StopWatch.Free;
-   {$endif}
-end;
-
-procedure TMesh.CommonVoxelLoadingActions(const _Voxel : TVoxelSection);
-begin
-   // The rest
-   SetLength(Normals,0);
-   SetLength(Colours,0);
-   SetLength(TexCoords,0);
-   BoundingBox.Min.X := _Voxel.Tailer.MinBounds[1];
-   BoundingBox.Min.Y := _Voxel.Tailer.MinBounds[2];
-   BoundingBox.Min.Z := _Voxel.Tailer.MinBounds[3];
-   BoundingBox.Max.X := _Voxel.Tailer.MaxBounds[1];
-   BoundingBox.Max.Y := _Voxel.Tailer.MaxBounds[2];
-   BoundingBox.Max.Z := _Voxel.Tailer.MaxBounds[3];
-   AddMaterial;
-   Scale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
-   Scale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
-   Scale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
-   Opened := true;
 end;
 
 // Texture related.
@@ -585,45 +305,57 @@ end;
 // Gets
 function TMesh.IsOpened: boolean;
 begin
-   Result := Opened;
+   Result := FOpened;
 end;
 
 
 // Rendering methods.
-procedure TMesh.Render(var _PolyCount,_VoxelCount: longword);
+procedure TMesh.Render;
+begin
+   if IsVisible and FOpened then
+   begin
+      CommonRenderingProcedure;
+   end;
+end;
+
+procedure TMesh.Render(var _PolyCount: longword);
+begin
+   if IsVisible and FOpened then
+   begin
+      inc(_PolyCount,NumFaces);
+
+      CommonRenderingProcedure;
+   end;
+end;
+
+procedure TMesh.CommonRenderingProcedure;
 var
    i : integer;
    CurrentGeometry: PMeshGeometryBase;
 begin
-   if IsVisible and Opened then
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
    begin
-      inc(_PolyCount,NumFaces);
-      inc(_VoxelCount,NumVoxels);
-
-      Geometry.GoToFirstElement;
+      CurrentGeometry^.PreRender(Addr(self));
+      Geometry.GoToNextElement;
       CurrentGeometry := Geometry.Current;
-      while CurrentGeometry <> nil do
-      begin
-         CurrentGeometry^.PreRender(Addr(self));
-         Geometry.GoToNextElement;
-         CurrentGeometry := Geometry.Current;
-      end;
-      // Move accordingly to the bounding box position.
-      glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
-      Geometry.GoToFirstElement;
+   end;
+   // Move accordingly to the bounding box position.
+   glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
+   Geometry.GoToFirstElement;
+   CurrentGeometry := Geometry.Current;
+   while CurrentGeometry <> nil do
+   begin
+      CurrentGeometry^.Render;
+      Geometry.GoToNextElement;
       CurrentGeometry := Geometry.Current;
-      while CurrentGeometry <> nil do
+   end;
+   for i := Low(Plugins) to High(Plugins) do
+   begin
+      if Plugins[i] <> nil then
       begin
-         CurrentGeometry^.Render;
-         Geometry.GoToNextElement;
-         CurrentGeometry := Geometry.Current;
-      end;
-      for i := Low(Plugins) to High(Plugins) do
-      begin
-         if Plugins[i] <> nil then
-         begin
-            Plugins[i]^.Render;
-         end;
+         Plugins[i]^.Render;
       end;
    end;
 end;
@@ -633,7 +365,7 @@ var
    i : integer;
    CurrentGeometry: PMeshGeometryBase;
 begin
-   if IsVisible and Opened then
+   if IsVisible and FOpened then
    begin
       // Move accordingly to the bounding box position.
       glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
@@ -688,7 +420,7 @@ begin
    NormalsType := _Mesh.NormalsType;
    ColoursType := _Mesh.ColoursType;
    TransparencyLevel := _Mesh.TransparencyLevel;
-   Opened := _Mesh.Opened;
+   FOpened := _Mesh.FOpened;
    Name := CopyString(_Mesh.Name);
    ID := _Mesh.ID;
    Son := _Mesh.Son;

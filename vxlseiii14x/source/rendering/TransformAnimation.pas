@@ -2,7 +2,7 @@ unit TransformAnimation;
 
 interface
 
-uses BasicMathsTypes;
+uses BasicMathsTypes, Geometry;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
@@ -26,6 +26,7 @@ type
 
          // Sets
          procedure SetScale(_Scale : TVector3f; _Section : Integer; _Frame: integer);
+         procedure SetMatrix(const _M : TMatrix; _Frame,_Section : Integer);
 
          // Copy
          procedure Assign(const _Source: TTransformAnimation);
@@ -99,7 +100,7 @@ var
    Matrix : TGLMatrixf4;
    index: integer;
 begin
-   index := _Frame * _Section;
+   index := (_Frame * _Section) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
@@ -131,7 +132,7 @@ var
    Matrix : TGLMatrixf4;
    index: integer;
 begin
-   index := _Frame * _Section;
+   index := (_Frame * _Section) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
@@ -163,7 +164,7 @@ procedure TTransformAnimation.SetScale(_Scale : TVector3f; _Section : Integer; _
 var
    index: integer;
 begin
-   index := _Frame * _Section;
+   index := (_Frame * _Section) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
@@ -171,6 +172,17 @@ begin
    TransformMatrices[index][3,1] := TransformMatrices[index][3,1] * _Scale.Y;
    TransformMatrices[index][3,2] := TransformMatrices[index][3,2] * _Scale.Z;
    TransformMatrices[index][3,3] := TransformMatrices[index][3,3];
+end;
+
+procedure TTransformAnimation.SetMatrix(const _M : TMatrix; _Frame,_Section : Integer);
+var
+   x,y : integer;
+   index: integer;
+begin
+   index := (_Frame * _Section) + _Section;
+   for x := 0 to 3 do
+      for y := 0 to 3 do
+         TransformMatrices[index][x][y] := _m[x][y];
 end;
 
 procedure TTransformAnimation.Assign(const _Source: TTransformAnimation);

@@ -2,7 +2,10 @@ unit ModelBankItem;
 
 interface
 
-uses Model, BasicFunctions, Voxel, HVA, Palette, GlConstants, ShaderBank;
+{$INCLUDE source/Global_Conditionals.inc}
+
+uses Model, ModelVxT, BasicFunctions, {$IFDEF VOXEL_SUPPORT}Voxel, HVA,{$ENDIF}
+      Palette, GlConstants, ShaderBank;
 
 type
    TModelBankItem = class
@@ -15,8 +18,10 @@ type
          // Constructor and Destructor
 //         constructor Create; overload;
          constructor Create(const _Filename: string; _ShaderBank : PShaderBank); overload;
+{$IFDEF VOXEL_SUPPORT}
          constructor Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED); overload;
          constructor Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED); overload;
+{$ENDIF}
          constructor Create(const _Model: PModel); overload;
          destructor Destroy; override;
          // Sets
@@ -59,19 +64,21 @@ begin
    Filename := CopyString(Model.Filename);
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 constructor TModelBankItem.Create(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED);
 begin
-   Model := TModel.Create(_Voxel,_Palette,_HVA,_ShaderBank,_Quality);
+   Model := TModelVxt.Create(_Voxel,_Palette,_HVA,_ShaderBank,_Quality);
    Counter := 1;
    Filename := CopyString(Model.Filename);
 end;
 
 constructor TModelBankItem.Create(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _ShaderBank : PShaderBank; _Quality: integer = C_QUALITY_CUBED);
 begin
-   Model := TModel.Create(_VoxelSection,_Palette,_ShaderBank,_Quality);
+   Model := TModelVxt.Create(_VoxelSection,_Palette,_ShaderBank,_Quality);
    Counter := 1;
    Filename := CopyString(Model.Filename);
 end;
+{$ENDIF}
 
 destructor TModelBankItem.Destroy;
 begin

@@ -22,5 +22,7 @@
 
 {// $DEFINE TIB_PLUGIN}
 
+{$DEFINE VOXEL_SUPPORT}    // Enable voxel rendering support for the Rendering Engine.
+
 // This activates and deactivates Plasamdroids new project system. (Basically, the create VXL and HVA system)
 {$DEFINE PLASMA_PROJECT}

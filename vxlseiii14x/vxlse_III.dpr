@@ -275,7 +275,9 @@ uses
   MeshOptimization2009Command in 'source\control\commands\MeshOptimization2009Command.pas',
   ModelChangeRemappableCommand in 'source\control\commands\ModelChangeRemappableCommand.pas',
   HierarchyAnimation in 'source\rendering\HierarchyAnimation.pas',
-  TransformAnimation in 'source\rendering\TransformAnimation.pas';
+  TransformAnimation in 'source\rendering\TransformAnimation.pas',
+  MeshVxt in 'source\rendering\MeshVxt.pas',
+  ModelVxt in 'source\rendering\ModelVxt.pas';
 
 {$R *.res}
 

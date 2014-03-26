@@ -5,9 +5,11 @@ interface
 // This command must be executed AFTER the model has been loaded.
 // It should post-process the model to achieve the desired quality.
 
-uses ControllerDataTypes, ActorActionCommandBase, Actor;
-
 {$INCLUDE source/Global_Conditionals.inc}
+
+{$ifdef VOXEL_SUPPORT}
+
+uses ControllerDataTypes, ActorActionCommandBase, Actor;
 
 type
    TModelLoadCommand = class (TActorActionCommandBase)
@@ -18,9 +20,13 @@ type
          procedure Execute; override;
    end;
 
+{$endif}
+
 implementation
 
-uses StopWatch, GlobalVars, SysUtils, GLConstants, LODPostProcessing;
+{$ifdef VOXEL_SUPPORT}
+
+uses StopWatch, GlobalVars, SysUtils, GLConstants, LODPostProcessing, ModelVxt;
 
 constructor TModelLoadCommand.Create(var _Actor: TActor; var _Params: TCommandParams);
 begin
@@ -40,16 +46,19 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   FActor.Models[0]^.MakeVoxelHVAIndependent;
-   LODProcessor := TLODPostProcessing.Create(FQuality);
-   LODProcessor.Execute(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
-   LODProcessor.Free;
+   if FActor.Models[0]^.ModelType = C_MT_VOXEL then
+   begin
+//      (FActor.Models[0]^ as TModelVxt).MakeVoxelHVAIndependent;
+      LODProcessor := TLODPostProcessing.Create(FQuality);
+      LODProcessor.Execute(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
+      LODProcessor.Free;
+   end;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
    GlobalVars.SpeedFile.Add('Model loading time is: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;
-
+{$endif}
 
 end.

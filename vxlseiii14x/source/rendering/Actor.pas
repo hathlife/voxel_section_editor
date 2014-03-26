@@ -2,8 +2,10 @@ unit Actor;
 
 interface
 
-uses BasicMathsTypes, math3d, math, dglOpenGL, Model, Voxel, HVA,
-   Palette, Graphics, Windows, GLConstants, ShaderBank,Histogram;
+{$INCLUDE source/Global_Conditionals.inc}
+
+uses BasicMathsTypes, math3d, math, dglOpenGL, Model, ModelVxt, Palette, Graphics,
+   {$IFDEF VOXEL_SUPPORT}Voxel, HVA,{$ENDIF} Windows, GLConstants, ShaderBank, Histogram;
 
 type
    PActor = ^TActor;
@@ -43,13 +45,15 @@ type
       // I/O
       procedure SaveToFile(const _Filename,_TexExt: string; _ModelID: integer);
        // Execution
-      procedure Render(var _PolyCount,_VoxelCount: longword);
+      procedure Render();
       procedure RenderVectorial();
       procedure RotateActor;
       procedure MoveActor;
       procedure ProcessNextFrame;
+{$IFDEF VOXEL_SUPPORT}
       procedure RebuildActor;
       procedure RebuildCurrentMeshes;
+{$ENDIF}
       procedure Refresh;
       // Gets
       function GetRequestUpdateWorld: boolean;
@@ -72,16 +76,22 @@ type
        // Adds
       procedure Add(const _filename: string); overload;
       procedure Add(const _Model: PModel); overload;
+{$IFDEF VOXEL_SUPPORT}
       procedure Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       procedure Add(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+{$ENDIF}
       procedure AddReadOnly(const _filename: string); overload;
       procedure AddReadOnly(const _Model: PModel); overload;
+{$IFDEF VOXEL_SUPPORT}
       procedure AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       procedure AddReadOnly(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+{$ENDIF}
       procedure Clone(const _filename: string); overload;
       procedure Clone(const _Model: PModel); overload;
+{$IFDEF VOXEL_SUPPORT}
       procedure Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
       procedure Clone(const _VoxelSection: PVoxelSection; const _Palette: PPalette; _Quality: integer = C_QUALITY_CUBED); overload;
+{$ENDIF}
       // Removes
       procedure Remove(var _Model : PModel);
       // switches
@@ -91,17 +101,8 @@ type
       procedure ChangeRemappable (_r,_g,_b : byte); overload;
       procedure ChangePalette (const _Filename: string);
       // Textures
-      procedure GenerateDiffuseTexture; overload;
-      procedure GenerateDiffuseTexture(_Angle: single; _Size: integer); overload;
-      procedure GenerateDiffuseTextureOrigami; overload;
-      procedure GenerateDiffuseTextureOrigami(_Size: integer); overload;
-      procedure GenerateDiffuseTextureOrigamiGA; overload;
-      procedure GenerateDiffuseTextureOrigamiGA(_Size: integer); overload;
       procedure ExportTextures(const _BaseDir, _Ext: string; _previewTextures: boolean);
       procedure ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
-      procedure GenerateNormalMapTexture;
-      procedure GenerateBumpMapTexture; overload;
-      procedure GenerateBumpMapTexture(_Scale: single); overload;
       procedure SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
       // Transparency methods
       procedure ForceTransparency(_level: single);
@@ -179,7 +180,7 @@ begin
    ModelBank.Save(Models[_ModelID],_Filename, _TexExt);
 end;
 
-procedure TActor.Render(var _PolyCount,_VoxelCount: longword);
+procedure TActor.Render();
 var
    i : integer;
 begin
@@ -190,7 +191,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.Render(_PolyCount,_VoxelCount,Frame);
+            Models[i]^.Render(Frame);
          end;
       end;
    glPopMatrix;
@@ -267,6 +268,7 @@ begin
    RequestUpdateWorld := RequestUpdateWorld or (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0) or (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0);
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 procedure TActor.RebuildActor;
 var
    i : integer;
@@ -275,7 +277,10 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.RebuildModel;
+         if Models[i]^.ModelType = C_MT_VOXEL then
+         begin
+            (Models[i]^ as TModelVxt).RebuildModel;
+         end;
          Models[i]^.ChangeRemappable(FactionColour);
       end;
    end;
@@ -290,11 +295,12 @@ begin
    begin
       if Models[i] <> nil then
       begin
-         Models[i]^.RebuildCurrentLOD;
+         (Models[i]^ as TModelVxt).RebuildCurrentLOD;
       end;
    end;
    RequestUpdateWorld := true;
 end;
+{$ENDIF}
 
 procedure TActor.Refresh;
 var
@@ -483,6 +489,7 @@ begin
    CommonAddActions;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 procedure TActor.Add(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
@@ -496,6 +503,7 @@ begin
    Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
+{$ENDIF}
 
 procedure TActor.AddReadOnly(const _filename: string);
 begin
@@ -511,6 +519,7 @@ begin
    CommonAddActions;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 procedure TActor.AddReadOnly(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
@@ -524,6 +533,7 @@ begin
    Models[High(Models)] := ModelBank.AddReadOnly(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
+{$ENDIF}
 
 procedure TActor.Clone(const _filename: string);
 begin
@@ -539,6 +549,7 @@ begin
    CommonAddActions;
 end;
 
+{$IFDEF VOXEL_SUPPORT}
 procedure TActor.Clone(const _Voxel: PVoxel; const _HVA: PHVA; const _Palette: PPalette; _Quality: integer);
 begin
    SetLength(Models,High(Models)+2);
@@ -552,6 +563,7 @@ begin
    Models[High(Models)] := ModelBank.Add(_VoxelSection,_Palette,ShaderBank,_Quality);
    CommonAddActions;
 end;
+{$ENDIF}
 
 procedure TActor.CommonAddActions;
 begin
@@ -645,91 +657,6 @@ begin
    RequestUpdateWorld := true;
 end;
 
-// Textures
-procedure TActor.GenerateDiffuseTexture;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlas;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateDiffuseTextureOrigami;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlasOrigami;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateDiffuseTextureOrigamiGA;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlasOrigamiGA;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateNormalMapTexture;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.GenerateNormalMapTexture;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateBumpMapTexture;
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.GenerateBumpMapTexture;
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateBumpMapTexture(_Scale: single);
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.GenerateBumpMapTexture(_Scale);
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
 procedure TActor.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 var
    i : integer;
@@ -739,48 +666,6 @@ begin
       if Models[i] <> nil then
       begin
          Models[i]^.SetTextureNumMipMaps(_NumMipMaps,_TextureType);
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateDiffuseTexture(_Angle: single; _Size: integer);
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlas(_Angle, _Size);
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateDiffuseTextureOrigami(_Size: integer);
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlasOrigami(_Size);
-      end;
-   end;
-   RequestUpdateWorld := true;
-end;
-
-procedure TActor.GenerateDiffuseTextureOrigamiGA(_Size: integer);
-var
-   i : integer;
-begin
-   for i := Low(Models) to High(Models) do
-   begin
-      if Models[i] <> nil then
-      begin
-         //Models[i]^.ExtractTextureAtlasOrigamiGA(_Size);
       end;
    end;
    RequestUpdateWorld := true;

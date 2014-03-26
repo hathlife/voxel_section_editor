@@ -2,6 +2,8 @@ unit LODPostProcessing;
 
 interface
 
+{$INCLUDE source/Global_Conditionals.inc}
+
 uses LOD;
 
 type

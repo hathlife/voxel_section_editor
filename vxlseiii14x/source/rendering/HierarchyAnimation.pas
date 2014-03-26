@@ -28,6 +28,7 @@ type
          destructor Destroy; override;
          procedure Initialize;
          procedure Clear;
+         procedure Reset(_NumSectors, _NumFrames: integer);
 
          // Executes
          procedure ExecuteAnimation(_NumSection: integer);
@@ -40,6 +41,7 @@ type
          // Copy
          procedure Assign(const _Source: THierarchyAnimation);
    end;
+   PHierarchyAnimation = ^THierarchyAnimation;
 
 implementation
 
@@ -87,6 +89,14 @@ begin
    begin
       TransformAnimations[i].Free;
    end;
+end;
+
+procedure THierarchyAnimation.Reset(_NumSectors, _NumFrames: integer);
+begin
+   Clear;
+   NumSectors := _NumSectors;
+   NumTransformationFrames := _NumFrames;
+   Initialize;
 end;
 
 // Executes

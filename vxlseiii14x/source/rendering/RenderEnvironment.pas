@@ -17,6 +17,7 @@ type
          // Constructors and destructors.
          procedure CleanUpCameras;
          procedure CleanUpActors;
+         procedure CleanUpVariableNames;
          // Screenshot
          procedure MakeMeAScreenshotName(var Filename: string; Ext : string);
          procedure ScreenshotJPG(const _Filename: string; _Compression: integer);
@@ -47,9 +48,10 @@ type
          // Colours
          BackgroundColour,FontColour : TVector3f;
          // Counters
-         PolyCount: longword;
-         VoxelCount : longword;
          FPS : single;
+         // Rendering display text
+         RenderingVariableNames: array of string;
+         RenderingVariableValues: array of string;
          // Debug related.
          ShowDepth, ShowSpeed, ShowPolyCount, ShowRotations : boolean;
          IsEnabled : boolean;
@@ -88,6 +90,7 @@ type
          // Adds
          function AddCamera: PCamera;
          function AddActor: PActor;
+         procedure AddRenderingVariable(const _Name, _Value: string);
          procedure RemoveCamera(var _Camera : PCamera);
          procedure RemoveActor(var _Actor : PActor);
 
@@ -172,7 +175,6 @@ begin
    AnimFrameTime := 3; //about 30fps.
    // Setup perspective and text settings.
    Resize(_width,_height);
-   PolyCount := 0;
    ShowDepth := true;
    ShowSpeed := true;
    ShowPolyCount := true;
@@ -187,6 +189,7 @@ begin
    KillFont;
    CleanUpActors;
    CleanUpCameras;
+   CleanUpVariableNames;
    ShaderBank.Free;
    DeactivateRenderingContext;
    wglDeleteContext(rc);
@@ -222,12 +225,27 @@ begin
    FUpdateWorld := true;
 end;
 
+procedure TRenderEnvironment.CleanUpVariableNames;
+var
+   i: integer;
+begin
+   for i := Low(RenderingVariableNames) to High(RenderingVariableNames) do
+   begin
+      RenderingVariableNames[i] := '';
+      RenderingVariableValues[i] := '';
+   end;
+   SetLength(RenderingVariableNames, 0);
+   SetLength(RenderingVariableValues, 0);
+end;
+
 // Renders
 procedure TRenderEnvironment.Render;
 var
    temp : int64;
    t2 : double;
+   i: integer;
    Actor : PActor;
+   VariableText: string;
 begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
@@ -288,12 +306,10 @@ begin
       CurrentCamera^.RotateCamera;
 
       // Render all models.
-      PolyCount := 0;
-      VoxelCount := 0;
       Actor := ActorList;
       while Actor <> nil do
       begin
-         Actor^.Render(Polycount,VoxelCount);
+         Actor^.Render();
          Actor := Actor^.Next;
       end;
       glColor4f(1,1,1,0);
@@ -341,7 +357,19 @@ begin
             glColor4f(FontColour.X, FontColour.Y, FontColour.Z,1);
             // No, we are not screenshoting, so show normal stats.
             glRasterPos2i(1, 2);
-            glPrint(PChar('Faces: ' + IntToStr(PolyCount) + ' - Voxels: ' + IntToStr(VoxelCount)));
+            VariableText := '';
+            if High(RenderingVariableNames) >= 0 then
+            begin
+               for i := Low(RenderingVariableNames) to 0 do
+               begin
+                  VariableText := VariableText + RenderingVariableNames[i] + ': ' + RenderingVariableValues[i];
+               end;
+               for i := 1 to High(RenderingVariableNames) do
+               begin
+                  VariableText := VariableText + ' - ' + RenderingVariableNames[i] + ': ' + RenderingVariableValues[i];
+               end;
+            end;
+            glPrint(PChar(VariableText));
 
             if (ShowDepth) then
             begin
@@ -586,7 +614,13 @@ begin
    FUpdateWorld := true;
 end;
 
-
+procedure TRenderEnvironment.AddRenderingVariable(const _Name, _Value: string);
+begin
+   SetLength(RenderingVariableNames, High(RenderingVariableNames) + 2);
+   SetLength(RenderingVariableValues, High(RenderingVariableNames) + 1);
+   RenderingVariableNames[High(RenderingVariableNames)] := copyString(_Name);
+   RenderingVariableValues[High(RenderingVariableNames)] := copyString(_Value);
+end;
 
 // Removes
 procedure TRenderEnvironment.RemoveCamera(var _Camera : PCamera);
