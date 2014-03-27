@@ -364,7 +364,8 @@ type
 
 implementation
 
-uses FormMain, GlobalVars, DistanceFormulas, Model, ModelVxt;
+uses FormMain, GlobalVars, DistanceFormulas, Model, ModelVxt,
+  HierarchyAnimation;
 
 {$R *.DFM}
 
@@ -637,11 +638,13 @@ begin
    begin
       Actor^.Models[0]^.HA^.PlayTransformAnim;
       SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp');
+      AnimationTimer.Enabled := true;
    end
    else
    begin
       Actor^.Models[0]^.HA^.PauseTransformAnim;
       SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+      AnimationTimer.Enabled := false;
    end;
    Actor^.Models[0]^.RequestUpdateWorld := true;
 end;
@@ -650,6 +653,7 @@ procedure TFrm3DModelizer.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
    Actor^.Models[0]^.HA^.StopTransformAnim;
+   AnimationTimer.Enabled := false;
    Env.ForceRefresh;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
@@ -755,16 +759,14 @@ end;
 
 procedure TFrm3DModelizer.AnimationTimerTimer(Sender: TObject);
 begin
-{
    if FrmMain.Document.ActiveHVA^.Header.N_Frames = 1 then
    begin
       SpStopClick(Sender);
    end
    else
    begin
-      SpFrame.Value := Actor^.Frame + 1;
+      SpFrame.Value := Actor^.Models[0]^.HA^.CurrentTransformationFrame + 1;
    end;
-}
 end;
 
 procedure TFrm3DModelizer.QualityAnalysisAspectRatioClick(Sender: TObject);
@@ -805,7 +807,8 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-//      Actor^.Frame := SpFrame.Value-1;
+      Actor^.Models[0]^.HA^.CurrentTransformationFrame := SpFrame.Value - 1;
+      Env.ForceRefresh;
    end;
 end;
 
