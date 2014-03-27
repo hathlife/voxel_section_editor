@@ -13,6 +13,9 @@ type
    protected
       FOpened : boolean;
       FType: integer;
+      FRequestUpdateWorld: boolean;
+      // Gets
+      function GetRequestUpdateWorld: boolean;
    public
       ID: integer;
       Palette : PPalette;
@@ -49,8 +52,9 @@ type
       procedure SetColourModeRendering;
       procedure SetQuality(_value: integer); virtual;
       // Rendering methods
-      procedure Render(_Frame: integer);
-      procedure RenderVectorial(_Frame: integer);
+      procedure Render;
+      procedure RenderVectorial;
+      procedure ProcessNextFrame;
       // Refresh OpenGL List
       procedure RefreshModel;
       procedure RefreshMesh(_MeshID: integer);
@@ -83,6 +87,7 @@ type
       procedure RemoveNormalsPlugin;
 
       property ModelType: integer read FType;
+      property RequestUpdateWorld: boolean read GetRequestUpdateWorld write FRequestUpdateWorld;
    end;
 
 implementation
@@ -224,6 +229,12 @@ begin
    Result := 0;
 end;
 
+function TModel.GetRequestUpdateWorld: boolean;
+begin
+   Result := FRequestUpdateWorld;
+   FRequestUpdateWorld := false;
+end;
+
 // Sets
 procedure TModel.SetQuality(_value: integer);
 begin
@@ -251,28 +262,52 @@ begin
 end;
 
 // Rendering methods
-procedure TModel.Render(_Frame: integer);
+procedure TModel.Render;
 begin
    if IsVisible and FOpened then
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         LOD[CurrentLOD].Render(HA,_Frame);
+         if HA^.DetectTransformationAnimationFrame then
+         begin
+            FRequestUpdateWorld := true;
+         end;
+         LOD[CurrentLOD].Render(HA);
       end;
    end;
 end;
 
 // No render to texture, nor display lists.
-procedure TModel.RenderVectorial(_Frame: integer);
+procedure TModel.RenderVectorial;
 begin
    if IsVisible and FOpened then
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         LOD[CurrentLOD].RenderVectorial(HA,_Frame);
+         if HA^.DetectTransformationAnimationFrame then
+         begin
+            FRequestUpdateWorld := true;
+         end;
+         LOD[CurrentLOD].RenderVectorial(HA);
       end;
    end;
 end;
+
+procedure TModel.ProcessNextFrame;
+begin
+   if IsVisible and FOpened then
+   begin
+      if CurrentLOD <= High(LOD) then
+      begin
+         if HA^.DetectTransformationAnimationFrame then
+         begin
+            FRequestUpdateWorld := true;
+         end;
+      end;
+   end;
+end;
+
+
 
 // Refresh OpenGL List
 procedure TModel.RefreshModel;

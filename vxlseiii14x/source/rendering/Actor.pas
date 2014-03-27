@@ -20,8 +20,6 @@ type
       Next : PActor;
       // Atributes
       Models : array of PModel;
-      // Animation
-      Frame: integer;
       // physics cinematics.
       PositionAcceleration : TVector3f;
       RotationAcceleration : TVector3f;
@@ -123,7 +121,7 @@ type
 
 implementation
 
-uses GlobalVars;
+uses GlobalVars, HierarchyAnimation;
 
 constructor TActor.Create(_ShaderBank : PShaderBank);
 begin
@@ -160,7 +158,6 @@ end;
 
 procedure TActor.Reset;
 begin
-   Frame := 0;
    Rotation.X := 0;
    Rotation.Y := 0;
    Rotation.Z := 0;
@@ -191,7 +188,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.Render(Frame);
+            Models[i]^.Render();
          end;
       end;
    glPopMatrix;
@@ -208,7 +205,7 @@ begin
       begin
          if Models[i] <> nil then
          begin
-            Models[i]^.RenderVectorial(Frame);
+            Models[i]^.RenderVectorial();
          end;
       end;
    glPopMatrix;
@@ -228,7 +225,7 @@ end;
 
 procedure TActor.ProcessNextFrame;
 var
-   Signal : integer;
+   Signal, i : integer;
 begin
    // Process acceleration.
    Signal := Sign(PositionSpeed.X);
@@ -263,6 +260,16 @@ begin
    Rotation.X := CleanAngle(Rotation.X + RotationSpeed.X);
    Rotation.Y := CleanAngle(Rotation.Y + RotationSpeed.Y);
    Rotation.Z := CleanAngle(Rotation.Z + RotationSpeed.Z);
+
+   // Process included models.
+   for i := Low(Models) to High(Models) do
+   begin
+      if Models[i] <> nil then
+      begin
+         Models[i]^.ProcessNextFrame;
+         RequestUpdateWorld := RequestUpdateWorld or Models[i]^.RequestUpdateWorld;
+      end;
+   end;
 
    // update request world update.
    RequestUpdateWorld := RequestUpdateWorld or (PositionSpeed.X <> 0) or (PositionSpeed.Y <> 0) or (PositionSpeed.Z <> 0) or (RotationSpeed.X <> 0) or (RotationSpeed.Y <> 0) or (RotationSpeed.Z <> 0);
@@ -318,6 +325,8 @@ end;
 
 // Gets
 function TActor.GetRequestUpdateWorld: boolean;
+var
+   i : integer;
 begin
    Result := RequestUpdateWorld;
    RequestUpdateWorld := false;
@@ -833,7 +842,6 @@ begin
       Models[i]^ := TModel.Create(_Source.Models[i]^);
       Models[i]^.ID := _Source.Models[i]^.ID;
    end;
-   Frame := _Source.Frame;
    PositionAcceleration.X := _Source.PositionAcceleration.X;
    PositionAcceleration.Y := _Source.PositionAcceleration.Y;
    PositionAcceleration.Z := _Source.PositionAcceleration.Z;

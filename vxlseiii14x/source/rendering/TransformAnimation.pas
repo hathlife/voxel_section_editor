@@ -137,23 +137,23 @@ begin
       exit;
 
    Matrix[0,0] := TransformMatrices[index][0,0];
-   Matrix[0,1] := TransformMatrices[index][0,1];
-   Matrix[0,2] := TransformMatrices[index][0,2];
-   Matrix[0,3] := TransformMatrices[index][0,3];
+   Matrix[0,1] := TransformMatrices[index][1,0];
+   Matrix[0,2] := TransformMatrices[index][2,0];
+   Matrix[0,3] := TransformMatrices[index][3,0];
 
-   Matrix[1,0] := TransformMatrices[index][1,0];
+   Matrix[1,0] := TransformMatrices[index][0,1];
    Matrix[1,1] := TransformMatrices[index][1,1];
-   Matrix[1,2] := TransformMatrices[index][1,2];
-   Matrix[1,3] := TransformMatrices[index][1,3];
+   Matrix[1,2] := TransformMatrices[index][2,1];
+   Matrix[1,3] := TransformMatrices[index][3,1];
 
-   Matrix[2,0] := TransformMatrices[index][2,0];
-   Matrix[2,1] := TransformMatrices[index][2,1];
+   Matrix[2,0] := TransformMatrices[index][0,2];
+   Matrix[2,1] := TransformMatrices[index][1,2];
    Matrix[2,2] := TransformMatrices[index][2,2];
-   Matrix[2,3] := TransformMatrices[index][2,3];
+   Matrix[2,3] := TransformMatrices[index][3,2];
 
-   Matrix[3,0] := TransformMatrices[index][3,0];
-   Matrix[3,1] := TransformMatrices[index][3,1];
-   Matrix[3,2] := TransformMatrices[index][3,2];
+   Matrix[3,0] := TransformMatrices[index][0,3];
+   Matrix[3,1] := TransformMatrices[index][1,3];
+   Matrix[3,2] := TransformMatrices[index][2,3];
    Matrix[3,3] := TransformMatrices[index][3,3];
 
    glMultMatrixf(@Matrix[0,0]);
@@ -168,9 +168,9 @@ begin
    if Index > High(TransformMatrices) then
       exit;
 
-   TransformMatrices[index][3,0] := TransformMatrices[index][3,0] * _Scale.X;
-   TransformMatrices[index][3,1] := TransformMatrices[index][3,1] * _Scale.Y;
-   TransformMatrices[index][3,2] := TransformMatrices[index][3,2] * _Scale.Z;
+   TransformMatrices[index][0,3] := TransformMatrices[index][0,3] * _Scale.X;
+   TransformMatrices[index][1,3] := TransformMatrices[index][1,3] * _Scale.Y;
+   TransformMatrices[index][2,3] := TransformMatrices[index][2,3] * _Scale.Z;
    TransformMatrices[index][3,3] := TransformMatrices[index][3,3];
 end;
 

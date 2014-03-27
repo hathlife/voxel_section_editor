@@ -633,23 +633,23 @@ end;
 
 procedure TFrm3DModelizer.SpPlayClick(Sender: TObject);
 begin
-   // Enable timer here.
-   if not AnimationTimer.Enabled then
+   if not Actor^.Models[0]^.HA^.ExecuteTransformAnimation then
    begin
+      Actor^.Models[0]^.HA^.PlayTransformAnim;
       SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp');
-      AnimationTimer.Enabled := true;
    end
    else
    begin
-      AnimationTimer.Enabled := false;
+      Actor^.Models[0]^.HA^.PauseTransformAnim;
       SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
    end;
+   Actor^.Models[0]^.RequestUpdateWorld := true;
 end;
 
 procedure TFrm3DModelizer.SpStopClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := false;
-   Actor.Frame := 0;
+   Actor^.Models[0]^.HA^.StopTransformAnim;
    Env.ForceRefresh;
    SpFrame.Value := 1;
    SpPlay.Glyph.LoadFromFile(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
@@ -755,16 +755,16 @@ end;
 
 procedure TFrm3DModelizer.AnimationTimerTimer(Sender: TObject);
 begin
+{
    if FrmMain.Document.ActiveHVA^.Header.N_Frames = 1 then
    begin
       SpStopClick(Sender);
    end
    else
    begin
-      Actor^.Frame := (Actor^.Frame + 1) mod SpFrame.MaxValue;
-      Env.ForceRefresh;
       SpFrame.Value := Actor^.Frame + 1;
    end;
+}
 end;
 
 procedure TFrm3DModelizer.QualityAnalysisAspectRatioClick(Sender: TObject);
@@ -805,8 +805,7 @@ begin
          SpFrame.Value := 1
       else if SpFrame.Value < 1 then
          SpFrame.Value := SpFrame.MaxValue;
-      Actor^.Frame := SpFrame.Value-1;
-      Env.ForceRefresh;
+//      Actor^.Frame := SpFrame.Value-1;
    end;
 end;
 

@@ -32,8 +32,11 @@ type
 
          // Executes
          procedure ExecuteAnimation(_NumSection: integer);
-         procedure DetectTransformationAnimationFrame;
+         function DetectTransformationAnimationFrame: boolean;
          procedure ApplyPivot(_Pivot: TVector3f);
+         procedure PlayTransformAnim;
+         procedure PauseTransformAnim;
+         procedure StopTransformAnim;
 
          // Sets
          procedure SetTransformFPS(_FPS: single);
@@ -105,11 +108,12 @@ begin
    TransformAnimations[CurrentTransformAnimation].ApplyMatrix(_NumSection, CurrentTransformationFrame);
 end;
 
-procedure THierarchyAnimation.DetectTransformationAnimationFrame;
+function THierarchyAnimation.DetectTransformationAnimationFrame: boolean;
 var
    temp : int64;
    t2: int64;
 begin
+   Result := false;
    if ExecuteTransformAnimation then
    begin
       // determine the current frame here
@@ -120,6 +124,7 @@ begin
          if t2 >= FDesiredTimeRate then
          begin
             CurrentTransformationFrame := (CurrentTransformationFrame + 1) mod NumTransformationFrames;
+            Result := true;
             if (not (ExecuteTransformAnimationLoop)) and (CurrentTransformationFrame = 0) then
             begin
                ExecuteTransformAnimation := false;
@@ -130,6 +135,7 @@ begin
       else
       begin
          CurrentTransformationFrame := (CurrentTransformationFrame + 1) mod NumTransformationFrames;
+         Result := true;
          if (not (ExecuteTransformAnimationLoop)) and (CurrentTransformationFrame = 0) then
          begin
             ExecuteTransformAnimation := false;
@@ -141,6 +147,23 @@ end;
 procedure THierarchyAnimation.ApplyPivot(_Pivot: TVector3f);
 begin
    glTranslatef(_Pivot.X, _Pivot.Y, _Pivot.Z);
+end;
+
+procedure THierarchyAnimation.PlayTransformAnim;
+begin
+   CurrentTransformationFrame := 0;
+   ExecuteTransformAnimation := true;
+end;
+
+procedure THierarchyAnimation.PauseTransformAnim;
+begin
+   ExecuteTransformAnimation := false;
+end;
+
+procedure THierarchyAnimation.StopTransformAnim;
+begin
+   CurrentTransformationFrame := 0;
+   ExecuteTransformAnimation := false;
 end;
 
 // Sets

@@ -18,8 +18,8 @@ type
       procedure SaveToOBJFile(const _Filename,_TexExt: string);
       procedure SaveToPLYFile(const _Filename: string);
       // Rendering Methods
-      procedure RenderMesh(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
-      procedure RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
+      procedure RenderMesh(_i :integer; const _HA: PHierarchyAnimation);
+      procedure RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation);
    public
       InitialMesh : integer;
       Name : string;
@@ -34,8 +34,8 @@ type
       // Gets
       function GetNumMeshes: longword;
       // Rendering Methods
-      procedure Render(const _HA: PHierarchyAnimation; _Frame: integer);
-      procedure RenderVectorial(const _HA: PHierarchyAnimation; _Frame: integer);
+      procedure Render(const _HA: PHierarchyAnimation);
+      procedure RenderVectorial(const _HA: PHierarchyAnimation);
       procedure SetNormalsModeRendering;
       procedure SetColourModeRendering;
       // Refresh OpenGL List
@@ -152,41 +152,41 @@ begin
 end;
 
 // Rendering Methods
-procedure TLOD.Render(const _HA: PHierarchyAnimation; _Frame: integer);
+procedure TLOD.Render(const _HA: PHierarchyAnimation);
 begin
-   RenderMesh(InitialMesh,_HA, _Frame);
+   RenderMesh(InitialMesh, _HA);
 end;
 
-procedure TLOD.RenderVectorial(const _HA: PHierarchyAnimation; _Frame: integer);
+procedure TLOD.RenderVectorial(const _HA: PHierarchyAnimation);
 begin
-   RenderMeshVectorial(InitialMesh,_HA, _Frame);
+   RenderMeshVectorial(InitialMesh, _HA);
 end;
 
-procedure TLOD.RenderMesh(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
+procedure TLOD.RenderMesh(_i :integer; const _HA: PHierarchyAnimation);
 begin
    if _i <> -1 then
    begin
       glPushMatrix();
          //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
          _HA^.ExecuteAnimation(_i);
-         RenderMesh(Mesh[_i].Son,_HA, _Frame);
+         RenderMesh(Mesh[_i].Son, _HA);
          Mesh[_i].Render();
       glPopMatrix();
-      RenderMesh(Mesh[_i].Next,_HA, _Frame);
+      RenderMesh(Mesh[_i].Next, _HA);
    end;
 end;
 
-procedure TLOD.RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation; _Frame: integer);
+procedure TLOD.RenderMeshVectorial(_i :integer; const _HA: PHierarchyAnimation);
 begin
    if _i <> -1 then
    begin
       glPushMatrix();
          //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
          _HA^.ExecuteAnimation(_i);
-         RenderMeshVectorial(Mesh[_i].Son,_HA, _Frame);
+         RenderMeshVectorial(Mesh[_i].Son, _HA);
          Mesh[_i].RenderVectorial();
       glPopMatrix();
-      RenderMeshVectorial(Mesh[_i].Next,_HA, _Frame);
+      RenderMeshVectorial(Mesh[_i].Next, _HA);
    end;
 end;
 

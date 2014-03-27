@@ -23,7 +23,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.203';
+   APPLICATION_VER = '1.39.204';
    APPLICATION_BETA = true;
 
 type
@@ -1172,6 +1172,11 @@ end;
 procedure TFrmMain.FormDestroy(Sender: TObject);
 begin
    VoxelOpen := false;
+   if IsEditable then
+   begin
+      GlobalVars.ModelUndoEngine.Remove(Actor^.Models[0]^.ID);
+      GlobalVars.ActorController.TerminateObject(Actor);
+   end;
    IsEditable := false;
    GlobalVars.ModelUndoEngine.Free;
    GlobalVars.ModelRedoEngine.Free;

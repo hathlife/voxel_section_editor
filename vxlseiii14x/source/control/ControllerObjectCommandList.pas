@@ -31,6 +31,8 @@ type
 
 implementation
 
+uses Math;
+
 constructor TControllerObjectCommandList.Create;
 begin
    FCurrentCommand := 0;
@@ -48,11 +50,13 @@ procedure TControllerObjectCommandList.Clear;
 var
    i: integer;
 begin
-   for i := Low(FCommands) to FMaxCommand do
+   for i := Low(FCommands) to min(FMaxCommand, High(FCommands)) do
    begin
       FCommands[i].Free;
    end;
    SetLength(FCommands, 0);
+   FMaxCommand := -1;
+   FCurrentCommand := 0;
 end;
 
 procedure TControllerObjectCommandList.Add(_Command: longint; var _Params: TCommandParams);
