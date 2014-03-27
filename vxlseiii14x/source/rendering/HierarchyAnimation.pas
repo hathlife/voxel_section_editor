@@ -25,6 +25,7 @@ type
          // constructors and destructors
          constructor Create(_NumSectors, _NumFrames: integer); overload;
          constructor Create(_NumSectors: integer); overload;
+         constructor Create(const _Source: THierarchyAnimation); overload;
          destructor Destroy; override;
          procedure Initialize;
          procedure Clear;
@@ -62,6 +63,11 @@ begin
    NumSectors := _NumSectors;
    NumTransformationFrames := _NumFrames;
    Initialize;
+end;
+
+constructor THierarchyAnimation.Create(const _Source: THierarchyAnimation);
+begin
+   Assign(_Source);
 end;
 
 destructor THierarchyAnimation.Destroy;
@@ -196,7 +202,7 @@ begin
    SetLength(TransformAnimations, High(_Source.TransformAnimations) + 1);
    for i := Low(TransformAnimations) to High(TransformAnimations) do
    begin
-      TransformAnimations[i].Assign(_Source.TransformAnimations[i]);
+      TransformAnimations[i] := TTransformAnimation.Create(_Source.TransformAnimations[i]);
    end;
 end;
 

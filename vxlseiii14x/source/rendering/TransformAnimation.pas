@@ -8,6 +8,8 @@ uses BasicMathsTypes, Geometry;
 
 type
    TTransformAnimation = class
+      protected
+         FNumSectors: integer;
       public
          Name: string;
          TransformMatrices: array of TGLMatrixf4;
@@ -17,6 +19,7 @@ type
          constructor Create(_NumSectors: integer); overload;
          constructor Create(const _Name: string; _NumSectors, _NumFrames: integer); overload;
          constructor Create(_NumSectors, _NumFrames: integer); overload;
+         constructor Create(const _Source: TTransformAnimation); overload;
          destructor Destroy;
          procedure InitializeTransforms(_NumSectors, _NumFrames: integer);
 
@@ -61,6 +64,11 @@ begin
    InitializeTransforms(_NumSectors, _NumFrames);
 end;
 
+constructor TTransformAnimation.Create(const _Source: TTransformAnimation);
+begin
+   Assign(_Source);
+end;
+
 destructor TTransformAnimation.Destroy;
 begin
    Name := '';
@@ -72,6 +80,7 @@ procedure TTransformAnimation.InitializeTransforms(_NumSectors, _NumFrames: Inte
 var
    i: integer;
 begin
+   FNumSectors := _NumSectors;
    SetLength(TransformMatrices, _NumSectors * _NumFrames);
    for i := Low(TransformMatrices) to High(TransformMatrices) do
    begin
@@ -100,28 +109,28 @@ var
    Matrix : TGLMatrixf4;
    index: integer;
 begin
-   index := (_Frame * _Section) + _Section;
+   index := (_Frame * FNumSectors) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
    Matrix[0,0] := TransformMatrices[index][0,0];
-   Matrix[0,1] := TransformMatrices[index][0,1];
-   Matrix[0,2] := TransformMatrices[index][0,2];
-   Matrix[0,3] := TransformMatrices[index][0,3];
+   Matrix[0,1] := TransformMatrices[index][1,0];
+   Matrix[0,2] := TransformMatrices[index][2,0];
+   Matrix[0,3] := TransformMatrices[index][3,0];
 
-   Matrix[1,0] := TransformMatrices[index][1,0];
+   Matrix[1,0] := TransformMatrices[index][0,1];
    Matrix[1,1] := TransformMatrices[index][1,1];
-   Matrix[1,2] := TransformMatrices[index][1,2];
-   Matrix[1,3] := TransformMatrices[index][1,3];
+   Matrix[1,2] := TransformMatrices[index][2,1];
+   Matrix[1,3] := TransformMatrices[index][3,1];
 
-   Matrix[2,0] := TransformMatrices[index][2,0];
-   Matrix[2,1] := TransformMatrices[index][2,1];
+   Matrix[2,0] := TransformMatrices[index][0,2];
+   Matrix[2,1] := TransformMatrices[index][1,2];
    Matrix[2,2] := TransformMatrices[index][2,2];
-   Matrix[2,3] := TransformMatrices[index][2,3];
+   Matrix[2,3] := TransformMatrices[index][3,2];
 
-   Matrix[3,0] := TransformMatrices[index][3,0] * _Scale.X;
-   Matrix[3,1] := TransformMatrices[index][3,1] * _Scale.Y;
-   Matrix[3,2] := TransformMatrices[index][3,2] * _Scale.Z;
+   Matrix[3,0] := TransformMatrices[index][0,3] * _Scale.X;
+   Matrix[3,1] := TransformMatrices[index][1,3] * _Scale.Y;
+   Matrix[3,2] := TransformMatrices[index][2,3] * _Scale.Z;
    Matrix[3,3] := TransformMatrices[index][3,3];
 
    glMultMatrixf(@Matrix[0,0]);
@@ -132,7 +141,7 @@ var
    Matrix : TGLMatrixf4;
    index: integer;
 begin
-   index := (_Frame * _Section) + _Section;
+   index := (_Frame * FNumSectors) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
@@ -164,14 +173,13 @@ procedure TTransformAnimation.SetScale(_Scale : TVector3f; _Section : Integer; _
 var
    index: integer;
 begin
-   index := (_Frame * _Section) + _Section;
+   index := (_Frame * FNumSectors) + _Section;
    if Index > High(TransformMatrices) then
       exit;
 
    TransformMatrices[index][0,3] := TransformMatrices[index][0,3] * _Scale.X;
    TransformMatrices[index][1,3] := TransformMatrices[index][1,3] * _Scale.Y;
    TransformMatrices[index][2,3] := TransformMatrices[index][2,3] * _Scale.Z;
-   TransformMatrices[index][3,3] := TransformMatrices[index][3,3];
 end;
 
 procedure TTransformAnimation.SetMatrix(const _M : TMatrix; _Frame,_Section : Integer);
@@ -179,7 +187,7 @@ var
    x,y : integer;
    index: integer;
 begin
-   index := (_Frame * _Section) + _Section;
+   index := (_Frame * FNumSectors) + _Section;
    for x := 0 to 3 do
       for y := 0 to 3 do
          TransformMatrices[index][x][y] := _m[x][y];
@@ -190,6 +198,7 @@ var
    i,x,y: integer;
 begin
    Name := CopyString(_Source.Name);
+   FNumSectors := _Source.FNumSectors;
    SetLength(TransformMatrices, High(_Source.TransformMatrices) + 1);
    for i := Low(TransformMatrices) to High(TransformMatrices) do
    begin

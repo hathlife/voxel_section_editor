@@ -268,10 +268,6 @@ begin
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         if HA^.DetectTransformationAnimationFrame then
-         begin
-            FRequestUpdateWorld := true;
-         end;
          LOD[CurrentLOD].Render(HA);
       end;
    end;
@@ -284,10 +280,6 @@ begin
    begin
       if CurrentLOD <= High(LOD) then
       begin
-         if HA^.DetectTransformationAnimationFrame then
-         begin
-            FRequestUpdateWorld := true;
-         end;
          LOD[CurrentLOD].RenderVectorial(HA);
       end;
    end;
@@ -388,6 +380,8 @@ var
    i : integer;
 begin
    New(Palette);
+   FType := _Model.ModelType;
+   FRequestUpdateWorld := _Model.FRequestUpdateWorld;
    ShaderBank := _Model.ShaderBank;
    Palette^ := TPalette.Create(_Model.Palette^);
    IsVisible := _Model.IsVisible;
@@ -398,6 +392,13 @@ begin
    end;
    CurrentLOD := _Model.CurrentLOD;
    Filename := CopyString(_Model.Filename);
+   if HA <> nil then
+   begin
+      HA^.Free;
+      HA := nil;
+   end;
+   new(HA);
+   HA^ := THierarchyAnimation.Create(_Model.HA^);
    IsSelected := _Model.IsSelected;
 end;
 
