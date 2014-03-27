@@ -103,6 +103,7 @@ var
    found: boolean;
 begin
    i := High(FObjects);
+   found := false;
    while (not found) and (i >= 0) do
    begin
       if FObjects[i].ObjectID = _Item.ObjectID then

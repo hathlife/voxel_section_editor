@@ -23,7 +23,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.204';
+   APPLICATION_VER = '1.39.205';
    APPLICATION_BETA = true;
 
 type
@@ -1101,6 +1101,8 @@ begin
       Actor^.Clear;
    end;
    Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
+   GlobalVars.ActorController.DoLoadModel(Actor, C_QUALITY_CUBED);
+   GlobalVars.ActorController.SetBaseObject(Actor);
    UpdateRenderingCounters;
    if p_Frm3DPreview <> nil then
    begin
