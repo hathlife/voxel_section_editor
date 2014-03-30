@@ -33,6 +33,7 @@ type
          // Execute
          function VerifyKernelParameters(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32; _NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32): boolean;
          // Misc
+         procedure ClearGPUBuffers;
          procedure WriteDebug(const _Text: string);
       public
          // Constructors and Destructors
@@ -42,11 +43,14 @@ type
          // I/O
          procedure LoadProgram(const _FileName, _KernelName: string); overload;
          procedure LoadProgram(const _FileName: string; const _KernelNames: AString); overload;
-         procedure LoadDataIntoGPU(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSource: aint32);
-         procedure SaveDataFromGPU(const _InputData: APointer; const _InputSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32);
+         procedure LoadDataIntoGPU(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSource: aint32); overload;
+         procedure LoadDataIntoGPU(_ID: integer; _ReadWrite: boolean; const _InputData: Pointer; const _InputSize,_InputUnitSize: longword; var _OutputData: APointer); overload;
+         procedure SaveDataFromGPU(const _InputData: APointer; const _InputSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32); overload;
+         procedure SaveDataFromGPU(const _InputData: Pointer; const _InputSize: longword; var _OutputData: Pointer; const _OutputSize,_OutputUnitSize: longword; const _OutputSource: integer); overload;
          // Execute
          procedure RunKernel(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32; _NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32); overload;
          procedure RunKernel(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; const _OutputSource: aint32; _NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32); overload;
+         procedure RunKernel(_NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32); overload;
          procedure RunKernelSafe(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32; _NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32);
          // Properties
          property CurrentKernel: integer read FCurrentKernel write SetCurrentKernel;
@@ -89,6 +93,9 @@ end;
 destructor TOpenCLLauncher.Destroy;
 begin
    ClearContext();
+   ClearGPUBuffers();
+   SetLength(FMem, 0);
+   SetLength(FFlags, 0);
    inherited Destroy;
 end;
 
@@ -113,7 +120,7 @@ begin
    if not InitOpenCL(GetDriver) then Exit;
 
    Status := clGetPlatformIDs(1, @Platform_, nil);
-   if Status <> CL_SUCCESS then 
+   if Status <> CL_SUCCESS then
    begin
       WriteDebug('clGetPlatformIDs: ' + GetString(Status));
       Exit;
@@ -371,6 +378,51 @@ begin
    end;
 end;
 
+procedure TOpenCLLauncher.LoadDataIntoGPU(_ID: integer; _ReadWrite: boolean; const _InputData: Pointer; const _InputSize,_InputUnitSize: longword; var _OutputData: APointer);
+var
+   Status: TCL_int;
+begin
+   if not FIsLoaded then exit;
+   if (_ID <= 0) or (_ID > High(FMem)) then exit;
+
+   // Determine the flags used
+   FFlags[_ID] := _ReadWrite;
+
+   if FMem[_ID] <> nil then
+   begin
+      Status := clReleaseMemObject(FMem[_ID]);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clReleaseMemObject (' + IntToStr(_ID) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status))
+      else
+         FMem[_ID] := nil;
+   end;
+
+   // Now, write parameters to GPU memory.
+   if (_InputSize > 1) or (FFlags[_ID]) then
+   begin
+      if FFlags[_ID] then
+      begin
+         FMem[_ID] := clCreateBuffer(FContext, CL_MEM_READ_WRITE or CL_MEM_COPY_HOST_PTR, _InputSize * _InputUnitSize, _InputData, @Status);
+      end
+      else
+      begin
+         FMem[_ID] := clCreateBuffer(FContext, CL_MEM_COPY_HOST_PTR, _InputSize * _InputUnitSize, _InputData, @Status);
+      end;
+      if Status <> CL_SUCCESS then
+         WriteDebug('clCreateBuffer[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+      Status := clSetKernelArg(FKernel[FCurrentKernel], _ID, SizeOf(pcl_mem), @FMem[_ID]);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clSetKernelArg[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+   end
+   else
+   begin
+      FMem[_ID] := nil;
+      Status := clSetKernelArg(FKernel[FCurrentKernel], _ID, _InputUnitSize, _InputData);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clSetKernelArg[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+   end;
+end;
+
 procedure TOpenCLLauncher.SaveDataFromGPU(const _InputData: APointer; const _InputSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32);
 var
    Status: TCL_int;
@@ -393,8 +445,24 @@ begin
       begin
          Status := clReleaseMemObject(FMem[i]);
          if Status <> CL_SUCCESS then
-            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status))
+         else
+            FMem[i] := nil;
       end;
+   end;
+end;
+
+procedure TOpenCLLauncher.SaveDataFromGPU(const _InputData: Pointer; const _InputSize: longword; var _OutputData: Pointer; const _OutputSize,_OutputUnitSize: longword; const _OutputSource: integer);
+var
+   Status: TCL_int;
+begin
+   if not FIsLoaded then exit;
+
+   if (_OutputSource >= 0) and (_OutputSource <= High(FMem)) then
+   begin
+      Status := clEnqueueReadBuffer(FCommandQueue, FMem[_OutputSource], CL_TRUE, 0, _OutputSize * _OutputUnitSize, _OutputData, 0, nil, nil);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clEnqueueReadBuffer (' + IntToStr(_OutputSource) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
    end;
 end;
 
@@ -443,6 +511,7 @@ begin
       end
       else
       begin
+         FMem[i] := nil;
          Status := clSetKernelArg(FKernel[FCurrentKernel], i, _InputUnitSize[i], _InputData[i]);
          if Status <> CL_SUCCESS then
             WriteDebug('clSetKernelArg[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
@@ -478,7 +547,9 @@ begin
       begin
          Status := clReleaseMemObject(FMem[i]);
          if Status <> CL_SUCCESS then
-            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status))
+         else
+            FMem[i] := nil;
       end;
    end;
 end;
@@ -526,6 +597,7 @@ begin
       end
       else
       begin
+         FMem[i] := nil;
          Status := clSetKernelArg(FKernel[FCurrentKernel], i, _InputUnitSize[i], _InputData[i]);
          if Status <> CL_SUCCESS then
             WriteDebug('clSetKernelArg[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
@@ -561,10 +633,34 @@ begin
       begin
          Status := clReleaseMemObject(FMem[i]);
          if Status <> CL_SUCCESS then
-            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status))
+         else
+            FMem[i] := nil;
       end;
    end;
 end;
+
+procedure TOpenCLLauncher.RunKernel(_NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32);
+var
+   Status: TCL_int;
+begin
+   if (_GlobalWorkSize <> nil) and (_LocalWorkSize <> nil) then
+   begin
+      Status := clEnqueueNDRangeKernel(FCommandQueue, FKernel[FCurrentKernel], _NumDimensions, nil, @(_GlobalWorkSize[0]), @_LocalWorkSize, 0, nil, nil);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clEnqueueNDRangeKernel[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+   end
+   else if (_GlobalWorkSize <> nil) then
+   begin
+      Status := clEnqueueNDRangeKernel(FCommandQueue, FKernel[FCurrentKernel], _NumDimensions, nil, @(_GlobalWorkSize[0]), nil, 0, nil, nil);
+      if Status <> CL_SUCCESS then
+         WriteDebug('clEnqueueNDRangeKernel[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+   end;
+   Status:= clFinish(FCommandQueue);
+   if Status <> CL_SUCCESS then
+      WriteDebug('clFinish[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status));
+end;
+
 
 function TOpenCLLauncher.VerifyKernelParameters(const _InputData: APointer; const _InputSize,_InputUnitSize: Auint32; var _OutputData: APointer; const _OutputSize,_OutputUnitSize: AUint32; const _OutputSource: aint32; _NumDimensions: TCL_int; const _GlobalWorkSize,_LocalWorkSize: Auint32): boolean;
 var
@@ -618,6 +714,24 @@ begin
 end;
 
 // Misc
+procedure TOpenCLLauncher.ClearGPUBuffers;
+var
+   i: integer;
+   Status: TCL_int;
+begin
+   for i := Low(FMem) to High(FMem) do
+   begin
+      if FMem[i] <> nil then
+      begin
+         Status := clReleaseMemObject(FMem[i]);
+         if Status <> CL_SUCCESS then
+            WriteDebug('clReleaseMemObject (' + IntToStr(i) + ')[' + FProgramName + '::' + FKernelName[FCurrentKernel] + ']: ' + GetString(Status))
+         else
+            FMem[i] := nil;
+      end;
+   end;
+end;
+
 procedure TOpenCLLauncher.WriteDebug(const _Text: string);
 begin
    if not FHasDebugFile then
