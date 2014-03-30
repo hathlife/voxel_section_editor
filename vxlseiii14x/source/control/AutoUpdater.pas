@@ -100,6 +100,7 @@ begin
    ForceDirectories(BaseDir + 'cschemes\PalPack1\');
    ForceDirectories(BaseDir + 'cschemes\PalPack2\');
    ForceDirectories(BaseDir + 'cschemes\USER\');
+   ForceDirectories(BaseDir + 'opencl\');
    // check each item
    Node := XMLDocument.DocumentElement.ChildNodes.FindNode('file');
    repeat
