@@ -10,9 +10,13 @@ type
    PColisionCheck = ^CColisionCheck;
    CColisionCheck = class (CColisionCheckBase)
       private
+         function IsVertexInsideOrOutside2DV1(const _VL1, _VL2, _V: TVector2f): byte;
+         function IsVertexInsideOrOutside2DV2(const _VL1, _VL2, _V: TVector2f): byte;
          function IsVertexInsideOrOutside2DEdge(const _VL1, _VL2, _V: TVector2f): byte;
       public
          function Are2DTrianglesColiding(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
+         function Are2DTrianglesColidingEdges(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
+         function Are2DTrianglesOverlapping(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
          function Is2DPointInsideTriangle(const _V, _V1, _V2, _V3: TVector2f): boolean;
          function Is2DTriangleColidingWithMesh(const _V1, _V2, _V3: TVector2f; const _Coords: TAVector2f; const _Faces: auint32; const _AllowedFaces: abool): boolean;
          function Is2DTriangleColidingWithMeshMT(const _V1, _V2, _V3: TVector2f; const _Coords: TAVector2f; const _Faces: auint32; const _AllowedFaces: abool): boolean;
@@ -33,13 +37,16 @@ implementation
 
 uses GlobalVars, GenericThread;
 
-function CColisionCheck.IsVertexInsideOrOutside2DEdge(const _VL1, _VL2, _V: TVector2f): byte;
+function CColisionCheck.IsVertexInsideOrOutside2DV1(const _VL1, _VL2, _V: TVector2f): byte;
 var
-   Value: single;
+   DistVVL1, DistVVL2, DistVL1VL2, DetVVL1VL2: single;
 begin
+	DistVVL1 := sqrt(((_V.U - _VL1.U) * (_V.U - _VL1.U)) + ((_V.V - _VL1.V) * (_V.V - _VL1.V)));
+	DistVVL2 := sqrt(((_V.U - _VL2.U) * (_V.U - _VL2.U)) + ((_V.V - _VL2.V) * (_V.V - _VL2.V)));
+	DistVL1VL2 := sqrt(((_VL1.U - _VL2.U) * (_VL1.U - _VL2.U)) + ((_VL1.V - _VL2.V) * (_VL1.V - _VL2.V)));
    // determinant.
-   Value := (_V.U * _VL1.V) + (_V.V * _VL2.U) + (_VL1.U * _VL2.V) - (_V.U * _VL2.V) - (_V.V * _VL1.U) - (_VL1.V * _VL2.U);
-   if Epsilon(Value) <= 0 then
+   DetVVL1VL2 := Epsilon((_V.U * _VL1.V) + (_V.V * _VL2.U) + (_VL1.U * _VL2.V) - (_V.U * _VL2.V) - (_V.V * _VL1.U) - (_VL1.V * _VL2.U));
+   if (DetVVL1VL2 > 0) or ((DetVVL1VL2 = 0) and ((Epsilon(DistVVL1 + DistVVL2 - DistVL1VL2) > 0) or (Epsilon(DistVVL1) = 0))) then
    begin
       Result := 1;
    end
@@ -49,6 +56,61 @@ begin
    end;
 end;
 
+function CColisionCheck.IsVertexInsideOrOutside2DV2(const _VL1, _VL2, _V: TVector2f): byte;
+var
+   DistVVL1, DistVVL2, DistVL1VL2, DetVVL1VL2: single;
+begin
+	DistVVL1 := sqrt(((_V.U - _VL1.U) * (_V.U - _VL1.U)) + ((_V.V - _VL1.V) * (_V.V - _VL1.V)));
+	DistVVL2 := sqrt(((_V.U - _VL2.U) * (_V.U - _VL2.U)) + ((_V.V - _VL2.V) * (_V.V - _VL2.V)));
+	DistVL1VL2 := sqrt(((_VL1.U - _VL2.U) * (_VL1.U - _VL2.U)) + ((_VL1.V - _VL2.V) * (_VL1.V - _VL2.V)));
+   // determinant.
+   DetVVL1VL2 := Epsilon((_V.U * _VL1.V) + (_V.V * _VL2.U) + (_VL1.U * _VL2.V) - (_V.U * _VL2.V) - (_V.V * _VL1.U) - (_VL1.V * _VL2.U));
+   if (DetVVL1VL2 > 0) or ((DetVVL1VL2 = 0) and ((Epsilon(DistVVL1 + DistVVL2 - DistVL1VL2) > 0) or (Epsilon(DistVVL2) = 0))) then
+   begin
+      Result := 1;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
+function CColisionCheck.IsVertexInsideOrOutside2DEdge(const _VL1, _VL2, _V: TVector2f): byte;
+var
+   DistVVL1, DistVVL2, DistVL1VL2, DetVVL1VL2: single;
+begin
+	DistVVL1 := sqrt(((_V.U - _VL1.U) * (_V.U - _VL1.U)) + ((_V.V - _VL1.V) * (_V.V - _VL1.V)));
+	DistVVL2 := sqrt(((_V.U - _VL2.U) * (_V.U - _VL2.U)) + ((_V.V - _VL2.V) * (_V.V - _VL2.V)));
+	DistVL1VL2 := sqrt(((_VL1.U - _VL2.U) * (_VL1.U - _VL2.U)) + ((_VL1.V - _VL2.V) * (_VL1.V - _VL2.V)));
+   // determinant.
+   DetVVL1VL2 := Epsilon((_V.U * _VL1.V) + (_V.V * _VL2.U) + (_VL1.U * _VL2.V) - (_V.U * _VL2.V) - (_V.V * _VL1.U) - (_VL1.V * _VL2.U));
+   if (DetVVL1VL2 > 0) or ((DetVVL1VL2 = 0) and ((Epsilon(DistVVL1 + DistVVL2 - DistVL1VL2) > 0) or (Epsilon(DistVVL1) = 0) or (Epsilon(DistVVL2) = 0))) then
+   begin
+      Result := 1;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+
+{
+function CColisionCheck.IsVertexInsideOrOutside2DEdge(const _VL1, _VL2, _V: TVector2f): byte;
+var
+   DetVL1Vl2: single;
+begin
+   // determinant.
+   DetVL1Vl2 := (_V.U * _VL1.V) + (_V.V * _VL2.U) + (_VL1.U * _VL2.V) - (_V.U * _VL2.V) - (_V.V * _VL1.U) - (_VL1.V * _VL2.U);
+   if Epsilon(DetVL1Vl2) <= 0 then
+   begin
+      Result := 1;
+   end
+   else
+   begin
+      Result := 0;
+   end;
+end;
+}
 
 function CColisionCheck.Are2DTrianglesColiding(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
 var
@@ -87,6 +149,72 @@ begin
    if (VertexConfig1 and VertexConfig3) = 0 then
    begin
       exit; // return true, the line segment crosses the triangle.
+   end;
+   // Now let's check the triangle, if it contains the other or not.
+   if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
+   begin
+      exit; // return true, the triangle contains the other triangle.
+   end;
+   Result := false; // return false. There is no colision between the two triangles.
+end;
+
+function CColisionCheck.Are2DTrianglesColidingEdges(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
+var
+   VertexConfig1,VertexConfig2,VertexConfig3: byte;
+begin
+   Result := true; // assume true for optimization
+
+   // Collect vertex configurations. 1 is outside and 0 is inside.
+   // Vertex 1
+   VertexConfig1 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB1));
+   if VertexConfig1 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 2
+   VertexConfig2 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB2) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB2)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB2));
+   if VertexConfig2 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 3
+   VertexConfig3 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB3) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB3)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB3));
+   if VertexConfig3 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Now let's check the triangle, if it contains the other or not.
+   if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
+   begin
+      exit; // return true, the triangle contains the other triangle.
+   end;
+   Result := false; // return false. There is no colision between the two triangles.
+end;
+
+function CColisionCheck.Are2DTrianglesOverlapping(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
+var
+   VertexConfig1,VertexConfig2,VertexConfig3: byte;
+begin
+   Result := true; // assume true for optimization
+
+   // Collect vertex configurations. 1 is outside and 0 is inside.
+   // Vertex 1
+   VertexConfig1 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA1) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3,_VA1)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA1));
+   if VertexConfig1 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 2
+   VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA2) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA2)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA2));
+   if VertexConfig2 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 3
+   VertexConfig3 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA3) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA3)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA3));
+   if VertexConfig3 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
    end;
    // Now let's check the triangle, if it contains the other or not.
    if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then

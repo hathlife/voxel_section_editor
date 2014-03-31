@@ -38,7 +38,7 @@ type
 implementation
 
 uses GlobalVars, TextureGeneratorBase, DiffuseTextureGenerator, MeshBRepGeometry,
-   GLConstants, ColisionCheck;
+   GLConstants, ColisionCheck, BasicFunctions;
 
 procedure CTextureAtlasExtractorOrigami.Execute();
 var
@@ -1232,7 +1232,6 @@ begin
       // Let's check if this UV Position will hit another UV project face.
       Result := true;
       // the change in the _AddedFace temporary optimization for the upcoming loop.
-      _CheckFace[_PreviousFace] := false;
       v := 0;
       for i := Low(_CheckFace) to High(_CheckFace) do
       begin
@@ -1245,20 +1244,18 @@ begin
             // Check if the candidate position is inside this triangle.
             // If it is inside the triangle, then point is not validated. Exit.
             //if VertexUtil.IsPointInsideTriangle(_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]],_UVPosition) then
-            if ColisionUtil.Are2DTrianglesColiding(_UVPosition,_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
+            if ColisionUtil.Are2DTrianglesColidingEdges(_UVPosition,_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
             begin
                {$ifdef ORIGAMI_TEST}
                GlobalVars.OrigamiFile.Add('Vertex textured coordinate (' + FloatToStr(_UVPosition.U) + ', ' + FloatToStr(_UVPosition.V) + ') conflicts with face ' + IntToStr(i) + '.');
                {$endif}
                Result := false;
-               _CheckFace[_PreviousFace] := true;
                ColisionUtil.Free;
                exit;
             end;
          end;
          inc(v,_VerticesPerFace);
       end;
-      _CheckFace[_PreviousFace] := true;
    end;
    ColisionUtil.Free;
 end;
@@ -1267,13 +1264,32 @@ function CTextureAtlasExtractorOrigami.IsValidUVTriangle(const _Faces : auint32;
 var
    i,v: integer;
    ColisionUtil : CColisionCheck;//TVertexTransformationUtils;
+   DirTE0,DirE1T: TVector2f;
 begin
+   // Do we have a valid triangle?
+   DirTE0 := SubtractVector(_TexCoords[_Edge0], _TexCoords[_Target]);
+   if Normalize(DirTE0) = 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+   DirE1T := SubtractVector(_TexCoords[_Target], _TexCoords[_Edge1]);
+   if Normalize(DirE1T) = 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+   if epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+
    ColisionUtil := CColisionCheck.Create; //TVertexTransformationUtils.Create;
 
    // Let's check if this UV Position will hit another UV project face.
    Result := true;
    // the change in the _AddedFace temporary optimization for the upcoming loop.
-   _CheckFace[_PreviousFace] := false;
    v := 0;
    for i := Low(_CheckFace) to High(_CheckFace) do
    begin
@@ -1286,20 +1302,18 @@ begin
          // Check if the candidate position is inside this triangle.
          // If it is inside the triangle, then point is not validated. Exit.
          //if VertexUtil.IsPointInsideTriangle(_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]],_UVPosition) then
-         if ColisionUtil.Are2DTrianglesColiding(_TexCoords[_Target],_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
+         if ColisionUtil.Are2DTrianglesOverlapping(_TexCoords[_Target],_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
          begin
             {$ifdef ORIGAMI_TEST}
             GlobalVars.OrigamiFile.Add('Vertex textured coordinate (' + FloatToStr(_TexCoords[_Target].U) + ', ' + FloatToStr(_TexCoords[_Target].V) + ') conflicts with face ' + IntToStr(i) + '.');
             {$endif}
             Result := false;
-            _CheckFace[_PreviousFace] := true;
             ColisionUtil.Free;
             exit;
          end;
       end;
       inc(v,_VerticesPerFace);
    end;
-   _CheckFace[_PreviousFace] := true;
    ColisionUtil.Free;
 end;
 

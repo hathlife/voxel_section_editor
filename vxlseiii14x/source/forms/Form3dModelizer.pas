@@ -698,27 +698,13 @@ end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseOrigamiClick(Sender: TObject);
 begin
-   if GlobalVars.Render.EnableOpenCL then
-   begin
-      GlobalVars.ActorController.DoTextureAtlasExtractionOrigami(Actor, TextureSize);
-      //Actor.GenerateDiffuseTextureOrigami;
-      Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
-      UpdateRenderingCounters;
-      SetColoursMode(2);
-      UncheckDiffuseTexture;
-      TextureFXTraditionalDiffuseTexture.Checked := true;
-   end
-   else
-   begin
-      if GlobalVars.Render.IsOpenCLAllowed then
-      begin
-         ShowMessage('Warning: This operation has been canceled because OpenCL is disabled under preferences.');
-      end
-      else
-      begin
-         ShowMessage('Warning: This operation has been canceled because this machine does not support OpenCL or the OpenCL driver is corrupted.');
-      end;
-   end;
+   GlobalVars.ActorController.DoTextureAtlasExtractionOrigami(Actor, TextureSize);
+   //Actor.GenerateDiffuseTextureOrigami;
+   Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
+   UpdateRenderingCounters;
+   SetColoursMode(2);
+   UncheckDiffuseTexture;
+   TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
 procedure TFrm3DModelizer.TextureFXDiffuseOrigamiGAClick(Sender: TObject);
@@ -2041,7 +2027,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := false;
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
-         TextureFXDiffuseOrigami.Enabled := GlobalVars.Render.EnableOpenCL;
+         TextureFXDiffuseOrigami.Enabled := true;
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
@@ -2087,7 +2073,7 @@ begin
          ColourFXConvertFacetoVertex.Enabled := true;
          TextureFXDiffuse.Enabled := true;
          TextureFXDiffuseCustom.Enabled := true;
-         TextureFXDiffuseOrigami.Enabled := GlobalVars.Render.EnableOpenCL;
+         TextureFXDiffuseOrigami.Enabled := true;
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;

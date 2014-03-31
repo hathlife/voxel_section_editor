@@ -19,8 +19,8 @@ type
 
 implementation
 
-uses StopWatch, TextureAtlasExtractorBase, TextureAtlasExtractorOrigamiGPU,
-   GlobalVars, SysUtils;
+uses StopWatch, TextureAtlasExtractorBase, TextureAtlasExtractorOrigami,
+   TextureAtlasExtractorOrigamiGPU, GlobalVars, SysUtils;
 
 constructor TTextureAtlasExtractorOrigamiCommand.Create(var _Actor: TActor; var _Params: TCommandParams);
 begin
@@ -40,7 +40,14 @@ begin
    StopWatch := TStopWatch.Create(true);
    {$endif}
    // First, we'll build the texture atlas.
-   TexExtractor := CTextureAtlasExtractorOrigamiGPU.Create(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
+   if GlobalVars.Render.EnableOpenCL then
+   begin
+      TexExtractor := CTextureAtlasExtractorOrigamiGPU.Create(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
+   end
+   else
+   begin
+      TexExtractor := CTextureAtlasExtractorOrigami.Create(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
+   end;
    TexExtractor.ExecuteWithDiffuseTexture(FSize);
    TexExtractor.Free;
    {$ifdef SPEED_TEST}

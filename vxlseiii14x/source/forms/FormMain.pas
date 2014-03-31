@@ -7,23 +7,17 @@ unit FormMain;
 interface
 
 uses
-  Windows, BasicMathsTypes, BasicDataTypes, Messages, SysUtils, Variants, Classes,
-  Graphics, Controls, Forms, Dialogs,Voxel_Engine, Menus, ExtCtrls, StdCtrls,
-  Voxel, ComCtrls, ToolWin, ImgList, Math, palette, Spin, Buttons, FTGifAnimate,
-  VoxelUndoEngine, ShellAPI, Constants, pause, FormNewVxlUnit, mouse, Registry,
-  Form3dpreview, Debug, FormAutoNormals, XPMan, VoxelBank, GlobalVars, dglOpenGL,
-  HVABank, ModelBank, VoxelDocument, VoxelDocumentBank, TextureBank, Render,
-  RenderEnvironment, Actor, Camera, BasicFunctions, GlConstants, Form3dModelizer,
-  Normals, CustomScheme, INIFiles, ShaderBank, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP, FormRepairAssistant, BasicConstants,
-  FormHeightmap, ImageIOUtils, FormTopologyAnalysis, IsoSurfaceFile,
-  TopologyFixer, FillUselessGapsTool, BasicVXLSETypes;
+  Windows, BasicMathsTypes, BasicDataTypes, Render, SysUtils, Variants, Classes,
+  Graphics, Controls, Forms, Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls,
+  ToolWin, ImgList, Spin, Buttons, ShellAPI, Form3dpreview, XPMan, dglOpenGL,
+  VoxelDocument, RenderEnvironment, Actor, Camera, BasicFunctions,
+  BasicVXLSETypes, Form3dModelizer;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.207';
+   APPLICATION_VER = '1.39.208';
    APPLICATION_BETA = true;
 
 type
@@ -657,7 +651,12 @@ implementation
 uses FormHeaderUnit, LoadForm, FormNewSectionSizeUnit, FormPalettePackAbout, HVA,
    FormReplaceColour, FormVoxelTexture, FormBoundsManager, FormImportSection,
    FormFullResize, FormPreferences, FormVxlError, Config, ActorActionController,
-   ModelUndoEngine, ModelVxt;
+   ModelUndoEngine, ModelVxt, Constants, mouse, Math, FormAutoNormals, pause,
+   FormRepairAssistant, GlConstants, FormHeightmap, FormTopologyAnalysis, Voxel,
+   IsoSurfaceFile, FillUselessGapsTool, TopologyFixer, FormNewVxlUnit, Registry,
+   VoxelUndoEngine, GlobalVars, VoxelDocumentBank, ModelBank, TextureBank, Normals,
+   HVABank, VoxelBank, CustomScheme, BasicConstants, ImageIOUtils, INIFiles,
+   Voxel_Engine;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var

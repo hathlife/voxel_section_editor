@@ -29,7 +29,7 @@ type
 
 implementation
 
-uses Math3d;
+uses Math3d, Math, BasicFunctions;
 
 function TMeshCurvatureMeasure.GetVertexCurvatureAngle(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
 const
@@ -132,53 +132,43 @@ function TMeshCurvatureMeasure.GetVertexAngleSum(_ID: integer; const _Vertices, 
 const
    C_DEFAULT = 999999;
 var
-   v,zeroCounter : integer;
-   Direction: TVector3f;
-   DotResult: single;
+   v,vNext,firstV,zeroCounter : integer;
+   Direction,DirectionNext: TVector3f;
+   DotResult,DotSum: single;
 begin
-   Result := C_DEFAULT;
+   Result := 0;
    zeroCounter := 0;
    v := _NeighborDetector.GetNeighborFromID(_ID);
-   while v <> -1 do
+   if v <> -1 then
    begin
-      Direction := SubtractVector(_Vertices[v],_Vertices[_ID]);
-      Normalize(Direction);
-      DotResult := DotProduct(_VertexNormals[_ID],Direction);
-      if DotResult <> 0 then
+      vNext := _NeighborDetector.GetNextNeighbor;
+      firstV := v;
+      while vNext <> -1 do
       begin
-         if Abs(DotResult) < Result then
-         begin
-            if (Result <> C_DEFAULT) and ((Result * DotResult) > 0) then
-            begin
-               Result := DotResult;
-            end
-            else if (Result <> C_DEFAULT) then
-            begin
-               Result := 0;
-               exit;
-            end
-            else
-            begin
-               Result := DotResult;
-            end;
-         end;
-      end
-      else if DotResult = 0 then
-      begin
-         Result := 0;
-         exit;
+         Direction := SubtractVector(_Vertices[v],_Vertices[_ID]);
+         Normalize(Direction);
+         DirectionNext := SubtractVector(_Vertices[vNext],_Vertices[_ID]);
+         Normalize(DirectionNext);
+         DotResult := DotProduct(Direction,DirectionNext);
+         Result := Result + arccos(DotResult);
+         v := vNext;
+         vNext := _NeighborDetector.GetNextNeighbor;
       end;
-      v := _NeighborDetector.GetNextNeighbor;
+      if v <> firstV then
+      begin
+         Direction := SubtractVector(_Vertices[firstV],_Vertices[_ID]);
+         Normalize(Direction);
+         DotResult := DotProduct(Direction,DirectionNext);
+         Result := Result + arccos(DotResult);
+      end;
    end;
-   if Result = C_DEFAULT then
-      Result := 0;
 end;
 
 function TMeshCurvatureMeasure.GetVertexAngleSumFactor(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
 const
    C_2PI = 2 * pi;
 begin
-   Result := GetVertexAngleSum(_ID, _Vertices, _VertexNormals, _NeighborDetector) / C_2PI;
+   Result := epsilon((GetVertexAngleSum(_ID, _Vertices, _VertexNormals, _NeighborDetector) / C_2PI) - 1) + 1;
 end;
 
 
