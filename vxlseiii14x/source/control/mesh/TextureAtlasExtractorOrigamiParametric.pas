@@ -379,7 +379,7 @@ function CTextureAtlasExtractorOrigamiParametric.IsValidUVPoint(const _Vertices:
 var
    Ang0,Ang1,AngTarget,AngSum,cosAng0,cosAng1,sinAng0,sinAng1,Edge0Size: single;
    DirEdge0,DirEdge1: TVector3f;
-   EdgeSizeInMesh,EdgeSizeInUV,Scale,SinProjectionSizeInUV,ProjectionSizeInUV: single;
+   EdgeSizeInMesh,EdgeSizeInUV,SinProjectionSizeInUV,ProjectionSizeInUV: single;
    EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
    EdgeDirectionInMesh: TVector3f;
    SourceSide: single;
@@ -399,7 +399,6 @@ begin
       // Directions must be normalized.
       Normalize(EdgeDirectionInMesh);
       Normalize(EdgeDirectionInUV);
-      Scale := EdgeSizeInUV / EdgeSizeInMesh;
 
       // Find the angles of the vertexes of the main edge in Mesh.
       DirEdge0 := SubtractVector(_Vertices[_Target],_Vertices[_Edge0]);
