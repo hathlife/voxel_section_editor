@@ -265,9 +265,9 @@ begin
    Normalize(DirEdge0);
    DirEdge1 := SubtractVector(_Vertices[Target],_Vertices[Edge1]);
    Normalize(DirEdge1);
-   Ang0 := ArcCos(DotProduct(DirEdge0, DirEdge)) * FAngleFactor[GetVertexLocationID(Edge0)];
-   Ang1 := ArcCos(DotProduct(DirEdge1, DirEdge)) * FAngleFactor[GetVertexLocationID(Edge1)];
-   AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) * FAngleFactor[GetVertexLocationID(Target)];
+   Ang0 := ArcCos(DotProduct(DirEdge0, DirEdge)) / FAngleFactor[GetVertexLocationID(Edge0)];
+   Ang1 := ArcCos(DotProduct(DirEdge1, DirEdge)) / FAngleFactor[GetVertexLocationID(Edge1)];
+   AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) / FAngleFactor[GetVertexLocationID(Target)];
    AngSum := Ang0 + Ang1 + AngTarget;
    Ang0 := (Ang0 / AngSum) * pi;
    Ang1 := (Ang1 / AngSum) * pi;
@@ -406,9 +406,9 @@ begin
       Normalize(DirEdge0);
       DirEdge1 := SubtractVector(_Vertices[_Target],_Vertices[_Edge1]);
       Normalize(DirEdge1);
-      Ang0 := ArcCos(DotProduct(DirEdge0, EdgeDirectionInMesh)) * FAngleFactor[GetVertexLocationID(_Edge0)];
-      Ang1 := ArcCos(DotProduct(DirEdge1, EdgeDirectionInMesh)) * FAngleFactor[GetVertexLocationID(_Edge1)];
-      AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) * FAngleFactor[GetVertexLocationID(_Target)];
+      Ang0 := ArcCos(DotProduct(DirEdge0, EdgeDirectionInMesh)) / FAngleFactor[GetVertexLocationID(_Edge0)];
+      Ang1 := ArcCos(DotProduct(DirEdge1, EdgeDirectionInMesh)) / FAngleFactor[GetVertexLocationID(_Edge1)];
+      AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) / FAngleFactor[GetVertexLocationID(_Target)];
       AngSum := Ang0 + Ang1 + AngTarget;
       Ang0 := (Ang0 / AngSum) * pi;
       Ang1 := (Ang1 / AngSum) * pi;
