@@ -128,6 +128,7 @@ begin
       Result := 0;
 end;
 
+// Requires star ordered C_NEIGHBTYPE_VERTEX_VERTEX _NeighborDetector.
 function TMeshCurvatureMeasure.GetVertexAngleSum(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
 const
    C_DEFAULT = 999999;

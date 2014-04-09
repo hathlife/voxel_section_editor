@@ -422,7 +422,6 @@ var
    FaceList,PreviousFaceList : CIntegerList;
    Angle: single;
    Position,TriangleCenter: TVector3f;
-   VertsLocation : aint32;
    CandidateUVPosition: TVector2f;
    AddedFace: abool;
    TriangleTransform,TriangleTransformInv: TMultiVector;
@@ -442,10 +441,10 @@ begin
    PreviousFaceList := CIntegerList.Create;
    PreviousFaceList.UseFixedRAM(High(_CheckFace)+1);
    // Setup VertsLocation
-   SetLength(VertsLocation,High(_Vertices)+1);
-   for v := Low(VertsLocation) to High(VertsLocation) do
+   SetLength(FVertsLocation,High(_Vertices)+1);
+   for v := Low(FVertsLocation) to High(FVertsLocation) do
    begin
-      VertsLocation[v] := -1;
+      FVertsLocation[v] := -1;
    end;
    // Avoid unlimmited loop
    SetLength(AddedFace,High(_CheckFace)+1);
@@ -498,8 +497,8 @@ begin
          SetLength(_Vertices,High(_Vertices)+2);
          SetLength(_VertsSeed,High(_Vertices)+1);
          _VertsSeed[High(_VertsSeed)] := _ID;
-         SetLength(VertsLocation,High(_Vertices)+1);
-         VertsLocation[High(_Vertices)] := vertex;  // _VertsLocation works slightly different here than in the non-origami version.
+         SetLength(FVertsLocation,High(_Vertices)+1);
+         FVertsLocation[High(_Vertices)] := vertex;  // _VertsLocation works slightly different here than in the non-origami version.
          {$ifdef ORIGAMI_TEST}
          GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed to ' + IntToStr(High(_Vertices)));
          {$endif}
@@ -537,7 +536,7 @@ begin
          {$endif}
          // This seed is the first seed to use this vertex.
          _VertsSeed[vertex] := _ID;
-         VertsLocation[vertex] := vertex;
+         FVertsLocation[vertex] := vertex;
          // Get temporary texture coordinates.
 //         _TextCoords[vertex] := VertexUtil.GetUVCoordinates(Position,Result.TransformMatrix);
          _TextCoords[vertex] := GetVertexPositionOnTriangleProjectionGA(EuclideanGA,Position,TriangleTransform,TriangleTransformInv);
@@ -595,7 +594,7 @@ begin
       GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' that was added by previous face ' + IntToStr(PreviousFace));
       {$endif}
       // The first idea is to get the vertex that wasn't added yet.
-      ObtainCommonEdgeFromFaces(_Faces,VertsLocation,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1,v);
+      ObtainCommonEdgeFromFaces(_Faces,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1,v);
       {$ifdef ORIGAMI_TEST}
       GlobalVars.OrigamiFile.Add('Current Vertex = ' + IntToStr(CurrentVertex) + '; Previous Vertex = ' + IntToStr(PreviousVertex) + '; Share Edge = [' + IntToStr(SharedEdge0) + ', ' + IntToStr(SharedEdge1) + ']');
       {$endif}
@@ -614,7 +613,7 @@ begin
             // This seed is the first seed to use this vertex.
 
             // Does this vertex has coordinates already?
-            if VertsLocation[CurrentVertex] <> -1 then
+            if FVertsLocation[CurrentVertex] <> -1 then
             begin
                {$ifdef ORIGAMI_TEST}
                GlobalVars.OrigamiFile.Add('Vertex ' + IntToStr(CurrentVertex) + ' is being cloned as ' + IntToStr(High(_Vertices)+1));
@@ -624,8 +623,8 @@ begin
                SetLength(_Vertices,High(_Vertices)+2);
                SetLength(_VertsSeed,High(_Vertices)+1);
                _VertsSeed[High(_VertsSeed)] := _ID;
-               SetLength(VertsLocation,High(_Vertices)+1);
-               VertsLocation[High(_Vertices)] := CurrentVertex;
+               SetLength(FVertsLocation,High(_Vertices)+1);
+               FVertsLocation[High(_Vertices)] := CurrentVertex;
                {$ifdef ORIGAMI_TEST}
                GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed from ' + IntToStr(CurrentVertex) + ' to ' + IntToStr(High(_Vertices)));
                {$endif}
@@ -663,7 +662,7 @@ begin
                {$endif}
                // Write the vertex coordinates.
                _VertsSeed[CurrentVertex] := _ID;
-               VertsLocation[CurrentVertex] := CurrentVertex;
+               FVertsLocation[CurrentVertex] := CurrentVertex;
                // Get temporary texture coordinates.
                _TextCoords[CurrentVertex].U := CandidateUVPosition.U;
                _TextCoords[CurrentVertex].V := CandidateUVPosition.V;
@@ -687,8 +686,8 @@ begin
             SetLength(_Vertices,High(_Vertices)+2);
             SetLength(_VertsSeed,High(_Vertices)+1);
             _VertsSeed[High(_VertsSeed)] := _ID;
-            SetLength(VertsLocation,High(_Vertices)+1);
-            VertsLocation[High(_Vertices)] := CurrentVertex;
+            SetLength(FVertsLocation,High(_Vertices)+1);
+            FVertsLocation[High(_Vertices)] := CurrentVertex;
             {$ifdef ORIGAMI_TEST}
             GlobalVars.OrigamiFile.Add('Face item ' + IntToStr(FaceIndex+v) + ' has been changed from ' + IntToStr(CurrentVertex) + ' to ' + IntToStr(High(_Vertices)));
             {$endif}
@@ -761,9 +760,9 @@ begin
 
    if _NeighborhoodPlugin <> nil then
    begin
-      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalencesOrigami(VertsLocation);
+      TNeighborhoodDataPlugin(_NeighborhoodPlugin^).UpdateEquivalencesOrigami(FVertsLocation);
    end;
-   SetLength(VertsLocation,0);
+   SetLength(FVertsLocation,0);
    SetLength(AddedFace,0);
    SetLength(FaceBackup,0);
    TriangleTransform.Free;

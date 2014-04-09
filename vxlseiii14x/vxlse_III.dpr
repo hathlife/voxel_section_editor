@@ -277,7 +277,9 @@ uses
   HierarchyAnimation in 'source\rendering\HierarchyAnimation.pas',
   TransformAnimation in 'source\rendering\TransformAnimation.pas',
   MeshVxt in 'source\rendering\MeshVxt.pas',
-  ModelVxt in 'source\rendering\ModelVxt.pas';
+  ModelVxt in 'source\rendering\ModelVxt.pas',
+  TextureAtlasExtractorOrigamiParametric in 'source\control\mesh\TextureAtlasExtractorOrigamiParametric.pas',
+  TextureAtlasExtractorOrigamiParametricCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas';
 
 {$R *.res}
 

@@ -667,6 +667,8 @@ begin
          end;
       end;
    end;
+   SetLength(Order, 0);
+   SetLength(Angles, 0);
    Util.Free;
 end;
 
@@ -721,6 +723,8 @@ begin
          end;
       end;
    end;
+   SetLength(Order, 0);
+   SetLength(Angles, 0);
    Util.Free;
 end;
 
@@ -775,6 +779,8 @@ begin
          end;
       end;
    end;
+   SetLength(Order, 0);
+   SetLength(Angles, 0);
    Util.Free;
 end;
 
@@ -829,6 +835,8 @@ begin
          end;
       end;
    end;
+   SetLength(Order, 0);
+   SetLength(Angles, 0);
    Util.Free;
 end;
 

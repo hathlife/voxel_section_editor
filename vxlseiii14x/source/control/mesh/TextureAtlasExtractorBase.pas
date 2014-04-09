@@ -21,7 +21,7 @@ type
       protected
          FLOD: TLOD;
          // Get Mesh Seeds related functions.
-         procedure SetupMeshSeeds(var _Vertices : TAVector3f; var _FaceNormals : TAVector3f; var _Faces : auint32;_VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _FaceNeighbors: TNeighborDetector; var _TexCoords: TAVector2f; var _MaxVerts: integer; var _FaceSeed : aint32; var _FacePriority: AFloat; var _FaceOrder : auint32; var _CheckFace: abool);
+         procedure SetupMeshSeeds(var _Vertices : TAVector3f; var _FaceNormals : TAVector3f; var _Faces : auint32;_VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _FaceNeighbors: TNeighborDetector; var _TexCoords: TAVector2f; var _MaxVerts: integer; var _FaceSeed : aint32; var _FacePriority: AFloat; var _FaceOrder : auint32; var _CheckFace: abool); virtual;
          procedure ReAlignSeedsToCenter(var _Seeds: TSeedSet; var _VertsSeed : aint32; var _FaceNeighbors: TNeighborDetector; var _TexCoords: TAVector2f; var _FacePriority: AFloat; var _FaceOrder : auint32; var _CheckFace: abool; var _NeighborhoodPlugin: PMeshPluginBase);
          // Sort related functions
          function isVLower(_UMerge, _VMerge, _UMax, _VMax: single): boolean;
@@ -30,14 +30,13 @@ type
          procedure QuickSortSeeds(_min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction);
          procedure QuickSortPriority(_min, _max : integer; var _FaceOrder: auint32; const _FacePriority : afloat);
          function SeedBinarySearch(const _Value, _min, _max : integer; var _OrderedList: auint32; const _Seeds : TSeedSet; _CompareFunction: TTexCompareFunction; var _current,_previous : integer): integer;
-
       public
          // Constructors and Destructors
          constructor Create(var _LOD: TLOD);
          destructor Destroy; override;
          procedure Initialize; virtual;
          procedure Reset;
-         procedure Clear;
+         procedure Clear; virtual;
          // Executes
          procedure Execute(); virtual; abstract;
          procedure ExecuteWithDiffuseTexture(_Size: integer); virtual; abstract;
