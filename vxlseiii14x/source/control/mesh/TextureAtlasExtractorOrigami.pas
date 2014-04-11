@@ -335,7 +335,7 @@ begin
          end;
 
          {$ifdef ORIGAMI_TEST}
-         GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' that was added by previous face ' + IntToStr(PreviousFace));
+         GlobalVars.OrigamiFile.Add('Veryfing Face ' + IntToStr(Value) + ' <' + IntToStr(_Faces[FaceIndex]) + ', ' + IntToStr(_Faces[FaceIndex + 1]) + ', ' + IntToStr(_Faces[FaceIndex + 2]) + '> that was added by previous face ' + IntToStr(PreviousFace));
          {$endif}
          // The first idea is to get the vertex that wasn't added yet.
          ObtainCommonEdgeFromFaces(_Faces,_VerticesPerFace,Value,PreviousFace,CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1,v);
@@ -1282,18 +1282,25 @@ var
 begin
    // Do we have a valid triangle?
    DirTE0 := SubtractVector(_TexCoords[_Edge0], _TexCoords[_Target]);
-   if Normalize(DirTE0) = 0 then
+   if Epsilon(Normalize(DirTE0)) = 0 then
    begin
       Result := false;
       exit;
    end;
    DirE1T := SubtractVector(_TexCoords[_Target], _TexCoords[_Edge1]);
-   if Normalize(DirE1T) = 0 then
+   if Epsilon(Normalize(DirE1T)) = 0 then
    begin
       Result := false;
       exit;
    end;
-   if epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
+   if Epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+
+   // Is the orientation correct?
+   if Epsilon(Get2DOuterProduct(_TexCoords[_Target],_TexCoords[_Edge0],_TexCoords[_Edge1])) > 0 then
    begin
       Result := false;
       exit;

@@ -21,7 +21,7 @@ type
 implementation
 
 uses GlobalVars, Math, Math3D, ColisionCheck, MeshCurvatureMeasure, IntegerList,
-   SysUtils;
+   SysUtils, BasicFunctions;
 
 function CTextureAtlasExtractorOrigamiParametric.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
 var
@@ -411,9 +411,6 @@ begin
       AngSum := Ang0 + Ang1 + AngTarget;
       Ang0 := (Ang0 / AngSum) * pi;
       Ang1 := (Ang1 / AngSum) * pi;
-      {$ifdef ORIGAMI_TEST}
-      GlobalVars.OrigamiFile.Add('Angles (' + FloatToStr(Ang0) + ', ' + FloatToStr(Ang1) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge1)]) + ') and AngleSum is ' + FloatToStr(AngSum) + ' .');
-      {$endif}
 
       cosAng0 := cos(Ang0);
       cosAng1 := cos(Ang1);
@@ -421,60 +418,67 @@ begin
       sinAng1 := sin(Ang1);
 
       // We'll now use these angles to find the projection directly in UV.
-//      if ((cosAng0 * sinAng1) + (cosAng1 * sinAng0)) = 0 then
-//      begin
-//         Edge0Size := 0;
-//      end;
-
       Edge0Size := (EdgeSizeInUV * sinAng1) / ((cosAng0 * sinAng1) + (cosAng1 * sinAng0));
-
-      // Get the size of projection of (Vertex - Edge0) at the Edge, in UV already
-      ProjectionSizeInUV := Edge0Size * cosAng0;
-
-      // Obtain the position of this projection at the edge, in UV
-      PositionOfTargetatEdgeInUV := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInUV,ProjectionSizeInUV));
-
-      // Find out the distance between that and the _Target in UV.
-      SinProjectionSizeInUV := Edge0Size * sinAng0;
-      // Rotate the edgeze in 90' in UV space.
-      SinDirectionInUV := Get90RotDirectionFromDirection(EdgeDirectionInUV);
-      // We need to make sure that _Target and _OriginVert are at opposite sides
-      // the universe, if it is divided by the Edge0 to Edge1.
-      SourceSide := Get2DOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
-      if SourceSide > 0 then
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('Angles (' + FloatToStr(Ang0) + ', ' + FloatToStr(Ang1) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge1)]) + '), Edge0Size is ' + FloatToStr(Edge0Size) + ' and AngleSum is ' + FloatToStr(AngSum) + ' .');
+      {$endif}
+      if (Edge0Size <= 10) and (Edge0Size >= 0.1) then
       begin
-         SinDirectionInUV := ScaleVector(SinDirectionInUV,-1);
-      end;
-      // Write the UV Position
-      _UVPosition := AddVector(PositionOfTargetatEdgeInUV,ScaleVector(SinDirectionInUV,SinProjectionSizeInUV));
+         // Get the size of projection of (Vertex - Edge0) at the Edge, in UV already
+         ProjectionSizeInUV := Edge0Size * cosAng0;
 
-      // Let's check if this UV Position will hit another UV project face.
-      Result := true;
-      // the change in the _AddedFace temporary optimization for the upcoming loop.
-      v := 0;
-      for i := Low(_CheckFace) to High(_CheckFace) do
-      begin
-         // If the face was projected in the UV domain.
-         if _CheckFace[i] then
+         // Obtain the position of this projection at the edge, in UV
+         PositionOfTargetatEdgeInUV := AddVector(_TexCoords[_Edge0],ScaleVector(EdgeDirectionInUV,ProjectionSizeInUV));
+
+         // Find out the distance between that and the _Target in UV.
+         SinProjectionSizeInUV := Edge0Size * sinAng0;
+         // Rotate the edgeze in 90' in UV space.
+         SinDirectionInUV := Get90RotDirectionFromDirection(EdgeDirectionInUV);
+         // We need to make sure that _Target and _OriginVert are at opposite sides
+         // the universe, if it is divided by the Edge0 to Edge1.
+         SourceSide := Get2DOuterProduct(_TexCoords[_OriginVert],_TexCoords[_Edge0],_TexCoords[_Edge1]);
+         if SourceSide > 0 then
          begin
-            {$ifdef ORIGAMI_TEST}
-            //GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
-            {$endif}
-            // Check if the candidate position is inside this triangle.
-            // If it is inside the triangle, then point is not validated. Exit.
-            //if VertexUtil.IsPointInsideTriangle(_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]],_UVPosition) then
-            if ColisionUtil.Are2DTrianglesColidingEdges(_UVPosition,_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
+            SinDirectionInUV := ScaleVector(SinDirectionInUV,-1);
+         end;
+         // Write the UV Position
+         _UVPosition := AddVector(PositionOfTargetatEdgeInUV,ScaleVector(SinDirectionInUV,SinProjectionSizeInUV));
+
+         // Let's check if this UV Position will hit another UV project face.
+         Result := true;
+         // the change in the _AddedFace temporary optimization for the upcoming loop.
+         v := 0;
+         for i := Low(_CheckFace) to High(_CheckFace) do
+         begin
+            // If the face was projected in the UV domain.
+            if _CheckFace[i] then
             begin
                {$ifdef ORIGAMI_TEST}
-               GlobalVars.OrigamiFile.Add('Vertex textured coordinate (' + FloatToStr(_UVPosition.U) + ', ' + FloatToStr(_UVPosition.V) + ') conflicts with face ' + IntToStr(i) + '.');
+               //GlobalVars.OrigamiFile.Add('Face ' + IntToStr(i) + ' has vertexes (' + FloatToStr(_TexCoords[_Faces[v]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v]].V) + '), (' + FloatToStr(_TexCoords[_Faces[v+1]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+1]].V)  + '), (' + FloatToStr(_TexCoords[_Faces[v+2]].U) + ', ' + FloatToStr(_TexCoords[_Faces[v+2]].V) + ').');
                {$endif}
-               Result := false;
-               ColisionUtil.Free;
-               exit;
+               // Check if the candidate position is inside this triangle.
+               // If it is inside the triangle, then point is not validated. Exit.
+               //if VertexUtil.IsPointInsideTriangle(_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]],_UVPosition) then
+               if ColisionUtil.Are2DTrianglesColidingEdges(_UVPosition,_TexCoords[_Edge0],_TexCoords[_Edge1],_TexCoords[_Faces[v]],_TexCoords[_Faces[v+1]],_TexCoords[_Faces[v+2]]) then
+               begin
+                  {$ifdef ORIGAMI_TEST}
+                  GlobalVars.OrigamiFile.Add('Vertex textured coordinate (' + FloatToStr(_UVPosition.U) + ', ' + FloatToStr(_UVPosition.V) + ') conflicts with face ' + IntToStr(i) + '.');
+                  {$endif}
+                  Result := false;
+                  ColisionUtil.Free;
+                  exit;
+               end;
             end;
+            inc(v,_VerticesPerFace);
          end;
-         inc(v,_VerticesPerFace);
       end;
+   end
+   else
+   begin
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('New triangle causes too much distortion. Edge size is: ' + FloatToStr(Edge0Size) + '.');
+      {$endif}
+      Result := false;
    end;
    ColisionUtil.Free;
 end;
