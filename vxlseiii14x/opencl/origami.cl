@@ -5,7 +5,7 @@ Coded by: Banshee
 
 float epsilon(float value)
 {
-	if (fabs(value) < 0.000001)
+	if (fabs(value) < 0.0001)
 	{
 		return 0;
 	}
@@ -15,16 +15,69 @@ float epsilon(float value)
 	}
 }
 
-int isInOrOutVertexA(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
+int isInOrOutNone(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
 {
-	float distvvlA = sqrt(((vX - vlAx) * (vX - vlAx)) + ((vY - vlAy) * (vY - vlAy)));
-	float distvvlB = sqrt(((vX - vlBx) * (vX - vlBx)) + ((vY - vlBy) * (vY - vlBy)));
-	float distvlAvlB = sqrt(((vlAx - vlBx) * (vlAx - vlBx)) + ((vlAy - vlBy) * (vlAy - vlBy)));
 	// do determinant.
 	float detvvlAvlB = epsilon((vX * vlAy) + (vY * vlBx) + (vlAx * vlBy) - (vX * vlBy) - (vY * vlAx) - (vlAy * vlBx));
-	if ((detvvlAvlB > 0) || ((detvvlAvlB == 0) && ((epsilon(distvvlA + distvvlB - distvlAvlB) > 0) || (epsilon(distvvlA) == 0))))
+	if (detvvlAvlB >= 0)
 	{
-		return 1;
+		if (detvvlAvlB == 0)
+		{
+			float vlAvlBx = (vlBx - vlAx);
+			float vlAvlBy = (vlBy - vlAy);
+			float distvlAvlB = sqrt((vlAvlBx * vlAvlBx) + (vlAvlBy * vlAvlBy));
+			vlAvlBx = vlAvlBx / distvlAvlB;
+			vlAvlBy = vlAvlBy / distvlAvlB;
+			// Projection
+			float projvvl = epsilon((((vX - vlAx) * vlAvlBx) + ((vY - vlAy) * vlAvlBy)) / distvlAvlB);
+			if ((projvvl >= 0) && (epsilon(projvvl - 1) <= 0))
+			{
+				return 33;  // Hack to remove vertexes at the edges.
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+int isInOrOutVertexA(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
+{
+	// do determinant.
+	float detvvlAvlB = epsilon((vX * vlAy) + (vY * vlBx) + (vlAx * vlBy) - (vX * vlBy) - (vY * vlAx) - (vlAy * vlBx));
+	if (detvvlAvlB >= 0)
+	{
+		if (detvvlAvlB == 0)
+		{
+			float vlAvlBx = (vlBx - vlAx);
+			float vlAvlBy = (vlBy - vlAy);
+			float distvlAvlB = sqrt((vlAvlBx * vlAvlBx) + (vlAvlBy * vlAvlBy));
+			vlAvlBx = vlAvlBx / distvlAvlB;
+			vlAvlBy = vlAvlBy / distvlAvlB;
+			// Projection
+			float projvvl = epsilon((((vX - vlAx) * vlAvlBx) + ((vY - vlAy) * vlAvlBy)) / distvlAvlB);
+			if ((projvvl > 0) && (epsilon(projvvl - 1) <= 0))
+			{
+				return 33;  // Hack to remove vertexes at the edges.
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
 	}
 	else
 	{
@@ -34,14 +87,32 @@ int isInOrOutVertexA(float vlAx, float vlAy, float vlBx, float vlBy, float vX, f
 
 int isInOrOutVertexB(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
 {
-	float distvvlA = sqrt(((vX - vlAx) * (vX - vlAx)) + ((vY - vlAy) * (vY - vlAy)));
-	float distvvlB = sqrt(((vX - vlBx) * (vX - vlBx)) + ((vY - vlBy) * (vY - vlBy)));
-	float distvlAvlB = sqrt(((vlAx - vlBx) * (vlAx - vlBx)) + ((vlAy - vlBy) * (vlAy - vlBy)));
 	// do determinant.
 	float detvvlAvlB = epsilon((vX * vlAy) + (vY * vlBx) + (vlAx * vlBy) - (vX * vlBy) - (vY * vlAx) - (vlAy * vlBx));
-	if ((detvvlAvlB > 0) || ((detvvlAvlB == 0) && ((epsilon(distvvlA + distvvlB - distvlAvlB) > 0) || (epsilon(distvvlB) == 0))))
+	if (detvvlAvlB >= 0)
 	{
-		return 1;
+		if (detvvlAvlB == 0)
+		{
+			float vlAvlBx = (vlBx - vlAx);
+			float vlAvlBy = (vlBy - vlAy);
+			float distvlAvlB = sqrt((vlAvlBx * vlAvlBx) + (vlAvlBy * vlAvlBy));
+			vlAvlBx = vlAvlBx / distvlAvlB;
+			vlAvlBy = vlAvlBy / distvlAvlB;
+			// Projection
+			float projvvl = epsilon((((vX - vlAx) * vlAvlBx) + ((vY - vlAy) * vlAvlBy)) / distvlAvlB);
+			if ((projvvl >= 0) && (epsilon(projvvl - 1) < 0))
+			{
+				return 33;  // Hack to remove vertexes at the edges.
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
 	}
 	else
 	{
@@ -51,27 +122,32 @@ int isInOrOutVertexB(float vlAx, float vlAy, float vlBx, float vlBy, float vX, f
 
 int isInOrOutEdge(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
 {
-	float distvvlA = sqrt(((vX - vlAx) * (vX - vlAx)) + ((vY - vlAy) * (vY - vlAy)));
-	float distvvlB = sqrt(((vX - vlBx) * (vX - vlBx)) + ((vY - vlBy) * (vY - vlBy)));
-	float distvlAvlB = sqrt(((vlAx - vlBx) * (vlAx - vlBx)) + ((vlAy - vlBy) * (vlAy - vlBy)));
 	// do determinant.
 	float detvvlAvlB = epsilon((vX * vlAy) + (vY * vlBx) + (vlAx * vlBy) - (vX * vlBy) - (vY * vlAx) - (vlAy * vlBx));
-	if ((detvvlAvlB > 0) || ((detvvlAvlB == 0) && ((epsilon(distvvlA + distvvlB - distvlAvlB) > 0) || (epsilon(distvvlA) == 0) || (epsilon(distvvlB) == 0))))
+	if (detvvlAvlB >= 0)
 	{
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
-
-int isInOrOut(float vlAx, float vlAy, float vlBx, float vlBy, float vX, float vY)
-{
-	// do determinant.
-	if (epsilon((vX * vlAy) + (vY * vlBx) + (vlAx * vlBy) - (vX * vlBy) - (vY * vlAx) - (vlAy * vlBx)) >= 0)
-	{
-		return 1;
+		if (detvvlAvlB == 0)
+		{
+			float vlAvlBx = (vlBx - vlAx);
+			float vlAvlBy = (vlBy - vlAy);
+			float distvlAvlB = sqrt((vlAvlBx * vlAvlBx) + (vlAvlBy * vlAvlBy));
+			vlAvlBx = vlAvlBx / distvlAvlB;
+			vlAvlBy = vlAvlBy / distvlAvlB;
+			// Projection
+			float projvvl = epsilon((((vX - vlAx) * vlAvlBx) + ((vY - vlAy) * vlAvlBy)) / distvlAvlB);
+			if ((projvvl > 0) && (epsilon(projvvl - 1) < 0))
+			{
+				return 33;  // Hack to remove vertexes at the edges.
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			return 1;
+		}
 	}
 	else
 	{
@@ -96,7 +172,7 @@ __kernel void are2DTrianglesColidingEdges(__global float * triA, __global int * 
 
 	int vertexConfig3 = isInOrOutVertexB(triA[0], triA[1], coords[triA1], coords[triA1+1], coords[v3], coords[v3+1]) | (2 * isInOrOutEdge(coords[triA1], coords[triA1+1], coords[triA2], coords[triA2+1], coords[v3], coords[v3+1])) | (4 * isInOrOutVertexA(coords[triA2], coords[triA2+1], triA[0], triA[1], coords[v3], coords[v3+1]));	
 	
-	if ( (faceAllowed[i]) && ((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) )
+	if ( (faceAllowed[i]) && (((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) || ((vertexConfig1 | vertexConfig2 | vertexConfig3) > 7)) )
 	{
 		output[0] = 1;
 	}
@@ -119,7 +195,7 @@ __kernel void are2DTrianglesOverlapping(__global float * triA, __global int * ed
 
 	int vertexConfig3 = isInOrOutEdge(coords[v1], coords[v1+1], coords[v2], coords[v2+1], coords[triA2], coords[triA2+1]) | (2 * isInOrOutEdge(coords[v2], coords[v2+1], coords[v3], coords[v3+1], coords[triA2], coords[triA2+1])) | (4 * isInOrOutEdge(coords[v3], coords[v3+1], coords[v1], coords[v1+1], coords[triA2], coords[triA2+1]));	
 
-	if ( (faceAllowed[i]) && ((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) ) 
+	if ( (faceAllowed[i]) && (((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) || ((vertexConfig1 | vertexConfig2 | vertexConfig3) > 7)) )
 	{
 		output[0] = 1;
 	}
