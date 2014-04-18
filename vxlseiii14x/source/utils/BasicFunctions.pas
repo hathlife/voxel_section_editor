@@ -15,7 +15,6 @@ function GetStringID(_ID : integer): string;
 
 // Graphics related (OpenGL engine)
 function GetPow2Size(Size : Cardinal) : Cardinal;
-function SetVector(x, y, z : single) : TVector3f;
 function SetVectorI(x, y, z : integer) : TVector3i;
 function CopyVector(const _vector : TVector3f): TVector3f;
 function SetVector4f(x, y, z, w : single) : TVector4f;
@@ -127,13 +126,6 @@ begin
       Result := 4096;
 end;
 
-function SetVector(x, y, z : single) : TVector3f;
-begin
-   result.x := x;
-   result.y := y;
-   result.z := z;
-end;
-
 function SetVectorI(x, y, z : integer) : TVector3i;
 begin
    result.x := x;
@@ -191,7 +183,7 @@ end;
 // Numeric related
 function epsilon(_value: single): single;
 begin
-   if abs(_value) < 0.00001 then
+   if abs(_value) < 0.0001 then
    begin
       Result := 0;
    end

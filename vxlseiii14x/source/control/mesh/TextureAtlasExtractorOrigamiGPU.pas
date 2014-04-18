@@ -242,22 +242,30 @@ var
 begin
    // Do we have a valid triangle?
    DirTE0 := SubtractVector(_TexCoords[_Edge0], _TexCoords[_Target]);
-   if Normalize(DirTE0) = 0 then
+   if Epsilon(Normalize(DirTE0)) = 0 then
    begin
       Result := false;
       exit;
    end;
    DirE1T := SubtractVector(_TexCoords[_Target], _TexCoords[_Edge1]);
-   if Normalize(DirE1T) = 0 then
+   if Epsilon(Normalize(DirE1T)) = 0 then
    begin
       Result := false;
       exit;
    end;
-   if epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
+   if Epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
    begin
       Result := false;
       exit;
    end;
+
+   // Is the orientation correct?
+   if Epsilon(Get2DOuterProduct(_TexCoords[_Target],_TexCoords[_Edge0],_TexCoords[_Edge1])) > 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+   
    // Let's check if this UV Position will hit another UV project face.
    SetLength(TriangleData, 2);
    TriangleData[0] := _TexCoords[_Target].U;

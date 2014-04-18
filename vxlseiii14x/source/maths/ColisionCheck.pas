@@ -282,32 +282,6 @@ var
 begin
    Result := true; // assume true for optimization
 
-{
-   // Collect vertex configurations. 1 is outside and 0 is inside.
-   // Vertex 1
-   VertexConfig1 := IsVertexInsideOrOutside2DNone(_VB1, _VB2, _VA1) or (2 * IsVertexInsideOrOutside2DNone(_VB2, _VB3,_VA1)) or (4 * IsVertexInsideOrOutside2DNone(_VB3, _VB1, _VA1));
-   if VertexConfig1 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Vertex 2
-   VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA2) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA2)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA2));
-   if VertexConfig2 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Vertex 3
-   VertexConfig3 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA3) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA3)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA3));
-   if VertexConfig3 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Now let's check the triangle, if it contains the other or not.
-   if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
-   begin
-      exit;
-   end;
-}
    // Collect vertex configurations. 1 is outside and 0 is inside.
    // Vertex 1
    VertexConfig1 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB1));
@@ -330,7 +304,30 @@ begin
    // Now let's check the triangle, if it contains the other or not.
    if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
    begin
-      exit; // return true, the triangle contains the other triangle.
+      // Collect vertex configurations. 1 is outside and 0 is inside.
+      // Vertex 1
+      VertexConfig1 := IsVertexInsideOrOutside2DNone(_VB1, _VB2, _VA1) or (2 * IsVertexInsideOrOutside2DNone(_VB2, _VB3,_VA1)) or (4 * IsVertexInsideOrOutside2DNone(_VB3, _VB1, _VA1));
+      if (VertexConfig1 = 0) or (VertexConfig1 >= 16) then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Vertex 2
+      VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA2) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA2)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA2));
+      if (VertexConfig2 = 0) or (VertexConfig2 >= 16) then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Vertex 3
+      VertexConfig3 := IsVertexInsideOrOutside2DEdge(_VB1, _VB2, _VA3) or (2 * IsVertexInsideOrOutside2DEdge(_VB2, _VB3, _VA3)) or (4 * IsVertexInsideOrOutside2DEdge(_VB3, _VB1, _VA3));
+      if (VertexConfig3 = 0) or (VertexConfig3 >= 16) then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Now let's check the triangle, if it contains the other or not.
+      if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
+      begin
+         exit;
+      end;
    end;
    Result := false; // return false. There is no colision between the two triangles.
 end;
@@ -396,34 +393,31 @@ begin
    // Now let's check the triangle, if it contains the other or not.
    if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
    begin
-      exit;
+      // Collect vertex configurations. 1 is outside and 0 is inside.
+      // Vertex 1
+      VertexConfig1 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB1));
+      if VertexConfig1 = 0 then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Vertex 2
+      VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB2) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB2)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB2));
+      if VertexConfig2 = 0 then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Vertex 3
+      VertexConfig3 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB3) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB3)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB3));
+      if VertexConfig3 = 0 then
+      begin
+         exit; // return true, the vertex is inside the triangle.
+      end;
+      // Now let's check the triangle, if it contains the other or not.
+      if (VertexConfig1 and VertexConfig2 and VertexConfig3 and 7) = 0 then
+      begin
+         exit; // return true, the triangle contains the other triangle.
+      end;
    end;
-{
-   // Collect vertex configurations. 1 is outside and 0 is inside.
-   // Vertex 1
-   VertexConfig1 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB1));
-   if VertexConfig1 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Vertex 2
-   VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB2) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB2)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB2));
-   if VertexConfig2 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Vertex 3
-   VertexConfig3 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB3) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB3)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB3));
-   if VertexConfig3 = 0 then
-   begin
-      exit; // return true, the vertex is inside the triangle.
-   end;
-   // Now let's check the triangle, if it contains the other or not.
-   if (VertexConfig1 and VertexConfig2 and VertexConfig3) = 0 then
-   begin
-      exit; // return true, the triangle contains the other triangle.
-   end;
-}
    Result := false; // return false. There is no colision between the two triangles.
 end;
 

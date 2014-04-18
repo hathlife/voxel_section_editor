@@ -5,7 +5,7 @@ unit normals;
 
 interface
 
-uses BasicMathsTypes, NormalsConstants, BasicFunctions;
+uses BasicMathsTypes, NormalsConstants;
 
 const
    C_RES_INFINITE = -1;
@@ -64,6 +64,8 @@ var
    CubeNormals : TNormals;
 
 implementation
+
+uses BasicFunctions, Math3d;
 
 // Constructors
 constructor TNormals.Create;

@@ -144,7 +144,8 @@ type
 implementation
 
 uses GlobalVars, VoxelMeshGenerator, NormalsMeshPlugin, NeighborhoodDataPlugin,
-      MeshBRepGeometry, BumpMapDataPlugin, BasicConstants, BasicFunctions, NeighborDetector;
+      MeshBRepGeometry, BumpMapDataPlugin, BasicConstants, BasicFunctions,
+      Math3d, NeighborDetector;
 
 constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank);
 begin

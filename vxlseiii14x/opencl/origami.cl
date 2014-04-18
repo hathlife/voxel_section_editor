@@ -172,7 +172,13 @@ __kernel void are2DTrianglesColidingEdges(__global float * triA, __global int * 
 
 	int vertexConfig3 = isInOrOutVertexB(triA[0], triA[1], coords[triA1], coords[triA1+1], coords[v3], coords[v3+1]) | (2 * isInOrOutEdge(coords[triA1], coords[triA1+1], coords[triA2], coords[triA2+1], coords[v3], coords[v3+1])) | (4 * isInOrOutVertexA(coords[triA2], coords[triA2+1], triA[0], triA[1], coords[v3], coords[v3+1]));	
 	
-	if ( (faceAllowed[i]) && (((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) || ((vertexConfig1 | vertexConfig2 | vertexConfig3) > 7)) )
+	int vertexConfig4 = isInOrOutNone(coords[v1], coords[v1+1], coords[v2], coords[v2+1], triA[0], triA[1]) | (2 * isInOrOutNone(coords[v2], coords[v2+1], coords[v3], coords[v3+1], triA[0], triA[1])) | (4 * isInOrOutNone(coords[v3], coords[v3+1], coords[v1], coords[v1+1], triA[0], triA[1]));	
+
+	int vertexConfig5 = isInOrOutEdge(coords[v1], coords[v1+1], coords[v2], coords[v2+1], coords[triA1], coords[triA1+1]) | (2 * isInOrOutEdge(coords[v2], coords[v2+1], coords[v3], coords[v3+1], coords[triA1], coords[triA1+1])) | (4 * isInOrOutEdge(coords[v3], coords[v3+1], coords[v1], coords[v1+1], coords[triA1], coords[triA1+1]));	
+
+	int vertexConfig6 = isInOrOutEdge(coords[v1], coords[v1+1], coords[v2], coords[v2+1], coords[triA2], coords[triA2+1]) | (2 * isInOrOutEdge(coords[v2], coords[v2+1], coords[v3], coords[v3+1], coords[triA2], coords[triA2+1])) | (4 * isInOrOutEdge(coords[v3], coords[v3+1], coords[v1], coords[v1+1], coords[triA2], coords[triA2+1]));	
+	
+	if ( (faceAllowed[i]) && (((vertexConfig1 | vertexConfig2 | vertexConfig3 | vertexConfig4 | vertexConfig5 | vertexConfig6) > 16) || (((vertexConfig1 & vertexConfig2 & vertexConfig3) | (vertexConfig4 & vertexConfig5 & vertexConfig6)) == 0))) 
 	{
 		output[0] = 1;
 	}
@@ -195,7 +201,13 @@ __kernel void are2DTrianglesOverlapping(__global float * triA, __global int * ed
 
 	int vertexConfig3 = isInOrOutEdge(coords[v1], coords[v1+1], coords[v2], coords[v2+1], coords[triA2], coords[triA2+1]) | (2 * isInOrOutEdge(coords[v2], coords[v2+1], coords[v3], coords[v3+1], coords[triA2], coords[triA2+1])) | (4 * isInOrOutEdge(coords[v3], coords[v3+1], coords[v1], coords[v1+1], coords[triA2], coords[triA2+1]));	
 
-	if ( (faceAllowed[i]) && (((vertexConfig1 & vertexConfig2 & vertexConfig3) == 0) || ((vertexConfig1 | vertexConfig2 | vertexConfig3) > 7)) )
+	int vertexConfig4 = isInOrOutEdge(triA[0], triA[1], coords[triA1], coords[triA1+1], coords[v1], coords[v1+1]) | (2 * isInOrOutEdge(coords[triA1], coords[triA1+1], coords[triA2], coords[triA2+1], coords[v1], coords[v1+1])) | (4 * isInOrOutEdge(coords[triA2], coords[triA2+1], triA[0], triA[1], coords[v1], coords[v1+1]));	
+
+	int vertexConfig5 = isInOrOutEdge(triA[0], triA[1], coords[triA1], coords[triA1+1], coords[v2], coords[v2+1]) | (2 * isInOrOutEdge(coords[triA1], coords[triA1+1], coords[triA2], coords[triA2+1], coords[v2], coords[v2+1])) | (4 * isInOrOutEdge(coords[triA2], coords[triA2+1], triA[0], triA[1], coords[v2], coords[v2+1]));	
+
+	int vertexConfig6 = isInOrOutEdge(triA[0], triA[1], coords[triA1], coords[triA1+1], coords[v3], coords[v3+1]) | (2 * isInOrOutEdge(coords[triA1], coords[triA1+1], coords[triA2], coords[triA2+1], coords[v3], coords[v3+1])) | (4 * isInOrOutEdge(coords[triA2], coords[triA2+1], triA[0], triA[1], coords[v3], coords[v3+1]));	
+	
+	if ( (faceAllowed[i]) && (((vertexConfig1 | vertexConfig2 | vertexConfig3 | vertexConfig4 | vertexConfig5 | vertexConfig6) > 16) || (((vertexConfig1 & vertexConfig2 & vertexConfig3) | (vertexConfig4 & vertexConfig5 & vertexConfig6)) == 0))) 
 	{
 		output[0] = 1;
 	}

@@ -2,7 +2,7 @@ unit DifferentMeshFaceTypePlugin;
 
 interface
 
-uses MeshPluginBase, BasicMathsTypes, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
+uses MeshPluginBase, BasicMathsTypes, BasicDataTypes, GlConstants, BasicConstants,
    dglOpenGL, RenderingMachine, Material, MeshBRepGeometry;
 
 type
@@ -34,7 +34,7 @@ type
 
 implementation
 
-uses Mesh;
+uses Mesh, Math3d;
 
 constructor TDifferentMeshFaceTypePlugin.Create;
 begin

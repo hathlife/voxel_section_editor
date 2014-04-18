@@ -8,7 +8,7 @@ unit ThreeDMap;
 interface
 
 uses BasicMathsTypes, BasicDataTypes, ThreeDPointList, Normals, BasicConstants, Voxel_Engine,
-   Math, Dialogs, SysUtils, BasicFunctions;
+   Math, Dialogs, SysUtils;
 
 type
    T3DMap = class
@@ -83,6 +83,8 @@ type
    P3DMap = ^T3DMap;
 
 implementation
+
+uses Math3d, BasicFunctions;
 
 // Constructors and Destructors
 constructor T3DMap.Create(_x, _y, _z: Integer);

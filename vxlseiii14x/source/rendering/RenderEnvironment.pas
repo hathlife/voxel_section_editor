@@ -123,6 +123,8 @@ implementation
 uses FormMain;
 {$endif}
 
+uses Math3d;
+
 // Constructors;
 constructor TRenderEnvironment.Create(_Handle: Cardinal; _FirstRC: HGLRC; _width, _height : longword; const _ShaderDirectory: string);
 begin
@@ -130,7 +132,7 @@ begin
    Next := nil;
    IsEnabled := false;
    // Environment colours.
-   BackGroundColour   := SetVector(0.549,0.666,0.921); // RGB(140,170,235)
+   BackGroundColour := SetVector(0.549,0.666,0.921); // RGB(140,170,235)
    FontColour := SetVector(1,1,1);
    // Setup rendering context.
    Handle := _Handle;

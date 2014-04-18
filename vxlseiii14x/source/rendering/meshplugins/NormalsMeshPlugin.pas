@@ -2,7 +2,7 @@ unit NormalsMeshPlugin;
 
 interface
 
-uses MeshPluginBase, BasicMathsTypes, BasicDataTypes, GlConstants, BasicConstants, BasicFunctions,
+uses MeshPluginBase, BasicMathsTypes, BasicDataTypes, GlConstants, BasicConstants,
    dglOpenGL, RenderingMachine, Material, MeshBRepGeometry;
 
 type
@@ -41,7 +41,7 @@ type
 
 implementation
 
-uses Mesh;
+uses Mesh, BasicFunctions, Math3d;
 
 constructor TNormalsMeshPlugin.Create;
 begin

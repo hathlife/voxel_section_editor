@@ -44,7 +44,7 @@ type
 
 implementation
 
-uses GlobalVars, SysUtils, Math3d;
+uses GlobalVars, SysUtils, Math3d, BasicFunctions;
 
 constructor TVertexTransformationUtils.Create;
 begin
@@ -272,9 +272,10 @@ end;
 function TVertexTransformationUtils.GetArcCosineFromTangentPlane(const _Vector, _AxisX, _AxisY: TVector3f): single;
 var
    Signal : single;
+   Angle: single;
 begin
-   Signal := DotProduct(_Vector,_AxisY);
-   if Signal > 0 then
+   Signal := Epsilon(DotProduct(_Vector,_AxisY));
+   if Signal >= 0 then
    begin
       Signal := 1;
    end
@@ -282,7 +283,12 @@ begin
    begin
       Signal := -1;
    end;
-   Result := Signal * ArcCos(DotProduct(_Vector,_AxisX));
+   Angle := DotProduct(_Vector,_AxisX);
+   if Angle > 1 then
+      Angle := 1
+   else if Angle < -1 then
+      Angle := -1;
+   Result := Signal * ArcCos(Angle);
 end;
 
 function TVertexTransformationUtils.GetArcCosineFromAngleOnTangentSpace(_VI,_V1,_V2: TVector3f; _VertexNormal: TVector3f): single;

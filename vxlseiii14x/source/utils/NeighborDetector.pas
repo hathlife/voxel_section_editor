@@ -39,7 +39,7 @@ type
          procedure ReOrderVertexFace(const _Vertexes,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
          procedure ReOrderFaceVertex(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
          procedure ReOrderFaceFace(const _Vertexes,_FaceNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
-         procedure QuickSortAngles(_min, _max : integer; var _Order: auint32; const _Angles : afloat);
+         procedure QuickSortAngles(_min, _max : integer; var _Order: auint32; var _Angles : afloat);
          function GetTheVertexAfterMe(_VertexID,_VertexesPerFace: integer; const _Faces: auint32): integer;
          function GetFaceCenterPosition(_Face: integer; const _Faces:auint32; const _Vertexes: TAVector3f; _VertexesPerFace: integer): TVector3f;
          // Adds
@@ -841,7 +841,7 @@ begin
 end;
 
 // Ascending Quick Sort (To make it descending, change the > and < in both whiles)
-procedure TNeighborDetector.QuickSortAngles(_min, _max : integer; var _Order: auint32; const _Angles : afloat);
+procedure TNeighborDetector.QuickSortAngles(_min, _max : integer; var _Order: auint32; var _Angles : afloat);
 var
    Lo, Hi, Mid, T: Integer;
    A : real;
@@ -850,8 +850,8 @@ begin
    Hi := _max;
    Mid := (Lo + Hi) div 2;
    repeat
-      while (_Angles[_Order[Lo]] - _Angles[_Order[Mid]]) < 0 do Inc(Lo);
-      while (_Angles[_Order[Hi]] - _Angles[_Order[Mid]]) > 0 do Dec(Hi);
+      while (_Angles[Lo] - _Angles[Mid]) < 0 do Inc(Lo);
+      while (_Angles[Hi] - _Angles[Mid]) > 0 do Dec(Hi);
       if Lo <= Hi then
       begin
          T := _Order[Lo];
