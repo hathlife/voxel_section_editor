@@ -279,7 +279,9 @@ uses
   MeshVxt in 'source\rendering\MeshVxt.pas',
   ModelVxt in 'source\rendering\ModelVxt.pas',
   TextureAtlasExtractorOrigamiParametric in 'source\control\mesh\TextureAtlasExtractorOrigamiParametric.pas',
-  TextureAtlasExtractorOrigamiParametricCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas';
+  TextureAtlasExtractorOrigamiParametricCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas',
+  TextureAtlasExtractorOrigamiParametricSE in 'source\control\mesh\TextureAtlasExtractorOrigamiParametricSE.pas',
+  TextureAtlasExtractorOrigamiParametricSECommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricSECommand.pas';
 
 {$R *.res}
 

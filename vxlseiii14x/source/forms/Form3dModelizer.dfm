@@ -753,6 +753,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Extract Texture Atlas (Origami Parametric)'
         OnClick = TextureFXDiffuseOrigamiParametricClick
       end
+      object TextureFXDiffuseOrigamiParametricSE: TMenuItem
+        Caption = 'Extract Texture Atlas (Origami Parametric SE)'
+        OnClick = TextureFXDiffuseOrigamiParametricSEClick
+      end
       object N8: TMenuItem
         Caption = '-'
       end

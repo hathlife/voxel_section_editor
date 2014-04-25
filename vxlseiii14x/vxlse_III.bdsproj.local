@@ -442,5 +442,7 @@
     <Transaction>2014/03/25 12:35:34.491.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\rendering\ModelVxt.pas</Transaction>
     <Transaction>2014/04/04 01:22:46.504.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigamiParametric.pas</Transaction>
     <Transaction>2014/04/07 00:47:47.833.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas</Transaction>
+    <Transaction>2014/04/24 20:53:59.140.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigamiParametricSE.pas</Transaction>
+    <Transaction>2014/04/25 07:20:46.406.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\TextureAtlasExtractorOrigamiParametricSECommand.pas</Transaction>
   </Transactions>
 </BorlandProject>

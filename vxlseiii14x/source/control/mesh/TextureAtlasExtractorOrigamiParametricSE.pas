@@ -1,98 +1,139 @@
-unit TextureAtlasExtractorOrigamiParametric;
+unit TextureAtlasExtractorOrigamiParametricSE;
 
 interface
 
-uses TextureAtlasExtractorBase, TextureAtlasExtractorOrigami, BasicMathsTypes, BasicDataTypes,
-      NeighborDetector, MeshPluginBase, VertexTransformationUtils;
+uses TextureAtlasExtractorBase, TextureAtlasExtractorOrigamiParametric,
+      BasicMathsTypes, BasicDataTypes, NeighborDetector, MeshPluginBase,
+      VertexTransformationUtils;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 type
-   CTextureAtlasExtractorOrigamiParametric = class (CTextureAtlasExtractorOrigami)
+   CTextureAtlasExtractorOrigamiParametricSE = class (CTextureAtlasExtractorOrigamiParametric)
       protected
-         FAngleFactor: afloat;
+         FMaxDistortionFactor: single;
          procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
          procedure BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed); override;
          function IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean; override;
-      public
-         function GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f; override;
+         function CalculateDistortionFactor(_value: single): single;
+         procedure GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer; var _Ang0, _Ang1: single);
    end;
+
 
 implementation
 
 uses GlobalVars, Math, Math3D, ColisionCheck, MeshCurvatureMeasure, IntegerList,
    SysUtils, BasicFunctions;
 
-function CTextureAtlasExtractorOrigamiParametric.GetMeshSeeds(_MeshID: integer; var _Vertices : TAVector3f; var _FaceNormals,_VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; _VerticesPerFace: integer; var _Seeds: TSeedSet; var _VertsSeed : aint32; var _NeighborhoodPlugin: PMeshPluginBase): TAVector2f;
-var
-   i, MaxVerts, NumSeeds, ExpectedMaxFaces: integer;
-   FaceSeed : aint32;
-   FacePriority: AFloat;
-   FaceOrder : auint32;
-   CheckFace: abool;
-   FaceNeighbors, VertexNeighbors: TNeighborDetector;
-   {$ifdef ORIGAMI_TEST}
-   Temp: string;
-   {$endif}
-begin
-   SetupMeshSeeds(_Vertices,_FaceNormals,_Faces,_VerticesPerFace,_Seeds,_VertsSeed,FaceNeighbors,Result,MaxVerts,FaceSeed,FacePriority,FaceOrder,CheckFace);
-   VertexNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_VERTEX);
-   VertexNeighbors.BuildUpData(_Faces,_VerticesPerFace,High(_Vertices)+1);
-   VertexNeighbors.GetStarOrder(_Vertices, _FaceNormals, _VertsNormals, _Faces, _VerticesPerFace);
-
-   SetupAngleFactor(_Vertices, _VertsNormals, VertexNeighbors);
-   ExpectedMaxFaces := ((High(CheckFace)+1) * 2) + 1;
-   FFaceList := CIntegerList.Create;
-   FFaceList.UseFixedRAM(ExpectedMaxFaces);
-   FPreviousFaceList := CIntegerList.Create;
-   FPreviousFaceList.UseFixedRAM(ExpectedMaxFaces);
-
-   // Let's build the seeds.
-   NumSeeds := High(_Seeds)+1;
-   SetLength(_Seeds,NumSeeds + High(FaceSeed)+1);
-   for i := Low(FaceSeed) to High(FaceSeed) do
-   begin
-      if FaceSeed[FaceOrder[i]] = -1 then
-      begin
-         // Make new seed.
-         {$ifdef ORIGAMI_TEST}
-         GlobalVars.OrigamiFile.Add('Seed = ' + IntToStr(NumSeeds) + ' and i = ' + IntToStr(i));
-         {$endif}
-         _Seeds[NumSeeds] := MakeNewSeed(NumSeeds,_MeshID,FaceOrder[i],_Vertices,_FaceNormals,_VertsNormals,_VertsColours,_Faces,Result,FaceSeed,_VertsSeed,FaceNeighbors,_NeighborhoodPlugin,_VerticesPerFace,MaxVerts,CheckFace);
-         inc(NumSeeds);
-      end;
-   end;
-   SetLength(_Seeds,NumSeeds);
-
-   // Re-align vertexes and seed bounds to start at (0,0)
-   ReAlignSeedsToCenter(_Seeds,_VertsSeed,FaceNeighbors,Result,FacePriority,FaceOrder,CheckFace,_NeighborhoodPlugin);
-
-   // Clear memory
-   SetLength(FaceSeed, 0);
-   SetLength(FacePriority, 0);
-   SetLength(FaceOrder, 0);
-   SetLength(CheckFace, 0);
-   SetLength(FAngleFactor, 0);
-   FFaceList.Free;
-   FPreviousFaceList.Free;
-end;
-
-procedure CTextureAtlasExtractorOrigamiParametric.SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
+procedure CTextureAtlasExtractorOrigamiParametricSE.SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
 var
    i: integer;
    Tool: TMeshCurvatureMeasure;
+   DistortionFactor: single;
 begin
    // Obtain the parametric angle distortion factor for each vertex.
    SetLength(FAngleFactor, High(_Vertices) + 1);
    Tool := TMeshCurvatureMeasure.Create;
+   FMaxDistortionFactor := 0;
    for i := Low(FAngleFactor) to High(FAngleFactor) do
    begin
       FAngleFactor[i] := Tool.GetVertexAngleSumFactor(i, _Vertices, _VertexNormals, _VertexNeighbors);
+      DistortionFactor := CalculateDistortionFactor(FAngleFactor[i]);
+      if DistortionFactor > FMaxDistortionFactor then
+      begin
+         FMaxDistortionFactor := DistortionFactor;
+      end;
    end;
    Tool.Free;
 end;
 
-procedure CTextureAtlasExtractorOrigamiParametric.BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed);
+function CTextureAtlasExtractorOrigamiParametricSE.CalculateDistortionFactor(_value: single): single;
+begin
+   if abs(_Value) >= 1 then
+   begin
+      Result := abs(_value) - 1;
+   end
+   else
+   begin
+      Result := 1 - abs(_value);
+   end;
+end;
+
+procedure CTextureAtlasExtractorOrigamiParametricSE.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer; var _Ang0, _Ang1: single);
+const
+   C_2PI = 2 * pi;
+var
+   i: integer;
+   DirEdge,DirEdge0,DirEdge1: TVector3f;
+   AngSum, DistortionSum: single;
+   IdealAngles, OriginalAngles: afloat;
+   DistortionFactor: afloat;
+   IDs: auint32;
+begin
+   // Set memory
+   SetLength(IDs, 3);
+   SetLength(OriginalAngles, 3);
+   SetLength(IdealAngles, 3);
+   SetLength(DistortionFactor, 3);
+   IDs[0] := _Edge0;
+   IDs[1] := _Edge1;
+   IDs[2] := _Target;
+
+   // Gather basic data
+   DirEdge := SubtractVector(_Vertices[_Edge1],_Vertices[_Edge0]);
+   Normalize(DirEdge);
+   DirEdge0 := SubtractVector(_Vertices[_Target],_Vertices[_Edge0]);
+   Normalize(DirEdge0);
+   DirEdge1 := SubtractVector(_Vertices[_Target],_Vertices[_Edge1]);
+   Normalize(DirEdge1);
+   OriginalAngles[0] := ArcCos(DotProduct(DirEdge0, DirEdge));
+   OriginalAngles[1] := ArcCos(-1 * DotProduct(DirEdge1, DirEdge));
+   OriginalAngles[2] := ArcCos(DotProduct(DirEdge0, DirEdge1));
+   IdealAngles[0] := OriginalAngles[0] / FAngleFactor[GetVertexLocationID(IDs[0])];
+   IdealAngles[1] := OriginalAngles[1] / FAngleFactor[GetVertexLocationID(IDs[1])];
+   IdealAngles[2] := OriginalAngles[2] / FAngleFactor[GetVertexLocationID(IDs[2])];
+   AngSum := IdealAngles[0] + IdealAngles[1] + IdealAngles[2];
+   // Calculate resulting angles.
+   if AngSum <= C_2PI then
+   begin
+      _Ang0 := (IdealAngles[0] / AngSum) * pi;
+      _Ang1 := (IdealAngles[1] / AngSum) * pi;
+   end
+   else
+   begin
+      // We'll priorize the highest distortion factor.
+      AngSum := AngSum - C_2PI;
+      DistortionSum := 0;
+      for i := 0 to 2 do
+      begin
+         DistortionFactor[i] := FMaxDistortionFactor - CalculateDistortionFactor(FAngleFactor[GetVertexLocationID(IDs[i])]);
+         DistortionSum := DistortionSum + DistortionFactor[i];
+      end;
+      if DistortionSum > 0 then
+      begin
+         _Ang0 := IdealAngles[0] - (AngSum * (DistortionFactor[0] / DistortionSum));
+         _Ang1 := IdealAngles[1] - (AngSum * (DistortionFactor[1] / DistortionSum));
+      end
+      else
+      begin
+         _Ang0 := IdealAngles[0] - (AngSum / 3);
+         _Ang1 := IdealAngles[1] - (AngSum / 3);
+      end;
+      {$ifdef ORIGAMI_TEST}
+      AngSum := AngSum + C_2PI;
+      {$endif}
+   end;
+   // Report result if required.
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Add('Triangle with the angles: (' + FloatToStr(OriginalAngles[0]) + ', ' + FloatToStr(OriginalAngles[1]) + ', ' + FloatToStr(OriginalAngles[2]) + ') has been deformed with the angles: (' + FloatToStr(IdealAngles[0]) + ', ' + FloatToStr(IdealAngles[1]) + ', ' + FloatToStr(IdealAngles[2]) + ') and, it generates the following angles: (' + FloatToStr(_Ang0) + ', ' + FloatToStr(_Ang1) + ', ' + FloatToStr(pi - (_Ang0 + _Ang1)) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge1)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Target)]) + ') and AngleSum is ' + FloatToStr(AngSum) + ' .');
+   {$endif}
+   // Free memory.
+   SetLength(IDs, 0);
+   SetLength(IdealAngles, 0);
+   SetLength(DistortionFactor, 0);
+end;
+
+procedure CTextureAtlasExtractorOrigamiParametricSE.BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed);
 var
    v, vertex, f, FaceIndex: integer;
    Position: TVector3f;
@@ -259,21 +300,7 @@ begin
    Edge0 := _Faces[FaceIndex];
    Edge1 := _Faces[FaceIndex + 1];
 
-   DirEdge := SubtractVector(_Vertices[Edge1],_Vertices[Edge0]);
-   Normalize(DirEdge);
-   DirEdge0 := SubtractVector(_Vertices[Target],_Vertices[Edge0]);
-   Normalize(DirEdge0);
-   DirEdge1 := SubtractVector(_Vertices[Target],_Vertices[Edge1]);
-   Normalize(DirEdge1);
-   Ang0 := ArcCos(DotProduct(DirEdge0, DirEdge)) / FAngleFactor[GetVertexLocationID(Edge0)];
-   Ang1 := ArcCos(-1 * DotProduct(DirEdge1, DirEdge)) / FAngleFactor[GetVertexLocationID(Edge1)];
-   AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) / FAngleFactor[GetVertexLocationID(Target)];
-   AngSum := Ang0 + Ang1 + AngTarget;
-   Ang0 := (Ang0 / AngSum) * pi;
-   Ang1 := (Ang1 / AngSum) * pi;
-   {$ifdef ORIGAMI_TEST}
-   GlobalVars.OrigamiFile.Add('Angles (' + FloatToStr(Ang0) + ', ' + FloatToStr(Ang1) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(Edge1)]) + ') and AngleSum is ' + FloatToStr(AngSum) + ' .');
-   {$endif}
+   GetAnglesFromCoordinates(_Vertices, Edge0, Edge1, Target, Ang0, Ang1);
 
    cosAng0 := cos(Ang0);
    cosAng1 := cos(Ang1);
@@ -375,7 +402,7 @@ begin
    end;
 end;
 
-function CTextureAtlasExtractorOrigamiParametric.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
+function CTextureAtlasExtractorOrigamiParametricSE.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
 var
    Ang0,Ang1,AngTarget,AngSum,cosAng0,cosAng1,sinAng0,sinAng1,Edge0Size: single;
    DirEdge0,DirEdge1: TVector3f;
@@ -404,24 +431,7 @@ begin
       Normalize(EdgeDirectionInUV);
 
       // Find the angles of the vertexes of the main edge in Mesh.
-      DirEdge0 := SubtractVector(_Vertices[_Target],_Vertices[_Edge0]);
-      Normalize(DirEdge0);
-      DirEdge1 := SubtractVector(_Vertices[_Target],_Vertices[_Edge1]);
-      Normalize(DirEdge1);
-      Ang0 := ArcCos(DotProduct(DirEdge0, EdgeDirectionInMesh)) / FAngleFactor[GetVertexLocationID(_Edge0)];
-      Ang1 := ArcCos(-1 * DotProduct(DirEdge1, EdgeDirectionInMesh)) / FAngleFactor[GetVertexLocationID(_Edge1)];
-      AngTarget := ArcCos(DotProduct(DirEdge0, DirEdge1)) / FAngleFactor[GetVertexLocationID(_Target)];
-      {$ifdef ORIGAMI_TEST}
-      Ang0Original := Ang0 * FAngleFactor[GetVertexLocationID(_Edge0)];
-      Ang1Original := Ang1 * FAngleFactor[GetVertexLocationID(_Edge1)];
-      Ang0BB := Ang0;
-      Ang1BB := Ang1;
-      AngTargetBB := AngTarget;
-      {$endif}
-
-      AngSum := Ang0 + Ang1 + AngTarget;
-      Ang0 := (Ang0 / AngSum) * pi;
-      Ang1 := (Ang1 / AngSum) * pi;
+      GetAnglesFromCoordinates(_Vertices, _Edge0, _Edge1, _Target, Ang0, Ang1);
 
       cosAng0 := cos(Ang0);
       cosAng1 := cos(Ang1);
@@ -431,8 +441,7 @@ begin
       // We'll now use these angles to find the projection directly in UV.
       Edge0Size := (EdgeSizeInUV * sinAng1) / ((cosAng0 * sinAng1) + (cosAng1 * sinAng0));
       {$ifdef ORIGAMI_TEST}
-      AngTarget := AngTarget * FAngleFactor[GetVertexLocationID(_Target)];
-      GlobalVars.OrigamiFile.Add('Triangle with the angles: (' + FloatToStr(Ang0Original) + ', ' + FloatToStr(Ang1Original) + ', ' + FloatToStr(AngTarget) + ') has been deformed with the angles: (' + FloatToStr(Ang0BB) + ', ' + FloatToStr(Ang1BB) + ', ' + FloatToStr(AngTargetBB) + ') and, it generates the following angles: (' + FloatToStr(Ang0) + ', ' + FloatToStr(Ang1) + ', ' + FloatToStr(pi - (Ang0 + Ang1)) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge1)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Target)]) + '), Edge0Size is ' + FloatToStr(Edge0Size) + ' and AngleSum is ' + FloatToStr(AngSum) + ' .');
+      GlobalVars.OrigamiFile.Add('Edge0Size is ' + FloatToStr(Edge0Size) + '.');
       {$endif}
       if (Edge0Size <= 10) and (Edge0Size >= 0.1) then
       begin
@@ -494,6 +503,5 @@ begin
    end;
    ColisionUtil.Free;
 end;
-
 
 end.
