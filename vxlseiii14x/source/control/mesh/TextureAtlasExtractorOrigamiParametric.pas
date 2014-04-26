@@ -11,7 +11,7 @@ type
    CTextureAtlasExtractorOrigamiParametric = class (CTextureAtlasExtractorOrigami)
       protected
          FAngleFactor: afloat;
-         procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
+         procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector); virtual;
          procedure BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed); override;
          function IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean; override;
       public

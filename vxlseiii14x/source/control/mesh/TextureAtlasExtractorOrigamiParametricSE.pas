@@ -12,7 +12,7 @@ type
    CTextureAtlasExtractorOrigamiParametricSE = class (CTextureAtlasExtractorOrigamiParametric)
       protected
          FMaxDistortionFactor: single;
-         procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
+         procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector); override;
          procedure BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed); override;
          function IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean; override;
          function CalculateDistortionFactor(_value: single): single;
@@ -60,8 +60,6 @@ begin
 end;
 
 procedure CTextureAtlasExtractorOrigamiParametricSE.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer; var _Ang0, _Ang1: single);
-const
-   C_2PI = 2 * pi;
 var
    i: integer;
    DirEdge,DirEdge0,DirEdge1: TVector3f;
@@ -94,7 +92,7 @@ begin
    IdealAngles[2] := OriginalAngles[2] / FAngleFactor[GetVertexLocationID(IDs[2])];
    AngSum := IdealAngles[0] + IdealAngles[1] + IdealAngles[2];
    // Calculate resulting angles.
-   if AngSum <= C_2PI then
+   if AngSum <= pi then
    begin
       _Ang0 := (IdealAngles[0] / AngSum) * pi;
       _Ang1 := (IdealAngles[1] / AngSum) * pi;
@@ -102,7 +100,7 @@ begin
    else
    begin
       // We'll priorize the highest distortion factor.
-      AngSum := AngSum - C_2PI;
+      AngSum := AngSum - pi;
       DistortionSum := 0;
       for i := 0 to 2 do
       begin
@@ -120,7 +118,7 @@ begin
          _Ang1 := IdealAngles[1] - (AngSum / 3);
       end;
       {$ifdef ORIGAMI_TEST}
-      AngSum := AngSum + C_2PI;
+      AngSum := AngSum + pi;
       {$endif}
    end;
    // Report result if required.
