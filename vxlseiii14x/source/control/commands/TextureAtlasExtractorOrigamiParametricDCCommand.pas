@@ -1,4 +1,4 @@
-unit TextureAtlasExtractorOrigamiParametricSECommand;
+unit TextureAtlasExtractorOrigamiParametricDCCommand;
 
 interface
 
@@ -7,7 +7,7 @@ uses ControllerDataTypes, ActorActionCommandBase, Actor;
 {$INCLUDE source/Global_Conditionals.inc}
 
 type
-   TTextureAtlasExtractorOrigamiParametricSECommand = class (TActorActionCommandBase)
+   TTextureAtlasExtractorOrigamiParametricDCCommand = class (TActorActionCommandBase)
       const
          C_DEFAULT_SIZE = 1024;
       protected
@@ -19,17 +19,17 @@ type
 
 implementation
 
-uses StopWatch, TextureAtlasExtractorBase, TextureAtlasExtractorOrigamiParametricSE,
+uses StopWatch, TextureAtlasExtractorBase, TextureAtlasExtractorOrigamiParametricDC,
    TextureAtlasExtractorOrigamiGPU, GlobalVars, SysUtils;
 
-constructor TTextureAtlasExtractorOrigamiParametricSECommand.Create(var _Actor: TActor; var _Params: TCommandParams);
+constructor TTextureAtlasExtractorOrigamiParametricDCCommand.Create(var _Actor: TActor; var _Params: TCommandParams);
 begin
-   FCommandName := 'Texture Atlas Extraction Origami Parametric SE';
+   FCommandName := 'Texture Atlas Extraction Origami Parametric DC';
    ReadAttributes1Int(_Params, FSize, C_DEFAULT_SIZE);
    inherited Create(_Actor,_Params);
 end;
 
-procedure TTextureAtlasExtractorOrigamiParametricSECommand.Execute;
+procedure TTextureAtlasExtractorOrigamiParametricDCCommand.Execute;
 var
    TexExtractor : CTextureAtlasExtractorBase;
    {$ifdef SPEED_TEST}
@@ -39,12 +39,12 @@ begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);
    {$endif}
-   TexExtractor := CTextureAtlasExtractorOrigamiParametricSE.Create(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
+   TexExtractor := CTextureAtlasExtractorOrigamiParametricDC.Create(FActor.Models[0]^.LOD[FActor.Models[0]^.CurrentLOD]);
    TexExtractor.ExecuteWithDiffuseTexture(FSize);
    TexExtractor.Free;
    {$ifdef SPEED_TEST}
    StopWatch.Stop;
-   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction (origami parametric special edition) for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
+   GlobalVars.SpeedFile.Add('Texture atlas and diffuse texture extraction (origami parametric distortion control) for LOD takes: ' + FloatToStr(StopWatch.ElapsedNanoseconds) + ' nanoseconds.');
    StopWatch.Free;
    {$endif}
 end;

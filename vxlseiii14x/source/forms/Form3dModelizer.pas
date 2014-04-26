@@ -185,8 +185,8 @@ type
       TextureFXDiffuseTexture: TMenuItem;
       TextureFXTraditionalDiffuseTexture: TMenuItem;
     TextureFXDiffuseOrigamiParametric: TMenuItem;
-    TextureFXDiffuseOrigamiParametricSE: TMenuItem;
-    procedure TextureFXDiffuseOrigamiParametricSEClick(Sender: TObject);
+    TextureFXDiffuseOrigamiParametricDC: TMenuItem;
+    procedure TextureFXDiffuseOrigamiParametricDCClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiParametricClick(Sender: TObject);
       procedure TextureFXDebugClick(Sender: TObject);
       procedure TextureFXDiffuseTextureClick(Sender: TObject);
@@ -732,9 +732,9 @@ begin
    TextureFXTraditionalDiffuseTexture.Checked := true;
 end;
 
-procedure TFrm3DModelizer.TextureFXDiffuseOrigamiParametricSEClick(Sender: TObject);
+procedure TFrm3DModelizer.TextureFXDiffuseOrigamiParametricDCClick(Sender: TObject);
 begin
-   GlobalVars.ActorController.DoTextureAtlasExtractionOrigamiParametricSE(Actor, TextureSize);
+   GlobalVars.ActorController.DoTextureAtlasExtractionOrigamiParametricDC(Actor, TextureSize);
    Actor^.SetTextureNumMipMaps(NumMipMaps,C_TTP_DIFFUSE);
    UpdateRenderingCounters;
    SetColoursMode(2);
@@ -2031,7 +2031,7 @@ begin
          TextureFXDiffuseOrigami.Enabled := false;
          TextureFXDiffuseOrigamiGA.Enabled := false;
          TextureFXDiffuseOrigamiParametric.Enabled := false;
-         TextureFXDiffuseOrigamiParametricSE.Enabled := false;
+         TextureFXDiffuseOrigamiParametricDC.Enabled := false;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
          TextureFXDiffuseTexture.Enabled := false;
@@ -2055,7 +2055,7 @@ begin
          TextureFXDiffuseCustom.Enabled := true;
          TextureFXDiffuseOrigami.Enabled := true;
          TextureFXDiffuseOrigamiParametric.Enabled := true;
-         TextureFXDiffuseOrigamiParametricSE.Enabled := true;
+         TextureFXDiffuseOrigamiParametricDC.Enabled := true;
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := false;
          TextureFSExportHeightMap.Enabled := false;
@@ -2080,7 +2080,7 @@ begin
          TextureFXDiffuseCustom.Enabled := false;
          TextureFXDiffuseOrigami.Enabled := false;
          TextureFXDiffuseOrigamiParametric.Enabled := false;
-         TextureFXDiffuseOrigamiParametricSE.Enabled := false;
+         TextureFXDiffuseOrigamiParametricDC.Enabled := false;
          TextureFXDiffuseOrigamiGA.Enabled := false;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;
@@ -2105,7 +2105,7 @@ begin
          TextureFXDiffuseCustom.Enabled := true;
          TextureFXDiffuseOrigami.Enabled := true;
          TextureFXDiffuseOrigamiParametric.Enabled := true;
-         TextureFXDiffuseOrigamiParametricSE.Enabled := true;
+         TextureFXDiffuseOrigamiParametricDC.Enabled := true;
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := true;
          TextureFSExportHeightMap.Enabled := true;

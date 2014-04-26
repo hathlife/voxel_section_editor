@@ -796,7 +796,7 @@ begin
    while (_SP.V <= _FinalPos.V) do
    begin
       PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_SP.U,_SP.U + _dxs,_SP.V,_SC,_SC);
-      PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_SP.V,_EC,_EC);
+      PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_EP.V,_EC,_EC);
       _SP := SetVector(_SP.U + _dxs, _SP.V + 1);
       _EP := SetVector(_EP.U + _dxe, _EP.V + 1);
       _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
@@ -809,12 +809,12 @@ begin
    while (_SP.V <= _FinalPos.V) do
    begin
       PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_SP.U,_SP.U + _dxs,_SP.V,_SC,_SC);
-      PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_SP.V,_EC,_EC);
+      PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_EP.V,_EC,_EC);
       _SP := SetVector(_SP.U + _dxs, _SP.V + 1);
       _EP := SetVector(_EP.U + _dxe, _EP.V + 1);
       _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
       _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
-   end;
+	end;
 end;
 
 

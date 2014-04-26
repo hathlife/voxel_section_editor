@@ -1,4 +1,4 @@
-unit TextureAtlasExtractorOrigamiParametricSE;
+unit TextureAtlasExtractorOrigamiParametricDC;
 
 interface
 
@@ -9,7 +9,7 @@ uses TextureAtlasExtractorBase, TextureAtlasExtractorOrigamiParametric,
 {$INCLUDE source/Global_Conditionals.inc}
 
 type
-   CTextureAtlasExtractorOrigamiParametricSE = class (CTextureAtlasExtractorOrigamiParametric)
+   CTextureAtlasExtractorOrigamiParametricDC = class (CTextureAtlasExtractorOrigamiParametric)
       protected
          FMaxDistortionFactor: single;
          procedure SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector); override;
@@ -25,7 +25,7 @@ implementation
 uses GlobalVars, Math, Math3D, ColisionCheck, MeshCurvatureMeasure, IntegerList,
    SysUtils, BasicFunctions;
 
-procedure CTextureAtlasExtractorOrigamiParametricSE.SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
+procedure CTextureAtlasExtractorOrigamiParametricDC.SetupAngleFactor(var _Vertices : TAVector3f; var _VertexNormals : TAVector3f; var _VertexNeighbors: TNeighborDetector);
 var
    i: integer;
    Tool: TMeshCurvatureMeasure;
@@ -47,7 +47,7 @@ begin
    Tool.Free;
 end;
 
-function CTextureAtlasExtractorOrigamiParametricSE.CalculateDistortionFactor(_value: single): single;
+function CTextureAtlasExtractorOrigamiParametricDC.CalculateDistortionFactor(_value: single): single;
 begin
    if abs(_Value) >= 1 then
    begin
@@ -59,7 +59,10 @@ begin
    end;
 end;
 
-procedure CTextureAtlasExtractorOrigamiParametricSE.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer; var _Ang0, _Ang1: single);
+procedure CTextureAtlasExtractorOrigamiParametricDC.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer; var _Ang0, _Ang1: single);
+const
+   C_MIN_ANGLE = pi / 6;
+   C_HALF_MIN_ANGLE = C_MIN_ANGLE / 2;
 var
    i: integer;
    DirEdge,DirEdge0,DirEdge1: TVector3f;
@@ -92,7 +95,31 @@ begin
    IdealAngles[2] := OriginalAngles[2] / FAngleFactor[GetVertexLocationID(IDs[2])];
    AngSum := IdealAngles[0] + IdealAngles[1] + IdealAngles[2];
    // Calculate resulting angles.
-   if AngSum <= pi then
+   if AngSum < pi then
+   begin
+      // We'll priorize the highest distortion factor.
+      AngSum := pi - AngSum;
+      DistortionSum := 0;
+      for i := 0 to 2 do
+      begin
+         DistortionFactor[i] := FMaxDistortionFactor - CalculateDistortionFactor(FAngleFactor[GetVertexLocationID(IDs[i])]);
+         DistortionSum := DistortionSum + DistortionFactor[i];
+      end;
+      if DistortionSum > 0 then
+      begin
+         _Ang0 := IdealAngles[0] + (AngSum * (DistortionFactor[0] / DistortionSum));
+         _Ang1 := IdealAngles[1] + (AngSum * (DistortionFactor[1] / DistortionSum));
+      end
+      else
+      begin
+         _Ang0 := IdealAngles[0] + (AngSum / 3);
+         _Ang1 := IdealAngles[1] + (AngSum / 3);
+      end;
+      {$ifdef ORIGAMI_TEST}
+      AngSum := pi - AngSum;
+      {$endif}
+   end
+   else if AngSum = pi then
    begin
       _Ang0 := (IdealAngles[0] / AngSum) * pi;
       _Ang1 := (IdealAngles[1] / AngSum) * pi;
@@ -121,6 +148,24 @@ begin
       AngSum := AngSum + pi;
       {$endif}
    end;
+
+   // Self-Defense against absurdly deformed triangles.
+   if _Ang0 < C_MIN_ANGLE then
+   begin
+      _Ang0 := C_MIN_ANGLE;
+      _Ang1 := _Ang1 - C_HALF_MIN_ANGLE;
+   end;
+   if _Ang1 < C_MIN_ANGLE then
+   begin
+      _Ang0 := _Ang0 - C_HALF_MIN_ANGLE;
+      _Ang1 := C_MIN_ANGLE;
+   end;
+   if (pi - (_Ang0 + _Ang1)) < C_MIN_ANGLE then
+   begin
+      _Ang0 := _Ang0 - C_HALF_MIN_ANGLE;
+      _Ang1 := _Ang1 - C_HALF_MIN_ANGLE;
+   end;
+
    // Report result if required.
    {$ifdef ORIGAMI_TEST}
    GlobalVars.OrigamiFile.Add('Triangle with the angles: (' + FloatToStr(OriginalAngles[0]) + ', ' + FloatToStr(OriginalAngles[1]) + ', ' + FloatToStr(OriginalAngles[2]) + ') has been deformed with the angles: (' + FloatToStr(IdealAngles[0]) + ', ' + FloatToStr(IdealAngles[1]) + ', ' + FloatToStr(IdealAngles[2]) + ') and, it generates the following angles: (' + FloatToStr(_Ang0) + ', ' + FloatToStr(_Ang1) + ', ' + FloatToStr(pi - (_Ang0 + _Ang1)) + ') where the factors are respectively ( ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge0)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Edge1)]) + ', ' + FloatToStr(FAngleFactor[GetVertexLocationID(_Target)]) + ') and AngleSum is ' + FloatToStr(AngSum) + ' .');
@@ -131,7 +176,7 @@ begin
    SetLength(DistortionFactor, 0);
 end;
 
-procedure CTextureAtlasExtractorOrigamiParametricSE.BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed);
+procedure CTextureAtlasExtractorOrigamiParametricDC.BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed);
 var
    v, vertex, f, FaceIndex: integer;
    Position: TVector3f;
@@ -400,7 +445,7 @@ begin
    end;
 end;
 
-function CTextureAtlasExtractorOrigamiParametricSE.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
+function CTextureAtlasExtractorOrigamiParametricDC.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
 var
    Ang0,Ang1,AngTarget,AngSum,cosAng0,cosAng1,sinAng0,sinAng1,Edge0Size: single;
    DirEdge0,DirEdge1: TVector3f;
