@@ -229,6 +229,9 @@ begin
 end;
 
 function CTextureAtlasExtractorOrigamiGPU.IsValidUVTriangle(const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
+const
+   C_MIN_ANGLE = pi / 6;
+   C_HALF_MIN_ANGLE = C_MIN_ANGLE / 2;
 var
    i,v: integer;
    InputData: apointer;
@@ -238,7 +241,8 @@ var
    EdgeIDs: aint32;
    TriangleData: afloat;
    Output: integer;
-   DirTE0,DirE1T: TVector2f;
+   DirTE0,DirE1T,DirE0E1: TVector2f;
+   Ang0,Ang1,AngTarget: single;
 begin
    // Do we have a valid triangle?
    DirTE0 := SubtractVector(_TexCoords[_Edge0], _TexCoords[_Target]);
@@ -253,11 +257,6 @@ begin
       Result := false;
       exit;
    end;
-   if Epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
-   begin
-      Result := false;
-      exit;
-   end;
 
    // Is the orientation correct?
    if Epsilon(Get2DOuterProduct(_TexCoords[_Target],_TexCoords[_Edge0],_TexCoords[_Edge1])) > 0 then
@@ -265,7 +264,36 @@ begin
       Result := false;
       exit;
    end;
-   
+
+   DirE0E1 := SubtractVector(_TexCoords[_Edge1], _TexCoords[_Edge0]);
+   Normalize(DirE0E1);
+   // Are angles acceptable?
+   Ang0 := ArcCos(-1 * DotProduct(DirTE0, DirE0E1));
+   Ang1 := ArcCos(-1 * DotProduct(DirE0E1, DirE1T));
+   AngTarget := ArcCos(-1 * DotProduct(DirE1T, DirTE0));
+   if Epsilon(abs(DotProduct(DirTE0,DirE1T)) - 1) = 0 then
+   begin
+      Result := false;
+      exit;
+   end;
+
+   // Are all angles above threshold?
+   if Ang0 < C_MIN_ANGLE then
+   begin
+      Result := false;
+      exit;
+   end;
+   if Ang1 < C_MIN_ANGLE then
+   begin
+      Result := false;
+      exit;
+   end;
+   if AngTarget < C_MIN_ANGLE then
+   begin
+      Result := false;
+      exit;
+   end;
+
    // Let's check if this UV Position will hit another UV project face.
    SetLength(TriangleData, 2);
    TriangleData[0] := _TexCoords[_Target].U;
