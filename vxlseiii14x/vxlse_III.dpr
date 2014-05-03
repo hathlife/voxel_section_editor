@@ -281,7 +281,8 @@ uses
   TextureAtlasExtractorOrigamiParametric in 'source\control\mesh\TextureAtlasExtractorOrigamiParametric.pas',
   TextureAtlasExtractorOrigamiParametricCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas',
   TextureAtlasExtractorOrigamiParametricDC in 'source\control\mesh\TextureAtlasExtractorOrigamiParametricDC.pas',
-  TextureAtlasExtractorOrigamiParametricDCCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricDCCommand.pas';
+  TextureAtlasExtractorOrigamiParametricDCCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricDCCommand.pas',
+  HalfEdgePlugin in 'source\rendering\meshplugins\HalfEdgePlugin.pas';
 
 {$R *.res}
 

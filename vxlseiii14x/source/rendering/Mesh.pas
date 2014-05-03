@@ -117,6 +117,7 @@ type
          procedure AddNormalsPlugin;
          procedure AddNeighborhoodPlugin;
          procedure AddBumpMapDataPlugin;
+         procedure AddHalfEdgePlugin(_ID: integer);
          procedure RemovePlugin(_PluginType: integer);
          procedure ClearPlugins;
          function IsPluginEnabled(_PluginType: integer): boolean;
@@ -145,7 +146,7 @@ implementation
 
 uses GlobalVars, VoxelMeshGenerator, NormalsMeshPlugin, NeighborhoodDataPlugin,
       MeshBRepGeometry, BumpMapDataPlugin, BasicConstants, BasicFunctions,
-      Math3d, NeighborDetector;
+      Math3d, NeighborDetector, HalfEdgePlugin;
 
 constructor TMesh.Create(_ID,_NumVertices,_NumFaces : longword; _BoundingBox : TRectangle3f; _VerticesPerFace, _ColoursType, _NormalsType : byte; _ShaderBank : PShaderBank);
 begin
@@ -498,6 +499,10 @@ begin
          begin
             Plugins[i]^ := TNormalsMeshPlugin.Create(_Mesh.Plugins[i]^ as TNormalsMeshPlugin);
          end;
+         C_MPL_HALFEDGE:
+         begin
+            Plugins[i]^ := THalfEdgePlugin.Create(_Mesh.Plugins[i]^ as THalfEdgePlugin);
+         end;
       end;
    end;
    Next := _Mesh.Next;
@@ -717,6 +722,26 @@ begin
    ForceRefresh;
 end;
 
+procedure TMesh.AddHalfEdgePlugin(_ID: integer);
+var
+   NewPlugin : PMeshPluginBase;
+   i: integer;
+begin
+   Geometry.GoToFirstElement;
+   while i < _ID do
+   begin
+      Geometry.GoToNextElement;
+      inc(i);
+   end;
+   if Geometry.Current <> nil then
+   begin
+      new(NewPlugin);
+      NewPlugin^ := THalfEdgePlugin.Create(i,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace);
+      SetLength(Plugins,High(Plugins)+2);
+      Plugins[High(Plugins)] := NewPlugin;
+      ForceRefresh;
+   end;
+end;
 
 procedure TMesh.RemovePlugin(_PluginType: integer);
 var

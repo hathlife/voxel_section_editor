@@ -80,6 +80,7 @@ const
    C_MPL_NEIGHBOOR = 2;
    C_MPL_BUMPMAPDATA = 3;
    C_MPL_MESH = 4;
+   C_MPL_HALFEDGE = 5;
 
    // Distance Functions
 {*

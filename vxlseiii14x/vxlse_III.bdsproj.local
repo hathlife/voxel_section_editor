@@ -446,5 +446,6 @@
     <Transaction>2014/04/25 07:20:46.406.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\TextureAtlasExtractorOrigamiParametricSECommand.pas</Transaction>
     <Transaction>2014/04/26 10:43:51.953.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigamiParametricSE.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\TextureAtlasExtractorOrigamiParametricDC.pas</Transaction>
     <Transaction>2014/04/26 10:45:02.093.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\TextureAtlasExtractorOrigamiParametricSECommand.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\TextureAtlasExtractorOrigamiParametricDCCommand.pas</Transaction>
+    <Transaction>2014/05/02 14:50:12.984.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\rendering\meshplugins\HalfEdgePlugin.pas</Transaction>
   </Transactions>
 </BorlandProject>

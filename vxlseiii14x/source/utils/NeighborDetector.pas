@@ -69,6 +69,8 @@ type
          // Requests
          function GetNeighborFromID(_ID: integer): integer;
          function GetNextNeighbor: integer;
+         function GetNumNeighbors(_ID: integer): integer;
+         function GetDataSize: integer;
          // Copy
          procedure Assign(const _Source: TNeighborDetector);
    end;
@@ -944,6 +946,19 @@ begin
    end
    else
       Result := -1;
+end;
+
+function TNeighborDetector.GetNumNeighbors(_ID: integer): integer;
+begin
+   if (_ID >= 0) and (_ID <= High(FDescriptorData)) then
+   begin
+      Result := FDescriptorData[_ID].Size;
+   end;
+end;
+
+function TNeighborDetector.GetDataSize: integer;
+begin
+   Result := High(FNeighborhoodData) + 1;
 end;
 
 // Copy
