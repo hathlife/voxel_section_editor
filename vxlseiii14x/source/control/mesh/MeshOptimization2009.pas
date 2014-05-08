@@ -39,7 +39,7 @@ type
          // Miscellaneous
          function GetBorderVertexList(const _Vertices: TAVector3f; const _Faces : auint32; _VerticesPerFace : integer): abool;
       public
-         constructor Create(var _LOD: TLOD);
+         constructor Create(var _LOD: TLOD); override;
          destructor Destroy; override;
 
          property IgnoreColors: boolean read FIgnoreColours write FIgnoreColours;
@@ -544,7 +544,7 @@ var
    List : CIntegerList;
    v, Value,HitCounter : integer;
    Angle, MaxAngle : single;
-   Position,Normal,EstimatedPosition,EstimatedNormal: TVector3f;
+   Position,Normal,EstimatedPosition: TVector3f;
    TexCoordinate: TVector2f;
    VerticesBackup,NormalsBackup: TAVector3f;
    TexturesBackup: TAVector2f;

@@ -27,7 +27,7 @@ type
       public
          DistanceFunction: TDistanceFunc;
 
-         constructor Create(var _LOD: TLOD);
+         constructor Create(var _LOD: TLOD); override;
    end;
 
 implementation

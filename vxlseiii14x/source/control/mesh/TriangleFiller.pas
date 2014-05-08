@@ -820,9 +820,9 @@ end;
 
 procedure CTriangleFiller.PaintGouraudTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f);
 var
-   dx1, dx2, dx3, dr, dr1, dr2, dr3, dg, dg1, dg2, dg3, db, db1, db2, db3 : single;
-   SP, EP, PP : TVector2f;
-   SC, EC, PC : TVector3f;
+   dx1, dx2, dx3, dr1, dr2, dr3, dg1, dg2, dg3, db1, db2, db3 : single;
+   SP, EP : TVector2f;
+   SC, EC : TVector3f;
 begin
    GetGradient(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1);
    GetGradient(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2);
@@ -906,9 +906,9 @@ end;
 
 procedure CTriangleFiller.PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f);
 var
-   dx1, dx2, dx3, dr, dr1, dr2, dr3, dg, dg1, dg2, dg3, db, db1, db2, db3 : single;
-   SP, EP, PP : TVector2f;
-   SC, EC, PC : TVector3f;
+   dx1, dx2, dx3, dr1, dr2, dr3, dg1, dg2, dg3, db1, db2, db3 : single;
+   SP, EP : TVector2f;
+   SC, EC : TVector3f;
 begin
    GetGradient(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1);
    GetGradient(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2);
@@ -934,7 +934,6 @@ end;
 
 procedure CTriangleFiller.PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
 var
-   P1, P2, P3 : TVector2f;
    dx1, dx2, dx3 : single;
    Size : integer;
    S, E : TVector2f;
@@ -962,7 +961,6 @@ end;
 
 procedure CTriangleFiller.PaintBumpMapTriangle(var _Buffer: TAbstract2DImageData; const _HeightMap: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f);
 var
-   P1, P2, P3 : TVector2f;
    dx1, dx2, dx3 : single;
    Size : integer;
    S, E : TVector2f;
@@ -1052,7 +1050,6 @@ end;
 procedure CTriangleFiller.PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
 var
    P1, P2, P3 : TVector2f;
-   CX : TVector4f;
    Size : integer;
 begin
    Size := High(_Buffer[0])+1;
@@ -1212,7 +1209,6 @@ end;
 procedure CTriangleFiller.PaintTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
 var
    P1, P2, P3 : TVector2f;
-   CX : TVector4f;
    Size : integer;
 begin
    Size := _Buffer.MaxX +1;

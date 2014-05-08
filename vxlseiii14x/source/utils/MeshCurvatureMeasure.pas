@@ -35,12 +35,11 @@ function TMeshCurvatureMeasure.GetVertexCurvatureAngle(_ID: integer; const _Vert
 const
    C_DEFAULT = 999999;
 var
-   v,zeroCounter : integer;
+   v : integer;
    Direction: TVector3f;
    DotResult: single;
 begin
    Result := C_DEFAULT;
-   zeroCounter := 0;
    v := _NeighborDetector.GetNeighborFromID(_ID);
    while v <> -1 do
    begin
@@ -81,13 +80,12 @@ function TMeshCurvatureMeasure.GetVertexCurvatureLength(_ID: integer; const _Ver
 const
    C_DEFAULT = 999999;
 var
-   v,zeroCounter : integer;
+   v : integer;
    Direction: TVector3f;
    DotResult,PreviousDotResult,Length: single;
 begin
    PreviousDotResult := C_DEFAULT;
    Result := C_DEFAULT;
-   zeroCounter := 0;
    v := _NeighborDetector.GetNeighborFromID(_ID);
    while v <> -1 do
    begin
@@ -133,12 +131,11 @@ function TMeshCurvatureMeasure.GetVertexAngleSum(_ID: integer; const _Vertices, 
 const
    C_DEFAULT = 999999;
 var
-   v,vNext,firstV,zeroCounter : integer;
+   v,vNext,firstV : integer;
    Direction,DirectionNext: TVector3f;
-   DotResult,DotSum: single;
+   DotResult: single;
 begin
    Result := 0;
-   zeroCounter := 0;
    v := _NeighborDetector.GetNeighborFromID(_ID);
    if v <> -1 then
    begin

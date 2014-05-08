@@ -36,7 +36,7 @@ type
       VoxelSection : PVoxelSection;
       Quality: integer;
       // constructors and destructors
-      constructor Create(const _Filename: string; _ShaderBank : PShaderBank); overload;
+      constructor Create(const _Filename: string; _ShaderBank : PShaderBank); overload; override;
       constructor Create(const _VoxelSection: PVoxelSection; const _Palette : PPalette; _ShaderBank : PShaderBank; _Quality : integer); overload;
       constructor Create(const _Voxel: PVoxel; const _Palette : PPalette; const _HVA: PHVA; _ShaderBank : PShaderBank; _Quality : integer); overload;
       constructor Create(const _Model: TModel); overload; override;
@@ -48,9 +48,9 @@ type
       procedure RebuildCurrentLOD;
       procedure SynchronizeHVA;
       // Gets
-      function GetVoxelCount: longword; virtual;
+      function GetVoxelCount: longword; override;
       // Sets
-      procedure SetQuality(_value: integer);
+      procedure SetQuality(_value: integer); override;
       // Palette Related
       procedure ChangeRemappable (_Colour : TColor); override;
       procedure ChangePalette(const _Filename: string); override;
@@ -369,8 +369,6 @@ end;
 
 // Copies
 procedure TModelVxt.Assign(const _Model: TModel);
-var
-   i : integer;
 begin
    HVA := (_Model as TModelVxt).HVA;
    Voxel := (_Model as TModelVxt).Voxel;

@@ -147,8 +147,9 @@ end;
 // Symmetric tridiagonal QL algorithm.
 procedure TEigenValueDecomposition.tql2 ();
 var
-   i,l,m,iter,j,k : cardinal;
+   i,l,m,j,k : cardinal;
    f,tst1,eps,g,p,r,dl1,h,c,c2,c3,el1,s,s2: single;
+   //iter: cardinal;
 begin
 	//  This is derived from the Algol procedures tql2, by
 	//  Bowdler, Martin, Reinsch, and Wilkinson, Handbook for
@@ -167,6 +168,7 @@ begin
 	tst1 := 0.0;
 	eps := math.Power(2,-52.0);
 	l := 0;
+   m := 0;
    while l < FDimension do
    begin
       // Find small subdiagonal element
@@ -185,9 +187,9 @@ begin
 	// otherwise, iterate.
    if (m > l) then
    begin
-		iter := 0;
+//		iter := 0;
 		repeat
-			iter := iter + 1;  // (Could check iteration count here.)
+//			iter := iter + 1;  // (Could check iteration count here.)
 
 			// Compute implicit shift
          g := GetEigenvalues(l);
@@ -405,7 +407,7 @@ begin
          end;
       end;
    	SetEigenvalues(i, h);
-      dec(j);
+      dec(i);
    end;
 
 	// Accumulate transformations.

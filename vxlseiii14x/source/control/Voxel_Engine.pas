@@ -596,7 +596,6 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: PaintView2');
    {$endif}
-   Bitmap := nil;
    if (not Cnv.Enabled) or (not IsEditable) then
    begin // draw it empty then
       with Cnv.Canvas do
@@ -1967,9 +1966,8 @@ begin
                   image.Canvas.Pixels[z,y] := GetVXLPaletteColor(v.Normal);
          end;
       GlobalUnlock(clipboardData);
-   end;
-
-   if Vxl.View[0].GetOrient = oriY then
+   end
+   else if Vxl.View[0].GetOrient = oriY then
    begin
       image.Width := Vxl.Tailer.XSize;
       image.Height := Vxl.Tailer.ZSize;
@@ -1996,9 +1994,8 @@ begin
                   image.Canvas.Pixels[x,z] := GetVXLPaletteColor(v.Normal);
          end;
       GlobalUnlock(clipboardData);
-   end;
-
-   if Vxl.View[0].GetOrient = oriZ then
+   end
+   else if Vxl.View[0].GetOrient = oriZ then
    begin
       image.Width := Vxl.Tailer.XSize;
       image.Height := Vxl.Tailer.YSize;
@@ -2083,7 +2080,6 @@ var
    image : TBitmap;
    v : tvoxelunpacked;
 begin
-   Image := nil;
    // Security Check
    if not isEditable then exit;
 

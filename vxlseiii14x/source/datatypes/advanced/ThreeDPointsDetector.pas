@@ -93,6 +93,7 @@ begin
    if F3DMap[ix,iy,iz] <> nil then
    begin
       Element := F3DMap[ix,iy,iz];
+      Previous := nil;
       while Element <> nil do
       begin
          if (Element^.x = _x) and (Element^.y = _y) and (Element^.z = _z) then

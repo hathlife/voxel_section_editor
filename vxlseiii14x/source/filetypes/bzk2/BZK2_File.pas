@@ -660,7 +660,6 @@ end;
 // Builds
 procedure TBZK2File.BuildSectorMap;
 var
-   Sector : TBZK2Sector;
    Scale : TVector3i;
    xcount, ycount, zcount, x, y, z, xmax, ymax, zmax: Integer;
    v : TVoxelUnpacked;

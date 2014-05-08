@@ -998,7 +998,7 @@ end;
 
 procedure TGeometricAlgebra.Sum(var _Vec1: TMultiVector; const _Vec2: TMultiVector);
 var
-   i,j: cardinal;
+   i: cardinal;
    Sum: TMultiVector;
 begin
    Sum := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
@@ -1019,7 +1019,7 @@ end;
 
 function TGeometricAlgebra.GetSum(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
-   i,j: cardinal;
+   i: cardinal;
 begin
    Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
    i := 0;
@@ -1037,7 +1037,7 @@ end;
 
 procedure TGeometricAlgebra.Subtraction(var _Vec1: TMultiVector; const _Vec2: TMultiVector);
 var
-   i,j: cardinal;
+   i: cardinal;
    Subtraction: TMultiVector;
 begin
    Subtraction := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
@@ -1058,7 +1058,7 @@ end;
 
 function TGeometricAlgebra.GetSubtraction(const _Vec1,_Vec2: TMultiVector):TMultiVector;
 var
-   i,j: cardinal;
+   i: cardinal;
 begin
    Result := TMultiVector.Create(Max(_Vec1.Dimension,_Vec2.Dimension));
    i := 0;
@@ -1431,7 +1431,7 @@ end;
 
 procedure TGeometricAlgebra.Reverse(var _Vec: TMultiVector);
 var
-   i,Grade: cardinal;
+   i: cardinal;
 begin
    for i := 0 to _Vec.MaxElement do
    begin

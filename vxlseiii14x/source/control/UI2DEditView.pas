@@ -39,7 +39,6 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('UI2DEditView: PaintView2');
    {$endif}
-   Bitmap := nil;
    if (not Canvas.Enabled) or (not _IsEditable) then
    begin // draw it empty then
       with Canvas.Canvas do

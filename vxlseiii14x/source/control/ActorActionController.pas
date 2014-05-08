@@ -120,7 +120,6 @@ uses GlobalVars, ActorActionCommandBase, TextureAtlasExtractorCommand,
 // Constructors and Destructors
 destructor TActorActionController.Destroy;
 var
-   Item: TControllerObjectItem;
    i, maxi: integer;
 begin
    maxi := Objects.NumItems - 1;

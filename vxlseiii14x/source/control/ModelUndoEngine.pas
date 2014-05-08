@@ -162,6 +162,7 @@ var
    Position: integer;
 begin
    Position := _ModelID;
+   Result := nil;
    if GetPosition(Position) then
    begin
       if _NumMoves > (High(FModels[Position])+1) then

@@ -14867,15 +14867,14 @@ end;
 
 function dglGetProcAddress(ProcName: PAnsiChar; LibHandle: Pointer = nil {$IFDEF DGL_LINUX}; ForceDLSym: Boolean = False{$ENDIF}): Pointer;
 begin
-  if LibHandle = nil then
-    LibHandle := GL_LibHandle;
+   if LibHandle = nil then
+      LibHandle := GL_LibHandle;
+   Result :=  nil;
 
-  Result :=  nil;
+   {$IFDEF DGL_WIN}
+   Result := GetProcAddress(HMODULE(LibHandle), ProcName);
 
-  {$IFDEF DGL_WIN}
-    Result := GetProcAddress(HMODULE(LibHandle), ProcName);
-
-    if result <> nil then
+   if result <> nil then
       exit;
 
     if Addr(wglGetProcAddress) <> nil then
@@ -14899,10 +14898,10 @@ begin
 
     Result := dlsym(LibHandle, ProcName);
   {$ENDIF}
-  
+
   {$IFDEF DGL_MAC}
     Result := GetProcAddress(HMODULE(LibHandle), ProcName);
-  {$ENDIF}  
+  {$ENDIF}
 end;
 
 

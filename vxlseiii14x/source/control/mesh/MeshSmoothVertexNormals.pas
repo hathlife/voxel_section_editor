@@ -14,7 +14,7 @@ type
       public
          DistanceFunction: TDistanceFunc;
 
-         constructor Create(var _LOD: TLOD);
+         constructor Create(var _LOD: TLOD); override;
    end;
 
 implementation
@@ -62,14 +62,13 @@ begin
          VertexEquivalences := nil;
       end;
       MeshSmoothVertexNormalsOperation(_Mesh.Normals,_Mesh.Vertices,NumVertices,Neighbors,VertexEquivalences);
+      // Free memory
+      if NeighborhoodPlugin = nil then
+      begin
+         Neighbors.Free;
+      end;
+      _Mesh.ForceRefresh;
    end;
-
-   // Free memory
-   if NeighborhoodPlugin = nil then
-   begin
-      Neighbors.Free;
-   end;
-   _Mesh.ForceRefresh;
 end;
 
 procedure TMeshSmoothVertexNormals.MeshSmoothVertexNormalsOperation(var _Normals: TAVector3f; const _Vertices: TAVector3f; _NumVertices: integer; const _Neighbors : TNeighborDetector; const _VertexEquivalences: auint32);

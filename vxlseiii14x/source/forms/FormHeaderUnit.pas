@@ -247,7 +247,7 @@ begin
       except
          on EConvertError do
          begin
-            i:=0;
+            //i:=0;
          end;
       end;
    end;
@@ -275,7 +275,7 @@ begin
       except
          on EConvertError do
          begin
-            i:=0;
+            //i:=0;
          end;
       end;
    end;

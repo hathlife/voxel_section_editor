@@ -911,8 +911,6 @@ end;
 procedure TVoxelMeshGenerator.BuildRefinementTriangles(const _Voxel : TVoxelSection; const _Palette: TPalette; var _VertexMap : T3DVolumeGreyIntData; const _VoxelMap: TVoxelMap;  var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _NumVertices,_NumVoxels: longword; var _VertexTransformation: aint32);
 var
    x,y,z,id,OldNumVertices,VUnitPlus1: integer;
-   V : TVoxelUnpacked;
-   c: single;
    FaceConfig : integer;
    NeighbourVertexIDs: T3DIntGrid;
    TriangleList: CTriangleList;
@@ -1218,11 +1216,10 @@ end;
 
 procedure TVoxelMeshGenerator.BuildModelFromVoxelMapWithRefinementZones(const _Voxel : TVoxelSection; const _Palette : TPalette; var _Vertices: TAVector3f; var _Geometry: TMeshBRepGeometry; var _TexCoords: TAVector2f; var _NumVoxels: longword; var _VoxelMap: TVoxelMap);
 var
-   NumVertices,NumFaces : longword;
+   NumVertices : longword;
    VertexMap : T3DVolumeGreyIntData;
 //   FaceMap : T4DIntGrid;
    VertexTransformation: aint32;
-   x, y, z : longword;
 begin
    // This is the complex part of the thing. We'll map all vertices and faces
    // and make a model out of it.

@@ -35,7 +35,6 @@ var
    StopWatch : TStopWatch;
    {$endif}
    LODProcessor: TLODPostProcessing;
-   i: integer;
 begin
    {$ifdef SPEED_TEST}
    StopWatch := TStopWatch.Create(true);

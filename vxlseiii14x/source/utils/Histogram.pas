@@ -158,6 +158,7 @@ end;
 // Gets
 function THistogram.GetElement(_ID: integer): single;
 begin
+   Result := -1;
    if (_ID >= 0) and (_ID <= FElements.Last) then
    begin
       Result := (FElements as TSingleDataSet).Data[_ID];
@@ -171,6 +172,7 @@ end;
 
 function THistogram.GetCounter(_ID: integer): integer;
 begin
+   Result := -1;
    if (_ID >= 0) and (_ID <= FElements.Last) then
    begin
       Result := (FCounter as TIntDataSet).Data[_ID];

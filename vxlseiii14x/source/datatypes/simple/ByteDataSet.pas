@@ -8,9 +8,9 @@ type
    TByteDataSet = class (TAbstractDataSet)
       private
          // Gets
-         function GetData(_pos: integer): byte;
+         function GetData(_pos: integer): byte; reintroduce; overload;
          // Sets
-         procedure SetData(_pos: integer; _data: byte);
+         procedure SetData(_pos: integer; _data: byte); reintroduce; overload;
       protected
          FData : packed array of byte;
          // Gets

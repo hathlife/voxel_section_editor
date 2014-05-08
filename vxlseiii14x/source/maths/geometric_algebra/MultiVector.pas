@@ -146,7 +146,6 @@ end;
 // Sets
 procedure TMultiVector.SetDimension(_Dimension: cardinal);
 var
-   NewData: array of Single;
    NewSize,i : cardinal;
 begin
    if FDimension > 0 then

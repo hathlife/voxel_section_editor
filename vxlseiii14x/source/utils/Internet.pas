@@ -57,7 +57,6 @@ var
    f: File;
    sAppName: string;
 begin
-   result := false;
    sAppName := ExtractFileName(Application.ExeName) ;
    hSession := InternetOpen(PChar(sAppName), INTERNET_OPEN_TYPE_PRECONFIG, nil, nil, 0) ;
    try
@@ -71,12 +70,16 @@ begin
             synchronize(ForceProcessMessages);
          until BufferLen = 0;
          CloseFile(f);
-      finally
+      except
          InternetCloseHandle(hURL);
-         result := True;
-      end
+         Result := false;
+         InternetCloseHandle(hSession);
+         exit;
+      end;
+      InternetCloseHandle(hURL);
    finally
-      InternetCloseHandle(hSession)
+      InternetCloseHandle(hSession);
+      Result := true;
    end
 end;
 

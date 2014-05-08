@@ -129,9 +129,6 @@ var
    Image:   TMemoryStream;
    Decoder: TDecoder;
    ImageHeight, ImageWidth: integer;
-   Size:    longint;
-   BMI:     TBitmapInfo;
-   Bmf:     TBitmapFileHeader;
 begin
    Result := nil;
    Stream.Position := 0;
@@ -197,7 +194,6 @@ procedure TDecoder.Decode_Row(Stream: TStream; RL: integer; ScanLine: TMemoryStr
 var
    i, ByteCount, Repeats, RunLength: integer;
    b: byte;
-   NumRead: integer;
    ReadCount, Count: longint;
 begin
    ByteCount := 0;
@@ -252,7 +248,6 @@ end;
 function TDecoder.MakeBMFileHeader(Bmi: PBitmapInfo): TBitmapFileHeader;
 var
    Bmf: TBitmapFileHeader;
-   ImageSize: longint;
 begin
    with Bmf do
    begin
@@ -424,7 +419,6 @@ end;
 {R-}
 procedure TDecoder16.MakeBMIColors(Stream: TStream; BitmapInfo: PBitmapInfo);
 var
-   b:      byte;
    i:      integer;
    Header: TPCXHeader;
 begin

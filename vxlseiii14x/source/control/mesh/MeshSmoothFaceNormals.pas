@@ -14,7 +14,7 @@ type
       public
          DistanceFunction: TDistanceFunc;
 
-         constructor Create(var _LOD: TLOD);
+         constructor Create(var _LOD: TLOD); override;
    end;
 
 implementation
@@ -33,8 +33,6 @@ procedure TMeshSmoothFaceNormals.DoMeshProcessing(var _Mesh: TMesh);
 var
    Neighbors : TNeighborDetector;
    NeighborhoodPlugin : PMeshPluginBase;
-   NumVertices : integer;
-   VertexEquivalences: auint32;
 begin
    // Setup Neighbors.
    NeighborhoodPlugin := _Mesh.GetPlugin(C_MPL_NEIGHBOOR);
@@ -52,14 +50,13 @@ begin
          Neighbors.BuildUpData(_Mesh.Geometry,High(_Mesh.Vertices)+1);
       end;
       MeshSmoothFaceNormalsOperation((_Mesh.Geometry.Current^ as TMeshBRepGeometry).Normals,_Mesh.Vertices,Neighbors);
+      // Free memory
+      if NeighborhoodPlugin = nil then
+      begin
+         Neighbors.Free;
+      end;
+      _Mesh.ForceRefresh;
    end;
-
-   // Free memory
-   if NeighborhoodPlugin = nil then
-   begin
-      Neighbors.Free;
-   end;
-   _Mesh.ForceRefresh;
 end;
 
 procedure TMeshSmoothFaceNormals.MeshSmoothFaceNormalsOperation(var _FaceNormals: TAVector3f; const _Vertices: TAVector3f; const _Neighbors : TNeighborDetector);

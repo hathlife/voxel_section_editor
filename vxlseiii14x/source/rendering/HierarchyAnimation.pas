@@ -77,8 +77,6 @@ begin
 end;
 
 procedure THierarchyAnimation.Initialize;
-var
-   i: integer;
 begin
    QueryPerformanceCounter(FTransformLastChange);
    CurrentTransformationFrame := 0;

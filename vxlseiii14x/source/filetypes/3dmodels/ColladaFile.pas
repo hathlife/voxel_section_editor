@@ -185,7 +185,7 @@ end;
 
 procedure TColladaFile.SaveImagesNode(var _ParentNode: IXMLNode; const _BaseName: string);
 var
-   ImageNode,Node,ChildNode: IXMLNode;
+   ImageNode,Node: IXMLNode;
    Mesh : PColladaMeshUnit;
    UsedTextures: CIntegerSet;
    mat,tex : integer;

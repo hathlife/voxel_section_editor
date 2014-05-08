@@ -81,15 +81,11 @@ implementation
    constructor TNeighborhoodDataPlugin.Create(var _Geometry: CMeshGeometryList; _NumVertices: integer);
    var
       i : integer;
-//      Faces: auint32;
-      VerticesPerFace: integer;
    begin
       FPluginType := C_MPL_NEIGHBOOR;
       AllowRender := false;
       AllowUpdate := false;
-//      Faces := (_Geometry.Current^ as TMeshBRepGeometry).Faces;
       _Geometry.GoToFirstElement;
-      VerticesPerFace := (_Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
       VertexNeighbors := TNeighborDetector.Create;
       VertexNeighbors.BuildUpData(_Geometry,_NumVertices);
       FaceNeighbors := TNeighborDetector.Create(C_NEIGHBTYPE_VERTEX_FACE);

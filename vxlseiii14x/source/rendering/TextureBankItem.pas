@@ -108,10 +108,6 @@ begin
 end;
 
 constructor TTextureBankItem.Create(const _Texture: GLInt);
-var
-   Pixels : PByte;
-   x,xSize,ySize,BaseLevel,MaxLevel : integer;
-   tempi : PGLInt;
 begin
    glEnable(GL_TEXTURE_2D);
    glGenTextures(1, @ID);
@@ -840,8 +836,6 @@ var
    Width, Height : cardinal;
    Tempi : PGLInt;
    Data: Pointer;
-   RData,GData,BData,AData: PByte;
-   x, y: integer;
 begin
    glEnable(GL_TEXTURE_2D);
    glBindTexture(GL_TEXTURE_2D,ID);

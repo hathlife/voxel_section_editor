@@ -92,6 +92,7 @@ begin
          end;
       end;
    end;
+   Result := nil;
 end;
 
 procedure TMeshMaterial.GetTextureData(_Type: integer; var _Image: TAbstract2DImageData);

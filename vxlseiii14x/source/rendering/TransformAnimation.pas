@@ -20,7 +20,7 @@ type
          constructor Create(const _Name: string; _NumSectors, _NumFrames: integer); overload;
          constructor Create(_NumSectors, _NumFrames: integer); overload;
          constructor Create(const _Source: TTransformAnimation); overload;
-         destructor Destroy;
+         destructor Destroy; override;
          procedure InitializeTransforms(_NumSectors, _NumFrames: integer);
 
          // Execute

@@ -129,7 +129,6 @@ var
    EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
    EdgeDirectionInMesh,PositionOfTargetAtEdgeInMesh: TVector3f;
    SourceSide: single;
-   i,v: integer;
    InputData: apointer;
    InputSize, InputUnitSize: auint32;
    OutputSource: aint32;
@@ -138,6 +137,7 @@ var
    TriangleData: afloat;
    Output: integer;
 begin
+   Result := false;
    // Get edge size in mesh
    EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
    if EdgeSizeInMesh > 0 then
@@ -233,7 +233,6 @@ const
    C_MIN_ANGLE = pi / 6;
    C_HALF_MIN_ANGLE = C_MIN_ANGLE / 2;
 var
-   i,v: integer;
    InputData: apointer;
    InputSize, InputUnitSize: auint32;
    OutputSource: aint32;

@@ -76,7 +76,6 @@ end;
 procedure CBaseSet.AddBlindly (_Data : pointer);
 var
    NewPosition,Position : PPointerItem;
-   Found : boolean;
 begin
    // Now, we add the value.
    New(NewPosition);
@@ -95,9 +94,6 @@ begin
 end;
 
 function CBaseSet.Add (_Data : pointer): boolean;
-var
-   NewPosition,Position : PPointerItem;
-   Found : boolean;
 begin
    // First, we check it if we should add this value or not.
    if not IsDataInList(_Data) then

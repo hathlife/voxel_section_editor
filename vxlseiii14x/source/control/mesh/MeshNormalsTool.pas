@@ -205,7 +205,6 @@ end;
 procedure TMeshNormalsTool.GetFaceNormals(var _FaceNormals: TAVector3f; _VerticesPerFace : integer; const _Vertices: TAVector3f; const _Faces: auint32);
 var
    f,face : integer;
-   temp : TVector3f;
 begin
    if High(_FaceNormals) >= 0 then
    begin

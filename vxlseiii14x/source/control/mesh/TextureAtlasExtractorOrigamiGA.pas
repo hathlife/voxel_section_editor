@@ -115,6 +115,7 @@ var
    PlaneRotation,SegmentRotation: TMultiVector; // Versors
    ColisionCheck : CColisionCheckGA;
 begin
+   Result := false;
    ColisionCheck := CColisionCheckGA.Create(_PGA);
    // Get constants that will be required in our computation.
 

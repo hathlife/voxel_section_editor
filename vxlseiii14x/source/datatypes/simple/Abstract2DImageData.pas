@@ -201,7 +201,7 @@ end;
 // Same as the previous function, except that it swaps Y.
 procedure TAbstract2DImageData.LoadGL_RGBA(const _Data:Pointer; _Width, _Height: integer);
 var
-   x, y, Position,DataPosition: integer;
+   x, y, Position: integer;
    Data,GData,BData,AData: PByte;
 begin
    if Assigned(_Data) then

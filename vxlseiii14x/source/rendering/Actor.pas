@@ -325,8 +325,6 @@ end;
 
 // Gets
 function TActor.GetRequestUpdateWorld: boolean;
-var
-   i : integer;
 begin
    Result := RequestUpdateWorld;
    RequestUpdateWorld := false;

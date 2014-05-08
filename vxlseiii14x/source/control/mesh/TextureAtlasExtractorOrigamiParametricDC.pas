@@ -178,11 +178,9 @@ end;
 
 procedure CTextureAtlasExtractorOrigamiParametricDC.BuildFirstTriangle(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; _VerticesPerFace: integer; var _VertexUtil: TVertexTransformationUtils; var _TextureSeed: TTextureSeed);
 var
-   v, vertex, f, FaceIndex: integer;
-   Position: TVector3f;
-   DirEdge,DirEdge0,DirEdge1: TVector3f;
+   vertex, f, FaceIndex: integer;
    Target,Edge0,Edge1: integer;
-   Ang0, Ang1, AngTarget, AngSum, cosAng0, cosAng1, sinAng0, sinAng1, Edge0Size: single;
+   Ang0, Ang1, cosAng0, cosAng1, sinAng0, sinAng1, Edge0Size: single;
    UVPosition: TVector2f;
 begin
    // The first triangle is dealt in a different way.
@@ -447,18 +445,15 @@ end;
 
 function CTextureAtlasExtractorOrigamiParametricDC.IsValidUVPoint(const _Vertices: TAVector3f; const _Faces : auint32; var _TexCoords: TAVector2f; _Target,_Edge0,_Edge1,_OriginVert: integer; var _CheckFace: abool; var _UVPosition: TVector2f; _CurrentFace, _PreviousFace, _VerticesPerFace: integer): boolean;
 var
-   Ang0,Ang1,AngTarget,AngSum,cosAng0,cosAng1,sinAng0,sinAng1,Edge0Size: single;
-   DirEdge0,DirEdge1: TVector3f;
+   Ang0,Ang1,cosAng0,cosAng1,sinAng0,sinAng1,Edge0Size: single;
    EdgeSizeInMesh,EdgeSizeInUV,SinProjectionSizeInUV,ProjectionSizeInUV: single;
    EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
    EdgeDirectionInMesh: TVector3f;
    SourceSide: single;
    i,v: integer;
    ColisionUtil : CColisionCheck;//TVertexTransformationUtils;
-   {$ifdef ORIGAMI_TEST}
-   Ang0Original,Ang1Original,Ang0BB,Ang1BB,AngTargetBB: single;
-   {$endif}
 begin
+   Result := false;
    ColisionUtil := CColisionCheck.Create; //TVertexTransformationUtils.Create;
    // Get edge size in mesh
    EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);

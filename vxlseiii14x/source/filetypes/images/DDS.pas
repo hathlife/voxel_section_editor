@@ -149,7 +149,7 @@ type
          function LoadDDS(var _Stream: TStream; Var _Texture : Cardinal; _NoPicMip : Boolean; Var _Width,_Height : Integer): boolean;
          function SaveDDS(var _Stream: TStream; Var _Texture : Cardinal; _Compression : GLINT = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): boolean;
          function SaveToFile(const _Filename: string; _Texture: Cardinal): boolean; overload;
-         function SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean; overload;
+//         function SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean; overload;
    end;
 
 var
@@ -419,7 +419,7 @@ end;
 function TDDSImage.SaveDDS(var _Stream: TStream; Var _Texture : Cardinal; _Compression : GLINT = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT): boolean;
 var
    hdr: TDDSHeader;
-   Border,x, y, xSize, ySize, i, Size: Cardinal;
+   Border,x, xSize, ySize, i, Size: Cardinal;
    data,pixels: PBytes;
    tempi : PGLInt;
    IsRGBA, IsCompressed: boolean;
@@ -633,13 +633,18 @@ function TDDSImage.SaveToFile(const _Filename: string; _Texture: Cardinal): bool
 var
    MyFile: TStream;
 begin
-   Result := false;
-   MyFile := TFileStream.Create(_Filename,fmCreate);
-   SaveDDS(MyFile,_Texture);
-   MyFile.Free;
+   try
+      MyFile := TFileStream.Create(_Filename,fmCreate);
+      SaveDDS(MyFile,_Texture);
+   except
+      Result := false;
+      MyFile.Free;
+      exit;
+   end;
    Result := true;
 end;
 
+{
 function TDDSImage.SaveToFile(const _Filename: string; _Texture, _Compression: Cardinal): boolean;
 var
    Compression : TGLInt;
@@ -662,8 +667,8 @@ begin
          Compression := GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
       end;
    end;
-   SaveToFile(_Filename,_Texture,Compression);
+   Result := SaveToFile(_Filename,_Texture,Compression);
 end;
-
+}
 
 end.

@@ -165,7 +165,6 @@ end;
 
 procedure TBaseController.ProcessAllCommands;
 var
-   Item: TControllerObjectItem;
    i, maxi: integer;
 begin
    maxi := Objects.NumItems - 1;

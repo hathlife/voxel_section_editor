@@ -49,7 +49,7 @@ type
    public
       TopologyAnalyzer: CTopologyAnalyzer;
       // Constructors and Destructors.
-      constructor Create(const _Voxel: TVoxelSection; Sender: TComponent); overload;
+      constructor Create(const _Voxel: TVoxelSection; Sender: TComponent); reintroduce; overload;
       destructor Destroy; override;
   end;
 

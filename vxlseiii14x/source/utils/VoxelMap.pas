@@ -135,8 +135,6 @@ begin
 end;
 
 procedure TVoxelMap.Clear;
-var
-   x,y : integer;
 begin
    FMap.Clear;
 end;
@@ -430,8 +428,6 @@ end;
 
 // Copies
 procedure TVoxelMap.Assign(const _Map : TVoxelMap);
-var
-   x, y, z: integer;
 begin
    FBias := _Map.FBias;
    FSection := _Map.FSection;
@@ -439,8 +435,6 @@ begin
 end;
 
 function TVoxelMap.CopyMap(const _Map: T3DVolumeGreyData): T3DVolumeGreyData;
-var
-   x, y, z: integer;
 begin
    Result := T3DVolumeGreyData.Create(_Map);
 end;
@@ -1096,7 +1090,7 @@ const
 var
    Cube : TNormals;
    CurrentNormal : TVector3f;
-   x, y, z, i, j, maxi,VertexConfig,BitValue,BitCount : integer;
+   x, y, z, i, j, maxi,VertexConfig,BitValue : integer;
    RegionBitConfig: longword;
 begin
    Cube := TNormals.Create(6);

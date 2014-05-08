@@ -29,7 +29,7 @@ implementation
 // Automatic Tangent Vector generation, adapted from http://www.terathon.com/code/tangent.html
 constructor THalfEdgePlugin.Create(_ID: integer; const _Vertices: TAVector3f; const _Faces: auint32; _VerticesPerFace: integer);
 var
-   n,nBase,v,i,iNext,vNext: integer;
+   n,nBase,v,i,iNext: integer;
    Neighbors, NeighborEdge: aint32;
    NumVertices: integer;
 begin

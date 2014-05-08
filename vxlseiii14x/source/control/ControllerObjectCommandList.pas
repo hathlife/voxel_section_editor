@@ -87,7 +87,9 @@ begin
    begin
       Result := FCommands[FCurrentCommand];
       inc(FCurrentCommand);
-   end;
+   end
+   else
+      Result := nil;
 end;
 
 function TControllerObjectCommandList.HasCommandsToBeExecuted: boolean;

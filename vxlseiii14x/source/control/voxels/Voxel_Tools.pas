@@ -1004,7 +1004,7 @@ var
    PointList: array of TVector3b;
    N: TArray3i;
    Orient1,Orient2: TOrient;
-   A, NPoint, i, j, x,y,z: Integer;
+   NPoint, i, j, x,y,z: Integer;
 
    // Find adjacent face
    procedure Succeed(var P: TArray3i; var O: TOrient);

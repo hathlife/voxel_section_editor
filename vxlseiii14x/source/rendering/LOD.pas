@@ -71,7 +71,8 @@ implementation
 
 uses GlobalVars, PLYFile, MeshBRepGeometry, GlConstants, ObjFile, IntegerSet,
    StopWatch, ImageIOUtils, ImageRGBAByteData, ImageRGBAData, ImageRGBByteData,
-   ImageGreyData, Abstract2DImageData, ImageRGBData, BasicFunctions, TextureBankItem;
+   ImageGreyData, Abstract2DImageData, ImageRGBData, BasicFunctions, TextureBankItem,
+   TextureGeneratorBase;
 
 // Constructors and Destructors
 constructor TLOD.Create;
@@ -246,23 +247,20 @@ begin
 end;
 
 procedure TLOD.ExportHeightMap(const _BaseDir, _Ext : string; _previewTextures: boolean);
-var
-   DiffuseBitmap,HeightmapBitmap: TBitmap;
-//   TexGenerator: CTextureGenerator;
+//var
+//   DiffuseBitmap,HeightmapBitmap: TBitmap;
+//   TexGenerator: CTextureGeneratorBase;
 begin
-   DiffuseBitmap := Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE);
-//   TexGenerator := CTextureGenerator.Create;
+//   DiffuseBitmap := Mesh[0].Materials[0].GetTexture(C_TTP_DIFFUSE);
 //   HeightmapBitmap := TexGenerator.GenerateHeightMap(DiffuseBitmap);
-   SaveImage(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,HeightMapBitmap);
-   if (_previewTextures) then
-   begin
-      RunAProgram(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,'','');
-   end;
-//   TexGenerator.Free;
-   DiffuseBitmap.Free;
-   HeightmapBitmap.Free;
+//   SaveImage(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,HeightMapBitmap);
+//   if (_previewTextures) then
+//   begin
+//      RunAProgram(_BaseDir + Mesh[0].Name + '_heightmap.' + _Ext,'','');
+//   end;
+//   DiffuseBitmap.Free;
+//   HeightmapBitmap.Free;
 end;
-
 
 procedure TLOD.SetTextureNumMipMaps(_NumMipMaps, _TextureType: integer);
 var

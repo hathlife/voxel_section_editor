@@ -30,9 +30,9 @@ var
    EdgeDirectionInUV,PositionOfTargetAtEdgeInUV,SinDirectionInUV: TVector2f;
    EdgeDirectionInMesh,PositionOfTargetAtEdgeInMesh: TVector3f;
    SourceSide: single;
-   i,v: integer;
    ColisionUtil : CColisionCheck;
 begin
+   Result := false;
    ColisionUtil := CColisionCheck.Create;
    // Get edge size in mesh
    EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);

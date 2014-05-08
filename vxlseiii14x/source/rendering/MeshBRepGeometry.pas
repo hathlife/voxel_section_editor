@@ -83,10 +83,10 @@ type
          procedure ConvertQuadsTo48Tris(_Mesh : Pointer); overload;
          procedure UpdateNumFaces;
          // Debug
-         procedure Debug(const _Debug:TDebugFile);
-         procedure DebugFaces(const _Debug:TDebugFile);
-         procedure DebugFaceNormals(const _Debug:TDebugFile);
-         procedure DebugFaceColours(const _Debug:TDebugFile);
+         procedure Debug(const _Debug:TDebugFile); override;
+         procedure DebugFaces(const _Debug:TDebugFile); override;
+         procedure DebugFaceNormals(const _Debug:TDebugFile); override;
+         procedure DebugFaceColours(const _Debug:TDebugFile); override;
    end;
 
 implementation
@@ -351,7 +351,7 @@ const
    SQRT3 = 1.7320508075688772935274463415059;
    SQRT3DIV4 = 0.43301270189221932338186158537647;
 var
-   v,i : integer;
+   v : integer;
    EdgeSize: array of single;
    Radius,EqSide,EqArea,TriArea,s : single;
 begin
@@ -519,7 +519,6 @@ end;
 procedure TMeshBRepGeometry.ConvertVertexToFaceColours(const _VertexColours: TAVector4f);
 var
    Tool: TMeshColoursTool;
-   OriginalColours : TAVector4f;
    {$ifdef SPEED_TEST}
    StopWatch : TStopWatch;
    {$endif}

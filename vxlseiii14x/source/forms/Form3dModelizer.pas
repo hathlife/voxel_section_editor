@@ -2083,7 +2083,7 @@ begin
          TextureFXDiffuseOrigamiParametricDC.Enabled := false;
          TextureFXDiffuseOrigamiGA.Enabled := false;
          TextureFSExport.Enabled := true;
-         TextureFSExportHeightMap.Enabled := true;
+         TextureFSExportHeightMap.Enabled := false;//true;
          TextureFXDiffuseTexture.Enabled := true;
          TextureFXTraditionalDiffuseTexture.Enabled := true;
          TextureFXDebug.Enabled := true;
@@ -2108,7 +2108,7 @@ begin
          TextureFXDiffuseOrigamiParametricDC.Enabled := true;
          TextureFXDiffuseOrigamiGA.Enabled := true;
          TextureFSExport.Enabled := true;
-         TextureFSExportHeightMap.Enabled := true;
+         TextureFSExportHeightMap.Enabled := false;//true;
          TextureFXDiffuseTexture.Enabled := true;
          TextureFXTraditionalDiffuseTexture.Enabled := true;
          TextureFXDebug.Enabled := true;

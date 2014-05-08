@@ -389,6 +389,7 @@ var
    Ang0Original,Ang1Original,Ang0BB,Ang1BB,AngTargetBB: single;
    {$endif}
 begin
+   Result := false;
    ColisionUtil := CColisionCheck.Create; //TVertexTransformationUtils.Create;
    // Get edge size in mesh
    EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);

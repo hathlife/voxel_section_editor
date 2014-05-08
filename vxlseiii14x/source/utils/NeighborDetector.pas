@@ -676,7 +676,7 @@ end;
 
 procedure TNeighborDetector.ReOrderVertexFace(const _Vertexes,_VertexNormals: TAVector3f; const _Faces: auint32; _VertexesPerFace: integer);
 var
-   v,i,c : integer;
+   v,i: integer;
    Order: auint32;
    Angles: afloat;
    Util: TVertexTransformationUtils;
@@ -953,6 +953,10 @@ begin
    if (_ID >= 0) and (_ID <= High(FDescriptorData)) then
    begin
       Result := FDescriptorData[_ID].Size;
+   end
+   else
+   begin
+      Result := 0;
    end;
 end;
 

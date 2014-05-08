@@ -260,10 +260,8 @@ end;
 
 function CTextureAtlasExtractorOrigami.MakeNewSeed(_ID,_MeshID,_StartingFace: integer; var _Vertices : TAVector3f; var _FaceNormals, _VertsNormals : TAVector3f; var _VertsColours : TAVector4f; var _Faces : auint32; var _TextCoords: TAVector2f; var _FaceSeeds,_VertsSeed: aint32; const _FaceNeighbors: TNeighborDetector; var _NeighborhoodPlugin: PMeshPluginBase; _VerticesPerFace,_MaxVerts: integer; var _CheckFace: abool): TTextureSeed;
 var
-   v,f,i,imax,Value,vertex,FaceIndex,PreviousFace : integer;
+   v,f,i,imax,Value,FaceIndex,PreviousFace : integer;
    CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1: integer;
-   Angle: single;
-   Position,TriangleCenter: TVector3f;
    found: boolean;
    VertexUtil : TVertexTransformationUtils;
    CandidateUVPosition: TVector2f;
@@ -806,7 +804,6 @@ function CTextureAtlasExtractorOrigami.MakeNewSeed(_ID,_MeshID,_StartingFace: in
 var
    v, f, Value, vertex, FaceIndex, PreviousFace, VerticesPerFace : integer;
    CurrentVertex,PreviousVertex,SharedEdge0,SharedEdge1: integer;
-   Angle: single;
    Position,TriangleCenter: TVector3f;
    VertexUtil : TVertexTransformationUtils;
    CandidateUVPosition: TVector2f;
@@ -1204,6 +1201,7 @@ var
    i,v: integer;
    ColisionUtil : CColisionCheck;//TVertexTransformationUtils;
 begin
+   Result := false;
    ColisionUtil := CColisionCheck.Create; //TVertexTransformationUtils.Create;
    // Get edge size in mesh
    EdgeSizeInMesh := VectorDistance(_Vertices[_Edge0],_Vertices[_Edge1]);
@@ -1445,6 +1443,7 @@ begin
    // Real code starts here.
    // Find a vertex that is in both faces and call it _CommonVertex1
    i := 0;
+   j := 0;
    Found := false;
    while (i < _VerticesPerFace) and (not Found) do
    begin

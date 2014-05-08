@@ -117,7 +117,8 @@ type
          procedure AddNormalsPlugin;
          procedure AddNeighborhoodPlugin;
          procedure AddBumpMapDataPlugin;
-         procedure AddHalfEdgePlugin(_ID: integer);
+         procedure AddHalfEdgePlugin; overload;
+         procedure AddHalfEdgePlugin(_ID: integer); overload;
          procedure RemovePlugin(_PluginType: integer);
          procedure ClearPlugins;
          function IsPluginEnabled(_PluginType: integer): boolean;
@@ -728,6 +729,7 @@ var
    i: integer;
 begin
    Geometry.GoToFirstElement;
+   i := 0;
    while i < _ID do
    begin
       Geometry.GoToNextElement;
@@ -741,6 +743,25 @@ begin
       Plugins[High(Plugins)] := NewPlugin;
       ForceRefresh;
    end;
+end;
+
+procedure TMesh.AddHalfEdgePlugin;
+var
+   NewPlugin : PMeshPluginBase;
+   i: integer;
+begin
+   Geometry.GoToFirstElement;
+   i := 0;
+   while Geometry.Current <> nil do
+   begin
+      new(NewPlugin);
+      NewPlugin^ := THalfEdgePlugin.Create(i,Vertices,(Geometry.Current^ as TMeshBRepGeometry).Faces,(Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace);
+      SetLength(Plugins,High(Plugins)+2);
+      Plugins[High(Plugins)] := NewPlugin;
+      Geometry.GoToNextElement;
+      inc(i);
+   end;
+   ForceRefresh;
 end;
 
 procedure TMesh.RemovePlugin(_PluginType: integer);

@@ -74,12 +74,10 @@ end;
 function CVertexList.Add (_ID : integer; _x,_y,_z: single):integer;
 var
    Position,NewPosition : PVertexItem;
-   Found: boolean;
 begin
    // Ensure that no vertex will repeat.
    Position := Start;
-   Found := false;
-   while (Position <> nil) and (not Found) do
+   while (Position <> nil) do
    begin
       if Position^.x <> _x then
       begin
@@ -95,32 +93,29 @@ begin
       end
       else
       begin
-         Found := true;
          Result := Position^.ID;
+         exit;
       end;
    end;
    // Add vertex if it is not in the list.
-   if not Found then
+   New(NewPosition);
+   NewPosition^.ID := _ID;
+   NewPosition^.x := _x;
+   NewPosition^.y := _y;
+   NewPosition^.z := _z;
+   NewPosition^.Next := nil;
+   inc(FCount);
+   if Start <> nil then
    begin
-      New(NewPosition);
-      NewPosition^.ID := _ID;
-      NewPosition^.x := _x;
-      NewPosition^.y := _y;
-      NewPosition^.z := _z;
-      NewPosition^.Next := nil;
-      inc(FCount);
-      if Start <> nil then
-      begin
-         Last^.Next := NewPosition;
-      end
-      else
-      begin
-         Start := NewPosition;
-         Active := Start;
-      end;
-      Last := NewPosition;
-      Result := _ID;
+      Last^.Next := NewPosition;
+   end
+   else
+   begin
+      Start := NewPosition;
+      Active := Start;
    end;
+   Last := NewPosition;
+   Result := _ID;
 end;
 
 // Delete

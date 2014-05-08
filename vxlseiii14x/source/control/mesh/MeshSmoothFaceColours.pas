@@ -25,7 +25,7 @@ var
    NeighborhoodPlugin: PMeshPluginBase;
    NeighborDetector: TNeighborDetector;
    VertexEquivalences: auint32;
-   NumVertices,MyNumFaces: integer;
+   NumVertices: integer;
    MyFaces: auint32;
    MyFaceColours: TAVector4f;
 begin
@@ -38,7 +38,6 @@ begin
       begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceNeighbors;
          MyFaces := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaces;
-         MyNumFaces := (High(MyFaces)+1) div (_Mesh.Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace;
          MyFaceColours := TNeighborhoodDataPlugin(NeighborhoodPlugin^).QuadFaceColours;
       end
       else
@@ -46,7 +45,6 @@ begin
          NeighborDetector := TNeighborhoodDataPlugin(NeighborhoodPlugin^).FaceNeighbors;
          _Mesh.Geometry.GoToFirstElement;
          MyFaces := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).Faces;
-         MyNumFaces := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).NumFaces;
          MyFaceColours := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).Colours;
       end;
       VertexEquivalences := TNeighborhoodDataPlugin(NeighborhoodPlugin^).VertexEquivalences;
@@ -59,7 +57,6 @@ begin
       VertexEquivalences := nil;
       NumVertices := High(_Mesh.Vertices)+1;
       MyFaces := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).Faces;
-      MyNumFaces := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).NumFaces;
       MyFaceColours := (_Mesh.Geometry.Current^ as TMeshBRepGeometry).Colours;
    end;
    MeshSmoothOperation(_Mesh.Colours,MyFaceColours,_Mesh.Vertices,NumVertices,MyFaces,(_Mesh.Geometry.Current^ as TMeshBRepGeometry).VerticesPerFace,NeighborDetector,VertexEquivalences,Calculator);

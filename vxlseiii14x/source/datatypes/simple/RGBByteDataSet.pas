@@ -9,12 +9,12 @@ type
       private
          FLength : integer;
          // Gets
-         function GetData(_pos: integer): byte;
+         function GetData(_pos: integer): byte; reintroduce; overload;
          function GetRed(_pos: integer): byte;
          function GetGreen(_pos: integer): byte;
          function GetBlue(_pos: integer): byte;
          // Sets
-         procedure SetData(_pos: integer; _data: byte);
+         procedure SetData(_pos: integer; _data: byte); reintroduce; overload;
          procedure SetRed(_pos: integer; _data: byte);
          procedure SetGreen(_pos: integer; _data: byte);
          procedure SetBlue(_pos: integer; _data: byte);
