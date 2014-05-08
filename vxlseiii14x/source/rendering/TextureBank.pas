@@ -142,12 +142,10 @@ end;
 function TTextureBank.Save(var _ID: GLInt; const _Filename: string): boolean;
 var
    i : integer;
-   ID : GLInt;
 begin
    i := Search(_ID);
    if i <> -1 then
    begin
-      ID := Items[i]^.GetID;
       Items[i]^.SaveTexture(_Filename);
       Result := true;
    end

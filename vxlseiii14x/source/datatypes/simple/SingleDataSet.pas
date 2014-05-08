@@ -8,9 +8,9 @@ type
    TSingleDataSet = class (TAbstractDataSet)
       private
          // Gets
-         function GetData(_pos: integer): single; overload;
+         function GetData(_pos: integer): single; reintroduce; overload;
          // Sets
-         procedure SetData(_pos: integer; _data: single); overload;
+         procedure SetData(_pos: integer; _data: single); reintroduce; overload;
       protected
          FData : packed array of single;
          // Gets

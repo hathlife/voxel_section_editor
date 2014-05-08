@@ -75,7 +75,7 @@ end;
 // Add
 procedure CBaseSet.AddBlindly (_Data : pointer);
 var
-   NewPosition,Position : PPointerItem;
+   NewPosition : PPointerItem;
 begin
    // Now, we add the value.
    New(NewPosition);
