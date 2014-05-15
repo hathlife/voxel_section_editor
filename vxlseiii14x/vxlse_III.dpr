@@ -282,7 +282,9 @@ uses
   TextureAtlasExtractorOrigamiParametricCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricCommand.pas',
   TextureAtlasExtractorOrigamiParametricDC in 'source\control\mesh\TextureAtlasExtractorOrigamiParametricDC.pas',
   TextureAtlasExtractorOrigamiParametricDCCommand in 'source\control\commands\TextureAtlasExtractorOrigamiParametricDCCommand.pas',
-  HalfEdgePlugin in 'source\rendering\meshplugins\HalfEdgePlugin.pas';
+  HalfEdgePlugin in 'source\rendering\meshplugins\HalfEdgePlugin.pas',
+  TextureAtlasExtractorIDC in 'source\control\mesh\TextureAtlasExtractorIDC.pas',
+  OrderedWeightList in 'source\datatypes\advanced\OrderedWeightList.pas';
 
 {$R *.res}
 
