@@ -9,7 +9,9 @@ unit OrderedWeightList;
 // from a leaf.
 
 // Operations such as Add, Find and Delete happens on O(log(n)) in most of the
-// situations.
+// situations, using a fixed RAM size. If you set a low size to this structure,
+// the Add operation may take O(n), as it will try to allocate the new element
+// in the place of an element that was removed before.
 
 // Feel free to use it in your program, as long as I'm credited.
 
@@ -176,6 +178,8 @@ begin
                         end;
                         FRight[Daddy] := GrandPa;
                         FLeft[Daddy] := Result;
+                        if FPrevious[Daddy] <> -1 then
+                           FNext[FPrevious[Daddy]] := Result;
                         FNext[Result] := Daddy;
                         FPrevious[Result] := FPrevious[Daddy];
                         FPrevious[Daddy] := Result;
@@ -203,6 +207,8 @@ begin
                         FRight[GrandPa] := -1;
                         FLeft[Result] := GrandPa;
                         FRight[Result] := Daddy;
+                        if FPrevious[Daddy] <> -1 then
+                           FNext[FPrevious[Daddy]] := Result;
                         FNext[Result] := Daddy;
                         FPrevious[Result] := FPrevious[Daddy];
                         FPrevious[Daddy] := Result;
@@ -214,6 +220,8 @@ begin
                      begin
                         FLeft[Daddy] := Result;
                         FFather[Result] := Daddy;
+                        if FPrevious[Daddy] <> -1 then
+                           FNext[FPrevious[Daddy]] := Result;
                         FNext[Result] := Daddy;
                         FPrevious[Result] := FPrevious[Daddy];
                         FPrevious[Daddy] := Result;
@@ -223,6 +231,8 @@ begin
                   begin
                      FLeft[Daddy] := Result;
                      FFather[Result] := Daddy;
+                     if FPrevious[Daddy] <> -1 then
+                        FNext[FPrevious[Daddy]] := Result;
                      FNext[Result] := Daddy;
                      FPrevious[Result] := FPrevious[Daddy];
                      FPrevious[Daddy] := Result;
@@ -251,6 +261,8 @@ begin
                         FRight[GrandPa] := -1;
                         FLeft[Result] := Daddy;
                         FRight[Result] := GrandPa;
+                        if FPrevious[GrandPa] <> -1 then
+                           FNext[FPrevious[GrandPa]] := Result;
                         FNext[Result] := GrandPa;
                         FPrevious[Result] := FPrevious[GrandPa];
                         FPrevious[GrandPa] := Result;
@@ -272,6 +284,8 @@ begin
                            Root := Daddy;
                         end;
                         FRight[Daddy] := Result;
+                        if FNext[Daddy] <> -1 then
+                           FPrevious[FNext[Daddy]] := Result;
                         FPrevious[Result] := Daddy;
                         FNext[Result] := FNext[Daddy];
                         FNext[Daddy] := Result;
@@ -285,6 +299,8 @@ begin
                      begin
                         FRight[Daddy] := Result;
                         FFather[Result] := Daddy;
+                        if FNext[Daddy] <> -1 then
+                           FPrevious[FNext[Daddy]] := Result;
                         FPrevious[Result] := Daddy;
                         FNext[Result] := FNext[Daddy];
                         FNext[Daddy] := Result;
@@ -294,6 +310,8 @@ begin
                   begin
                      FRight[Daddy] := Result;
                      FFather[Result] := Daddy;
+                     if FNext[Daddy] <> -1 then
+                        FPrevious[FNext[Daddy]] := Result;
                      FPrevious[Result] := Daddy;
                      FNext[Result] := FNext[Daddy];
                      FNext[Daddy] := Result;
@@ -306,6 +324,8 @@ begin
                begin
                   FLeft[Daddy] := Result;
                   FNext[Result] := Daddy;
+                  if FPrevious[Daddy] <> -1 then
+                     FNext[FPrevious[Daddy]] := Result;
                   FPrevious[Result] := FPrevious[Daddy];
                   FPrevious[Daddy] := Result;
                end
@@ -313,6 +333,8 @@ begin
                begin
                   FRight[Daddy] := Result;
                   FPrevious[Result] := Daddy;
+                  if FNext[Daddy] <> -1 then
+                     FPrevious[FNext[Daddy]] := Result;
                   FNext[Result] := FNext[Daddy];
                   FNext[Daddy] := Result;
                end;
@@ -325,6 +347,8 @@ begin
             begin
                FLeft[Daddy] := Result;
                FNext[Result] := Daddy;
+               if FPrevious[Daddy] <> -1 then
+                  FNext[FPrevious[Daddy]] := Result;
                FPrevious[Result] := FPrevious[Daddy];
                FPrevious[Daddy] := Result;
             end
@@ -332,10 +356,27 @@ begin
             begin
                FRight[Daddy] := Result;
                FPrevious[Result] := Daddy;
+               if FNext[Daddy] <> -1 then
+                  FPrevious[FNext[Daddy]] := Result;
                FNext[Result] := FNext[Daddy];
                FNext[Daddy] := Result;
             end;
             FFather[Result] := Daddy;
+         end;
+
+         if goLeft then
+         begin
+            if IsHigher(FWeight[First],FWeight[Result]) then
+            begin
+               First := Result;
+            end;
+         end
+         else
+         begin
+            if IsHigher(FWeight[Result], FWeight[Last]) then
+            begin
+               Last := Result;
+            end;
          end;
       end
       else // this is the first element.
@@ -347,21 +388,7 @@ begin
          FNext[Result] := -1;
          FPrevious[Result] := -1;
       end;
-      if goLeft then
-      begin
-         if not IsHigher(FWeight[First],FWeight[Result]) then
-         begin
-            First := Result;
-         end;
-      end
-      else
-      begin
-         if IsHigher(FWeight[Last],FWeight[Result]) then
-         begin
-            Last := Result;
-         end;
-      end;
-
+      inc(NextID);
    end;
    // else, the element cannot be added and it will return -1.
 end;
@@ -385,16 +412,12 @@ begin
             begin
                FLeft[Daddy] := -1;
                IsLeftSon := true;
-               if First = _ID then
-                  First := Daddy;
                Brother := FRight[Daddy];
             end
             else
             begin
                FRight[Daddy] := -1;
                IsLeftSon := false;
-               if Last = _ID then
-                  Last := Daddy;
                Brother := FLeft[Daddy];
             end;
             // Reballance the binary tree if possible.
@@ -433,8 +456,6 @@ begin
                            FRight[Brother] := GrandPa;
                            FFather[Daddy] := Brother;
                            FFather[GrandPa] := Brother;
-                           if First = _ID then
-                              First := Daddy;
                         end
                         else
                         begin
@@ -547,10 +568,7 @@ begin
             else
             begin
                Root := FLeft[_ID];
-            end;
-            if Last = _ID then
-            begin
-               Last := FLeft[_ID];
+               FFather[Root] := -1;
             end;
          end
          else if (FRight[_ID] <> -1) and (FLeft[_ID] = -1) then
@@ -569,11 +587,8 @@ begin
             end
             else
             begin
-               Root := FLeft[_ID];
-            end;
-            if First = _ID then
-            begin
-               First := FRight[_ID];
+               Root := FRight[_ID];
+               FFather[Root] := -1;
             end;
          end
          else
@@ -651,6 +666,14 @@ begin
          end;
       end;
 
+      if First = _ID then
+      begin
+         First := FNext[_ID];
+      end;
+      if Last = _ID then
+      begin
+         Last := FPrevious[_ID];
+      end;
       FLeft[_ID] := -1;
       FRight[_ID] := -1;
       FFather[_ID] := -1;
@@ -680,6 +703,8 @@ begin
       FLeft[i] := -1;
       FRight[i] := -1;
       FFather[i] := -1;
+      FNext[i] := -1;
+      FPrevious[i] := -1;
    end;
 end;
 
@@ -692,6 +717,8 @@ begin
       SetLength(FRight, _Value);
       SetLength(FFather, _Value);
       SetLength(FWeight, _Value);
+      SetLength(FNext, _Value);
+      SetLength(FPrevious, _Value);
       ClearBuffers;
    end;
 end;
@@ -761,12 +788,12 @@ end;
 // Comparisons
 function COrderedWeightList.IsHigherAscendent(_value1, _value2: single): boolean;
 begin
-   Result := _Value2 >= _Value1;
+   Result := _Value1 >= _Value2;
 end;
 
 function COrderedWeightList.IsHigherDescendent(_value1, _value2: single): boolean;
 begin
-   Result := _Value1 >= _Value2;
+   Result := _Value2 >= _Value1;
 end;
 
 // Misc

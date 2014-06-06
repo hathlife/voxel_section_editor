@@ -47,6 +47,7 @@ type
          C_TextureAtlasExtractionOrigamiGA = $10A03;
          C_TextureAtlasExtractionOrigamiParametric = $10A04;
          C_TextureAtlasExtractionOrigamiParametricDC = $10A05;
+         C_TextureAtlasExtractionIDC = $10A06;
          C_DiffuseTextureGeneration = $10B01;
          C_NormalMappingTextureGeneration = $10B02;
          C_BumpMappingTextureGeneration = $10B03;
@@ -91,6 +92,7 @@ type
          procedure DoTextureAtlasExtractionOrigamiGA(var _Actor: PActor; _Size: integer);
          procedure DoTextureAtlasExtractionOrigamiParametric(var _Actor: PActor; _Size: integer);
          procedure DoTextureAtlasExtractionOrigamiParametricDC(var _Actor: PActor; _Size: integer);
+         procedure DoTextureAtlasExtractionIDC(var _Actor: PActor; _Size: integer);
          procedure DoDiffuseTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
          procedure DoNormalMappingTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
          procedure DoBumpMappingTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer; _Scale: single);
@@ -114,7 +116,8 @@ uses GlobalVars, ActorActionCommandBase, TextureAtlasExtractorCommand,
    MeshSetFaceNormalsCommand, MeshSetVertexColoursCommand, MeshSetFaceColoursCommand,
    ModelRebuildCommand, DiffuseDebugTextureGeneratorCommand,
    MeshOptimization2009Command, ModelChangeRemappableCommand,
-   TextureAtlasExtractorOrigamiParametricCommand, TextureAtlasExtractorOrigamiParametricDCCommand;
+   TextureAtlasExtractorOrigamiParametricCommand, TextureAtlasExtractorOrigamiParametricDCCommand,
+   TextureAtlasExtractorIDCCommand;
 
 
 // Constructors and Destructors
@@ -176,6 +179,10 @@ begin
       C_TextureAtlasExtractionOrigamiParametricDC:
       begin
          Command := TTextureAtlasExtractorOrigamiParametricDCCommand.Create(Actor,_Parameters);
+      end;
+      C_TextureAtlasExtractionIDC:
+      begin
+         Command := TTextureAtlasExtractorIDCCommand.Create(Actor,_Parameters);
       end;
       C_DiffuseTextureGeneration:
       begin
@@ -444,6 +451,11 @@ end;
 procedure TActorActionController.DoTextureAtlasExtractionOrigamiParametricDC(var _Actor: PActor; _Size: integer);
 begin
    SendCommand1Int(C_TextureAtlasExtractionOrigamiParametricDC, _Actor, _Size);
+end;
+
+procedure TActorActionController.DoTextureAtlasExtractionIDC(var _Actor: PActor; _Size: integer);
+begin
+   SendCommand1Int(C_TextureAtlasExtractionIDC, _Actor, _Size);
 end;
 
 procedure TActorActionController.DoDiffuseTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);

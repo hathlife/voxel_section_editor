@@ -18,7 +18,8 @@ type
          function GetVertexCurvatureAngle(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
          function GetVertexCurvatureLength(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
          function GetVertexAngleSum(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
-         function GetVertexAngleSumFactor(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single;
+         function GetVertexAngleSumFactor(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): single; overload;
+         function GetVertexAngleSumFactor(_Factor: single): single; overload;
 
          // Just check if it is convex, concave or something else.
          function GetVertexClassification(_ID: integer; const _Vertices, _VertexNormals: TAVector3f; const _NeighborDetector : TNeighborDetector): integer;
@@ -167,6 +168,13 @@ const
    C_2PI = 2 * pi;
 begin
    Result := epsilon((GetVertexAngleSum(_ID, _Vertices, _VertexNormals, _NeighborDetector) / C_2PI) - 1) + 1;
+end;
+
+function TMeshCurvatureMeasure.GetVertexAngleSumFactor(_Factor: single): single;
+const
+   C_2PI = 2 * pi;
+begin
+   Result := epsilon((_Factor / C_2PI) - 1) + 1;
 end;
 
 

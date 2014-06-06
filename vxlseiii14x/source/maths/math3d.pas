@@ -11,7 +11,8 @@ const
   M_PI_180 = 0.017453292519943295769236907684886;
 
 
-function GetVectorLength(const _v: TVector3f): single;
+function GetVectorLength(const _v: TVector2f): single; overload;
+function GetVectorLength(const _v: TVector3f): single; overload;
 function VectorDistance(const v1, v2 : TVector2f) : Single; overload;
 function VectorDistance(const v1, v2 : TVector3f) : Single; overload;
 function DEG2RAD(a : single) : single;
@@ -89,6 +90,11 @@ end;
 function GetVectorLength(const _v: TVector3f): single;
 begin
    Result := sqrt((_v.X * _v.X) + (_v.Y * _v.Y) + (_v.Z * _v.Z));
+end;
+
+function GetVectorLength(const _v: TVector2f): single;
+begin
+   Result := sqrt((_v.U * _v.U) + (_v.V * _v.V));
 end;
 
 function SetVector(const v : TVector2f) : TVector2f;

@@ -757,6 +757,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Extract Texture Atlas (Origami Parametric DC)'
         OnClick = TextureFXDiffuseOrigamiParametricDCClick
       end
+      object TextureFXDiffuseIDC: TMenuItem
+        Caption = 'Extract Texture Atlas (Intense Distortion Control)'
+        OnClick = TextureFXDiffuseIDCClick
+      end
       object N8: TMenuItem
         Caption = '-'
       end

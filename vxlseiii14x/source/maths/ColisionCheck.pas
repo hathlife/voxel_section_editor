@@ -20,6 +20,8 @@ type
          function Are2DTrianglesColidingEdgesQuick(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
          function Are2DTrianglesOverlapping(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
          function Are2DTrianglesOverlappingQuick(const _VA1, _VA2, _VA3, _VB1, _VB2, _VB3: TVector2f): boolean;
+         function Is2DTriangleColidingEdge(const _VA1, _VA2, _VA3, _VB1, _VB2: TVector2f): boolean;
+         function Is2DTriangleOverlappingEdge(const _VA1, _VA2, _VA3, _VB1, _VB2: TVector2f): boolean;
          function Is2DPointInsideTriangle(const _V, _V1, _V2, _V3: TVector2f): boolean;
          function Is2DTriangleColidingWithMesh(const _V1, _V2, _V3: TVector2f; const _Coords: TAVector2f; const _Faces: auint32; const _AllowedFaces: abool): boolean;
          function Is2DTriangleColidingWithMeshMT(const _V1, _V2, _V3: TVector2f; const _Coords: TAVector2f; const _Faces: auint32; const _AllowedFaces: abool): boolean;
@@ -453,6 +455,61 @@ begin
    end;
    Result := false; // return false. There is no colision between the two triangles.
 end;
+
+function CColisionCheck.Is2DTriangleColidingEdge(const _VA1, _VA2, _VA3, _VB1, _VB2: TVector2f): boolean;
+var
+   VertexConfig1,VertexConfig2: byte;
+begin
+   Result := true; // assume true for optimization
+
+   // Collect vertex configurations. 1 is outside and 0 is inside.
+   // Vertex 1
+   VertexConfig1 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB1));
+   if (VertexConfig1 = 0) or (VertexConfig1 >= 16) then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 2
+   VertexConfig2 := IsVertexInsideOrOutside2DV2(_VA1, _VA2, _VB2) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB2)) or (4 * IsVertexInsideOrOutside2DV1(_VA3, _VA1, _VB2));
+   if (VertexConfig2 = 0) or (VertexConfig2 >= 16) then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Now let's check the triangle, if it contains the other or not.
+   if (VertexConfig1 and VertexConfig2) = 0 then
+   begin
+      exit;
+   end;
+   Result := false; // return false. There is no colision between the two triangles.
+end;
+
+function CColisionCheck.Is2DTriangleOverlappingEdge(const _VA1, _VA2, _VA3, _VB1, _VB2: TVector2f): boolean;
+var
+   VertexConfig1,VertexConfig2: byte;
+begin
+   Result := true; // assume true for optimization
+
+   // Collect vertex configurations. 1 is outside and 0 is inside.
+   // Vertex 1
+   VertexConfig1 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB1) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3,_VB1)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB1));
+   if VertexConfig1 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Vertex 2
+   VertexConfig2 := IsVertexInsideOrOutside2DEdge(_VA1, _VA2, _VB2) or (2 * IsVertexInsideOrOutside2DEdge(_VA2, _VA3, _VB2)) or (4 * IsVertexInsideOrOutside2DEdge(_VA3, _VA1, _VB2));
+   if VertexConfig2 = 0 then
+   begin
+      exit; // return true, the vertex is inside the triangle.
+   end;
+   // Now let's check the triangle, if it contains the other or not.
+   if (VertexConfig1 and VertexConfig2 and 7) = 0 then
+   begin
+      exit; // return true, the triangle contains the other triangle.
+   end;
+   Result := false; // return false. There is no colision between the two triangles.
+end;
+
 
 function CColisionCheck.Is2DPointInsideTriangle(const _V, _V1, _V2, _V3: TVector2f): boolean;
 var
