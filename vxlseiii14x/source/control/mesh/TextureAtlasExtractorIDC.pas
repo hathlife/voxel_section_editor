@@ -894,13 +894,13 @@ begin
       begin
          Found := true;
          i := _Opposites[minpface + j] mod _VerticesPerFace;
-         _CommonVertex1 := _Faces[minpface + j]; //_Faces[mincface + i];
-         _CommonVertex2 := _Faces[minpface + ((j + 1) mod _VerticesPerFace)]; //_Faces[mincface + ((i + 1) mod _VerticesPerFace)];
+         _CommonVertex2 := _Faces[minpface + j]; //_Faces[mincface + i];
+         _CommonVertex1 := _Faces[minpface + ((j + 1) mod _VerticesPerFace)]; //_Faces[mincface + ((i + 1) mod _VerticesPerFace)];
          _inFaceCurrVertPosition := (i + 2) mod _VerticesPerFace;
          _CurrentVertex := _Faces[mincface + _inFaceCurrVertPosition];
          _PreviousVertex := _Faces[minpface + ((j + 2) mod _VerticesPerFace)];
-         _Faces[mincface + ((_inFaceCurrVertPosition + 1) mod _VerticesPerFace)] := _CommonVertex2;
-         _Faces[mincface + ((_inFaceCurrVertPosition + 2) mod _VerticesPerFace)] := _CommonVertex1;
+         _Faces[mincface + ((_inFaceCurrVertPosition + 1) mod _VerticesPerFace)] := _CommonVertex1;
+         _Faces[mincface + ((_inFaceCurrVertPosition + 2) mod _VerticesPerFace)] := _CommonVertex2;
       end
       else
          inc(j);
