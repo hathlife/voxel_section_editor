@@ -138,10 +138,10 @@ begin
    SetLength(FAngleFactor, High(_Vertices)+1);
    for i := Low(FMeshAngleCount) to High(FMeshAngleCount) do
    begin
-      FMeshAngleCount[i] := C_2PI;
-      FParamAngleCount[i] := Tool.GetVertexAngleSum(i, _Vertices, _VertsNormals, (_NeighborhoodPlugin^ as TNeighborhoodDataPlugin).VertexNeighbors);
+      FParamAngleCount[i] := C_2PI;
+      FMeshAngleCount[i] := Tool.GetVertexAngleSum(i, _Vertices, _VertsNormals, (_NeighborhoodPlugin^ as TNeighborhoodDataPlugin).VertexNeighbors);
       FVertNeighborsLeft[i] := (_NeighborhoodPlugin^ as TNeighborhoodDataPlugin).VertexNeighbors.GetNumNeighbors(i);
-      FAngleFactor[i] := Tool.GetVertexAngleSumFactor(FParamAngleCount[i]);
+      FAngleFactor[i] := Tool.GetVertexAngleSumFactor(FMeshAngleCount[i]);
    end;
    Tool.Free;
 
@@ -732,6 +732,8 @@ begin
    end
    else
       Result := 0;
+
+   Result := Result * Result; // Ok, make it quadratic :P.
 end;
 
 procedure CTextureAtlasExtractorIDC.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer);
@@ -1060,12 +1062,18 @@ begin
    if _Faces[i] <> _Faces[FaceIndex + v] then
    begin
       Result := false;
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('New triangle has an undesirable configuration.');
+      {$endif}
       exit;
    end;
    i := OppFaceIndex + ((i + 2) mod _VerticesPerFace);
    if _Faces[i] <> _Faces[FaceIndex + ((v + 1) mod _VerticesPerFace)] then
    begin
       Result := false;
+      {$ifdef ORIGAMI_TEST}
+      GlobalVars.OrigamiFile.Add('New triangle has an undesirable configuration.');
+      {$endif}
       exit;
    end;
 
