@@ -703,9 +703,9 @@ begin
    FParamAngleCount[_Edge0] := FParamAngleCount[_Edge0] - FUVAng0;
    FParamAngleCount[_Edge1] := FParamAngleCount[_Edge1] - FUVAng1;
    FParamAngleCount[_Target] := FParamAngleCount[_Target] - FUVAngTarget;
-   FAngleFactor[_Edge0] := epsilon((FParamAngleCount[_Edge0] / FMeshAngleCount[GetVertexLocationID(_Edge0)]) - 1) + 1;
-   FAngleFactor[_Edge1] := epsilon((FParamAngleCount[_Edge1] / FMeshAngleCount[GetVertexLocationID(_Edge1)]) - 1) + 1;
-   FAngleFactor[_Target] := epsilon((FParamAngleCount[_Target] / FMeshAngleCount[GetVertexLocationID(_Target)]) - 1) + 1;
+   FAngleFactor[_Edge0] := epsilon((FMeshAngleCount[GetVertexLocationID(_Edge0)] / FParamAngleCount[_Edge0]) - 1) + 1;
+   FAngleFactor[_Edge1] := epsilon((FMeshAngleCount[GetVertexLocationID(_Edge1)] / FParamAngleCount[_Edge1]) - 1) + 1;
+   FAngleFactor[_Target] := epsilon((FMeshAngleCount[GetVertexLocationID(_Target)] / FParamAngleCount[_Target]) - 1) + 1;
    dec(FVertNeighborsLeft[GetVertexLocationID(_Edge0)]);
    dec(FVertNeighborsLeft[GetVertexLocationID(_Edge1)]);
    dec(FVertNeighborsLeft[GetVertexLocationID(_Target)]);
@@ -716,24 +716,24 @@ end;
 function CTextureAtlasExtractorIDC.GetDistortionFactor(_ID:integer; _Angle: single): single;
 var
    AvgAngle: single;
+   NumNeighborsFactor: integer;
 begin
-   AvgAngle := (FParamAngleCount[_ID] - _Angle) / (FVertNeighborsLeft[_ID] -1);
+   NumNeighborsFactor := (FVertNeighborsLeft[_ID] -1);
+   AvgAngle := (FParamAngleCount[_ID] - _Angle) / NumNeighborsFactor;
    if AvgAngle < C_MIN_ANGLE then
    begin
       Result := 0;
    end
    else if AvgAngle < C_IDEAL_ANGLE  then
    begin
-      Result := (AvgAngle - C_MIN_ANGLE) / (C_MIN_TO_IDEAL_ANGLE_INTERVAL);
+      Result := ((AvgAngle - C_MIN_ANGLE) / (C_MIN_TO_IDEAL_ANGLE_INTERVAL)) * (NumNeighborsFactor * NumNeighborsFactor);
    end
    else if AvgAngle < C_MAX_ANGLE  then
    begin
-      Result := 1 - ((AvgAngle - C_IDEAL_ANGLE) / (C_IDEAL_TO_MAX_ANGLE_INTERVAL));
+      Result := (1 - ((AvgAngle - C_IDEAL_ANGLE) / (C_IDEAL_TO_MAX_ANGLE_INTERVAL))) * (NumNeighborsFactor * NumNeighborsFactor);
    end
    else
       Result := 0;
-
-   Result := Result * Result; // Ok, make it quadratic :P.
 end;
 
 procedure CTextureAtlasExtractorIDC.GetAnglesFromCoordinates(const _Vertices: TAVector3f; _Edge0, _Edge1, _Target: integer);
@@ -1080,24 +1080,21 @@ begin
 
 
    // Are all angles above threshold?
-{
-   if FUVAng0 < C_MIN_ANGLE then
+   if FUVAng0 < C_HALF_MIN_ANGLE then
    begin
       Result := false;
       exit;
    end;
-   if FUVAng1 < C_MIN_ANGLE then
+   if FUVAng1 < C_HALF_MIN_ANGLE then
    begin
       Result := false;
       exit;
    end;
-   if FUVAngTarget < C_MIN_ANGLE then
+   if FUVAngTarget < C_HALF_MIN_ANGLE then
    begin
       Result := false;
       exit;
    end;
-}
-
 
 
    DirMeshE0E1 := SubtractVector(_Vertices[_Edge1],_Vertices[_Edge0]);
