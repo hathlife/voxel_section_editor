@@ -66,6 +66,7 @@ object FrmAutoNormals: TFrmAutoNormals
     Height = 148
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Normalization Method:'
+    ParentBackground = False
     TabOrder = 0
     object RbInfluence: TRadioButton
       Left = 16
@@ -154,8 +155,8 @@ object FrmAutoNormals: TFrmAutoNormals
     Height = 170
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Influence Normalizer Options...'
+    ParentBackground = False
     TabOrder = 1
-    ExplicitTop = 350
     object Label1: TLabel
       Left = 8
       Top = 24
@@ -300,7 +301,6 @@ object FrmAutoNormals: TFrmAutoNormals
     Caption = 'OK'
     TabOrder = 2
     OnClick = BtOKClick
-    ExplicitTop = 528
   end
   object BtCancel: TButton
     Left = 298
@@ -311,7 +311,6 @@ object FrmAutoNormals: TFrmAutoNormals
     Caption = 'Cancel'
     TabOrder = 3
     OnClick = BtCancelClick
-    ExplicitTop = 528
   end
   object BtTips: TButton
     Left = 8
@@ -322,6 +321,5 @@ object FrmAutoNormals: TFrmAutoNormals
     Caption = 'Tips'
     TabOrder = 4
     OnClick = BtTipsClick
-    ExplicitTop = 528
   end
 end

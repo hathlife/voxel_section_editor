@@ -40,17 +40,18 @@ object FrmPreferences: TFrmPreferences
     Width = 297
     Height = 265
     Caption = 'File Association'
+    ParentBackground = False
     TabOrder = 0
     object PageControl1: TPageControl
       Left = 8
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = ThreeDOptions_tab
+      ActivePage = TabSheet1
       Style = tsFlatButtons
       TabOrder = 0
       object TabSheet1: TTabSheet
-        Caption = 'File_assosiation_tab'
+        Caption = 'File_association_tab'
         TabVisible = False
         object AssociateCheck: TCheckBox
           Left = 0
@@ -66,6 +67,7 @@ object FrmPreferences: TFrmPreferences
           Width = 113
           Height = 89
           Caption = 'Icon'
+          ParentBackground = False
           TabOrder = 1
           object IconPrev: TImage
             Left = 40
@@ -101,6 +103,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -215,6 +221,7 @@ object FrmPreferences: TFrmPreferences
     Align = alTop
     BevelOuter = bvNone
     Color = clWhite
+    ParentBackground = False
     TabOrder = 2
     object Image1: TImage
       Left = 0
@@ -253,6 +260,7 @@ object FrmPreferences: TFrmPreferences
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 3
     object Button4: TButton
       Left = 327

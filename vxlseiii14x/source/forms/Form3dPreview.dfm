@@ -32,6 +32,7 @@ object Frm3DPReview: TFrm3DPReview
     Align = alClient
     BevelOuter = bvLowered
     Color = clBlack
+    ParentBackground = False
     TabOrder = 0
     OnMouseDown = Panel2MouseDown
     OnMouseMove = Panel2MouseMove
@@ -44,6 +45,7 @@ object Frm3DPReview: TFrm3DPReview
     Height = 26
     Align = alTop
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 1
     DesignSize = (
       363

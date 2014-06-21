@@ -37,8 +37,6 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Caption = 'OK'
     TabOrder = 0
     OnClick = BtOKClick
-    ExplicitLeft = 343
-    ExplicitTop = 311
   end
   object GbCollectedData: TGroupBox
     Left = 8
@@ -47,6 +45,7 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Height = 137
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Collected Data:'
+    ParentBackground = False
     TabOrder = 1
     DesignSize = (
       433
@@ -157,6 +156,7 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Height = 51
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Analysis:'
+    ParentBackground = False
     TabOrder = 2
     DesignSize = (
       433
@@ -199,8 +199,8 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Height = 172
     Anchors = [akLeft, akTop, akRight, akBottom]
     Caption = 'Explanation'
+    ParentBackground = False
     TabOrder = 3
-    ExplicitHeight = 138
     DesignSize = (
       433
       172)
@@ -260,6 +260,7 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
     Width = 432
     Height = 57
     Caption = 'Target:'
+    ParentBackground = False
     TabOrder = 4
     object RbWholeModel: TRadioButton
       Left = 24
@@ -287,7 +288,7 @@ object FrmTopologyAnalysis: TFrmTopologyAnalysis
       Width = 145
       Height = 21
       Style = csDropDownList
-      ItemHeight = 0
+      ItemHeight = 13
       TabOrder = 2
       OnChange = CbSectionsChange
     end

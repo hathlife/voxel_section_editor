@@ -40,6 +40,7 @@ object FrmVxlError: TFrmVxlError
     Align = alTop
     BevelOuter = bvNone
     Color = clWhite
+    ParentBackground = False
     TabOrder = 0
     object Image1: TImage
       Left = 0
@@ -78,6 +79,7 @@ object FrmVxlError: TFrmVxlError
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 1
     object BtClose: TButton
       Left = 408
@@ -99,10 +101,6 @@ object FrmVxlError: TFrmVxlError
     TabOrder = 2
     object TabSheet1: TTabSheet
       Caption = 'Header Information'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label1: TLabel
         Left = 8
         Top = 8
@@ -149,10 +147,6 @@ object FrmVxlError: TFrmVxlError
     object TabSheet2: TTabSheet
       Caption = 'Normals'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label2: TLabel
         Left = 8
         Top = 8

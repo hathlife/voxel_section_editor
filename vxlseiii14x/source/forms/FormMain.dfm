@@ -32,6 +32,7 @@ object FrmMain: TFrmMain
     Height = 844
     Align = alClient
     BevelOuter = bvLowered
+    ParentBackground = False
     TabOrder = 0
     object Splitter1: TSplitter
       Left = 653
@@ -48,6 +49,7 @@ object FrmMain: TFrmMain
       Width = 152
       Height = 817
       Align = alLeft
+      ParentBackground = False
       TabOrder = 0
       object lblSection: TLabel
         Left = 1
@@ -151,6 +153,7 @@ object FrmMain: TFrmMain
         Height = 41
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 0
         object SectionCombo: TComboBox
           Left = 8
@@ -170,6 +173,7 @@ object FrmMain: TFrmMain
         Height = 85
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 1
         object SpeedButton3: TSpeedButton
           Left = 8
@@ -794,6 +798,7 @@ object FrmMain: TFrmMain
         Height = 21
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 2
         object lblActiveColour: TLabel
           Left = 40
@@ -808,6 +813,7 @@ object FrmMain: TFrmMain
           Width = 33
           Height = 17
           BevelOuter = bvLowered
+          ParentBackground = False
           TabOrder = 0
         end
       end
@@ -818,6 +824,7 @@ object FrmMain: TFrmMain
         Height = 67
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 3
         object Label2: TLabel
           Left = 8
@@ -992,6 +999,7 @@ object FrmMain: TFrmMain
         Height = 35
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 4
         object Brush_5: TSpeedButton
           Left = 104
@@ -1274,6 +1282,7 @@ object FrmMain: TFrmMain
       Width = 205
       Height = 817
       Align = alRight
+      ParentBackground = False
       TabOrder = 1
       object CnvView2: TPaintBox
         Left = 1
@@ -1384,6 +1393,7 @@ object FrmMain: TFrmMain
         BevelOuter = bvNone
         Ctl3D = False
         FullRepaint = False
+        ParentBackground = False
         ParentCtl3D = False
         TabOrder = 0
         OnMouseDown = OGL3DPreviewMouseDown
@@ -1397,6 +1407,7 @@ object FrmMain: TFrmMain
         Height = 26
         Align = alTop
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 1
         object SpeedButton2: TSpeedButton
           Left = 2
@@ -1596,6 +1607,7 @@ object FrmMain: TFrmMain
       Width = 500
       Height = 817
       Align = alClient
+      ParentBackground = False
       TabOrder = 2
       object lblView0: TLabel
         Left = 1
@@ -4329,6 +4341,7 @@ object FrmMain: TFrmMain
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
+        ParentBackground = False
         TabOrder = 1
         object ScrollBar1: TScrollBar
           Left = 0
@@ -4350,6 +4363,7 @@ object FrmMain: TFrmMain
           Height = 16
           Align = alRight
           BevelOuter = bvNone
+          ParentBackground = False
           TabOrder = 1
         end
       end
@@ -4360,6 +4374,7 @@ object FrmMain: TFrmMain
       Width = 860
       Height = 25
       Align = alTop
+      ParentBackground = False
       TabOrder = 3
       object ToolBar1: TToolBar
         Left = 1

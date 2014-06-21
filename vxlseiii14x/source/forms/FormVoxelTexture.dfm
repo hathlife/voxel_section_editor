@@ -47,6 +47,7 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Width = 153
     Height = 265
     BevelOuter = bvLowered
+    ParentBackground = False
     TabOrder = 0
     object Image1: TImage
       Left = 1
@@ -122,6 +123,7 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Align = alTop
     BevelOuter = bvNone
     Color = clWhite
+    ParentBackground = False
     TabOrder = 7
     object Image3: TImage
       Left = 0
@@ -160,6 +162,7 @@ object FrmVoxelTexture: TFrmVoxelTexture
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 8
     object LbCurrentOperation: TLabel
       Left = 32

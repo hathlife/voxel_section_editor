@@ -80,6 +80,7 @@ object FrmReplaceColour: TFrmReplaceColour
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 1
     object BtOK: TButton
       Left = 327
@@ -108,6 +109,7 @@ object FrmReplaceColour: TFrmReplaceColour
     Height = 289
     BevelInner = bvRaised
     BevelOuter = bvLowered
+    ParentBackground = False
     TabOrder = 2
     object Label1: TLabel
       Left = 192

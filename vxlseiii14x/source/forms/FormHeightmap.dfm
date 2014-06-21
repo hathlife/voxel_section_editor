@@ -92,9 +92,8 @@ object FrmHeightMap: TFrmHeightMap
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
+    ParentBackground = False
     TabOrder = 4
-    ExplicitTop = 140
-    ExplicitWidth = 579
     object BtCancel: TButton
       Left = 183
       Top = 11
