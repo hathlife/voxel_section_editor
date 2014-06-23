@@ -165,6 +165,7 @@ object FrmReplaceColour: TFrmReplaceColour
       Top = 32
       Width = 65
       Height = 17
+      ParentBackground = False
       TabOrder = 0
       OnClick = PanelReplaceClick
     end
@@ -174,6 +175,7 @@ object FrmReplaceColour: TFrmReplaceColour
       Width = 65
       Height = 17
       BevelOuter = bvLowered
+      ParentBackground = False
       TabOrder = 1
       OnClick = PanelWithClick
     end
@@ -219,6 +221,7 @@ object FrmReplaceColour: TFrmReplaceColour
       Width = 145
       Height = 21
       BevelOuter = bvNone
+      ParentBackground = False
       TabOrder = 6
       object lblActiveColour: TLabel
         Left = 40
@@ -233,6 +236,7 @@ object FrmReplaceColour: TFrmReplaceColour
         Width = 33
         Height = 17
         BevelOuter = bvLowered
+        ParentBackground = False
         TabOrder = 0
       end
     end
