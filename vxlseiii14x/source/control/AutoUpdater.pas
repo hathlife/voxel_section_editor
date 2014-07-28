@@ -89,18 +89,6 @@ begin
    XMLDocument := TXMLDocument.Create(nil);
    XMLDocument.Active := true;
    XMLDocument.LoadFromFile(StructureFilename);
-   // Make sure that we create the directories that the program will use.
-   ForceDirectories(BaseDir + 'palettes\');
-   ForceDirectories(BaseDir + 'palettes\TS\');
-   ForceDirectories(BaseDir + 'palettes\RA2\');
-   ForceDirectories(BaseDir + 'Cursors\');
-   ForceDirectories(BaseDir + 'images\');
-   ForceDirectories(BaseDir + 'shaders\');
-   ForceDirectories(BaseDir + 'cschemes\');
-   ForceDirectories(BaseDir + 'cschemes\PalPack1\');
-   ForceDirectories(BaseDir + 'cschemes\PalPack2\');
-   ForceDirectories(BaseDir + 'cschemes\USER\');
-   ForceDirectories(BaseDir + 'opencl\');
    // check each item
    Node := XMLDocument.DocumentElement.ChildNodes.FindNode('file');
    repeat
