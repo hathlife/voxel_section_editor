@@ -76,6 +76,11 @@ type
    EVoxelViewDir = (dirTowards, dirAway);
    TVoxelType = (vtLand, vtAir);
 
+   TSitesList = array of packed record
+      SiteName : string;
+      SiteUrl : string;
+   end;
+
 
 implementation
 

@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 863
+  ClientHeight = 882
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,15 +29,16 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 844
+    Height = 863
     Align = alClient
     BevelOuter = bvLowered
     ParentBackground = False
     TabOrder = 0
+    ExplicitHeight = 844
     object Splitter1: TSplitter
       Left = 653
       Top = 26
-      Height = 817
+      Height = 836
       Align = alRight
       ExplicitLeft = 640
       ExplicitTop = 360
@@ -47,10 +48,11 @@ object FrmMain: TFrmMain
       Left = 1
       Top = 26
       Width = 152
-      Height = 817
+      Height = 836
       Align = alLeft
       ParentBackground = False
       TabOrder = 0
+      ExplicitHeight = 817
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1280,10 +1282,11 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 817
+      Height = 836
       Align = alRight
       ParentBackground = False
       TabOrder = 1
+      ExplicitHeight = 817
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1605,10 +1608,11 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 500
-      Height = 817
+      Height = 836
       Align = alClient
       ParentBackground = False
       TabOrder = 2
+      ExplicitHeight = 817
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1631,7 +1635,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 482
-        Height = 786
+        Height = 805
         Align = alClient
         OnMouseDown = CnvView0MouseDown
         OnMouseMove = CnvView0MouseMove
@@ -4324,7 +4328,7 @@ object FrmMain: TFrmMain
         Left = 483
         Top = 14
         Width = 16
-        Height = 786
+        Height = 805
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4333,16 +4337,18 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
+        ExplicitHeight = 786
       end
       object Panel5: TPanel
         Left = 1
-        Top = 800
+        Top = 819
         Width = 498
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         ParentBackground = False
         TabOrder = 1
+        ExplicitTop = 800
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4547,7 +4553,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 844
+    Top = 863
     Width = 862
     Height = 19
     Panels = <
@@ -4566,6 +4572,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
+    ExplicitTop = 844
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -5280,128 +5287,6 @@ object FrmMain: TFrmMain
       end
       object N13: TMenuItem
         Caption = '-'
-      end
-      object Editing1: TMenuItem
-        Caption = 'Editing'
-        object ModEnc1: TMenuItem
-          Caption = 'CnC Modding Encyclopedia'
-          ImageIndex = 18
-          OnClick = ModEnc1Click
-        end
-        object Dezire1: TMenuItem
-          Caption = 'Deezire'
-          ImageIndex = 18
-          OnClick = Dezire1Click
-        end
-        object PPMModdingForums1: TMenuItem
-          Caption = 'Project Perfect Mod Forums'
-          ImageIndex = 39
-          OnClick = PPMModdingForums1Click
-        end
-        object RevoraCCForums1: TMenuItem
-          Caption = 'Revora Editing Forums'
-          ImageIndex = 40
-          OnClick = RevoraCCForums1Click
-        end
-        object Sleipnir1: TMenuItem
-          Caption = 'Sleipnir Stuff Forums'
-          ImageIndex = 16
-          OnClick = Sleipnir1Click
-        end
-      end
-      object General1: TMenuItem
-        Caption = 'General'
-        object CCFilefront1: TMenuItem
-          Caption = 'CnC: Filefront'
-          ImageIndex = 18
-          OnClick = CCFilefront1Click
-        end
-        object CnCGuild1: TMenuItem
-          Caption = 'CnC Guild'
-          ImageIndex = 18
-          OnClick = CnCGuild1Click
-        end
-        object CNCNZcom1: TMenuItem
-          Caption = 'CNCNZ.com'
-          ImageIndex = 41
-          OnClick = CNCNZcom1Click
-        end
-        object PlanetCNC1: TMenuItem
-          Caption = 'Planet CNC'
-          ImageIndex = 17
-          OnClick = PlanetCNC1Click
-        end
-        object TiberiumWeb1: TMenuItem
-          Caption = 'TiberiumWeb.Com'
-          ImageIndex = 15
-          OnClick = TiberiumWeb1Click
-        end
-      end
-      object ResourceSites1: TMenuItem
-        Caption = 'Resource Sites'
-        object CnCSource1: TMenuItem
-          Caption = 'CnC-Source'
-          ImageIndex = 18
-          OnClick = CnCSource1Click
-        end
-        object GamesModding1: TMenuItem
-          Caption = 'Games Modding'
-          ImageIndex = 18
-          OnClick = GamesModding1Click
-        end
-        object MadHQGraphicsDump1: TMenuItem
-          Caption = 'MadHQ Graphics Dump'
-          ImageIndex = 16
-          OnClick = MadHQGraphicsDump1Click
-        end
-        object MigEater1: TMenuItem
-          Caption = 'Migeater.net'
-          ImageIndex = 16
-          OnClick = MigEater1Click
-        end
-        object Raminator1: TMenuItem
-          Caption = 'Raminator'#39's CnC Resources'
-          ImageIndex = 16
-          OnClick = Raminator1Click
-        end
-        object YRArgentina1: TMenuItem
-          Caption = 'YR Argentina'
-          ImageIndex = 18
-          OnClick = YRArgentina1Click
-        end
-      end
-      object ools3: TMenuItem
-        Caption = 'Tools'
-        object DCoder1: TMenuItem
-          Caption = 'DCoder`s Coding Realm'
-          ImageIndex = 18
-          OnClick = DCoder1Click
-        end
-        object Marshallx1: TMenuItem
-          Caption = 'Marshallx Industries'
-          ImageIndex = 16
-          OnClick = Marshallx1Click
-        end
-        object RockPatch2: TMenuItem
-          Caption = 'Rock Patch 2'
-          ImageIndex = 16
-          OnClick = RockPatch2Click
-        end
-        object ibEd1: TMenuItem
-          Caption = 'TibEd'
-          ImageIndex = 18
-          OnClick = ibEd1Click
-        end
-        object VKHomepage1: TMenuItem
-          Caption = 'VK Homepage'
-          ImageIndex = 18
-          OnClick = VKHomepage1Click
-        end
-        object XCC1: TMenuItem
-          Caption = 'XCC Utilities'
-          ImageIndex = 18
-          OnClick = XCC1Click
-        end
       end
     end
     object Help1: TMenuItem

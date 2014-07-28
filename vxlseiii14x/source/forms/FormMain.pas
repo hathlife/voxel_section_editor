@@ -17,7 +17,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.222';
+   APPLICATION_VER = '1.39.223';
    APPLICATION_BETA = true;
 
 type
@@ -180,22 +180,8 @@ type
     RemoveRedundantVoxels1: TMenuItem;
     CnvView0: TPaintBox;
     Sites1: TMenuItem;
-    CnCSource1: TMenuItem;
     PPMForUpdates1: TMenuItem;
     N13: TMenuItem;
-    Editing1: TMenuItem;
-    General1: TMenuItem;
-    ResourceSites1: TMenuItem;
-    ools3: TMenuItem;
-    Sleipnir1: TMenuItem;
-    Dezire1: TMenuItem;
-    PlanetCNC1: TMenuItem;
-    Marshallx1: TMenuItem;
-    Raminator1: TMenuItem;
-    MadHQGraphicsDump1: TMenuItem;
-    YRArgentina1: TMenuItem;
-    ibEd1: TMenuItem;
-    XCC1: TMenuItem;
     Help1: TMenuItem;
     VXLSEHelp1: TMenuItem;
     N14: TMenuItem;
@@ -224,7 +210,6 @@ type
     Nudge1Right1: TMenuItem;
     Nudge1up1: TMenuItem;
     Nudge1Down1: TMenuItem;
-    DCoder1: TMenuItem;
     Palette1: TMenuItem;
     iberianSunPalette1: TMenuItem;
     RedAlert2Palette1: TMenuItem;
@@ -296,10 +281,6 @@ type
     VoxelTexture1: TMenuItem;
     N12: TMenuItem;
     test1: TMenuItem;
-    GamesModding1: TMenuItem;
-    MigEater1: TMenuItem;
-    CnCGuild1: TMenuItem;
-    TiberiumWeb1: TMenuItem;
     Scripts1: TMenuItem;
     SpinButton3: TSpinButton;
     SpinButton1: TSpinButton;
@@ -327,16 +308,9 @@ type
     Others1: TMenuItem;
     blank18: TMenuItem;
     MirrorFrontToBack2: TMenuItem;
-    RockPatch2: TMenuItem;
-    ModEnc1: TMenuItem;
-    RevoraCCForums1: TMenuItem;
     Display3DWindow1: TMenuItem;
-    PPMModdingForums1: TMenuItem;
-    VKHomepage1: TMenuItem;
     ProjectSVN1: TMenuItem;
     XPManifest1: TXPManifest;
-    CNCNZcom1: TMenuItem;
-    CCFilefront1: TMenuItem;
     Animation1: TMenuItem;
     SpeedButton14: TSpeedButton;
     TSPalettes: TMenuItem;
@@ -388,19 +362,12 @@ type
     procedure UpdateSchemes1Click(Sender: TObject);
     procedure using3ds2vxl1Click(Sender: TObject);
     procedure O3DModelizer1Click(Sender: TObject);
-    procedure CCFilefront1Click(Sender: TObject);
-    procedure CNCNZcom1Click(Sender: TObject);
     procedure ProjectSVN1Click(Sender: TObject);
-    procedure VKHomepage1Click(Sender: TObject);
-    procedure PPMModdingForums1Click(Sender: TObject);
     procedure FormDeactivate(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure NewAutoNormals1Click(Sender: TObject);
     procedure Display3DWindow1Click(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure RevoraCCForums1Click(Sender: TObject);
-    procedure ModEnc1Click(Sender: TObject);
-    procedure RockPatch2Click(Sender: TObject);
     procedure Open1Click(Sender: TObject);
     procedure OpenVoxelInterface(const _Filename: string);
     procedure CnvView0Paint(Sender: TObject);
@@ -514,16 +481,7 @@ type
     procedure ClearEntireSection1Click(Sender: TObject);
     procedure CnCSource1Click(Sender: TObject);
     procedure PPMForUpdates1Click(Sender: TObject);
-    procedure Sleipnir1Click(Sender: TObject);
-    procedure Dezire1Click(Sender: TObject);
-    procedure PlanetCNC1Click(Sender: TObject);
-    procedure Marshallx1Click(Sender: TObject);
-    procedure Raminator1Click(Sender: TObject);
-    procedure SavageWarTS1Click(Sender: TObject);
-    procedure MadHQGraphicsDump1Click(Sender: TObject);
-    procedure YRArgentina1Click(Sender: TObject);
-    procedure ibEd1Click(Sender: TObject);
-    procedure XCC1Click(Sender: TObject);
+    procedure LoadSite(Sender: TObject);
     procedure OpenHyperlink(HyperLink: PChar);
     procedure VXLSEHelp1Click(Sender: TObject);
     procedure Display3dView1Click(Sender: TObject);
@@ -538,8 +496,6 @@ type
     procedure Nudge1Left1Click(Sender: TObject);
     procedure Section2Click(Sender: TObject);
     procedure Copyofthissection1Click(Sender: TObject);
-    procedure DCoder1Click(Sender: TObject);
-    procedure RA2FAQ1Click(Sender: TObject);
     procedure BuildReopenMenu;
     procedure mnuHistoryClick(Sender: TObject);
     procedure BarReopenClick(Sender: TObject);
@@ -582,10 +538,6 @@ type
     procedure SmoothNormals1Click(Sender: TObject);
     procedure VoxelTexture1Click(Sender: TObject);
     procedure test1Click(Sender: TObject);
-    procedure GamesModding1Click(Sender: TObject);
-    procedure MigEater1Click(Sender: TObject);
-    procedure CnCGuild1Click(Sender: TObject);
-    procedure TiberiumWeb1Click(Sender: TObject);
     function GetVoxelImportedBy3ds2vxl(var _Destination: string): boolean;
     procedure ImportSectionFromVoxel(const _Filename: string);
     procedure Importfrommodel1Click(Sender: TObject);
@@ -632,6 +584,7 @@ type
      Actor : PActor;
      Camera : TCamera;
      ColourSchemes : TColourSchemesInfo;
+     SiteList: TSitesList;
      {$ifdef DEBUG_FILE}
      DebugFile: TDebugFile;
      {$endif}
@@ -656,7 +609,7 @@ uses FormHeaderUnit, LoadForm, FormNewSectionSizeUnit, FormPalettePackAbout, HVA
    IsoSurfaceFile, FillUselessGapsTool, TopologyFixer, FormNewVxlUnit, Registry,
    VoxelUndoEngine, GlobalVars, VoxelDocumentBank, ModelBank, TextureBank, Normals,
    HVABank, VoxelBank, CustomScheme, BasicConstants, ImageIOUtils, INIFiles,
-   Voxel_Engine;
+   Voxel_Engine, CommunityLinks;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -820,6 +773,12 @@ begin
    end;
    frm.Close;
    frm.Free;
+
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/commlist.ini')) then
+   begin
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '/commlist.ini');
+   end;
+   LoadCommunityLinks;
 
    WindowState := wsMaximized;
 //  refresh;
@@ -4335,119 +4294,9 @@ begin
    OpenHyperLink('http://www.ppmsite.com/index.php?go=vxlseinfo');
 end;
 
-procedure TFrmMain.Sleipnir1Click(Sender: TObject);
+procedure TFrmMain.LoadSite(Sender : TObject);
 begin
-   OpenHyperLink('http://www.sleipnirstuff.com/forum/viewforum.php?f=10');
-end;
-
-procedure TFrmMain.Dezire1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.deezire.net/');
-end;
-
-procedure TFrmMain.PPMModdingForums1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.ppmsite.com/forum/index.php?f=309');
-end;
-
-procedure TFrmMain.PlanetCNC1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.planetcnc.com/');
-end;
-
-procedure TFrmMain.Marshallx1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://marshall.strategy-x.com/');
-end;
-
-procedure TFrmMain.Raminator1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://cnc.raminator.de/');
-end;
-
-procedure TFrmMain.SavageWarTS1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://ts.savagewar.co.uk/');
-end;
-
-procedure TFrmMain.MadHQGraphicsDump1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://zombapro.net/depot/');
-end;
-
-procedure TFrmMain.YRArgentina1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://yrarg.cncguild.net/');
-end;
-
-procedure TFrmMain.ibEd1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.tibed.net/');
-end;
-
-procedure TFrmMain.XCC1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://xhp.xwis.net/');
-end;
-
-procedure TFrmMain.DCoder1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://dc.strategy-x.com/');
-end;
-
-procedure TFrmMain.RockPatch2Click(Sender: TObject);
-begin
-   OpenHyperLink('http://rp2.strategy-x.com/');
-end;
-
-procedure TFrmMain.RA2FAQ1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://ra2faq.savagewar.co.uk/');
-end;
-
-procedure TFrmMain.ModEnc1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.modenc.renegadeprojects.com/Main_Page');
-end;
-
-procedure TFrmMain.RevoraCCForums1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://forums.revora.net/index.php?showforum=1676');
-end;
-
-procedure TFrmMain.GamesModding1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.gamesmodding.com/');
-end;
-
-procedure TFrmMain.MigEater1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.migeater.net/');
-end;
-
-procedure TFrmMain.CnCGuild1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.cncguild.net/');
-end;
-
-procedure TFrmMain.CCFilefront1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.cnc-files.com/');
-end;
-
-procedure TFrmMain.CNCNZcom1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.cncnz.com/');
-end;
-
-procedure TFrmMain.TiberiumWeb1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://www.tiberiumweb.com/');
-end;
-
-procedure TFrmMain.VKHomepage1Click(Sender: TObject);
-begin
-   OpenHyperLink('http://vk.cncguild.net/');
+   OpenHyperlink(PChar(FrmMain.SiteList[TMenuItem(Sender).Tag].SiteUrl));
 end;
 
 procedure TFrmMain.ProjectSVN1Click(Sender: TObject);

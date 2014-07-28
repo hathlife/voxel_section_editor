@@ -285,7 +285,8 @@ uses
   HalfEdgePlugin in 'source\rendering\meshplugins\HalfEdgePlugin.pas',
   TextureAtlasExtractorIDC in 'source\control\mesh\TextureAtlasExtractorIDC.pas',
   OrderedWeightList in 'source\datatypes\advanced\OrderedWeightList.pas',
-  TextureAtlasExtractorIDCCommand in 'source\control\commands\TextureAtlasExtractorIDCCommand.pas';
+  TextureAtlasExtractorIDCCommand in 'source\control\commands\TextureAtlasExtractorIDCCommand.pas',
+  CommunityLinks in 'source\control\CommunityLinks.pas';
 
 {$R *.res}
 
