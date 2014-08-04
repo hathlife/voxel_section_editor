@@ -2,13 +2,9 @@ unit BasicVXLSETypes;
 
 interface
 
-uses Graphics, ExtCtrls, StdCtrls, Menus, BasicMathsTypes;
+uses Graphics, BasicMathsTypes;
 
 type
-   PPaintBox = ^TPaintBox;
-   PLabel = ^TLabel;
-   PMenuItem = ^TMenuItem;
-
    TVoxelUnpacked = record
       Colour,
       Normal,
@@ -47,10 +43,6 @@ type
       Data_no : integer;
    end;
 
-   TColourSchemesInfo = array of packed record
-        Name,Filename,By,Website : string;
-   end;
-
    TVoxelPacked = LongInt;
 
    TThumbnail = record
@@ -75,12 +67,6 @@ type
    EVoxelViewOrient = (oriX, oriY, oriZ);
    EVoxelViewDir = (dirTowards, dirAway);
    TVoxelType = (vtLand, vtAir);
-
-   TSitesList = array of packed record
-      SiteName : string;
-      SiteUrl : string;
-   end;
-
 
 implementation
 

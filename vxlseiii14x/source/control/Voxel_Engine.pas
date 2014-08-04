@@ -4,7 +4,8 @@ interface
 
 uses Windows, BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, Palette, StdCtrls,
    ExtCtrls, Graphics, Math, SysUtils, Types, Config, Constants, Menus, Clipbrd,
-   mouse, forms, Dialogs, Voxel, VoxelDocument, BasicConstants, NormalsConstants;
+   mouse, forms, Dialogs, Voxel, VoxelDocument, BasicConstants, NormalsConstants,
+   BasicProgramTypes;
 
 {$INCLUDE source/Global_Conditionals.inc}
 Var

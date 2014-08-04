@@ -4925,12 +4925,13 @@ object FrmMain: TFrmMain
     object Scripts1: TMenuItem
       Caption = 'Scripts'
       object ColourScheme1: TMenuItem
-        Caption = 'Colour Scheme'
-        Visible = False
+        Caption = 'Colour Schemes'
         object PalPack1: TMenuItem
+          Tag = -2
           Caption = 'Pal Pack'
           Visible = False
           object About2: TMenuItem
+            Tag = -1
             Caption = 'About'
             OnClick = About2Click
           end
@@ -4978,7 +4979,7 @@ object FrmMain: TFrmMain
             end
           end
           object Brown11: TMenuItem
-            Caption = 'Brown1'
+            Caption = 'Brown 1'
             Visible = False
             object blank10: TMenuItem
               Caption = 'blank'
@@ -4986,7 +4987,7 @@ object FrmMain: TFrmMain
             end
           end
           object Brown21: TMenuItem
-            Caption = 'Brown2'
+            Caption = 'Brown 2'
             Visible = False
             object blank11: TMenuItem
               Caption = 'blank'
@@ -5042,6 +5043,10 @@ object FrmMain: TFrmMain
             end
           end
         end
+        object Apollo1: TMenuItem
+          Tag = -1
+          Caption = 'Apollo'#39's Schemes'
+        end
         object N23: TMenuItem
           Caption = '-'
         end
@@ -5081,13 +5086,13 @@ object FrmMain: TFrmMain
             Visible = False
           end
         end
-        object N25: TMenuItem
-          Caption = '-'
-        end
-        object UpdateSchemes1: TMenuItem
-          Caption = 'Update Colour Scheme List'
-          OnClick = UpdateSchemes1Click
-        end
+      end
+      object N26: TMenuItem
+        Caption = '-'
+      end
+      object UpdateSchemes1: TMenuItem
+        Caption = 'Update Colour Scheme List'
+        OnClick = UpdateSchemes1Click
       end
     end
     object ools2: TMenuItem

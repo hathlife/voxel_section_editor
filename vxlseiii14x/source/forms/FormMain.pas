@@ -11,13 +11,13 @@ uses
   Graphics, Controls, Forms, Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls,
   ToolWin, ImgList, Spin, Buttons, ShellAPI, Form3dpreview, XPMan, dglOpenGL,
   VoxelDocument, RenderEnvironment, Actor, Camera, BasicFunctions,
-  BasicVXLSETypes, Form3dModelizer;
+  BasicVXLSETypes, Form3dModelizer, BasicProgramTypes, CustomSchemeControl;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.223';
+   APPLICATION_VER = '1.39.224';
    APPLICATION_BETA = true;
 
 type
@@ -320,7 +320,6 @@ type
     N20: TMenuItem;
     using3ds2vxl1: TMenuItem;
     MainMenu1: TMainMenu;
-    N25: TMenuItem;
     UpdateSchemes1: TMenuItem;
     OpenDialog3ds2vxl: TOpenDialog;
     Importfromamodelusing3ds2vxl1: TMenuItem;
@@ -346,6 +345,8 @@ type
     Shape1: TMenuItem;
     FillUselessInternalGaps1: TMenuItem;
     FillUselessInternalCavesVeryStrict1: TMenuItem;
+    N26: TMenuItem;
+    Apollo1: TMenuItem;
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
     procedure FillUselessInternalGaps1Click(Sender: TObject);
     procedure IncreaseResolution1Click(Sender: TObject);
@@ -522,14 +523,10 @@ type
     procedure PasteFull1Click(Sender: TObject);
     procedure Paste1Click(Sender: TObject);
     function CreateSplitterMenuItem: TMenuItem;
-    procedure InsertItemAtMenu(var _item,_menu: TMenuItem; Split: boolean);
-    procedure AddScheme(const _Filename: string);
     function UpdateCScheme : integer;
     function LoadCScheme : integer;
     procedure blank2Click(Sender: TObject);
     procedure About2Click(Sender: TObject);
-    function LoadCSchemes(_Dir : string; _c : integer) : Integer;
-    function UpdateCSchemes(_Latest: integer; _Dir : string; _c : integer) : Integer;
     procedure EmptyVoxel1Click(Sender: TObject);
     procedure EmptyVoxel2Click(Sender: TObject);
     Procedure NewVFile(Game : integer);
@@ -562,16 +559,15 @@ type
     procedure AutoRepair(const _Filename: string; _ForceRepair: boolean = false);
     procedure RemoveRedundantVoxelsB1Click(Sender: TObject);
   private
-    { Private declarations }
-    RemapColour : TVector3f;
-    Xcoord, Ycoord, Zcoord : Integer;
-    MouseButton : Integer;
-    LatestScheme : integer;
-    procedure Idle(Sender: TObject; var Done: Boolean);
-    procedure BuildUsedColoursArray;
-    function CharToStr: string;
-    procedure ApplyPalette(const _Filename: string);
-    procedure UncheckFillMode;
+     { Private declarations }
+     RemapColour : TVector3f;
+     Xcoord, Ycoord, Zcoord : Integer;
+     MouseButton : Integer;
+     procedure Idle(Sender: TObject; var Done: Boolean);
+     procedure BuildUsedColoursArray;
+     function CharToStr: string;
+     procedure ApplyPalette(const _Filename: string);
+     procedure UncheckFillMode;
   public
     { Public declarations }
     {IsEditable,}IsVXLLoading : boolean;
@@ -583,7 +579,7 @@ type
      Env : TRenderEnvironment;
      Actor : PActor;
      Camera : TCamera;
-     ColourSchemes : TColourSchemesInfo;
+     CustomSchemeControl : TCustomSchemeControl;
      SiteList: TSitesList;
      {$ifdef DEBUG_FILE}
      DebugFile: TDebugFile;
@@ -1160,7 +1156,7 @@ begin
   {$ifdef MESH_TEST}
    GlobalVars.MeshFile.Free;
    {$endif}
-   SetLength(ColourSchemes,0);
+   //SetLength(ColourSchemes,0);
 end;
 
 Procedure TFrmMain.RefreshAll;
@@ -3943,122 +3939,25 @@ begin
    Result.Caption := '-';
 end;
 
-procedure TFrmMain.InsertItemAtMenu(var _item,_menu: TMenuItem; Split: boolean);
-begin
-   if Split then
-      _Menu.Insert(_Menu.Count - 1, CreateSplitterMenuItem());
-   _Menu.Insert(_Menu.Count - 1, _Item);
-   _Menu.Visible := True;
-end;
-
-procedure TFrmMain.AddScheme(const _Filename: string);
-var
-   item: TMenuItem;
-   Scheme : TCustomScheme;
-   c : integer;
-begin
-   c := High(ColourSchemes)+2;
-   SetLength(ColourSchemes, c + 1);
-
-   Scheme := TCustomScheme.CreateForVXLSE(_Filename);
-   ColourSchemes[c].FileName := CopyString(_Filename);
-
-   item     := TMenuItem.Create(Owner);
-   item.Caption := Scheme.Name;
-   item.Tag := c; // so we know which it is
-   item.OnClick := blank2Click;
-   item.ImageIndex := Scheme.ImageIndex;
-
-   case (Scheme.GameType) of
-      0: InsertItemAtMenu(item,Others1,Scheme.Split); // Others
-      1: InsertItemAtMenu(item,iberianSun2,Scheme.Split); // TS
-      2: InsertItemAtMenu(item,RedAlert22,Scheme.Split); // RA2
-      3: InsertItemAtMenu(item,YurisRevenge1,Scheme.Split); //YR
-      4: InsertItemAtMenu(item,Allied1,Scheme.Split);
-      5: InsertItemAtMenu(item,Soviet1,Scheme.Split);
-      6: InsertItemAtMenu(item,Yuri1,Scheme.Split);
-      7: InsertItemAtMenu(item,Brick1,Scheme.Split);
-      8: InsertItemAtMenu(item,GrayScale1,Scheme.Split);
-      9: InsertItemAtMenu(item,Remap1,Scheme.Split);
-      10: InsertItemAtMenu(item,Brown11,Scheme.Split);
-      11: InsertItemAtMenu(item,Brown21,Scheme.Split);
-      12: InsertItemAtMenu(item,Blue2,Scheme.Split);
-      13: InsertItemAtMenu(item,Green2,Scheme.Split);
-      14: InsertItemAtMenu(item,NoUnlit1,Scheme.Split);
-      15: InsertItemAtMenu(item,Red2,Scheme.Split);
-      16: InsertItemAtMenu(item,Yellow1,Scheme.Split);
-      else InsertItemAtMenu(item,Others1,Scheme.Split);
-   end;
-   Scheme.Free;
-end;
-
-function TFrmMain.UpdateCSchemes(_Latest: integer; _Dir : string; _c : integer) : Integer;
-var
-   f:     TSearchRec;
-   path:  string;
-begin
-   // prepare
-   path := Concat(_Dir, '*.cscheme');
-   // find files
-   if FindFirst(path, faAnyFile, f) = 0 then
-      repeat
-         if f.Time > _Latest then
-         begin
-            AddScheme(Concat(_Dir, f.Name));
-            if f.Time > LatestScheme then
-            begin
-               LatestScheme := f.Time;
-            end;
-            inc(_c);
-         end;
-      until FindNext(f) <> 0;
-   FindClose(f);
-   Result := _c;
-end;
-
-function TFrmMain.LoadCSchemes(_Dir: string; _c: integer): integer;
-var
-   f:     TSearchRec;
-   path:  string;
-begin
-   // prepare
-   path := Concat(_Dir, '*.cscheme');
-
-   // find files
-   if FindFirst(path, faAnyFile, f) = 0 then
-      repeat
-         AddScheme(Concat(_Dir, f.Name));
-      until FindNext(f) <> 0;
-   FindClose(f);
-   Result := High(ColourSchemes)+1;
-end;
-
 function TFrmMain.UpdateCScheme : integer;
 var
-   User,c,LastScheme : integer;
+   LastScheme : integer;
 begin
-   LastScheme := LatestScheme;
-   User := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
-   c := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
-   Result := UpdateCSchemes(LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
+   LastScheme := CustomSchemeControl.LatestScheme;
+   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\PalPack1\',0);
+   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\PalPack2\',Result);
+   Result := CustomSchemeControl.UpdateCSchemes(Apollo1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\Apollo\',Result);
+   Result := CustomSchemeControl.UpdateCSchemes(ColourScheme1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\USER\',Result);
 end;
 
 function TFrmMain.LoadCScheme : integer;
-var
-   User,c : integer;
 begin
-   SetLength(ColourSchemes,0);
-   User := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
-   c := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
-   Result := LoadCSchemes(ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
-   if c > 0 then
-   begin
-      ColourScheme1.Visible := True;
-      if User < Result then
-      begin
-         PalPack1.Visible := True;
-      end;
-   end;
+   // New Custom Scheme loader goes here.
+   CustomSchemeControl := TCustomSchemeControl.Create(ColourScheme1, Owner, blank2Click);
+   Result := CustomSchemeControl.LoadCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack1\',0, false);
+   Result := CustomSchemeControl.LoadCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack2\',Result, false);
+   Result := CustomSchemeControl.LoadCSchemes(Apollo1, ExtractFilePath(ParamStr(0))+'\cschemes\Apollo\',Result, false);
+   Result := CustomSchemeControl.LoadCSchemes(ColourScheme1, ExtractFilePath(ParamStr(0))+'\cschemes\USER\',Result, false);
 end;
 
 procedure TFrmMain.blank2Click(Sender: TObject);
@@ -4068,7 +3967,7 @@ var
    Scheme : TCustomScheme;
    Data : TCustomSchemeData;
 begin
-   Scheme := TCustomScheme.CreateForData(ColourSchemes[Tmenuitem(Sender).Tag].Filename);
+   Scheme := TCustomScheme.CreateForData(CustomSchemeControl.ColourSchemes[Tmenuitem(Sender).Tag].Filename);
    Data := Scheme.Data;
 
    tempview.Data_no := tempview.Data_no +0;
