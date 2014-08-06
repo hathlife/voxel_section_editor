@@ -147,13 +147,21 @@ end;
 procedure TCustomScheme.GatherData(const _Filename : string);
 var
    s: TStringList;
-   i : integer;
+   i, Temp : integer;
 begin
    s := TStringList.Create;
    s.LoadFromFile(_Filename);
    for i := 0 to 255 do
    begin
-      fData[i] := StrToIntDef(getTagValue(s,IntToStr(i)),0);
+      temp := StrToIntDef(getTagValue(s,IntToStr(i)),-1);
+      if temp <> -1 then
+      begin
+         fData[i] := temp;
+      end
+      else
+      begin
+         fData[i] := i;
+      end;
    end;
    s.Free;
 end;

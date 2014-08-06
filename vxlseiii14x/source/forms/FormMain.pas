@@ -641,18 +641,18 @@ begin
    begin
       AutoRepair(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'palettes\TS\unittem.pal');
    end;
-   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp')) then
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '\images\pause.bmp')) then
    begin
-      AutoRepair(ExtractFileDir(ParamStr(0)) + '/images/pause.bmp');
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '\images\pause.bmp');
    end;
-   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/images/play.bmp')) then
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '\images\play.bmp')) then
    begin
-      AutoRepair(ExtractFileDir(ParamStr(0)) + '/images/play.bmp');
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '\images\play.bmp');
    end;
    // ensure that ocl scripts exists
-   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/opencl/origami.cl')) then
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '\opencl\origami.cl')) then
    begin
-      AutoRepair(ExtractFileDir(ParamStr(0)) + '/opencl/origami.cl');
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '\opencl\origami.cl');
    end;
 
    GlobalVars.Render := TRender.Create(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'shaders');
@@ -769,10 +769,9 @@ begin
    end;
    frm.Close;
    frm.Free;
-
-   if (not FileExists(ExtractFileDir(ParamStr(0)) + '/commlist.ini')) then
+   if (not FileExists(ExtractFileDir(ParamStr(0)) + '\commlist.ini')) then
    begin
-      AutoRepair(ExtractFileDir(ParamStr(0)) + '/commlist.ini');
+      AutoRepair(ExtractFileDir(ParamStr(0)) + '\commlist.ini');
    end;
    LoadCommunityLinks;
 
