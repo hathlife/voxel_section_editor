@@ -288,7 +288,8 @@ uses
   TextureAtlasExtractorIDCCommand in 'source\control\commands\TextureAtlasExtractorIDCCommand.pas',
   CommunityLinks in 'source\control\CommunityLinks.pas',
   CustomSchemeControl in 'source\control\CustomSchemeControl.pas',
-  BasicProgramTypes in 'source\datatypes\BasicProgramTypes.pas';
+  BasicProgramTypes in 'source\datatypes\BasicProgramTypes.pas',
+  PaletteControl in 'source\control\PaletteControl.pas';
 
 {$R *.res}
 

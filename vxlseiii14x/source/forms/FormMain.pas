@@ -11,13 +11,14 @@ uses
   Graphics, Controls, Forms, Dialogs, Menus, ExtCtrls, StdCtrls, ComCtrls,
   ToolWin, ImgList, Spin, Buttons, ShellAPI, Form3dpreview, XPMan, dglOpenGL,
   VoxelDocument, RenderEnvironment, Actor, Camera, BasicFunctions,
-  BasicVXLSETypes, Form3dModelizer, BasicProgramTypes, CustomSchemeControl;
+  BasicVXLSETypes, Form3dModelizer, BasicProgramTypes, CustomSchemeControl,
+  PaletteControl;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.224';
+   APPLICATION_VER = '1.39.225';
    APPLICATION_BETA = true;
 
 type
@@ -347,6 +348,9 @@ type
     FillUselessInternalCavesVeryStrict1: TMenuItem;
     N26: TMenuItem;
     Apollo1: TMenuItem;
+    N25: TMenuItem;
+    UpdatePaletteList1: TMenuItem;
+    procedure UpdatePaletteList1Click(Sender: TObject);
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
     procedure FillUselessInternalGaps1Click(Sender: TObject);
     procedure IncreaseResolution1Click(Sender: TObject);
@@ -580,6 +584,7 @@ type
      Actor : PActor;
      Camera : TCamera;
      CustomSchemeControl : TCustomSchemeControl;
+     PaletteControl : TPaletteControl;
      SiteList: TSitesList;
      {$ifdef DEBUG_FILE}
      DebugFile: TDebugFile;
@@ -1149,6 +1154,8 @@ begin
    RA2Normals.Free;
    TSNormals.Free;
    CubeNormals.Free;
+   CustomSchemeControl.Free;
+   PaletteControl.Free;
   {$ifdef SPEED_TEST}
    GlobalVars.SpeedFile.Free;
    {$endif}
@@ -3683,56 +3690,39 @@ begin
 end;
 
 Procedure TFrmMain.LoadPalettes;
-const
-   C_MAX_PAL_DIRS = 2;
-   PaletteDirs: array[0..C_MAX_PAL_DIRS] of string = ('palettes\TS\', 'palettes\RA2\', 'palettes\USER\');
 var
-   f: TSearchRec;
-   path: String;
-   item: TMenuItem;
-   i,c : integer;
-   PaletteMenuItems: array[0..C_MAX_PAL_DIRS] of TMenuItem;
+   c : integer;
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: LoadPalettes');
    {$endif}
+   PaletteControl := TPaletteControl.Create(Owner, blank1Click);
+
    // prepare
-   PaletteList.Data_no := 0;
-   SetLength(PaletteList.Data,PaletteList.Data_no);
-   i := 0;
-   PaletteMenuItems[0] := TSPalettes;
-   PaletteMenuItems[1] := RA2Palettes;
-   PaletteMenuItems[2] := Custom1;
-   while i <= C_MAX_PAL_DIRS do
-   begin
-      PaletteMenuItems[i].Visible := false;
-      path := Concat(ExtractFilePath(ParamStr(0)) + PaletteDirs[i],'*.pal');
-      c := 0;
-      // find files
-      if FindFirst(path,faAnyFile,f) = 0 then
-      repeat
-         SetLength(PaletteList.Data,PaletteList.Data_no+1);
+   c := 0;
 
-         item := TMenuItem.Create(Owner);
-         item.Caption := copy(f.Name,1,length(f.Name)-length(extractfileext(f.Name)));
-         PaletteList.Data[PaletteList.Data_no] := ExtractFilePath(ParamStr(0)) + PaletteDirs[i] + f.Name;
-         item.Tag := PaletteList.Data_no; // so we know which it is
-         item.OnClick := blank1Click;
+   // Now Load TS Palettes
+   PaletteControl.AddPalettesToSubMenu(TSPalettes, ExtractFilePath(ParamStr(0))+'Palettes\TS\', c, 15);
+   // Now Load RA2 Palettes
+   PaletteControl.AddPalettesToSubMenu(RA2Palettes, ExtractFilePath(ParamStr(0))+'Palettes\RA2\', c, 16);
+   // Now Load User's Palettes
+   PaletteControl.AddPalettesToSubMenu(Custom1, ExtractFilePath(ParamStr(0))+'Palettes\User\', c, 39);
+end;
 
-         PaletteMenuItems[i].Insert(c,item);
-         PaletteMenuItems[i].Visible := true;
-         N18.Visible := true;
-         inc(PaletteList.Data_no);
-         inc(c);
-      until FindNext(f) <> 0;
-      inc(i);
-   end;
-   FindClose(f);
+procedure TFrmMain.UpdatePaletteList1Click(Sender: TObject);
+var
+   c, Latest : integer;
+begin
+   c := 0;
+   Latest := PaletteControl.LatestTime;
+   PaletteControl.UpdatePalettesAtSubMenu(TSPalettes, Latest, ExtractFilePath(ParamStr(0))+'Palettes\TS\', c, 15);
+   PaletteControl.UpdatePalettesAtSubMenu(RA2Palettes, Latest, ExtractFilePath(ParamStr(0))+'Palettes\RA2\', c, 16);
+   PaletteControl.UpdatePalettesAtSubMenu(Custom1, Latest, ExtractFilePath(ParamStr(0))+'Palettes\User\', c, 39);
 end;
 
 procedure TFrmMain.blank1Click(Sender: TObject);
 begin
-   ApplyPalette(PaletteList.Data[TMenuItem(Sender).tag]);
+   ApplyPalette(PaletteControl.PaletteSchemes[TMenuItem(Sender).tag].Filename);
 end;
 
 Procedure TFrmMain.CheckVXLChanged;
@@ -3952,7 +3942,7 @@ end;
 function TFrmMain.LoadCScheme : integer;
 begin
    // New Custom Scheme loader goes here.
-   CustomSchemeControl := TCustomSchemeControl.Create(ColourScheme1, Owner, blank2Click);
+   CustomSchemeControl := TCustomSchemeControl.Create(Owner, blank2Click);
    Result := CustomSchemeControl.LoadCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack1\',0, false);
    Result := CustomSchemeControl.LoadCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack2\',Result, false);
    Result := CustomSchemeControl.LoadCSchemes(Apollo1, ExtractFilePath(ParamStr(0))+'\cschemes\Apollo\',Result, false);

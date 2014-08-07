@@ -53,6 +53,10 @@ object FrmPreferences: TFrmPreferences
       object TabSheet1: TTabSheet
         Caption = 'File_association_tab'
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object AssociateCheck: TCheckBox
           Left = 0
           Top = 8
@@ -159,6 +163,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'ThreeDOptions_tab'
         ImageIndex = 2
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label3: TLabel
           Left = 199
           Top = 30

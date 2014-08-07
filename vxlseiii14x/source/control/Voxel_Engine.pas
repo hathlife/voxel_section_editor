@@ -33,7 +33,6 @@ Var
    TempView : TTempView;
    TempLines : TTempLines;
    mnuReopen : PMenuItem;
-   PaletteList : TPaletteList;
    VXLChanged : Boolean = false;
    OldMousePos : TPoint;
    MousePos : TPoint;

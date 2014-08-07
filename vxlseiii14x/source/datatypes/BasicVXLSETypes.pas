@@ -38,11 +38,6 @@ type
       Data_no : integer;
    end;
 
-   TPaletteList = record
-      Data : array of String;
-      Data_no : integer;
-   end;
-
    TVoxelPacked = LongInt;
 
    TThumbnail = record

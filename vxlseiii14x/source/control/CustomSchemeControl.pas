@@ -9,7 +9,7 @@ type
       private
          MenuItems: array [1..19] of TMenuItem;
 
-         BaseMn, CurrentSubMenu: TMenuItem;
+         CurrentSubMenu: TMenuItem;
          Owner: TComponent;
 
          function IsFileInUse(const _FileName: string): Boolean;
@@ -23,24 +23,28 @@ type
          ColourSchemes : TColourSchemesInfo;
          OnClickEvent: TNotifyEvent;
 
-         constructor Create(var _BaseMenu: TMenuItem; const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
+         constructor Create(const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
+         destructor Destroy; override;
          function UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer) : Integer; overload;
          function UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer; _UseBaseItem: boolean) : Integer; overload;
          function LoadCSchemes(var _BaseItem: TMenuItem; _Dir: string; _c: integer): integer; overload;
          function LoadCSchemes(var _BaseItem: TMenuItem; _Dir: string; _c: integer; _CreateSubMenu: boolean): integer; overload;
-         function UpdateCScheme : integer;
-         function LoadCScheme : integer;
    end;
 
 implementation
 
 uses BasicFunctions, Windows, SysUtils;
 
-constructor TCustomSchemeControl.Create(var _BaseMenu: TMenuItem; const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
+constructor TCustomSchemeControl.Create(const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
 begin
-   BaseMn := _BaseMenu;
    Owner := _Owner;
    OnClickEvent := _OnClickEvent;
+end;
+
+destructor TCustomSchemeControl.Destroy;
+begin
+   SetLength(ColourSchemes, 0);
+   inherited Destroy;
 end;
 
 function TCustomSchemeControl.FindSubMenuItemFromCaption(var _BaseMenuItem: TMenuItem; const _Caption: string):TMenuItem;
@@ -176,6 +180,7 @@ var
    f:     TSearchRec;
    Name, path:  string;
    i : integer;
+   MySubMenu: TMenuItem;
 begin
    if not DirectoryExists(IncludeTrailingPathDelimiter(_Dir)) then
       exit;
@@ -188,6 +193,7 @@ begin
    begin
       CurrentSubMenu := _BaseItem;
    end;
+   MySubMenu := CurrentSubMenu;
    // Reset submenus.
    for i := 1 to 19 do
    begin
@@ -227,7 +233,7 @@ begin
             Name := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(_Dir) + f.Name);
             if DirectoryExists(Name) then // It sounds unnecessary, but for some reason, it may catch some weird dirs sometimes.
             begin
-               UpdateCSchemes(CurrentSubMenu, _Latest, Name, _c, false);
+               UpdateCSchemes(MySubMenu, _Latest, Name, _c, false);
             end;
          end;
       until FindNext(f) <> 0;
@@ -361,6 +367,7 @@ var
    f:     TSearchRec;
    Name, path:  string;
    Item: TMenuItem;
+   MySubMenu: TMenuItem;
 begin
    if not DirectoryExists(IncludeTrailingPathDelimiter(_Dir)) then
       exit;
@@ -379,6 +386,7 @@ begin
          exit;
       CurrentSubMenu := _BaseItem;
    end;
+   MySubMenu := CurrentSubMenu;
    // Find submenu subitems
    SetupSubMenu;
 
@@ -409,7 +417,7 @@ begin
             Name := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(_Dir) + f.Name);
             if DirectoryExists(Name) then // It sounds unnecessary, but for some reason, it may catch some weird dirs sometimes.
             begin
-               LoadCSchemes(CurrentSubMenu, Name, _c, true);
+               LoadCSchemes(MySubMenu, Name, _c, true);
             end;
          end;
       until FindNext(f) <> 0;
@@ -421,26 +429,5 @@ begin
       CurrentSubMenu.Visible := true;
    end;
 end;
-
-function TCustomSchemeControl.UpdateCScheme : integer;
-var
-   User,c,LastScheme : integer;
-begin
-   LastScheme := LatestScheme;
-   User := UpdateCSchemes(BaseMn, LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
-   c := UpdateCSchemes(BaseMn, LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
-   Result := UpdateCSchemes(BaseMn, LastScheme,ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
-end;
-
-function TCustomSchemeControl.LoadCScheme : integer;
-var
-   User,c : integer;
-begin
-   SetLength(ColourSchemes,0);
-   User := LoadCSchemes(BaseMn, ExtractFilePath(ParamStr(0))+'\cscheme\USER\',0);
-   c := LoadCSchemes(BaseMn, ExtractFilePath(ParamStr(0))+'\cscheme\PalPack1\',User);
-   Result := LoadCSchemes(BaseMn, ExtractFilePath(ParamStr(0))+'\cscheme\PalPack2\',c);
-end;
-
 
 end.

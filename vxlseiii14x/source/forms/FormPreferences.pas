@@ -313,12 +313,11 @@ begin
    ComboBox1.Items.Add('unittem.pal');
    ComboBox1.ItemsEX.Items[ComboBox1.Items.Count-1].ImageIndex := 16;
 
-   if PaletteList.Data_no > 0 then
-      for x := 0 to PaletteList.Data_no-1 do
-      begin
-         ComboBox1.Items.Add(ExtractFileName(PaletteList.Data[x]));
-         ComboBox1.ItemsEX.Items[ComboBox1.Items.Count-1].ImageIndex := 24;
-      end;
+   for x := Low(FrmMain.PaletteControl.PaletteSchemes) to High(FrmMain.PaletteControl.PaletteSchemes) do
+   begin
+      ComboBox1.Items.Add(ExtractFileName(FrmMain.PaletteControl.PaletteSchemes[x].Filename));
+      ComboBox1.ItemsEX.Items[ComboBox1.Items.Count-1].ImageIndex := 24;
+   end;
 
    ComboBox2.Clear;
    ComboBox2.Items.Add('unittem.pal');
@@ -327,12 +326,11 @@ begin
    ComboBox2.Items.Add('unittem.pal');
    ComboBox2.ItemsEX.Items[ComboBox2.Items.Count-1].ImageIndex := 16;
 
-   if PaletteList.Data_no > 0 then
-      for x := 0 to PaletteList.Data_no-1 do
-      begin
-         ComboBox2.Items.Add(ExtractFileName(PaletteList.Data[x]));
-         ComboBox2.ItemsEX.Items[ComboBox2.Items.Count-1].ImageIndex := 24;
-      end;
+   for x := Low(FrmMain.PaletteControl.PaletteSchemes) to High(FrmMain.PaletteControl.PaletteSchemes) do
+   begin
+      ComboBox2.Items.Add(ExtractFileName(FrmMain.PaletteControl.PaletteSchemes[x].Filename));
+      ComboBox2.ItemsEX.Items[ComboBox2.Items.Count-1].ImageIndex := 24;
+   end;
 
    // 3D Options
    CbFPSCap.Checked := Configuration.FPSCap <> 0;
