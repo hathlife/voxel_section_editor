@@ -11,17 +11,18 @@ type
 
          function IsFileInUse(const _FileName: string): Boolean;
          function FindSubMenuItemFromCaption(var _BaseMenuItem: TMenuItem; const _Caption: string):TMenuItem;
+         procedure ClearSubMenu(var _MenuItem: TMenuItem);
       public
-         LatestTime : integer;
          PaletteSchemes : TPaletteSchemes;
          OnClickEvent: TNotifyEvent;
 
          constructor Create(const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
          destructor Destroy; override;
+         procedure ResetPaletteSchemes;
          procedure AddPalettesToSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer); overload;
          procedure AddPalettesToSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer;  _CreateSubMenu: boolean); overload;
-         procedure UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; _Latest: integer; const _Dir: string; var _Counter: integer; const _ImageIndex: integer); overload;
-         procedure UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; _Latest: integer; const _Dir: string; var _Counter: integer; const _ImageIndex: integer;  _UseBaseItem: boolean); overload;
+         procedure UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer); overload;
+         procedure UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer;  _UseBaseItem, _ClearBaseItem: boolean); overload;
    end;
 
 implementation
@@ -36,8 +37,34 @@ end;
 
 destructor TPaletteControl.Destroy;
 begin
-   SetLength(PaletteSchemes, 0);
+   ResetPaletteSchemes;
    inherited Destroy;
+end;
+
+procedure TPaletteControl.ResetPaletteSchemes;
+begin
+   SetLength(PaletteSchemes, 0);
+end;
+
+procedure TPaletteControl.ClearSubMenu(var _MenuItem: TMenuItem);
+var
+   i: integer;
+   item: TMenuItem;
+begin
+   if _MenuItem.Count > 0 then
+   begin
+      i := _MenuItem.Count - 1;
+      while i >= 0 do
+      begin
+         item := _MenuItem.Items[i];
+         if Item.Count > 0 then
+         begin
+            ClearSubMenu(Item);
+         end;
+         _MenuItem.Delete(i);
+         dec(i);
+      end;
+   end;
 end;
 
 function TPaletteControl.FindSubMenuItemFromCaption(var _BaseMenuItem: TMenuItem; const _Caption: string):TMenuItem;
@@ -119,13 +146,8 @@ begin
       item.Caption := extractfilename(PaletteSchemes[High(PaletteSchemes)].FileName);
       item.Tag := High(PaletteSchemes); // so we know which it is
       item.OnClick := OnClickEvent;
-      item.ImageIndex := _ImageIndex;
 
       CurrentSubMenu.Insert(CurrentSubMenu.Count, item);
-      if f.Time > LatestTime then
-      begin
-         LatestTime := f.Time;
-      end;
    until FindNext(f) <> 0;
    FindClose(f);
 
@@ -153,12 +175,12 @@ begin
    FindClose(f);
 end;
 
-procedure TPaletteControl.UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; _Latest: integer; const _Dir: string; var _Counter: integer; const _ImageIndex: integer);
+procedure TPaletteControl.UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer);
 begin
-   UpdatePalettesAtSubMenu(_SubMenu, _Latest, _Dir, _Counter, _ImageIndex, true);
+   UpdatePalettesAtSubMenu(_SubMenu, _Dir, _Counter, _ImageIndex, true, true);
 end;
 
-procedure TPaletteControl.UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; _Latest: integer; const _Dir: string; var _Counter: integer; const _ImageIndex: integer;  _UseBaseItem: boolean);
+procedure TPaletteControl.UpdatePalettesAtSubMenu(var _SubMenu: TMenuItem; const _Dir: string; var _Counter: integer; const _ImageIndex: integer;  _UseBaseItem, _ClearBaseItem: boolean);
 var
    f: TSearchRec;
    FileName, DirName, path: String;
@@ -176,6 +198,10 @@ begin
    begin
       CurrentSubMenu := _SubMenu;
    end;
+   if _ClearBaseItem then
+   begin
+      ClearSubMenu(CurrentSubMenu);
+   end;
 
    path := Concat(_Dir, '*.pal');
    // find files
@@ -184,28 +210,20 @@ begin
       FileName := _Dir + f.Name;
       if FileExists(FileName) and (not IsFileInUse(FileName)) then
       begin
-         if f.Time > _Latest then
-         begin
-            SetLength(PaletteSchemes, High(PaletteSchemes)+2);
+         SetLength(PaletteSchemes, High(PaletteSchemes)+2);
 
-            PaletteSchemes[High(PaletteSchemes)].FileName := Filename;
-            PaletteSchemes[High(PaletteSchemes)].ImageIndex := _ImageIndex;
+         PaletteSchemes[High(PaletteSchemes)].FileName := Filename;
+         PaletteSchemes[High(PaletteSchemes)].ImageIndex := _ImageIndex;
 
-            item := TMenuItem.Create(Owner);
-            item.AutoHotkeys := maManual;
-            item.Caption := extractfilename(PaletteSchemes[High(PaletteSchemes)].FileName);
-            item.Tag := High(PaletteSchemes); // so we know which it is
-            item.OnClick := OnClickEvent;
-            item.ImageIndex := _ImageIndex;
+         item := TMenuItem.Create(Owner);
+         item.AutoHotkeys := maManual;
+         item.Caption := extractfilename(PaletteSchemes[High(PaletteSchemes)].FileName);
+         item.Tag := High(PaletteSchemes); // so we know which it is
+         item.OnClick := OnClickEvent;
 
-            inc(_Counter);
-            CurrentSubMenu.Insert(CurrentSubMenu.Count, item);
-            if f.Time > LatestTime then
-            begin
-               LatestTime := f.Time;
-            end;
-            inc(_Counter);
-         end;
+         inc(_Counter);
+         CurrentSubMenu.Insert(CurrentSubMenu.Count, item);
+         inc(_Counter);
       end;
    until FindNext(f) <> 0;
    FindClose(f);
@@ -225,7 +243,7 @@ begin
             DirName := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(_Dir) + f.Name);
             if DirectoryExists(DirName) then // It sounds unnecessary, but for some reason, it may catch some weird dirs sometimes.
             begin
-               UpdatePalettesAtSubMenu(CurrentSubMenu, _Latest, DirName, _Counter, _ImageIndex, false);
+               UpdatePalettesAtSubMenu(CurrentSubMenu, DirName, _Counter, _ImageIndex, false, true);
             end;
          end;
       until FindNext(f) <> 0;

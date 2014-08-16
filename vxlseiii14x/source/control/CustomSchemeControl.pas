@@ -13,20 +13,21 @@ type
          Owner: TComponent;
 
          function IsFileInUse(const _FileName: string): Boolean;
+         procedure ClearSubMenu(var _MenuItem: TMenuItem);
          function FindSubMenuItemFromCaption(var _BaseMenuItem: TMenuItem; const _Caption: string):TMenuItem;
          function CreateSplitterMenuItem: TMenuItem;
          procedure InsertItemAtMenu(var _item,_menu: TMenuItem; _GameType: integer; Split: boolean);
          procedure AddScheme(const _Filename: string);
          procedure SetupSubMenu;
       public
-         LatestScheme : integer;
          ColourSchemes : TColourSchemesInfo;
          OnClickEvent: TNotifyEvent;
 
          constructor Create(const _Owner: TComponent; _OnClickEvent: TNotifyEvent);
          destructor Destroy; override;
-         function UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer) : Integer; overload;
-         function UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer; _UseBaseItem: boolean) : Integer; overload;
+         procedure ResetColourSchemes;
+         function UpdateCSchemes(var _BaseItem: TMenuItem; _Dir : string; _c : integer) : Integer; overload;
+         function UpdateCSchemes(var _BaseItem: TMenuItem; _Dir : string; _c : integer; _UseBaseItem, _ClearBaseMenu: boolean) : Integer; overload;
          function LoadCSchemes(var _BaseItem: TMenuItem; _Dir: string; _c: integer): integer; overload;
          function LoadCSchemes(var _BaseItem: TMenuItem; _Dir: string; _c: integer; _CreateSubMenu: boolean): integer; overload;
    end;
@@ -43,8 +44,44 @@ end;
 
 destructor TCustomSchemeControl.Destroy;
 begin
-   SetLength(ColourSchemes, 0);
+   ResetColourSchemes;
    inherited Destroy;
+end;
+
+procedure TCustomSchemeControl.ResetColourSchemes;
+begin
+   SetLength(ColourSchemes, 0);
+end;
+
+procedure TCustomSchemeControl.ClearSubMenu(var _MenuItem: TMenuItem);
+var
+   i: integer;
+   item: TMenuItem;
+begin
+   if _MenuItem.Count > 0 then
+   begin
+      i := _MenuItem.Count - 1;
+      while i >= 0 do
+      begin
+         item := _MenuItem.Items[i];
+         if Item.Count > 0 then
+         begin
+            if (Item.Tag >= 0) then
+            begin
+               ClearSubMenu(Item);
+               _MenuItem.Delete(i);
+            end;
+         end
+         else
+         begin
+            if (Item.Tag > 0) and (CompareStr(Item.Caption,'-') <> 0) then
+            begin
+               _MenuItem.Delete(i);
+            end;
+         end;          
+         dec(i);
+      end;
+   end;
 end;
 
 function TCustomSchemeControl.FindSubMenuItemFromCaption(var _BaseMenuItem: TMenuItem; const _Caption: string):TMenuItem;
@@ -170,11 +207,77 @@ begin
       CloseHandle(HFileRes);
 end;
 
-function TCustomSchemeControl.UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer) : Integer;
+function TCustomSchemeControl.UpdateCSchemes(var _BaseItem: TMenuItem; _Dir : string; _c : integer) : Integer;
 begin
-   Result := UpdateCSchemes(_BaseItem, _Latest, _Dir, _c, true);
+   Result := UpdateCSchemes(_BaseItem, _Dir, _c, true, true);
 end;
 
+function TCustomSchemeControl.UpdateCSchemes(var _BaseItem: TMenuItem; _Dir : string; _c : integer; _UseBaseItem, _ClearBaseMenu: boolean) : Integer;
+var
+   f:     TSearchRec;
+   Name, path:  string;
+   i : integer;
+   MySubMenu: TMenuItem;
+begin
+   if not DirectoryExists(IncludeTrailingPathDelimiter(_Dir)) then
+      exit;
+
+   if not _UseBaseItem then
+   begin
+      CurrentSubMenu := FindSubMenuItemFromCaption(_BaseItem, ExtractFileName(ExcludeTrailingPathDelimiter(_Dir)));
+   end
+   else
+   begin
+      CurrentSubMenu := _BaseItem;
+   end;
+   if _ClearBaseMenu then
+   begin
+      ClearSubMenu(CurrentSubMenu);
+   end;
+   MySubMenu := CurrentSubMenu;
+   // Reset submenus.
+   for i := 1 to 19 do
+   begin
+      MenuItems[i] := nil;
+   end;
+   // Find submenu subitems
+   SetupSubMenu;
+
+   // prepare
+   path := Concat(_Dir, '*.cscheme');
+   // find files
+   if FindFirst(path, faAnyFile, f) = 0 then
+      repeat
+         Name := IncludeTrailingPathDelimiter(_Dir) + f.Name;
+         if FileExists(Name) and (not IsFileInUse(Name)) then
+         begin
+            AddScheme(Concat(_Dir, f.Name));
+            inc(_c);
+         end;
+      until FindNext(f) <> 0;
+   FindClose(f);
+
+   // Check all subdirectories.
+   Path := IncludeTrailingPathDelimiter(_Dir) + '*';
+   if FindFirst(path,faDirectory,f) = 0 then
+   begin
+      repeat
+         if (CompareStr(f.Name,'.') <> 0) and (CompareStr(f.Name, '..') <> 0) then
+         begin
+            Name := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(_Dir) + f.Name);
+            if DirectoryExists(Name) then // It sounds unnecessary, but for some reason, it may catch some weird dirs sometimes.
+            begin
+               UpdateCSchemes(MySubMenu, Name, _c, false, true);
+            end;
+         end;
+      until FindNext(f) <> 0;
+   end;
+   FindClose(f);
+   Result := _c;
+end;
+
+{
+// Old code. The old approach could have ordering failures and issues with the time detection.
 function TCustomSchemeControl.UpdateCSchemes(var _BaseItem: TMenuItem; _Latest: integer; _Dir : string; _c : integer; _UseBaseItem: boolean) : Integer;
 var
    f:     TSearchRec;
@@ -241,6 +344,7 @@ begin
    FindClose(f);
    Result := _c;
 end;
+}
 
 procedure TCustomSchemeControl.SetupSubMenu;
 var
@@ -400,10 +504,6 @@ begin
          if FileExists(Name) and (not IsFileInUse(Name)) then
          begin
             AddScheme(Concat(_Dir, f.Name));
-            if f.Time > LatestScheme then
-            begin
-               LatestScheme := f.Time;
-            end;
          end;
       until FindNext(f) <> 0;
    FindClose(f);

@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.225';
+   APPLICATION_VER = '1.39.226';
    APPLICATION_BETA = true;
 
 type
@@ -3711,13 +3711,13 @@ end;
 
 procedure TFrmMain.UpdatePaletteList1Click(Sender: TObject);
 var
-   c, Latest : integer;
+   c : integer;
 begin
    c := 0;
-   Latest := PaletteControl.LatestTime;
-   PaletteControl.UpdatePalettesAtSubMenu(TSPalettes, Latest, ExtractFilePath(ParamStr(0))+'Palettes\TS\', c, 15);
-   PaletteControl.UpdatePalettesAtSubMenu(RA2Palettes, Latest, ExtractFilePath(ParamStr(0))+'Palettes\RA2\', c, 16);
-   PaletteControl.UpdatePalettesAtSubMenu(Custom1, Latest, ExtractFilePath(ParamStr(0))+'Palettes\User\', c, 39);
+   PaletteControl.ResetPaletteSchemes;
+   PaletteControl.UpdatePalettesAtSubMenu(TSPalettes, ExtractFilePath(ParamStr(0))+'Palettes\TS\', c, 15);
+   PaletteControl.UpdatePalettesAtSubMenu(RA2Palettes, ExtractFilePath(ParamStr(0))+'Palettes\RA2\', c, 16);
+   PaletteControl.UpdatePalettesAtSubMenu(Custom1, ExtractFilePath(ParamStr(0))+'Palettes\User\', c, 39);
 end;
 
 procedure TFrmMain.blank1Click(Sender: TObject);
@@ -3929,14 +3929,12 @@ begin
 end;
 
 function TFrmMain.UpdateCScheme : integer;
-var
-   LastScheme : integer;
 begin
-   LastScheme := CustomSchemeControl.LatestScheme;
-   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\PalPack1\',0);
-   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\PalPack2\',Result);
-   Result := CustomSchemeControl.UpdateCSchemes(Apollo1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\Apollo\',Result);
-   Result := CustomSchemeControl.UpdateCSchemes(ColourScheme1, LastScheme,ExtractFilePath(ParamStr(0))+'\cschemes\USER\',Result);
+   CustomSchemeControl.ResetColourSchemes;
+   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack1\',0, true, true);
+   Result := CustomSchemeControl.UpdateCSchemes(PalPack1, ExtractFilePath(ParamStr(0))+'\cschemes\PalPack2\',Result, true, false);
+   Result := CustomSchemeControl.UpdateCSchemes(Apollo1, ExtractFilePath(ParamStr(0))+'\cschemes\Apollo\',Result, true, true);
+   Result := CustomSchemeControl.UpdateCSchemes(ColourScheme1, ExtractFilePath(ParamStr(0))+'\cschemes\USER\',Result, true, true);
 end;
 
 function TFrmMain.LoadCScheme : integer;
