@@ -124,7 +124,7 @@ begin
    {$endif}
    if AsciizToStr(FrmMain.Document.ActiveVoxel^.Header.FileType,16) <> 'Voxel Animation' then
       Result := False
-   else if FrmMain.Document.ActiveVoxel^.Header.Unknown <> 1 then
+   else if FrmMain.Document.ActiveVoxel^.Header.NumPalettes <> 1 then
       Result := False
    else
       Result := True;
@@ -180,7 +180,7 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: SetVoxelFileDefaults');
    {$endif}
    SetHeaderFileType('Voxel Animation');
-   FrmMain.Document.ActiveVoxel^.Header.Unknown := 1;
+   FrmMain.Document.ActiveVoxel^.Header.NumPalettes := 1;
    FrmMain.Document.ActiveVoxel^.Header.StartPaletteRemap := 16;
    FrmMain.Document.ActiveVoxel^.Header.EndPaletteRemap := 31;
    FrmMain.Document.ActiveVoxel^.Header.BodySize := 0;

@@ -103,7 +103,7 @@ begin
    p:=Vox;
    HVA := _HVA;
    label2.caption:='File Type: '+p^.Header.FileType;
-   label3.caption:='Unknown: '+IntToStr(p^.Header.Unknown);
+   label3.caption:='Num Palettes: '+IntToStr(p^.Header.NumPalettes);
    label4.caption:='Num Sections: '+IntToStr(p^.Header.NumSections) + ' - ' +IntToStr(p^.Header.NumSections2);
    label6.caption:='Start: '+IntToStr(p^.Header.StartPaletteRemap);
    label7.caption:='End: '+IntToStr(p^.Header.EndPaletteRemap);

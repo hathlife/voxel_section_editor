@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.226';
+   APPLICATION_VER = '1.39.227';
    APPLICATION_BETA = true;
 
 type
@@ -2808,6 +2808,10 @@ begin
       end
       else
          SaveAs1Click(Sender);
+   end
+   else
+   begin
+      SaveAs1Click(Sender);
    end;
 end;
 

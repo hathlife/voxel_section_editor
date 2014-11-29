@@ -11,7 +11,7 @@ uses
 type
    TVoxelHeader = packed record
       FileType: packed array[1..16] of Char; // always "Voxel Animation"
-      Unknown, // always 1
+      NumPalettes, // always 1
       NumSections,
       NumSections2,
       BodySize: LongInt; // as above
@@ -1180,7 +1180,10 @@ begin
    end;
 end;
 
-function TVoxel.isOpen: Boolean; begin Result := Loaded; end;
+function TVoxel.isOpen: Boolean;
+begin
+  Result := Loaded;
+end;
 
 procedure TVoxel.Assign(const _Voxel: TVoxel);
 var
@@ -1192,7 +1195,7 @@ begin
    Filename := _Voxel.Filename;
    for i := 1 to 16 do
       Header.FileType[i] := _Voxel.Header.FileType[i];
-   Header.Unknown := _Voxel.Header.Unknown;
+   Header.NumPalettes := _Voxel.Header.NumPalettes;
    Header.NumSections := _Voxel.Header.NumSections;
    Header.NumSections2 := _Voxel.Header.NumSections2;
    Header.BodySize := _Voxel.Header.BodySize;
