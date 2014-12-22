@@ -936,7 +936,8 @@ begin
 end;
 
 procedure CentreView(WndIndex: Integer);
-var Width, Height, x, y: Integer;
+var
+   Width, Height, x, y: Integer;
 begin
    if not VoxelOpen then Exit;
    {$ifdef DEBUG_FILE}

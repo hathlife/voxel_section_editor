@@ -5,18 +5,19 @@ interface
 uses BasicMathsTypes, BasicDataTypes, BasicVXLSETypes, Voxel, Voxel_Engine;
 
 Type
-   TUndo_Redo_data = record
+   TUndo_Redo_Voxel_Data = record
       Pos : TVector3i;
       V : TVoxelUnpacked;
    end;
 
-   TUndo_Redo_data2 = record
-      Data : array of TUndo_Redo_Data;
+   TUndo_Redo_Section_Data = record
+      XSize, YSize, ZSize: integer;
+      Data : array of TUndo_Redo_Voxel_Data;
       Data_no : integer;
    end;
 
    TUndo_Redo = record
-      Data : array of TUndo_Redo_Data2;
+      Data : array of TUndo_Redo_Section_Data;
       Data_no : integer;
    end;
 
@@ -58,6 +59,9 @@ begin
    inc(Undo_Redo.Data_no);
    SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
 
+   Undo_Redo.Data[Undo_Redo.Data_no-1].XSize := FrmMain.Document.ActiveSection^.Tailer.XSize;
+   Undo_Redo.Data[Undo_Redo.Data_no-1].YSize := FrmMain.Document.ActiveSection^.Tailer.YSize;
+   Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize := FrmMain.Document.ActiveSection^.Tailer.ZSize;
    Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no := 0;
    SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
 
@@ -92,6 +96,14 @@ begin
    inc(URRedo.Data_no);
    SetLength(URRedo.Data,URRedo.Data_no);
 
+   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> URUndo.Data[URRedo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> URUndo.Data[URRedo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> URUndo.Data[URRedo.Data_no-1].ZSize) then
+   begin
+      FrmMain.Document.ActiveSection^.Resize(URUndo.Data[URRedo.Data_no-1].XSize, URUndo.Data[URRedo.Data_no-1].YSize, URUndo.Data[URRedo.Data_no-1].ZSize);
+   end;
+
+   URRedo.Data[URRedo.Data_no-1].XSize := URUndo.Data[URRedo.Data_no-1].XSize;
+   URRedo.Data[URRedo.Data_no-1].YSize := URUndo.Data[URRedo.Data_no-1].YSize;
+   URRedo.Data[URRedo.Data_no-1].ZSize := URUndo.Data[URRedo.Data_no-1].ZSize;
    URRedo.Data[URRedo.Data_no-1].Data_no := 0;
    SetLength(URRedo.Data[URRedo.Data_no-1].Data,URRedo.Data[URRedo.Data_no-1].Data_no);
 
@@ -171,6 +183,9 @@ begin
    inc(Undo_Redo.Data_no);
    SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
 
+   Undo_Redo.Data[Undo_Redo.Data_no-1].XSize := VXL.Tailer.XSize;
+   Undo_Redo.Data[Undo_Redo.Data_no-1].YSize := VXL.Tailer.YSize;
+   Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize := VXL.Tailer.ZSize;
    Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no := 0;
    SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
 
@@ -204,6 +219,9 @@ begin
    SetLength(Dest.Data,Dest.Data_no);
    for i := 0 to Source.Data_no-1 do
    begin
+      Dest.Data[i].XSize := Dest.Data[i].XSize;
+      Dest.Data[i].YSize := Dest.Data[i].YSize;
+      Dest.Data[i].ZSize := Dest.Data[i].ZSize;
       Dest.Data[i].Data_no := Source.Data[i].Data_no;
       SetLength(Dest.Data[i].Data,Dest.Data[i].Data_no);
       For j := 0 to Source.Data[i].Data_no-1 do
@@ -229,6 +247,9 @@ begin
    SetLength(Dest.Data,Dest.Data_no);
    for i := 5 to Source.Data_no-1 do
    begin
+      Dest.Data[i-5].XSize := Dest.Data[i].XSize;
+      Dest.Data[i-5].YSize := Dest.Data[i].YSize;
+      Dest.Data[i-5].ZSize := Dest.Data[i].ZSize;
       Dest.Data[i-5].Data_no := Source.Data[i].Data_no;
       SetLength(Dest.Data[i-5].Data,Dest.Data[i-5].Data_no);
       For j := 0 to Source.Data[i].Data_no-1 do

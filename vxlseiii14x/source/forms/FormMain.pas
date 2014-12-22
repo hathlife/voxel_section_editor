@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.227';
+   APPLICATION_VER = '1.39.230';
    APPLICATION_BETA = true;
 
 type
@@ -1468,7 +1468,7 @@ begin
    PaintView2(0,true,CnvView[0],Document.ActiveSection^.View[0]);
 end;
 
-procedure TFrmMain.setupscrollbars;
+procedure TFrmMain.SetupScrollBars;
 begin
    ScrollBar1.Enabled := false;
    ScrollBar2.Enabled := false;
@@ -1505,10 +1505,10 @@ begin
       ScrollBar2.Enabled := false;
 end;
 
-procedure TFrmMain.cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var colwidth, rowheight: Real;
-    i, j, idx: Integer;
+procedure TFrmMain.cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+   colwidth, rowheight: Real;
+   i, j, idx: Integer;
 begin
    If not isEditable then exit;
    {$ifdef DEBUG_FILE}
@@ -2952,6 +2952,8 @@ begin
    {$endif}
    UndoRestorePoint(Undo,Redo);
    UpdateUndo_RedoState;
+   SetupViews;
+   SetupStatusBar;
    RefreshAll;
    VXLChanged := true;
 end;
@@ -3019,7 +3021,7 @@ begin
 
    if Document.ActiveVoxel^.Header.NumSections<2 then
    begin
-      MessageDlg('Can''t delete if there''s only 1 section!',mtWarning,[mbOK],0);
+      MessageDlg('Warning: We can not delete this section if there is only 1 section!',mtWarning,[mbOK],0);
       Exit;
    end;
 
@@ -4375,14 +4377,14 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: Resize1Click');
    {$endif}
-   FrmNew:=TFrmNew.Create(Self);
+   FrmNew := TFrmNew.Create(Self);
    with FrmNew do
    begin
       //FrmNew.Caption := ' Resize';
       //grpCurrentSize.Left := 8;
       //grpNewSize.Left := 112;
       //grpNewSize.Width := 97;
-      Label9.caption := 'Enter the size you want the canvas to be';
+      Label9.caption := 'Enter the size you want the canvas to be:';
       Label10.caption := 'Resize Canvas';
       grpCurrentSize.Visible := true;
       Image1.Picture := TopBarImageHolder.Picture;
@@ -4395,13 +4397,16 @@ begin
       if changed then
       begin
          //Save undo information
-         ResetUndoRedo;
+         CreateVXLRestorePoint(Document.ActiveSection^,Undo);
          UpdateUndo_RedoState;
 
          SetIsEditable(false);
          Document.ActiveSection^.Resize(x,y,z);
          SetIsEditable(true);
-         SectionComboChange(Sender);
+         SetupViews;
+         SetupStatusBar;
+         CursorReset;
+         Refreshall;
          VXLChanged := true;
       end;
    end;
@@ -4450,14 +4455,17 @@ begin
 
    if (Document.ActiveSection^.Tailer.XSize < 127) and (Document.ActiveSection^.Tailer.YSize < 127) and (Document.ActiveSection^.Tailer.ZSize < 127) then
    begin
-      ResetUndoRedo;
+      CreateVXLRestorePoint(Document.ActiveSection^,Undo);
       UpdateUndo_RedoState;
+
       SetIsEditable(false);
       Tool := CTopologyFixer.Create(Document.ActiveSection^,Document.Palette^);
       Tool.Free;
       SetIsEditable(true);
-      SectionComboChange(Sender);
+      SetupViews;
       SetupStatusBar;
+      CursorReset;
+      Refreshall;
       VXLChanged := true;
    end;
 end;
@@ -4481,12 +4489,15 @@ begin
       ShowModal;
       if Changed then
       begin
-         ResetUndoRedo;
+         CreateVXLRestorePoint(Document.ActiveSection^,Undo);
          UpdateUndo_RedoState;
          SetIsEditable(false);
          Document.ActiveSection^.ResizeBlowUp(Scale);
          SetIsEditable(true);
-         SectionComboChange(Sender);
+         SetupViews;
+         SetupStatusBar;
+         CursorReset;
+         Refreshall;
          VXLChanged := true;
       end;
    end;
