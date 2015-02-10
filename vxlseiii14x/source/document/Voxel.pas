@@ -264,8 +264,8 @@ begin
    Z := (Tailer.ZSize div 2);
    // set views
    View[0] := TVoxelView.Create(Self,oriZ,dirTowards);
-   View[1] := TVoxelView.Create(Self,oriX,dirTowards);
-   View[2] := TVoxelView.Create(Self,oriY,dirTowards);
+   View[1] := TVoxelView.Create(Self,oriX,dirAway);
+   View[2] := TVoxelView.Create(Self,oriY,dirAway);
    for i := 0 to 2 do
    begin
       with ViewPort[i] do
@@ -1450,7 +1450,7 @@ procedure TVoxelView.Refresh;
             begin
                y := Foreground;
                Voxel.GetVoxel(x,y,z,v);
-               // find voxel on the x axis
+               // find voxel on the y axis
                while not v.Used do
                begin
                   Inc(y);
@@ -1484,7 +1484,7 @@ procedure TVoxelView.Refresh;
             begin
                y := Foreground;
                Voxel.GetVoxel(x,y,z,v);
-               // find voxel on the x axis
+               // find voxel on the y axis
                while not v.Used do
                begin
                   Dec(y);
@@ -1548,7 +1548,7 @@ procedure TVoxelView.Refresh;
             begin
                z := Foreground;
                Voxel.GetVoxel(x,y,z,v);
-               // find voxel on the x axis
+               // find voxel on the z axis
                while not v.Used do
                begin
                   Inc(z);
@@ -1582,7 +1582,7 @@ procedure TVoxelView.Refresh;
             begin
                z := Foreground;
                Voxel.GetVoxel(x,y,z,v);
-               // find voxel on the x axis
+               // find voxel on the z axis
                while not v.Used do
                begin
                   Dec(z);
@@ -1736,28 +1736,28 @@ begin
    idx := getViewNameIdx;
    case idx of
       0:
-      begin // Right to Left
-         SwapX := False;
-         SwapY := True;
-         SwapZ := False;
-      end;
-      1:
       begin // Left to Right
          SwapX := False;
          SwapY := True;
          SwapZ := True;
       end;
-      2:
-      begin // Top to Bottom
-         SwapX := True;
+      1:
+      begin // Right to Left
+         SwapX := False;
          SwapY := True;
          SwapZ := False;
       end;
-      3:
+      2:
       begin // Bottom to Top
          SwapX := True;
-         SwapY := True;
-         SwapZ := True;
+         SwapY := False;
+         SwapZ := False;
+      end;
+      3:
+      begin // Top to Bottom
+         SwapX := False;
+         SwapY := False;
+         SwapZ := False;
       end;
       4:
       begin // Back to Front

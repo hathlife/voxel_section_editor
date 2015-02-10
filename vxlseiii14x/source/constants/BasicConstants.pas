@@ -24,10 +24,10 @@ const
 
 
    ViewName: array[0..5] of string = (
-      ' Right',
       ' Left',
-      ' Top',
+      ' Right',
       ' Bottom',
+      ' Top',
       ' Back',
       ' Front');
 
