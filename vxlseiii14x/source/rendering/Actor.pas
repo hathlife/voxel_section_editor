@@ -182,8 +182,8 @@ var
    i : integer;
 begin
    glPushMatrix;
-      RotateActor;
       MoveActor;
+      RotateActor;
       for i := Low(Models) to High(Models) do
       begin
          if Models[i] <> nil then
@@ -199,8 +199,8 @@ var
    i : integer;
 begin
    glPushMatrix;
-      RotateActor;
       MoveActor;
+      RotateActor;
       for i := Low(Models) to High(Models) do
       begin
          if Models[i] <> nil then

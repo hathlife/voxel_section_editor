@@ -1223,7 +1223,9 @@ begin
    j := Trunc(_Smooth)+1;
    while not (j=0) do
    begin
-      temp := S; S := D; D := temp;
+      temp := S;
+      S := D;
+      D := temp;
       for i:=0 to NPoint-1 do
       begin
          x := PointList[i].R;

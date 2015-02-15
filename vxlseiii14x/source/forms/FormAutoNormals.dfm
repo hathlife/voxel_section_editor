@@ -74,14 +74,14 @@ object FrmAutoNormals: TFrmAutoNormals
       Width = 321
       Height = 17
       Hint = 
-        'This is the latest Normalizer. Influence Normalizer is builds a ' +
-        'reference map based on the influence of a region (how far it is ' +
-        'inside the model). Then, it normalizes it and in the end, it smo' +
-        'oths it. The range for the normalization and smooth can be defin' +
-        'ed by the user. The higher the range, the smoother the result...' +
-        ' however, it will kill your processor, memory and take longer. V' +
-        'alues higher than 3 will use too much processor and will hardly ' +
-        'do any difference at all.'
+        'Influence Normalizer builds a reference map based on the influen' +
+        'ce of a region (how far it is inside the model). Then, it normal' +
+        'izes it and in the end, it smooths it. The range for the normali' +
+        'zation and smooth can be defined by the user. The higher the ran' +
+        'ge, the smoother the result... however, it will kill your proces' +
+        'sor, memory and take longer. Values higher than 3 will use too m' +
+        'uch processing power and it will hardly do any difference at all' +
+        '.'
       Caption = 'Influence AutoNormals (Auto Normals v7.0, recommended)'
       ParentShowHint = False
       ShowHint = True
@@ -99,12 +99,12 @@ object FrmAutoNormals: TFrmAutoNormals
         'eference map based on influences (how much is inside the structu' +
         're) for those pixels that are not inside the model. Then, it nor' +
         'malizes it and smooth it in the end. The results are often good ' +
-        'and it distuingish well the borders of the model. The range for ' +
-        'the normalization and smooth can be defined by the user. The hig' +
-        'her the range, the smoother the result... however, it will kill ' +
-        'your processor, memory and take longer. Values higher than 3 wil' +
-        'l use too much processor and will hardly do any difference at al' +
-        'l.'
+        'and it distuingishes well the borders of the model. The range fo' +
+        'r the normalization and smooth can be defined by the user. The h' +
+        'igher the range, the smoother the result... however, it will kil' +
+        'l your processor, memory and take longer. Values higher than 3 w' +
+        'ill use too much processing power and will hardly do any differe' +
+        'nce at all.'
       Caption = 'Cubed AutoNormals (Auto Normals v5.5)'
       ParentShowHint = False
       ShowHint = True
@@ -132,6 +132,10 @@ object FrmAutoNormals: TFrmAutoNormals
       Top = 24
       Width = 313
       Height = 17
+      Hint = 
+        'Tangent Plane AutoNormals tries to detect the normal vector of t' +
+        'he surface, supposing that it has a manifold surface of voxels a' +
+        'round the voxel that is being analyzed.'
       Caption = 'Tangent Plane AutoNormals (Auto Normals 8.0 Beta)'
       Checked = True
       TabOrder = 3
@@ -143,6 +147,12 @@ object FrmAutoNormals: TFrmAutoNormals
       Top = 119
       Width = 313
       Height = 17
+      Hint = 
+        'This is an extension of the 6-Faced AutoNormals, created by HBD,' +
+        ' that creates a more advanced influence map of the external part' +
+        ' of the volume around the surface using the Normalization Range ' +
+        'provided by the user. The higher the range, the higher the longe' +
+        'r it takes to execute it.'
       Caption = 'HBD AutoNormals (Fast and it has good results)'
       TabOrder = 4
       OnClick = RbHBDClick

@@ -115,6 +115,7 @@ begin
    RbCubed.Caption := 'Cubed Auto Normals (v' + AUTONORMALS_CUBED + ')';
    Rb6Faced.Caption := '6-Faced Auto Normals (v' + AUTONORMALS_6FACED + ')';
    RbHBD.Caption := 'HBD AutoNormals (Quick`n`Good.)';
+   GbInfluenceOptions.Caption := 'Tangent Plane Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.LbRangeClick(Sender: TObject);
@@ -169,6 +170,7 @@ end;
 procedure TFrmAutoNormals.Rb6FacedClick(Sender: TObject);
 begin
    ShowInfluenceOptions(not Rb6Faced.Checked);
+   GbInfluenceOptions.Caption := '6-Faced Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.BtCancelClick(Sender: TObject);
