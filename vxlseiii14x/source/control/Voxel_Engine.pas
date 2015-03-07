@@ -730,11 +730,14 @@ begin
       begin
          for xx := 1 to tempview.Data_no do
          begin
-            if (View.getViewNameIdx = 1) or(View.getViewNameIdx = 3) or (View.getViewNameIdx = 4) then
+            if (View.getViewNameIdx = 0) or (View.getViewNameIdx = 4) then
                x := View.Width - 1-tempview.data[xx].X
             else
                x := tempview.data[xx].X;
-            y :=  View.Height - 1-tempview.data[xx].Y;
+            if (View.getViewNameIdx = 3) then
+               y :=  tempview.data[xx].Y
+            else
+               y :=  View.Height - 1-tempview.data[xx].Y;
             if tempview.data[xx].VU then
             begin
                if SpectrumMode = ModeColours then

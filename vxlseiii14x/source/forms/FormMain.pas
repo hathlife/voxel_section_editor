@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.231';
+   APPLICATION_VER = '1.39.232';
    APPLICATION_BETA = true;
 
 type
@@ -2168,8 +2168,7 @@ begin
    StatusBar1.Refresh;
 end;
 
-procedure TFrmMain.CnvView0MouseMove(Sender: TObject; Shift: TShiftState;
-  X, Y: Integer);
+procedure TFrmMain.CnvView0MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 label
    PickColor;
 var
@@ -2372,7 +2371,7 @@ begin
          OldMousePos.Y := Y;
          //TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
          with Document.ActiveSection^.Tailer do
-            if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) or (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then
+            if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) or (LastClick[0].X >= XSize) or (LastClick[0].Y >= YSize) or (LastClick[0].Z >= ZSize) then
             begin
                if TempView.Data_no > 0 then
                begin
