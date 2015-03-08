@@ -249,6 +249,12 @@ begin
    FrmMain.Document.ActiveSection^.View[2].Refresh;
 
    FrmMain.Document.ActiveSection^.Viewport[0].Zoom := DefaultZoom;
+   if FrmMain.SelectedZoomOption <> nil then
+   begin
+      FrmMain.SelectedZoomOption.Checked := false;
+   end;
+   FrmMain.SelectedZoomOption := FrmMain.N7x1;
+   FrmMain.SelectedZoomOption.Checked := true;
    FrmMain.Document.ActiveSection^.Viewport[1].Zoom := DefaultZoom;
    FrmMain.Document.ActiveSection^.Viewport[2].Zoom := DefaultZoom;
 
@@ -1123,6 +1129,12 @@ begin
       Thumb[0] := Thumb[Idx];
       Thumb[Idx] := swapThumb;
       Viewport[0].Zoom := DefaultZoom;
+      if FrmMain.SelectedZoomOption <> nil then
+      begin
+         FrmMain.SelectedZoomOption.Checked := false;
+      end;
+      FrmMain.SelectedZoomOption := FrmMain.N7x1;
+      FrmMain.SelectedZoomOption.Checked := true;
    end;
    SyncViews;
    CentreView(0);

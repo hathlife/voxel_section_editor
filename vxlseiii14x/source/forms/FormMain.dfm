@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 958
+  ClientHeight = 996
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,15 +29,16 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 939
+    Height = 977
     Align = alClient
     BevelOuter = bvLowered
     ParentBackground = False
     TabOrder = 0
+    ExplicitHeight = 958
     object Splitter1: TSplitter
       Left = 653
       Top = 26
-      Height = 912
+      Height = 950
       Align = alRight
       ExplicitLeft = 640
       ExplicitTop = 360
@@ -47,10 +48,11 @@ object FrmMain: TFrmMain
       Left = 1
       Top = 26
       Width = 152
-      Height = 912
+      Height = 950
       Align = alLeft
       ParentBackground = False
       TabOrder = 0
+      ExplicitHeight = 931
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1280,10 +1282,11 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 912
+      Height = 950
       Align = alRight
       ParentBackground = False
       TabOrder = 1
+      ExplicitHeight = 931
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1605,10 +1608,11 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 500
-      Height = 912
+      Height = 950
       Align = alClient
       ParentBackground = False
       TabOrder = 2
+      ExplicitHeight = 931
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -1631,7 +1635,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 482
-        Height = 881
+        Height = 919
         Align = alClient
         OnMouseDown = CnvView0MouseDown
         OnMouseMove = CnvView0MouseMove
@@ -4324,7 +4328,7 @@ object FrmMain: TFrmMain
         Left = 483
         Top = 14
         Width = 16
-        Height = 881
+        Height = 919
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4333,16 +4337,18 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
+        ExplicitHeight = 900
       end
       object Panel5: TPanel
         Left = 1
-        Top = 895
+        Top = 933
         Width = 498
         Height = 16
         Align = alBottom
         BevelOuter = bvNone
         ParentBackground = False
         TabOrder = 1
+        ExplicitTop = 914
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4547,7 +4553,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 939
+    Top = 977
     Width = 862
     Height = 19
     Panels = <
@@ -4566,6 +4572,7 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
+    ExplicitTop = 958
   end
   object MainMenu1: TMainMenu
     Images = ImageList1

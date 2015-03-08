@@ -592,6 +592,7 @@ type
      {$ifdef TEXTURE_DEBUG}
      DebugFile: TDebugFile;
      {$endif}
+     SelectedZoomOption: TMenuItem;
      procedure UpdateRenderingCounters;
   end;
 
@@ -1569,8 +1570,7 @@ begin
    PaintPalette(cnvPalette,True);
 end;
 
-procedure TFrmMain.OGL3DPreviewMouseMove(Sender: TObject;
-  Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.OGL3DPreviewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
    If not isEditable then exit;
    {$ifdef DEBUG_FILE}
@@ -1605,8 +1605,7 @@ begin
    end;
 end;
 
-procedure TFrmMain.OGL3DPreviewMouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.OGL3DPreviewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    If not isEditable then exit;
    {$ifdef DEBUG_FILE}
@@ -1625,8 +1624,7 @@ begin
    end;
 end;
 
-procedure TFrmMain.OGL3DPreviewMouseUp(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.OGL3DPreviewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: OGL3DPreviewMouseUp');
@@ -4565,13 +4563,18 @@ end;
 procedure TFrmMain.N1x1Click(Sender: TObject);
 begin
    Document.ActiveSection^.Viewport[0].Zoom := Strtoint(CleanString(TMenuItem(Sender).caption));
+   if SelectedZoomOption <> nil then
+   begin
+      SelectedZoomOption.Checked := false;
+   end;
+   SelectedZoomOption := TMenuItem(Sender);
+   SelectedZoomOption.Checked := true;
    CentreViews;
    setupscrollbars;
    CnvView0.Refresh;
 end;
 
-procedure TFrmMain.FormKeyDown(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TFrmMain.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
    if not isEditable then exit;
 
