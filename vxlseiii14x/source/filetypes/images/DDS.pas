@@ -641,6 +641,7 @@ begin
       MyFile.Free;
       exit;
    end;
+   MyFile.Free;
    Result := true;
 end;
 

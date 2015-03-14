@@ -1461,6 +1461,105 @@ end;
 
 procedure CTriangleFiller.PaintDebugTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f);
 var
+   P1, P2, P3, P12, P23, P31, PC : TVector2f;
+   CX : TVector4f;
+   Size : integer;
+   Perimeter, D12, D23, D31 : single;
+begin
+   Size := _Buffer.MaxX+1;
+   P1 := ScaleVector(_P1,Size);
+   P2 := ScaleVector(_P2,Size);
+   P3 := ScaleVector(_P3,Size);
+
+   // We'll do things in a different way here.
+   // 1) paint center of triangle:
+
+   // Detect Central position.
+   D12 := VectorDistance(P1, P2);
+   D23 := VectorDistance(P2, P3);
+   D31 := VectorDistance(P3, P1);
+   P12.U := (P1.U + P2.U) / 2;
+   P12.V := (P1.V + P2.V) / 2;
+   P23.U := (P2.U + P3.U) / 2;
+   P23.V := (P2.V + P3.V) / 2;
+   P31.U := (P3.U + P1.U) / 2;
+   P31.V := (P3.V + P1.V) / 2;
+   Perimeter := (D12 + D23 + D31);
+   PC.U := (P23.U * (D23 / Perimeter)) + (P31.U * (D31 / Perimeter)) + (P12.U * (D12 / Perimeter));
+   PC.V := (P23.V * (D23 / Perimeter)) + (P31.V * (D31 / Perimeter)) + (P12.V * (D12 / Perimeter));
+   // Set Center colour, should be a green.
+   CX.X := 0;
+   CX.Y := 1;
+   CX.Z := 0;
+   CX.W := 1;
+   // Paint it.
+   PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PC, CX);
+
+   // 2) paint the edges.
+   // Set edge colour, should be a blue.
+   CX.X := 0;
+   CX.Y := 0;
+   CX.Z := 1;
+   CX.W := 1;
+   if IsP1HigherThanP2(P1,P2) then
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         // P3 < P2 < P1
+         PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P3,P2,P1,CX,CX,CX);
+      end
+      else
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P2 < P3 < P1
+            PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P2,P3,P1,CX,CX,CX);
+         end
+         else
+         begin
+            // P2 < P1 < P3
+            PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P2,P1,P3,CX,CX,CX);
+         end;
+      end;
+   end
+   else
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P3 < P1 < P2
+            PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P3,P1,P2,CX,CX,CX);
+         end
+         else
+         begin
+            // P1 < P3 < P2
+            PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P1,P3,P2,CX,CX,CX);
+         end;
+      end
+      else
+      begin
+         // P1 < P2 < P3
+         PaintGouraudTriangleBorder(_Buffer,_WeightBuffer,P1,P2,P3,CX,CX,CX);
+      end;
+   end;
+
+   // 3) Paint vertexes.
+   // Set vertex colour, should be white.
+   CX.X := 1;
+   CX.Y := 1;
+   CX.Z := 0;
+   CX.W := 1;
+
+   // Paint it.
+   PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P1, CX);
+   PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P2, CX);
+   PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P3, CX);
+end;
+
+{
+procedure CTriangleFiller.PaintDebugTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f);
+var
    P1, P2, P3, PC : TVector2f;
    CX : TVector4f;
    Size : integer;
@@ -1550,5 +1649,5 @@ begin
    PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P2, CX);
    PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, P3, CX);
 end;
-
+}
 end.
