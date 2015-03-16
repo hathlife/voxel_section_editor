@@ -66,26 +66,28 @@ begin
    SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
 
    for i := 1 to TempView.Data_no do
+   begin
       if TempView.Data[i].VU then
       begin
          inc(Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
-         no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no;
+         no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no - 1;
 
-         SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,no);
+         SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, no + 1);
          with TempView do
             FrmMain.Document.ActiveSection^.GetVoxel(Data[i].VC.X,Data[i].VC.Y,Data[i].VC.Z,v);
 
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Colour := V.Colour;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Flags := V.Flags;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Normal := V.Normal;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Used := V.Used;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
 
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.X := TempView.Data[i].VC.X;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.Y := TempView.Data[i].VC.Y;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.Z := TempView.Data[i].VC.Z;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.X := TempView.Data[i].VC.X;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Y := TempView.Data[i].VC.Y;
+         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := TempView.Data[i].VC.Z;
       end;
-      VXLChanged := true;
-      Result := true;
+   end;
+   VXLChanged := true;
+   Result := true;
 end;
 
 Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
@@ -96,14 +98,14 @@ begin
    inc(URRedo.Data_no);
    SetLength(URRedo.Data,URRedo.Data_no);
 
-   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> URUndo.Data[URRedo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> URUndo.Data[URRedo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> URUndo.Data[URRedo.Data_no-1].ZSize) then
+   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> URUndo.Data[URUndo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> URUndo.Data[URUndo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> URUndo.Data[URUndo.Data_no-1].ZSize) then
    begin
-      FrmMain.Document.ActiveSection^.Resize(URUndo.Data[URRedo.Data_no-1].XSize, URUndo.Data[URRedo.Data_no-1].YSize, URUndo.Data[URRedo.Data_no-1].ZSize);
+      FrmMain.Document.ActiveSection^.Resize(URUndo.Data[URRedo.Data_no-1].XSize, URUndo.Data[URUndo.Data_no-1].YSize, URUndo.Data[URUndo.Data_no-1].ZSize);
    end;
 
-   URRedo.Data[URRedo.Data_no-1].XSize := URUndo.Data[URRedo.Data_no-1].XSize;
-   URRedo.Data[URRedo.Data_no-1].YSize := URUndo.Data[URRedo.Data_no-1].YSize;
-   URRedo.Data[URRedo.Data_no-1].ZSize := URUndo.Data[URRedo.Data_no-1].ZSize;
+   URRedo.Data[URRedo.Data_no-1].XSize := URUndo.Data[URUndo.Data_no-1].XSize;
+   URRedo.Data[URRedo.Data_no-1].YSize := URUndo.Data[URUndo.Data_no-1].YSize;
+   URRedo.Data[URRedo.Data_no-1].ZSize := URUndo.Data[URUndo.Data_no-1].ZSize;
    URRedo.Data[URRedo.Data_no-1].Data_no := 0;
    SetLength(URRedo.Data[URRedo.Data_no-1].Data,URRedo.Data[URRedo.Data_no-1].Data_no);
 
@@ -187,26 +189,26 @@ begin
    Undo_Redo.Data[Undo_Redo.Data_no-1].YSize := VXL.Tailer.YSize;
    Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize := VXL.Tailer.ZSize;
    Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no := 0;
-   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
+   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, 0);
 
    for x := 0 to VXL.Tailer.XSize-1 do
       for y := 0 to VXL.Tailer.YSize-1 do
          for z := 0 to VXL.Tailer.ZSize-1 do
          begin
             inc(Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
-            no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no;
+            no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no - 1;
 
-            SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,no);
+            SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, no + 1);
             FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
 
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Colour := V.Colour;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Flags := V.Flags;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Normal := V.Normal;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].V.Used := V.Used;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
 
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.X := x;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.Y := y;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no-1].Pos.Z := z;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.X := x;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Y := y;
+            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := z;
          end;
    VXLChanged := true;
 end;
