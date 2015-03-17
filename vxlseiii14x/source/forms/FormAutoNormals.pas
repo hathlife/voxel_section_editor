@@ -49,8 +49,8 @@ type
       EdSmooth: TEdit;
       Label8: TLabel;
       RbTangent: TRadioButton;
-    RbHBD: TRadioButton;
-    procedure RbHBDClick(Sender: TObject);
+      RbHBD: TRadioButton;
+      procedure RbHBDClick(Sender: TObject);
       procedure RbTangentClick(Sender: TObject);
       procedure BtTipsClick(Sender: TObject);
       procedure BtOKClick(Sender: TObject);
@@ -105,17 +105,63 @@ end;
 
 procedure TFrmAutoNormals.FormShow(Sender: TObject);
 begin
-   RbTangent.Checked := true;
-   ShowInfluenceOptions(true);
-   LbRange.ItemIndex := RANGE_DEFAULT;
-   LbRangeClick(Sender);
+   case Configuration.ANType of
+      0:
+      begin
+         RbTangent.Checked := true;
+         RbTangentClick(Sender);
+      end;
+      1:
+      begin
+         RbInfluence.Checked := true;
+         RbInfluenceClick(Sender);
+      end;
+      2:
+      begin
+         RbCubed.Checked := true;
+         RbCubedClick(Sender);
+      end;
+      3:
+      begin
+         Rb6Faced.Checked := true;
+         Rb6FacedClick(Sender);
+      end;
+      4:
+      begin
+         RbHBD.Checked := true;
+         RbHBDClick(Sender);
+      end;
+   end;
+   EdRange.Text := FloatToStr(Configuration.ANNormalizationRange);
+   if Configuration.ANNormalizationRange = TS_MAGIC_NUMBER then
+   begin
+      LbRange.ItemIndex := 0;
+   end
+   else if Configuration.ANNormalizationRange = RA2_MAGIC_NUMBER then
+   begin
+      LbRange.ItemIndex := 1;
+   end
+   else
+   begin
+      LbRange.ItemIndex := RANGE_CUSTOM;
+   end;
+   CbSmoothMe.Checked := Configuration.ANSmoothMyNormals;
+   CbInfluenceMap.Checked := Configuration.ANInfluenceMap;
+   CbNewPixelsOnly.Checked := Configuration.ANNewPixels;
+   CbIncreaseContrast.Checked := Configuration.ANStretch;
+   EdSmooth.Text := FloatToStr(Configuration.ANSmoothLevel);
+   EdContrast.Text := FloatToStr(Configuration.ANContrastLevel);
+   //RbTangent.Checked := true;
+   //ShowInfluenceOptions(true);
+   //LbRange.ItemIndex := RANGE_DEFAULT;
+   //LbRangeClick(Sender);
    Caption := 'AutoNormals ' + AUTONORMALS_TANGENT;
    RbTangent.Caption := 'Tangent Plane Auto Normals (v' + AUTONORMALS_TANGENT + ', recommended)';
    RbInfluence.Caption := 'Influence Auto Normals (v' + AUTONORMALS_INFLUENCE + ')';
    RbCubed.Caption := 'Cubed Auto Normals (v' + AUTONORMALS_CUBED + ')';
    Rb6Faced.Caption := '6-Faced Auto Normals (v' + AUTONORMALS_6FACED + ')';
    RbHBD.Caption := 'HBD AutoNormals (Quick`n`Good.)';
-   GbInfluenceOptions.Caption := 'Tangent Plane Normalizer Options..';
+   //GbInfluenceOptions.Caption := 'Tangent Plane Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.LbRangeClick(Sender: TObject);
@@ -146,31 +192,36 @@ end;
 procedure TFrmAutoNormals.RbTangentClick(Sender: TObject);
 begin
    ShowInfluenceOptions(RbTangent.Checked);
+   Configuration.ANType := 0;
    GbInfluenceOptions.Caption := 'Tangent Plane Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.RbInfluenceClick(Sender: TObject);
 begin
    ShowInfluenceOptions(RbInfluence.Checked);
+   Configuration.ANType := 1;
    GbInfluenceOptions.Caption := 'Influence Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.RbCubedClick(Sender: TObject);
 begin
    ShowInfluenceOptions(RbCubed.Checked);
+   Configuration.ANType := 2;
    GbInfluenceOptions.Caption := 'Smooth Cubed Normalizer Options..';
-end;
-
-procedure TFrmAutoNormals.RbHBDClick(Sender: TObject);
-begin
-   ShowInfluenceOptions(RbHBD.Checked);
-   GbInfluenceOptions.Caption := 'HBD Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.Rb6FacedClick(Sender: TObject);
 begin
    ShowInfluenceOptions(not Rb6Faced.Checked);
+   Configuration.ANType := 3;
    GbInfluenceOptions.Caption := '6-Faced Normalizer Options..';
+end;
+
+procedure TFrmAutoNormals.RbHBDClick(Sender: TObject);
+begin
+   ShowInfluenceOptions(RbHBD.Checked);
+   Configuration.ANType := 4;
+   GbInfluenceOptions.Caption := 'HBD Normalizer Options..';
 end;
 
 procedure TFrmAutoNormals.BtCancelClick(Sender: TObject);
@@ -229,7 +280,7 @@ begin
    else if RbCubed.Checked then
    begin
       Range := StrToFloatDef(EdRange.Text,0);
-      Contrast := StrToIntDef(EdContrast.Text,0);
+      Contrast := StrToIntDef(EdContrast.Text,1);
       if CbSmoothMe.Checked and CbSmoothMe.Enabled then
       begin
          Smooth := StrToFloatDef(EdSmooth.Text,1);
@@ -294,6 +345,15 @@ begin
          MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_6FACED + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused)),'6-Faced Auto Normal Results',0);
       end;
    end;
+
+   // Update configurations.
+   Configuration.ANSmoothMyNormals := CbSmoothMe.Checked;
+   Configuration.ANInfluenceMap := CbInfluenceMap.Checked;
+   Configuration.ANNewPixels := CbNewPixelsOnly.Checked;
+   Configuration.ANStretch := CbIncreaseContrast.Checked;
+   Configuration.ANNormalizationRange := StrToFloatDef(EdRange.Text, 0);
+   Configuration.ANSmoothLevel := StrToFloatDef(EdSmooth.Text, 1);
+   Configuration.ANContrastLevel := StrToFloatDef(EdContrast.Text, 1);
 
    VXLChanged := true;
    FrmMain.Refreshall;
