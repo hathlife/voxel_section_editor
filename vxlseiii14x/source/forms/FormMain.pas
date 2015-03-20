@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.234';
+   APPLICATION_VER = '1.39.235';
    APPLICATION_BETA = true;
 
 type
@@ -2964,6 +2964,8 @@ begin
    {$endif}
    RedoRestorePoint(Undo,Redo);
    UpdateUndo_RedoState;
+   SetupViews;
+   SetupStatusBar;
    RefreshAll;
    VXLChanged := true;
 end;

@@ -35,6 +35,9 @@ Procedure ResetUndoRedo;
 // Bad but only way to do some restore points(i.e flips, nudges, mirroring)
 Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
+Procedure PushVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure PopVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+
 Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
 
 implementation
@@ -91,55 +94,15 @@ begin
 end;
 
 Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
-var
-   i,no : Integer;
-   v : TVoxelUnpacked;
 begin
-   inc(URRedo.Data_no);
-   SetLength(URRedo.Data,URRedo.Data_no);
-
-   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> URUndo.Data[URUndo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> URUndo.Data[URUndo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> URUndo.Data[URUndo.Data_no-1].ZSize) then
-   begin
-      FrmMain.Document.ActiveSection^.Resize(URUndo.Data[URRedo.Data_no-1].XSize, URUndo.Data[URUndo.Data_no-1].YSize, URUndo.Data[URUndo.Data_no-1].ZSize);
-   end;
-
-   URRedo.Data[URRedo.Data_no-1].XSize := URUndo.Data[URUndo.Data_no-1].XSize;
-   URRedo.Data[URRedo.Data_no-1].YSize := URUndo.Data[URUndo.Data_no-1].YSize;
-   URRedo.Data[URRedo.Data_no-1].ZSize := URUndo.Data[URUndo.Data_no-1].ZSize;
-   URRedo.Data[URRedo.Data_no-1].Data_no := 0;
-   SetLength(URRedo.Data[URRedo.Data_no-1].Data,URRedo.Data[URRedo.Data_no-1].Data_no);
-
-   for i := 0 to URUndo.Data[URUndo.Data_no-1].Data_no-1 do
-   begin
-      //with URUndo.Data[URUndo.Data_no-1] do
-      FrmMain.Document.ActiveSection^.GetVoxel(URUndo.Data[URUndo.Data_no-1].Data[i].Pos.X,URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Y,URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Z,v);
-
-      inc(URRedo.Data[URRedo.Data_no-1].Data_no);
-      no := URRedo.Data[URRedo.Data_no-1].Data_no;
-
-      SetLength(URRedo.Data[URRedo.Data_no-1].Data,no);
-
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].V.Colour := V.Colour;
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].V.Flags := V.Flags;
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].V.Normal := V.Normal;
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].V.Used := V.Used;
-
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].Pos.X := URUndo.Data[URUndo.Data_no-1].Data[i].Pos.X;
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].Pos.Y := URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Y;
-      URRedo.Data[URRedo.Data_no-1].Data[no-1].Pos.Z := URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Z;
-
-      //with URUndo.Data[URUndo.Data_no-1] do
-      FrmMain.Document.ActiveSection^.SetVoxel(URUndo.Data[URUndo.Data_no-1].Data[i].Pos.X,URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Y,URUndo.Data[URUndo.Data_no-1].Data[i].Pos.Z,URUndo.Data[URUndo.Data_no-1].Data[i].v);
-   end;
-
-   dec(URUndo.Data_no);
-   SetLength(URUndo.Data,URUndo.Data_no);
-   VXLChanged := true;
+   PushVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
+   PopVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
 end;
 
 Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 begin
-   UndoRestorePoint(URRedo,URUndo);
+   PushVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
+   PopVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
 end;
 
 Function IsUndoRedoUsed(Undo_Redo : TUndo_Redo) : boolean;
@@ -172,15 +135,20 @@ begin
 end;
 
 Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+begin
+   Redo.Data_no := 0;
+   SetLength(Redo.Data,Redo.Data_no);
+
+   PushVXLRestorePoint(Vxl, Undo_Redo);
+end;
+
+Procedure PushVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 var
    x,y,z,no : integer;
    v : TVoxelUnpacked;
 begin
    if Undo_Redo.Data_no > Min_Undos + 5 then
       GoneOverReset(Undo_Redo);
-
-   Redo.Data_no := 0;
-   SetLength(Redo.Data,Redo.Data_no);
 
    inc(Undo_Redo.Data_no);
    SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
@@ -213,6 +181,32 @@ begin
    VXLChanged := true;
 end;
 
+Procedure PopVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+var
+   i : integer;
+   v : TVoxelUnpacked;
+begin
+   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize) then
+   begin
+      FrmMain.Document.ActiveSection^.Resize(Undo_Redo.Data[Undo_Redo.Data_no-1].XSize, Undo_Redo.Data[Undo_Redo.Data_no-1].YSize, Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize);
+   end;
+
+   for i := 0 to Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no-1 do
+   begin
+      v.Colour := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Colour;
+      v.Flags := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Flags;
+      v.Normal := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Normal;
+      v.Used := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Used;
+
+      FrmMain.Document.ActiveSection^.SetVoxel(Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.X,Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.Y,Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.Z, v);
+   end;
+
+   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, 0);
+   dec(Undo_Redo.Data_no);
+   SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
+   VXLChanged := true;
+end;
+
 Procedure Copy_UndoRedo(Const Source : TUndo_Redo; Var Dest  : TUndo_Redo);
 var
    I,J : integer;
@@ -221,9 +215,9 @@ begin
    SetLength(Dest.Data,Dest.Data_no);
    for i := 0 to Source.Data_no-1 do
    begin
-      Dest.Data[i].XSize := Dest.Data[i].XSize;
-      Dest.Data[i].YSize := Dest.Data[i].YSize;
-      Dest.Data[i].ZSize := Dest.Data[i].ZSize;
+      Dest.Data[i].XSize := Source.Data[i].XSize;
+      Dest.Data[i].YSize := Source.Data[i].YSize;
+      Dest.Data[i].ZSize := Source.Data[i].ZSize;
       Dest.Data[i].Data_no := Source.Data[i].Data_no;
       SetLength(Dest.Data[i].Data,Dest.Data[i].Data_no);
       For j := 0 to Source.Data[i].Data_no-1 do
@@ -249,9 +243,9 @@ begin
    SetLength(Dest.Data,Dest.Data_no);
    for i := 5 to Source.Data_no-1 do
    begin
-      Dest.Data[i-5].XSize := Dest.Data[i].XSize;
-      Dest.Data[i-5].YSize := Dest.Data[i].YSize;
-      Dest.Data[i-5].ZSize := Dest.Data[i].ZSize;
+      Dest.Data[i-5].XSize := Source.Data[i].XSize;
+      Dest.Data[i-5].YSize := Source.Data[i].YSize;
+      Dest.Data[i-5].ZSize := Source.Data[i].ZSize;
       Dest.Data[i-5].Data_no := Source.Data[i].Data_no;
       SetLength(Dest.Data[i-5].Data,Dest.Data[i-5].Data_no);
       For j := 0 to Source.Data[i].Data_no-1 do
