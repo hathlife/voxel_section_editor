@@ -1956,9 +1956,9 @@ begin
             b:=Round(j*VectorDir[1]+VectorPos[1]);
             c:=Round(k*VectorDir[2]+VectorPos[2]);
             //perform range checking
-            if not (a<0) and not (b<0) and not (c<0) then
+            if (a >=0 ) and (b >= 0) and (c >= 0) then
             begin
-               if (a<Tailer.XSize) and (b<Tailer.YSize) and (c<Tailer.ZSize) then
+               if (a < Tailer.XSize) and (b < Tailer.YSize) and (c < Tailer.ZSize) then
                   NewData[a,b,c]:=Data[i,j,k];
             end;
          end;

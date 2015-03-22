@@ -35,8 +35,8 @@ Procedure ResetUndoRedo;
 // Bad but only way to do some restore points(i.e flips, nudges, mirroring)
 Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
-Procedure PushVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
-Procedure PopVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
 Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
 
@@ -95,14 +95,14 @@ end;
 
 Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 begin
-   PushVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
-   PopVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
+   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
+   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
 end;
 
 Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 begin
-   PushVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
-   PopVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
+   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
+   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
 end;
 
 Function IsUndoRedoUsed(Undo_Redo : TUndo_Redo) : boolean;
@@ -139,10 +139,10 @@ begin
    Redo.Data_no := 0;
    SetLength(Redo.Data,Redo.Data_no);
 
-   PushVXLRestorePoint(Vxl, Undo_Redo);
+   SaveVXLRestorePoint(Vxl, Undo_Redo);
 end;
 
-Procedure PushVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 var
    x,y,z,no : integer;
    v : TVoxelUnpacked;
@@ -181,7 +181,7 @@ begin
    VXLChanged := true;
 end;
 
-Procedure PopVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 var
    i : integer;
    v : TVoxelUnpacked;
