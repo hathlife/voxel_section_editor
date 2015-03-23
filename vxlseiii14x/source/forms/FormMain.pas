@@ -2949,7 +2949,7 @@ begin
    {$endif}
    UndoRestorePoint(Undo,Redo);
    UpdateUndo_RedoState;
-   SetupViews;
+   UpdateViews;
    SetupStatusBar;
    RefreshAll;
    VXLChanged := true;
@@ -2964,7 +2964,7 @@ begin
    {$endif}
    RedoRestorePoint(Undo,Redo);
    UpdateUndo_RedoState;
-   SetupViews;
+   UpdateViews;
    SetupStatusBar;
    RefreshAll;
    VXLChanged := true;
@@ -4402,7 +4402,7 @@ begin
          SetIsEditable(false);
          Document.ActiveSection^.Resize(x,y,z);
          SetIsEditable(true);
-         SetupViews;
+         UpdateViews;
          SetupStatusBar;
          CursorReset;
          Refreshall;
@@ -4461,7 +4461,7 @@ begin
       Tool := CTopologyFixer.Create(Document.ActiveSection^,Document.Palette^);
       Tool.Free;
       SetIsEditable(true);
-      SetupViews;
+      UpdateViews;
       SetupStatusBar;
       CursorReset;
       Refreshall;
@@ -4493,7 +4493,7 @@ begin
          SetIsEditable(false);
          Document.ActiveSection^.ResizeBlowUp(Scale);
          SetIsEditable(true);
-         SetupViews;
+         UpdateViews;
          SetupStatusBar;
          CursorReset;
          Refreshall;

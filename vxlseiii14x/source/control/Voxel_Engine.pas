@@ -50,6 +50,7 @@ Function LoadVoxel(var Document: TVoxelDocument; Filename : String) : boolean;
 Function NewVoxel(var Document: TVoxelDocument; Game,x,y,z : integer) : boolean;
 Procedure ChangeSection;
 Procedure SetupViews;
+Procedure UpdateViews;
 Procedure SetSpectrumMode;
 Procedure SetNormalsCount;
 Function CleanVCol(Color : TVector3f) : TColor;
@@ -263,6 +264,19 @@ begin
 
 // CentreView(0);
    CentreViews;
+end;
+
+procedure UpdateViews;
+begin
+   {$ifdef DEBUG_FILE}
+   FrmMain.DebugFile.Add('VoxelEngine: UpdateViews');
+   {$endif}
+   FrmMain.Document.ActiveSection^.View[0].Refresh;
+   FrmMain.Document.ActiveSection^.View[1].Refresh;
+   FrmMain.Document.ActiveSection^.View[2].Refresh;
+   ZoomToFit(1);
+   ZoomToFit(2);
+   CentreViews; 
 end;
 
 Procedure SetSpectrumMode;
