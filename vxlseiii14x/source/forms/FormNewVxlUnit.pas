@@ -122,7 +122,7 @@ begin
      if dataloss then
          begin
         end;
-     Vxlchanged := true;
+     FrmMain.SetVoxelChanged(true);
      Close;
 end;
 

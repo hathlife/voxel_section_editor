@@ -47,7 +47,7 @@ uses FormMain;
 procedure TFrmVxlError.BtFixErrorHeaderClick(Sender: TObject);
 begin
    SetVoxelFileDefaults;
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    BtFixErrorHeader.Enabled := False;
 end;
 
@@ -65,7 +65,7 @@ begin
 
    MessageBox(0,Pchar('Normals Set To: ' + inttostr(N)),'Information',0);
 
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    BtFixErrorNormals.Enabled := False;
 end;
 

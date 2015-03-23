@@ -355,7 +355,7 @@ begin
    Configuration.ANSmoothLevel := StrToFloatDef(EdSmooth.Text, 1);
    Configuration.ANContrastLevel := StrToFloatDef(EdContrast.Text, 1);
 
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    FrmMain.Refreshall;
    Close;
 end;

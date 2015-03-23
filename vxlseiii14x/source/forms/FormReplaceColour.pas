@@ -306,7 +306,7 @@ begin
 
    FrmMain.RefreshAll;
    FrmMain.UpdateUndo_RedoState;
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    Close;
 end;
 

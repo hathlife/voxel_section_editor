@@ -485,7 +485,7 @@ begin
    BtApplyTextureClick(sender);
    FrmMain.UpdateUndo_RedoState;
    //FrmMain.RefreshAll;
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    Close;
 end;
 

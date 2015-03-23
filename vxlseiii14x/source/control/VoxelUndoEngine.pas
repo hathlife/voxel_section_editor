@@ -89,7 +89,7 @@ begin
          Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := TempView.Data[i].VC.Z;
       end;
    end;
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    Result := true;
 end;
 
@@ -178,7 +178,7 @@ begin
             Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Y := y;
             Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := z;
          end;
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
 end;
 
 Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
@@ -204,7 +204,7 @@ begin
    SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, 0);
    dec(Undo_Redo.Data_no);
    SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
 end;
 
 Procedure Copy_UndoRedo(Const Source : TUndo_Redo; Var Dest  : TUndo_Redo);

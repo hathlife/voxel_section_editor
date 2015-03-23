@@ -1526,7 +1526,7 @@ var
    Res : TApplyNormalsResult;
 begin
    Res := ApplyNormals(VXL);
-   VXLChanged := true;
+   FrmMain.SetVoxelChanged(true);
    Result := Res.confused;
    MessageBox(0,pchar('AutoNormals v1.1' + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applied: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused) {+ #13+ 'Redundent: ' +inttostr(Res.redundant)}),'6-Faced Auto Normal Results',0);
 end;
@@ -1535,20 +1535,20 @@ Function ApplyCubedNormalsToVXL(var VXL : TVoxelSection) : integer;
 var
    Res : TApplyNormalsResult;
 begin
-    Res := ApplyCubedNormals(VXL,1.74,1,1,true,true,false);
-    VXLChanged := true;
-    Result := Res.applied;
-    MessageBox(0,pchar('AutoNormals v5.2' + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
+   Res := ApplyCubedNormals(VXL,1.74,1,1,true,true,false);
+   FrmMain.SetVoxelChanged(true);
+   Result := Res.applied;
+   MessageBox(0,pchar('AutoNormals v5.2' + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
 end;
 
 Function ApplyInfluenceNormalsToVXL(var VXL : TVoxelSection) : integer;
 var
    Res : TApplyNormalsResult;
 begin
-    Res := ApplyInfluenceNormals(VXL,3.55,1,1,true,false,false);
-    VXLChanged := true;
-    Result := Res.applied;
-    MessageBox(0,pchar('AutoNormals v6.1' + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
+   Res := ApplyInfluenceNormals(VXL,3.55,1,1,true,false,false);
+   FrmMain.SetVoxelChanged(true);
+   Result := Res.applied;
+   MessageBox(0,pchar('AutoNormals v6.1' + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
 end;
 
 
@@ -1557,7 +1557,7 @@ begin
    result := RemoveRedundantVoxels(VXL);
 //   result := result + RemoveRedundantVoxelsOld(VXL);
    if Result > 0 then
-      VXLChanged := true;
+      FrmMain.SetVoxelChanged(true);
 end;
 
 procedure UpdateHistoryMenu;

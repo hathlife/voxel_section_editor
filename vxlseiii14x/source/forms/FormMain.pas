@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.236';
+   APPLICATION_VER = '1.39.237';
    APPLICATION_BETA = true;
 
 type
@@ -378,7 +378,7 @@ type
     procedure CnvView0Paint(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
-    procedure changecaption(Filename : boolean; FName : string);
+    procedure ChangeCaption(Filename : boolean);
     procedure CnvView1Paint(Sender: TObject);
     procedure CnvView2Paint(Sender: TObject);
     Procedure SetIsEditable(Value : boolean);
@@ -594,6 +594,7 @@ type
      {$endif}
      SelectedZoomOption: TMenuItem;
      procedure UpdateRenderingCounters;
+     procedure SetVoxelChanged(_Value: boolean);
   end;
 
 var
@@ -696,7 +697,7 @@ begin
    SetActiveColor(16,true);
    SetActiveNormal(0,false);
 
-   changecaption(false,'');
+   ChangeCaption(false);
 
    // Resets the 3 views on the right sidebar if the res is too low for 203 high ones.
    if RightPanel.Height < lblView1.Height+CnvView1.Height+lblView2.Height+CnvView2.Height+lbl3dview.Height+Panel7.Height+OGL3DPreview.Height then
@@ -1029,10 +1030,7 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: DoAfterLoadingThings');
    {$endif}
-   if VXLFilename = '' then
-      changecaption(true,'Untitled')
-   else
-      changecaption(true,VXLFilename);
+   ChangeCaption(true);
 
    v := not IsVoxelValid;
    n := HasNormalsBug;
@@ -1201,12 +1199,25 @@ end;
 {------------------------------------------------------------------}
 {------------------------------------------------------------------}
 
-procedure TFrmMain.changecaption(Filename : boolean; FName : string);
+procedure TFrmMain.changecaption(Filename : boolean);
 begin
    Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER;
 
    if Filename then
-      Caption := Caption + ' [' + extractfilename(FName) + ']';
+   begin
+      if VXLFilename = '' then
+      begin
+         Caption := Caption + ' [Untitled]';
+      end
+      else
+      begin
+         Caption := Caption + ' [' + extractfilename(VXLFilename) + ']';
+      end;
+      if VXLChanged then
+      begin
+         Caption := Caption  + '*';
+      end;
+   end;
 end;
 
 procedure TFrmMain.CnvView0Paint(Sender: TObject);
@@ -2799,8 +2810,7 @@ begin
       begin
          // ShowBusyMessage('Saving...');
          Document.SaveDocument(VXLFilename);
-         VXLChanged := false;
-         changecaption(true,VXLFilename);
+         SetVoxelChanged(false);
          // HideBusyMessage;
       end
       else
@@ -2828,8 +2838,8 @@ begin
    begin
       Document.SaveDocument(SaveVXLDialog.FileName);
       VXLFilename := SaveVXLDialog.Filename;
-      VXLChanged := false;
-      changecaption(true,VXLFilename);
+
+      SetVoxelChanged(false);
       Configuration.AddFileToHistory(VXLFilename);
       UpdateHistoryMenu;
    end;
@@ -2952,7 +2962,6 @@ begin
    UpdateViews;
    SetupStatusBar;
    RefreshAll;
-   VXLChanged := true;
 end;
 
 procedure TFrmMain.mnuBarRedoClick(Sender: TObject);
@@ -2967,7 +2976,6 @@ begin
    UpdateViews;
    SetupStatusBar;
    RefreshAll;
-   VXLChanged := true;
 end;
 
 procedure TFrmMain.updatenormals1Click(Sender: TObject);
@@ -2993,7 +3001,7 @@ begin
          RemoveRedundantVoxels1Click(Sender);
 
    Refreshall;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.CubedAutoNormals1Click(Sender: TObject);
@@ -3052,7 +3060,7 @@ begin
    SectionCombo.ItemIndex:=0;
    SectionComboChange(Self);
    SetisEditable(True);
-   VXLChanged := true;
+   SetVoxelChanged(true);
    Refreshall;
 end;
 
@@ -3092,7 +3100,7 @@ begin
    begin
       ShowMessage('Remove Redundant Voxels (8-Neighbors)' +#13#13+ 'Removed: ' + IntToStr(no));
       RefreshAll;
-      VXLChanged := true;
+      SetVoxelChanged(true);
    end;
 end;
 
@@ -3122,7 +3130,7 @@ begin
    if RemoveCount > 0 then
    begin
       RefreshAll;
-      VxlChanged := True;
+      SetVoxelChanged(true);
    end;
 end;
 
@@ -3143,7 +3151,7 @@ begin
    CreateVXLRestorePoint(Document.ActiveSection^,Undo);
    UpdateUndo_RedoState;
    Document.ActiveSection^.Clear;
-   VXLChanged := true;
+   SetVoxelChanged(true);
    RefreshAll;
 end;
 
@@ -3217,7 +3225,7 @@ begin
 
    Document.ActiveSection^.FlipMatrix([1,1,-1],[0,0,1]);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
@@ -3243,7 +3251,7 @@ begin
    Tool.Free;
 
    RefreshAll;
-   VxlChanged := True;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.FillUselessInternalGaps1Click(Sender: TObject);
@@ -3269,7 +3277,7 @@ begin
    Tool.Free;
 
    RefreshAll;
-   VxlChanged := True;
+   SetVoxelChanged(true);
 
 end;
 
@@ -3281,7 +3289,7 @@ begin
 
    Document.ActiveSection^.FlipMatrix([-1,1,1],[1,0,0]);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.FlipYswitchTopBottom1Click(Sender: TObject);
@@ -3292,7 +3300,7 @@ begin
 
    Document.ActiveSection^.FlipMatrix([1,-1,1],[0,1,0]);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.MirrorBottomToTop1Click(Sender: TObject);
@@ -3347,7 +3355,7 @@ begin
   end;
 
   RefreshAll;
-  VXLChanged := true;
+  SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.MirrorLeftToRight1Click(Sender: TObject);
@@ -3409,7 +3417,7 @@ begin
       end;
    end;
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.MirrorBackToFront1Click(Sender: TObject);
@@ -3420,7 +3428,7 @@ begin
    FlipZswitchFrontBack1Click(Sender);
    Document.ActiveSection^.Mirror(oriZ);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.MirrorFrontToBack1Click(Sender: TObject);
@@ -3430,7 +3438,7 @@ begin
 
    Document.ActiveSection^.Mirror(oriZ);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.Nudge1Left1Click(Sender: TObject);
@@ -3486,7 +3494,7 @@ begin
 
    Document.ActiveSection^.FlipMatrix([1,1,1],NR,False);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.Section2Click(Sender: TObject);
@@ -3537,7 +3545,7 @@ begin
 
       ResetUndoRedo;
       SetisEditable(True);
-      VXLChanged := true;
+      SetVoxelChanged(true);
    end;
    FrmNewSectionSize.Free;
 end;
@@ -3597,7 +3605,7 @@ begin
    //MajorRepaint;
    SectionCombo.ItemIndex:=SectionIndex;
    SectionComboChange(Self);
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.CropSection1Click(Sender: TObject);
@@ -3615,7 +3623,7 @@ begin
    Document.ActiveSection^.Crop;
    SetisEditable(True);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.mnuHistoryClick(Sender: TObject);
@@ -3851,7 +3859,7 @@ begin
             Document.ActiveSection^.SetVoxel(x,y,z,v);
          end;
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.ClearLayer1Click(Sender: TObject);
@@ -3871,7 +3879,7 @@ begin
 
    UpdateUndo_RedoState;
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.Copy1Click(Sender: TObject);
@@ -3888,7 +3896,7 @@ begin
    VXLCutToClipboard(Document.ActiveSection^);
    UpdateUndo_RedoState;
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.ClearUndoSystem1Click(Sender: TObject);
@@ -3909,7 +3917,7 @@ begin
 
    PasteFullVXL(Document.ActiveSection^);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.Paste1Click(Sender: TObject);
@@ -3924,7 +3932,7 @@ begin
    // --- Replaced with
    PasteVXL(Document.ActiveSection^);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 function TFrmMain.CreateSplitterMenuItem: TMenuItem;
@@ -4141,7 +4149,7 @@ begin
    UpdateUndo_RedoState;
    SmoothVXLNormals(Document.ActiveSection^);
    RefreshAll;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.VoxelTexture1Click(Sender: TObject);
@@ -4246,7 +4254,7 @@ begin
    SetIsEditable(true);
 
    SetupSections;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.ImagewithHeightmap1Click(Sender: TObject);
@@ -4309,7 +4317,7 @@ begin
                      end;
                   SetIsEditable(true);
                   VoxelOpen := true;
-                  VXLChanged := true;
+                  SetVoxelChanged(true);
                   DoAfterLoadingThings;
                end;
                IsVXLLoading := false;
@@ -4406,7 +4414,7 @@ begin
          SetupStatusBar;
          CursorReset;
          Refreshall;
-         VXLChanged := true;
+         SetVoxelChanged(true);
       end;
    end;
    FrmNew.Free;
@@ -4465,7 +4473,7 @@ begin
       SetupStatusBar;
       CursorReset;
       Refreshall;
-      VXLChanged := true;
+      SetVoxelChanged(true);
    end;
 end;
 
@@ -4497,7 +4505,7 @@ begin
          SetupStatusBar;
          CursorReset;
          Refreshall;
-         VXLChanged := true;
+         SetVoxelChanged(true);
       end;
    end;
    frm.Free;
@@ -4691,7 +4699,7 @@ begin
 
    ApplyInfluenceNormalsToVXL(Document.ActiveSection^);
    Refreshall;
-   VXLChanged := true;
+   SetVoxelChanged(true);
 end;
 
 procedure TFrmMain.AutoRepair(const _Filename: string; _ForceRepair: boolean);
@@ -4760,6 +4768,12 @@ end;
 procedure TFrmMain.FormDeactivate(Sender: TObject);
 begin
    Application.OnIdle := nil;
+end;
+
+procedure TFrmMain.SetVoxelChanged(_Value: boolean);
+begin
+   VXLChanged := _Value;
+   ChangeCaption(true);
 end;
 
 end.
