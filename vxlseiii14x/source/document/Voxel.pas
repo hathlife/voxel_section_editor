@@ -1749,13 +1749,13 @@ begin
       end;
       2:
       begin // Bottom to Top
-         SwapX := True;
+         SwapX := False;
          SwapY := False;
          SwapZ := False;
       end;
       3:
       begin // Top to Bottom
-         SwapX := False;
+         SwapX := True;
          SwapY := False;
          SwapZ := False;
       end;

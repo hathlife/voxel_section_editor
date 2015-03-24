@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.237';
+   APPLICATION_VER = '1.39.238';
    APPLICATION_BETA = true;
 
 type
@@ -3474,8 +3474,8 @@ begin
          case Document.ActiveSection^.View[0].GetViewNameIdx of
             0: NR[1]:=-1;
             1: NR[1]:=-1;
-            2: NR[0]:=-1;
-            3: NR[0]:=1;
+            2: NR[0]:=1;
+            3: NR[0]:=-1;
             4: NR[1]:=-1;
             5: NR[1]:=-1;
          end;
