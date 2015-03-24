@@ -63,7 +63,7 @@ Procedure CentreView(WndIndex: Integer);
 Procedure CentreViews;
 procedure ZoomToFit(WndIndex: Integer);
 Procedure RepaintViews;
-procedure TranslateClick(WndIndex, sx, sy: Integer; var lx, ly, lz: Integer);
+procedure TranslateClick(WndIndex, sx, sy: Integer; var lx, ly, lz: Integer; var outside: boolean);
 procedure TranslateClick2(WndIndex, sx, sy: Integer; var lx, ly, lz: Integer);
 procedure MoveCursor(lx, ly, lz: Integer; Repaint : boolean);
 Function GetPaletteColourFromVoxel(x,y, WndIndex : integer) : integer;
@@ -1029,7 +1029,7 @@ begin
    end;
 end;
 
-procedure TranslateClick(WndIndex, sx, sy: Integer; var lx, ly, lz: Integer);
+procedure TranslateClick(WndIndex, sx, sy: Integer; var lx, ly, lz: Integer; var outside: boolean);
 var
   p, q: Integer; // physical coords
 begin
@@ -1042,6 +1042,11 @@ begin
       //new conversion routines?
       p:=(sx - Viewport[WndIndex].Left) div Viewport[WndIndex].Zoom;
       q:=(sy - Viewport[WndIndex].Top) div Viewport[WndIndex].Zoom;
+      Outside := false;
+      if (p < 0) or (p >= View[WndIndex].Width) then
+         Outside := true;
+      if (q < 0) or (q >= View[WndIndex].Height) then
+         Outside := true;
       p:=Max(p,0);  //make sure p is >=0
       q:=Max(q,0);  //same for q
       //also make sure they're in range of 0..(Width/Height/Depth)-1
@@ -1113,13 +1118,14 @@ Function GetPaletteColourFromVoxel(x,y, WndIndex : integer) : integer;
 var
    Pos : TVector3i;
    v : TVoxelUnpacked;
+   Outside: Boolean;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: GetPaletteColourFromVoxel');
    {$endif}
    Result := -1;
 
-   TranslateClick(WndIndex,x,y,Pos.x,Pos.y,Pos.z);
+   TranslateClick(WndIndex,x,y,Pos.x,Pos.y,Pos.z,Outside);
    FrmMain.Document.ActiveSection^.GetVoxel(Pos.x,Pos.y,Pos.z,v);
 
    if v.Used then
