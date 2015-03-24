@@ -34,7 +34,6 @@ object FrmMain: TFrmMain
     BevelOuter = bvLowered
     ParentBackground = False
     TabOrder = 0
-    ExplicitHeight = 977
     object Splitter1: TSplitter
       Left = 653
       Top = 26
@@ -52,7 +51,6 @@ object FrmMain: TFrmMain
       Align = alLeft
       ParentBackground = False
       TabOrder = 0
-      ExplicitHeight = 950
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -163,7 +161,7 @@ object FrmMain: TFrmMain
           Width = 137
           Height = 21
           Style = csDropDownList
-          ItemHeight = 13
+          ItemHeight = 0
           TabOrder = 0
           OnChange = SectionComboChange
         end
@@ -1286,7 +1284,6 @@ object FrmMain: TFrmMain
       Align = alRight
       ParentBackground = False
       TabOrder = 1
-      ExplicitHeight = 950
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1612,7 +1609,6 @@ object FrmMain: TFrmMain
       Align = alClient
       ParentBackground = False
       TabOrder = 2
-      ExplicitHeight = 950
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4337,7 +4333,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 919
       end
       object Panel5: TPanel
         Left = 1
@@ -4348,7 +4343,6 @@ object FrmMain: TFrmMain
         BevelOuter = bvNone
         ParentBackground = False
         TabOrder = 1
-        ExplicitTop = 933
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4572,7 +4566,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 977
   end
   object MainMenu1: TMainMenu
     Images = ImageList1

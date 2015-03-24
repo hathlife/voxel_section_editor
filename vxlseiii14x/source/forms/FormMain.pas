@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.239';
+   APPLICATION_VER = '1.39.240';
    APPLICATION_BETA = true;
 
 type
@@ -2282,6 +2282,8 @@ begin
                         SetActiveColor(TempI,True)
                      else
                         SetActiveNormal(TempI,True);
+                  Mouse_Current := MouseDropper;
+                  CnvView[0].Cursor := Mouse_Current;
                end;
 
                VXLTool_SmoothNormal:
@@ -2425,6 +2427,11 @@ begin
                   Exit;
                end;
             SetCursor;
+            if ssAlt in Shift then
+            begin
+               Mouse_Current := MouseDropper;
+               CnvView[0].Repaint;
+            end;
             CnvView[0].Cursor := Mouse_Current;
 
             if TempView.Data_no > 0 then
@@ -2434,13 +2441,13 @@ begin
                //CnvView[0].Repaint;
             end;
 
-            if not DisableDrawPreview1.Checked then
+            if (not DisableDrawPreview1.Checked) and (not (ssAlt in Shift)) then
             begin
                case VXLTool of
 
                   VXLTool_Brush:
                   begin
-                     if VXLBrush <> 4 then
+                     if (VXLBrush <> 4) then
                      begin
                         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
                         if (SpectrumMode = ModeColours) or (v.Used=False) then
@@ -2467,7 +2474,7 @@ begin
 
                end; // tool switch
 
-            end; // draw preview not disabled
+            end; // draw preview not disabled and alt not used.
 
          end; // Which button is down
          
