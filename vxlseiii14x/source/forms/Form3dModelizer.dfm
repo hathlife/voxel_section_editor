@@ -772,6 +772,10 @@ object Frm3DModelizer: TFrm3DModelizer
           Caption = 'Traditional Diffuse Texture'
           OnClick = TextureFXDiffuseTextureClick
         end
+        object TextureFXDiffuseTexturewithMoreContrast: TMenuItem
+          Caption = 'Diffuse Texture with More Contrast'
+          OnClick = TextureFXDiffuseTexturewithMoreContrastClick
+        end
         object TextureFXDebug: TMenuItem
           Caption = 'Debug Texture Atlas'
           OnClick = TextureFXDebugClick

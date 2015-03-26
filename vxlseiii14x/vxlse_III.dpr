@@ -289,7 +289,9 @@ uses
   CommunityLinks in 'source\control\CommunityLinks.pas',
   CustomSchemeControl in 'source\control\CustomSchemeControl.pas',
   BasicProgramTypes in 'source\datatypes\BasicProgramTypes.pas',
-  PaletteControl in 'source\control\PaletteControl.pas';
+  PaletteControl in 'source\control\PaletteControl.pas',
+  NCMDiffuseTextureGenerator in 'source\control\mesh\NCMDiffuseTextureGenerator.pas',
+  NCMDiffuseTextureGeneratorCommand in 'source\control\commands\NCMDiffuseTextureGeneratorCommand.pas';
 
 {$R *.res}
 

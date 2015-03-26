@@ -52,6 +52,7 @@ type
          C_NormalMappingTextureGeneration = $10B02;
          C_BumpMappingTextureGeneration = $10B03;
          C_DiffuseDebugTextureGeneration = $10B04;
+         C_NCMDiffuseTextureGeneration = $10B05;
 
          // Execute goes here.
          procedure ExecuteCommand(_CommandType: integer; _ObjectID: TObjectID; _Parameters: TCommandParams); override;
@@ -97,6 +98,7 @@ type
          procedure DoNormalMappingTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
          procedure DoBumpMappingTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer; _Scale: single);
          procedure DoDiffuseDebugTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
+         procedure DoNCMDiffuseTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
          procedure DoMeshOptimization2009(var _Actor: PActor; _IgnoreColours: boolean; _Angle: single);
          procedure DoModelChangeRemappable(var _Actor: PActor; _Quality: integer; _Colour: integer);
    end;
@@ -117,7 +119,7 @@ uses GlobalVars, ActorActionCommandBase, TextureAtlasExtractorCommand,
    ModelRebuildCommand, DiffuseDebugTextureGeneratorCommand,
    MeshOptimization2009Command, ModelChangeRemappableCommand,
    TextureAtlasExtractorOrigamiParametricCommand, TextureAtlasExtractorOrigamiParametricDCCommand,
-   TextureAtlasExtractorIDCCommand;
+   TextureAtlasExtractorIDCCommand, NCMDiffuseTextureGeneratorCommand;
 
 
 // Constructors and Destructors
@@ -191,6 +193,10 @@ begin
       C_DiffuseDebugTextureGeneration:
       begin
          Command := TDiffuseDebugTextureGeneratorCommand.Create(Actor,_Parameters);
+      end;
+      C_NCMDiffuseTextureGeneration:
+      begin
+         Command := TNCMDiffuseTextureGeneratorCommand.Create(Actor,_Parameters);
       end;
       C_NormalMappingTextureGeneration:
       begin
@@ -476,6 +482,11 @@ end;
 procedure TActorActionController.DoDiffuseDebugTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
 begin
    SendCommand3Int(C_DiffuseDebugTextureGeneration, _Actor, _Size, _MaterialID, _TextureID);
+end;
+
+procedure TActorActionController.DoNCMDiffuseTextureGeneration(var _Actor: PActor; _Size: integer; _MaterialID: integer; _TextureID: integer);
+begin
+   SendCommand3Int(C_NCMDiffuseTextureGeneration, _Actor, _Size, _MaterialID, _TextureID);
 end;
 
 procedure TActorActionController.DoMeshOptimization2009(var _Actor: PActor; _IgnoreColours: boolean; _Angle: single);

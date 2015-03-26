@@ -16,6 +16,10 @@ type
          function GetAverageColour(const _C1, _C2: TVector4f):TVector4f; overload;
          function GetAverageColour(const _C1, _C2,_C3: TVector3f):TVector3f; overload;
          function GetAverageColour(const _C1, _C2,_C3: TVector4f):TVector4f; overload;
+         procedure GetRGBFactorsFromPixel(const _r, _g, _b: real; var _i, _rX, _gX, _bX: real);
+         function GetColourSimilarityFactor(_r1, _g1, _b1, _r2, _g2, _b2: real; var _cos: real): real;
+         function AreColoursSimilar(_r1, _g1, _b1, _r2, _g2, _b2: real): real;
+
          // Paint single pixel
          procedure PaintPixel(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size, _PosX, _PosY : integer; _Colour: TVector4f; _Weight : single); overload;
          procedure PaintPixel(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _Size, _PosX, _PosY : integer; _Colour: TVector3f; _Weight : single); overload;
@@ -32,18 +36,23 @@ type
          procedure PaintGouraudHorizontalLine(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer, _WeightBuffer: TAbstract2DImageData; _X1, _X2, _Y : single; _C1, _C2: TVector3f); overload;
          procedure PaintGouraudHorizontalLine(var _Buffer, _WeightBuffer: TAbstract2DImageData; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
+         procedure PaintHorizontalLineNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
+         procedure PaintHorizontalLineNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; _X1, _X2, _Y : single; _C1, _C2: TVector4f); overload;
          procedure PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X1, _X2, _Y : single; _Size: integer); overload;
          procedure PaintBumpHorizontalLine(var _Buffer: TAbstract2DImageData; const _HeightMap: TAbstract2DImageData; _X1, _X2, _Y : single; _Size: integer); overload;
          // Triangle Utils
          procedure GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector3f; var _dx, _dr, _dg, _db: single); overload;
          procedure GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single); overload;
          procedure GetGradient(const _P2, _P1: TVector2f; var _dx: single); overload;
+         procedure GetGradientNCM(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single; var _iStart, _iEnd: real); overload;
          procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector3f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe: real); overload;
          procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real); overload;
          procedure PaintTrianglePiece(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector3f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe: real); overload;
          procedure PaintTrianglePiece(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real); overload;
          procedure PaintTrianglePiece(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; var _S, _E: TVector2f; const _FinalPos: TVector2f; const _dxs, _dxe: single; _Size: integer); overload;
          procedure PaintTrianglePiece(var _Buffer: TAbstract2DImageData; const _HeightMap: TAbstract2DImageData; var _S, _E: TVector2f; const _FinalPos: TVector2f; const _dxs, _dxe: single; _Size: integer); overload;
+         procedure PaintTrianglePieceNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae,_iStart1, _iEnd1,_iStart2,_iEnd2: real); overload;
+         procedure PaintTrianglePieceNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae,_iStart1, _iEnd1,_iStart2,_iEnd2: real); overload;
          procedure PaintTrianglePieceBorder(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real); overload;
          procedure PaintTrianglePieceBorder(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real); overload;
          // Paint triangle
@@ -51,6 +60,8 @@ type
          procedure PaintGouraudTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f); overload;
          procedure PaintGouraudTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector3f); overload;
          procedure PaintGouraudTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
+         procedure PaintNCMTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
+         procedure PaintNCMTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintBumpMapTriangle(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f); overload;
          procedure PaintBumpMapTriangle(var _Buffer: TAbstract2DImageData; const _HeightMap: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f); overload;
          procedure PaintGouraudTriangleBorder(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
@@ -64,6 +75,8 @@ type
          procedure PaintTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
          procedure PaintTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _N1, _N2, _N3: TVector3f); overload;
          procedure PaintTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
+         procedure PaintTriangleNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
+         procedure PaintTriangleNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f); overload;
          procedure PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f); overload;
          procedure PaintFlatTriangleFromHeightMap(var _Buffer: TAbstract2DImageData; const _HeightMap: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f); overload;
          procedure PaintDebugTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f); overload;
@@ -138,6 +151,58 @@ begin
    Result.Y := (_C1.Y + _C2.Y + _C3.Y) / 3;
    Result.Z := (_C1.Z + _C2.Z + _C3.Z) / 3;
    Result.W := (_C1.W + _C2.W + _C3.W) / 3;
+end;
+
+procedure CTriangleFiller.GetRGBFactorsFromPixel(const _r, _g, _b: real; var _i, _rX, _gX, _bX: real);
+var
+   temp: real;
+begin
+   _i := Max(_r, Max(_g, _b));
+   // Get the chrome.
+   if _r + _g + _b > 0 then
+   begin
+      temp := sqrt((_r * _r) + (_g * _g) + (_b * _b));
+      _rX := _r / temp;
+      _gX := _g / temp;
+      _bX := _b / temp;
+   end
+   else
+   begin
+      _rX := sqrt(3)/3;
+      _gX := _rX;
+      _bX := _rX;
+   end;
+end;
+
+function CTriangleFiller.GetColourSimilarityFactor(_r1, _g1, _b1, _r2, _g2, _b2: real; var _cos: real): real;
+var
+   dot: real;
+begin
+   // Get the inner product between the two normalized colours and calculate score.
+   _cos := (_r1 * _r2) + (_g1 * _g2) + (_b1 * _b2);
+   if _cos >= 1 then
+   begin
+      Result := 0;
+   end
+   else
+   begin
+      Result := sqrt(1 - (_cos * _cos)); // Result is the sin: sin = sqrt(1 - cos²)
+   end;
+end;
+
+function CTriangleFiller.AreColoursSimilar(_r1, _g1, _b1, _r2, _g2, _b2: real): real;
+const
+   C_EPSILON = 6/255;
+var
+   i1, r1, g1, b1, i2, r2, g2, b2, cos, sin: real;
+begin
+   GetRGBFactorsFromPixel(_r1, _g1, _b1, i1, r1, g1, b1);
+   GetRGBFactorsFromPixel(_r2, _g2, _b2, i2, r2, g2, b2);
+   sin := GetColourSimilarityFactor(r1, g1, b1, r2, g2, b2, cos);
+   if (i1 * sin <= C_EPSILON) and (i2 * sin <= C_EPSILON) then
+      Result := cos
+   else
+      Result := 0;
 end;
 
 
@@ -603,6 +668,153 @@ begin
    end;
 end;
 
+procedure CTriangleFiller.PaintHorizontalLineNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
+var
+   dr, dg, db, da : real;
+   x2, x1 : single;
+   C1, C2, PC : TVector4f;
+   PP : TVector2f;
+   iStart, iEnd: real;
+begin
+   // First we make sure x1 will be smaller than x2.
+   if (_X1 > _X2) then
+   begin
+      x1 := _X2;
+      x2 := _X1;
+      C1 := SetVector(_C2);
+      C2 := SetVector(_C1);
+   end
+   else if _X1 = _X2 then
+   begin
+      PP := SetVector(_x1,_Y);
+      PC := GetAverageColour(_C1,_C2);
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      exit;
+   end
+   else
+   begin
+      x1 := _X1;
+      x2 := _X2;
+      C1 := SetVector(_C1);
+      C2 := SetVector(_C2);
+   end;
+
+   iStart := x1 + (((1 - AreColoursSimilar(C1.X, C1.Y, C1.Z, C2.X, C2.Y, C2.Z)) / 2) * (x2 - x1));
+   iEnd := x2 - iStart;
+
+   // get the gradients for each colour channel
+   if (iEnd - iStart) > 0 then
+   begin
+ 	   dr := (C2.X - C1.X) / (iEnd - iStart);
+      dg := (C2.Y - C1.Y) / (iEnd - iStart);
+      db := (C2.Z - C1.Z) / (iEnd - iStart);
+      da := (C2.W - C1.W) / (iEnd - iStart);
+   end
+   else
+   begin
+ 	   dr := (C2.X - C1.X);
+      dg := (C2.Y - C1.Y);
+      db := (C2.Z - C1.Z);
+      da := (C2.W - C1.W);
+   end;
+
+   //  Now, let's start the painting procedure:
+   PP := SetVector(x1,_Y);
+   PC := SetVector(C1);
+   while PP.U < iStart do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PP.U := PP.U + 1;
+   end;
+   while PP.U < iEnd do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PC.X := PC.X + dr;
+      PC.Y := PC.Y + dg;
+      PC.Z := PC.Z + db;
+      PC.W := PC.W + da;
+      PP.U := PP.U + 1;
+   end;
+   while PP.U <= x2 do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PP.U := PP.U + 1;
+   end;
+end;
+
+procedure CTriangleFiller.PaintHorizontalLineNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; _X1, _X2, _Y : single; _C1, _C2: TVector4f);
+var
+   dr, dg, db, da : real;
+   x2, x1 : single;
+   C1, C2, PC : TVector4f;
+   PP : TVector2f;
+   iStart, iEnd: real;
+begin
+   // First we make sure x1 will be smaller than x2.
+   if (_X1 > _X2) then
+   begin
+      x1 := _X2;
+      x2 := _X1;
+      C1 := SetVector(_C2);
+      C2 := SetVector(_C1);
+   end
+   else if _X1 = _X2 then
+   begin
+      PP := SetVector(_x1,_Y);
+      PC := GetAverageColour(_C1,_C2);
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      exit;
+   end
+   else
+   begin
+      x1 := _X1;
+      x2 := _X2;
+      C1 := SetVector(_C1);
+      C2 := SetVector(_C2);
+   end;
+
+   iStart := x1 + (((1 - AreColoursSimilar(C1.X, C1.Y, C1.Z, C2.X, C2.Y, C2.Z)) / 2) * (x2 - x1));
+   iEnd := x2 - iStart;
+
+   // get the gradients for each colour channel
+   if (iEnd - iStart) > 0 then
+   begin
+ 	   dr := (C2.X - C1.X) / (iEnd - iStart);
+      dg := (C2.Y - C1.Y) / (iEnd - iStart);
+      db := (C2.Z - C1.Z) / (iEnd - iStart);
+      da := (C2.W - C1.W) / (iEnd - iStart);
+   end
+   else
+   begin
+ 	   dr := (C2.X - C1.X);
+      dg := (C2.Y - C1.Y);
+      db := (C2.Z - C1.Z);
+      da := (C2.W - C1.W);
+   end;
+
+   //  Now, let's start the painting procedure:
+   PP := SetVector(x1,_Y);
+   PC := SetVector(C1);
+   while PP.U < iStart do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PP.U := PP.U + 1;
+   end;
+   while PP.U < iEnd do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PC.X := PC.X + dr;
+      PC.Y := PC.Y + dg;
+      PC.Z := PC.Z + db;
+      PC.W := PC.W + da;
+      PP.U := PP.U + 1;
+   end;
+   while PP.U <= x2 do
+   begin
+      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      PP.U := PP.U + 1;
+   end;
+end;
 
 procedure CTriangleFiller.PaintBumpHorizontalLine(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _X1, _X2, _Y : single; _Size: integer);
 var
@@ -712,6 +924,35 @@ begin
    end;
 end;
 
+procedure CTriangleFiller.GetGradientNCM(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single; var _iStart, _iEnd: real);
+var
+   VSize: single;
+   iStart, iEnd, iSize: real;
+begin
+   VSize := _P2.V - _P1.V;
+
+   _iStart := _P1.V + (((1 - AreColoursSimilar(_C1.X, _C1.Y, _C1.Z, _C2.X, _C2.Y, _C2.Z)) / 2) * (VSize));
+   _iEnd := _P2.V - _iStart;
+   iSize := _iEnd - _iStart;
+
+   if (abs(iSize) >= 1) then
+   begin
+		_dx := (_P2.U - _P1.U) / absCeil(iSize);
+		_dr := (_C2.X - _C1.X) / absCeil(iSize);
+		_dg := (_C2.Y - _C1.Y) / absCeil(iSize);
+		_db := (_C2.Z - _C1.Z) / absCeil(iSize);
+		_da := (_C2.W - _C1.W) / absCeil(iSize);
+	end
+   else
+   begin
+		_dx := (_P2.U - _P1.U);
+      _dr := (_C2.X - _C1.X);
+      _dg := (_C2.Y - _C1.Y);
+      _db := (_C2.Z - _C1.Z);
+      _da := (_C2.W - _C1.W);
+   end;
+end;
+
 procedure CTriangleFiller.GetGradient(const _P2, _P1: TVector2f; var _dx: single);
 var
    VSize: single;
@@ -768,6 +1009,42 @@ begin
       _EP := SetVector(_EP.U + _dxe, _EP.V + 1);
       _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
       _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
+	end;
+end;
+
+procedure CTriangleFiller.PaintTrianglePieceNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae, _iStart1, _iEnd1,_iStart2,_iEnd2: real);
+begin
+   while (_SP.V <= _FinalPos.V) do
+   begin
+      PaintHorizontalLineNCM(_Buffer,_WeightBuffer,_SP.U,_EP.U,_SP.V,_SC,_EC);
+      if (_SP.V  >= _iStart1) and (_SP.V <= _iEnd1) then
+      begin
+         _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
+      end;
+      if (_EP.V  >= _iStart2) and (_EP.V <= _iEnd2) then
+      begin
+         _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
+      end;
+      _SP := SetVector(_SP.U + _dxs, _SP.V + 1);
+      _EP := SetVector(_EP.U + _dxe, _EP.V + 1);
+	end;
+end;
+
+procedure CTriangleFiller.PaintTrianglePieceNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae,_iStart1, _iEnd1,_iStart2,_iEnd2: real);
+begin
+   while (_SP.V <= _FinalPos.V) do
+   begin
+      PaintHorizontalLineNCM(_Buffer,_WeightBuffer,_SP.U,_EP.U,_SP.V,_SC,_EC);
+      if (_SP.V  >= _iStart1) and (_SP.V <= _iEnd1) then
+      begin
+         _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
+      end;
+      if (_EP.V  >= _iStart2) and (_EP.V <= _iEnd2) then
+      begin
+         _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
+      end;
+      _SP := SetVector(_SP.U + _dxs, _SP.V + 1);
+      _EP := SetVector(_EP.U + _dxe, _EP.V + 1);
 	end;
 end;
 
@@ -929,6 +1206,74 @@ begin
 
       AssignPointColour(SP,SC,_P2,_C2);
       PaintTrianglePiece(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx3,dx2,dr3,dr2,dg3,dg2,db3,db2);
+	end;
+end;
+
+procedure CTriangleFiller.PaintNCMTriangle(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
+var
+   dx1, dx2, dx3, dr1, dr2, dr3, dg1, dg2, dg3, db1, db2, db3, da1, da2, da3 : single;
+   SP, EP : TVector2f;
+   SC, EC : TVector4f;
+   iStart1, iEnd1, iStart2, iEnd2: real;
+begin
+   GetGradient(_P2,_P1,dx1);
+   GetGradient(_P3,_P1,dx2);
+
+   AssignPointColour(SP,SC,_P1,_C1);
+   AssignPointColour(EP,EC,_P1,_C1);
+	if (dx1 > dx2) then
+   begin
+      GetGradientNCM(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1,da1,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2,da2,iStart2,iEnd2);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx2,dx1,dr2,dr1,dg2,dg1,db2,db1,da2,da1,iStart1,iEnd1,iStart2,iEnd2);
+
+      AssignPointColour(EP,EC,_P2,_C2);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx2,dx3,dr2,dr3,dg2,dg3,db2,db3,da2,da3,iStart1,iEnd1,iStart2,iEnd2);
+	end
+   else
+   begin
+      GetGradientNCM(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1,da1,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2,da2,iStart2,iEnd2);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx1,dx2,dr1,dr2,dg1,dg2,db1,db2,da1,da2,iStart1,iEnd1,iStart2,iEnd2);
+
+      AssignPointColour(SP,SC,_P2,_C2);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx3,dx2,dr3,dr2,dg3,dg2,db3,db2,da3,da2,iStart1,iEnd1,iStart2,iEnd2);
+	end;
+end;
+
+procedure CTriangleFiller.PaintNCMTriangle(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
+var
+   dx1, dx2, dx3, dr1, dr2, dr3, dg1, dg2, dg3, db1, db2, db3, da1, da2, da3 : single;
+   SP, EP : TVector2f;
+   SC, EC : TVector4f;
+   iStart1, iEnd1, iStart2, iEnd2: real;
+begin
+   GetGradient(_P2,_P1,dx1);
+   GetGradient(_P3,_P1,dx2);
+
+   AssignPointColour(SP,SC,_P1,_C1);
+   AssignPointColour(EP,EC,_P1,_C1);
+	if (dx1 > dx2) then
+   begin
+      GetGradientNCM(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1,da1,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2,da2,iStart2,iEnd2);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx2,dx1,dr2,dr1,dg2,dg1,db2,db1,da2,da1,iStart1,iEnd1,iStart2,iEnd2);
+
+      AssignPointColour(EP,EC,_P2,_C2);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx2,dx3,dr2,dr3,dg2,dg3,db2,db3,da2,da3,iStart1,iEnd1,iStart2,iEnd2);
+	end
+   else
+   begin
+      GetGradientNCM(_P2,_P1,_C2,_C1,dx1,dr1,dg1,db1,da1,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P1,_C3,_C1,dx2,dr2,dg2,db2,da2,iStart2,iEnd2);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx1,dx2,dr1,dr2,dg1,dg2,db1,db2,da1,da2,iStart1,iEnd1,iStart2,iEnd2);
+
+      AssignPointColour(SP,SC,_P2,_C2);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx3,dx2,dr3,dr2,dg3,dg2,db3,db2,da3,da2,iStart1,iEnd1,iStart2,iEnd2);
 	end;
 end;
 
@@ -1259,6 +1604,111 @@ begin
    end;
 end;
 
+procedure CTriangleFiller.PaintTriangleNCM(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
+var
+   P1, P2, P3 : TVector2f;
+   Size : integer;
+begin
+   Size := High(_Buffer[0])+1;
+   P1 := ScaleVector(_P1,Size);
+   P2 := ScaleVector(_P2,Size);
+   P3 := ScaleVector(_P3,Size);
+   if IsP1HigherThanP2(P1,P2) then
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         // P3 < P2 < P1
+         PaintNCMTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_C3,_C2,_C1);
+      end
+      else
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P2 < P3 < P1
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_C2,_C3,_C1);
+         end
+         else
+         begin
+            // P2 < P1 < P3
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_C2,_C1,_C3);
+         end;
+      end;
+   end
+   else
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P3 < P1 < P2
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_C3,_C1,_C2);
+         end
+         else
+         begin
+            // P1 < P3 < P2
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_C1,_C3,_C2);
+         end;
+      end
+      else
+      begin
+         // P1 < P2 < P3
+         PaintNCMTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_C1,_C2,_C3);
+      end;
+   end;
+end;
+
+procedure CTriangleFiller.PaintTriangleNCM(var _Buffer, _WeightBuffer: TAbstract2DImageData; _P1, _P2, _P3 : TVector2f; _C1, _C2, _C3: TVector4f);
+var
+   P1, P2, P3 : TVector2f;
+   Size : integer;
+begin
+   Size := _Buffer.MaxX +1;
+   P1 := ScaleVector(_P1,Size);
+   P2 := ScaleVector(_P2,Size);
+   P3 := ScaleVector(_P3,Size);
+   if IsP1HigherThanP2(P1,P2) then
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         // P3 < P2 < P1
+         PaintNCMTriangle(_Buffer,_WeightBuffer,P3,P2,P1,_C3,_C2,_C1);
+      end
+      else
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P2 < P3 < P1
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P2,P3,P1,_C2,_C3,_C1);
+         end
+         else
+         begin
+            // P2 < P1 < P3
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P2,P1,P3,_C2,_C1,_C3);
+         end;
+      end;
+   end
+   else
+   begin
+      if IsP1HigherThanP2(P2,P3) then
+      begin
+         if IsP1HigherThanP2(P1,P3) then
+         begin
+            // P3 < P1 < P2
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P3,P1,P2,_C3,_C1,_C2);
+         end
+         else
+         begin
+            // P1 < P3 < P2
+            PaintNCMTriangle(_Buffer,_WeightBuffer,P1,P3,P2,_C1,_C3,_C2);
+         end;
+      end
+      else
+      begin
+         // P1 < P2 < P3
+         PaintNCMTriangle(_Buffer,_WeightBuffer,P1,P2,P3,_C1,_C2,_C3);
+      end;
+   end;
+end;
 
 procedure CTriangleFiller.PaintFlatTriangleFromHeightMap(var _Buffer: T2DFrameBuffer; const _HeightMap: TByteMap; _P1, _P2, _P3 : TVector2f);
 var

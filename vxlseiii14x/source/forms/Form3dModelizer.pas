@@ -187,6 +187,8 @@ type
     TextureFXDiffuseOrigamiParametric: TMenuItem;
     TextureFXDiffuseOrigamiParametricDC: TMenuItem;
     TextureFXDiffuseIDC: TMenuItem;
+    TextureFXDiffuseTexturewithMoreContrast: TMenuItem;
+    procedure TextureFXDiffuseTexturewithMoreContrastClick(Sender: TObject);
     procedure TextureFXDiffuseIDCClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiParametricDCClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiParametricClick(Sender: TObject);
@@ -1481,6 +1483,13 @@ begin
    GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[8].R,RemapColourMap[8].G,RemapColourMap[8].B));
 end;
 
+procedure TFrm3DModelizer.TextureFXDiffuseTexturewithMoreContrastClick(Sender: TObject);
+begin
+   GlobalVars.ActorController.DoNCMDiffuseTextureGeneration(Actor, TextureSize, 0, 0);
+   UncheckDiffuseTexture;
+   TextureFXDiffuseTexturewithMoreContrast.Checked := true;
+end;
+
 procedure TFrm3DModelizer.DisplayFMPointCloudClick(Sender: TObject);
 begin
    UncheckFillMode;
@@ -1857,6 +1866,7 @@ procedure TFrm3DModelizer.UncheckDiffuseTexture;
 begin
    TextureFXTraditionalDiffuseTexture.Checked := false;
    TextureFXDebug.Checked := false;
+   TextureFXDiffuseTexturewithMoreContrast.Checked := false;
 end;
 
 procedure TFrm3DModelizer.UncheckModelQuality;
@@ -2049,6 +2059,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;
          TextureFXDiffuseTexture.Enabled := false;
          TextureFXTraditionalDiffuseTexture.Enabled := false;
+         TextureFXDiffuseTexturewithMoreContrast.Enabled := false;
          TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
@@ -2075,6 +2086,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;
          TextureFXDiffuseTexture.Enabled := false;
          TextureFXTraditionalDiffuseTexture.Enabled := true;
+         TextureFXDiffuseTexturewithMoreContrast.Enabled := false;
          TextureFXDebug.Enabled := false;
          TextureFXNormal.Enabled := false;
          TextureFXBump.Enabled := false;
@@ -2101,6 +2113,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;//true;
          TextureFXDiffuseTexture.Enabled := true;
          TextureFXTraditionalDiffuseTexture.Enabled := true;
+         TextureFXDiffuseTexturewithMoreContrast.Enabled := true;
          TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := (NormalsMode = 1);
          TextureFXBump.Enabled := (NormalsMode = 1);
@@ -2127,6 +2140,7 @@ begin
          TextureFSExportHeightMap.Enabled := false;//true;
          TextureFXDiffuseTexture.Enabled := true;
          TextureFXTraditionalDiffuseTexture.Enabled := true;
+         TextureFXDiffuseTexturewithMoreContrast.Enabled := true;
          TextureFXDebug.Enabled := true;
          TextureFXNormal.Enabled := true;
          TextureFXBump.Enabled := true;
