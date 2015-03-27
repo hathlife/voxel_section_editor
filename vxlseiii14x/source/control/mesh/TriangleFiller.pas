@@ -700,12 +700,12 @@ begin
    end;
 
    iStart := x1 + (((1 - AreColoursSimilar(C1.X, C1.Y, C1.Z, C2.X, C2.Y, C2.Z)) / 2) * (x2 - x1));
-   iEnd := x2 - iStart;
+   iEnd := x2 - (iStart - x1);
 
    // get the gradients for each colour channel
    if (iEnd - iStart) > 0 then
    begin
- 	   dr := (C2.X - C1.X) / (iEnd - iStart);
+      dr := (C2.X - C1.X) / (iEnd - iStart);
       dg := (C2.Y - C1.Y) / (iEnd - iStart);
       db := (C2.Z - C1.Z) / (iEnd - iStart);
       da := (C2.W - C1.W) / (iEnd - iStart);
@@ -721,23 +721,16 @@ begin
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
    PC := SetVector(C1);
-   while PP.U < iStart do
-   begin
-      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-      PP.U := PP.U + 1;
-   end;
-   while PP.U < iEnd do
-   begin
-      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-      PC.X := PC.X + dr;
-      PC.Y := PC.Y + dg;
-      PC.Z := PC.Z + db;
-      PC.W := PC.W + da;
-      PP.U := PP.U + 1;
-   end;
    while PP.U <= x2 do
    begin
       PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      if (PP.U >= iStart) and (PP.U <= iEnd) then
+      begin
+         PC.X := PC.X + dr;
+         PC.Y := PC.Y + dg;
+         PC.Z := PC.Z + db;
+         PC.W := PC.W + da;
+      end;
       PP.U := PP.U + 1;
    end;
 end;
@@ -774,12 +767,12 @@ begin
    end;
 
    iStart := x1 + (((1 - AreColoursSimilar(C1.X, C1.Y, C1.Z, C2.X, C2.Y, C2.Z)) / 2) * (x2 - x1));
-   iEnd := x2 - iStart;
+   iEnd := x2 - (iStart - x1);
 
    // get the gradients for each colour channel
    if (iEnd - iStart) > 0 then
    begin
- 	   dr := (C2.X - C1.X) / (iEnd - iStart);
+      dr := (C2.X - C1.X) / (iEnd - iStart);
       dg := (C2.Y - C1.Y) / (iEnd - iStart);
       db := (C2.Z - C1.Z) / (iEnd - iStart);
       da := (C2.W - C1.W) / (iEnd - iStart);
@@ -795,23 +788,16 @@ begin
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
    PC := SetVector(C1);
-   while PP.U < iStart do
-   begin
-      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-      PP.U := PP.U + 1;
-   end;
-   while PP.U < iEnd do
-   begin
-      PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
-      PC.X := PC.X + dr;
-      PC.Y := PC.Y + dg;
-      PC.Z := PC.Z + db;
-      PC.W := PC.W + da;
-      PP.U := PP.U + 1;
-   end;
    while PP.U <= x2 do
    begin
       PaintPixelAtFrameBuffer(_Buffer, _WeightBuffer, PP, PC);
+      if (PP.U >= iStart) and (PP.U <= iEnd) then
+      begin
+         PC.X := PC.X + dr;
+         PC.Y := PC.Y + dg;
+         PC.Z := PC.Z + db;
+         PC.W := PC.W + da;
+      end;
       PP.U := PP.U + 1;
    end;
 end;
@@ -932,20 +918,27 @@ begin
    VSize := _P2.V - _P1.V;
 
    _iStart := _P1.V + (((1 - AreColoursSimilar(_C1.X, _C1.Y, _C1.Z, _C2.X, _C2.Y, _C2.Z)) / 2) * (VSize));
-   _iEnd := _P2.V - _iStart;
+   _iEnd := _P2.V - (_iStart - _P1.V);
    iSize := _iEnd - _iStart;
 
-   if (abs(iSize) >= 1) then
+   if abs(VSize) > 0 then
    begin
-		_dx := (_P2.U - _P1.U) / absCeil(iSize);
-		_dr := (_C2.X - _C1.X) / absCeil(iSize);
-		_dg := (_C2.Y - _C1.Y) / absCeil(iSize);
-		_db := (_C2.Z - _C1.Z) / absCeil(iSize);
-		_da := (_C2.W - _C1.W) / absCeil(iSize);
+      _dx := (_P2.U - _P1.U) / absCeil(VSize);
+   end
+   else
+   begin
+      _dx := (_P2.U - _P1.U);
+   end;
+
+   if (abs(iSize) > 0) then
+   begin
+		_dr := (_C2.X - _C1.X) / iSize;
+		_dg := (_C2.Y - _C1.Y) / iSize;
+		_db := (_C2.Z - _C1.Z) / iSize;
+		_da := (_C2.W - _C1.W) / iSize;
 	end
    else
    begin
-		_dx := (_P2.U - _P1.U);
       _dr := (_C2.X - _C1.X);
       _dg := (_C2.Y - _C1.Y);
       _db := (_C2.Z - _C1.Z);
@@ -1228,7 +1221,7 @@ begin
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx2,dx1,dr2,dr1,dg2,dg1,db2,db1,da2,da1,iStart1,iEnd1,iStart2,iEnd2);
 
       AssignPointColour(EP,EC,_P2,_C2);
-      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart2,iEnd2);
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx2,dx3,dr2,dr3,dg2,dg3,db2,db3,da2,da3,iStart1,iEnd1,iStart2,iEnd2);
 	end
    else
@@ -1262,7 +1255,7 @@ begin
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx2,dx1,dr2,dr1,dg2,dg1,db2,db1,da2,da1,iStart1,iEnd1,iStart2,iEnd2);
 
       AssignPointColour(EP,EC,_P2,_C2);
-      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart2,iEnd2);
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx2,dx3,dr2,dr3,dg2,dg3,db2,db3,da2,da3,iStart1,iEnd1,iStart2,iEnd2);
 	end
    else
