@@ -31,6 +31,7 @@ Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 Function IsUndoRedoUsed(Undo_Redo : TUndo_Redo) : boolean;
 Procedure ResetUndoRedo;
+Procedure ResetUndo(var _Undo : TUndo_Redo);
 
 // Bad but only way to do some restore points(i.e flips, nudges, mirroring)
 Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
@@ -56,8 +57,7 @@ begin
    if Undo_Redo.Data_no > Min_Undos + 5 then
       GoneOverReset(Undo_Redo);
 
-   Redo.Data_no := 0;
-   SetLength(Redo.Data,Redo.Data_no);
+   ResetUndo(Redo);
 
    inc(Undo_Redo.Data_no);
    SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
@@ -114,31 +114,27 @@ begin
 end;
 
 Procedure ResetUndoRedo;
+begin
+   ResetUndo(Undo);
+   ResetUndo(Redo);
+end;
+
+Procedure ResetUndo(var _Undo : TUndo_Redo);
 var
    x : integer;
 begin
-   for x := Low(Undo.Data) to High(Undo.Data) do
+   for x := Low(_Undo.Data) to High(_Undo.Data) do
    begin
-      SetLength(Undo.Data[x].Data,0);
-      Undo.Data[x].Data_no := 0;
+      SetLength(_Undo.Data[x].Data,0);
+      _Undo.Data[x].Data_no := 0;
    end;
-   Undo.Data_no := 0;
-   SetLength(Undo.Data,Undo.Data_no);
-
-   for x := Low(Redo.Data) to High(Redo.Data) do
-   begin
-      SetLength(Redo.Data[x].Data,0);
-      Redo.Data[x].Data_no := 0;
-   end;
-   Redo.Data_no := 0;
-   SetLength(Redo.Data,Redo.Data_no);
+   _Undo.Data_no := 0;
+   SetLength(_Undo.Data,_Undo.Data_no);
 end;
 
 Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 begin
-   Redo.Data_no := 0;
-   SetLength(Redo.Data,Redo.Data_no);
-
+   ResetUndo(Redo);
    SaveVXLRestorePoint(Vxl, Undo_Redo);
 end;
 

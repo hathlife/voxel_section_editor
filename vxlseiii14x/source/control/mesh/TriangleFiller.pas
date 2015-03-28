@@ -186,7 +186,7 @@ begin
    end
    else
    begin
-      Result := sqrt(1 - (_cos * _cos)); // Result is the sin: sin = sqrt(1 - cos²)
+      Result := sqrt(1 - (_cos * _cos)); // Result is the sin: sin = sqrt(1 - cos²) in the 1st quadrant
    end;
 end;
 
@@ -199,7 +199,8 @@ begin
    GetRGBFactorsFromPixel(_r1, _g1, _b1, i1, r1, g1, b1);
    GetRGBFactorsFromPixel(_r2, _g2, _b2, i2, r2, g2, b2);
    sin := GetColourSimilarityFactor(r1, g1, b1, r2, g2, b2, cos);
-   if (i1 * sin <= C_EPSILON) and (i2 * sin <= C_EPSILON) then
+   //if ((i1 * sin) <= C_EPSILON) and ((i2 * sin) <= C_EPSILON) then
+   if (sin <= (sqrt(12)/(255 * i1 * i1))) and  (sin <= (sqrt(12)/(255 * i2 * i2))) then   
       Result := cos
    else
       Result := 0;

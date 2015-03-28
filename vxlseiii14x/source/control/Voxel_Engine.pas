@@ -1821,7 +1821,7 @@ end;
 
 Procedure RemoveDoublesFromTempView;
 var
-x,y : integer;
+   x,y : integer;
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: RemoveDoublesFromTempView');
@@ -2067,6 +2067,7 @@ begin
    Clipboard.SetAsHandle(clipboardFormat,clipboardData);
    Clipboard.Assign(image);
    Clipboard.Close();
+   image.Free;
 end;
 
 Procedure VXLCutToClipboard(Vxl : TVoxelSection);
