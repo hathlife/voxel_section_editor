@@ -504,9 +504,9 @@ begin
    end;
 
    // get the gradients for each colour channel
- 	dr := (C2.X - C1.X) / (x2 - x1);
-   dg := (C2.Y - C1.Y) / (x2 - x1);
-   db := (C2.Z - C1.Z) / (x2 - x1);
+ 	dr := (C2.X - C1.X) / trunc(x2 - x1 + 1);
+   dg := (C2.Y - C1.Y) / trunc(x2 - x1 + 1);
+   db := (C2.Z - C1.Z) / trunc(x2 - x1 + 1);
 
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
@@ -552,10 +552,10 @@ begin
    end;
 
    // get the gradients for each colour channel
- 	dr := (C2.X - C1.X) / (x2 - x1);
-   dg := (C2.Y - C1.Y) / (x2 - x1);
-   db := (C2.Z - C1.Z) / (x2 - x1);
-   da := (C2.W - C1.W) / (x2 - x1);
+ 	dr := (C2.X - C1.X) / trunc(x2 - x1 + 1);
+   dg := (C2.Y - C1.Y) / trunc(x2 - x1 + 1);
+   db := (C2.Z - C1.Z) / trunc(x2 - x1 + 1);
+   da := (C2.W - C1.W) / trunc(x2 - x1 + 1);
 
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
@@ -602,9 +602,9 @@ begin
    end;
 
    // get the gradients for each colour channel
- 	dr := (C2.X - C1.X) / (x2 - x1);
-   dg := (C2.Y - C1.Y) / (x2 - x1);
-   db := (C2.Z - C1.Z) / (x2 - x1);
+ 	dr := (C2.X - C1.X) / trunc(x2 - x1 + 1);
+   dg := (C2.Y - C1.Y) / trunc(x2 - x1 + 1);
+   db := (C2.Z - C1.Z) / trunc(x2 - x1 + 1);
 
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
@@ -650,10 +650,10 @@ begin
    end;
 
    // get the gradients for each colour channel
- 	dr := (C2.X - C1.X) / (x2 - x1);
-   dg := (C2.Y - C1.Y) / (x2 - x1);
-   db := (C2.Z - C1.Z) / (x2 - x1);
-   da := (C2.W - C1.W) / (x2 - x1);
+ 	dr := (C2.X - C1.X) / trunc(x2 - x1 + 1);
+   dg := (C2.Y - C1.Y) / trunc(x2 - x1 + 1);
+   db := (C2.Z - C1.Z) / trunc(x2 - x1 + 1);
+   da := (C2.W - C1.W) / trunc(x2 - x1 + 1);
 
    //  Now, let's start the painting procedure:
    PP := SetVector(x1,_Y);
@@ -861,75 +861,45 @@ end;
 // Triangle Utils
 procedure CTriangleFiller.GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector3f; var _dx, _dr, _dg, _db: single);
 var
-   VSize: single;
+   VSize: real;
 begin
-   VSize := _P2.V - _P1.V;
-   if (abs(VSize) >= 1) then
-   begin
-		_dx := (_P2.U - _P1.U) / ceil(abs(VSize));
-		_dr := (_C2.X - _C1.X) / ceil(abs(VSize));
-		_dg := (_C2.Y - _C1.Y) / ceil(abs(VSize));
-		_db := (_C2.Z - _C1.Z) / ceil(abs(VSize));
-	end
-   else
-   begin
-		_dx := (_P2.U - _P1.U);
-      _dr := (_C2.X - _C1.X);
-      _dg := (_C2.Y - _C1.Y);
-      _db := (_C2.Z - _C1.Z);
-   end;
+   VSize := trunc(abs(_P2.V - _P1.V) + 1);
+   _dx := (_P2.U - _P1.U) / VSize;
+	_dr := (_C2.X - _C1.X) / VSize;
+	_dg := (_C2.Y - _C1.Y) / VSize;
+	_db := (_C2.Z - _C1.Z) / VSize;
 end;
 
 procedure CTriangleFiller.GetGradient(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single);
 var
-   VSize: single;
+   VSize: real;
 begin
-   VSize := _P2.V - _P1.V;
-   if (abs(VSize) >= 1) then
-   begin
-		_dx := (_P2.U - _P1.U) / ceil(abs(VSize));
-		_dr := (_C2.X - _C1.X) / ceil(abs(VSize));
-		_dg := (_C2.Y - _C1.Y) / ceil(abs(VSize));
-		_db := (_C2.Z - _C1.Z) / ceil(abs(VSize));
-		_da := (_C2.W - _C1.W) / ceil(abs(VSize));
-	end
-   else
-   begin
-		_dx := (_P2.U - _P1.U);
-      _dr := (_C2.X - _C1.X);
-      _dg := (_C2.Y - _C1.Y);
-      _db := (_C2.Z - _C1.Z);
-      _da := (_C2.W - _C1.W);
-   end;
+   VSize := trunc(abs(_P2.V - _P1.V) + 1);
+   _dx := (_P2.U - _P1.U) / VSize;
+	_dr := (_C2.X - _C1.X) / VSize;
+	_dg := (_C2.Y - _C1.Y) / VSize;
+	_db := (_C2.Z - _C1.Z) / VSize;
+	_da := (_C2.W - _C1.W) / VSize;
 end;
 
 procedure CTriangleFiller.GetGradientNCM(const _P2, _P1: TVector2f; const _C2, _C1: TVector4f; var _dx, _dr, _dg, _db, _da: single; var _iStart, _iEnd: real);
 var
-   VSize: single;
    iStart, iEnd, iSize: real;
 begin
-   VSize := _P2.V - _P1.V;
-
-   _iStart := _P1.V + (((1 - AreColoursSimilar(_C1.X, _C1.Y, _C1.Z, _C2.X, _C2.Y, _C2.Z)) / 2) * (VSize));
+   _iStart := _P1.V + (((1 - AreColoursSimilar(_C1.X, _C1.Y, _C1.Z, _C2.X, _C2.Y, _C2.Z)) / 2) * (_P2.V - _P1.V));
    _iEnd := _P2.V - (_iStart - _P1.V);
-   iSize := _iEnd - _iStart;
+   iSize := trunc(abs(_iEnd - _iStart) + 1);
 
-   _dx := (_P2.U - _P1.U) / trunc(abs(VSize) + 1);
-   _dr := (_C2.X - _C1.X) / trunc(abs(iSize) + 1);
-	_dg := (_C2.Y - _C1.Y) / trunc(abs(iSize) + 1);
-	_db := (_C2.Z - _C1.Z) / trunc(abs(iSize) + 1);
-	_da := (_C2.W - _C1.W) / trunc(abs(iSize) + 1);
+   _dx := (_P2.U - _P1.U) / trunc(abs(_P2.V - _P1.V) + 1);
+   _dr := (_C2.X - _C1.X) / iSize;
+	_dg := (_C2.Y - _C1.Y) / iSize;
+	_db := (_C2.Z - _C1.Z) / iSize;
+	_da := (_C2.W - _C1.W) / iSize;
 end;
 
 procedure CTriangleFiller.GetGradient(const _P2, _P1: TVector2f; var _dx: single);
-var
-   VSize: single;
 begin
-   VSize := _P2.V - _P1.V;
-   if (abs(VSize) >= 1) then
-      _dx := (_P2.U - _P1.U) / ceil(abs(VSize))
-   else
-		_dx := (_P2.U - _P1.U);
+   _dx := (_P2.U - _P1.U) / trunc(abs(_P2.V - _P1.V) + 1);
 end;
 
 procedure CTriangleFiller.PaintTrianglePiece(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector3f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe: real);
@@ -1224,7 +1194,7 @@ begin
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P2,dx2,dx1,dr2,dr1,dg2,dg1,db2,db1,da2,da1,iStart1,iEnd1,iStart2,iEnd2);
 
       AssignPointColour(EP,EC,_P2,_C2);
-      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart2,iEnd2);
+      GetGradientNCM(_P3,_P2,_C3,_C2,dx3,dr3,dg3,db3,da3,iStart1,iEnd1);
       PaintTrianglePieceNCM(_Buffer,_WeightBuffer,SP,EP,SC,EC,_P3,dx2,dx3,dr2,dr3,dg2,dg3,db2,db3,da2,da3,iStart1,iEnd1,iStart2,iEnd2);
 	end
    else
