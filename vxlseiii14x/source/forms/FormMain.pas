@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.244';
+   APPLICATION_VER = '1.39.245';
    APPLICATION_BETA = true;
 
 type
@@ -509,7 +509,7 @@ type
     Procedure LoadPalettes;
     procedure blank1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    Procedure CheckVXLChanged;
+    Function CheckVXLChanged: boolean;
     procedure SpeedButton7Click(Sender: TObject);
     procedure SpeedButton12Click(Sender: TObject);
     procedure SpeedButton14Click(Sender: TObject);
@@ -1109,22 +1109,28 @@ end;
 
 procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-   CheckVXLChanged;
-   if p_Frm3DPreview <> nil then
+   if CheckVXLChanged then
    begin
-      try
-         p_Frm3DPreview^.Release;
-      except;
+      if p_Frm3DPreview <> nil then
+      begin
+         try
+            p_Frm3DPreview^.Release;
+         except;
+         end;
+         p_Frm3DPreview := nil;
       end;
-      p_Frm3DPreview := nil;
-   end;
-   if p_Frm3DModelizer <> nil then
+      if p_Frm3DModelizer <> nil then
+      begin
+         try
+            p_Frm3DModelizer^.Release;
+         except;
+         end;
+         p_Frm3DModelizer := nil;
+      end
+   end
+   else
    begin
-      try
-         p_Frm3DModelizer^.Release;
-      except;
-      end;
-      p_Frm3DModelizer := nil;
+      Action := caNone;
    end;
 end;
 
@@ -3784,9 +3790,10 @@ begin
    ApplyPalette(PaletteControl.PaletteSchemes[TMenuItem(Sender).tag].Filename);
 end;
 
-Procedure TFrmMain.CheckVXLChanged;
+Function TFrmMain.CheckVXLChanged: Boolean;
 var
    T : string;
+   Answer: integer;
 begin
    if VXLChanged then
    begin
@@ -3795,14 +3802,18 @@ begin
       {$endif}
       T := ExtractFileName(VXLFilename);
       if t = '' then
-         T := 'Save Untitled'
+         T := 'Do you want to save Untitled'
       else
-         T := 'Save changes in ' + T;
-      if MessageDlg('Last changes not saved. ' + T +' ?',mtWarning,[mbYes,mbNo],0) = mrYes then
+         T := 'Do you want to save changes in ' + T;
+      Answer := MessageDlg('Last changes were not saved. ' + T + '? Answer YES to save and exit, NO to exit without saving and CANCEL to not exit nor save.',mtWarning,[mbYes,mbNo,mbCancel],0);
+      if Answer = mrYes then
       begin
          Save1.Click;
       end;
-   end;
+      Result := Answer <> MrCancel;
+   end
+   else
+      Result := true;
 end;
 
 procedure TFrmMain.SpeedButton7Click(Sender: TObject);
