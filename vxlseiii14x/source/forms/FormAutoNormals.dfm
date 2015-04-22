@@ -13,6 +13,7 @@ object FrmAutoNormals: TFrmAutoNormals
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  Position = poDesktopCenter
   OnShow = FormShow
   DesignSize = (
     378
