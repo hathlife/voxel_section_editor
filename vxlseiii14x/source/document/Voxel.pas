@@ -208,10 +208,12 @@ end;
 
 // Min/MaxBounds Fixed! - Stucuk
 procedure TVoxelSection.DefaultTransforms;
+const
+   C_WWDET = 1/12;
 var
    i, j: integer;
 begin
-   Tailer.Det := 0.83333;
+   Tailer.Det := C_WWDET;
 
    for i := 1 to 3 do
       for j := 1 to 3 do // from memory, don't think this transform is ever used.
