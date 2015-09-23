@@ -282,6 +282,7 @@ begin
    begin
       glDisable(GL_CULL_FACE);
    end;
+   glMatrixMode(GL_MODELVIEW);
    // Process Camera
    CurrentCamera^.ProcessNextFrame;
    FUpdateWorld := FUpdateWorld or CurrentCamera^.GetRequestUpdateWorld;

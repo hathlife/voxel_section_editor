@@ -169,6 +169,7 @@ begin
    begin
       glPushMatrix();
          //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
+//         glTranslatef(Mesh[_i].BoundingBox.Min.X, Mesh[_i].BoundingBox.Min.Y, Mesh[_i].BoundingBox.Min.Z);
          _HA^.ExecuteAnimation(_i);
          RenderMesh(Mesh[_i].Son, _HA);
          Mesh[_i].Render();
@@ -183,6 +184,7 @@ begin
    begin
       glPushMatrix();
          //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
+//         glTranslatef(Mesh[_i].BoundingBox.Min.X, Mesh[_i].BoundingBox.Min.Y, Mesh[_i].BoundingBox.Min.Z);
          _HA^.ExecuteAnimation(_i);
          RenderMeshVectorial(Mesh[_i].Son, _HA);
          Mesh[_i].RenderVectorial();

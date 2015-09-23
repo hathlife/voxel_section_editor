@@ -1554,17 +1554,18 @@ end;
 
 procedure CTriangleFiller.PaintTrianglePieceBorder(var _Buffer: T2DFrameBuffer; var _WeightBuffer: TWeightBuffer; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real);
 var
-   dy: real;
+   dys,dye: real;
 begin
    if (_FinalPos.V - _SP.V) > 1 then
    begin
-      dy := (_FinalPos.V - _SP.V) / trunc(_FinalPos.V - _SP.V);
+      dys := (_FinalPos.V - _SP.V) / trunc(_FinalPos.V - _SP.V);
+      dye := (_FinalPos.V - _EP.V) / trunc(_FinalPos.V - _SP.V);
       while (_SP.V < _FinalPos.V) do
       begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_SP.U,_SP.U + _dxs,_SP.V,_SC,_SC);
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_EP.V,_EC,_EC);
-         _SP := SetVector(_SP.U + _dxs, _SP.V + dy);
-         _EP := SetVector(_EP.U + _dxe, _EP.V + dy);
+         _SP := SetVector(_SP.U + _dxs, _SP.V + dys);
+         _EP := SetVector(_EP.U + _dxe, _EP.V + dye);
          _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
          _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
    	end;
@@ -1578,23 +1579,24 @@ begin
       _SC := SetVector(_SC.X + (_drs / 2), _SC.Y + (_dgs / 2), _SC.Z + (_dbs / 2), _SC.W + (_das / 2));
       _EC := SetVector(_EC.X + (_dre / 2), _EC.Y + (_dge / 2), _EC.Z + (_dbe / 2), _EC.W + (_dae / 2));
       _EP := SetVector(_EP.U + _dxe, _EP.V + (_FinalPos.V - _SP.V));
-      _SP := SetVector(_SP.U + _dxs, _SP.V + _FinalPos.V);
+      _SP := SetVector(_SP.U + _dxs, _FinalPos.V);
    end;
 end;
 
 procedure CTriangleFiller.PaintTrianglePieceBorder(var _Buffer, _WeightBuffer: TAbstract2DImageData; var _SP, _EP: TVector2f; var _SC, _EC: TVector4f; const _FinalPos: TVector2f; const _dxs, _dxe, _drs, _dre, _dgs, _dge, _dbs, _dbe, _das, _dae: real);
 var
-   dy: real;
+   dys,dye: real;
 begin
    if (_FinalPos.V - _SP.V) > 1 then
    begin
-      dy := (_FinalPos.V - _SP.V) / trunc(_FinalPos.V - _SP.V);
+      dys := (_FinalPos.V - _SP.V) / trunc(_FinalPos.V - _SP.V);
+      dye := (_FinalPos.V - _EP.V) / trunc(_FinalPos.V - _SP.V);
       while (_SP.V < _FinalPos.V) do
       begin
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_SP.U,_SP.U + _dxs,_SP.V,_SC,_SC);
          PaintGouraudHorizontalLine(_Buffer,_WeightBuffer,_EP.U,_EP.U + _dxe,_EP.V,_EC,_EC);
-         _SP := SetVector(_SP.U + _dxs, _SP.V + dy);
-         _EP := SetVector(_EP.U + _dxe, _EP.V + dy);
+         _SP := SetVector(_SP.U + _dxs, _SP.V + dys);
+         _EP := SetVector(_EP.U + _dxe, _EP.V + dye);
          _SC := SetVector(_SC.X + _drs, _SC.Y + _dgs, _SC.Z + _dbs, _SC.W + _das);
          _EC := SetVector(_EC.X + _dre, _EC.Y + _dge, _EC.Z + _dbe, _EC.W + _dae);
 	   end;
@@ -1608,7 +1610,7 @@ begin
       _SC := SetVector(_SC.X + (_drs / 2), _SC.Y + (_dgs / 2), _SC.Z + (_dbs / 2), _SC.W + (_das / 2));
       _EC := SetVector(_EC.X + (_dre / 2), _EC.Y + (_dge / 2), _EC.Z + (_dbe / 2), _EC.W + (_dae / 2));
       _EP := SetVector(_EP.U + _dxe, _EP.V + (_FinalPos.V - _SP.V));
-      _SP := SetVector(_SP.U + _dxs, _SP.V + _FinalPos.V);
+      _SP := SetVector(_SP.U + _dxs, _FinalPos.V);
    end;
 end;
 

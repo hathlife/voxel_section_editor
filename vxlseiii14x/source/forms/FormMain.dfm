@@ -6940,6 +6940,7 @@ object FrmMain: TFrmMain
     end
   end
   object mnuDirectionPopup: TPopupMenu
+    AutoPopup = False
     OnPopup = mnuDirectionPopupPopup
     Left = 321
     Top = 96

@@ -190,7 +190,7 @@ begin
    index := (_Frame * FNumSectors) + _Section;
    for x := 0 to 3 do
       for y := 0 to 3 do
-         TransformMatrices[index][x][y] := _m[x][y];
+         TransformMatrices[index][x][y] := _M[x][y];
 end;
 
 procedure TTransformAnimation.Assign(const _Source: TTransformAnimation);
