@@ -40,6 +40,7 @@ Procedure SaveVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
 Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
+procedure FreeUndoRedo(Var Undo_Redo : TUndo_Redo);
 
 implementation
 
@@ -266,6 +267,20 @@ begin
    Copy_UndoRedo(Undo_Redo,UndoT);
    ResetUndoRedo;
    Copy_UndoRedo2(UndoT,Undo_Redo);
+   FreeUndoRedo(UndoT);
+end;
+
+procedure FreeUndoRedo(Var Undo_Redo : TUndo_Redo);
+var
+   i: integer;
+begin
+   i := Low(Undo_Redo.Data);
+   while i <= High(Undo_Redo.Data) do
+   begin
+      SetLength(Undo_Redo.Data[i].Data, 0);
+      inc(i);
+   end;
+   SetLength(Undo_Redo.Data, 0);
 end;
 
 begin

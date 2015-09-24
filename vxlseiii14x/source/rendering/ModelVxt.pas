@@ -288,22 +288,6 @@ begin
          begin
             // Copy transformation matrix values
             HA^.TransformAnimations[0].SetMatrix(HVA.GetMatrix(s, f), f, s);
-            // SetScale.
-{
-            if Voxel <> nil then
-            begin
-               Scale.X := LOD[CurrentLOD].Mesh[s].Scale.X;
-               Scale.Y := LOD[CurrentLOD].Mesh[s].Scale.Y;
-               Scale.Z := LOD[CurrentLOD].Mesh[s].Scale.Z;
-            end
-            else
-            begin
-               Scale.X := 1/12;
-               Scale.Y := 1/12;
-               Scale.Z := 1/12;
-            end;
-            HA^.TransformAnimations[0].SetScale(Scale, s, f);
-}
          end;
       end;
       HA^.SetTransformFPS(6); // 1 frame each 0.1 seconds.

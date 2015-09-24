@@ -147,6 +147,7 @@ procedure TModel.Clear;
 begin
    ClearLODs;
    Palette^.Free;
+   Palette := nil;
    if HA <> nil then
    begin
       HA^.Free;

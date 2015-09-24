@@ -488,9 +488,26 @@ begin
    NormalizeModel(Voxel,Map,FloatMap,Dist,FullRange,IntRange);
    PolishModel(Voxel,FloatMap,Dist,FullRange,IntSmooth,SmoothMe,Result.Applied,AffectOnlyNonNormalized);
    // Now, let's free some memory.
-   Finalize(Dist);
+   for x := Low(Dist) to High(Dist) do
+   begin
+      for y := Low(Dist) to High(Dist[x]) do
+      begin
+         SetLength(Dist[x,y], 0);
+      end;
+      SetLength(Dist[x], 0);
+   end;
+   SetLength(Dist, 0);
    Map.Free;
-   Finalize(FloatMap);
+   for x := Low(FloatMap) to High(FloatMap) do
+   begin
+      for y := Low(FloatMap) to High(FloatMap[x]) do
+      begin
+         SetLength(FloatMap[x,y], 0);
+      end;
+      SetLength(FloatMap[x], 0);
+   end;
+   SetLength(FloatMap, 0);
+   SetLength(Values, 0);
 end;
 
 
@@ -547,14 +564,31 @@ begin
    PolishModel(Voxel,FloatMap,Dist,FullRange,IntSmooth,SmoothMe,Result.Applied,AffectOnlyNonNormalized);
 
    // Now, let's free some memory.
-   Finalize(Dist);
+   for x := Low(Dist) to High(Dist) do
+   begin
+      for y := Low(Dist) to High(Dist[x]) do
+      begin
+         SetLength(Dist[x,y], 0);
+      end;
+      SetLength(Dist[x], 0);
+   end;
+   SetLength(Dist, 0);
    Map.Free;
-   Finalize(FloatMap);
+   for x := Low(FloatMap) to High(FloatMap) do
+   begin
+      for y := Low(FloatMap) to High(FloatMap[x]) do
+      begin
+         SetLength(FloatMap[x,y], 0);
+      end;
+      SetLength(FloatMap[x], 0);
+   end;
+   SetLength(FloatMap, 0);
+   SetLength(Values, 0);
 end;
 
 function ApplyNormals(var Voxel : TVoxelSection) : TApplyNormalsResult;
-var maxx, maxy, maxz,
-    x, y, z: integer;
+var
+   maxx, maxy, maxz, x, y, z: integer;
    function Empty(x,y,z: integer): boolean;
    var
       v: TVoxelUnpacked;
@@ -910,6 +944,7 @@ begin
    Map.ConvertValues(Values);
    Result := Map.SynchronizeWithSection(1);
    Map.Free;
+   SetLength(Values, 0);
 end;
 
 
@@ -1241,8 +1276,24 @@ begin
       with PointList[i] do
          MergeFaces(X,Y,Z);
    SetLength(PointList,0);
-   SetLength(FaceMap2,0);
-   SetLength(FaceMap,0);
+   for x := Low(FaceMap) to High(FaceMap) do
+   begin
+      for y := Low(FaceMap) to High(FaceMap[x]) do
+      begin
+         SetLength(FaceMap[x,y], 0);
+      end;
+      SetLength(FaceMap[x], 0);
+   end;
+   SetLength(FaceMap, 0);
+   for x := Low(FaceMap2) to High(FaceMap2) do
+   begin
+      for y := Low(FaceMap2) to High(FaceMap2[x]) do
+      begin
+         SetLength(FaceMap2[x,y], 0);
+      end;
+      SetLength(FaceMap2[x], 0);
+   end;
+   SetLength(FaceMap2, 0);
    Map.Free;
 end;
 

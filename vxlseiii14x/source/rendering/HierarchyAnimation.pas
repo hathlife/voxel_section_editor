@@ -74,6 +74,7 @@ end;
 destructor THierarchyAnimation.Destroy;
 begin
    Clear;
+   SetLength(TransformAnimations, 0);
    inherited Destroy;
 end;
 

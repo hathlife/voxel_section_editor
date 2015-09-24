@@ -101,6 +101,7 @@ implementation
 function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 var
    MapaDoVoxel : TVoxelMap;
+   x, y: integer;
    Filtro : TFiltroDistancia;
    IntAlcance : integer;
 begin
@@ -131,7 +132,15 @@ begin
    // ----------------------------------------------------
    // Parte 4: Libera memória.
    // ----------------------------------------------------
-   Finalize(Filtro);
+   for x := Low(Filtro) to High(Filtro) do
+   begin
+      for y := Low(Filtro) to High(Filtro[x]) do
+      begin
+         SetLength(Filtro[x,y], 0);
+      end;
+      SetLength(Filtro[x], 0);
+   end;
+   SetLength(Filtro, 0);
    MapaDoVoxel.Free;
 end;
 
@@ -525,6 +534,17 @@ begin
 
    // Aplica a nova normal
    Voxel.SetVoxel(_x,_y,_z,V);
+
+   // Libera memória
+   for x := Low(MapaDaSuperficie) to High(MapaDaSuperficie) do
+   begin
+      for y := Low(MapaDaSuperficie) to High(MapaDaSuperficie[x]) do
+      begin
+         SetLength(MapaDaSuperficie[x,y], 0);
+      end;
+      SetLength(MapaDaSuperficie[x], 0);
+   end;
+   SetLength(MapaDaSuperficie, 0);
 end;
 
 
@@ -772,8 +792,18 @@ begin
       Lista.GoToNextElement;
       Direcao.GoToNextElement;
    end;
+   // Libera memória
    Lista.Free;
    Direcao.Free;
+   for xx := Low(MapaDeVisitas) to High(MapaDeVisitas) do
+   begin
+      for yy := Low(MapaDeVisitas) to High(MapaDeVisitas[xx]) do
+      begin
+         SetLength(MapaDeVisitas[xx,yy], 0);
+      end;
+      SetLength(MapaDeVisitas[xx], 0);
+   end;
+   SetLength(MapaDeVisitas, 0);
 end;
 
 
