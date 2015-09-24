@@ -30,13 +30,13 @@ object FrmImportSection: TFrmImportSection
     ItemHeight = 13
     TabOrder = 0
   end
-  object Button1: TButton
+  object BtOK: TButton
     Left = 96
     Top = 48
     Width = 75
     Height = 25
     Caption = 'OK'
     TabOrder = 1
-    OnClick = Button1Click
+    OnClick = BtOKClick
   end
 end

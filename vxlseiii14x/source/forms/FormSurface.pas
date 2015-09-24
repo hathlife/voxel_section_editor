@@ -61,6 +61,7 @@ uses FormMain;
 
 procedure TFrmSurfaces.BtOKClick(Sender: TObject);
 begin
+   BtOK.Enabled := false;
    Changed := true;
    Close;
 end;

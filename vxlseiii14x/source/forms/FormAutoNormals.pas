@@ -234,10 +234,10 @@ var
    Res : TApplyNormalsResult;
    Range,Smooth : single;
    Contrast : integer;
+   AutoNormalsApplied: boolean;
 begin
-   CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
-   FrmMain.UpdateUndo_RedoState;
-
+   AutoNormalsApplied := false;
+   BtOK.Enabled := false;
    If RbTangent.Checked then
    begin
       Range := StrToFloatDef(EdRange.Text,0);
@@ -246,6 +246,9 @@ begin
          MessageBox(0,pchar('Range Value Is Invalid. It Must Be Positive and Higher Than 1. Using 3.54 (Default).'),'Auto Normals Warning',0);
          Range := RA2_MAGIC_NUMBER;
       end;
+      AutoNormalsApplied := true;
+      CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+      FrmMain.UpdateUndo_RedoState;
       Res := AcharNormais(MyVoxel,Range,CbIncreaseContrast.Checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_TANGENT + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Tangent Plane Auto Normal Results',0);
    end
@@ -274,6 +277,9 @@ begin
          MessageBox(0,pchar('Contrast Value Is Invalid. It Must Be Positive, Integer and Higher Or Equal Than 1. Using 1 (Default).'),'Auto Normals Warning',0);
          Contrast := 1;
       end;
+      AutoNormalsApplied := true;
+      CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+      FrmMain.UpdateUndo_RedoState;
       Res := ApplyInfluenceNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbNewPixelsOnly.checked,CbIncreaseContrast.checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_INFLUENCE + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Influence Auto Normal Results',0);
    end
@@ -302,6 +308,9 @@ begin
          MessageBox(0,pchar('Contrast Value Is Invalid. It Must Be Positive, Integer and Higher Or Equal Than 1. Using 1 (Default).'),'Auto Normals Warning',0);
          Contrast := 1;
       end;
+      AutoNormalsApplied := true;
+      CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+      FrmMain.UpdateUndo_RedoState;
       Res := ApplyCubedNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbInfluenceMap.Checked,CbNewPixelsOnly.checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_CUBED + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
    end
@@ -321,11 +330,17 @@ begin
       end
       else
          Smooth := Range;
+      AutoNormalsApplied := true;
+      CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+      FrmMain.UpdateUndo_RedoState;
       velAutoNormals2(MyVoxel, Range, Smooth);
       ShowMessage('AutoNormals HBD' + #13#13 + 'Operation Completed!');
    end
    else
    begin
+      AutoNormalsApplied := true;
+      CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
+      FrmMain.UpdateUndo_RedoState;
       Res := ApplyNormals(MyVoxel);
       if Res.confused > 0 then
       begin
@@ -347,17 +362,24 @@ begin
    end;
 
    // Update configurations.
-   Configuration.ANSmoothMyNormals := CbSmoothMe.Checked;
-   Configuration.ANInfluenceMap := CbInfluenceMap.Checked;
-   Configuration.ANNewPixels := CbNewPixelsOnly.Checked;
-   Configuration.ANStretch := CbIncreaseContrast.Checked;
-   Configuration.ANNormalizationRange := StrToFloatDef(EdRange.Text, 0);
-   Configuration.ANSmoothLevel := StrToFloatDef(EdSmooth.Text, 1);
-   Configuration.ANContrastLevel := StrToFloatDef(EdContrast.Text, 1);
+   if AutoNormalsApplied = true then
+   begin
+      Configuration.ANSmoothMyNormals := CbSmoothMe.Checked;
+      Configuration.ANInfluenceMap := CbInfluenceMap.Checked;
+      Configuration.ANNewPixels := CbNewPixelsOnly.Checked;
+      Configuration.ANStretch := CbIncreaseContrast.Checked;
+      Configuration.ANNormalizationRange := StrToFloatDef(EdRange.Text, 0);
+      Configuration.ANSmoothLevel := StrToFloatDef(EdSmooth.Text, 1);
+      Configuration.ANContrastLevel := StrToFloatDef(EdContrast.Text, 1);
 
-   FrmMain.SetVoxelChanged(true);
-   FrmMain.Refreshall;
-   Close;
+      FrmMain.SetVoxelChanged(true);
+      FrmMain.Refreshall;
+      Close;
+   end
+   else
+   begin
+      BtOK.Enabled := true;
+   end;
 end;
 
 procedure TFrmAutoNormals.BtTipsClick(Sender: TObject);

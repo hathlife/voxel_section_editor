@@ -10,8 +10,8 @@ type
   TFrmImportSection = class(TForm)
     Label1: TLabel;
     ComboBox1: TComboBox;
-    Button1: TButton;
-    procedure Button1Click(Sender: TObject);
+    BtOK: TButton;
+    procedure BtOKClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -25,9 +25,10 @@ implementation
 
 {$R *.dfm}
 
-procedure TFrmImportSection.Button1Click(Sender: TObject);
+procedure TFrmImportSection.BtOKClick(Sender: TObject);
 begin
-close;
+   BtOK.Enabled := false;
+   close;
 end;
 
 end.

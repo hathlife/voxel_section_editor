@@ -481,6 +481,7 @@ end;
 
 procedure TFrmVoxelTexture.BtOKClick(Sender: TObject);
 begin
+   BtOK.Enabled := false;
    CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
    BtApplyTextureClick(sender);
    FrmMain.UpdateUndo_RedoState;

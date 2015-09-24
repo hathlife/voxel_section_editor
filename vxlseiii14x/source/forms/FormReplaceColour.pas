@@ -282,6 +282,7 @@ var
 begin
    if data_no < 1 then Close; // nothing to do, so close.
 
+   BtOK.Enabled := false;
    CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo); // Save Undo
 
    For x := 0 to 255 do

@@ -53,10 +53,6 @@ object FrmPreferences: TFrmPreferences
       object TabSheet1: TTabSheet
         Caption = 'File_association_tab'
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object AssociateCheck: TCheckBox
           Left = 0
           Top = 8
@@ -107,10 +103,6 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -163,10 +155,6 @@ object FrmPreferences: TFrmPreferences
         Caption = 'ThreeDOptions_tab'
         ImageIndex = 2
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label3: TLabel
           Left = 199
           Top = 30
@@ -270,16 +258,16 @@ object FrmPreferences: TFrmPreferences
     BevelOuter = bvNone
     ParentBackground = False
     TabOrder = 3
-    object Button4: TButton
+    object BtOK: TButton
       Left = 327
       Top = 11
       Width = 75
       Height = 23
       Caption = 'Ok'
       TabOrder = 0
-      OnClick = Button4Click
+      OnClick = BtOKClick
     end
-    object Button1: TButton
+    object BtCancel: TButton
       Left = 408
       Top = 11
       Width = 75

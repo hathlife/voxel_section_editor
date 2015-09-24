@@ -40,6 +40,7 @@ begin
    if (Threshold > 0) and (Threshold < 180) then
    begin
       Threshold := cos((Threshold * Pi) / 180);
+      BtOK.Enabled := false;
       Apply := true;
       Close;
    end

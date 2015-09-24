@@ -38,7 +38,7 @@ object FrmBumpMapping: TFrmBumpMapping
     Left = 21
     Top = 41
     Width = 315
-    Height = 40
+    Height = 39
     Anchors = [akLeft, akRight, akBottom]
     Caption = 
       'Bump mapping textures distorts the normals in the texture of the' +
@@ -55,8 +55,6 @@ object FrmBumpMapping: TFrmBumpMapping
     Caption = 'OK'
     TabOrder = 0
     OnClick = BtOKClick
-    ExplicitLeft = 262
-    ExplicitTop = 132
   end
   object BtCancel: TButton
     Left = 180
@@ -67,8 +65,6 @@ object FrmBumpMapping: TFrmBumpMapping
     Caption = 'Cancel'
     TabOrder = 1
     OnClick = BtCancelClick
-    ExplicitLeft = 181
-    ExplicitTop = 132
   end
   object EdBump: TEdit
     Left = 128

@@ -31,13 +31,13 @@ type
     Label10: TLabel;
     Bevel2: TBevel;
     Panel2: TPanel;
-    Button4: TButton;
-    Button2: TButton;
+    BtOK: TButton;
+    BtCancel: TButton;
     txtScale: TEdit;
     procedure UDClick(Sender: TObject; Button: TUDBtnType);
     procedure FormShow(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure BtOKClick(Sender: TObject);
+    procedure BtCancelClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -48,65 +48,75 @@ type
     IllegalVal,Changed: Boolean;
   end;
 
-var
-  FrmFullResize: TFrmFullResize;
-
 implementation
 
 {$R *.DFM}
 
 procedure TFrmFullResize.UDClick(Sender: TObject; Button: TUDBtnType);
 var
-  a: Integer;
-  b,c,d: Integer;
+   a: Integer;
+   b,c,d: Integer;
 begin
-  a:=UD.Position;
-  Scale:=a;
-  txtScale.Text:=IntToStr(a);
-  b:=Max(Min(Round(X*a),256),1);
-  c:=Max(Min(Round(Y*a),256),1);
-  d:=Max(Min(Round(Z*a),256),1);
-  txtNewX.Text:=IntToStr(b);
-  txtNewY.Text:=IntToStr(c);
-  txtNewZ.Text:=IntToStr(d);
-  IllegalVal:=False;
-  if b>255 then begin txtNewX.Text:='Err'; IllegalVal:=True; end;
-  if c>255 then begin txtNewY.Text:='Err'; IllegalVal:=True; end;
-  if d>255 then begin txtNewZ.Text:='Err'; IllegalVal:=True; end;
+   a:=UD.Position;
+   Scale:=a;
+   txtScale.Text:=IntToStr(a);
+   b:=Max(Min(Round(X*a),256),1);
+   c:=Max(Min(Round(Y*a),256),1);
+   d:=Max(Min(Round(Z*a),256),1);
+   txtNewX.Text:=IntToStr(b);
+   txtNewY.Text:=IntToStr(c);
+   txtNewZ.Text:=IntToStr(d);
+   IllegalVal:=False;
+   if b>255 then
+   begin
+      txtNewX.Text:='Err';
+      IllegalVal:=True;
+   end;
+   if c>255 then
+   begin
+      txtNewY.Text:='Err';
+      IllegalVal:=True;
+   end;
+   if d>255 then
+   begin
+      txtNewZ.Text:='Err';
+      IllegalVal:=True;
+   end;
 end;
 
 procedure TFrmFullResize.FormShow(Sender: TObject);
 begin
-  txtCurrentX.Text := IntToStr(x); txtNewX.Text := txtCurrentX.Text;
-  txtCurrentY.Text := IntToStr(y); txtNewY.Text := txtCurrentY.Text;
-  txtCurrentZ.Text := IntToStr(z); txtNewZ.Text := txtCurrentZ.Text;
-  Scale:=UD.Position;
-  UDClick(Self,btNext);
+   txtCurrentX.Text := IntToStr(x); txtNewX.Text := txtCurrentX.Text;
+   txtCurrentY.Text := IntToStr(y); txtNewY.Text := txtCurrentY.Text;
+   txtCurrentZ.Text := IntToStr(z); txtNewZ.Text := txtCurrentZ.Text;
+   Scale:=UD.Position;
+   UDClick(Self,btNext);
 end;
 
-procedure TFrmFullResize.Button4Click(Sender: TObject);
+procedure TFrmFullResize.BtOKClick(Sender: TObject);
 begin
-if IllegalVal then begin
-    MessageDlg('All sizes must be an integer number between 1 and 255',mtError,[mbOK],0);
-    Exit;
-  end;
-  Changed:=True;
-  Scale:=UD.Position;
-  x:=Max(Min(Round(X*Scale),256),1);
-  y:=Max(Min(Round(Y*Scale),256),1);
-  z:=Max(Min(Round(Z*Scale),256),1);
-  Close;
+   if IllegalVal then begin
+      MessageDlg('All sizes must be an integer number between 1 and 255',mtError,[mbOK],0);
+      Exit;
+   end;
+   Changed:=True;
+   BtOK.Enabled := false;
+   Scale:=UD.Position;
+   x:=Max(Min(Round(X*Scale),256),1);
+   y:=Max(Min(Round(Y*Scale),256),1);
+   z:=Max(Min(Round(Z*Scale),256),1);
+   Close;
 end;
 
-procedure TFrmFullResize.Button2Click(Sender: TObject);
+procedure TFrmFullResize.BtCancelClick(Sender: TObject);
 begin
-Changed:=False;
-Close;
+   Changed:=False;
+   Close;
 end;
 
 procedure TFrmFullResize.FormCreate(Sender: TObject);
 begin
-Panel1.DoubleBuffered := true;
+   Panel1.DoubleBuffered := true;
 end;
 
 

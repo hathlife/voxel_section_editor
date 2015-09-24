@@ -29,22 +29,21 @@ type
     Label10: TLabel;
     Bevel2: TBevel;
     Panel2: TPanel;
-    Button4: TButton;
-    Button2: TButton;
+    BtOK: TButton;
+    BtCancel: TButton;
     GrpVoxelType: TGroupBox;
     rbLand: TRadioButton;
     rbAir: TRadioButton;
     procedure FormActivate(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure BtOKClick(Sender: TObject);
+    procedure BtCancelClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
     x, y, z: integer; //size of voxel section currently
-    changed, //has x,y or z changed at all? if not, no need to do anything
-    dataloss: boolean; //and if changed, will this result in any voxels being lost?
+    changed: boolean; //has x,y or z changed at all? if not, no need to do anything
   end;
 
 var
@@ -58,84 +57,86 @@ uses FormMain;
 
 procedure TFrmNew.FormActivate(Sender: TObject);
 begin
-     changed := false;
-     dataloss := false;
-     txtCurrentX.Text := IntToStr(x); txtNewX.Text := txtCurrentX.Text;
-     txtCurrentY.Text := IntToStr(y); txtNewY.Text := txtCurrentY.Text;
-     txtCurrentZ.Text := IntToStr(z); txtNewZ.Text := txtCurrentZ.Text;
+   changed := false;
+   txtCurrentX.Text := IntToStr(x);
+   txtNewX.Text := txtCurrentX.Text;
+   txtCurrentY.Text := IntToStr(y);
+   txtNewY.Text := txtCurrentY.Text;
+   txtCurrentZ.Text := IntToStr(z);
+   txtNewZ.Text := txtCurrentZ.Text;
 end;
 
-procedure TFrmNew.Button4Click(Sender: TObject);
-var i, code: integer;
-procedure ValError(v: string; Ctrl: TEdit);
+procedure TFrmNew.BtOKClick(Sender: TObject);
+var
+   i, code: integer;
+   procedure ValError(v: string; Ctrl: TEdit);
+   begin
+      MessageDlg(v + ' must be an integer number between 1 and 255',mtError,[mbOK],0);
+      Ctrl.SetFocus;
+   end;
+   procedure Reset;
+   begin
+      x := StrToInt(txtNewX.Text);
+      y := StrToInt(txtNewY.Text);
+      z := StrToInt(txtNewZ.Text);
+      changed := false;
+   end;
 begin
-     MessageDlg(v + ' must be an integer number between 1 and 255',
-                  mtError,[mbOK],0);
-     Ctrl.SetFocus;
-end;
-procedure Reset;
-begin
-     x := StrToInt(txtNewX.Text);
-     y := StrToInt(txtNewY.Text);
-     z := StrToInt(txtNewZ.Text);
-     changed := false;
-     dataloss := false;
-end;
-begin
-     changed := false;
-     dataloss := false;
-     // X
-     Val(txtNewX.Text,i,code);
-     if (code <> 0) or not (i in [1..255]) then begin
-        ValError('x',txtNewX);
-        Exit;
-     end;
-     if i <> x then begin
-        dataloss := dataloss or (i < x);
-        x := i;
-        changed := true;
-     end;
-     // Y
-     Val(txtNewY.Text,i,code);
-     if (code <> 0) or not (i in [1..255]) then begin
-        ValError('y',txtNewY);
-        Reset;
-        Exit;
-     end;
-     if i <> y then begin
-        dataloss := dataloss or (i < y);
-        y := i;
-        changed := true;
-     end;
-     // Z
-     Val(txtNewZ.Text,i,code);
-     if (code <> 0) or not (i in [1..255]) then begin
-        ValError('z',txtNewZ);
-        reset;
-        Exit;
-     end;
-     if i <> z then begin
-        dataloss := dataloss or (i < z);
-        z := i;
-        changed := true;
-     end;
-     if dataloss then
-         begin
-        end;
-     FrmMain.SetVoxelChanged(true);
-     Close;
+   changed := false;
+   // X
+   Val(txtNewX.Text,i,code);
+   if (code <> 0) or not (i in [1..255]) then
+   begin
+      ValError('x',txtNewX);
+      Reset;
+      Exit;
+   end;
+   if i <> x then
+   begin
+      x := i;
+      changed := true;
+   end;
+   // Y
+   Val(txtNewY.Text,i,code);
+   if (code <> 0) or not (i in [1..255]) then
+   begin
+      ValError('y',txtNewY);
+      Reset;
+      Exit;
+   end;
+   if i <> y then
+   begin
+      y := i;
+      changed := true;
+   end;
+   // Z
+   Val(txtNewZ.Text,i,code);
+   if (code <> 0) or not (i in [1..255]) then
+   begin
+      ValError('z',txtNewZ);
+      reset;
+      Exit;
+   end;
+   if i <> z then
+   begin
+      z := i;
+      changed := true;
+   end;
+   BtOK.Enabled := false;
+   FrmMain.SetVoxelChanged(true);
+   Close;
 end;
 
-procedure TFrmNew.Button2Click(Sender: TObject);
+procedure TFrmNew.BtCancelClick(Sender: TObject);
 begin
-changed:=false;
-Close;
+   changed:=false;
+   Close;
 end;
 
 procedure TFrmNew.FormCreate(Sender: TObject);
 begin
-changed:=false;
-Panel1.DoubleBuffered := true;
+   changed:=false;
+   Panel1.DoubleBuffered := true;
 end;
 
 end.

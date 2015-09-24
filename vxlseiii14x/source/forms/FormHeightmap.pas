@@ -78,6 +78,7 @@ end;
 
 procedure TFrmHeightMap.BtOKClick(Sender: TObject);
 begin
+   BtOK.Enabled := false;
    OK := true;
    close;
 end;

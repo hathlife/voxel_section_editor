@@ -30,8 +30,8 @@ type
     Label10: TLabel;
     Bevel3: TBevel;
     Panel2: TPanel;
-    Button4: TButton;
-    Button1: TButton;
+    BtOK: TButton;
+    BtCancel: TButton;
     ThreeDOptions_tab: TTabSheet;
     CbFPSCap: TCheckBox;
     SpFPSCap: TSpinEdit;
@@ -42,13 +42,11 @@ type
     procedure IconIDChange(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Pref_ListClick(Sender: TObject);
-    procedure Pref_ListKeyDown(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
+    procedure Pref_ListKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure Pref_ListKeyPress(Sender: TObject; var Key: Char);
-    procedure Pref_ListKeyUp(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
+    procedure Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure CheckBox1Click(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
+    procedure BtOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -261,8 +259,7 @@ begin
    end;
 end;
 
-procedure TFrmPreferences.Pref_ListKeyDown(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TFrmPreferences.Pref_ListKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
    Pref_ListClick(sender);
 end;
@@ -273,8 +270,7 @@ begin
    Pref_ListClick(sender);
 end;
 
-procedure TFrmPreferences.Pref_ListKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TFrmPreferences.Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
    Pref_ListClick(sender);
 end;
@@ -287,9 +283,11 @@ begin
    ComboBox2.Enabled := CheckBox1.Checked;
 end;
 
-procedure TFrmPreferences.Button4Click(Sender: TObject);
+procedure TFrmPreferences.BtOKClick(Sender: TObject);
 begin
    BtnApplyClick(Sender);
+   BtOK.Enabled := false;
+   BtnApply.Enabled := false;
    Close;
 end;
 

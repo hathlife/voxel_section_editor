@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.249';
+   APPLICATION_VER = '1.39.250';
    APPLICATION_BETA = true;
 
 type
@@ -2927,7 +2927,7 @@ begin
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
       RefreshAll;
-      Free;
+      Release;
    end;
 end;
 
@@ -2947,7 +2947,7 @@ begin
       PageControl1.ActivePage := PageControl1.Pages[0];
       Image2.Picture := TopBarImageHolder.Picture;
       ShowModal;
-      Free;
+      Release;
    end;
 end;
 
@@ -4119,8 +4119,8 @@ begin
       //grpNewSize.Width := 201;
       grpNewSize.Left := (FrmNew.Width div 2) - (grpNewSize.Width div 2);
       grpNewSize.Caption := 'Size';
-      Button2.Visible := false;
-      Button4.Left := Button2.Left;
+      BtCancel.Visible := false;
+      BtOK.Left := BtCancel.Left;
       Image1.Picture := TopBarImageHolder.Picture;
       //grpCurrentSize.Visible := true;
       grpVoxelType.Visible := true;

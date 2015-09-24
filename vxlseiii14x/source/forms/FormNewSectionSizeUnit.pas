@@ -21,8 +21,8 @@ type
     chkBefore: TRadioButton;
     chkAfter: TRadioButton;
     Bevel1: TBevel;
-    Button1: TButton;
-    Button2: TButton;
+    BtOK: TButton;
+    BtCancel: TButton;
     procedure FormActivate(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     procedure btnOKClick(Sender: TObject);
@@ -117,6 +117,7 @@ begin
       ValError('z',txtZ);
       Exit;
    end;
+   btOK.Enabled := false;
    before := chkBefore.Checked;
    aborted := false;
    Close;

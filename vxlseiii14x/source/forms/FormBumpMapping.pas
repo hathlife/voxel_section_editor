@@ -37,6 +37,7 @@ procedure TFrmBumpMapping.BtOKClick(Sender: TObject);
 begin
    if StrToFloatDef(EdBump.Text,-1) > 0 then
    begin
+      BtOk.Enabled := false;
       Apply := true;
       Close;
    end

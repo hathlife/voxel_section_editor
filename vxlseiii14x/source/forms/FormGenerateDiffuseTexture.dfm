@@ -38,7 +38,7 @@ object FrmGenerateDiffuseTexture: TFrmGenerateDiffuseTexture
     Left = 8
     Top = 50
     Width = 313
-    Height = 88
+    Height = 78
     Anchors = [akLeft, akRight, akBottom]
     Caption = 
       'Diffuse Texture Generation tool build the texture atlas by takin' +
@@ -48,7 +48,6 @@ object FrmGenerateDiffuseTexture: TFrmGenerateDiffuseTexture
       'at chance of several faces take the same sector of the picture, ' +
       'blurring the final result.'
     WordWrap = True
-    ExplicitTop = 60
   end
   object BtOK: TButton
     Left = 262
@@ -59,7 +58,6 @@ object FrmGenerateDiffuseTexture: TFrmGenerateDiffuseTexture
     Caption = 'OK'
     TabOrder = 0
     OnClick = BtOKClick
-    ExplicitTop = 132
   end
   object BtCancel: TButton
     Left = 181
@@ -70,7 +68,6 @@ object FrmGenerateDiffuseTexture: TFrmGenerateDiffuseTexture
     Caption = 'Cancel'
     TabOrder = 1
     OnClick = BtCancelClick
-    ExplicitTop = 132
   end
   object EdThreshold: TEdit
     Left = 128
