@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.248';
+   APPLICATION_VER = '1.39.249';
    APPLICATION_BETA = true;
 
 type
@@ -2052,78 +2052,80 @@ begin
             SetActiveColor(TempI,True)
          else
             SetActiveNormal(TempI,True);
-   end;
-
-   if (ssCtrl in shift) and (Button = mbLeft) then
+   end
+   else
    begin
-      TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-      if not Outside then
+      if (ssCtrl in shift) and (Button = mbLeft) then
       begin
-         MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,false);
+         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+         if not Outside then
+         begin
+            MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,false);
+         end;
       end;
-   end;
 
-   if VXLTool = VXLTool_FloodFill then
-   begin
-      TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-      if not Outside then
+      if VXLTool = VXLTool_FloodFill then
       begin
-         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-         if (SpectrumMode = ModeColours) or (v.Used=False) then
-            v.Colour := ActiveColour;
-         if (SpectrumMode = ModeNormals) or (v.Used=False) then
-            v.Normal := ActiveNormal;
+         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+         if not Outside then
+         begin
+            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+            if (SpectrumMode = ModeColours) or (v.Used=False) then
+               v.Colour := ActiveColour;
+            if (SpectrumMode = ModeNormals) or (v.Used=False) then
+               v.Normal := ActiveNormal;
 
-         v.Used := True;
-         VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+            v.Used := True;
+            VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+         end;
       end;
-   end;
 
-   if VXLTool = VXLTool_FloodFillErase then
-   begin
-      TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-      if not Outside then
+      if VXLTool = VXLTool_FloodFillErase then
       begin
-         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-         if (SpectrumMode = ModeColours) or (v.Used=False) then
-            v.Colour := 0;
-         if (SpectrumMode = ModeNormals) or (v.Used=False) then
-            v.Normal := 0;
+         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+         if not Outside then
+         begin
+            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+            if (SpectrumMode = ModeColours) or (v.Used=False) then
+               v.Colour := 0;
+            if (SpectrumMode = ModeNormals) or (v.Used=False) then
+               v.Normal := 0;
 
-         v.Used := False;
-         VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+            v.Used := False;
+            VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+         end;
       end;
-   end;
 
-   if VXLTool = VXLTool_Darken then
-   begin
-      TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-      if not Outside then
+      if VXLTool = VXLTool_Darken then
       begin
-         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-         if (SpectrumMode = ModeColours) or (v.Used=False) then
-            v.Colour := ActiveColour;
-         if (SpectrumMode = ModeNormals) or (v.Used=False) then
-            v.Normal := ActiveNormal;
+         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+         if not Outside then
+         begin
+            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+            if (SpectrumMode = ModeColours) or (v.Used=False) then
+               v.Colour := ActiveColour;
+            if (SpectrumMode = ModeNormals) or (v.Used=False) then
+               v.Normal := ActiveNormal;
 
-         v.Used := True;
-         VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,True);
+            v.Used := True;
+            VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,True);
+         end;
       end;
-   end;
 
-   if VXLTool = VXLTool_Lighten then
-   begin
-      TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-      if not Outside then
+      if VXLTool = VXLTool_Lighten then
       begin
-         Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-         if (SpectrumMode = ModeColours) or (v.Used=False) then
-            v.Colour := ActiveColour;
-         if (SpectrumMode = ModeNormals) or (v.Used=False) then
-            v.Normal := ActiveNormal;
+         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+         if not Outside then
+         begin
+            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+            if (SpectrumMode = ModeColours) or (v.Used=False) then
+               v.Colour := ActiveColour;
+            if (SpectrumMode = ModeNormals) or (v.Used=False) then
+               v.Normal := ActiveNormal;
 
-         v.Used := True;
-         VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,false);
+            v.Used := True;
+            VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,false);
+         end;
       end;
    end;
 
