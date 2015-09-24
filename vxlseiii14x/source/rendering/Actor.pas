@@ -291,6 +291,8 @@ begin
          Models[i]^.ChangeRemappable(FactionColour);
       end;
    end;
+   if ColoursType = C_COLOURS_DISABLED then
+      SetNormalsModeRendering;
    RequestUpdateWorld := true;
 end;
 
