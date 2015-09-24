@@ -58,6 +58,7 @@ type
 
          BoundingBox : TRectangle3f;
          Scale : TVector3f;
+         BoundingScale: TVector3f;
          IsColisionEnabled : boolean;
          IsVisible : boolean;
          // Rendering optimization
@@ -174,6 +175,7 @@ begin
    BoundingBox.Max.Y := _BoundingBox.Max.Y;
    BoundingBox.Max.Z := _BoundingBox.Max.Z;
    Scale := SetVector(1,1,1);
+   BoundingScale := SetVector(1,1,1);
    IsColisionEnabled := false; // Temporarily, until colision is implemented.
    IsVisible := true;
    TransparencyLevel := C_TRP_OPAQUE;
@@ -346,6 +348,7 @@ begin
    end;
    // Move accordingly to the bounding box position.
    glTranslatef(BoundingBox.Min.X, BoundingBox.Min.Y, BoundingBox.Min.Z);
+   glScalef(BoundingScale.X, BoundingScale.Y, BoundingScale.Z);
    Geometry.GoToFirstElement;
    CurrentGeometry := Geometry.Current;
    while CurrentGeometry <> nil do

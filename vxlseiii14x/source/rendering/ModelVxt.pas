@@ -271,7 +271,7 @@ end;
 procedure TModelVxt.SynchronizeHVA;
 var
    s, f: integer;
-   Scale: TVector3f;
+//   Scale: TVector3f;
 begin
    if HVA <> nil then
    begin
@@ -289,6 +289,7 @@ begin
             // Copy transformation matrix values
             HA^.TransformAnimations[0].SetMatrix(HVA.GetMatrix(s, f), f, s);
             // SetScale.
+{
             if Voxel <> nil then
             begin
                Scale.X := LOD[CurrentLOD].Mesh[s].Scale.X;
@@ -302,6 +303,7 @@ begin
                Scale.Z := 1/12;
             end;
             HA^.TransformAnimations[0].SetScale(Scale, s, f);
+}
          end;
       end;
       HA^.SetTransformFPS(6); // 1 frame each 0.1 seconds.

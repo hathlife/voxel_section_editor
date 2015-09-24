@@ -342,9 +342,12 @@ begin
    BoundingBox.Max.Y := _Voxel.Tailer.MaxBounds[2];
    BoundingBox.Max.Z := _Voxel.Tailer.MaxBounds[3];
    AddMaterial;
-   Scale.X := _Voxel.Tailer.Det * ((BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize);
-   Scale.Y := _Voxel.Tailer.Det * ((BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize);
-   Scale.Z := _Voxel.Tailer.Det * ((BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize);
+   BoundingScale.X := (BoundingBox.Max.X - BoundingBox.Min.X) / _Voxel.Tailer.XSize;
+   BoundingScale.Y := (BoundingBox.Max.Y - BoundingBox.Min.Y) / _Voxel.Tailer.YSize;
+   BoundingScale.Z := (BoundingBox.Max.Z - BoundingBox.Min.Z) / _Voxel.Tailer.ZSize;
+   Scale.X := _Voxel.Tailer.Det;
+   Scale.Y := _Voxel.Tailer.Det;
+   Scale.Z := _Voxel.Tailer.Det;
    FOpened := true;
 end;
 

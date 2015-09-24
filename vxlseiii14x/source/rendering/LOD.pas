@@ -168,9 +168,7 @@ begin
    if _i <> -1 then
    begin
       glPushMatrix();
-         //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
-//         glTranslatef(Mesh[_i].BoundingBox.Min.X, Mesh[_i].BoundingBox.Min.Y, Mesh[_i].BoundingBox.Min.Z);
-         _HA^.ExecuteAnimation(_i);
+         _HA^.ExecuteAnimation(Mesh[_i].Scale, _i);
          RenderMesh(Mesh[_i].Son, _HA);
          Mesh[_i].Render();
       glPopMatrix();
@@ -183,9 +181,7 @@ begin
    if _i <> -1 then
    begin
       glPushMatrix();
-         //_HVA^.ApplyMatrix(Mesh[_i].Scale,_i,_Frame);
-//         glTranslatef(Mesh[_i].BoundingBox.Min.X, Mesh[_i].BoundingBox.Min.Y, Mesh[_i].BoundingBox.Min.Z);
-         _HA^.ExecuteAnimation(_i);
+         _HA^.ExecuteAnimation(Mesh[_i].Scale, _i);
          RenderMeshVectorial(Mesh[_i].Son, _HA);
          Mesh[_i].RenderVectorial();
       glPopMatrix();

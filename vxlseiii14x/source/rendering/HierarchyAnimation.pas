@@ -32,7 +32,8 @@ type
          procedure Reset(_NumSectors, _NumFrames: integer);
 
          // Executes
-         procedure ExecuteAnimation(_NumSection: integer);
+         procedure ExecuteAnimation(_NumSection: integer); overload;
+         procedure ExecuteAnimation(const _Scale:TVector3f; _NumSection: integer); overload;
          function DetectTransformationAnimationFrame: boolean;
          procedure ApplyPivot(_Pivot: TVector3f);
          procedure PlayTransformAnim;
@@ -110,6 +111,11 @@ end;
 procedure THierarchyAnimation.ExecuteAnimation(_NumSection: integer);
 begin
    TransformAnimations[CurrentTransformAnimation].ApplyMatrix(_NumSection, CurrentTransformationFrame);
+end;
+
+procedure THierarchyAnimation.ExecuteAnimation(const _Scale: TVector3f; _NumSection: integer);
+begin
+   TransformAnimations[CurrentTransformAnimation].ApplyMatrix(_Scale, _NumSection, CurrentTransformationFrame);
 end;
 
 function THierarchyAnimation.DetectTransformationAnimationFrame: boolean;
