@@ -333,7 +333,7 @@ Var
 begin
    if Color < 0 then
    begin
-      Result := BGViewColor;
+      Result := Configuration.Canvas2DBackgroundColor; //BGViewColor;
       exit;
    end;
 
@@ -406,7 +406,7 @@ begin
 
    // fill margins around shape
    Bitmap.Canvas.Brush.Style := bsSolid;
-   Bitmap.Canvas.Brush.Color := BGViewColor;
+   Bitmap.Canvas.Brush.Color := Configuration.Canvas2DBackgroundColor; //BGViewColor;
    // left side?
    if (Viewport.Left > 0) then
    begin
@@ -566,7 +566,7 @@ begin
       View.getPhysicalCursorCoords(x,y);
 
       //set brush color, or else it will get the color of the bottom-right voxel
-      Bitmap.Canvas.Brush.Color:= BGViewColor;
+      Bitmap.Canvas.Brush.Color:= Configuration.Canvas2DBackgroundColor; //BGViewColor;
 
       // vert
       r.Top := Max(Viewport.Top,0);
@@ -637,7 +637,7 @@ begin
    // fill margins around shape
    Bitmap := TBitmap.Create;
    Bitmap.Canvas.Brush.Style := bsSolid;
-   Bitmap.Canvas.Brush.Color := BGViewColor;
+   Bitmap.Canvas.Brush.Color := Configuration.Canvas2DBackgroundColor; //BGViewColor;
    Bitmap.Width := Cnv.Width;
    Bitmap.Height := Cnv.Height;
    // left side?
@@ -807,7 +807,7 @@ begin
    begin
       View.getPhysicalCursorCoords(x,y);
       //set brush color, or else it will get the color of the bottom-right voxel
-      Bitmap.Canvas.Brush.Color:= BGViewColor;
+      Bitmap.Canvas.Brush.Color:= Configuration.Canvas2DBackgroundColor; //BGViewColor;
       // vert
       r.Top := Max(Viewport.Top,0);
       r.Bottom := Min(Viewport.Top + (View.Height * Viewport.Zoom), Cnv.Height);

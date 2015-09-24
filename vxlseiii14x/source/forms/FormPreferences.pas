@@ -37,6 +37,18 @@ type
     SpFPSCap: TSpinEdit;
     Label3: TLabel;
     CbOpenCL: TCheckBox;
+    TwoDOptions_tab: TTabSheet;
+    pnl3DBackgroundColour: TPanel;
+    Label4: TLabel;
+    BtReset3DBackColor: TButton;
+    ColorDialog1: TColorDialog;
+    pnl2DBackgroundColour: TPanel;
+    Label5: TLabel;
+    BtReset2DBackColor: TButton;
+    procedure pnl2DBackgroundColourClick(Sender: TObject);
+    procedure BtReset2DBackColorClick(Sender: TObject);
+    procedure pnl3DBackgroundColourClick(Sender: TObject);
+    procedure BtReset3DBackColorClick(Sender: TObject);
     procedure BtnApplyClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure IconIDChange(Sender: TObject);
@@ -129,6 +141,11 @@ begin
    else
       Configuration.OpenCL := false;
    GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
+
+   Configuration.Canvas2DBackgroundColor := longword(pnl2DBackgroundColour.Color);
+
+   Configuration.Canvas3DBackgroundColor := longword(pnl3DBackgroundColour.Color);
+   FrmMain.Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor);
 
    if Reg.OpenKey('\VXLSe\DefaultIcon\',true) then
    begin
@@ -238,6 +255,32 @@ begin
    MIcon.Free;
 end;
 
+procedure TFrmPreferences.pnl2DBackgroundColourClick(Sender: TObject);
+begin
+   if ColorDialog1.Execute then
+   begin
+      pnl2DBackgroundColour.Color := ColorDialog1.Color;
+   end;
+end;
+
+procedure TFrmPreferences.pnl3DBackgroundColourClick(Sender: TObject);
+begin
+   if ColorDialog1.Execute then
+   begin
+      pnl3DBackgroundColour.Color := ColorDialog1.Color;
+   end;
+end;
+
+procedure TFrmPreferences.BtReset2DBackColorClick(Sender: TObject);
+begin
+   pnl2DBackgroundColour.Color := RGB(140,170,235);
+end;
+
+procedure TFrmPreferences.BtReset3DBackColorClick(Sender: TObject);
+begin
+   pnl3DBackgroundColour.Color := RGB(140,170,235);
+end;
+
 procedure TFrmPreferences.Button2Click(Sender: TObject);
 begin
    Close;
@@ -253,6 +296,8 @@ begin
          PageControl1.ActivePageIndex := 1;
       if pref_list.Selected.Text = '3D Options' then
          PageControl1.ActivePageIndex := 2;
+      if pref_list.Selected.Text = '2D Options' then
+         PageControl1.ActivePageIndex := 3;
       GroupBox1.Caption := pref_list.Selected.Text;
    end;
 end;
@@ -286,6 +331,7 @@ begin
    BtnApplyClick(Sender);
    BtOK.Enabled := false;
    BtnApply.Enabled := false;
+   FrmMain.RefreshAll;
    Close;
 end;
 
@@ -333,6 +379,8 @@ begin
    SpFPSCap.Value := Configuration.FPSCap;
    CbOpenCL.Enabled := GlobalVars.Render.IsOpenCLAllowed;
    CbOpenCL.Checked := Configuration.OpenCL and GlobalVars.Render.IsOpenCLAllowed;
+   pnl2DBackgroundColour.Color := Configuration.Canvas2DBackgroundColor;
+   pnl3DBackgroundColour.Color := Configuration.Canvas3DBackgroundColor;
 end;
 
 end.

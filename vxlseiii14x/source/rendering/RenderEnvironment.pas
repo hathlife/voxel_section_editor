@@ -102,7 +102,8 @@ type
          procedure BuildFont;
          procedure KillFont;
          procedure glPrint(_text : pchar);
-         procedure SetBackgroundColour(const _Colour: TVector3f);
+         procedure SetBackgroundColour(const _Colour: TVector3f); overload;
+         procedure SetBackgroundColour(const _Colour: TColor); overload;
          procedure SetFontColour(const _Colour: TVector3f);
          procedure SetPolygonMode(const _value: integer);
 
@@ -733,6 +734,18 @@ begin
    BackgroundColour.X := _Colour.X;
    BackgroundColour.Y := _Colour.Y;
    BackgroundColour.Z := _Colour.Z;
+   // Due to texture caching, the background colour will only update in the second
+   // render.
+   FUpdateWorld := true;
+   Render;
+   FUpdateWorld := true;
+end;
+
+procedure TRenderEnvironment.SetBackgroundColour(const _Colour: TColor);
+begin
+   BackgroundColour.X := (_Colour and $FF) / 255;
+   BackgroundColour.Y := ((_Colour shr 8) and $FF) / 255;
+   BackgroundColour.Z := ((_Colour shr 16) and $FF) / 255;
    // Due to texture caching, the background colour will only update in the second
    // render.
    FUpdateWorld := true;

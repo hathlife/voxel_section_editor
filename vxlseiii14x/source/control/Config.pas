@@ -28,6 +28,7 @@ type
          ANType: integer;
          ANSmoothMyNormals, ANInfluenceMap, ANNewPixels, ANStretch: boolean;
          ANNormalizationRange, ANSmoothLevel, ANContrastLevel: single;
+         Canvas2DBackgroundColor, Canvas3DBackgroundColor: longword;
          constructor Create();
          destructor Destroy(); override;
          procedure AddFileToHistory(FileName: String);
@@ -171,6 +172,16 @@ begin
             ANContrastLevel := Reg.ReadFloat('ANContrastLevel')
          else
             ANContrastLevel := 1;
+
+         if Reg.ValueExists('2DBackgroundColor') then
+            Canvas2DBackgroundColor := Reg.ReadInteger('2DBackgroundColor')
+         else
+            Canvas2DBackgroundColor := 15444620; // RGB(140, 170, 235)
+
+         if Reg.ValueExists('3DBackgroundColor') then
+            Canvas3DBackgroundColor := Reg.ReadInteger('3DBackgroundColor')
+         else
+            Canvas3DBackgroundColor := 15444620;
       end
       else
       begin
@@ -193,6 +204,8 @@ begin
          ANNormalizationRange := 1.7;
          ANSmoothLevel := 1;
          ANContrastLevel := 1;
+         Canvas2DBackgroundColor := 15444620; // RGB(140, 170, 235)
+         Canvas3DBackgroundColor := 15444620;
       end;
 
    finally
@@ -245,6 +258,8 @@ begin
    Reg.WriteFloat('ANNormalizationRange', ANNormalizationRange);
    Reg.WriteFloat('ANSmoothLevel', ANSmoothLevel);
    Reg.WriteFloat('ANContrastLevel', ANContrastLevel);
+   Reg.WriteInteger('2DBackgroundColor',Canvas2DBackgroundColor);
+   Reg.WriteInteger('3DBackgroundColor',Canvas3DBackgroundColor);
    Reg.CloseKey;
    Reg.Free;
 end;

@@ -198,7 +198,7 @@ type
 
 implementation
 
-uses FormMain, GlobalVars, DistanceFormulas, ModelVxt;
+uses FormMain, GlobalVars, DistanceFormulas, ModelVxt, Config;
 
 {$R *.DFM}
 
@@ -208,7 +208,7 @@ begin
    // OpenGL initialization
    EnvP := GlobalVars.Render.AddEnvironment(Panel2.Handle,Panel2.Width,Panel2.Height);
    Env := EnvP^;
-   Env.BackgroundColour := SetVector(140/255,170/255,235/255);
+   Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor); //SetVector(140/255,170/255,235/255);
    Env.FontColour := SetVector(1,1,1);
    Env.AddRenderingVariable('Faces','0');
    Env.AddRenderingVariable('Voxels','0');

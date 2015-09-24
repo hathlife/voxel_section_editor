@@ -47,7 +47,7 @@ object FrmPreferences: TFrmPreferences
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = TabSheet1
+      ActivePage = ThreeDOptions_tab
       Style = tsFlatButtons
       TabOrder = 0
       object TabSheet1: TTabSheet
@@ -162,6 +162,13 @@ object FrmPreferences: TFrmPreferences
           Height = 13
           Caption = 'frames p/ sec'
         end
+        object Label4: TLabel
+          Left = 39
+          Top = 60
+          Width = 108
+          Height = 13
+          Caption = '3D Background Colour'
+        end
         object CbFPSCap: TCheckBox
           Left = 3
           Top = 29
@@ -188,6 +195,58 @@ object FrmPreferences: TFrmPreferences
           Caption = 'Enable OpenCL Support'
           TabOrder = 2
         end
+        object pnl3DBackgroundColour: TPanel
+          Left = 0
+          Top = 58
+          Width = 33
+          Height = 17
+          BevelOuter = bvLowered
+          ParentBackground = False
+          TabOrder = 3
+          OnClick = pnl3DBackgroundColourClick
+        end
+        object BtReset3DBackColor: TButton
+          Left = 187
+          Top = 55
+          Width = 75
+          Height = 25
+          Caption = 'Reset Colour'
+          TabOrder = 4
+          OnClick = BtReset3DBackColorClick
+        end
+      end
+      object TwoDOptions_tab: TTabSheet
+        Caption = '2D Options'
+        ImageIndex = 3
+        TabVisible = False
+        ExplicitTop = 27
+        ExplicitHeight = 210
+        object Label5: TLabel
+          Left = 42
+          Top = 8
+          Width = 108
+          Height = 13
+          Caption = '2D Background Colour'
+        end
+        object pnl2DBackgroundColour: TPanel
+          Left = 3
+          Top = 6
+          Width = 33
+          Height = 17
+          BevelOuter = bvLowered
+          ParentBackground = False
+          TabOrder = 0
+          OnClick = pnl2DBackgroundColourClick
+        end
+        object BtReset2DBackColor: TButton
+          Left = 190
+          Top = 3
+          Width = 75
+          Height = 25
+          Caption = 'Reset Colour'
+          TabOrder = 1
+          OnClick = BtReset2DBackColorClick
+        end
       end
     end
   end
@@ -203,11 +262,13 @@ object FrmPreferences: TFrmPreferences
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
     Items.NodeData = {
-      01030000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      01040000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
       0011460069006C00650020004100730073006F00630069006100740069006F00
       6E007300270000000000000000000000FFFFFFFFFFFFFFFF0000000000000000
       07500061006C0065007400740065002D0000000000000000000000FFFFFFFFFF
-      FFFFFF00000000000000000A3300440020004F007000740069006F006E007300}
+      FFFFFF00000000000000000A3200440020004F007000740069006F006E007300
+      2D0000000000000000000000FFFFFFFFFFFFFFFF00000000000000000A330044
+      0020004F007000740069006F006E007300}
   end
   object Panel1: TPanel
     Left = 0
@@ -277,5 +338,9 @@ object FrmPreferences: TFrmPreferences
       TabOrder = 1
       OnClick = Button2Click
     end
+  end
+  object ColorDialog1: TColorDialog
+    Left = 240
+    Top = 56
   end
 end

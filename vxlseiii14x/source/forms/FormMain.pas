@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.251';
+   APPLICATION_VER = '1.39.252';
    APPLICATION_BETA = true;
 
 type
@@ -686,6 +686,7 @@ begin
    Camera := Env.CurrentCamera^;
    GlobalVars.Render.SetFPS(Configuration.FPSCap);
    GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
+   Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor);
    Env.EnableShaders(false);
    Env.AddRenderingVariable('Voxels','0');
    SetIsEditable(False);
