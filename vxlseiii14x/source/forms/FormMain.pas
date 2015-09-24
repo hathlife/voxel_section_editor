@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.247';
+   APPLICATION_VER = '1.39.248';
    APPLICATION_BETA = true;
 
 type
@@ -794,9 +794,20 @@ begin
       If FileExists(VoxelName) then
       Begin
          IsVXLLoading := true;
+         Application.OnIdle := nil;
          SetIsEditable(LoadVoxel(Document,VoxelName));
          if IsEditable then
          begin
+            if p_Frm3DPreview <> nil then
+            begin
+               p_Frm3DPreview^.SpFrame.MaxValue := 1;
+               p_Frm3DPreview^.SpStopClick(nil);
+            end;
+            if p_Frm3DModelizer <> nil then
+            begin
+               p_Frm3DModelizer^.SpFrame.MaxValue := 1;
+               p_Frm3DModelizer^.SpStopClick(nil);
+            end;
             DoAfterLoadingThings;
          end;
          IsVXLLoading := false;
