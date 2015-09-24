@@ -3,52 +3,49 @@ unit FormVoxelTexture;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls,voxel, ExtDlgs,math, ComCtrls, BasicDataTypes,
-  Voxel_Engine, Palette, VoxelUndoEngine;
+   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+   Dialogs, ExtCtrls, StdCtrls,voxel, ExtDlgs,math, ComCtrls, BasicDataTypes,
+   Voxel_Engine, Palette, VoxelUndoEngine;
 
 type
-  TFrmVoxelTexture = class(TForm)
-    Panel1: TPanel;
-    Image1: TImage;
-    BtGetVoxelTexture: TButton;
-    BtApplyTexture: TButton;
-    BtLoadTexture: TButton;
-    BtSaveTexture: TButton;
-    OpenPictureDialog1: TOpenPictureDialog;
-    SavePictureDialog1: TSavePictureDialog;
-    BtSavePalette: TButton;
-    Image2: TImage;
-    CbPaintRemaining: TCheckBox;
-    Bevel2: TBevel;
-    Panel2: TPanel;
-    Image3: TImage;
-    Label2: TLabel;
-    Label3: TLabel;
-    Bevel3: TBevel;
-    Panel3: TPanel;
-    BtOK: TButton;
-    BtCancel: TButton;
-    ProgressBar: TProgressBar;
-    LbCurrentOperation: TLabel;
-    procedure BtGetVoxelTextureClick(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure BtLoadTextureClick(Sender: TObject);
-    procedure BtSaveTextureClick(Sender: TObject);
-    procedure BtSavePaletteClick(Sender: TObject);
-    procedure BtApplyTextureClick(Sender: TObject);
-    procedure BtOKClick(Sender: TObject);
-    procedure BtCancelClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-  private
-    { Private declarations }
-  public
-    { Public declarations }
+   TFrmVoxelTexture = class(TForm)
+      Panel1: TPanel;
+      Image1: TImage;
+      BtGetVoxelTexture: TButton;
+      BtApplyTexture: TButton;
+      BtLoadTexture: TButton;
+      BtSaveTexture: TButton;
+      OpenPictureDialog1: TOpenPictureDialog;
+      SavePictureDialog1: TSavePictureDialog;
+      BtSavePalette: TButton;
+      Image2: TImage;
+      CbPaintRemaining: TCheckBox;
+      Bevel2: TBevel;
+      Panel2: TPanel;
+      Image3: TImage;
+      Label2: TLabel;
+      Label3: TLabel;
+      Bevel3: TBevel;
+      Panel3: TPanel;
+      BtOK: TButton;
+      BtCancel: TButton;
+      ProgressBar: TProgressBar;
+      LbCurrentOperation: TLabel;
+      procedure BtGetVoxelTextureClick(Sender: TObject);
+      procedure FormShow(Sender: TObject);
+      procedure BtLoadTextureClick(Sender: TObject);
+      procedure BtSaveTextureClick(Sender: TObject);
+      procedure BtSavePaletteClick(Sender: TObject);
+      procedure BtApplyTextureClick(Sender: TObject);
+      procedure BtOKClick(Sender: TObject);
+      procedure BtCancelClick(Sender: TObject);
+      procedure FormCreate(Sender: TObject);
+   private
+      { Private declarations }
+   public
+      { Public declarations }
+   end;
 
-  end;
-
-var
-  FrmVoxelTexture: TFrmVoxelTexture;
 
 implementation
 

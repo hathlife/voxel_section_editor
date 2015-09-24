@@ -18,8 +18,6 @@ type
     { Public declarations }
   end;
 
-var
-  FrmImportSection: TFrmImportSection;
 
 implementation
 

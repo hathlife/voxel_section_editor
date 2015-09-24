@@ -101,10 +101,6 @@ object FrmVxlError: TFrmVxlError
     TabOrder = 2
     object TabSheet1: TTabSheet
       Caption = 'Header Information'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label1: TLabel
         Left = 8
         Top = 8

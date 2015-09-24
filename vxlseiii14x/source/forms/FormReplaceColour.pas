@@ -3,71 +3,66 @@ unit FormReplaceColour;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, ExtCtrls, Voxel_Engine, BasicDataTypes, palette, voxel,
-  mouse, VoxelUndoEngine;
+   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+   Dialogs, StdCtrls, ExtCtrls, Voxel_Engine, BasicDataTypes, palette, voxel,
+   mouse, VoxelUndoEngine;
 
 Type
-TReplaceColourData = record
-   Col1 : byte;
-   Col2 : byte;
-end;
+   TReplaceColourData = record
+      Col1 : byte;
+      Col2 : byte;
+   end;
 
 type
-  TFrmReplaceColour = class(TForm)
-    Bevel3: TBevel;
-    PanelTitle: TPanel;
-    Image1: TImage;
-    Label5: TLabel;
-    Label6: TLabel;
-    Bevel4: TBevel;
-    Panel4: TPanel;
-    BtOK: TButton;
-    BtCancel: TButton;
-    Panel5: TPanel;
-    Label1: TLabel;
-    Label2: TLabel;
-    LabelReplace: TLabel;
-    LabelWith: TLabel;
-    PanelReplace: TPanel;
-    PanelWith: TPanel;
-    ListBox1: TListBox;
-    BtAdd: TButton;
-    BtEdit: TButton;
-    BtDelete: TButton;
-    Bevel1: TBevel;
-    cnvPalette: TPaintBox;
-    pnlPalette: TPanel;
-    lblActiveColour: TLabel;
-    pnlActiveColour: TPanel;
-    procedure FormDestroy(Sender: TObject);
-    procedure cnvPalettePaint(Sender: TObject);
-    procedure PanelReplaceClick(Sender: TObject);
-    procedure PanelWithClick(Sender: TObject);
-    procedure cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure FormCreate(Sender: TObject);
-    procedure BtAddClick(Sender: TObject);
-    procedure ListBox1Click(Sender: TObject);
-    procedure BtEditClick(Sender: TObject);
-    procedure BtDeleteClick(Sender: TObject);
-    procedure cnvPaletteMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure BtOKClick(Sender: TObject);
-    procedure BtCancelClick(Sender: TObject);
-  private
-    { Private declarations }
-  public
-    { Public declarations }
-  end;
-
-var
-  FrmReplaceColour: TFrmReplaceColour;
-  ReplaceColourData,TempColourData : array of TReplaceColourData;
-  Data_no : integer;
-  Replace : integer = -1;
-  ReplaceW : integer = -1;
+   TFrmReplaceColour = class(TForm)
+      Bevel3: TBevel;
+      PanelTitle: TPanel;
+      Image1: TImage;
+      Label5: TLabel;
+      Label6: TLabel;
+      Bevel4: TBevel;
+      Panel4: TPanel;
+      BtOK: TButton;
+      BtCancel: TButton;
+      Panel5: TPanel;
+      Label1: TLabel;
+      Label2: TLabel;
+      LabelReplace: TLabel;
+      LabelWith: TLabel;
+      PanelReplace: TPanel;
+      PanelWith: TPanel;
+      ListBox1: TListBox;
+      BtAdd: TButton;
+      BtEdit: TButton;
+      BtDelete: TButton;
+      Bevel1: TBevel;
+      cnvPalette: TPaintBox;
+      pnlPalette: TPanel;
+      lblActiveColour: TLabel;
+      pnlActiveColour: TPanel;
+      procedure FormDestroy(Sender: TObject);
+      procedure cnvPalettePaint(Sender: TObject);
+      procedure PanelReplaceClick(Sender: TObject);
+      procedure PanelWithClick(Sender: TObject);
+      procedure cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure FormCreate(Sender: TObject);
+      procedure BtAddClick(Sender: TObject);
+      procedure ListBox1Click(Sender: TObject);
+      procedure BtEditClick(Sender: TObject);
+      procedure BtDeleteClick(Sender: TObject);
+      procedure cnvPaletteMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+      procedure FormClose(Sender: TObject; var Action: TCloseAction);
+      procedure BtOKClick(Sender: TObject);
+      procedure BtCancelClick(Sender: TObject);
+   private
+      { Private declarations }
+   public
+      { Public declarations }
+      ReplaceColourData,TempColourData : array of TReplaceColourData;
+      Data_no : integer;
+      Replace : integer;
+      ReplaceW : integer;
+   end;
 
 implementation
 
@@ -148,6 +143,8 @@ procedure TFrmReplaceColour.FormCreate(Sender: TObject);
 begin
    cnvPalette.Cursor := MouseBrush;
    PanelTitle.DoubleBuffered := true;
+   Replace := -1;
+   ReplaceW := -1;
 end;
 
 procedure TFrmReplaceColour.BtAddClick(Sender: TObject);

@@ -32,8 +32,6 @@ type
     { Public declarations }
   end;
 
-var
-  FrmHeightMap: TFrmHeightMap;
 
 implementation
 

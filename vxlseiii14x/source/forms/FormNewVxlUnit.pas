@@ -46,8 +46,6 @@ type
     changed: boolean; //has x,y or z changed at all? if not, no need to do anything
   end;
 
-var
-  FrmNew: TFrmNew;
 
 implementation
 

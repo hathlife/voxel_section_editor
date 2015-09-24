@@ -36,8 +36,6 @@ type
     Name: array[1..16] of Char;
   end;
 
-var
-  FrmNewSectionSize: TFrmNewSectionSize;
 
 implementation
 

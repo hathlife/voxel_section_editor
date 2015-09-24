@@ -57,8 +57,6 @@ type
     procedure GetSettings;
   end;
 
-var
-  FrmPreferences: TFrmPreferences;
 
 implementation
 

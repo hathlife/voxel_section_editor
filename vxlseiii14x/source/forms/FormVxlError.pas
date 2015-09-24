@@ -35,8 +35,6 @@ type
     { Public declarations }
   end;
 
-var
-  FrmVxlError: TFrmVxlError;
 
 implementation
 
