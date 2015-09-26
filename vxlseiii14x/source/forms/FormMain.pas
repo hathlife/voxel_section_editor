@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.252';
+   APPLICATION_VER = '1.39.254';
    APPLICATION_BETA = true;
 
 type
@@ -350,6 +350,15 @@ type
     Apollo1: TMenuItem;
     N25: TMenuItem;
     UpdatePaletteList1: TMenuItem;
+    RotateModel1: TMenuItem;
+    Pitch901: TMenuItem;
+    Pitch902: TMenuItem;
+    Roll901: TMenuItem;
+    Roll902: TMenuItem;
+    Yaw901: TMenuItem;
+    Yaw902: TMenuItem;
+    N27: TMenuItem;
+    MaintainDimensions1: TMenuItem;
     procedure UpdatePaletteList1Click(Sender: TObject);
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
     procedure FillUselessInternalGaps1Click(Sender: TObject);
@@ -499,6 +508,12 @@ type
     procedure MirrorBackToFront1Click(Sender: TObject);
     procedure MirrorFrontToBack1Click(Sender: TObject);
     procedure Nudge1Left1Click(Sender: TObject);
+    procedure RotateYawNegativeClick(Sender: TObject);
+    procedure RotateYawPositiveClick(Sender: TObject);
+    procedure RotatePitchNegativeClick(Sender: TObject);
+    procedure RotatePitchPositiveClick(Sender: TObject);
+    procedure RotateRollNegativeClick(Sender: TObject);
+    procedure RotateRollPositiveClick(Sender: TObject);
     procedure Section2Click(Sender: TObject);
     procedure Copyofthissection1Click(Sender: TObject);
     procedure BuildReopenMenu;
@@ -3559,6 +3574,114 @@ begin
    UpdateUndo_RedoState;
 
    Document.ActiveSection^.FlipMatrix([1,1,1],NR,False);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotateYawNegativeClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[0,1] := 1;
+   Matrix[1,0] := -1;
+   Matrix[2,2] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotateYawPositiveClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[0,1] := -1;
+   Matrix[1,0] := 1;
+   Matrix[2,2] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotatePitchNegativeClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[0,2] := -1;
+   Matrix[2,0] := 1;
+   Matrix[1,1] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotatePitchPositiveClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[0,2] := 1;
+   Matrix[2,0] := -1;
+   Matrix[1,1] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotateRollNegativeClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[1,2] := 1;
+   Matrix[2,1] := -1;
+   Matrix[0,0] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
+   RefreshAll;
+   SetVoxelChanged(true);
+end;
+
+procedure TFrmMain.RotateRollPositiveClick(Sender: TObject);
+var
+   i: Integer;
+   Matrix: BasicMathsTypes.TGLMatrixf4;
+begin
+   CreateVXLRestorePoint(Document.ActiveSection^,Undo);
+   UpdateUndo_RedoState;
+
+   Matrix[1,2] := -1;
+   Matrix[2,1] := 1;
+   Matrix[0,0] := 1;
+   Matrix[3,3] := 1;
+
+   Document.ActiveSection^.ApplyMatrix(Matrix);
    RefreshAll;
    SetVoxelChanged(true);
 end;

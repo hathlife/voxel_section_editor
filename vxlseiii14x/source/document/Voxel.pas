@@ -111,6 +111,7 @@ type
       //a directional and a positional vector (x,y,z)=PosVector+t*DirectionVector
       procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
       procedure Mirror(MirrorView: EVoxelViewOrient);
+      procedure ApplyMatrix(_Matrix: TGLMatrixf4);
 
       procedure Assign(const _VoxelSection : TVoxelSection);
       function GetTransformAsOpenGLMatrix : TGlmatrixf4;
@@ -177,7 +178,7 @@ type
 implementation
 
 uses
-   SysUtils, Math, Dialogs;
+   SysUtils, Math, Dialogs, CholeskySolver;
 
 function AsciizToStr(var src: array of Char; maxlen: Byte): string;
 var
@@ -1962,6 +1963,107 @@ begin
             begin
                if (a < Tailer.XSize) and (b < Tailer.YSize) and (c < Tailer.ZSize) then
                   NewData[a,b,c]:=Data[i,j,k];
+            end;
+         end;
+      end;
+   end;
+   //That wasn't so hard...
+   //now copy it back
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         for k:=0 to Tailer.ZSize - 1 do
+         begin
+            Data[i,j,k] := NewData[i,j,k];
+         end;
+      end;
+   end;
+   // 1.3: Now, let's clear the memory
+   for i := Low(NewData) to High(NewData) do
+   begin
+      for j := Low(NewData[i]) to High(NewData[i]) do
+      begin
+         SetLength(NewData[i,j],0);
+      end;
+      SetLength(NewData[i],0);
+   end;
+   SetLength(NewData,0);
+end;
+
+// Make sure that the scale doesn't change, since this method doesn't properly deal with it yet.
+procedure TVoxelSection.ApplyMatrix(_Matrix: TGLMatrixf4);
+var
+   NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
+   i,j,k,a,b,c: Integer;
+   Empty: TVoxelUnpacked;
+   PackedVoxel: TVoxelPacked;
+   MatLinearSystem, ConstLinearSystem, Pivot: AFloat;
+   Solver: TCholeskySolver;
+begin
+   if _Matrix[3,3] = 0 then
+      exit; // bad parameter - division by 0.
+
+   // Prepare Linear System
+   SetLength(MatLinearSystem, 9);
+   SetLength(ConstLinearSystem, 3);
+   SetLength(Pivot, 3);
+   Pivot[0] := (Tailer.XSize - 1) / 2;
+   Pivot[1] := (Tailer.YSize - 1) / 2;
+   Pivot[2] := (Tailer.ZSize - 1) / 2;
+
+   // prepare empty voxel
+   with Empty do
+   begin
+      Colour := 0;
+      Normal := 0;
+      Used := False;
+   end;
+   PackedVoxel := PackVoxel(Empty);
+
+   //create new data matrix
+   SetLength(NewData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   //fill it with empty voxels
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         for k:=0 to Tailer.ZSize - 1 do
+         begin
+            NewData[i,j,k]:=PackedVoxel;
+         end;
+      end;
+   end;
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         for k:=0 to Tailer.ZSize - 1 do
+         begin
+            MatLinearSystem[0] := _Matrix[0,0];
+            MatLinearSystem[1] := _Matrix[0,1];
+            MatLinearSystem[2] := _Matrix[0,2];
+            MatLinearSystem[3] := _Matrix[1,0];
+            MatLinearSystem[4] := _Matrix[1,1];
+            MatLinearSystem[5] := _Matrix[1,2];
+            MatLinearSystem[6] := _Matrix[2,0];
+            MatLinearSystem[7] := _Matrix[2,1];
+            MatLinearSystem[8] := _Matrix[2,2];
+            ConstLinearSystem[0] := ((i - Pivot[0]) * _Matrix[3,3]) - _Matrix[0,3];
+            ConstLinearSystem[1] := ((j - Pivot[1]) * _Matrix[3,3]) - _Matrix[1,3];
+            ConstLinearSystem[2] := ((k - Pivot[2]) * _Matrix[3,3]) - _Matrix[2,3];
+            Solver := TCholeskySolver.Create(MatLinearSystem, ConstLinearSystem);
+            Solver.Execute;
+            a := Round(Pivot[0] + Solver.Answer[0]);
+            b := Round(Pivot[1] + Solver.Answer[1]);
+            c := Round(Pivot[2] + Solver.Answer[2]);
+            Solver.Free;
+
+            //perform range checking
+            if (a >=0 ) and (b >= 0) and (c >= 0) then
+            begin
+               if (a < Tailer.XSize) and (b < Tailer.YSize) and (c < Tailer.ZSize) then
+                  NewData[i,j,k]:=Data[a,b,c];
             end;
          end;
       end;

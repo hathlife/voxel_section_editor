@@ -291,7 +291,8 @@ uses
   BasicProgramTypes in 'source\datatypes\BasicProgramTypes.pas',
   PaletteControl in 'source\control\PaletteControl.pas',
   NCMDiffuseTextureGenerator in 'source\control\mesh\NCMDiffuseTextureGenerator.pas',
-  NCMDiffuseTextureGeneratorCommand in 'source\control\commands\NCMDiffuseTextureGeneratorCommand.pas';
+  NCMDiffuseTextureGeneratorCommand in 'source\control\commands\NCMDiffuseTextureGeneratorCommand.pas',
+  CholeskySolver in 'source\maths\CholeskySolver.pas';
 
 {$R *.res}
 

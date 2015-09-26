@@ -34,7 +34,6 @@ object FrmMain: TFrmMain
     BevelOuter = bvLowered
     ParentBackground = False
     TabOrder = 0
-    ExplicitHeight = 996
     object Splitter1: TSplitter
       Left = 653
       Top = 26
@@ -52,7 +51,6 @@ object FrmMain: TFrmMain
       Align = alLeft
       ParentBackground = False
       TabOrder = 0
-      ExplicitHeight = 969
       object lblSection: TLabel
         Left = 1
         Top = 1
@@ -1286,7 +1284,6 @@ object FrmMain: TFrmMain
       Align = alRight
       ParentBackground = False
       TabOrder = 1
-      ExplicitHeight = 969
       object CnvView2: TPaintBox
         Left = 1
         Top = 233
@@ -1612,7 +1609,6 @@ object FrmMain: TFrmMain
       Align = alClient
       ParentBackground = False
       TabOrder = 2
-      ExplicitHeight = 969
       object lblView0: TLabel
         Left = 1
         Top = 1
@@ -4337,7 +4333,6 @@ object FrmMain: TFrmMain
         Position = 50
         TabOrder = 0
         OnChange = ScrollBar1Change
-        ExplicitHeight = 938
       end
       object Panel5: TPanel
         Left = 1
@@ -4348,7 +4343,6 @@ object FrmMain: TFrmMain
         BevelOuter = bvNone
         ParentBackground = False
         TabOrder = 1
-        ExplicitTop = 952
         object ScrollBar1: TScrollBar
           Left = 0
           Top = 0
@@ -4572,7 +4566,6 @@ object FrmMain: TFrmMain
       item
         Width = 50
       end>
-    ExplicitTop = 996
   end
   object MainMenu1: TMainMenu
     Images = ImageList1
@@ -4877,6 +4870,41 @@ object FrmMain: TFrmMain
         object Nudge1Down1: TMenuItem
           Caption = 'Nudge 1 Down'
           OnClick = Nudge1Left1Click
+        end
+      end
+      object RotateModel1: TMenuItem
+        Caption = 'Rotate Model'
+        object MaintainDimensions1: TMenuItem
+          Caption = 'Maintain Dimensions'
+          Checked = True
+          Enabled = False
+        end
+        object N27: TMenuItem
+          Caption = '-'
+        end
+        object Pitch901: TMenuItem
+          Caption = 'Pitch -90'#39
+          OnClick = RotatePitchNegativeClick
+        end
+        object Pitch902: TMenuItem
+          Caption = 'Pitch 90'#39
+          OnClick = RotatePitchPositiveClick
+        end
+        object Roll901: TMenuItem
+          Caption = 'Roll -90'#39
+          OnClick = RotateRollNegativeClick
+        end
+        object Roll902: TMenuItem
+          Caption = 'Roll 90'#39
+          OnClick = RotateRollPositiveClick
+        end
+        object Yaw901: TMenuItem
+          Caption = 'Yaw -90'#39
+          OnClick = RotateYawNegativeClick
+        end
+        object Yaw902: TMenuItem
+          Caption = 'Yaw 90'#39
+          OnClick = RotateYawPositiveClick
         end
       end
       object N15: TMenuItem
