@@ -111,7 +111,8 @@ type
       //a directional and a positional vector (x,y,z)=PosVector+t*DirectionVector
       procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
       procedure Mirror(MirrorView: EVoxelViewOrient);
-      procedure ApplyMatrix(_Matrix: TGLMatrixf4);
+      procedure ApplyMatrix(const _Matrix: TGLMatrixf4);  overload;
+      procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f);  overload;
 
       procedure Assign(const _VoxelSection : TVoxelSection);
       function GetTransformAsOpenGLMatrix : TGlmatrixf4;
@@ -1991,14 +1992,23 @@ begin
    SetLength(NewData,0);
 end;
 
-// Make sure that the scale doesn't change, since this method doesn't properly deal with it yet.
-procedure TVoxelSection.ApplyMatrix(_Matrix: TGLMatrixf4);
+procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4);
+var
+   Pivot: TVector3f;
+begin
+   Pivot.X := (Tailer.XSize - 1) / 2;
+   Pivot.Y := (Tailer.YSize - 1) / 2;
+   Pivot.Z := (Tailer.ZSize - 1) / 2;
+   ApplyMatrix(_Matrix, Pivot);
+end;
+
+procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f);
 var
    NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k,a,b,c: Integer;
    Empty: TVoxelUnpacked;
    PackedVoxel: TVoxelPacked;
-   MatLinearSystem, ConstLinearSystem, Pivot: AFloat;
+   MatLinearSystem, ConstLinearSystem: AFloat;
    Solver: TCholeskySolver;
 begin
    if _Matrix[3,3] = 0 then
@@ -2007,10 +2017,6 @@ begin
    // Prepare Linear System
    SetLength(MatLinearSystem, 9);
    SetLength(ConstLinearSystem, 3);
-   SetLength(Pivot, 3);
-   Pivot[0] := (Tailer.XSize - 1) / 2;
-   Pivot[1] := (Tailer.YSize - 1) / 2;
-   Pivot[2] := (Tailer.ZSize - 1) / 2;
 
    // prepare empty voxel
    with Empty do
@@ -2034,36 +2040,38 @@ begin
          end;
       end;
    end;
+   MatLinearSystem[0] := _Matrix[0,0];
+   MatLinearSystem[1] := _Matrix[0,1];
+   MatLinearSystem[2] := _Matrix[0,2];
+   MatLinearSystem[3] := _Matrix[1,0];
+   MatLinearSystem[4] := _Matrix[1,1];
+   MatLinearSystem[5] := _Matrix[1,2];
+   MatLinearSystem[6] := _Matrix[2,0];
+   MatLinearSystem[7] := _Matrix[2,1];
+   MatLinearSystem[8] := _Matrix[2,2];
    for i:=0 to Tailer.XSize - 1 do
    begin
       for j:=0 to Tailer.YSize - 1 do
       begin
          for k:=0 to Tailer.ZSize - 1 do
          begin
-            MatLinearSystem[0] := _Matrix[0,0];
-            MatLinearSystem[1] := _Matrix[0,1];
-            MatLinearSystem[2] := _Matrix[0,2];
-            MatLinearSystem[3] := _Matrix[1,0];
-            MatLinearSystem[4] := _Matrix[1,1];
-            MatLinearSystem[5] := _Matrix[1,2];
-            MatLinearSystem[6] := _Matrix[2,0];
-            MatLinearSystem[7] := _Matrix[2,1];
-            MatLinearSystem[8] := _Matrix[2,2];
-            ConstLinearSystem[0] := ((i - Pivot[0]) * _Matrix[3,3]) - _Matrix[0,3];
-            ConstLinearSystem[1] := ((j - Pivot[1]) * _Matrix[3,3]) - _Matrix[1,3];
-            ConstLinearSystem[2] := ((k - Pivot[2]) * _Matrix[3,3]) - _Matrix[2,3];
+            ConstLinearSystem[0] := ((i - _Pivot.X) * _Matrix[3,3]) - _Matrix[0,3];
+            ConstLinearSystem[1] := ((j - _Pivot.Y) * _Matrix[3,3]) - _Matrix[1,3];
+            ConstLinearSystem[2] := ((k - _Pivot.Z) * _Matrix[3,3]) - _Matrix[2,3];
             Solver := TCholeskySolver.Create(MatLinearSystem, ConstLinearSystem);
             Solver.Execute;
-            a := Round(Pivot[0] + Solver.Answer[0]);
-            b := Round(Pivot[1] + Solver.Answer[1]);
-            c := Round(Pivot[2] + Solver.Answer[2]);
+            a := Round(_Pivot.X + Solver.Answer[0]);
+            b := Round(_Pivot.Y + Solver.Answer[1]);
+            c := Round(_Pivot.Z + Solver.Answer[2]);
             Solver.Free;
 
             //perform range checking
             if (a >=0 ) and (b >= 0) and (c >= 0) then
             begin
                if (a < Tailer.XSize) and (b < Tailer.YSize) and (c < Tailer.ZSize) then
+               begin
                   NewData[i,j,k]:=Data[a,b,c];
+               end;
             end;
          end;
       end;
@@ -2090,6 +2098,8 @@ begin
       SetLength(NewData[i],0);
    end;
    SetLength(NewData,0);
+   SetLength(MatLinearSystem, 0);
+   SetLength(ConstLinearSystem, 0);
 end;
 
 procedure TVoxelSection.Mirror(MirrorView: EVoxelViewOrient);
