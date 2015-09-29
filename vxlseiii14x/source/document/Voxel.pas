@@ -68,6 +68,7 @@ type
       constructor Create(const _VoxelSection : TVoxelSection); overload;
       destructor Destroy; override;
       procedure Resize(XSize,YSize,ZSize: Integer);
+      function ResizeUpdateBounds(var _MinPosition, _MaxPosition: TVector3f): boolean;
       procedure Crop;
       procedure ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
 	//Plasmadroid v1.4+ drawing tools
@@ -111,8 +112,8 @@ type
       //a directional and a positional vector (x,y,z)=PosVector+t*DirectionVector
       procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
       procedure Mirror(MirrorView: EVoxelViewOrient);
-      procedure ApplyMatrix(const _Matrix: TGLMatrixf4);  overload;
-      procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f);  overload;
+      procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _ResizeModel: Boolean = false);  overload;
+      procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f; _ResizeModel: Boolean = false);  overload;
 
       procedure Assign(const _VoxelSection : TVoxelSection);
       function GetTransformAsOpenGLMatrix : TGlmatrixf4;
@@ -1879,8 +1880,7 @@ begin
 end;
 
 // Insert a new section with SectionIndex :)
-procedure TVoxel.InsertSection(SectionIndex: Integer; Name: String; XSize,
-  YSize, ZSize: Integer);
+procedure TVoxel.InsertSection(SectionIndex: Integer; Name: String; XSize, YSize, ZSize: Integer);
 var
    i: Integer;
 begin
@@ -1992,24 +1992,28 @@ begin
    SetLength(NewData,0);
 end;
 
-procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4);
+procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4; _ResizeModel: Boolean = false);
 var
    Pivot: TVector3f;
 begin
-   Pivot.X := (Tailer.XSize - 1) / 2;
-   Pivot.Y := (Tailer.YSize - 1) / 2;
-   Pivot.Z := (Tailer.ZSize - 1) / 2;
-   ApplyMatrix(_Matrix, Pivot);
+   Pivot.X := (Tailer.XSize) / 2;
+   Pivot.Y := (Tailer.YSize) / 2;
+   Pivot.Z := (Tailer.ZSize) / 2;
+   ApplyMatrix(_Matrix, Pivot, _ResizeModel);
 end;
 
-procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f);
+procedure TVoxelSection.ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f; _ResizeModel: Boolean = false);
 var
-   NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
+   OldData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k,a,b,c: Integer;
    Empty: TVoxelUnpacked;
    PackedVoxel: TVoxelPacked;
    MatLinearSystem, ConstLinearSystem: AFloat;
    Solver: TCholeskySolver;
+   Borders: AFloat;
+   BorderNewPosition: TVector3f;
+   MinPosition, MaxPosition, SystemPivot: TVector3f;
+
 begin
    if _Matrix[3,3] = 0 then
       exit; // bad parameter - division by 0.
@@ -2027,8 +2031,19 @@ begin
    end;
    PackedVoxel := PackVoxel(Empty);
 
-   //create new data matrix
-   SetLength(NewData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   // Backup data
+   SetLength(OldData,Tailer.XSize,Tailer.YSize,Tailer.ZSize);
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         for k:=0 to Tailer.ZSize - 1 do
+         begin
+            OldData[i,j,k] := Data[i,j,k];
+         end;
+      end;
+   end;
+
    //fill it with empty voxels
    for i:=0 to Tailer.XSize - 1 do
    begin
@@ -2036,10 +2051,11 @@ begin
       begin
          for k:=0 to Tailer.ZSize - 1 do
          begin
-            NewData[i,j,k]:=PackedVoxel;
+            Data[i,j,k]:=PackedVoxel;
          end;
       end;
    end;
+
    MatLinearSystem[0] := _Matrix[0,0];
    MatLinearSystem[1] := _Matrix[0,1];
    MatLinearSystem[2] := _Matrix[0,2];
@@ -2049,55 +2065,116 @@ begin
    MatLinearSystem[6] := _Matrix[2,0];
    MatLinearSystem[7] := _Matrix[2,1];
    MatLinearSystem[8] := _Matrix[2,2];
+
+   if _ResizeModel then
+   begin
+      SetLength(Borders, 24);
+      Borders[0] := 0; Borders[1] := 0; Borders[2] := 0;
+      Borders[3] := 0; Borders[4] := 0; Borders[5] := Tailer.ZSize;
+      Borders[6] := 0; Borders[7] := Tailer.YSize; Borders[8] := 0;
+      Borders[9] := 0; Borders[10] := Tailer.YSize; Borders[11] := Tailer.ZSize;
+      Borders[12] := Tailer.XSize; Borders[13] := 0; Borders[14] := 0;
+      Borders[15] := Tailer.XSize; Borders[16] := 0; Borders[17] := Tailer.ZSize;
+      Borders[18] := Tailer.XSize; Borders[19] := Tailer.YSize; Borders[20] := 0;
+      Borders[21] := Tailer.XSize; Borders[22] := Tailer.YSize; Borders[23] := Tailer.ZSize;
+      MinPosition.X := 999999;
+      MinPosition.Y := 999999;
+      MinPosition.Z := 999999;
+      MaxPosition.X := -999999;
+      MaxPosition.Y := -999999;
+      MaxPosition.Z := -999999;
+
+
+      i := 0;
+      while i < 23 do
+      begin
+         ConstLinearSystem[0] := ((Borders[i] - _Pivot.X) * _Matrix[3,3]) - _Matrix[0,3];
+         ConstLinearSystem[1] := ((Borders[i+1] - _Pivot.Y) * _Matrix[3,3]) - _Matrix[1,3];
+         ConstLinearSystem[2] := ((Borders[i+2] - _Pivot.Z) * _Matrix[3,3]) - _Matrix[2,3];
+         Solver := TCholeskySolver.Create(MatLinearSystem, ConstLinearSystem);
+         Solver.Execute;
+         BorderNewPosition.X := _Pivot.X + Solver.Answer[0];
+         BorderNewPosition.Y := _Pivot.Y + Solver.Answer[1];
+         BorderNewPosition.Z := _Pivot.Z + Solver.Answer[2];
+         if BorderNewPosition.X < MinPosition.X then
+            MinPosition.X := BorderNewPosition.X;
+         if BorderNewPosition.Y < MinPosition.Y then
+            MinPosition.Y := BorderNewPosition.Y;
+         if BorderNewPosition.Z < MinPosition.Z then
+            MinPosition.Z := BorderNewPosition.Z;
+         if BorderNewPosition.X > MaxPosition.X then
+            MaxPosition.X := BorderNewPosition.X;
+         if BorderNewPosition.Y > MaxPosition.Y then
+            MaxPosition.Y := BorderNewPosition.Y;
+         if BorderNewPosition.Z > MaxPosition.Z then
+            MaxPosition.Z := BorderNewPosition.Z;
+         Solver.Free;
+         inc(i, 3);
+      end;
+      SetLength(Borders, 0);
+
+      if not ResizeUpdateBounds(MinPosition, MaxPosition) then
+      begin
+         exit;
+      end;
+      SystemPivot.X := (MaxPosition.X - MinPosition.X) / 2;
+      SystemPivot.Y := (MaxPosition.Y - MinPosition.Y) / 2;
+      SystemPivot.Z := (MaxPosition.Z - MinPosition.Z) / 2;
+   end
+   else
+   begin
+      SystemPivot.X := _Pivot.X;
+      SystemPivot.Y := _Pivot.Y;
+      SystemPivot.Z := _Pivot.Z;
+   end;
+
+
+
    for i:=0 to Tailer.XSize - 1 do
    begin
       for j:=0 to Tailer.YSize - 1 do
       begin
          for k:=0 to Tailer.ZSize - 1 do
          begin
-            ConstLinearSystem[0] := ((i - _Pivot.X) * _Matrix[3,3]) - _Matrix[0,3];
-            ConstLinearSystem[1] := ((j - _Pivot.Y) * _Matrix[3,3]) - _Matrix[1,3];
-            ConstLinearSystem[2] := ((k - _Pivot.Z) * _Matrix[3,3]) - _Matrix[2,3];
+            ConstLinearSystem[0] := ((i - SystemPivot.X) * _Matrix[3,3]) - _Matrix[0,3];
+            ConstLinearSystem[1] := ((j - SystemPivot.Y) * _Matrix[3,3]) - _Matrix[1,3];
+            ConstLinearSystem[2] := ((k - SystemPivot.Z) * _Matrix[3,3]) - _Matrix[2,3];
             Solver := TCholeskySolver.Create(MatLinearSystem, ConstLinearSystem);
             Solver.Execute;
-            a := Round(_Pivot.X + Solver.Answer[0]);
-            b := Round(_Pivot.Y + Solver.Answer[1]);
-            c := Round(_Pivot.Z + Solver.Answer[2]);
+            a := Trunc(_Pivot.X + Solver.Answer[0]);
+            b := Trunc(_Pivot.Y + Solver.Answer[1]);
+            c := Trunc(_Pivot.Z + Solver.Answer[2]);
             Solver.Free;
 
             //perform range checking
             if (a >=0 ) and (b >= 0) and (c >= 0) then
             begin
-               if (a < Tailer.XSize) and (b < Tailer.YSize) and (c < Tailer.ZSize) then
+               if (a <= High(OldData)) and (b <= High(OldData[0])) and (c <= High(OldData[0,0])) then
                begin
-                  NewData[i,j,k]:=Data[a,b,c];
+                  Data[i,j,k] := OldData[a,b,c];
                end;
             end;
          end;
       end;
    end;
-   //That wasn't so hard...
-   //now copy it back
-   for i:=0 to Tailer.XSize - 1 do
+
+   if _ResizeModel then
    begin
-      for j:=0 to Tailer.YSize - 1 do
-      begin
-         for k:=0 to Tailer.ZSize - 1 do
-         begin
-            Data[i,j,k] := NewData[i,j,k];
-         end;
-      end;
+      _Pivot.X := _Pivot.X + MinPosition.X;
+      _Pivot.Y := _Pivot.Y + MinPosition.Y;
+      _Pivot.Z := _Pivot.Z + MinPosition.Z;
    end;
+
    // 1.3: Now, let's clear the memory
-   for i := Low(NewData) to High(NewData) do
+   for i := Low(OldData) to High(OldData) do
    begin
-      for j := Low(NewData[i]) to High(NewData[i]) do
+      for j := Low(OldData[i]) to High(OldData[i]) do
       begin
-         SetLength(NewData[i,j],0);
+         SetLength(OldData[i,j],0);
       end;
-      SetLength(NewData[i],0);
+      SetLength(OldData[i],0);
    end;
-   SetLength(NewData,0);
+   SetLength(OldData,0);
    SetLength(MatLinearSystem, 0);
    SetLength(ConstLinearSystem, 0);
 end;
@@ -2254,6 +2331,80 @@ begin
       SetLength(NewData[i],0);
    end;
    SetLength(NewData,0);
+end;
+
+// This procedure will wipe all the pixel data from the section. Make sure you have a backup.
+function TVoxelSection.ResizeUpdateBounds(var _MinPosition, _MaxPosition: TVector3f): boolean;
+var
+   i,j,k: Integer;
+   Empty: TVoxelUnpacked;
+   PackedVoxel: TVoxelPacked;
+   OldMinBounds: TVector3f;
+   OldMaxBounds: TVector3f;
+   BoundScale: TVector3f;
+   OldSize, NewSize: TVector3i;
+begin
+// prepare empty voxel
+   with Empty do
+   begin
+      Colour := 0;
+      Normal := 0;
+      Used := False;
+   end;
+   PackedVoxel := PackVoxel(Empty);
+
+   // Backup bounds, since Resize will mess them up.
+   OldMinBounds.X := Tailer.MinBounds[1];
+   OldMinBounds.Y := Tailer.MinBounds[2];
+   OldMinBounds.Z := Tailer.MinBounds[3];
+   OldMaxBounds.X := Tailer.MaxBounds[1];
+   OldMaxBounds.Y := Tailer.MaxBounds[2];
+   OldMaxBounds.Z := Tailer.MaxBounds[3];
+
+   _MinPosition.X := Floor(_MinPosition.X);
+   _MinPosition.Y := Floor(_MinPosition.Y);
+   _MinPosition.Z := Floor(_MinPosition.Z);
+   _MaxPosition.X := Ceil(_MaxPosition.X);
+   _MaxPosition.Y := Ceil(_MaxPosition.Y);
+   _MaxPosition.Z := Ceil(_MaxPosition.Z);
+
+   NewSize.X := Round(_MaxPosition.X - _MinPosition.X);
+   NewSize.Y := Round(_MaxPosition.Y - _MinPosition.Y);
+   NewSize.Z := Round(_MaxPosition.Z - _MinPosition.Z);
+
+   if (NewSize.X <= 0) or (NewSize.X > 255) or (NewSize.Y <= 0) or (NewSize.Y > 255) or (NewSize.Z <= 0) or (NewSize.Z > 255) then
+   begin
+      Result := false;
+      exit;
+   end;
+   Result := true;
+
+   OldSize.X := Tailer.XSize;
+   OldSize.Y := Tailer.YSize;
+   OldSize.Z := Tailer.ZSize;
+
+   BoundScale.X := (OldMaxBounds.X - OldMinBounds.X) / Tailer.XSize;
+   BoundScale.Y := (OldMaxBounds.Y - OldMinBounds.Y) / Tailer.YSize;
+   BoundScale.Z := (OldMaxBounds.Z - OldMinBounds.Z) / Tailer.ZSize;
+
+   Resize(NewSize.X, NewSize.Y, NewSize.Z);
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         for k:=0 to Tailer.ZSize - 1 do
+         begin
+            Data[i,j,k]:=PackedVoxel;
+         end;
+      end;
+   end;
+
+   Tailer.MinBounds[1] := OldMinBounds.X + (_MinPosition.X * BoundScale.X);
+   Tailer.MinBounds[2] := OldMinBounds.Y + (_MinPosition.Y * BoundScale.Y);
+   Tailer.MinBounds[3] := OldMinBounds.Z + (_MinPosition.Z * BoundScale.Z);
+   Tailer.MaxBounds[1] := OldMaxBounds.X + ((_MaxPosition.X - OldSize.X) * BoundScale.X);
+   Tailer.MaxBounds[2] := OldMaxBounds.Y + ((_MaxPosition.Y - OldSize.Y) * BoundScale.Y);
+   Tailer.MaxBounds[3] := OldMaxBounds.Z + ((_MaxPosition.Z - OldSize.Z) * BoundScale.Z);
 end;
 
 //brushview contains the view of the current editing Window.

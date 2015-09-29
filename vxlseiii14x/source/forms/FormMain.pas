@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.254';
+   APPLICATION_VER = '1.39.255';
    APPLICATION_BETA = true;
 
 type
@@ -359,6 +359,7 @@ type
     Yaw902: TMenuItem;
     N27: TMenuItem;
     MaintainDimensions1: TMenuItem;
+    procedure MaintainDimensions1Click(Sender: TObject);
     procedure UpdatePaletteList1Click(Sender: TObject);
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
     procedure FillUselessInternalGaps1Click(Sender: TObject);
@@ -1219,14 +1220,17 @@ end;
 
 procedure TFrmMain.UpdateRenderingCounters;
 begin
-   if Actor^.Models[0]^.ModelType = C_MT_VOXEL then
-   begin
-      Env.RenderingVariableValues[0] := IntToStr((Actor^.Models[0]^ as TModelVxt).GetVoxelCount);
-   end
-   else
-   begin
-      Env.RenderingVariableValues[0] := IntToStr(Actor^.Models[0]^.GetVoxelCount);
-   end;
+   if (Actor <> nil) then
+      if High(Actor^.Models) >= 0 then
+         if Actor^.Models[0] <> nil then
+            if Actor^.Models[0]^.ModelType = C_MT_VOXEL then
+            begin
+               Env.RenderingVariableValues[0] := IntToStr((Actor^.Models[0]^ as TModelVxt).GetVoxelCount);
+            end
+            else
+            begin
+               Env.RenderingVariableValues[0] := IntToStr(Actor^.Models[0]^.GetVoxelCount);
+            end;
 end;
 
 {------------------------------------------------------------------}
@@ -1871,6 +1875,12 @@ begin
    RemapColour.Y := RemapColourMap[5].G /255;
    RemapColour.Z := RemapColourMap[5].B /255;
    Actor^.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
+end;
+
+procedure TFrmMain.MaintainDimensions1Click(Sender: TObject);
+begin
+   MaintainDimensions1.Checked := not MaintainDimensions1.Checked; 
+   Configuration.MaintainDimensionsRM := MaintainDimensions1.Checked;
 end;
 
 procedure TFrmMain.Purple1Click(Sender: TObject);
@@ -3591,7 +3601,15 @@ begin
    Matrix[2,2] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;
@@ -3609,7 +3627,15 @@ begin
    Matrix[2,2] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;
@@ -3627,7 +3653,15 @@ begin
    Matrix[1,1] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;
@@ -3645,7 +3679,15 @@ begin
    Matrix[1,1] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;
@@ -3663,7 +3705,15 @@ begin
    Matrix[0,0] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;
@@ -3681,7 +3731,15 @@ begin
    Matrix[0,0] := 1;
    Matrix[3,3] := 1;
 
-   Document.ActiveSection^.ApplyMatrix(Matrix);
+   SetIsEditable(false);
+   Document.ActiveSection^.ApplyMatrix(Matrix, not MaintainDimensions1.Checked);
+   SetIsEditable(true);
+   if not MaintainDimensions1.Checked then
+   begin
+      UpdateViews;
+      SetupStatusBar;
+      CursorReset;
+   end;
    RefreshAll;
    SetVoxelChanged(true);
 end;

@@ -4876,8 +4876,7 @@ object FrmMain: TFrmMain
         Caption = 'Rotate Model'
         object MaintainDimensions1: TMenuItem
           Caption = 'Maintain Dimensions'
-          Checked = True
-          Enabled = False
+          OnClick = MaintainDimensions1Click
         end
         object N27: TMenuItem
           Caption = '-'
