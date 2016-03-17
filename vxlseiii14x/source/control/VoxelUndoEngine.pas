@@ -26,18 +26,18 @@ Var
 Const
    Min_Undos = 10;
 
-Function CreateRestorePoint(TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
+Function CreateRestorePoint(const TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
 Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
 Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
-Function IsUndoRedoUsed(Undo_Redo : TUndo_Redo) : boolean;
+Function IsUndoRedoUsed(const Undo_Redo : TUndo_Redo) : boolean;
 Procedure ResetUndoRedo;
 Procedure ResetUndo(var _Undo : TUndo_Redo);
 
 // Bad but only way to do some restore points(i.e flips, nudges, mirroring)
-Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure CreateVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
-Procedure SaveVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
-Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(var Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 
 Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
 procedure FreeUndoRedo(Var Undo_Redo : TUndo_Redo);
@@ -46,7 +46,7 @@ implementation
 
 uses FormMain;
 
-Function CreateRestorePoint(TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
+Function CreateRestorePoint(const TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
 var
    i,no : integer;
    v : TVoxelUnpacked;
@@ -106,7 +106,7 @@ begin
    LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
 end;
 
-Function IsUndoRedoUsed(Undo_Redo : TUndo_Redo) : boolean;
+Function IsUndoRedoUsed(const Undo_Redo : TUndo_Redo) : boolean;
 begin
    if Undo_Redo.Data_no > 0 then
       Result := true
@@ -133,13 +133,13 @@ begin
    SetLength(_Undo.Data,_Undo.Data_no);
 end;
 
-Procedure CreateVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure CreateVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 begin
    ResetUndo(Redo);
    SaveVXLRestorePoint(Vxl, Undo_Redo);
 end;
 
-Procedure SaveVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 var
    x,y,z,no : integer;
    v : TVoxelUnpacked;
@@ -178,7 +178,7 @@ begin
    FrmMain.SetVoxelChanged(true);
 end;
 
-Procedure LoadVXLRestorePoint(Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(var Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
 var
    i : integer;
    v : TVoxelUnpacked;

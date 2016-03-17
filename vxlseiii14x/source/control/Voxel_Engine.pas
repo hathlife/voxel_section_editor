@@ -78,22 +78,23 @@ Function ApplyCubedNormalsToVXL(var VXL : TVoxelSection) : integer;
 Function ApplyInfluenceNormalsToVXL(var VXL : TVoxelSection) : integer;
 Function RemoveRedundantVoxelsFromVXL(var VXL : TVoxelSection) : integer;
 procedure UpdateHistoryMenu;
-procedure VXLBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
-procedure VXLBrushToolDarkenLighten(VXL : TVoxelSection; Xc,Yc,Zc: Integer; BrushMode: Integer; BrushView: EVoxelViewOrient; Darken : Boolean);
+procedure VXLBrushTool(const VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+procedure VXLBrushToolDarkenLighten(const VXL : TVoxelSection; Xc,Yc,Zc: Integer; BrushMode: Integer; BrushView: EVoxelViewOrient; Darken : Boolean);
 procedure ClearVXLLayer(var Vxl : TVoxelSection);
 Function ApplyTempView(var vxl :TVoxelSection): Boolean;
-Procedure VXLCopyToClipboard(Vxl : TVoxelSection);
-Procedure VXLCutToClipboard(Vxl : TVoxelSection);
-procedure VXLFloodFillTool(Vxl : TVoxelSection; Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
-procedure velFloodFill3D(VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
-procedure velFloodFillClear3D(VelSect: TVoxelSection; X, Y, Z: Byte);
-function velRemoveRedundantVoxels(VelSect: TVoxelSection): Cardinal;Procedure RemoveDoublesFromTempView;
+Procedure VXLCopyToClipboard(const Vxl : TVoxelSection);
+Procedure VXLCutToClipboard(var Vxl : TVoxelSection);
+procedure VXLFloodFillTool(const Vxl : TVoxelSection; Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
+procedure velFloodFill3D(var VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
+procedure velFloodFillClear3D(var VelSect: TVoxelSection; X, Y, Z: Byte);
+function velRemoveRedundantVoxels(var VelSect: TVoxelSection): Cardinal;
+Procedure RemoveDoublesFromTempView;
 Procedure PasteFullVXL(var Vxl : TVoxelsection);
 Procedure PasteVXL(var Vxl : TVoxelsection);
 procedure PaintView2(WndIndex: Integer; isMouseLeftDown : boolean; var Cnv: PPaintBox; var View: TVoxelView);
 Procedure SmoothVXLNormals(var Vxl : TVoxelSection);
 
-procedure VXLSmoothBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+procedure VXLSmoothBrushTool(var VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
 
 Procedure SetVoxelFileDefaults;
 Function IsVoxelValid : Boolean;
@@ -1590,7 +1591,7 @@ begin
    end;
 end;
 
-procedure VXLBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+procedure VXLBrushTool(const VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
 var
    Shape: Array[-5..5,-5..5] of 0..1;
    i,j,r1,r2,x,y: Integer;
@@ -1722,7 +1723,7 @@ begin
    result := VUP;
 end;
 
-procedure VXLBrushToolDarkenLighten(VXL : TVoxelSection; Xc,Yc,Zc: Integer; BrushMode: Integer; BrushView: EVoxelViewOrient; Darken : Boolean);
+procedure VXLBrushToolDarkenLighten(const VXL : TVoxelSection; Xc,Yc,Zc: Integer; BrushMode: Integer; BrushView: EVoxelViewOrient; Darken : Boolean);
 var
    Shape: Array[-5..5,-5..5] of 0..1;
    i,j,r1,r2: Integer;
@@ -1851,17 +1852,17 @@ begin
       Result := CreateRestorePoint(TempView,Undo);
 
       for i := 1 to TempView.Data_no do
-      if TempView.Data[i].VU then // If VU = true apply to VXL
-      begin
-         vxl.GetVoxel(TempView.Data[i].VC.X,TempView.Data[i].VC.Y,TempView.Data[i].VC.Z,v);
-         if (SpectrumMode = ModeColours) or (v.Used=False) then
-            v.Colour := TempView.Data[i].V.Colour;
-         if (SpectrumMode = ModeNormals) or (v.Used=False) then
-            v.Normal := TempView.Data[i].V.Normal;
-         v.Used := TempView.Data[i].V.Used;
+         if TempView.Data[i].VU then // If VU = true apply to VXL
+         begin
+            vxl.GetVoxel(TempView.Data[i].VC.X,TempView.Data[i].VC.Y,TempView.Data[i].VC.Z,v);
+            if (SpectrumMode = ModeColours) or (v.Used=False) then
+               v.Colour := TempView.Data[i].V.Colour;
+            if (SpectrumMode = ModeNormals) or (v.Used=False) then
+               v.Normal := TempView.Data[i].V.Normal;
+            v.Used := TempView.Data[i].V.Used;
 
-         vxl.SetVoxel(TempView.Data[i].VC.X,TempView.Data[i].VC.Y,TempView.Data[i].VC.Z,v);
-      end;
+            vxl.SetVoxel(TempView.Data[i].VC.X,TempView.Data[i].VC.Y,TempView.Data[i].VC.Z,v);
+         end;
 
       TempView.Data_no := 0;
       SetLength(TempView.Data,0);
@@ -1958,7 +1959,7 @@ begin
    ApplyTempView(Vxl);
 end;
 
-Procedure VXLCopyToClipboard(Vxl : TVoxelSection);
+Procedure VXLCopyToClipboard(const Vxl : TVoxelSection);
 var
    x,y,z : integer;
    v : tvoxelunpacked;
@@ -2070,7 +2071,7 @@ begin
    image.Free;
 end;
 
-Procedure VXLCutToClipboard(Vxl : TVoxelSection);
+Procedure VXLCutToClipboard(var Vxl : TVoxelSection);
 begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: VXLCutToClipboard');
@@ -2387,7 +2388,7 @@ begin
 
 end;
 
-procedure VXLFloodFillTool(Vxl : TVoxelSection; Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
+procedure VXLFloodFillTool(const Vxl : TVoxelSection; Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
 type
   FloodSet = (Left,Right,Up,Down);
   Flood3DPoint = record
@@ -2576,7 +2577,7 @@ begin
    MessageBox(0,pchar('Smooth Normals v1.0' + #13#13 + 'Total: ' + inttostr(Res.applied + Res.confused) + #13 +'Applyed: ' + inttostr(Res.applied) + #13 + 'Confused: ' +inttostr(Res.confused) {+ #13+ 'Redundent: ' +inttostr(Res.redundant)}),'Smooth Normals Result',0);
 end;
 
-procedure VXLSmoothBrushTool(VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+procedure VXLSmoothBrushTool(var VXL : TVoxelSection; Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
 var
    Shape: Array[-5..5,-5..5] of 0..1;
    i,j,r1,r2,x,y: Integer;
@@ -2692,7 +2693,7 @@ begin
 end;
 
 (***** COLORS ONLY *****)
-procedure velFloodFill3D(VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
+procedure velFloodFill3D(var VelSect: TVoxelSection; X, Y, Z: Byte; DesiredColor: Byte);
 type
    V3Byte = record
       X, Y, Z: Byte;
@@ -2777,7 +2778,7 @@ begin
    SetLength(Q, 0);
 end;
 
-procedure velFloodFillClear3D(VelSect: TVoxelSection; X, Y, Z: Byte);
+procedure velFloodFillClear3D(var VelSect: TVoxelSection; X, Y, Z: Byte);
 type
    V3Byte = record
       X, Y, Z: Byte;
@@ -2844,7 +2845,7 @@ begin
    SetLength(Q, 0);
 end;
 
-function velRemoveRedundantVoxels(VelSect: TVoxelSection): Cardinal;
+function velRemoveRedundantVoxels(var VelSect: TVoxelSection): Cardinal;
 var
    i, j, k: Byte;
    code: Byte;
