@@ -67,7 +67,7 @@ const
 
 
 // Função principal
-function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
+function AcharNormais(var Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 
 // Funções de mapeamento
 procedure ConverteInfluenciasEmPesos(var Mapa : TVoxelMap);
@@ -98,7 +98,7 @@ implementation
 
 // 1.37: Novo Auto-Normalizador baseado em planos tangentes
 // Essa é a função principal da normalização.
-function AcharNormais(Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
+function AcharNormais(var Voxel : TVoxelSection; Alcance : single; TratarDescontinuidades : boolean) : TApplyNormalsResult;
 var
    MapaDoVoxel : TVoxelMap;
    x, y: integer;
