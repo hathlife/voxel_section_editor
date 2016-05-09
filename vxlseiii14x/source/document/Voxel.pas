@@ -46,10 +46,10 @@ type
    private
       // for storing / accessing the stored data
       procedure InitViews;
-      procedure SetDataSize(XSize,YSize,ZSize: Integer);
+      procedure SetDataSize(_XSize, _YSize, _ZSize: Integer);
       procedure DefaultTransforms;
-      function PackVoxel(Unpacked: TVoxelUnpacked): TVoxelPacked;
-      procedure UnpackVoxel(PackedVoxel: TVoxelPacked; var dest: TVoxelUnpacked);
+      function PackVoxel(_Unpacked: TVoxelUnpacked): TVoxelPacked;
+      procedure UnpackVoxel(_PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
    public
       spectrum: ESpectrumMode;
       Data: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
@@ -64,37 +64,37 @@ type
       Thumb: array[0..2] of TThumbnail;
       ThumbVisible: array[0..2] of Boolean; // does not rotate with viewport changes
       constructor Create(); overload;
-      constructor Create(Name: string; Number, XSize,YSize,ZSize: Integer); overload;
+      constructor Create(const _Name: string; _Number, _XSize,_YSize,_ZSize: Integer); overload;
       constructor Create(const _VoxelSection : TVoxelSection); overload;
       destructor Destroy; override;
-      procedure Resize(XSize,YSize,ZSize: Integer);
+      procedure Resize(_XSize,_YSize,_ZSize: Integer);
       function ResizeUpdateBounds(var _MinPosition, _MaxPosition: TVector3f): boolean;
       procedure Crop;
-      procedure ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
+      procedure ReCreate(const _Name: string; _Number, _XSize,_YSize,_ZSize: Integer);
 	//Plasmadroid v1.4+ drawing tools
       //View-fix, combined with RectangleFill (for shorter code, less bugs :)
-      procedure Rectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; v: TVoxelUnpacked; Fill: Boolean);
+      procedure Rectangle(_Xpos,_Ypos,_Zpos,_Xpos2,_Ypos2,_Zpos2:Integer; _v: TVoxelUnpacked; _Fill: Boolean);
       //Replaced: it now uses the Rectangle code
 //        procedure RectangleFill(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; v: TVoxelUnpacked);
       //Fixed BrushTool
-      procedure BrushTool(Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+      procedure BrushTool(_Xc,_Yc,_Zc: Integer; _V: TVoxelUnpacked; _BrushMode: Integer; _BrushView: EVoxelViewOrient);
       //TODO: FIX
-      procedure FloodFillTool(Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
+      procedure FloodFillTool(_Xpos,_Ypos,_Zpos: Integer; _v: TVoxelUnpacked; _EditView: EVoxelViewOrient);
       //blow-up tool for content resizing
-      procedure ResizeBlowUp(Scale: Integer);
-      procedure setSpectrum(newspectrum: ESpectrumMode);
+      procedure ResizeBlowUp(_Scale: Integer);
+      procedure setSpectrum(_newspectrum: ESpectrumMode);
       // viewport cursor
-      procedure SetX(newX: Integer);
-      procedure SetY(newY: Integer);
-      procedure SetZ(newZ: Integer);
+      procedure SetX(_newX: Integer);
+      procedure SetY(_newY: Integer);
+      procedure SetZ(_newZ: Integer);
       procedure Clear; // blanks the entire voxel model
-      procedure SetVoxel(x,y,z: Integer; src: TVoxelUnpacked);
-      procedure GetVoxel(x,y,z: Integer; var dest: TVoxelUnpacked);
-      function GetVoxelSafe(x,y,z: Integer; var dest: TVoxelUnpacked): Boolean;
+      procedure SetVoxel(_x,_y,_z: Integer; const _src: TVoxelUnpacked);
+      procedure GetVoxel(_x,_y,_z: Integer; var _dest: TVoxelUnpacked);
+      function GetVoxelSafe(_x,_y,_z: Integer; var _dest: TVoxelUnpacked): Boolean;
       // loading and saving
-      function LoadFromFile(var F: File; HeadOfs, BodyOfs, TailOfs : Integer): EError;
+      function LoadFromFile(var _F: File; _HeadOfs, _BodyOfs, _TailOfs : Integer): EError;
 //    function SaveToFileHeader(var F: File): EError;
-      function SaveToFileBody(var F: File): EError;
+      function SaveToFileBody(var _F: File): EError;
  //   function SaveToFileTailer(var F: File): EError;
       procedure OpenGLToWestwoodCoordinates;
       procedure WestwoodToOpenGLCoordinates;
@@ -102,16 +102,16 @@ type
       // utility methods
       function Name: string;
       // new by Koen
-      procedure SetHeaderName(Name: String);
+      procedure SetHeaderName(const _Name: String);
 
       //New undo system by Koen - SaveUndoDump - saves data to an undo stream
-      procedure SaveUndoDump(fs: TStream);
+      procedure SaveUndoDump(var _fs: TStream);
       //loads data of this voxel section from a stream
-      procedure LoadUndoDump(fs: TStream);
+      procedure LoadUndoDump(var _fs: TStream);
 
       //a directional and a positional vector (x,y,z)=PosVector+t*DirectionVector
-      procedure FlipMatrix(VectorDir, VectorPos: Array of Single; Multiply: Boolean=True);
-      procedure Mirror(MirrorView: EVoxelViewOrient);
+      procedure FlipMatrix(const _VectorDir, _VectorPos: Array of Single; _Multiply: Boolean=True);
+      procedure Mirror(_MirrorView: EVoxelViewOrient);
       procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _ResizeModel: Boolean = false);  overload;
       procedure ApplyMatrix(const _Matrix: TGLMatrixf4; _Pivot: TVector3f; _ResizeModel: Boolean = false);  overload;
 
@@ -131,12 +131,12 @@ type
       constructor Create; overload;
       constructor Create(const _Voxel: TVoxel); overload;
       destructor Destroy; override;
-      procedure LoadFromFile(Fname: string); // examine ErrorCode for success
-      procedure SaveToFile(Fname: string); // examine ErrorCode for success
+      procedure LoadFromFile(const _Fname: string); // examine ErrorCode for success
+      procedure SaveToFile(const _Fname: string); // examine ErrorCode for success
       function isOpen: Boolean;
-      procedure setSpectrum(newspectrum: ESpectrumMode);
-      procedure InsertSection(SectionIndex: Integer; Name: String; XSize,YSize,ZSize: Integer);
-      procedure RemoveSection(SectionIndex: Integer);
+      procedure setSpectrum(_newspectrum: ESpectrumMode);
+      procedure InsertSection(_SectionIndex: Integer; const _Name: String; _XSize,_YSize,_ZSize: Integer);
+      procedure RemoveSection(_SectionIndex: Integer);
       procedure Assign(const _Voxel: TVoxel);
    end;
    PVoxel = ^TVoxel;
@@ -159,14 +159,14 @@ type
       Width, Height: Integer;
       Canvas: {packed} array of {packed} array of TVoxelViewCell;
       Voxel: TVoxelSection; // owner
-      constructor Create(Owner: TVoxelSection; o: EVoxelViewOrient; d: EVoxelViewDir);
+      constructor Create(const _Owner: TVoxelSection; _o: EVoxelViewOrient; _d: EVoxelViewDir);
       destructor Destroy; override;
       function getViewNameIdx: Integer;
       function getDir: EVoxelViewDir;
       function getOrient: EVoxelViewOrient;
-      procedure TranslateClick(i, j: Integer; var X, Y, Z: Integer);
-      procedure getPhysicalCursorCoords(var X, Y: integer);
-      procedure setDir(newdir: EVoxelViewDir);
+      procedure TranslateClick(_i, _j: Integer; var _X, _Y, _Z: Integer);
+      procedure getPhysicalCursorCoords(var _X, _Y: integer);
+      procedure setDir(_newdir: EVoxelViewDir);
       procedure Refresh; // like a paint on the canvas
       procedure Assign(const _VoxelView : TVoxelView);
    end;
@@ -175,22 +175,22 @@ type
       VoxelType: TVoxelType;
 
 
-   function AsciizToStr(var src: array of Char; maxlen: Byte): string;
+   function AsciizToStr(var _src: array of Char; _maxlen: Byte): string;
 
 implementation
 
 uses
    SysUtils, Math, Dialogs, CholeskySolver;
 
-function AsciizToStr(var src: array of Char; maxlen: Byte): string;
+function AsciizToStr(var _src: array of Char; _maxlen: Byte): string;
 var
    ch: Char;
    i: Integer;
 begin
-   SetLength(Result,maxlen);
-   for i := 1 to maxlen do
+   SetLength(Result,_maxlen);
+   for i := 1 to _maxlen do
    begin
-      ch := src[i-1];
+      ch := _src[i-1];
       if Ord(ch) = 0 then
       begin
          SetLength(Result,i-1);
@@ -200,10 +200,10 @@ begin
    end;
 end;
 
-procedure DebugMsg(Msg: string; Typ: TMsgDlgType);
+procedure DebugMsg(const _Msg: string; _Typ: TMsgDlgType);
 begin
    // in this version, just show a messsage box for the user
-   if (MessageDlg('Debug:' + Chr(10) + Msg,Typ,[mbOK,mbCancel],0) > 0) then
+   if (MessageDlg('Debug:' + Chr(10) + _Msg,_Typ,[mbOK,mbCancel],0) > 0) then
       Halt;
 end;
 
@@ -242,14 +242,14 @@ begin
    end;
 end;
 
-procedure TVoxelSection.Resize(XSize,YSize,ZSize: Integer);
+procedure TVoxelSection.Resize(_XSize,_YSize,_ZSize: Integer);
 begin
    // memory alloc
-   SetDataSize(XSize,YSize,ZSize); // will preserve contents where possible I believe
+   SetDataSize(_XSize, _YSize, _ZSize); // will preserve contents where possible I believe
    // set tailer
-   Tailer.XSize := XSize;
-   Tailer.YSize := YSize;
-   Tailer.ZSize := ZSize;
+   Tailer.XSize := _XSize;
+   Tailer.YSize := _YSize;
+   Tailer.ZSize := _ZSize;
    DefaultTransforms;
    // and (re)create views
    InitViews;
@@ -316,26 +316,27 @@ begin
    Result[3,3] := 1;
 end;
 
-procedure TVoxelSection.SetHeaderName(Name: String);
+procedure TVoxelSection.SetHeaderName(const _Name: String);
 const
    MAX_LEN = 15;
 var
    i: integer;
 begin
    for i:=1 to 16 do
-      Header.Name[i]:=#0;
-   for i := 1 to Length(Name) do
+      Header.Name[i] := #0;
+   for i := 1 to Length(_Name) do
    begin
-      if i > MAX_LEN then break;
-      Header.Name[i] := Name[i];
+      if i > MAX_LEN then
+         break;
+      Header.Name[i] := _Name[i];
    end;
 end;
 
-constructor TVoxelSection.Create(Name: string; Number, XSize,YSize,ZSize: Integer);
+constructor TVoxelSection.Create(const _Name: string; _Number, _XSize,_YSize,_ZSize: Integer);
 begin
    // create header
-   SetHeaderName(Name);
-   Header.Number := Number;
+   SetHeaderName(_Name);
+   Header.Number := _Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
    Tailer.NormalsType := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
@@ -344,7 +345,7 @@ begin
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
 
    // allocate the memory
-   Resize(XSize,YSize,ZSize);
+   Resize(_XSize,_YSize,_ZSize);
    // clear it
    Clear;
 end;
@@ -422,11 +423,11 @@ begin
    Assign(_VoxelSection);
 end;
 
-procedure TVoxelSection.ReCreate(Name: string; Number, XSize,YSize,ZSize: Integer);
+procedure TVoxelSection.ReCreate(const _Name: string; _Number, _XSize,_YSize,_ZSize: Integer);
 begin
    // create header
-   SetHeaderName(Name);
-   Header.Number := Number;
+   SetHeaderName(_Name);
+   Header.Number := _Number;
    Header.Unknown1 := 1; // TODO: review if this is correct in all cases etc
    Header.Unknown2 := 2; // TODO: review if this is correct in all cases etc
    Tailer.NormalsType := 2; // or 4 in RA2?  TODO: review if this is correct in all cases etc
@@ -435,7 +436,7 @@ begin
    Tailer.Det:=1/12; //oops, forgot to set Det part correctly
 
    // allocate the memory
-   Resize(XSize,YSize,ZSize);
+   Resize(_XSize, _YSize, _ZSize);
    // clear it
    Clear;
 end;
@@ -454,38 +455,38 @@ begin
    Result := AsciizToStr(Header.Name,16);
 end;
 
-procedure TVoxelSection.SetX(newX: Integer);
+procedure TVoxelSection.SetX(_newX: Integer);
 begin
-   X := Max(Min(newX,Tailer.XSize-1),0);
+   X := Max(Min(_newX,Tailer.XSize-1),0);
 end;
 
-procedure TVoxelSection.SetY(newY: Integer);
+procedure TVoxelSection.SetY(_newY: Integer);
 begin
-   Y := Max(Min(newY,Tailer.YSize-1),0);
+   Y := Max(Min(_newY,Tailer.YSize-1),0);
 end;
 
-procedure TVoxelSection.SetZ(newZ: Integer);
+procedure TVoxelSection.SetZ(_newZ: Integer);
 begin
-   Z := Max(Min(newZ,Tailer.ZSize-1),0);
+   Z := Max(Min(_newZ,Tailer.ZSize-1),0);
 end;
 
-function TVoxelSection.PackVoxel(Unpacked: TVoxelUnpacked): TVoxelPacked;
+function TVoxelSection.PackVoxel(_Unpacked: TVoxelUnpacked): TVoxelPacked;
 begin
-   Result := Unpacked.Flags shl 16;
-   if Unpacked.Used then
-      Result := Result or $100 or Unpacked.Colour
+   Result := _Unpacked.Flags shl 16;
+   if _Unpacked.Used then
+      Result := Result or $100 or _Unpacked.Colour
    else
-      Result := Result or Unpacked.Colour;
+      Result := Result or _Unpacked.Colour;
    Result := Result shl 8;
-   Result := Result or Unpacked.Normal;
+   Result := Result or _Unpacked.Normal;
 end;
 
-procedure TVoxelSection.UnpackVoxel(PackedVoxel: TVoxelPacked; var dest: TVoxelUnpacked);
+procedure TVoxelSection.UnpackVoxel(_PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
 begin
-   dest.Normal := (PackedVoxel and $000000FF);
-   dest.Colour := (PackedVoxel and $0000FF00) shr 8;
-   dest.Used :=   (PackedVoxel and $00010000) > 0;
-   dest.Flags :=  (PackedVoxel and $FF000000) shr 24;
+   _Dest.Normal := (_PackedVoxel and $000000FF);
+   _Dest.Colour := (_PackedVoxel and $0000FF00) shr 8;
+   _Dest.Used :=   (_PackedVoxel and $00010000) > 0;
+   _Dest.Flags :=  (_PackedVoxel and $FF000000) shr 24;
 end;
 
 procedure TVoxelSection.Clear; // blanks the entire voxel model
@@ -510,14 +511,14 @@ begin
             Data[x,y,z] := PackedVoxel;
 end;
 
-procedure TVoxelSection.SetDataSize(XSize,YSize,ZSize: Integer);
+procedure TVoxelSection.SetDataSize(_XSize, _YSize, _ZSize: Integer);
 var
    x, y: Integer;
 begin
    // 1.71: Let's clear the memory from the stuff after XSize.
-   if (High(Data) >= XSize) then
+   if (High(Data) >= _XSize) then
    begin
-      for x := XSize to High(Data) do
+      for x := _XSize to High(Data) do
       begin
          for y := 0 to High(Data[x]) do
          begin
@@ -527,42 +528,42 @@ begin
       end;
    end;
    // Old code continues here.
-   SetLength(Data,XSize);
-   for x := 0 to (XSize - 1) do
+   SetLength(Data,_XSize);
+   for x := 0 to (_XSize - 1) do
    begin
       // 1.71: Let's clear the memory stuff after YSize
-      if (High(Data[x]) >= YSize) then
+      if (High(Data[x]) >= _YSize) then
       begin
-         for y := YSize to High(Data[x]) do
+         for y := _YSize to High(Data[x]) do
          begin
             SetLength(Data[x,y],0);
          end;
       end;
       // Old code continues here.
-      SetLength(Data[x],YSize);
-      for y := 0 to (YSize - 1) do
-         SetLength(Data[x,y],ZSize);
+      SetLength(Data[x],_YSize);
+      for y := 0 to (_YSize - 1) do
+         SetLength(Data[x,y],_ZSize);
    end;
 end;
 
 //This catches the crashes!
 {$RANGECHECKS ON}
-procedure TVoxelSection.SetVoxel(x,y,z: Integer; src: TVoxelUnpacked);
+procedure TVoxelSection.SetVoxel(_x,_y,_z: Integer; const _Src: TVoxelUnpacked);
 begin
-   Data[x,y,z] := PackVoxel(src);
+   Data[_x,_y,_z] := PackVoxel(_Src);
 end;
 
-procedure TVoxelSection.GetVoxel(x,y,z: Integer; var dest: TVoxelUnpacked);
+procedure TVoxelSection.GetVoxel(_x,_y,_z: Integer; var _Dest: TVoxelUnpacked);
 begin
-   UnpackVoxel(Data[x,y,z],dest);
+   UnpackVoxel(Data[_x,_y,_z],_Dest);
 end;
 
-function TVoxelSection.GetVoxelSafe(x,y,z: Integer; var dest: TVoxelUnpacked): Boolean;
+function TVoxelSection.GetVoxelSafe(_x,_y,_z: Integer; var _Dest: TVoxelUnpacked): Boolean;
 begin
    Result := False;
-   if (x >= 0) and (x < Tailer.XSize) and (y >= 0) and (y < Tailer.YSize) and (z >= 0) and (z < Tailer.ZSize) then
+   if (_x >= 0) and (_x < Tailer.XSize) and (_y >= 0) and (_y < Tailer.YSize) and (_z >= 0) and (_z < Tailer.ZSize) then
    begin
-      UnpackVoxel(Data[x,y,z],dest);
+      UnpackVoxel(Data[_x,_y,_z],_Dest);
       Result := true;
    end;
 end;
@@ -570,7 +571,7 @@ end;
 {$OPTIMIZATION OFF}
 {$RANGECHECKS ON}
 
-function TVoxelSection.LoadFromFile(var F: File; HeadOfs, BodyOfs, TailOfs : Integer): EError;
+function TVoxelSection.LoadFromFile(var _F: File; _HeadOfs, _BodyOfs, _TailOfs : Integer): EError;
 var
    BytesToRead,
    BytesRead,
@@ -581,22 +582,24 @@ var
    UnpackedVoxel: TVoxelUnpacked;
    SpanStart, SpanEnd: packed array of LongInt;
    SpanData: packed array of Byte; // the raw data
-   procedure CleanUp(Err: Boolean);
+
+   procedure CleanUp(_Err: Boolean);
    begin
       SetLength(SpanData,0);
       SetLength(SpanEnd,0);
       SetLength(SpanStart,0);
-      if Err then
+      if _Err then
          SetDataSize(0,0,0);
    end;
+
 begin
    MaxNormal := 0;
    try
       Result := OK; // assume ok
 // read in tailer first
-      Seek(F,TailOfs); // move to tail offset
+      Seek(_F,_TailOfs); // move to tail offset
       BytesToRead := SizeOf(TVoxelSectionTailer);
-      BlockRead(F,Tailer,BytesToRead,BytesRead);
+      BlockRead(_F,Tailer,BytesToRead,BytesRead);
       if (BytesToRead <> BytesRead) then
       begin
          Result := ReadFailed;
@@ -606,9 +609,9 @@ begin
       {with Tailer do
           DebugMsg('Size = [' + IntToStr(XSize) + ',' + IntToStr(YSize) + ',' + IntToStr(ZSize) + ']',mtInformation);}
 // read in head next
-      Seek(F,HeadOfs);
+      Seek(_F,_HeadOfs);
       BytesToRead := SizeOf(TVoxelSectionHeader);
-      BlockRead(F,Header,BytesToRead,BytesRead);
+      BlockRead(_F,Header,BytesToRead,BytesRead);
       if (BytesToRead <> BytesRead) then
       begin
          Result := ReadFailed;
@@ -633,17 +636,17 @@ begin
       SetLength(SpanStart,SpanCount);
       SetLength(SpanEnd,SpanCount);
       // read in the span start offsets
-      Seek(F,BodyOfs + Tailer.SpanStartOfs);
+      Seek(_F,_BodyOfs + Tailer.SpanStartOfs);
       BytesToRead := SpanCount * SizeOf(LongInt);
-      BlockRead(F,SpanStart[0],BytesToRead,BytesRead);
+      BlockRead(_F,SpanStart[0],BytesToRead,BytesRead);
       if (BytesToRead <> BytesRead) then
       begin
          Result := ReadFailed;
          CleanUp(True);
          Exit;
       end;
-      Seek(F,BodyOfs + Tailer.SpanEndOfs);
-      BlockRead(F,SpanEnd[0],BytesToRead,BytesRead);
+      Seek(_F,_BodyOfs + Tailer.SpanEndOfs);
+      BlockRead(_F,SpanEnd[0],BytesToRead,BytesRead);
       if (BytesToRead <> BytesRead) then
       begin
          Result := ReadFailed;
@@ -669,7 +672,7 @@ begin
          Exit;
       end;
       SetLength(SpanData,SpanDataLen);
-      BlockRead(F,SpanData[0],SpanDataLen,BytesRead);
+      BlockRead(_F,SpanData[0],SpanDataLen,BytesRead);
       if (SpanDataLen <> BytesRead) then
       begin
          Result := ReadFailed;
@@ -752,34 +755,34 @@ begin
    CleanUp(False);
 end;
 
-function TVoxelSection.SaveToFileBody(var F: File): EError;
+function TVoxelSection.SaveToFileBody(var _F: File): EError;
 const
    MaskUsed: TVoxelPacked = $00010000;
 
-   function SpanUsed(x, y: integer): boolean;
+   function SpanUsed(_x, _y: integer): boolean;
    var
       z: integer;
    begin
       Result := True; // assume it is
       for z := 0 to (Tailer.ZSize - 1) do
-         if (Data[x,y,z] and MaskUsed) > 0 then // used flag set?
+         if (Data[_x,_y,z] and MaskUsed) > 0 then // used flag set?
             Exit;
       Result := False; // if here, span wasn't used after all
    end;
 
-   function SpanLength(x,y,z: integer): integer;
+   function SpanLength(_x,_y,_z: integer): integer;
    var
       v: TVoxelPacked;
    begin
       Result := 0;
-      while z < Tailer.ZSize do
+      while _z < Tailer.ZSize do
       begin
-         v := Data[x,y,z];
+         v := Data[_x,_y,_z];
          if (v and MaskUsed) > 0 then
             Inc(Result)
          else
             Exit;
-         Inc(z);
+         Inc(_z);
       end;
    end;
 var
@@ -790,7 +793,7 @@ var
    skip, spanlen, colour, normal: byte;
 begin
    // work out offsets
-   FBody := FilePos(F);
+   FBody := FilePos(_F);
    SpanSize := Tailer.XSize * Tailer.YSize * SizeOf(LongInt);
    FSpanEnd := FBody - SpanSize;
    FSpanStart := FSpanEnd - SpanSize;
@@ -808,7 +811,7 @@ begin
          end
          else
          begin
-            SpanStart := FilePos(F) - Tailer.SpanDataOfs;
+            SpanStart := FilePos(_F) - Tailer.SpanDataOfs;
             skip := 0;
             z := 0;
             while z < (Tailer.ZSize) do
@@ -816,17 +819,17 @@ begin
                spanlen := SpanLength(x,y,z);
                if (spanlen > 0) then
                begin
-                  BlockWrite(F,skip,1); // write skip
-                  BlockWrite(F,spanlen,1); // write span length again
+                  BlockWrite(_F,skip,1); // write skip
+                  BlockWrite(_F,spanlen,1); // write span length again
                   for s := 1 to spanlen do
                   begin
                      v := Data[x,y,z + s - 1]; // get voxel
                      colour := (v and $0000FF00) shr 8;
                      normal := (v and $000000FF);
-                     BlockWrite(F,colour,1);
-                     BlockWrite(F,normal,1);
+                     BlockWrite(_F,colour,1);
+                     BlockWrite(_F,normal,1);
                   end;
-                  BlockWrite(F,spanlen,1); // write span length again
+                  BlockWrite(_F,spanlen,1); // write span length again
                   Inc(z,spanlen);
                   skip := 0;
                end
@@ -838,22 +841,22 @@ begin
             end;
             if skip > 0 then
             begin // write a dummy?
-               BlockWrite(F,skip,1);
+               BlockWrite(_F,skip,1);
                spanlen := 0;
-               BlockWrite(F,spanlen,1);
-               BlockWrite(F,spanlen,1);
+               BlockWrite(_F,spanlen,1);
+               BlockWrite(_F,spanlen,1);
             end;
-            SpanEnd := FilePos(F) - Tailer.SpanDataOfs - 1;
+            SpanEnd := FilePos(_F) - Tailer.SpanDataOfs - 1;
          end;
          // write span data
-         FBody := FilePos(F);
-         Seek(F,FSpanStart);
-         BlockWrite(F,SpanStart,SizeOf(SpanStart));
+         FBody := FilePos(_F);
+         Seek(_F,FSpanStart);
+         BlockWrite(_F,SpanStart,SizeOf(SpanStart));
          Inc(FSpanStart,SizeOf(SpanStart));
-         Seek(F,FSpanEnd);
-         BlockWrite(F,SpanEnd,SizeOf(SpanEnd));
+         Seek(_F,FSpanEnd);
+         BlockWrite(_F,SpanEnd,SizeOf(SpanEnd));
          Inc(FSpanEnd,SizeOf(SpanEnd));
-         Seek(F,FBody); //return to span data
+         Seek(_F,FBody); //return to span data
       end;
    Result := OK;
 end;
@@ -991,7 +994,7 @@ begin
    inherited Destroy;
 end;
 
-procedure TVoxel.LoadFromFile(FName: string);
+procedure TVoxel.LoadFromFile(const _FName: string);
 var
    F: File;
    BytesToRead,
@@ -1005,7 +1008,7 @@ begin
    ErrorCode := OK;
    Loaded := False;
    try  // if file doesn't exist...
-      Filename := FName;
+      Filename := _FName;
       // open voxel file to read
       AssignFile(F,Filename);
       FileMode := fmOpenRead; // read only
@@ -1050,7 +1053,7 @@ begin
    end;
 end;
 
-procedure TVoxel.SaveToFile(Fname: string);
+procedure TVoxel.SaveToFile(const _Fname: string);
 { First, we create the file.  We write blanks to represent the
   header. We then write the section headers.  We then encode the
   section bodies.  We then return to the section headers and
@@ -1062,14 +1065,14 @@ var
    BytesToWrite,
    BytesWritten: integer;
 
-   function WriteBlank(count: integer): EError;
+   function WriteBlank(_count: integer): EError;
    var
       i: integer;
       ch: byte;
    begin
       ch := 0;
       BytesToWrite := 1;
-      for i := 1 to count do
+      for i := 1 to _count do
       begin
          BlockWrite(F,ch,BytesToWrite,BytesWritten);
          if (BytesWritten <> BytesToWrite) then
@@ -1087,7 +1090,7 @@ begin
    //-- when we save an empty voxel - this voxel will be unsupported - we must change this [Kamil ^aka Plasmadroid]
    ErrorCode := OK;
    try
-      Filename := Fname;
+      Filename := copy(_FName, 1, Length(_FName));
       // create voxel file to write
       AssignFile(F,Filename);
       FileMode := fmOpenWrite; // we save file, so write mode [VK]
@@ -1260,11 +1263,11 @@ begin
          end;
 end;
 
-constructor TVoxelView.Create(Owner: TVoxelSection; o: EVoxelViewOrient; d: EVoxelViewDir);
+constructor TVoxelView.Create(const _Owner: TVoxelSection; _o: EVoxelViewOrient; _d: EVoxelViewDir);
 begin
-   Voxel := Owner;
-   Orient := o;
-   Dir := d;
+   Voxel := _Owner;
+   Orient := _o;
+   Dir := _d;
    CreateCanvas;
    CalcSwapXYZ;
    Refresh;
@@ -1623,44 +1626,44 @@ begin
    end;
 end;
 
-procedure TVoxelView.TranslateClick(i, j: Integer; var X, Y, Z: Integer);
+procedure TVoxelView.TranslateClick(_i, _j: Integer; var _X, _Y, _Z: Integer);
 
    procedure TranslateX;
    begin
-      X := Foreground;
+      _X := Foreground;
       if SwapZ then
-         Z := Width - 1 - i
+         _Z := Width - 1 - _i
       else
-         Z := i;
+         _Z := _i;
       if SwapY then
-         Y := Height - 1 - j
+         _Y := Height - 1 - _j
       else
-         Y := j;
+         _Y := _j;
    end;
    procedure TranslateY;
    begin
       if SwapZ then
-         Z := Width - 1 - i
+         _Z := Width - 1 - _i
       else
-         Z := i;
-      Y := Foreground;
+         _Z := _i;
+      _Y := Foreground;
       if SwapX then
-         X := Height - 1 - j
+         _X := Height - 1 - _j
       else
-         X := j;
+         _X := _j;
    end;
 
    procedure TranslateZ;
    begin
       if SwapX then
-         X := Width - 1 - i
+         _X := Width - 1 - _i
       else
-         X := i;
+         _X := _i;
       if SwapY then
-         Y := Height - 1 - j
+         _Y := Height - 1 - _j
       else
-         Y := j;
-      Z := Foreground;
+         _Y := _j;
+      _Z := Foreground;
   end;
 
 begin
@@ -1671,39 +1674,39 @@ begin
    end;
 end;
 
-procedure TVoxelView.getPhysicalCursorCoords(var X, Y: integer);
+procedure TVoxelView.getPhysicalCursorCoords(var _X, _Y: integer);
    procedure TranslateX;
    begin
       if SwapZ then
-         X := Width - 1 - Voxel.Z
+         _X := Width - 1 - Voxel.Z
       else
-         X := Voxel.Z;
+         _X := Voxel.Z;
       if SwapY then
-         Y := Height - 1 - Voxel.Y
+         _Y := Height - 1 - Voxel.Y
       else
-         Y := Voxel.Y;
+         _Y := Voxel.Y;
    end;
    procedure TranslateY;
    begin
       if SwapZ then
-         X := Width - 1 - Voxel.Z
+         _X := Width - 1 - Voxel.Z
       else
-         X := Voxel.Z;
+         _X := Voxel.Z;
       if SwapX then
-         Y := Height - 1 - Voxel.X
+         _Y := Height - 1 - Voxel.X
       else
-         Y := Voxel.X;
+         _Y := Voxel.X;
    end;
    procedure TranslateZ;
    begin
       if SwapX then
-         X := Width - 1 - Voxel.X
+         _X := Width - 1 - Voxel.X
       else
-         X := Voxel.X;
+         _X := Voxel.X;
       if SwapY then
-         Y := Height - 1 - Voxel.Y
+         _Y := Height - 1 - Voxel.Y
       else
-         Y := Voxel.Y;
+         _Y := Voxel.Y;
    end;
 begin
    case Orient of
@@ -1713,9 +1716,9 @@ begin
    end;
 end;
 
-procedure TVoxelView.setDir(newdir: EVoxelViewDir);
+procedure TVoxelView.setDir(_newdir: EVoxelViewDir);
 begin
-   Dir := newdir;
+   Dir := _newdir;
    CalcSwapXYZ;
    Refresh;
 end;
@@ -1730,9 +1733,9 @@ begin
    Result := Orient;
 end;
 
-procedure TVoxelSection.setSpectrum(newspectrum: ESpectrumMode);
+procedure TVoxelSection.setSpectrum(_newspectrum: ESpectrumMode);
 begin
-   spectrum := newspectrum;
+   spectrum := _newspectrum;
 end;
 
 procedure TVoxelView.CalcSwapXYZ;
@@ -1779,7 +1782,7 @@ begin
    end;
 end;
 
-procedure TVoxelSection.Rectangle(Xpos,Ypos,Zpos,Xpos2,Ypos2,Zpos2:Integer; v: TVoxelUnpacked; Fill: Boolean);
+procedure TVoxelSection.Rectangle(_Xpos,_Ypos,_Zpos,_Xpos2,_Ypos2,_Zpos2:Integer; _v: TVoxelUnpacked; _Fill: Boolean);
 type
    EOrientRect = (oriUnDef, oriX, oriY, oriZ);
 var
@@ -1788,66 +1791,66 @@ var
    Inside,Exact: Integer;
 begin
    O:=oriUnDef; //the view direction isn't defined yet
-   if (Xpos=Xpos2) then O:=oriX;
-   if (Ypos=Ypos2) then O:=oriY;
-   if (Zpos=Zpos2) then O:=oriZ;
+   if (_Xpos=_Xpos2) then O:=oriX;
+   if (_Ypos=_Ypos2) then O:=oriY;
+   if (_Zpos=_Zpos2) then O:=oriZ;
    if (O=oriUnDef) then MessageDlg('Impossible to draw 3D rectangles!!!',mtError,[mbOK],0);
 {  //this isn't efficient...
   for i:=0 to Tailer.XSize do begin
     for j:=0 to Tailer.YSize do begin
       for k:=0 to Tailer.ZSize do begin}
   //this is better
-   for i:=Min(Xpos,Xpos2) to Max(Xpos,Xpos2) do
+   for i:=Min(_Xpos,_Xpos2) to Max(_Xpos,_Xpos2) do
    begin
-      for j:=Min(Ypos,Ypos2) to Max(Ypos,Ypos2) do
+      for j:=Min(_Ypos,_Ypos2) to Max(_Ypos,_Ypos2) do
       begin
-         for k:=Min(Zpos,Zpos2) to Max(Zpos,Zpos2) do
+         for k:=Min(_Zpos,_Zpos2) to Max(_Zpos,_Zpos2) do
          begin
             Inside:=0; Exact:=0;
             case O of
                oriX:
                begin
-                  if (i=Xpos) then
+                  if (i=_Xpos) then
                   begin //we're in the right slice
-                     if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then Inc(Inside);
-                     if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then Inc(Inside);
-                     if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then Inc(Exact);
-                     if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then Inc(Exact);
+                     if (j>Min(_Ypos,_Ypos2)) and (j<Max(_Ypos,_Ypos2)) then Inc(Inside);
+                     if (k>Min(_Zpos,_Zpos2)) and (k<Max(_Zpos,_Zpos2)) then Inc(Inside);
+                     if (j=Min(_Ypos,_Ypos2)) or (j=Max(_Ypos,_Ypos2)) then Inc(Exact);
+                     if (k=Min(_Zpos,_Zpos2)) or (k=Max(_Zpos,_Zpos2)) then Inc(Exact);
                   end;
                end;
                oriY:
                begin
-                  if (j=Ypos) then
+                  if (j=_Ypos) then
                   begin //we're in the right slice
-                     if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then Inc(Inside);
-                     if (k>Min(Zpos,Zpos2)) and (k<Max(Zpos,Zpos2)) then Inc(Inside);
-                     if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then Inc(Exact);
-                     if (k=Min(Zpos,Zpos2)) or (k=Max(Zpos,Zpos2)) then Inc(Exact);
+                     if (i>Min(_Xpos,_Xpos2)) and (i<Max(_Xpos,_Xpos2)) then Inc(Inside);
+                     if (k>Min(_Zpos,_Zpos2)) and (k<Max(_Zpos,_Zpos2)) then Inc(Inside);
+                     if (i=Min(_Xpos,_Xpos2)) or (i=Max(_Xpos,_Xpos2)) then Inc(Exact);
+                     if (k=Min(_Zpos,_Zpos2)) or (k=Max(_Zpos,_Zpos2)) then Inc(Exact);
                   end;
                end;
                oriZ:
                begin
-                  if (k=Zpos) then
+                  if (k=_Zpos) then
                   begin //we're in the right slice
-                     if (i>Min(Xpos,Xpos2)) and (i<Max(Xpos,Xpos2)) then Inc(Inside);
-                     if (j>Min(Ypos,Ypos2)) and (j<Max(Ypos,Ypos2)) then Inc(Inside);
-                     if (i=Min(Xpos,Xpos2)) or (i=Max(Xpos,Xpos2)) then Inc(Exact);
-                     if (j=Min(Ypos,Ypos2)) or (j=Max(Ypos,Ypos2)) then Inc(Exact);
+                     if (i>Min(_Xpos,_Xpos2)) and (i<Max(_Xpos,_Xpos2)) then Inc(Inside);
+                     if (j>Min(_Ypos,_Ypos2)) and (j<Max(_Ypos,_Ypos2)) then Inc(Inside);
+                     if (i=Min(_Xpos,_Xpos2)) or (i=Max(_Xpos,_Xpos2)) then Inc(Exact);
+                     if (j=Min(_Ypos,_Ypos2)) or (j=Max(_Ypos,_Ypos2)) then Inc(Exact);
                   end;
                end;
             end;
-            if Fill then
+            if _Fill then
             begin
                if Inside+Exact=2 then
                begin
-                  SetVoxel(i,j,k,v);
+                  SetVoxel(i,j,k,_v);
                end;
             end
             else
             begin
                if (Exact>=1) and (Inside+Exact=2) then
                begin
-                  SetVoxel(i,j,k,v);
+                  SetVoxel(i,j,k,_v);
                end;
             end;
          end;
@@ -1855,54 +1858,54 @@ begin
    end;
 end;
 
-procedure TVoxelSection.SaveUndoDump(fs: TStream);
+procedure TVoxelSection.SaveUndoDump(var _fs: TStream);
 var
    x,y,z: Integer;
 begin
-   fs.Write(Header,SizeOf(Header));
-   fs.Write(Tailer,SizeOf(Tailer));
+   _fs.Write(Header,SizeOf(Header));
+   _fs.Write(Tailer,SizeOf(Tailer));
    for x := 0 to (Tailer.XSize - 1) do
       for y := 0 to (Tailer.YSize - 1) do
          for z := 0 to (Tailer.ZSize - 1) do
-            fs.Write(Data[x,y,z],SizeOf(TVoxelPacked));
+            _fs.Write(Data[x,y,z],SizeOf(TVoxelPacked));
 end;
 
-procedure TVoxelSection.LoadUndoDump(fs: TStream);
+procedure TVoxelSection.LoadUndoDump(var _fs: TStream);
 var
    x,y,z: Integer;
 begin
-   fs.Read(Header,SizeOf(Header));
-   fs.Read(Tailer,SizeOf(Tailer));
+   _fs.Read(Header,SizeOf(Header));
+   _fs.Read(Tailer,SizeOf(Tailer));
    for x := 0 to (Tailer.XSize - 1) do
       for y := 0 to (Tailer.YSize - 1) do
          for z := 0 to (Tailer.ZSize - 1) do
-            fs.Read(Data[x,y,z],SizeOf(TVoxelPacked));
+            _fs.Read(Data[x,y,z],SizeOf(TVoxelPacked));
 end;
 
 // Insert a new section with SectionIndex :)
-procedure TVoxel.InsertSection(SectionIndex: Integer; Name: String; XSize, YSize, ZSize: Integer);
+procedure TVoxel.InsertSection(_SectionIndex: Integer; const _Name: String; _XSize, _YSize, _ZSize: Integer);
 var
    i: Integer;
 begin
    //SectionIndex contains the index of the *new* section to create...
    SetLength(Section,Header.NumSections+1);
    Section[High(Section)] := TVoxelSection.Create;
-   for i:=Header.NumSections-1 downto SectionIndex do
+   for i:=Header.NumSections-1 downto _SectionIndex do
    begin
       Section[i+1].Assign(Section[i]);
       Section[i+1].Header.Number:=i+1;
    end;
-   Section[SectionIndex].Clear;
-   Section[SectionIndex].ReCreate(Name,SectionIndex,XSize,YSize,ZSize);
+   Section[_SectionIndex].Clear;
+   Section[_SectionIndex].ReCreate(_Name,_SectionIndex,_XSize,_YSize,_ZSize);
    Inc(Header.NumSections);
    Inc(Header.NumSections2);
 end;
 
-procedure TVoxel.RemoveSection(SectionIndex: Integer);
+procedure TVoxel.RemoveSection(_SectionIndex: Integer);
 var
    i: Integer;
 begin
-   for i:= SectionIndex to Header.NumSections - 2 do
+   for i:= _SectionIndex to Header.NumSections - 2 do
    begin
       Section[i].Assign(Section[i+1]);
       Section[i].Header.Number:=i;
@@ -1915,12 +1918,13 @@ end;
 
 //this function uses basic matrix/vector operations (nice hybrid Koen) to
 //allow flipping and nudging.
-procedure TVoxelSection.FlipMatrix(VectorDir, VectorPos: array of Single; Multiply: Boolean=True);
+procedure TVoxelSection.FlipMatrix(const _VectorDir, _VectorPos: array of Single; _Multiply: Boolean=True);
 var
    NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k,a,b,c: Integer;
    Empty: TVoxelUnpacked;
    PackedVoxel: TVoxelPacked;
+   VectorPos: array [0..2] of Single;
 begin
    // prepare empty voxel
    with Empty do
@@ -1944,11 +1948,11 @@ begin
          end;
       end;
    end;
-   if Multiply then
+   if _Multiply then
    begin
-      VectorPos[0]:=Max(VectorPos[0]*Tailer.XSize-1,0);
-      VectorPos[1]:=Max(VectorPos[1]*Tailer.YSize-1,0);
-      VectorPos[2]:=Max(VectorPos[2]*Tailer.ZSize-1,0);
+      VectorPos[0]:=Max(_VectorPos[0]*Tailer.XSize-1,0);
+      VectorPos[1]:=Max(_VectorPos[1]*Tailer.YSize-1,0);
+      VectorPos[2]:=Max(_VectorPos[2]*Tailer.ZSize-1,0);
    end;
    for i:=0 to Tailer.XSize - 1 do
    begin
@@ -1956,9 +1960,9 @@ begin
       begin
          for k:=0 to Tailer.ZSize - 1 do
          begin
-            a:=Round(i*VectorDir[0]+VectorPos[0]);
-            b:=Round(j*VectorDir[1]+VectorPos[1]);
-            c:=Round(k*VectorDir[2]+VectorPos[2]);
+            a:=Round(i*_VectorDir[0]+VectorPos[0]);
+            b:=Round(j*_VectorDir[1]+VectorPos[1]);
+            c:=Round(k*_VectorDir[2]+VectorPos[2]);
             //perform range checking
             if (a >=0 ) and (b >= 0) and (c >= 0) then
             begin
@@ -2179,7 +2183,7 @@ begin
    SetLength(ConstLinearSystem, 0);
 end;
 
-procedure TVoxelSection.Mirror(MirrorView: EVoxelViewOrient);
+procedure TVoxelSection.Mirror(_MirrorView: EVoxelViewOrient);
 var
    NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k: Integer;
@@ -2202,7 +2206,7 @@ begin
    Xm:=Tailer.XSize div 2-1;
    Ym:=Tailer.YSize div 2-1;
    Zm:=Tailer.ZSize div 2-1;
-   case MirrorView of
+   case _MirrorView of
       oriX:
       begin
          if (Tailer.XSize mod 2)=1 then OddMod:=1;
@@ -2271,7 +2275,7 @@ begin
    finalize(NewData);
 end;
 
-procedure TVoxelSection.ResizeBlowUp(Scale: Integer);
+procedure TVoxelSection.ResizeBlowUp(_Scale: Integer);
 var
    NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k: Integer;
@@ -2288,29 +2292,29 @@ begin
    PackedVoxel := PackVoxel(Empty);
 
    //create new data matrix
-   SetLength(NewData,Tailer.XSize*Scale,Tailer.YSize*Scale,Tailer.ZSize*Scale);
+   SetLength(NewData,Tailer.XSize*_Scale,Tailer.YSize*_Scale,Tailer.ZSize*_Scale);
    //fill it with empty voxels
-   for i:=0 to Tailer.XSize * Scale - 1 do
+   for i:=0 to Tailer.XSize * _Scale - 1 do
    begin
-      for j:=0 to Tailer.YSize * Scale - 1 do
+      for j:=0 to Tailer.YSize * _Scale - 1 do
       begin
-         for k:=0 to Tailer.ZSize * Scale - 1 do
+         for k:=0 to Tailer.ZSize * _Scale - 1 do
          begin
             NewData[i,j,k]:=PackedVoxel;
          end;
       end;
    end;
-   for i:=0 to Tailer.XSize * Scale - 1 do
+   for i:=0 to Tailer.XSize * _Scale - 1 do
    begin
-      for j:=0 to Tailer.YSize * Scale - 1 do
+      for j:=0 to Tailer.YSize * _Scale - 1 do
       begin
-         for k:=0 to Tailer.ZSize * Scale - 1 do
+         for k:=0 to Tailer.ZSize * _Scale - 1 do
          begin
-            NewData[i,j,k]:=Data[i div Scale,j div Scale,k div Scale];
+            NewData[i,j,k]:=Data[i div _Scale,j div _Scale,k div _Scale];
          end;
       end;
    end;
-   Resize(Tailer.XSize*Scale,Tailer.YSize*Scale,Tailer.ZSize*Scale);
+   Resize(Tailer.XSize*_Scale,Tailer.YSize*_Scale,Tailer.ZSize*_Scale);
    for i:=0 to Tailer.XSize - 1 do
    begin
       for j:=0 to Tailer.YSize - 1 do
@@ -2408,7 +2412,7 @@ begin
 end;
 
 //brushview contains the view of the current editing Window.
-procedure TVoxelSection.BrushTool(Xc,Yc,Zc: Integer; V: TVoxelUnpacked; BrushMode: Integer; BrushView: EVoxelViewOrient);
+procedure TVoxelSection.BrushTool(_Xc,_Yc,_Zc: Integer; _V: TVoxelUnpacked; _BrushMode: Integer; _BrushView: EVoxelViewOrient);
 var
    Shape: Array[-5..5,-5..5] of 0..1;
    i,j,r1,r2: Integer;
@@ -2418,19 +2422,19 @@ begin
       for j:=-5 to 5 do
          Shape[i,j]:=0;
    Shape[0,0]:=1;
-   if BrushMode>=1 then
+   if _BrushMode>=1 then
    begin
       Shape[0,1]:=1; Shape[0,-1]:=1; Shape[1,0]:=1; Shape[-1,0]:=1;
    end;
-   if BrushMode>=2 then
+   if _BrushMode>=2 then
    begin
       Shape[1,1]:=1; Shape[1,-1]:=1; Shape[-1,-1]:=1; Shape[-1,1]:=1;
    end;
-   if BrushMode>=3 then
+   if _BrushMode>=3 then
    begin
       Shape[0,2]:=1; Shape[0,-2]:=1; Shape[2,0]:=1; Shape[-2,0]:=1;
    end;
-   if BrushMode =4 then
+   if _BrushMode =4 then
    begin
       for i:=-5 to 5 do
          for j:=-5 to 5 do
@@ -2451,10 +2455,10 @@ begin
       begin
          if Shape[i,j]=1 then
          begin
-            case BrushView of
-               oriX: SetVoxel(Xc,Max(Min(Yc+i,Tailer.YSize-1),0),Max(Min(Zc+j,Tailer.ZSize-1),0),v);
-               oriY: SetVoxel(Max(Min(Xc+i,Tailer.XSize-1),0),Yc,Max(Min(Zc+j,Tailer.ZSize-1),0),v);
-               oriZ: SetVoxel(Max(Min(Xc+i,Tailer.XSize-1),0),Max(Min(Yc+j,Tailer.YSize-1),0),Zc,v);
+            case _BrushView of
+               oriX: SetVoxel(_Xc,Max(Min(_Yc+i,Tailer.YSize-1),0),Max(Min(_Zc+j,Tailer.ZSize-1),0),_v);
+               oriY: SetVoxel(Max(Min(_Xc+i,Tailer.XSize-1),0),_Yc,Max(Min(_Zc+j,Tailer.ZSize-1),0),_v);
+               oriZ: SetVoxel(Max(Min(_Xc+i,Tailer.XSize-1),0),Max(Min(_Yc+j,Tailer.YSize-1),0),_Zc,_v);
             end;
          end;
       end;
@@ -2463,7 +2467,7 @@ begin
    //multiple views.
 end;
 
-procedure TVoxelSection.FloodFillTool(Xpos,Ypos,Zpos: Integer; v: TVoxelUnpacked; EditView: EVoxelViewOrient);
+procedure TVoxelSection.FloodFillTool(_Xpos,_Ypos,_Zpos: Integer; _v: TVoxelUnpacked; _EditView: EVoxelViewOrient);
 type
    FloodSet = (Left,Right,Up,Down);
    Flood3DPoint = record
@@ -2473,13 +2477,15 @@ type
       Dir: set of FloodSet;
       p: Flood3DPoint;
    end;
-   function PointOK(l: Flood3DPoint): Boolean;
+
+   function PointOK(_l: Flood3DPoint): Boolean;
    begin
       PointOK:=False;
-      if (l.X<0) or (l.Y<0) or (l.Z<0) then Exit;
-      if (l.X>=Tailer.XSize) or (l.Y>=Tailer.YSize) or (l.Z>=Tailer.ZSize) then Exit;
+      if (_l.X<0) or (_l.Y<0) or (_l.Z<0) then Exit;
+      if (_l.X>=Tailer.XSize) or (_l.Y>=Tailer.YSize) or (_l.Z>=Tailer.ZSize) then Exit;
       PointOK:=True;
    end;
+
 var
    z1,z2: TVoxelUnpacked;
    i,j,k: Integer;         //this isn't 100% FloodFill, but function is very handy for user;
@@ -2497,13 +2503,15 @@ begin
          for k:=0 to Tailer.ZSize - 1 do
             Done[i,j,k]:=False;
 
-   GetVoxel(Xpos,Ypos,Zpos,z1);
-   SetVoxel(Xpos,Ypos,Zpos,v);
+   GetVoxel(_Xpos,_Ypos,_Zpos,z1);
+   SetVoxel(_Xpos,_Ypos,_Zpos,_v);
 
    Full:=[Left,Right,Up,Down];
    Sp:=0;
    Stack[Sp].Dir:=Full;
-   Stack[Sp].p.X:=Xpos; Stack[Sp].p.Y:=Ypos; Stack[Sp].p.Z:=Zpos;
+   Stack[Sp].p.X:= _Xpos;
+   Stack[Sp].p.Y:= _Ypos;
+   Stack[Sp].p.Z:= _Zpos;
    SC:=1;
    while (SC>0) do
    begin
@@ -2512,7 +2520,7 @@ begin
          //not in there anymore! we're going to do that one now.
          Stack[Sp].Dir:=Stack[Sp].Dir - [Left];
          po:=Stack[Sp].p;
-         case EditView of
+         case _EditView of
             oriX: Dec(po.Y);
             oriY: Dec(po.X);
             oriZ: Dec(po.X);
@@ -2523,7 +2531,7 @@ begin
             GetVoxel(po.X,po.Y,po.Z,z2);
             if z2.Colour=z1.Colour then
             begin
-               SetVoxel(po.X,po.Y,po.Z,v);
+               SetVoxel(po.X,po.Y,po.Z,_v);
                if not Done[po.X,po.Y,po.Z] then
                begin
                   Stack[SC].Dir:=Full-[Right]; //Don't go back
@@ -2540,7 +2548,7 @@ begin
          //not in there anymore! we're going to do that one now.
          Stack[Sp].Dir:=Stack[Sp].Dir - [Right];
          po:=Stack[Sp].p;
-         case EditView of
+         case _EditView of
             oriX: Inc(po.Y);
             oriY: Inc(po.X);
             oriZ: Inc(po.X);
@@ -2551,7 +2559,7 @@ begin
             GetVoxel(po.X,po.Y,po.Z,z2);
             if z2.Colour=z1.Colour then
             begin
-               SetVoxel(po.X,po.Y,po.Z,v);
+               SetVoxel(po.X,po.Y,po.Z,_v);
                if not Done[po.X,po.Y,po.Z] then
                begin
                   Stack[SC].Dir:=Full-[Left]; //Don't go back
@@ -2568,7 +2576,7 @@ begin
          //not in there anymore! we're going to do that one now.
          Stack[Sp].Dir:=Stack[Sp].Dir - [Up];
          po:=Stack[Sp].p;
-         case EditView of
+         case _EditView of
             oriX: Dec(po.Z);
             oriY: Dec(po.Z);
             oriZ: Dec(po.Y);
@@ -2579,7 +2587,7 @@ begin
             GetVoxel(po.X,po.Y,po.Z,z2);
             if z2.Colour=z1.Colour then
             begin
-               SetVoxel(po.X,po.Y,po.Z,v);
+               SetVoxel(po.X,po.Y,po.Z,_v);
                if not Done[po.X,po.Y,po.Z] then
                begin
                   Stack[SC].Dir:=Full-[Down]; //Don't go back
@@ -2596,7 +2604,7 @@ begin
          //not in there anymore! we're going to do that one now.
          Stack[Sp].Dir:=Stack[Sp].Dir - [Down];
          po:=Stack[Sp].p;
-         case EditView of
+         case _EditView of
             oriX: Inc(po.Z);
             oriY: Inc(po.Z);
             oriZ: Inc(po.Y);
@@ -2607,7 +2615,7 @@ begin
             GetVoxel(po.X,po.Y,po.Z,z2);
             if z2.Colour=z1.Colour then
             begin
-               SetVoxel(po.X,po.Y,po.Z,v);
+               SetVoxel(po.X,po.Y,po.Z,_v);
                if not Done[po.X,po.Y,po.Z] then
                begin
                   Stack[SC].Dir:=Full-[Up]; //Don't go back
@@ -2839,11 +2847,11 @@ begin
    SetLength(TempData,0);
 end;
 
-procedure TVoxel.setSpectrum(newspectrum: ESpectrumMode);
+procedure TVoxel.setSpectrum(_newspectrum: ESpectrumMode);
 var i: integer;
 begin
    for i := Low(Section) to High(Section) do
-      Section[i].setSpectrum(newspectrum);
+      Section[i].setSpectrum(_newspectrum);
 end;
 
 end.
