@@ -26,89 +26,89 @@ Var
 Const
    Min_Undos = 10;
 
-Function CreateRestorePoint(const TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
-Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
-Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
-Function IsUndoRedoUsed(const Undo_Redo : TUndo_Redo) : boolean;
+Function CreateRestorePoint(const _TempView : TTempView; var _Undo_Redo : TUndo_Redo): Boolean;
+Procedure UndoRestorePoint(var _URUndo,_URRedo : TUndo_Redo);
+Procedure RedoRestorePoint(var _URUndo,_URRedo : TUndo_Redo);
+Function IsUndoRedoUsed(const _Undo_Redo : TUndo_Redo) : boolean;
 Procedure ResetUndoRedo;
 Procedure ResetUndo(var _Undo : TUndo_Redo);
 
 // Bad but only way to do some restore points(i.e flips, nudges, mirroring)
-Procedure CreateVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure CreateVXLRestorePoint(const _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
 
-Procedure SaveVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
-Procedure LoadVXLRestorePoint(var Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(const _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(var _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
 
-Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
-procedure FreeUndoRedo(Var Undo_Redo : TUndo_Redo);
+Procedure GoneOverReset(Var _Undo_Redo : TUndo_Redo);
+procedure FreeUndoRedo(Var _Undo_Redo : TUndo_Redo);
 
 implementation
 
 uses FormMain;
 
-Function CreateRestorePoint(const TempView : TTempView; var Undo_Redo : TUndo_Redo): Boolean;
+Function CreateRestorePoint(const _TempView : TTempView; var _Undo_Redo : TUndo_Redo): Boolean;
 var
    i,no : integer;
    v : TVoxelUnpacked;
 begin
    Result := false;
-   if TempView.Data_no < 1 then
+   if _TempView.Data_no < 1 then
       exit;
 
-   if Undo_Redo.Data_no > Min_Undos + 5 then
-      GoneOverReset(Undo_Redo);
+   if _Undo_Redo.Data_no > Min_Undos + 5 then
+      GoneOverReset(_Undo_Redo);
 
    ResetUndo(Redo);
 
-   inc(Undo_Redo.Data_no);
-   SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
+   inc(_Undo_Redo.Data_no);
+   SetLength(_Undo_Redo.Data,_Undo_Redo.Data_no);
 
-   Undo_Redo.Data[Undo_Redo.Data_no-1].XSize := FrmMain.Document.ActiveSection^.Tailer.XSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].YSize := FrmMain.Document.ActiveSection^.Tailer.YSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize := FrmMain.Document.ActiveSection^.Tailer.ZSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no := 0;
-   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data,Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].XSize := FrmMain.Document.ActiveSection^.Tailer.XSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].YSize := FrmMain.Document.ActiveSection^.Tailer.YSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].ZSize := FrmMain.Document.ActiveSection^.Tailer.ZSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no := 0;
+   SetLength(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data,_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no);
 
-   for i := 1 to TempView.Data_no do
+   for i := 1 to _TempView.Data_no do
    begin
-      if TempView.Data[i].VU then
+      if _TempView.Data[i].VU then
       begin
-         inc(Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
-         no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no - 1;
+         inc(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no);
+         no := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no - 1;
 
-         SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, no + 1);
-         with TempView do
+         SetLength(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data, no + 1);
+         with _TempView do
             FrmMain.Document.ActiveSection^.GetVoxel(Data[i].VC.X,Data[i].VC.Y,Data[i].VC.Z,v);
 
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
 
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.X := TempView.Data[i].VC.X;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Y := TempView.Data[i].VC.Y;
-         Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := TempView.Data[i].VC.Z;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.X := _TempView.Data[i].VC.X;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.Y := _TempView.Data[i].VC.Y;
+         _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.Z := _TempView.Data[i].VC.Z;
       end;
    end;
    FrmMain.SetVoxelChanged(true);
    Result := true;
 end;
 
-Procedure UndoRestorePoint(var URUndo,URRedo : TUndo_Redo);
+Procedure UndoRestorePoint(var _URUndo,_URRedo : TUndo_Redo);
 begin
-   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
-   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
+   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, _URRedo);
+   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, _URUndo);
 end;
 
-Procedure RedoRestorePoint(var URUndo,URRedo : TUndo_Redo);
+Procedure RedoRestorePoint(var _URUndo,_URRedo : TUndo_Redo);
 begin
-   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, URUndo);
-   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, URRedo);
+   SaveVXLRestorePoint(FrmMain.Document.ActiveSection^, _URUndo);
+   LoadVXLRestorePoint(FrmMain.Document.ActiveSection^, _URRedo);
 end;
 
-Function IsUndoRedoUsed(const Undo_Redo : TUndo_Redo) : boolean;
+Function IsUndoRedoUsed(const _Undo_Redo : TUndo_Redo) : boolean;
 begin
-   if Undo_Redo.Data_no > 0 then
+   if _Undo_Redo.Data_no > 0 then
       Result := true
    else
       Result := false;
@@ -133,154 +133,154 @@ begin
    SetLength(_Undo.Data,_Undo.Data_no);
 end;
 
-Procedure CreateVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure CreateVXLRestorePoint(const _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
 begin
    ResetUndo(Redo);
-   SaveVXLRestorePoint(Vxl, Undo_Redo);
+   SaveVXLRestorePoint(_Vxl, _Undo_Redo);
 end;
 
-Procedure SaveVXLRestorePoint(const Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure SaveVXLRestorePoint(const _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
 var
    x,y,z,no : integer;
    v : TVoxelUnpacked;
 begin
-   if Undo_Redo.Data_no > Min_Undos + 5 then
-      GoneOverReset(Undo_Redo);
+   if _Undo_Redo.Data_no > Min_Undos + 5 then
+      GoneOverReset(_Undo_Redo);
 
-   inc(Undo_Redo.Data_no);
-   SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
+   inc(_Undo_Redo.Data_no);
+   SetLength(_Undo_Redo.Data,_Undo_Redo.Data_no);
 
-   Undo_Redo.Data[Undo_Redo.Data_no-1].XSize := VXL.Tailer.XSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].YSize := VXL.Tailer.YSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize := VXL.Tailer.ZSize;
-   Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no := 0;
-   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, 0);
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].XSize := _VXL.Tailer.XSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].YSize := _VXL.Tailer.YSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].ZSize := _VXL.Tailer.ZSize;
+   _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no := 0;
+   SetLength(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data, 0);
 
-   for x := 0 to VXL.Tailer.XSize-1 do
-      for y := 0 to VXL.Tailer.YSize-1 do
-         for z := 0 to VXL.Tailer.ZSize-1 do
+   for x := 0 to _VXL.Tailer.XSize-1 do
+      for y := 0 to _VXL.Tailer.YSize-1 do
+         for z := 0 to _VXL.Tailer.ZSize-1 do
          begin
-            inc(Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no);
-            no := Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no - 1;
+            inc(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no);
+            no := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no - 1;
 
-            SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, no + 1);
+            SetLength(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data, no + 1);
             FrmMain.Document.ActiveSection^.GetVoxel(x,y,z,v);
 
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Colour := V.Colour;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Flags := V.Flags;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Normal := V.Normal;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].V.Used := V.Used;
 
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.X := x;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Y := y;
-            Undo_Redo.Data[Undo_Redo.Data_no-1].Data[no].Pos.Z := z;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.X := x;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.Y := y;
+            _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[no].Pos.Z := z;
          end;
    FrmMain.SetVoxelChanged(true);
 end;
 
-Procedure LoadVXLRestorePoint(var Vxl : TVoxelSection; var Undo_Redo : TUndo_Redo);
+Procedure LoadVXLRestorePoint(var _Vxl : TVoxelSection; var _Undo_Redo : TUndo_Redo);
 var
    i : integer;
    v : TVoxelUnpacked;
 begin
-   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize) then
+   if (FrmMain.Document.ActiveSection^.Tailer.XSize <> _Undo_Redo.Data[_Undo_Redo.Data_no-1].XSize) or (FrmMain.Document.ActiveSection^.Tailer.YSize <> _Undo_Redo.Data[_Undo_Redo.Data_no-1].YSize) or (FrmMain.Document.ActiveSection^.Tailer.ZSize <> _Undo_Redo.Data[_Undo_Redo.Data_no-1].ZSize) then
    begin
-      FrmMain.Document.ActiveSection^.Resize(Undo_Redo.Data[Undo_Redo.Data_no-1].XSize, Undo_Redo.Data[Undo_Redo.Data_no-1].YSize, Undo_Redo.Data[Undo_Redo.Data_no-1].ZSize);
+      FrmMain.Document.ActiveSection^.Resize(_Undo_Redo.Data[_Undo_Redo.Data_no-1].XSize, _Undo_Redo.Data[_Undo_Redo.Data_no-1].YSize, _Undo_Redo.Data[_Undo_Redo.Data_no-1].ZSize);
    end;
 
-   for i := 0 to Undo_Redo.Data[Undo_Redo.Data_no-1].Data_no-1 do
+   for i := 0 to _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data_no-1 do
    begin
-      v.Colour := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Colour;
-      v.Flags := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Flags;
-      v.Normal := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Normal;
-      v.Used := Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].V.Used;
+      v.Colour := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].V.Colour;
+      v.Flags := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].V.Flags;
+      v.Normal := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].V.Normal;
+      v.Used := _Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].V.Used;
 
-      FrmMain.Document.ActiveSection^.SetVoxel(Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.X,Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.Y,Undo_Redo.Data[Undo_Redo.Data_no-1].Data[i].Pos.Z, v);
+      FrmMain.Document.ActiveSection^.SetVoxel(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].Pos.X,_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].Pos.Y,_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data[i].Pos.Z, v);
    end;
 
-   SetLength(Undo_Redo.Data[Undo_Redo.Data_no-1].Data, 0);
-   dec(Undo_Redo.Data_no);
-   SetLength(Undo_Redo.Data,Undo_Redo.Data_no);
+   SetLength(_Undo_Redo.Data[_Undo_Redo.Data_no-1].Data, 0);
+   dec(_Undo_Redo.Data_no);
+   SetLength(_Undo_Redo.Data,_Undo_Redo.Data_no);
    FrmMain.SetVoxelChanged(true);
 end;
 
-Procedure Copy_UndoRedo(Const Source : TUndo_Redo; Var Dest  : TUndo_Redo);
+Procedure Copy_UndoRedo(Const _Source : TUndo_Redo; Var _Dest  : TUndo_Redo);
 var
    I,J : integer;
 begin
-   Dest.Data_no := Source.Data_no;
-   SetLength(Dest.Data,Dest.Data_no);
-   for i := 0 to Source.Data_no-1 do
+   _Dest.Data_no := _Source.Data_no;
+   SetLength(_Dest.Data,_Dest.Data_no);
+   for i := 0 to _Source.Data_no-1 do
    begin
-      Dest.Data[i].XSize := Source.Data[i].XSize;
-      Dest.Data[i].YSize := Source.Data[i].YSize;
-      Dest.Data[i].ZSize := Source.Data[i].ZSize;
-      Dest.Data[i].Data_no := Source.Data[i].Data_no;
-      SetLength(Dest.Data[i].Data,Dest.Data[i].Data_no);
-      For j := 0 to Source.Data[i].Data_no-1 do
+      _Dest.Data[i].XSize := _Source.Data[i].XSize;
+      _Dest.Data[i].YSize := _Source.Data[i].YSize;
+      _Dest.Data[i].ZSize := _Source.Data[i].ZSize;
+      _Dest.Data[i].Data_no := _Source.Data[i].Data_no;
+      SetLength(_Dest.Data[i].Data,_Dest.Data[i].Data_no);
+      For j := 0 to _Source.Data[i].Data_no-1 do
       begin
-         Dest.Data[i].Data[j].Pos.X := Source.Data[i].Data[j].Pos.X;
-         Dest.Data[i].Data[j].Pos.Y := Source.Data[i].Data[j].Pos.Y;
-         Dest.Data[i].Data[j].Pos.Z := Source.Data[i].Data[j].Pos.Z;
+         _Dest.Data[i].Data[j].Pos.X := _Source.Data[i].Data[j].Pos.X;
+         _Dest.Data[i].Data[j].Pos.Y := _Source.Data[i].Data[j].Pos.Y;
+         _Dest.Data[i].Data[j].Pos.Z := _Source.Data[i].Data[j].Pos.Z;
 
-         Dest.Data[i].Data[j].V.Colour := Source.Data[i].Data[j].V.Colour;
-         Dest.Data[i].Data[j].V.Normal := Source.Data[i].Data[j].V.Normal;
-         Dest.Data[i].Data[j].V.Flags := Source.Data[i].Data[j].V.Flags;
-         Dest.Data[i].Data[j].V.Used := Source.Data[i].Data[j].V.Used;
+         _Dest.Data[i].Data[j].V.Colour := _Source.Data[i].Data[j].V.Colour;
+         _Dest.Data[i].Data[j].V.Normal := _Source.Data[i].Data[j].V.Normal;
+         _Dest.Data[i].Data[j].V.Flags := _Source.Data[i].Data[j].V.Flags;
+         _Dest.Data[i].Data[j].V.Used := _Source.Data[i].Data[j].V.Used;
       end;
    end;
 end;
 
 
-Procedure Copy_UndoRedo2(Const Source : TUndo_Redo; Var Dest  : TUndo_Redo);
+Procedure Copy_UndoRedo2(Const _Source : TUndo_Redo; Var _Dest  : TUndo_Redo);
 var
    I,J : integer;
 begin
-   Dest.Data_no := Source.Data_no-5;
-   SetLength(Dest.Data,Dest.Data_no);
-   for i := 5 to Source.Data_no-1 do
+   _Dest.Data_no := _Source.Data_no-5;
+   SetLength(_Dest.Data,_Dest.Data_no);
+   for i := 5 to _Source.Data_no-1 do
    begin
-      Dest.Data[i-5].XSize := Source.Data[i].XSize;
-      Dest.Data[i-5].YSize := Source.Data[i].YSize;
-      Dest.Data[i-5].ZSize := Source.Data[i].ZSize;
-      Dest.Data[i-5].Data_no := Source.Data[i].Data_no;
-      SetLength(Dest.Data[i-5].Data,Dest.Data[i-5].Data_no);
-      For j := 0 to Source.Data[i].Data_no-1 do
+      _Dest.Data[i-5].XSize := _Source.Data[i].XSize;
+      _Dest.Data[i-5].YSize := _Source.Data[i].YSize;
+      _Dest.Data[i-5].ZSize := _Source.Data[i].ZSize;
+      _Dest.Data[i-5].Data_no := _Source.Data[i].Data_no;
+      SetLength(_Dest.Data[i-5].Data,_Dest.Data[i-5].Data_no);
+      For j := 0 to _Source.Data[i].Data_no-1 do
       begin
-         Dest.Data[i-5].Data[j].Pos.X := Source.Data[i].Data[j].Pos.X;
-         Dest.Data[i-5].Data[j].Pos.Y := Source.Data[i].Data[j].Pos.Y;
-         Dest.Data[i-5].Data[j].Pos.Z := Source.Data[i].Data[j].Pos.Z;
+         _Dest.Data[i-5].Data[j].Pos.X := _Source.Data[i].Data[j].Pos.X;
+         _Dest.Data[i-5].Data[j].Pos.Y := _Source.Data[i].Data[j].Pos.Y;
+         _Dest.Data[i-5].Data[j].Pos.Z := _Source.Data[i].Data[j].Pos.Z;
 
-         Dest.Data[i-5].Data[j].V.Colour := Source.Data[i].Data[j].V.Colour;
-         Dest.Data[i-5].Data[j].V.Normal := Source.Data[i].Data[j].V.Normal;
-         Dest.Data[i-5].Data[j].V.Flags := Source.Data[i].Data[j].V.Flags;
-         Dest.Data[i-5].Data[j].V.Used := Source.Data[i].Data[j].V.Used;
+         _Dest.Data[i-5].Data[j].V.Colour := _Source.Data[i].Data[j].V.Colour;
+         _Dest.Data[i-5].Data[j].V.Normal := _Source.Data[i].Data[j].V.Normal;
+         _Dest.Data[i-5].Data[j].V.Flags := _Source.Data[i].Data[j].V.Flags;
+         _Dest.Data[i-5].Data[j].V.Used := _Source.Data[i].Data[j].V.Used;
       end;
    end;
 end;
 
 // Should reduce the undo by 5 making it have Min_Undos
-Procedure GoneOverReset(Var Undo_Redo : TUndo_Redo);
+Procedure GoneOverReset(Var _Undo_Redo : TUndo_Redo);
 Var
    UndoT : TUndo_Redo;
 begin
-   Copy_UndoRedo(Undo_Redo,UndoT);
+   Copy_UndoRedo(_Undo_Redo,UndoT);
    ResetUndoRedo;
-   Copy_UndoRedo2(UndoT,Undo_Redo);
+   Copy_UndoRedo2(UndoT,_Undo_Redo);
    FreeUndoRedo(UndoT);
 end;
 
-procedure FreeUndoRedo(Var Undo_Redo : TUndo_Redo);
+procedure FreeUndoRedo(Var _Undo_Redo : TUndo_Redo);
 var
    i: integer;
 begin
-   i := Low(Undo_Redo.Data);
-   while i <= High(Undo_Redo.Data) do
+   i := Low(_Undo_Redo.Data);
+   while i <= High(_Undo_Redo.Data) do
    begin
-      SetLength(Undo_Redo.Data[i].Data, 0);
+      SetLength(_Undo_Redo.Data[i].Data, 0);
       inc(i);
    end;
-   SetLength(Undo_Redo.Data, 0);
+   SetLength(_Undo_Redo.Data, 0);
 end;
 
 begin
