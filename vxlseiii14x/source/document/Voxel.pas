@@ -48,8 +48,8 @@ type
       procedure InitViews;
       procedure SetDataSize(_XSize, _YSize, _ZSize: Integer);
       procedure DefaultTransforms;
-      function PackVoxel(_Unpacked: TVoxelUnpacked): TVoxelPacked;
-      procedure UnpackVoxel(_PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
+      function PackVoxel(const _Unpacked: TVoxelUnpacked): TVoxelPacked;
+      procedure UnpackVoxel(const _PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
    public
       spectrum: ESpectrumMode;
       Data: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
@@ -470,7 +470,7 @@ begin
    Z := Max(Min(_newZ,Tailer.ZSize-1),0);
 end;
 
-function TVoxelSection.PackVoxel(_Unpacked: TVoxelUnpacked): TVoxelPacked;
+function TVoxelSection.PackVoxel(const _Unpacked: TVoxelUnpacked): TVoxelPacked;
 begin
    Result := _Unpacked.Flags shl 16;
    if _Unpacked.Used then
@@ -481,7 +481,7 @@ begin
    Result := Result or _Unpacked.Normal;
 end;
 
-procedure TVoxelSection.UnpackVoxel(_PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
+procedure TVoxelSection.UnpackVoxel(const _PackedVoxel: TVoxelPacked; var _Dest: TVoxelUnpacked);
 begin
    _Dest.Normal := (_PackedVoxel and $000000FF);
    _Dest.Colour := (_PackedVoxel and $0000FF00) shr 8;
