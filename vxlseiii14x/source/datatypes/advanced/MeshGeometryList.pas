@@ -143,6 +143,7 @@ begin
             Last := Previous;
          end;
       end;
+      Active^.Free;
       Dispose(Active);
       dec(FCount);
    end;
@@ -157,6 +158,7 @@ begin
    begin
       Garbage := Active;
       Active := Active^.Next;
+      Garbage^.Free;
       dispose(Garbage);
    end;
    Reset;

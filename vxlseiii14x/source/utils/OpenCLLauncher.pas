@@ -96,6 +96,11 @@ begin
    ClearGPUBuffers();
    SetLength(FMem, 0);
    SetLength(FFlags, 0);
+   if FHasDebugFile then
+   begin
+      FDebugFile.Free;
+   end;
+
    inherited Destroy;
 end;
 

@@ -443,9 +443,13 @@ end;
 
 
 destructor TVoxelSection.Destroy;
+var
+   i: integer;
 begin
    Normals.Free;
    SetDataSize(0,0,0);
+   for i := 0 to 2 do
+      View[i].Free;
    inherited Destroy;
 end;
 

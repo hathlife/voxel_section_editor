@@ -35,6 +35,7 @@ type
          constructor Create(_VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          constructor Create(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          constructor Create(const _Geometry : TMeshGeometryBase); overload;
+         destructor Destroy; override;
          procedure InitializeWithParams(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte); overload;
          procedure Initialize; override;
          procedure Clear; override;
@@ -119,6 +120,13 @@ constructor TMeshBRepGeometry.Create(_NumFaces : longword; _VerticesPerFace, _Co
 begin
    InitializeWithParams(_NumFaces, _VerticesPerFace, _ColoursType, _NormalsType);
 end;
+
+destructor TMeshBRepGeometry.Destroy;
+begin
+   Renderer.Free;
+   inherited Destroy;
+end;
+
 
 procedure TMeshBRepGeometry.InitializeWithParams(_NumFaces : longword; _VerticesPerFace, _ColoursType, _NormalsType : byte);
 begin

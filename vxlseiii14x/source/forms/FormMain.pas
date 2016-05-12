@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.259';
+   APPLICATION_VER = '1.39.260';
    APPLICATION_BETA = true;
 
 type
@@ -1084,6 +1084,7 @@ begin
    if High(Actor^.Models) >= 0 then
    begin
       Actor^.Clear;
+      GlobalVars.ActorController.TerminateObject(Actor);
    end;
    Actor^.Add(Document.ActiveSection,Document.Palette,C_QUALITY_CUBED);
    GlobalVars.ActorController.DoLoadModel(Actor, C_QUALITY_CUBED);
@@ -1189,12 +1190,23 @@ begin
    CubeNormals.Free;
    CustomSchemeControl.Free;
    PaletteControl.Free;
-  {$ifdef SPEED_TEST}
+   {$ifdef SPEED_TEST}
    GlobalVars.SpeedFile.Free;
    {$endif}
-  {$ifdef MESH_TEST}
+   {$ifdef MESH_TEST}
    GlobalVars.MeshFile.Free;
    {$endif}
+   {$ifdef SMOOTH_TEST}
+   GlobalVars.SmoothFile.Free;
+   {$endif}
+   {$ifdef ORIGAMI_TEST}
+   GlobalVars.OrigamiFile.Free;
+   {$endif}
+   {$ifdef DEBUG_FILE or TEXTURE_DEBUG}
+   DebugFile.Free;
+   {$endif}
+   GlobalVars.SysInfo.Free;
+
    //SetLength(ColourSchemes,0);
 end;
 

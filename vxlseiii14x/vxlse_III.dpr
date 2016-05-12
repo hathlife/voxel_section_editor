@@ -297,6 +297,7 @@ uses
 {$R *.res}
 
 begin
+  //ReportMemoryLeaksOnShutdown := true;
   Application.Initialize;
   Application.Title := 'Voxel Section Editor III';
   //  Application.CreateForm(TFrmTimeMain, FrmTimeMain);

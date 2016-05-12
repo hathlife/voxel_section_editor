@@ -199,6 +199,7 @@ end;
 destructor TMesh.Destroy;
 begin
    Clear;
+   Geometry.Free;
    inherited Destroy;
 end;
 

@@ -835,11 +835,9 @@ var
 begin
    RequestUpdateWorld := _Source.RequestUpdateWorld;
    Next := _Source.Next;
-   SetLength(Models, High(_Source.Models) + 1);
-   for i := Low(Models) to High(Models) do
+   for i := Low(_Source.Models) to High(_Source.Models) do
    begin
-      new(Models[i]);
-      Models[i]^ := TModel.Create(_Source.Models[i]^);
+      Clone(_Source.Models[i]);
       Models[i]^.ID := _Source.Models[i]^.ID;
    end;
    PositionAcceleration.X := _Source.PositionAcceleration.X;
