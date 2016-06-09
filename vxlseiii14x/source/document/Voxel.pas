@@ -1957,6 +1957,12 @@ begin
       VectorPos[0]:=Max(_VectorPos[0]*Tailer.XSize-1,0);
       VectorPos[1]:=Max(_VectorPos[1]*Tailer.YSize-1,0);
       VectorPos[2]:=Max(_VectorPos[2]*Tailer.ZSize-1,0);
+   end
+   else
+   begin
+      VectorPos[0]:=_VectorPos[0];
+      VectorPos[1]:=_VectorPos[1];
+      VectorPos[2]:=_VectorPos[2];
    end;
    for i:=0 to Tailer.XSize - 1 do
    begin
