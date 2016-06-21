@@ -456,5 +456,7 @@
     <Transaction>2015/03/26 15:55:00.050.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\mesh\NCMDiffuseTextureGenerator.pas</Transaction>
     <Transaction>2015/03/26 15:58:01.111.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\control\commands\NCMDiffuseTextureGeneratorCommand.pas</Transaction>
     <Transaction>2015/09/25 00:15:21.461.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\maths\CholeskySolver.pas</Transaction>
+    <Transaction>2016/06/21 16:39:12.473.pas,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.pas=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\forms\FormCustom360DegAnimation.pas</Transaction>
+    <Transaction>2016/06/21 16:39:12.473.dfm,D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\Unit1.dfm=D:\SuperProjetos\Voxel Tools SVN\vxlseiii14x\source\forms\FormCustom360DegAnimation.dfm</Transaction>
   </Transactions>
 </BorlandProject>

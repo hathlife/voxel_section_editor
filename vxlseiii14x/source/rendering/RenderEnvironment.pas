@@ -396,11 +396,11 @@ begin
          else // We are screenshoting!
          begin
             // Let's check if the animation is over or not.
-            inc(AnimFrameCounter);
             if AnimFrameCounter < AnimFrameMax then
             begin
                // We are still animating. Simply add the frame.
                AddFrame;
+               inc(AnimFrameCounter);
             end
             else
             begin

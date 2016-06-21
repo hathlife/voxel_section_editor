@@ -362,6 +362,10 @@ object Frm3DModelizer: TFrm3DModelizer
         Caption = 'Make 360 Deg Animation (GIF)'
         OnClick = ake360DegScreenshots1Click
       end
+      object MakeaCustom360DegAnimationGIF1: TMenuItem
+        Caption = 'Make a Custom 360 Deg Animation (GIF)...'
+        OnClick = MakeaCustom360DegAnimationGIF1Click
+      end
     end
   end
   object ColorDialog1: TColorDialog

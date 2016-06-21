@@ -292,7 +292,8 @@ uses
   PaletteControl in 'source\control\PaletteControl.pas',
   NCMDiffuseTextureGenerator in 'source\control\mesh\NCMDiffuseTextureGenerator.pas',
   NCMDiffuseTextureGeneratorCommand in 'source\control\commands\NCMDiffuseTextureGeneratorCommand.pas',
-  CholeskySolver in 'source\maths\CholeskySolver.pas';
+  CholeskySolver in 'source\maths\CholeskySolver.pas',
+  FormCustom360DegAnimation in 'source\forms\FormCustom360DegAnimation.pas' {FrmCustom360DegAnimation};
 
 {$R *.res}
 

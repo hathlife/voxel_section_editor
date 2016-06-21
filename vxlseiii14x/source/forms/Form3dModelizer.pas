@@ -188,6 +188,8 @@ type
     TextureFXDiffuseOrigamiParametricDC: TMenuItem;
     TextureFXDiffuseIDC: TMenuItem;
     TextureFXDiffuseTexturewithMoreContrast: TMenuItem;
+    MakeaCustom360DegAnimationGIF1: TMenuItem;
+    procedure MakeaCustom360DegAnimationGIF1Click(Sender: TObject);
     procedure TextureFXDiffuseTexturewithMoreContrastClick(Sender: TObject);
     procedure TextureFXDiffuseIDCClick(Sender: TObject);
     procedure TextureFXDiffuseOrigamiParametricDCClick(Sender: TObject);
@@ -373,7 +375,7 @@ type
 implementation
 
 uses FormMain, GlobalVars, DistanceFormulas, Model, ModelVxt,
-  HierarchyAnimation, Config;
+  HierarchyAnimation, Config, FormCustom360DegAnimation;
 
 {$R *.DFM}
 
@@ -1271,6 +1273,36 @@ begin
    RemapColour.Z := RemapColourMap[5].B /255;
    //Actor^.ChangeRemappable(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B);
    GlobalVars.ActorController.DoModelChangeRemappable(Actor, GetQualityModel, RGB(RemapColourMap[5].R,RemapColourMap[5].G,RemapColourMap[5].B));
+end;
+
+procedure TFrm3DModelizer.MakeaCustom360DegAnimationGIF1Click(Sender: TObject);
+var
+   Form: TFrmCustom360DegAnimation;
+begin
+   Form := TFrmCustom360DegAnimation.Create(self);
+   Form.ShowModal;
+   if Form.OK then
+   begin
+      Env.Take360Animation(VXLFilename,Form.NumFrames,10,stGif);
+
+      btn3DRotateY_d := btn3DRotateY.Down;
+      btn3DRotateY2_d := btn3DRotateY2.Down;
+      btn3DRotateX_d := btn3DRotateX.Down;
+      btn3DRotateX2_d := btn3DRotateX2.Down;
+      btn3DRotateY.Down := false;
+      btn3DRotateY2.Down := false;
+      btn3DRotateX.Down := false;
+      btn3DRotateX2.Down := false;
+      btn3DRotateY.Enabled := false;
+      btn3DRotateY2.Enabled := false;
+      btn3DRotateX.Enabled := false;
+      btn3DRotateX2.Enabled := false;
+      spin3Djmp.Enabled := false;
+      SpeedButton1.Enabled := false;
+      SpeedButton2.Enabled := false;
+      Anim360Timer.Enabled := true;
+   end;
+   Form.Release;
 end;
 
 procedure TFrm3DModelizer.ModelFXHeavyEulerErosionClick(Sender: TObject);
