@@ -203,10 +203,13 @@ begin
       begin
          if Model^.ModelType = C_MT_VOXEL then
          begin
-            if _Voxel = (Model^ as TModelVxt).Voxel then
+            if Model^.IsOpened then
             begin
-               Result := i;
-               exit;
+               if _Voxel = (Model^ as TModelVxt).Voxel then
+               begin
+                  Result := i;
+                  exit;
+               end;
             end;
          end;
       end;
