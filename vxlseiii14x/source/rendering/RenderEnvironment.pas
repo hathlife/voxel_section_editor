@@ -255,18 +255,6 @@ begin
    if CurrentCamera = nil then exit;
    // Calculate time and FPS
    QueryPerformanceCounter(temp);
-   t2 := temp - FoldTime;
-   if DesiredTimeRate > 0 then
-   begin
-      if t2 < DesiredTimeRate then
-      begin
-         sleep(Round(1000 * (DesiredTimeRate - t2) / FFrequency));
-         QueryPerformanceCounter(temp);
-         t2 := temp - FoldTime;
-      end;
-   end;
-   QueryPerformanceCounter(FoldTime);
-   FPS := FFrequency/t2;
    wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
 
    // Rendering starts here
@@ -420,6 +408,18 @@ begin
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
+   QueryPerformanceCounter(FoldTime);
+   t2 := temp - FoldTime;
+   if DesiredTimeRate > 0 then
+   begin
+      if t2 < DesiredTimeRate then
+      begin
+         sleep(Round(1000 * (DesiredTimeRate - t2) / FFrequency));
+         QueryPerformanceCounter(temp);
+         t2 := temp - FoldTime;
+      end;
+   end;
+   FPS := FFrequency/t2;
 end;
 
 procedure TRenderEnvironment.RenderVectorial;
