@@ -253,9 +253,10 @@ begin
    // Here's the don't waste time checkup.
    if not IsEnabled then exit;
    if CurrentCamera = nil then exit;
-   // Calculate time and FPS
-   QueryPerformanceCounter(temp);
-   wglMakeCurrent(dc,rc);        // Make the DC the rendering Context
+   // Get time before rendering scene.
+   QueryPerformanceCounter(FoldTime);
+   // Make the DC the rendering Context
+   wglMakeCurrent(dc,rc);
 
    // Rendering starts here
    // -------------------------------------------------------
@@ -408,7 +409,8 @@ begin
    // Rendering starts here
    // -------------------------------------------------------
    SwapBuffers(DC);                  // Display the scene
-   QueryPerformanceCounter(FoldTime);
+   // Calculate time and FPS
+   QueryPerformanceCounter(temp);
    t2 := temp - FoldTime;
    if DesiredTimeRate > 0 then
    begin
