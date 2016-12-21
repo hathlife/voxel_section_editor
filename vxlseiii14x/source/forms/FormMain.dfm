@@ -3,7 +3,7 @@ object FrmMain: TFrmMain
   Top = 0
   ActiveControl = pnlActiveColour
   Caption = 'Application Title'
-  ClientHeight = 1016
+  ClientHeight = 1007
   ClientWidth = 862
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,15 +29,16 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 0
     Width = 862
-    Height = 997
+    Height = 988
     Align = alClient
+    Anchors = [akLeft, akTop, akRight]
     BevelOuter = bvLowered
     ParentBackground = False
     TabOrder = 0
     object Splitter1: TSplitter
       Left = 653
       Top = 26
-      Height = 970
+      Height = 961
       Align = alRight
       ExplicitLeft = 640
       ExplicitTop = 360
@@ -47,7 +48,7 @@ object FrmMain: TFrmMain
       Left = 1
       Top = 26
       Width = 152
-      Height = 970
+      Height = 961
       Align = alLeft
       ParentBackground = False
       TabOrder = 0
@@ -1280,7 +1281,7 @@ object FrmMain: TFrmMain
       Left = 656
       Top = 26
       Width = 205
-      Height = 970
+      Height = 961
       Align = alRight
       ParentBackground = False
       TabOrder = 1
@@ -1605,7 +1606,7 @@ object FrmMain: TFrmMain
       Left = 153
       Top = 26
       Width = 500
-      Height = 970
+      Height = 961
       Align = alClient
       ParentBackground = False
       TabOrder = 2
@@ -1631,7 +1632,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 14
         Width = 482
-        Height = 939
+        Height = 930
         Align = alClient
         OnMouseDown = CnvView0MouseDown
         OnMouseMove = CnvView0MouseMove
@@ -4324,7 +4325,7 @@ object FrmMain: TFrmMain
         Left = 483
         Top = 14
         Width = 16
-        Height = 939
+        Height = 930
         Align = alRight
         Ctl3D = False
         Kind = sbVertical
@@ -4336,7 +4337,7 @@ object FrmMain: TFrmMain
       end
       object Panel5: TPanel
         Left = 1
-        Top = 953
+        Top = 944
         Width = 498
         Height = 16
         Align = alBottom
@@ -4547,7 +4548,7 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 997
+    Top = 988
     Width = 862
     Height = 19
     Panels = <

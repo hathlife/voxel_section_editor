@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.264';
+   APPLICATION_VER = '1.39.265';
    APPLICATION_BETA = true;
 
 type
@@ -583,6 +583,7 @@ type
      RemapColour : TVector3f;
      Xcoord, Ycoord, Zcoord : Integer;
      MouseButton : Integer;
+     ValidLastClick : boolean;
      procedure Idle(Sender: TObject; var Done: Boolean);
      procedure BuildUsedColoursArray;
      function CharToStr: string;
@@ -647,6 +648,7 @@ begin
    // 1.32: Shortcut aditions
    ShiftPressed := false;
    AltPressed := false;
+   ValidLastClick := false;
 
    CnvView[0] := @CnvView0;
    CnvView[1] := @CnvView1;
@@ -898,6 +900,12 @@ begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SetIsEditable');
    {$endif}
+
+   // Clear tempview:
+   TempView.Data_no := 0;
+   Setlength(TempView.Data,0);
+   // Invalidate mouse click.
+   ValidLastClick := false;
 
    Env.IsEnabled := IsEditable;
 
@@ -1692,8 +1700,7 @@ begin
    MouseButton :=0;
 end;
 
-procedure TFrmMain.SpeedButton1MouseUp(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.SpeedButton1MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: SpeedButton1MouseUp');
@@ -2172,6 +2179,7 @@ begin
 
    TempLines.Data_no := 0;
    SetLength(TempLines.Data,0);
+   ValidLastClick := false;
 
    if (Button = mbLeft) or (Button = mbRight) then
    begin
@@ -2362,29 +2370,38 @@ begin
 
                VxlTool_Line:
                begin
-                  V.Used := true;
-                  V.Colour := ActiveColour;
-                  V.Normal := ActiveNormal;
-                  drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := true;
+                     V.Colour := ActiveColour;
+                     V.Normal := ActiveNormal;
+                     drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
+                     RepaintViews;
+                  end;
                end;
 
                VXLTool_Rectangle:
                begin
-                  V.Used := true;
-                  V.Colour := ActiveColour;
-                  V.Normal := ActiveNormal;
-                  VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := true;
+                     V.Colour := ActiveColour;
+                     V.Normal := ActiveNormal;
+                     VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
+                     RepaintViews;
+                  end;
                end;
 
                VXLTool_FilledRectangle:
                begin
-                  V.Used := true;
-                  V.Colour := ActiveColour;
-                  V.Normal := ActiveNormal;
-                  VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := true;
+                     V.Colour := ActiveColour;
+                     V.Normal := ActiveNormal;
+                     VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
+                     RepaintViews;
+                  end;
                end;
 
                VXLTool_Measure:
@@ -2438,29 +2455,38 @@ begin
 
                VxlTool_Line:
                begin
-                  V.Used := False;
-                  V.Colour := 0;
-                  V.Normal := 0;
-                  drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := False;
+                     V.Colour := 0;
+                     V.Normal := 0;
+                     drawstraightline(Document.ActiveSection^,TempView,LastClick[0],LastClick[1],V);
+                     RepaintViews;
+                  end;
                end;
 
                VXLTool_Rectangle:
                begin
-                  V.Used := False;
-                  V.Colour := 0;
-                  V.Normal := 0;
-                  VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := False;
+                     V.Colour := 0;
+                     V.Normal := 0;
+                     VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,false,v);
+                     RepaintViews;
+                  end;
                end;
 
                VXLTool_FilledRectangle:
                begin
-                  V.Used := False;
-                  V.Colour := 0;
-                  V.Normal := 0;
-                  VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
-                  RepaintViews;
+                  if ValidLastClick then
+                  begin
+                     V.Used := False;
+                     V.Colour := 0;
+                     V.Normal := 0;
+                     VXLRectangle(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true,v);
+                     RepaintViews;
+                  end;
                end;
 
             end; // tool switch
@@ -2846,7 +2872,7 @@ begin
    if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) then Exit;
 
    with Document.ActiveSection^.Tailer do
-      if (LastClick[0].X > XSize-1) or (LastClick[0].Y > YSize-1) or (LastClick[0].Z > ZSize-1) then Exit;
+      if (LastClick[0].X >= XSize) or (LastClick[0].Y >= YSize) or (LastClick[0].Z >= ZSize) then Exit;
 
    {$ifdef DEBUG_FILE}
    DebugFile.Add('FrmMain: CnvView0MouseDown');
@@ -2857,6 +2883,7 @@ begin
       LastClick[1].X := LastClick[0].X;
       LastClick[1].Y := LastClick[0].Y;
       LastClick[1].Z := LastClick[0].Z;
+      ValidLastClick := true;
    end;
 
    if button = mbleft then
