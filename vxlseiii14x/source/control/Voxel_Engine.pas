@@ -146,10 +146,10 @@ begin
    {$ifdef DEBUG_FILE}
    FrmMain.DebugFile.Add('VoxelEngine: LoadVoxel');
    {$endif}
+   VoxelOpen := true;
    VXLFilename := copy(_Filename, 1, Length(_Filename));
    Configuration.AddFileToHistory(VXLFilename);
    UpdateHistoryMenu;
-   VoxelOpen := true;
    Result := true;
 
    SetupViews;
@@ -211,7 +211,6 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: NewVoxel');
    {$endif}
    VXLFilename := '';
-   VoxelOpen := true;
    _Document.ActiveVoxel^.Loaded := true;
    Result := true;
 
@@ -225,6 +224,7 @@ begin
       FrmMain.p_Frm3DModelizer^.SpStopClick(nil);
       FrmMain.p_Frm3DModelizer^.SpFrame.MaxValue := 1;
    end;
+   VoxelOpen := true;
    SetupViews;
    SetNormalsCount;
    SetSpectrumMode;

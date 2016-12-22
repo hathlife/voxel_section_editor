@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.265';
+   APPLICATION_VER = '1.39.266';
    APPLICATION_BETA = true;
 
 type
@@ -873,8 +873,7 @@ begin
    Application.OnIdle := nil;
    CheckVXLChanged;
 
-   SetIsEditable(LoadVoxel(Document,_Filename));
-   if IsEditable then
+   if LoadVoxel(Document,_Filename) then
    begin
       if p_Frm3DPreview <> nil then
       begin
@@ -887,6 +886,12 @@ begin
          p_Frm3DModelizer^.SpStopClick(nil);
       end;
       DoAfterLoadingThings;
+      SetIsEditable(true);
+      RefreshAll;
+   end
+   else
+   begin
+      SetIsEditable(false);
    end;
    IsVXLLoading := false;
 end;
@@ -2002,19 +2007,22 @@ procedure TFrmMain.CnvView1MouseDown(Sender: TObject; Button: TMouseButton; Shif
 var
    Outside: Boolean;
 begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView1MouseDown');
-   {$endif}
-   // if Button = mbLeft then
-      // isLeftMB := true;
-
-   if Button = mbLeft then
+   if VoxelOpen and IsEditable then
    begin
-      TranslateClick(1,X,Y,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,Outside);
-      if not Outside then
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView1MouseDown');
+      {$endif}
+      // if Button = mbLeft then
+         // isLeftMB := true;
+
+      if Button = mbLeft then
       begin
-         MoveCursor(LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true);
-         CursorResetNoMAX;
+         TranslateClick(1,X,Y,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,Outside);
+         if not Outside then
+         begin
+            MoveCursor(LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true);
+            CursorResetNoMAX;
+         end;
       end;
    end;
 end;
@@ -2023,17 +2031,19 @@ procedure TFrmMain.CnvView1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: 
 var
    Outside: Boolean;
 begin
-   if not IsEditable then exit;
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView1MouseMove');
-   {$endif}
-   if ssLeft in Shift then
+   if VoxelOpen and IsEditable then
    begin
-      TranslateClick(1,X,Y,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,Outside);
-      if Not Outside then
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView1MouseMove');
+      {$endif}
+      if ssLeft in Shift then
       begin
-         MoveCursor(LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true);
-         CursorResetNoMAX;
+         TranslateClick(1,X,Y,LastClick[1].X,LastClick[1].Y,LastClick[1].Z,Outside);
+         if Not Outside then
+         begin
+            MoveCursor(LastClick[1].X,LastClick[1].Y,LastClick[1].Z,true);
+            CursorResetNoMAX;
+         end;
       end;
    end;
 end;
@@ -2042,17 +2052,19 @@ procedure TFrmMain.CnvView2MouseMove(Sender: TObject; Shift: TShiftState; X, Y: 
 var
    Outside: boolean;
 begin
-   if not IsEditable then exit;
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView2MouseMove');
-   {$endif}
-   if ssLeft in Shift then
+   if VoxelOpen and IsEditable then
    begin
-      TranslateClick(2,X,Y,LastClick[2].X,LastClick[2].Y,LastClick[2].Z,Outside);
-      if not Outside then
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView2MouseMove');
+      {$endif}
+      if ssLeft in Shift then
       begin
-         MoveCursor(LastClick[2].X,LastClick[2].Y,LastClick[2].Z,true);
-         CursorResetNoMAX;
+         TranslateClick(2,X,Y,LastClick[2].X,LastClick[2].Y,LastClick[2].Z,Outside);
+         if not Outside then
+         begin
+            MoveCursor(LastClick[2].X,LastClick[2].Y,LastClick[2].Z,true);
+            CursorResetNoMAX;
+         end;
       end;
    end;
 end;
@@ -2061,19 +2073,22 @@ procedure TFrmMain.CnvView2MouseDown(Sender: TObject; Button: TMouseButton; Shif
 var
    Outside: boolean;
 begin
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView2MouseDown');
-   {$endif}
-   // if Button = mbLeft then
-      // isLeftMB := true;
-
-   if ssLeft in Shift then
+   if VoxelOpen and IsEditable then
    begin
-      TranslateClick(2,X,Y,LastClick[2].X,LastClick[2].Y,LastClick[2].Z,Outside);
-      if not Outside then
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView2MouseDown');
+      {$endif}
+      // if Button = mbLeft then
+         // isLeftMB := true;
+
+      if ssLeft in Shift then
       begin
-         MoveCursor(LastClick[2].X,LastClick[2].Y,LastClick[2].Z,true);
-         CursorResetNoMAX;
+         TranslateClick(2,X,Y,LastClick[2].X,LastClick[2].Y,LastClick[2].Z,Outside);
+         if not Outside then
+         begin
+            MoveCursor(LastClick[2].X,LastClick[2].Y,LastClick[2].Z,true);
+            CursorResetNoMAX;
+         end;
       end;
    end;
 end;
@@ -2084,106 +2099,108 @@ var
    V : TVoxelUnpacked;
    Outside: boolean;
 begin
-   if not iseditable then exit;
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView0MouseUp');
-   {$endif}
-
-   if ((ssAlt in shift) and (Button = mbLeft)) or ((Button = mbLeft) and (VXLTool = VXLTool_Dropper)) then
+   if VoxelOpen and IsEditable then
    begin
-      TempI := GetPaletteColourFromVoxel(X,Y,0);
-      if TempI > -1 then
-         if SpectrumMode = ModeColours then
-            SetActiveColor(TempI,True)
-         else
-            SetActiveNormal(TempI,True);
-   end
-   else
-   begin
-      if (ssCtrl in shift) and (Button = mbLeft) then
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView0MouseUp');
+      {$endif}
+
+      if ((ssAlt in shift) and (Button = mbLeft)) or ((Button = mbLeft) and (VXLTool = VXLTool_Dropper)) then
       begin
-         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-         if not Outside then
+         TempI := GetPaletteColourFromVoxel(X,Y,0);
+         if TempI > -1 then
+            if SpectrumMode = ModeColours then
+               SetActiveColor(TempI,True)
+            else
+               SetActiveNormal(TempI,True);
+      end
+      else
+      begin
+         if (ssCtrl in shift) and (Button = mbLeft) then
          begin
-            MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,false);
+            TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+            if not Outside then
+            begin
+               MoveCursor(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,false);
+            end;
+         end;
+
+         if VXLTool = VXLTool_FloodFill then
+         begin
+            TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+            if not Outside then
+            begin
+               Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+               if (SpectrumMode = ModeColours) or (v.Used=False) then
+                  v.Colour := ActiveColour;
+               if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                  v.Normal := ActiveNormal;
+
+               v.Used := True;
+               VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+            end;
+         end;
+
+         if VXLTool = VXLTool_FloodFillErase then
+         begin
+            TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+            if not Outside then
+            begin
+               Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+               if (SpectrumMode = ModeColours) or (v.Used=False) then
+                  v.Colour := 0;
+               if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                  v.Normal := 0;
+
+               v.Used := False;
+               VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
+            end;
+         end;
+
+         if VXLTool = VXLTool_Darken then
+         begin
+            TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+            if not Outside then
+            begin
+               Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+               if (SpectrumMode = ModeColours) or (v.Used=False) then
+                  v.Colour := ActiveColour;
+               if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                  v.Normal := ActiveNormal;
+
+               v.Used := True;
+               VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,True);
+            end;
+         end;
+
+         if VXLTool = VXLTool_Lighten then
+         begin
+            TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
+            if not Outside then
+            begin
+               Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
+               if (SpectrumMode = ModeColours) or (v.Used=False) then
+                  v.Colour := ActiveColour;
+               if (SpectrumMode = ModeNormals) or (v.Used=False) then
+                  v.Normal := ActiveNormal;
+
+               v.Used := True;
+               VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,false);
+            end;
          end;
       end;
 
-      if VXLTool = VXLTool_FloodFill then
+      if ApplyTempView(Document.ActiveSection^) then
+         UpdateUndo_RedoState;
+
+      TempLines.Data_no := 0;
+      SetLength(TempLines.Data,0);
+      ValidLastClick := false;
+
+      if (Button = mbLeft) or (Button = mbRight) then
       begin
-         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-         if not Outside then
-         begin
-            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-            if (SpectrumMode = ModeColours) or (v.Used=False) then
-               v.Colour := ActiveColour;
-            if (SpectrumMode = ModeNormals) or (v.Used=False) then
-               v.Normal := ActiveNormal;
-
-            v.Used := True;
-            VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
-         end;
+         RefreshAll;
       end;
-
-      if VXLTool = VXLTool_FloodFillErase then
-      begin
-         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-         if not Outside then
-         begin
-            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-            if (SpectrumMode = ModeColours) or (v.Used=False) then
-               v.Colour := 0;
-            if (SpectrumMode = ModeNormals) or (v.Used=False) then
-               v.Normal := 0;
-
-            v.Used := False;
-            VXLFloodFillTool(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v,Document.ActiveSection^.View[0].GetOrient);
-         end;
-      end;
-
-      if VXLTool = VXLTool_Darken then
-      begin
-         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-         if not Outside then
-         begin
-            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-            if (SpectrumMode = ModeColours) or (v.Used=False) then
-               v.Colour := ActiveColour;
-            if (SpectrumMode = ModeNormals) or (v.Used=False) then
-               v.Normal := ActiveNormal;
-
-            v.Used := True;
-            VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,True);
-         end;
-      end;
-
-      if VXLTool = VXLTool_Lighten then
-      begin
-         TranslateClick(0,x,y,LastClick[0].x,LastClick[0].y,LastClick[0].z,Outside);
-         if not Outside then
-         begin
-            Document.ActiveSection^.GetVoxel(LastClick[0].X,LastClick[0].Y,LastClick[0].Z,v);
-            if (SpectrumMode = ModeColours) or (v.Used=False) then
-               v.Colour := ActiveColour;
-            if (SpectrumMode = ModeNormals) or (v.Used=False) then
-               v.Normal := ActiveNormal;
-
-            v.Used := True;
-            VXLBrushToolDarkenLighten(Document.ActiveSection^,LastClick[0].X,LastClick[0].Y,LastClick[0].Z,VXLBrush,Document.ActiveSection^.View[0].GetOrient,false);
-         end;
-      end;
-   end;
-
-   if ApplyTempView(Document.ActiveSection^) then
-      UpdateUndo_RedoState;
-
-   TempLines.Data_no := 0;
-   SetLength(TempLines.Data,0);
-   ValidLastClick := false;
-
-   if (Button = mbLeft) or (Button = mbRight) then
-   begin
-      RefreshAll;
    end;
 end;
 
@@ -2868,33 +2885,36 @@ end;
 
 procedure TFrmMain.CnvView0MouseDown(Sender: TObject; Button: TMouseButton;  Shift: TShiftState; X, Y: Integer);
 begin
-   TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
-   if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) then Exit;
-
-   with Document.ActiveSection^.Tailer do
-      if (LastClick[0].X >= XSize) or (LastClick[0].Y >= YSize) or (LastClick[0].Z >= ZSize) then Exit;
-
-   {$ifdef DEBUG_FILE}
-   DebugFile.Add('FrmMain: CnvView0MouseDown');
-   {$endif}
-
-   if (VXLTool = VXLTool_Line) or (VXLTool = VXLTool_FilledRectangle) or (VXLTool = VXLTool_Rectangle) then
+   if VoxelOpen and IsEditable then
    begin
-      LastClick[1].X := LastClick[0].X;
-      LastClick[1].Y := LastClick[0].Y;
-      LastClick[1].Z := LastClick[0].Z;
-      ValidLastClick := true;
-   end;
+      TranslateClick2(0,X,Y,LastClick[0].X,LastClick[0].Y,LastClick[0].Z);
+      if (LastClick[0].X < 0) or (LastClick[0].Y < 0) or (LastClick[0].Z < 0) then Exit;
 
-   if button = mbleft then
-   begin
-      if TempView.Data_no > 0 then
+      with Document.ActiveSection^.Tailer do
+         if (LastClick[0].X >= XSize) or (LastClick[0].Y >= YSize) or (LastClick[0].Z >= ZSize) then Exit;
+
+      {$ifdef DEBUG_FILE}
+      DebugFile.Add('FrmMain: CnvView0MouseDown');
+      {$endif}
+
+      if (VXLTool = VXLTool_Line) or (VXLTool = VXLTool_FilledRectangle) or (VXLTool = VXLTool_Rectangle) then
       begin
-         TempView.Data_no := 0;
-         Setlength(TempView.Data,0);
+         LastClick[1].X := LastClick[0].X;
+         LastClick[1].Y := LastClick[0].Y;
+         LastClick[1].Z := LastClick[0].Z;
+         ValidLastClick := true;
       end;
-      // isLeftMouseDown := true;
-      CnvView0MouseMove(sender,shift,x,y);
+
+      if button = mbleft then
+      begin
+         if TempView.Data_no > 0 then
+         begin
+            TempView.Data_no := 0;
+            Setlength(TempView.Data,0);
+         end;
+         // isLeftMouseDown := true;
+         CnvView0MouseMove(sender,shift,x,y);
+      end;
    end;
 end;
 
