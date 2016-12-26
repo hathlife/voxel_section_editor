@@ -1061,7 +1061,13 @@ begin
    Animation1.Enabled := false;
 
    if not iseditable then
+   begin
       OGL3DPreview.Refresh;
+   end
+   else
+   begin
+      sleep(250); // Prevent mouse clicks and other events in the canvas for those who anxiety problems.
+   end;
 end;
 
 procedure TFrmMain.DoAfterLoadingThings;
