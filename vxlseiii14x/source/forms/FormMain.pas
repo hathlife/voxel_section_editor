@@ -869,6 +869,8 @@ end;
 
 procedure TFrmMain.OpenVoxelInterface(const _Filename: string);
 begin
+   SendToBack;
+   SetIsEditable(false);
    IsVXLLoading := true;
    Application.OnIdle := nil;
    CheckVXLChanged;
@@ -888,12 +890,9 @@ begin
       DoAfterLoadingThings;
       SetIsEditable(true);
       RefreshAll;
-   end
-   else
-   begin
-      SetIsEditable(false);
    end;
    IsVXLLoading := false;
+   BringToFront;
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);
@@ -1063,10 +1062,6 @@ begin
    if not iseditable then
    begin
       OGL3DPreview.Refresh;
-   end
-   else
-   begin
-      sleep(250); // Prevent mouse clicks and other events in the canvas for those who anxiety problems.
    end;
 end;
 
