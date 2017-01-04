@@ -12,13 +12,13 @@ uses
   ToolWin, ImgList, Spin, Buttons, ShellAPI, Form3dpreview, XPMan, dglOpenGL,
   VoxelDocument, RenderEnvironment, Actor, Camera, BasicFunctions,
   BasicVXLSETypes, Form3dModelizer, BasicProgramTypes, CustomSchemeControl,
-  PaletteControl;
+  PaletteControl, Debug;
 
 {$INCLUDE source/Global_Conditionals.inc}
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.266';
+   APPLICATION_VER = '1.39.267';
    APPLICATION_BETA = true;
 
 type
@@ -603,10 +603,7 @@ type
      CustomSchemeControl : TCustomSchemeControl;
      PaletteControl : TPaletteControl;
      SiteList: TSitesList;
-     {$ifdef DEBUG_FILE}
-     DebugFile: TDebugFile;
-     {$endif}
-     {$ifdef TEXTURE_DEBUG}
+     {$ifdef DEBUG_FILE or TEXTURE_DEBUG}
      DebugFile: TDebugFile;
      {$endif}
      SelectedZoomOption: TMenuItem;
@@ -636,12 +633,8 @@ var
    i : integer;
 begin
    // 1.32: Debug adition
-   {$ifdef DEBUG_FILE}
-   DebugFile := TDebugFile.Create('debugdev.txt');
-   DebugFile.Add('FrmMain: FormCreate');
-   {$endif}
-   {$ifdef TEXTURE_DEBUG}
-   DebugFile := TDebugFile.Create('debugdev.txt');
+   {$ifdef DEBUG_FILE or TEXTURE_DEBUG}
+   DebugFile := TDebugFile.Create(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + 'debugdev.txt');
    DebugFile.Add('FrmMain: FormCreate');
    {$endif}
 
@@ -864,7 +857,9 @@ begin
    DebugFile.Add('FrmMain: Open1Click');
    {$endif}
    if OpenVXLDialog.Execute then
+   begin
       OpenVoxelInterface(OpenVXLDialog.FileName);
+   end;
 end;
 
 procedure TFrmMain.OpenVoxelInterface(const _Filename: string);
@@ -872,6 +867,9 @@ begin
    SendToBack;
    Deactivate;
    SetIsEditable(false);
+   sleep(100);
+   application.ProcessMessages;
+   CnvView0.Invalidate;
    IsVXLLoading := true;
    Application.OnIdle := nil;
    CheckVXLChanged;
@@ -2459,8 +2457,7 @@ begin
 
             end;
          end
-         else
-         if ssRight in Shift then
+         else if ssRight in Shift then
          begin
             case VxlTool of
 
@@ -2537,7 +2534,7 @@ begin
             end;
             CnvView[0].Cursor := Mouse_Current;
 
-            if TempView.Data_no > 0 then
+           if TempView.Data_no > 0 then
             begin
                TempView.Data_no := 0;
                Setlength(TempView.Data,0);
@@ -2580,7 +2577,7 @@ begin
             end; // draw preview not disabled and alt not used.
 
          end; // Which button is down
-         
+
       end // Is click not outside
       else
       begin

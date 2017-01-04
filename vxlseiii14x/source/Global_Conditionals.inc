@@ -4,7 +4,7 @@
 
 //{$DEFINE DEBUG_NORMALS} // disabled for now
 //{$DEFINE DEBUG_FILE}
-{$DEFINE SPEED_TEST}       // to check speed mesh operations.
+//{$DEFINE SPEED_TEST}       // to check speed mesh operations.
 //{$DEFINE MESH_TEST}       // to mesh values for UFF's final graduation project
 //{$DEFINE SMOOTH_TEST}      // to smooth values for UFF's master dissertation project
 //{$DEFINE ORIGAMI_TEST}     // to test the origami texture atlas extraction.
