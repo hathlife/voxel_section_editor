@@ -864,12 +864,9 @@ end;
 
 procedure TFrmMain.OpenVoxelInterface(const _Filename: string);
 begin
-   SendToBack;
-   Deactivate;
    SetIsEditable(false);
-   sleep(100);
+   sleep(50);
    application.ProcessMessages;
-   CnvView0.Invalidate;
    IsVXLLoading := true;
    Application.OnIdle := nil;
    CheckVXLChanged;
@@ -891,8 +888,6 @@ begin
       RefreshAll;
    end;
    IsVXLLoading := false;
-   BringToFront;
-   Activate;
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);
