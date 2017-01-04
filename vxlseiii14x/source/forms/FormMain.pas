@@ -870,6 +870,7 @@ end;
 procedure TFrmMain.OpenVoxelInterface(const _Filename: string);
 begin
    SendToBack;
+   Deactivate;
    SetIsEditable(false);
    IsVXLLoading := true;
    Application.OnIdle := nil;
@@ -893,6 +894,7 @@ begin
    end;
    IsVXLLoading := false;
    BringToFront;
+   Activate;
 end;
 
 Procedure TFrmMain.SetIsEditable(Value : boolean);
