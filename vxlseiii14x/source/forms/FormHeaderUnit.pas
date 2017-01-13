@@ -190,6 +190,7 @@ begin
       label1.Caption:='Dimensions: '+Format('%dx%dx%d', [XSize,YSize,ZSize]);
    end;
    SpFrameChange(Sender);
+   BtnApply.Enabled := true;
 end;
 
 procedure TFrmHeader.butCloseClick(Sender: TObject);
@@ -240,7 +241,7 @@ begin
          p^.Section[i].Tailer.MaxBounds[2] := StrToFloat(scaleYmax.Text);
          p^.Section[i].Tailer.MaxBounds[3] := StrToFloat(scaleZmax.Text);
          p^.Section[i].Tailer.Det := StrToFloat(scale.Text);
-         BtnApply.Enabled := false;
+         //BtnApply.Enabled := false;
          FrmMain.RefreshAll;
       except
          on EConvertError do
@@ -287,7 +288,7 @@ begin
       scaleZmax.text := floattostr((Tailer.ZSize /2));
       scaleXmin.text := floattostr(0 - (Tailer.XSize /2));
       scaleZmin.text := floattostr(0 - (Tailer.ZSize /2));
-      if rbAir.Checked then
+      if (rbAir.Checked) then
       begin
          scaleYmax.text := floattostr((Tailer.YSize /2));
          scaleYmin.text := floattostr(0 - (Tailer.YSize /2));
