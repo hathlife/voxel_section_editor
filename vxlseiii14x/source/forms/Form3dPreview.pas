@@ -769,7 +769,7 @@ begin
    Form.ShowModal;
    if Form.OK then
    begin
-      Env.Take360Animation(VXLFilename,Form.NumFrames,10,stGif);
+      Env.Take360Animation(VXLFilename,Form.NumFrames,Form.FrameDelay,stGif);
 
       btn3DRotateY_d := btn3DRotateY.Down;
       btn3DRotateY2_d := btn3DRotateY2.Down;

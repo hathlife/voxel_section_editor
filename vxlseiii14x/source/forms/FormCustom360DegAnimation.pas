@@ -8,11 +8,13 @@ uses
 
 type
   TFrmCustom360DegAnimation = class(TForm)
-    Label1: TLabel;
+    LbNumFrames: TLabel;
     EdNumFrames: TEdit;
     Bevel1: TBevel;
     BtOK: TButton;
     BtCancel: TButton;
+    LbFrameDelay: TLabel;
+    EdFrameDelay: TEdit;
     procedure BtOKClick(Sender: TObject);
     procedure BtCancelClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -22,6 +24,7 @@ type
     { Public declarations }
     OK: boolean;
     NumFrames: longword;
+    FrameDelay: longword;
   end;
 
 implementation
@@ -38,8 +41,16 @@ begin
    NumFrames := StrToIntDef(EdNumFrames.Text, 0);
    if NumFrames > 0 then
    begin
-      OK := true;
-      close;
+      FrameDelay := StrToIntDef(EdFrameDelay.Text, 0);
+      if FrameDelay > 0 then
+      begin
+         OK := true;
+         close;
+      end
+      else
+      begin
+         ShowMessage('Warning: Insert a valid time in millisseconds of frame delay for an animation. It must be a positive non-zero value.');
+      end;
    end
    else
    begin
