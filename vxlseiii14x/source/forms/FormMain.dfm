@@ -823,6 +823,7 @@ object FrmMain: TFrmMain
           BevelOuter = bvLowered
           ParentBackground = False
           TabOrder = 0
+          OnClick = Colours1Click
         end
         object pnlActiveNormal: TPanel
           Left = 2
@@ -832,6 +833,7 @@ object FrmMain: TFrmMain
           BevelOuter = bvLowered
           ParentBackground = False
           TabOrder = 1
+          OnClick = Normals1Click
         end
       end
       object PnlLayer: TPanel
