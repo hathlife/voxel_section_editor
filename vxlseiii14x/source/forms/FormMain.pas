@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.269';
+   APPLICATION_VER = '1.39.270';
    APPLICATION_BETA = true;
 
 type
@@ -361,6 +361,8 @@ type
     MaintainDimensions1: TMenuItem;
     pnlActiveNormal: TPanel;
     lblActiveNormal: TLabel;
+    procedure Splitter3Moved(Sender: TObject);
+    procedure Splitter2Moved(Sender: TObject);
     procedure MaintainDimensions1Click(Sender: TObject);
     procedure UpdatePaletteList1Click(Sender: TObject);
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
@@ -586,6 +588,7 @@ type
      Xcoord, Ycoord, Zcoord : Integer;
      MouseButton : Integer;
      ValidLastClick : boolean;
+     ViewMinimumHeight: integer;
      procedure Idle(Sender: TObject; var Done: Boolean);
      procedure BuildUsedColoursArray;
      function CharToStr: string;
@@ -716,14 +719,19 @@ begin
    // Resets the 3 views on the right sidebar if the res is too low for 203 high ones.
    if RightPanel.Height < lblView1.Height+CnvView1.Height+lblView2.Height+CnvView2.Height+lbl3dview.Height+Panel7.Height+OGL3DPreview.Height then
    begin
-      i := RightPanel.Height - (lblView1.Height+lblView2.Height+lbl3dview.Height+Panel7.Height);
+      ViewMinimumHeight := RightPanel.Height - (lblView1.Height+lblView2.Height+lbl3dview.Height+Panel7.Height);
 
-      i := trunc(i / 3);
-      CnvView1.Height := i;
-      CnvView2.Height := i;
-      OGL3DPreview.Height := i;
+      ViewMinimumHeight := trunc(ViewMinimumHeight / 3);
+      CnvView1.Height := ViewMinimumHeight;
+      CnvView2.Height := ViewMinimumHeight;
+      OGL3DPreview.Height := ViewMinimumHeight;
+   end
+   else
+   begin
+      ViewMinimumHeight := CnvView1.Height;
    end;
-
+   RightPanel.Constraints.MinHeight := lblView1.Height+CnvView1.Height+lblView2.Height+CnvView2.Height+lbl3dview.Height+Panel7.Height+OGL3DPreview.Height;
+   
    // 1.2 Enable Idle only on certain situations.
    Application.OnIdle := nil;
 
@@ -4747,6 +4755,30 @@ end;
 procedure TFrmMain.SpinButton3UpClick(Sender: TObject);
 begin
    YCursorBar.Position := YCursorBar.Position +1;
+end;
+
+procedure TFrmMain.Splitter2Moved(Sender: TObject);
+begin
+   if CnvView1.Height < ViewMinimumHeight then
+   begin
+      if RightPanel.Height > ((2 * ViewMinimumHeight) + (Splitter2.Height * 2) + (lblView1.Height * 2)) then
+      begin
+         CnvView1.Height := ViewMinimumHeight;
+         Splitter2.Top := CnvView1.Height + lblView1.Height;
+      end;
+   end;
+end;
+
+procedure TFrmMain.Splitter3Moved(Sender: TObject);
+begin
+   if CnvView2.Height < ViewMinimumHeight then
+   begin
+      if RightPanel.Height > ((2 * ViewMinimumHeight) + (Splitter2.Height * 2) + (lblView1.Height * 2)) then
+      begin
+         CnvView2.Height := ViewMinimumHeight;
+         Splitter3.Top := CnvView1.Height + CnvView2.Height + Splitter2.Height + lblView1.Height + lblView2.Height;
+      end;
+   end;
 end;
 
 procedure TFrmMain.SpinButton3DownClick(Sender: TObject);

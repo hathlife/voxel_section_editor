@@ -399,7 +399,10 @@ begin
       end;
       Exit; // don't do anything else then
    end;
-   if _View = nil then Exit;
+   if _View = nil then
+      Exit;
+   if (_Cnv.Width = 0) or (_Cnv.Height = 0) then
+      Exit;
    Viewport := FrmMain.Document.ActiveSection^.Viewport[_WndIndex];
    Bitmap := TBitmap.Create;
    Bitmap.Width := _Cnv.Width;
@@ -634,6 +637,8 @@ begin
       Exit; // don't do anything else then
    end;
    if _View = nil then
+      Exit;
+   if (_Cnv.Width = 0) or (_Cnv.Height = 0) then
       Exit;
    Viewport := FrmMain.Document.ActiveSection^.Viewport[_WndIndex];
    // fill margins around shape

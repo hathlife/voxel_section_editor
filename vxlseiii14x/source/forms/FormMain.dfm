@@ -1390,6 +1390,7 @@ object FrmMain: TFrmMain
         Align = alTop
         AutoSnap = False
         MinSize = 80
+        OnMoved = Splitter2Moved
         ExplicitLeft = 2
         ExplicitTop = 208
       end
@@ -1400,6 +1401,7 @@ object FrmMain: TFrmMain
         Height = 3
         Cursor = crVSplit
         Align = alTop
+        OnMoved = Splitter3Moved
         ExplicitLeft = 2
         ExplicitTop = 427
       end
