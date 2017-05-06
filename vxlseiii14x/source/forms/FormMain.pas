@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.268';
+   APPLICATION_VER = '1.39.269';
    APPLICATION_BETA = true;
 
 type
@@ -359,6 +359,8 @@ type
     Yaw902: TMenuItem;
     N27: TMenuItem;
     MaintainDimensions1: TMenuItem;
+    pnlActiveNormal: TPanel;
+    lblActiveNormal: TLabel;
     procedure MaintainDimensions1Click(Sender: TObject);
     procedure UpdatePaletteList1Click(Sender: TObject);
     procedure FillUselessInternalCavesVeryStrict1Click(Sender: TObject);
@@ -406,11 +408,11 @@ type
     procedure SetActiveColor(Value : integer; CN : boolean);
     procedure SetActiveNormal(Value : integer; CN : boolean);
     Procedure SetActiveCN(Value : integer);
+    Procedure SetActiveN(Value : integer);
     procedure ScrollBar1Change(Sender: TObject);
     procedure setupscrollbars;
     procedure FormShow(Sender: TObject);
-    procedure cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure cnvPaletteMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure ShowUsedColoursNormals1Click(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure OGL3DPreviewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -707,7 +709,7 @@ begin
    RightPanel.DoubleBuffered := true;
 
    SetActiveColor(16,true);
-   SetActiveNormal(0,false);
+   SetActiveNormal(0,true);
 
    ChangeCaption(false);
 
@@ -947,6 +949,7 @@ begin
 
       If SpectrumMode = ModeColours then
          SetActiveColor(ActiveColour,true);
+      SetActiveNormal(ActiveNormal,true);
       cnvPalette.refresh;
 
       // 1.32 Aditions:
@@ -1471,7 +1474,7 @@ begin
    {$endif}
    ActiveColour := Value;
    if CN then
-   if SpectrumMode = ModeColours then
+//      if SpectrumMode = ModeColours then
       SetActiveCN(Value);
 end;
 
@@ -1491,8 +1494,8 @@ begin
    ActiveNormal := v;
 
    if CN then
-      if SpectrumMode = ModeNormals then
-         SetActiveCN(V);
+//      if SpectrumMode = ModeNormals then
+      SetActiveN(V);
 end;
 
 Procedure TFrmMain.SetActiveCN(Value : integer);
@@ -1504,7 +1507,20 @@ begin
       pnlActiveColour.Color := GetVXLPaletteColor(Value)
    else
       pnlActiveColour.Color := colourtogray(GetVXLPaletteColor(Value));
-   lblActiveColour.Caption := IntToStr(Value) + ' (0x' + IntToHex(Value,3) + ')';
+   lblActiveColour.Caption := IntToStr(Value) + ' (0x' + IntToHex(Value,3) + '): Colour';
+   cnvPalette.Repaint;
+end;
+
+Procedure TFrmMain.SetActiveN(Value : integer);
+begin
+   {$ifdef DEBUG_FILE}
+   DebugFile.Add('FrmMain: SetActiveN');
+   {$endif}
+   if isEditable then
+      pnlActiveNormal.Color := GetVXLPaletteColor(Value, true)
+   else
+      pnlActiveNormal.Color := colourtogray(GetVXLPaletteColor(Value));
+   lblActiveNormal.Caption := IntToStr(Value) + ' (0x' + IntToHex(Value,3) + '): Normal';
    cnvPalette.Repaint;
 end;
 

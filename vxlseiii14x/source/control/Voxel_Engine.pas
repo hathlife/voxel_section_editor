@@ -54,7 +54,7 @@ Procedure UpdateViews;
 Procedure SetSpectrumMode;
 Procedure SetNormalsCount;
 Function CleanVCol(_Color : TVector3f) : TColor;
-Function GetVXLPaletteColor(_Color : integer) : TColor;
+Function GetVXLPaletteColor(_Color : integer; _ForceNormal: boolean = false) : TColor;
 Procedure PaintView(_WndIndex: Integer; _isMouseLeftDown : boolean; var _Cnv: PPaintBox; var _View: TVoxelView);
 function colourtogray(_colour : cardinal): cardinal;
 procedure SplitColour(_raw: TColor; var _red, _green, _blue: Byte);
@@ -328,7 +328,7 @@ begin
    Result := RGB(trunc(T.X),trunc(T.Y),trunc(T.Z));
 end;
 
-Function GetVXLPaletteColor(_Color : integer) : TColor;
+Function GetVXLPaletteColor(_Color : integer; _ForceNormal: boolean = false) : TColor;
 Var
    T : TVector3f;
 begin
@@ -338,7 +338,7 @@ begin
       exit;
    end;
 
-   if SpectrumMode = ModeColours then
+   if (SpectrumMode = ModeColours) and (not _ForceNormal) then
       Result := FrmMain.Document.Palette^[_Color]
    else
    begin

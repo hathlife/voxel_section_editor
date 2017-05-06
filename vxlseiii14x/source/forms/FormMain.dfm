@@ -796,7 +796,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 530
         Width = 150
-        Height = 21
+        Height = 43
         Align = alTop
         BevelOuter = bvNone
         ParentBackground = False
@@ -804,6 +804,13 @@ object FrmMain: TFrmMain
         object lblActiveColour: TLabel
           Left = 40
           Top = 2
+          Width = 3
+          Height = 13
+          Caption = '-'
+        end
+        object lblActiveNormal: TLabel
+          Left = 40
+          Top = 21
           Width = 3
           Height = 13
           Caption = '-'
@@ -816,6 +823,15 @@ object FrmMain: TFrmMain
           BevelOuter = bvLowered
           ParentBackground = False
           TabOrder = 0
+        end
+        object pnlActiveNormal: TPanel
+          Left = 2
+          Top = 21
+          Width = 33
+          Height = 17
+          BevelOuter = bvLowered
+          ParentBackground = False
+          TabOrder = 1
         end
       end
       object PnlLayer: TPanel
@@ -1640,7 +1656,6 @@ object FrmMain: TFrmMain
         OnPaint = CnvView0Paint
         ExplicitLeft = 0
         ExplicitTop = 20
-        ExplicitHeight = 767
       end
       object TopBarImageHolder: TImage
         Left = 0

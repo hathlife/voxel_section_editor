@@ -42,7 +42,7 @@ type
       Label6: TLabel;
       CbInfluenceMap: TCheckBox;
       BtTips: TButton;
-      CbNewPixelsOnly: TCheckBox;
+    CbPixelsZeroOnly: TCheckBox;
       CbIncreaseContrast: TCheckBox;
       Label7: TLabel;
       EdContrast: TEdit;
@@ -85,7 +85,7 @@ begin
    CbIncreaseContrast.Enabled := value and RbInfluence.Checked;
    EdContrast.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
    EdSmooth.Enabled := value and (not RbTangent.Checked);
-   CbNewPixelsOnly.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
+   CbPixelsZeroOnly.Enabled := value and (not RbTangent.Checked) and (not RbHBD.Checked);
    if RbInfluence.Checked then
    begin
       CbIncreaseContrast.Caption := 'Stretch Influence Map';
@@ -147,7 +147,7 @@ begin
    end;
    CbSmoothMe.Checked := Configuration.ANSmoothMyNormals;
    CbInfluenceMap.Checked := Configuration.ANInfluenceMap;
-   CbNewPixelsOnly.Checked := Configuration.ANNewPixels;
+   CbPixelsZeroOnly.Checked := Configuration.ANNewPixels;
    CbIncreaseContrast.Checked := Configuration.ANStretch;
    EdSmooth.Text := FloatToStr(Configuration.ANSmoothLevel);
    EdContrast.Text := FloatToStr(Configuration.ANContrastLevel);
@@ -280,7 +280,7 @@ begin
       AutoNormalsApplied := true;
       CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
       FrmMain.UpdateUndo_RedoState;
-      Res := ApplyInfluenceNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbNewPixelsOnly.checked,CbIncreaseContrast.checked);
+      Res := ApplyInfluenceNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbPixelsZeroOnly.checked,CbIncreaseContrast.checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_INFLUENCE + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Influence Auto Normal Results',0);
    end
    else if RbCubed.Checked then
@@ -311,7 +311,7 @@ begin
       AutoNormalsApplied := true;
       CreateVXLRestorePoint(FrmMain.Document.ActiveSection^,Undo);
       FrmMain.UpdateUndo_RedoState;
-      Res := ApplyCubedNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbInfluenceMap.Checked,CbNewPixelsOnly.checked);
+      Res := ApplyCubedNormals(MyVoxel,Range,Smooth,Contrast,CbSmoothMe.Checked,CbInfluenceMap.Checked,CbPixelsZeroOnly.checked);
       MessageBox(0,pchar('AutoNormals v' + AUTONORMALS_CUBED + #13#13 + 'Total: ' + inttostr(Res.applied) + ' voxels modified.'),'Cubed Auto Normal Results',0);
    end
    else if RbHBD.Checked then
@@ -366,7 +366,7 @@ begin
    begin
       Configuration.ANSmoothMyNormals := CbSmoothMe.Checked;
       Configuration.ANInfluenceMap := CbInfluenceMap.Checked;
-      Configuration.ANNewPixels := CbNewPixelsOnly.Checked;
+      Configuration.ANNewPixels := CbPixelsZeroOnly.Checked;
       Configuration.ANStretch := CbIncreaseContrast.Checked;
       Configuration.ANNormalizationRange := StrToFloatDef(EdRange.Text, 0);
       Configuration.ANSmoothLevel := StrToFloatDef(EdSmooth.Text, 1);

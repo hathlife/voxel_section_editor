@@ -268,12 +268,12 @@ object FrmAutoNormals: TFrmAutoNormals
       State = cbChecked
       TabOrder = 3
     end
-    object CbNewPixelsOnly: TCheckBox
+    object CbPixelsZeroOnly: TCheckBox
       Left = 200
       Top = 72
       Width = 153
       Height = 17
-      Caption = 'Normalize only new pixels'
+      Caption = 'Pixels with normal #0 only'
       TabOrder = 4
     end
     object CbIncreaseContrast: TCheckBox
