@@ -84,7 +84,7 @@ type
     HVA : PHVA;
   public
     { Public declarations }
-    procedure SetValues(Vox: PVoxel; _HVA: PHVA);
+    procedure SetValues(_Vox: PVoxel; _HVA: PHVA);
   end;
 
 implementation
@@ -93,11 +93,11 @@ uses FormMain, BasicVXLSETypes;
 
 {$R *.DFM}
 
-procedure TFrmHeader.SetValues(Vox: PVoxel; _HVA: PHVA);
+procedure TFrmHeader.SetValues(_Vox: PVoxel; _HVA: PHVA);
 var
    i: Integer;
 begin
-   p:=Vox;
+   p:=_Vox;
    HVA := _HVA;
    label2.caption:='File Type: '+p^.Header.FileType;
    label3.caption:='Num Palettes: '+IntToStr(p^.Header.NumPalettes);

@@ -2708,7 +2708,10 @@ begin
    FrmMain.DebugFile.Add('VoxelEngine: SetNormals');
    {$endif}
    for x := 0 to FrmMain.Document.ActiveVoxel^.Header.NumSections -1 do
+   begin
       FrmMain.Document.ActiveVoxel^.Section[x].Tailer.NormalsType := _Normal;
+      FrmMain.Document.ActiveVoxel^.Section[x].Normals.SwitchNormalsType(_Normal);
+   end;
 end;
 
 (***** COLORS ONLY *****)
