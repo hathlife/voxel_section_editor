@@ -36,7 +36,7 @@ object FrmPreferences: TFrmPreferences
   end
   object GroupBox1: TGroupBox
     Left = 176
-    Top = 88
+    Top = 96
     Width = 297
     Height = 265
     Caption = 'File Association'
@@ -47,7 +47,7 @@ object FrmPreferences: TFrmPreferences
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = ThreeDOptions_tab
+      ActivePage = Normals_tab
       Style = tsFlatButtons
       TabOrder = 0
       object TabSheet1: TTabSheet
@@ -219,8 +219,6 @@ object FrmPreferences: TFrmPreferences
         Caption = '2D Options'
         ImageIndex = 3
         TabVisible = False
-        ExplicitTop = 27
-        ExplicitHeight = 210
         object Label5: TLabel
           Left = 42
           Top = 8
@@ -248,6 +246,21 @@ object FrmPreferences: TFrmPreferences
           OnClick = BtReset2DBackColorClick
         end
       end
+      object Normals_tab: TTabSheet
+        Caption = 'Normals Options'
+        ImageIndex = 4
+        TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        object CbResetNormalValue: TCheckBox
+          Left = 16
+          Top = 3
+          Width = 249
+          Height = 17
+          Caption = 'Reset Normal Value to #0 when changing model.'
+          TabOrder = 0
+        end
+      end
     end
   end
   object Pref_List: TTreeView
@@ -262,13 +275,14 @@ object FrmPreferences: TFrmPreferences
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
     Items.NodeData = {
-      01040000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      01050000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
       0011460069006C00650020004100730073006F00630069006100740069006F00
       6E007300270000000000000000000000FFFFFFFFFFFFFFFF0000000000000000
       07500061006C0065007400740065002D0000000000000000000000FFFFFFFFFF
       FFFFFF00000000000000000A3200440020004F007000740069006F006E007300
       2D0000000000000000000000FFFFFFFFFFFFFFFF00000000000000000A330044
-      0020004F007000740069006F006E007300}
+      0020004F007000740069006F006E007300270000000000000000000000FFFFFF
+      FFFFFFFFFF0000000000000000074E006F0072006D0061006C007300}
   end
   object Panel1: TPanel
     Left = 0

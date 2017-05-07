@@ -24,7 +24,7 @@ type
          Assoc,Palette: Boolean;
          TS,RA2,Location3ds2vxl,INILocation3ds2vxl : string;
          FPSCap : longword;
-         OpenCL: boolean;
+         OpenCL, ResetNormalValue: boolean;
          ANType: integer;
          ANSmoothMyNormals, ANInfluenceMap, ANNewPixels, ANStretch: boolean;
          ANNormalizationRange, ANSmoothLevel, ANContrastLevel: single;
@@ -187,6 +187,10 @@ begin
             MaintainDimensionsRM := Reg.ReadBool('MaintainDimensionsRM')
          else
             MaintainDimensionsRM := false;
+         if Reg.ValueExists('ResetNormalValue') then
+            ResetNormalValue := Reg.ReadBool('ResetNormalValue')
+         else
+            ResetNormalValue := false;
       end
       else
       begin
@@ -212,6 +216,7 @@ begin
          Canvas2DBackgroundColor := 15444620; // RGB(140, 170, 235)
          Canvas3DBackgroundColor := 15444620;
          MaintainDimensionsRM := false;
+         ResetNormalValue := false;
       end;
 
    finally
@@ -267,6 +272,7 @@ begin
    Reg.WriteInteger('2DBackgroundColor',Canvas2DBackgroundColor);
    Reg.WriteInteger('3DBackgroundColor',Canvas3DBackgroundColor);
    Reg.WriteBool('MaintainDimensionsRM', MaintainDimensionsRM);
+   Reg.WriteBool('ResetNormalValue',ResetNormalValue);
    Reg.CloseKey;
    Reg.Free;
 end;

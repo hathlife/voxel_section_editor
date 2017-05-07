@@ -45,6 +45,8 @@ type
     pnl2DBackgroundColour: TPanel;
     Label5: TLabel;
     BtReset2DBackColor: TButton;
+    Normals_tab: TTabSheet;
+    CbResetNormalValue: TCheckBox;
     procedure pnl2DBackgroundColourClick(Sender: TObject);
     procedure BtReset2DBackColorClick(Sender: TObject);
     procedure pnl3DBackgroundColourClick(Sender: TObject);
@@ -146,6 +148,11 @@ begin
 
    Configuration.Canvas3DBackgroundColor := longword(pnl3DBackgroundColour.Color);
    FrmMain.Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor);
+
+   if cbResetNormalValue.Checked then
+      Configuration.ResetNormalValue := true
+   else
+      Configuration.ResetNormalValue := false;
 
    if Reg.OpenKey('\VXLSe\DefaultIcon\',true) then
    begin
@@ -298,6 +305,8 @@ begin
          PageControl1.ActivePageIndex := 2;
       if pref_list.Selected.Text = '2D Options' then
          PageControl1.ActivePageIndex := 3;
+      if pref_list.Selected.Text = 'Normals' then
+         PageControl1.ActivePageIndex := 4;
       GroupBox1.Caption := pref_list.Selected.Text;
    end;
 end;
@@ -381,6 +390,9 @@ begin
    CbOpenCL.Checked := Configuration.OpenCL and GlobalVars.Render.IsOpenCLAllowed;
    pnl2DBackgroundColour.Color := Configuration.Canvas2DBackgroundColor;
    pnl3DBackgroundColour.Color := Configuration.Canvas3DBackgroundColor;
+
+   // Normals
+   CbResetNormalValue.Checked := Configuration.ResetNormalValue;
 end;
 
 end.

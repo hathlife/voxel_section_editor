@@ -18,7 +18,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Voxel Section Editor III';
-   APPLICATION_VER = '1.39.270';
+   APPLICATION_VER = '1.39.271';
    APPLICATION_BETA = true;
 
 type
@@ -1091,7 +1091,14 @@ begin
    SetupSections;
    SetViewMode(ModeEmphasiseDepth);
    SetSpectrum(SpectrumMode);
-   SetActiveNormal(ActiveNormal,true);
+   if Configuration.ResetNormalValue then
+   begin
+      SetActiveNormal(0,true);   
+   end
+   else
+   begin
+      SetActiveNormal(ActiveNormal,true);
+   end;
    // 1.2b: Refresh Show Use Colours
    if UsedColoursOption then
       BuildUsedColoursArray;
