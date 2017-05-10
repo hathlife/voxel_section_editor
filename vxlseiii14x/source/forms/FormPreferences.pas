@@ -109,82 +109,89 @@ var
 begin
    ExtractIcon;
    Reg :=TRegistry.Create;
-   Reg.RootKey := HKEY_CLASSES_ROOT;
+   try
+      Reg.RootKey := HKEY_CURRENT_USER;
 
-   Configuration.Icon := IconID.Position;
-   Configuration.Assoc := AssociateCheck.Checked;
-   Configuration.Palette := CheckBox1.Checked;
+      Configuration.Icon := IconID.Position;
+      Configuration.Assoc := AssociateCheck.Checked;
+      Configuration.Palette := CheckBox1.Checked;
 
-   if ComboBox1.ItemIndex = 0 {< 1}then
-      Configuration.TS := 'TS'
-   else if ComboBox1.ItemIndex = 1 then
-      Configuration.TS := 'RA2'
-   else
-   begin
-      ShowMessage('I am going here with ' + IntToStr(ComboBox1.ItemIndex));
-      Configuration.TS := ComboBox1.Items.Strings[ComboBox1.ItemIndex];
-   end;
-
-   if ComboBox2.ItemIndex = 0 then
-      Configuration.RA2 := 'TS'
-   else if (ComboBox2.ItemIndex = 1) then// or (frm.ComboBox2.ItemIndex = -1) then
-      Configuration.RA2 := 'RA2'
-   else
-      Configuration.RA2 := ComboBox2.Items.Strings[ComboBox2.ItemIndex];
-
-   if cbFPSCap.Checked then
-      Configuration.FPSCap := StrToIntDef(SpFPSCap.Text,70)
-   else
-      Configuration.FPSCap := 0;
-   GlobalVars.Render.SetFPS(Configuration.FPSCap);
-
-   if cbOpenCL.Checked then
-      Configuration.OpenCL := true
-   else
-      Configuration.OpenCL := false;
-   GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
-
-   Configuration.Canvas2DBackgroundColor := longword(pnl2DBackgroundColour.Color);
-
-   Configuration.Canvas3DBackgroundColor := longword(pnl3DBackgroundColour.Color);
-   FrmMain.Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor);
-
-   if cbResetNormalValue.Checked then
-      Configuration.ResetNormalValue := true
-   else
-      Configuration.ResetNormalValue := false;
-
-   if Reg.OpenKey('\VXLSe\DefaultIcon\',true) then
-   begin
-      Reg.WriteString('',IconPath);
-      Reg.CloseKey;
-   end;
-
-   if AssociateCheck.Checked = true then
-   begin
-      Reg.RootKey := HKEY_CLASSES_ROOT;
-      if Reg.OpenKey('\.vxl\',true) then
+      if ComboBox1.ItemIndex = 0 {< 1}then
+         Configuration.TS := 'TS'
+      else if ComboBox1.ItemIndex = 1 then
+         Configuration.TS := 'RA2'
+      else
       begin
-         Reg.WriteString('','VXLSe');
+         ShowMessage('I am going here with ' + IntToStr(ComboBox1.ItemIndex));
+         Configuration.TS := ComboBox1.Items.Strings[ComboBox1.ItemIndex];
+      end;
+
+      if ComboBox2.ItemIndex = 0 then
+         Configuration.RA2 := 'TS'
+      else if (ComboBox2.ItemIndex = 1) then// or (frm.ComboBox2.ItemIndex = -1) then
+         Configuration.RA2 := 'RA2'
+      else
+         Configuration.RA2 := ComboBox2.Items.Strings[ComboBox2.ItemIndex];
+
+      if cbFPSCap.Checked then
+         Configuration.FPSCap := StrToIntDef(SpFPSCap.Text,70)
+      else
+         Configuration.FPSCap := 0;
+      GlobalVars.Render.SetFPS(Configuration.FPSCap);
+
+      if cbOpenCL.Checked then
+         Configuration.OpenCL := true
+      else
+         Configuration.OpenCL := false;
+      GlobalVars.Render.EnableOpenCL := Configuration.OpenCL;
+
+      Configuration.Canvas2DBackgroundColor := longword(pnl2DBackgroundColour.Color);
+
+      Configuration.Canvas3DBackgroundColor := longword(pnl3DBackgroundColour.Color);
+      FrmMain.Env.SetBackgroundColour(Configuration.Canvas3DBackgroundColor);
+
+      if cbResetNormalValue.Checked then
+         Configuration.ResetNormalValue := true
+      else
+         Configuration.ResetNormalValue := false;
+
+      if Reg.OpenKey('\SOFTWARE\Classes\VXLSe\DefaultIcon\',true) then
+      begin
+         Reg.WriteString('',IconPath);
          Reg.CloseKey;
-         Reg.RootKey := HKEY_CLASSES_ROOT;
-         if Reg.OpenKey('\VXLSe\shell\',true) then
+      end;
+
+      if AssociateCheck.Checked = true then
+      begin
+         Reg.RootKey := HKEY_CURRENT_USER;
+         if Reg.OpenKey('\SOFTWARE\Classes\.vxl\',true) then
          begin
-            Reg.WriteString('','Open');
-            if Reg.OpenKey('\VXLSe\shell\open\command\',true) then
-            begin
-               Reg.WriteString('',ParamStr(0)+' %1');
-            end;
+            Reg.WriteString('','VXLSe');
             Reg.CloseKey;
             Reg.RootKey := HKEY_CURRENT_USER;
-            if Reg.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.vxl\',true) then
+            if Reg.OpenKey('\SOFTWARE\Classes\VXLSe\shell\',true) then
             begin
-               Reg.WriteString('Application',ParamStr(0)+' "%1"');
+               Reg.WriteString('','Open');
+               if Reg.OpenKey('\VXLSe\shell\open\command\',true) then
+               begin
+                  Reg.WriteString('',ParamStr(0)+' %1');
+               end;
                Reg.CloseKey;
+               Reg.RootKey := HKEY_CURRENT_USER;
+               if Reg.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.vxl\',true) then
+               begin
+                  Reg.WriteString('Application',ParamStr(0)+' "%1"');
+                  Reg.CloseKey;
+               end
+               else
+               begin
+                  ShowMessage('VXLSE III was not able to associate .vxl files because you are under a non-administrative account or does not have enough rights to do it. Contact the system administrator if you need any help');
+               end;
             end
             else
             begin
                ShowMessage('VXLSE III was not able to associate .vxl files because you are under a non-administrative account or does not have enough rights to do it. Contact the system administrator if you need any help');
+               close;
             end;
          end
          else
@@ -195,23 +202,19 @@ begin
       end
       else
       begin
-         ShowMessage('VXLSE III was not able to associate .vxl files because you are under a non-administrative account or does not have enough rights to do it. Contact the system administrator if you need any help');
-         close;
+         Reg.RootKey := HKEY_CURRENT_USER;
+         Reg.DeleteKey('SOFTWARE\Classes\.vxl');
+         Reg.CloseKey;
+         Reg.RootKey := HKEY_CURRENT_USER;
+         Reg.DeleteKey('SOFTWARE\Classes\VXLSe\');
+         Reg.CloseKey;
+         Reg.RootKey := HKEY_CURRENT_USER;
+         Reg.DeleteKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.vxl\');
+         Reg.CloseKey;
       end;
-   end
-   else
-   begin
-      Reg.RootKey := HKEY_CLASSES_ROOT;
-      Reg.DeleteKey('.vxl');
-      Reg.CloseKey;
-      Reg.RootKey := HKEY_CLASSES_ROOT;
-      Reg.DeleteKey('\VXLSe\');
-      Reg.CloseKey;
-      Reg.RootKey := HKEY_CURRENT_USER;
-      Reg.DeleteKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.vxl\');
-      Reg.CloseKey;
+   finally
+      Reg.Free;
    end;
-   Reg.Free;
 end;
 
 function GetComboBoxNo(filename:string; default : cardinal): cardinal;

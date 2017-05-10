@@ -53,6 +53,10 @@ object FrmPreferences: TFrmPreferences
       object TabSheet1: TTabSheet
         Caption = 'File_association_tab'
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object AssociateCheck: TCheckBox
           Left = 0
           Top = 8
@@ -103,6 +107,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -155,6 +163,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'ThreeDOptions_tab'
         ImageIndex = 2
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label3: TLabel
           Left = 199
           Top = 30
@@ -219,6 +231,10 @@ object FrmPreferences: TFrmPreferences
         Caption = '2D Options'
         ImageIndex = 3
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label5: TLabel
           Left = 42
           Top = 8
@@ -250,8 +266,6 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Normals Options'
         ImageIndex = 4
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
         object CbResetNormalValue: TCheckBox
           Left = 16
           Top = 3
