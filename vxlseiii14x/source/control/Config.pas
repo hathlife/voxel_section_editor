@@ -246,33 +246,34 @@ begin
    //Retrieve history information
    Reg:=TRegistry.Create;
    Reg.RootKey := HKEY_CURRENT_USER;
-   Reg.OpenKey(RegPath,true);
-
-   for i:=0 to HistoryDepth - 1 do
+   if Reg.OpenKey(RegPath,true) then
    begin
-      Reg.WriteString('History'+IntToStr(i),History[i]);
+      for i:=0 to HistoryDepth - 1 do
+      begin
+         Reg.WriteString('History'+IntToStr(i),History[i]);
+      end;
+      Reg.WriteInteger('Icon',Icon);
+      Reg.WriteBool('Assoc',Assoc);
+      Reg.WriteBool('Palette',Palette);
+      Reg.WriteString('TS',TS);
+      Reg.WriteString('RA2',RA2);
+      Reg.WriteInteger('FPSCap',FPSCap);
+      Reg.WriteString('3ds2vxlLocation',Location3ds2vxl);
+      Reg.WriteString('3ds2vxlINILocation',INILocation3ds2vxl);
+      Reg.WriteBool('OpenCL',OpenCL);
+      Reg.WriteInteger('ANType', ANType);
+      Reg.WriteBool('ANSmoothMyNormals', ANSmoothMyNormals);
+      Reg.WriteBool('ANInfluenceMap', ANInfluenceMap);
+      Reg.WriteBool('ANNewPixels', ANNewPixels);
+      Reg.WriteBool('ANStretch', ANStretch);
+      Reg.WriteFloat('ANNormalizationRange', ANNormalizationRange);
+      Reg.WriteFloat('ANSmoothLevel', ANSmoothLevel);
+      Reg.WriteFloat('ANContrastLevel', ANContrastLevel);
+      Reg.WriteInteger('2DBackgroundColor',Canvas2DBackgroundColor);
+      Reg.WriteInteger('3DBackgroundColor',Canvas3DBackgroundColor);
+      Reg.WriteBool('MaintainDimensionsRM', MaintainDimensionsRM);
+      Reg.WriteBool('ResetNormalValue',ResetNormalValue);
    end;
-   Reg.WriteInteger('Icon',Icon);
-   Reg.WriteBool('Assoc',Assoc);
-   Reg.WriteBool('Palette',Palette);
-   Reg.WriteString('TS',TS);
-   Reg.WriteString('RA2',RA2);
-   Reg.WriteInteger('FPSCap',FPSCap);
-   Reg.WriteString('3ds2vxlLocation',Location3ds2vxl);
-   Reg.WriteString('3ds2vxlINILocation',INILocation3ds2vxl);
-   Reg.WriteBool('OpenCL',OpenCL);
-   Reg.WriteInteger('ANType', ANType);
-   Reg.WriteBool('ANSmoothMyNormals', ANSmoothMyNormals);
-   Reg.WriteBool('ANInfluenceMap', ANInfluenceMap);
-   Reg.WriteBool('ANNewPixels', ANNewPixels);
-   Reg.WriteBool('ANStretch', ANStretch);
-   Reg.WriteFloat('ANNormalizationRange', ANNormalizationRange);
-   Reg.WriteFloat('ANSmoothLevel', ANSmoothLevel);
-   Reg.WriteFloat('ANContrastLevel', ANContrastLevel);
-   Reg.WriteInteger('2DBackgroundColor',Canvas2DBackgroundColor);
-   Reg.WriteInteger('3DBackgroundColor',Canvas3DBackgroundColor);
-   Reg.WriteBool('MaintainDimensionsRM', MaintainDimensionsRM);
-   Reg.WriteBool('ResetNormalValue',ResetNormalValue);
    Reg.CloseKey;
    Reg.Free;
 end;
