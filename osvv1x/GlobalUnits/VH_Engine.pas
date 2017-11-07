@@ -553,7 +553,7 @@ begin
 
    Pixel := RGBBits;
    for y := 0 to GetPow2Size(SCREEN_HEIGHT)-1 do
-   for x := 0 to GetPow2Size(SCREEN_WIDTH)-1 do
+      for x := 0 to GetPow2Size(SCREEN_WIDTH)-1 do
       begin
          Temp              := Pixel.rgbRed;
          Pixel.rgbRed      := Pixel.rgbBlue;
@@ -578,11 +578,11 @@ begin
 
    if AllWhite then
    begin
-    BMP2.Free;
-    Result := VH_ScreenShot_BitmapResult;
+      BMP2.Free;
+      Result := VH_ScreenShot_BitmapResult;
    end
    else
-   Result := BMP2;
+      Result := BMP2;
 end;
 
 Procedure VH_LoadVVS(Filename : String);

@@ -19,8 +19,8 @@ uses
 
 Const
 APPLICATION_TITLE = 'Open Source Voxel Viewer';
-APPLICATION_VER = '1.82' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
-APPLICATION_VER_ID = '1.82';
+APPLICATION_VER = '1.83' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
+APPLICATION_VER_ID = '1.83';
 APPLICATION_BY = 'Stucuk && Banshee';
 
 type
@@ -447,13 +447,13 @@ end;
 
 procedure TVVFrmMain.Idle(Sender: TObject; var Done: Boolean);
 var
- BMP : TBitmap;
+   BMP : TBitmap;
 begin
    Done := False;
    if not DrawVHWorld then exit;
 
    if (ScreenShot.Take) or (ScreenShot.TakeAnimation) or (ScreenShot.Take360DAnimation) then
-   FUpdateWorld := True;
+      FUpdateWorld := True;
 
    DrawFrames;
 
@@ -465,14 +465,14 @@ begin
          VH_ScreenShotJPG(VXLFilename,ScreenShot.CompressionRate)
       else if ScreenShot._Type = 2 then
          VH_ScreenShotToSHPBuilder;
-          if AutoSizeCheck.Checked then
-          MainView.Align := alClient
-          else
-          begin
-           MainView.Align  := alNone;
-           MainView.Width  := OGLSize.Value;
-           MainView.Height := OGLSize.Value;
-          end;
+      if AutoSizeCheck.Checked then
+         MainView.Align := alClient
+      else
+      begin
+         MainView.Align  := alNone;
+         MainView.Width  := OGLSize.Value;
+         MainView.Height := OGLSize.Value;
+      end;
       ScreenShot.Take := false;
    end;
 
@@ -486,11 +486,11 @@ begin
 
    if ScreenShot.Take360DAnimation then
    begin
-      YRot := YRot + ScreenShot.FrameAdder;
       inc(ScreenShot.FrameCount);
       BMP := VH_ScreenShot_BitmapResult;
       GifAnimateAddImage(BMP,false,(100*90) div ScreenShot.Frames);
       BMP.Free;
+      YRot := YRot + ScreenShot.FrameAdder;
 
       if ScreenShot.FrameCount >= ScreenShot.Frames then
       begin
@@ -498,14 +498,14 @@ begin
 
          YRot := ScreenShot.OldYRot;
          ScreenShot.Take360DAnimation := false;
-          if AutoSizeCheck.Checked then
-          MainView.Align := alClient
-          else
-          begin
-           MainView.Align  := alNone;
-           MainView.Width  := OGLSize.Value;
-           MainView.Height := OGLSize.Value;
-          end;
+         if AutoSizeCheck.Checked then
+            MainView.Align := alClient
+         else
+         begin
+            MainView.Align  := alNone;
+            MainView.Width  := OGLSize.Value;
+            MainView.Height := OGLSize.Value;
+         end;
          AnimationTimer.Enabled := False;
          AnimationBar.Position := 0;
          AnimationBarChange(Sender);

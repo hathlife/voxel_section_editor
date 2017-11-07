@@ -25,7 +25,6 @@ object VVFrmMain: TVVFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 535
     object Panel2: TPanel
       Left = 1
       Top = 1
@@ -33,7 +32,6 @@ object VVFrmMain: TVVFrmMain
       Height = 374
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 368
       object Label2: TLabel
         Left = 1
         Top = 161
@@ -457,7 +455,6 @@ object VVFrmMain: TVVFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
-      ExplicitHeight = 368
       object TopBarImageHolder: TImage
         Left = 32
         Top = 16
@@ -3154,10 +3151,8 @@ object VVFrmMain: TVVFrmMain
         ActivePage = TabSheet4
         Align = alClient
         TabOrder = 0
-        ExplicitHeight = 158
         object TabSheet1: TTabSheet
           Caption = 'Ground && Sky'
-          ExplicitHeight = 130
           object Panel8: TPanel
             Left = 0
             Top = 0
@@ -3166,7 +3161,6 @@ object VVFrmMain: TVVFrmMain
             Align = alClient
             BevelOuter = bvNone
             TabOrder = 0
-            ExplicitHeight = 130
             object Label6: TLabel
               Left = 134
               Top = 80
@@ -3444,7 +3438,6 @@ object VVFrmMain: TVVFrmMain
         object TabSheet4: TTabSheet
           Caption = 'Unit'
           ImageIndex = 3
-          ExplicitHeight = 130
           object Label20: TLabel
             Left = 6
             Top = 32
@@ -3664,7 +3657,6 @@ object VVFrmMain: TVVFrmMain
         object TabSheet5: TTabSheet
           Caption = 'Lighting'
           ImageIndex = 4
-          ExplicitHeight = 130
           object Label19: TLabel
             Left = 8
             Top = 8
@@ -3885,7 +3877,6 @@ object VVFrmMain: TVVFrmMain
         object TabSheet2: TTabSheet
           Caption = 'Misc && OpenGL Window'
           ImageIndex = 1
-          ExplicitHeight = 130
           object Label17: TLabel
             Left = 142
             Top = 64
@@ -4060,7 +4051,6 @@ object VVFrmMain: TVVFrmMain
       item
         Width = 100
       end>
-    ExplicitTop = 535
   end
   object MainMenu1: TMainMenu
     Images = RemapImageList
