@@ -259,49 +259,49 @@ end;
 
 Procedure DrawTexture(Texture : Cardinal; X,Y : Single; Width,Height,AWidth,AHeight : Cardinal; XOff : Cardinal = 0; YOff : Cardinal = 0; XOffWidth : Cardinal = Cardinal(-1); YOffHeight : Cardinal = Cardinal(-1));
 var
-TexCoordX,
-TexCoordY,
-TexCoordOffX,
-TexCoordOffY : Single;
+   TexCoordX,
+   TexCoordY,
+   TexCoordOffX,
+   TexCoordOffY : Single;
 begin
- //glDisable(GL_CULL_FACE);
- if XOffWidth = Cardinal(-1) then
- XOffWidth    := Width;
- if YOffHeight = Cardinal(-1) then
- YOffHeight   := Height;
- TexCoordX    := XOffWidth/AWidth;
- TexCoordY    := YOffHeight/AHeight;
- TexCoordOffX := XOff/AWidth;
- TexCoordOffY := YOff/AHeight;
- glBindTexture(GL_TEXTURE_2D, Texture);
- glBegin(GL_QUADS);
-  //1
-  glTexCoord2f(TexCoordOffX, TexCoordOffY);
-  glVertex2f(X, Y);
-  //2
-  glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY);
-  glVertex2f(X+Width, Y);
-  //3
-  glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY+TexCoordY);
-  glVertex2f(X+Width, Y+Height);
-  //4
-  glTexCoord2f(TexCoordOffX, TexCoordOffY+TexCoordY);
-  glVertex2f(X, Y+Height);
- glEnd;
+   //glDisable(GL_CULL_FACE);
+   if XOffWidth = Cardinal(-1) then
+      XOffWidth    := Width;
+   if YOffHeight = Cardinal(-1) then
+      YOffHeight   := Height;
+   TexCoordX    := XOffWidth/AWidth;
+   TexCoordY    := YOffHeight/AHeight;
+   TexCoordOffX := XOff/AWidth;
+   TexCoordOffY := YOff/AHeight;
+   glBindTexture(GL_TEXTURE_2D, Texture);
+   glBegin(GL_QUADS);
+      //1
+      glTexCoord2f(TexCoordOffX, TexCoordOffY);
+      glVertex2f(X, Y);
+      //2
+      glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY);
+      glVertex2f(X+Width, Y);
+      //3
+      glTexCoord2f(TexCoordOffX+TexCoordX, TexCoordOffY+TexCoordY);
+      glVertex2f(X+Width, Y+Height);
+      //4
+      glTexCoord2f(TexCoordOffX, TexCoordOffY+TexCoordY);
+      glVertex2f(X, Y+Height);
+   glEnd;
  //glEnable(GL_CULL_FACE);
 end;
 
 function GetPow2Size(Size : Cardinal) : Cardinal;
 var
- Step : Byte;
+   Step : Byte;
 begin
- Step   := 0;
- Repeat
-  Result := Trunc(Power(2,Step));
-  inc(Step);
- Until (Result >= Size) or (Result >= 4096);
- if Result > 4096 then
- Result := 4096;
+   Step   := 0;
+   Repeat
+      Result := Trunc(Power(2,Step));
+      inc(Step);
+   Until (Result >= Size) or (Result >= 4096);
+   if Result > 4096 then
+      Result := 4096;
 end;
 
 Procedure DrawWorld;
@@ -384,7 +384,7 @@ begin
 
       glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
    end;
- 
+
    glDisable(GL_LIGHT0);
    glDisable(GL_LIGHTING);
    glDisable(GL_COLOR_MATERIAL);

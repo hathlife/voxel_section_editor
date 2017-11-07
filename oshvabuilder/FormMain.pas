@@ -9,7 +9,7 @@ uses
 
 Const
 APPLICATION_TITLE = 'Open Source HVA Builder';
-APPLICATION_VER = '2.11';
+APPLICATION_VER = '2.13';
 APPLICATION_BY = 'Stucuk and Banshee';
 
 type
@@ -430,172 +430,154 @@ begin
    end;
 end;
 
-procedure TFrmMain.MainViewMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.MainViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-   if (not VoxelOpen) or (not DrawVHWorld) then exit;
+   if (not VoxelOpen) or (not DrawVHWorld) then
+      exit;
 
    If VHControlType = CTOffset then
       VH_AddVOXELToUndo(CurrentVoxel,GetCurrentFrame,CurrentVoxelSection);
 
-If (VHControlType = CThvaposition) or (VHControlType = CThvarotation) then
-VH_AddHVAToUndo(CurrentHVA,GetCurrentFrame,CurrentVoxelSection);
+   If (VHControlType = CThvaposition) or (VHControlType = CThvarotation) then
+      VH_AddHVAToUndo(CurrentHVA,GetCurrentFrame,CurrentVoxelSection);
 
-if (VHControlType <> CTView) and (VH_ISRedo) then
-VH_ResetRedo;
+   if (VHControlType <> CTView) and (VH_ISRedo) then
+      VH_ResetRedo;
 
-SetUndoRedo;
-
-VH_MouseDown(Button,X, Y);
+   SetUndoRedo;
+   VH_MouseDown(Button,X, Y);
 end;
 
-procedure TFrmMain.MainViewMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TFrmMain.MainViewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-VH_MouseUp;
-MainView.Cursor := crCross;
+   VH_MouseUp;
+   MainView.Cursor := crCross;
 end;
 
-procedure TFrmMain.MainViewMouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
+procedure TFrmMain.MainViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
-
-VH_MouseMove(X,Y);
-
+   VH_MouseMove(X,Y);
 end;
 
 procedure TFrmMain.AnimationTimerTimer(Sender: TObject);
 Var
-N_Frames : Integer;
+   N_Frames : Integer;
 begin
+   N_Frames := GetCurrentHVA^.Header.N_Frames;
 
-N_Frames := GetCurrentHVA^.Header.N_Frames;
+   if (N_Frames < 2) then
+   begin
+      AnimationTimer.Enabled := false;
+      HVAFrame := 0;
+      HVAFrameT := 0;
+      HVAFrameB := 0;
+      AnimationBar.Position := 0;
+      exit;
+   end;
 
-if (N_Frames < 2) then
-begin
-AnimationTimer.Enabled := false;
-HVAFrame := 0;
-HVAFrameT := 0;
-HVAFrameB := 0;
+   if (AnimationBar.Position = N_Frames-1) and ScreenShot.CaptureAnimation then
+   begin
+      ScreenShot.CaptureAnimation := False;
+      VH_ScreenShotGIF(GifAnimateEndGif,VXLFilename);
+      AnimationTimer.Enabled := false;
+      HVAFrame := 0;
+      HVAFrameT := 0;
+      HVAFrameB := 0;
+      AnimationBar.Position := 0;
+      MainView.Align := alClient;
+   end;
 
-AnimationBar.Position := 0;
-exit;
-end;
+   if ScreenShot.CaptureAnimation then
+      ScreenShot.TakeAnimation := true;
 
-if (AnimationBar.Position = N_Frames-1) and ScreenShot.CaptureAnimation then
-begin
-ScreenShot.CaptureAnimation := False;
-VH_ScreenShotGIF(GifAnimateEndGif,VXLFilename);
-AnimationTimer.Enabled := false;
-HVAFrame := 0;
-HVAFrameT := 0;
-HVAFrameB := 0;
-
-AnimationBar.Position := 0;
-MainView.Align := alClient;
-end;
-
-if ScreenShot.CaptureAnimation then
-ScreenShot.TakeAnimation := true;
-
-if AnimationBar.Position = N_Frames-1 then
-AnimationBar.Position := 0
-else
-AnimationBar.Position := AnimationBar.Position +1;
+   if AnimationBar.Position = N_Frames-1 then
+      AnimationBar.Position := 0
+   else
+      AnimationBar.Position := AnimationBar.Position +1;
 
 end;
 
 procedure TFrmMain.PlayAnimationClick(Sender: TObject);
 begin
-AnimationTimer.Enabled := true;
+   AnimationTimer.Enabled := true;
 end;
 
 procedure TFrmMain.PauseAnimationClick(Sender: TObject);
 begin
-AnimationTimer.Enabled := not AnimationTimer.Enabled;
+   AnimationTimer.Enabled := not AnimationTimer.Enabled;
 end;
 
 procedure TFrmMain.StopAnimationClick(Sender: TObject);
 begin
-AnimationTimer.Enabled := False;
-AnimationBar.Position := 0;
+   AnimationTimer.Enabled := False;
+   AnimationBar.Position := 0;
 end;
 
 procedure TFrmMain.AnimationBarChange(Sender: TObject);
 begin
-SetCurrentFrame(AnimationBar.Position);
-lblHVAFrame.Caption := 'Frame ' + inttostr(GetCurrentFrame+1) + '/' + inttostr(GetCurrentHVA^.Header.N_Frames);
+   SetCurrentFrame(AnimationBar.Position);
+   lblHVAFrame.Caption := 'Frame ' + inttostr(GetCurrentFrame+1) + '/' + inttostr(GetCurrentHVA^.Header.N_Frames);
 end;
 
 Procedure TFrmMain.SetIsHVA;
 var
-V : Boolean;
+   V : Boolean;
 begin
+   If Assigned(CurrentHVA) then
+      if CurrentHVA^.Header.N_Frames > 1 then
+         V := True
+      else
+         V := False
+   else
+      V := False;
 
-If Assigned(CurrentHVA) then
-if CurrentHVA^.Header.N_Frames > 1 then
-V := True
-else
-V := False
-else
-V := False;
-
-
-
-AnimationBar.Enabled   := V;
-PlayAnimation.Enabled  := V;
-PauseAnimation.Enabled := V;
-StopAnimation.Enabled  := V;
-lblHVAFrame.Enabled    := V;
-
-ToolButton8.Enabled    := V;
-
-SetUndoRedo;
-
+   AnimationBar.Enabled   := V;
+   PlayAnimation.Enabled  := V;
+   PauseAnimation.Enabled := V;
+   StopAnimation.Enabled  := V;
+   lblHVAFrame.Enabled    := V;
+   ToolButton8.Enabled    := V;
+   SetUndoRedo;
 end;
 
 Procedure TFrmMain.SetIsEditable;
 begin
-RemapColourBox.Enabled := VoxelOpen;
-SpeedButton2.Enabled := VoxelOpen;
-btn3DRotateX.Enabled := VoxelOpen;
-btn3DRotateX2.Enabled := VoxelOpen;
-btn3DRotateY.Enabled := VoxelOpen;
-btn3DRotateY2.Enabled := VoxelOpen;
-spin3Djmp.Enabled := VoxelOpen;
-SectionBox.Enabled := VoxelOpen;
-ControlType.Enabled := VoxelOpen;
-ToolButton1.Enabled := VoxelOpen;
-ToolButton2.Enabled := VoxelOpen;
-ToolButton3.Enabled := VoxelOpen;
-ToolButton5.Enabled := VoxelOpen;
-BarSaveAs.Enabled := VoxelOpen;
-ToolButton6.Enabled := VoxelOpen;
-ToolButton12.Enabled := VoxelOpen;
-HighlightCheckBox.Enabled := VoxelOpen;
-DrawCenterCheckBox.Enabled := VoxelOpen;
-ShowDebugCheckBox.Enabled := VoxelOpen;
-VoxelCountCheckBox.Enabled := VoxelOpen;
-CheckBox1.Enabled := VoxelOpen;
-SaveVoxel1.Enabled := VoxelOpen;
-SaveAs1.Enabled := VoxelOpen;
-
-Options1.Visible := VoxelOpen;
-View1.Visible := VoxelOpen;
-ools1.Visible := VoxelOpen;
-Edit1.Visible := VoxelOpen;
-
-SetIsHVA;
+   RemapColourBox.Enabled := VoxelOpen;
+   SpeedButton2.Enabled := VoxelOpen;
+   btn3DRotateX.Enabled := VoxelOpen;
+   btn3DRotateX2.Enabled := VoxelOpen;
+   btn3DRotateY.Enabled := VoxelOpen;
+   btn3DRotateY2.Enabled := VoxelOpen;
+   spin3Djmp.Enabled := VoxelOpen;
+   SectionBox.Enabled := VoxelOpen;
+   ControlType.Enabled := VoxelOpen;
+   ToolButton1.Enabled := VoxelOpen;
+   ToolButton2.Enabled := VoxelOpen;
+   ToolButton3.Enabled := VoxelOpen;
+   ToolButton5.Enabled := VoxelOpen;
+   BarSaveAs.Enabled := VoxelOpen;
+   ToolButton6.Enabled := VoxelOpen;
+   ToolButton12.Enabled := VoxelOpen;
+   HighlightCheckBox.Enabled := VoxelOpen;
+   DrawCenterCheckBox.Enabled := VoxelOpen;
+   ShowDebugCheckBox.Enabled := VoxelOpen;
+   VoxelCountCheckBox.Enabled := VoxelOpen;
+   CheckBox1.Enabled := VoxelOpen;
+   SaveVoxel1.Enabled := VoxelOpen;
+   SaveAs1.Enabled := VoxelOpen;
+   Options1.Visible := VoxelOpen;
+   View1.Visible := VoxelOpen;
+   ools1.Visible := VoxelOpen;
+   Edit1.Visible := VoxelOpen;
+   SetIsHVA;
 end;
 
 Procedure TFrmMain.SetCaption(Filename : String);
 begin
-
-If Filename <> '' then
-Caption := ' ' + APPLICATION_TITLE + ' v'+APPLICATION_VER + ' [' +Extractfilename(Filename) + ']'
-else
-Caption := ' ' + APPLICATION_TITLE + ' v'+APPLICATION_VER;
-
+   If Filename <> '' then
+      Caption := ' ' + APPLICATION_TITLE + ' v'+APPLICATION_VER + ' [' +Extractfilename(Filename) + ']'
+   else
+      Caption := ' ' + APPLICATION_TITLE + ' v'+APPLICATION_VER;
 end;
 
 procedure TFrmMain.RemapColourBoxChange(Sender: TObject);
@@ -643,110 +625,105 @@ end;
 
 procedure TFrmMain.SpeedButton2Click(Sender: TObject);
 begin
-Depth := DefaultDepth;
+   Depth := DefaultDepth;
 end;
 
 Procedure TFrmMain.SetRotationAdders;
 var
-V : single;
+   V : single;
 begin
+   try
+      V := spin3Djmp.Value / 10;
+   except
+      exit; // Not a value
+   end;
 
-try
-V := spin3Djmp.Value / 10;
-except
-exit; // Not a value
-end;
+   if btn3DRotateX2.Down then
+      XRot2 := V
+   else if btn3DRotateX.Down then
+      XRot2 := -V;
 
-if btn3DRotateX2.Down then
-XRot2 := V
-else
-if btn3DRotateX.Down then
-XRot2 := -V;
-
-if btn3DRotateY2.Down then
-YRot2 := -V
-else
-if btn3DRotateY.Down then
-YRot2 := V;
+   if btn3DRotateY2.Down then
+      YRot2 := -V
+   else if btn3DRotateY.Down then
+      YRot2 := V;
 
 end;
 
 procedure TFrmMain.btn3DRotateXClick(Sender: TObject);
 begin
-if btn3DRotateX.Down then
-begin
-SetRotationAdders;
-XRotB := True;
-end
-else
-XRotB := false;
+   if btn3DRotateX.Down then
+   begin
+      SetRotationAdders;
+      XRotB := True;
+   end
+   else
+      XRotB := false;
 end;
 
 procedure TFrmMain.btn3DRotateX2Click(Sender: TObject);
 begin
-if btn3DRotateX2.Down then
-begin
-SetRotationAdders;
-XRotB := True;
-end
-else
-XRotB := false;
+   if btn3DRotateX2.Down then
+   begin
+      SetRotationAdders;
+      XRotB := True;
+   end
+   else
+      XRotB := false;
 end;
 
 procedure TFrmMain.btn3DRotateY2Click(Sender: TObject);
 begin
-if btn3DRotateY2.Down then
-begin
-SetRotationAdders;
-YRotB := True;
-end
-else
-YRotB := false;
+   if btn3DRotateY2.Down then
+   begin
+      SetRotationAdders;
+      YRotB := True;
+   end
+   else
+      YRotB := false;
 end;
 
 procedure TFrmMain.btn3DRotateYClick(Sender: TObject);
 begin
-if btn3DRotateY.Down then
-begin
-SetRotationAdders;
-YRotB := True;
-end
-else
-YRotB := false;
+   if btn3DRotateY.Down then
+   begin
+      SetRotationAdders;
+      YRotB := True;
+   end
+   else
+      YRotB := false;
 end;
 
 procedure TFrmMain.spin3DjmpChange(Sender: TObject);
 begin
-SetRotationAdders;
+   SetRotationAdders;
 end;
 
 Procedure TFrmMain.SetupSections;
 var
-i : integer;
+   i : integer;
 begin
-SectionBox.Clear;
+   SectionBox.Clear;
+   for i := 0 to (VoxelFile.Header.NumSections - 1) do
+   begin
+      SectionBox.Items.Add(VoxelFile.Section[i].Name);
+      SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 4;
+   end;
 
-for i := 0 to (VoxelFile.Header.NumSections - 1) do
-begin
-SectionBox.Items.Add(VoxelFile.Section[i].Name);
-SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 4;
-end;
+   if VoxelOpenT then
+      for i := 0 to (VoxelTurret.Header.NumSections - 1) do
+      begin
+         SectionBox.Items.Add(VoxelTurret.Section[i].Name);
+         SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 5;
+      end;
 
-if VoxelOpenT then
-for i := 0 to (VoxelTurret.Header.NumSections - 1) do
-begin
-SectionBox.Items.Add(VoxelTurret.Section[i].Name);
-SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 5;
-end;
-
-if VoxelOpenB then
-for i := 0 to (VoxelBarrel.Header.NumSections - 1) do
-begin
-SectionBox.Items.Add(VoxelBarrel.Section[i].Name);
-SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 6;
-end;
-
-SectionBox.ItemIndex := CurrentSection+1;
+   if VoxelOpenB then
+      for i := 0 to (VoxelBarrel.Header.NumSections - 1) do
+      begin
+         SectionBox.Items.Add(VoxelBarrel.Section[i].Name);
+         SectionBox.ItemsEx.ComboItems[SectionBox.ItemsEx.Count-1].ImageIndex := 6;
+      end;
+   SectionBox.ItemIndex := CurrentSection+1;
 end;
 
 procedure TFrmMain.SectionBoxChange(Sender: TObject);
@@ -807,309 +784,308 @@ end;
 
 procedure TFrmMain.ShowDebugCheckBoxClick(Sender: TObject);
 begin
-If VVSLoading then exit;
+   If VVSLoading then
+      exit;
 
-DebugMode := not DebugMode;
-ShowDebugCheckBox.Checked := DebugMode;
+   DebugMode := not DebugMode;
+   ShowDebugCheckBox.Checked := DebugMode;
 end;
 
 procedure TFrmMain.VoxelCountCheckBoxClick(Sender: TObject);
 begin
-If VVSLoading then exit;
+   If VVSLoading then
+      exit;
 
-ShowVoxelCount := not ShowVoxelCount;
-VoxelCountCheckBox.Checked := ShowVoxelCount;
+   ShowVoxelCount := not ShowVoxelCount;
+   VoxelCountCheckBox.Checked := ShowVoxelCount;
 end;
 
 procedure TFrmMain.Disable3DView1Click(Sender: TObject);
 begin
-If VVSLoading then Exit;
+   If VVSLoading then
+      exit;
 
-VVSLoading := True; //Fake a VVS Load
+   VVSLoading := True; //Fake a VVS Load
 
-DrawVHWorld := not DrawVHWorld;
-Disable3DView1.Checked := not DrawVHWorld;
-CheckBox1.Checked := not DrawVHWorld;
+   DrawVHWorld := not DrawVHWorld;
+   Disable3DView1.Checked := not DrawVHWorld;
+   CheckBox1.Checked := not DrawVHWorld;
 
-If not DrawVHWorld then
-MainView.Repaint;
+   If not DrawVHWorld then
+      MainView.Repaint;
 
-VVSLoading := False;
+   VVSLoading := False;
 end;
 
 procedure TFrmMain.ColoursNormals1Click(Sender: TObject);
 begin
-VH_SetSpectrum(True);
-ColoursNormals1.Checked := true;
-Normals1.Checked := false;
-Colours1.Checked := false;
-ColoursOnly := false;
+   VH_SetSpectrum(True);
+   ColoursNormals1.Checked := true;
+   Normals1.Checked := false;
+   Colours1.Checked := false;
+   ColoursOnly := false;
 end;
 
 procedure TFrmMain.Colours1Click(Sender: TObject);
 begin
-VH_SetSpectrum(True);
-ColoursNormals1.Checked := false;
-Normals1.Checked := false;
-Colours1.Checked := true;
-ColoursOnly := True;
+   VH_SetSpectrum(True);
+   ColoursNormals1.Checked := false;
+   Normals1.Checked := false;
+   Colours1.Checked := true;
+   ColoursOnly := True;
 end;
 
 procedure TFrmMain.Normals1Click(Sender: TObject);
 begin
-VH_SetSpectrum(False);
-ColoursNormals1.Checked := false;
-Normals1.Checked := true;
-Colours1.Checked := false;
-ColoursOnly := false;
+   VH_SetSpectrum(False);
+   ColoursNormals1.Checked := false;
+   Normals1.Checked := true;
+   Colours1.Checked := false;
+   ColoursOnly := false;
 end;
 
 procedure TFrmMain.CameraManager1Click(Sender: TObject);
 var
-  frm: TFrmCameraManager_New;
+   frm: TFrmCameraManager_New;
 begin
-  frm:=TFrmCameraManager_New.Create(Self);
-  frm.Visible:=False;
-  Frm.Image1.Picture := TopBarImageHolder.Picture;
-  frm.XRot.Text := FloatToStr(XRot);
-  frm.YRot.Text := FloatToStr(YRot);
-  frm.Depth.Text := FloatToStr(Depth);
-  frm.ShowModal;
-  frm.Close;
+   frm:=TFrmCameraManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
+   frm.XRot.Text := FloatToStr(XRot);
+   frm.YRot.Text := FloatToStr(YRot);
+   frm.Depth.Text := FloatToStr(Depth);
+   frm.ShowModal;
+   frm.Close;
 
-  if Frm.O then
-  begin
-  XRot := StrToFloat(frm.XRot.Text);
-  YRot := StrToFloat(frm.YRot.Text);
-  Depth := StrToFloat(frm.Depth.Text);
-  end;
+   if Frm.O then
+   begin
+      XRot := StrToFloat(frm.XRot.Text);
+      YRot := StrToFloat(frm.YRot.Text);
+      Depth := StrToFloat(frm.Depth.Text);
+   end;
 
-  frm.Free;
+   frm.Free;
 end;
 
 procedure TFrmMain.Help2Click(Sender: TObject);
 begin
-if not fileexists(extractfiledir(paramstr(0))+'/help.chm') then
-begin
-messagebox(0,'Help' + #13#13 + 'help.chm not found','Help',0);
-exit;
-end;
-RunAProgram('help.chm','',extractfiledir(paramstr(0)));
+   if not fileexists(extractfiledir(paramstr(0))+'/help.chm') then
+   begin
+      messagebox(0,'Help' + #13#13 + 'help.chm not found','Help',0);
+      exit;
+   end;
+   RunAProgram('help.chm','',extractfiledir(paramstr(0)));
 end;
 
 Procedure TFrmMain.ChangeView(Sender : TObject);
 begin
-VH_ChangeView(TMenuItem(Sender).Tag);
+   VH_ChangeView(TMenuItem(Sender).Tag);
 end;
 
 procedure TFrmMain.ScreenShot1Click(Sender: TObject);
 var
-  frm: TFrmScreenShotManager_New;
+   frm: TFrmScreenShotManager_New;
 begin
-  frm:=TFrmScreenShotManager_New.Create(Self);
-  frm.Visible:=False;
-  Frm.Image1.Picture := TopBarImageHolder.Picture;
+   frm:=TFrmScreenShotManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
 //  Frm.Image1.Refresh;
-  If ScreenShot._Type = 0 then
-  frm.RadioButton1.Checked := True
-  else
-  frm.RadioButton2.Checked := True;
+   If ScreenShot._Type = 0 then
+      frm.RadioButton1.Checked := True
+   else
+      frm.RadioButton2.Checked := True;
 
-  frm.RadioButton1Click(Sender);
-  Frm.Compression.Position := ScreenShot.CompressionRate;
+   frm.RadioButton1Click(Sender);
+   Frm.Compression.Position := ScreenShot.CompressionRate;
 
-  if ScreenShot.Width = -1 then
-  ScreenShot.Width := MainView.Width;
+   if ScreenShot.Width = -1 then
+      ScreenShot.Width := MainView.Width;
 
-  if ScreenShot.Height = -1 then
-  ScreenShot.Height := MainView.Height;
+   if ScreenShot.Height = -1 then
+      ScreenShot.Height := MainView.Height;
 
-  Frm.MainViewWidth.Value := ScreenShot.Width;
-  Frm.MainViewWidth.MaxValue := MainView.Width;
-  Frm.MainViewHeight.Value := ScreenShot.Height;
-  Frm.MainViewHeight.MaxValue := MainView.Height;
-  frm.ShowModal;
-  frm.Close;
+   Frm.MainViewWidth.Value := ScreenShot.Width;
+   Frm.MainViewWidth.MaxValue := MainView.Width;
+   Frm.MainViewHeight.Value := ScreenShot.Height;
+   Frm.MainViewHeight.MaxValue := MainView.Height;
+   frm.ShowModal;
+   frm.Close;
 
-  if frm.O then
-  begin
-  MainView.Align := alNone;
-  ScreenShot.Width := Frm.MainViewWidth.Value;
-  ScreenShot.Height := Frm.MainViewHeight.Value;
-  MainView.Width := Frm.MainViewWidth.Value;
-  MainView.Height := Frm.MainViewHeight.Value;
+   if frm.O then
+   begin
+      MainView.Align := alNone;
+      ScreenShot.Width := Frm.MainViewWidth.Value;
+      ScreenShot.Height := Frm.MainViewHeight.Value;
+      MainView.Width := Frm.MainViewWidth.Value;
+      MainView.Height := Frm.MainViewHeight.Value;
 
-  If frm.RadioButton1.Checked then
-  ScreenShot._Type := 0
-  else
-  ScreenShot._Type := 1;
+      If frm.RadioButton1.Checked then
+         ScreenShot._Type := 0
+      else
+         ScreenShot._Type := 1;
 
-  ScreenShot.CompressionRate := Frm.Compression.Position;
-  ScreenShot.Take := true;
-  end;
+      ScreenShot.CompressionRate := Frm.Compression.Position;
+      ScreenShot.Take := true;
+   end;
 
-  frm.Free;
+   frm.Free;
 end;
 
 procedure TFrmMain.BackgroundColour1Click(Sender: TObject);
 begin
-ColorDialog.Color := TVector3fToTColor(BGColor);
-if ColorDialog.Execute then
-VH_SetBGColour(TColorToTVector3f(ColorDialog.Color));
+   ColorDialog.Color := TVector3fToTColor(BGColor);
+   if ColorDialog.Execute then
+      VH_SetBGColour(TColorToTVector3f(ColorDialog.Color));
 end;
 
 procedure TFrmMain.extColour1Click(Sender: TObject);
 begin
-ColorDialog.Color := TVector3fToTColor(FontColor);
-if ColorDialog.Execute then
-FontColor := TColorToTVector3f(ColorDialog.Color);
+   ColorDialog.Color := TVector3fToTColor(FontColor);
+   if ColorDialog.Execute then
+      FontColor := TColorToTVector3f(ColorDialog.Color);
 end;
 
 procedure TFrmMain.CaptureAnimation1Click(Sender: TObject);
 var
-  frm: TFrmAniamtionManager_New;
+   frm: TFrmAnimationManager_New;
 begin
-  frm:=TFrmAniamtionManager_New.Create(Self);
-  frm.Visible:=False;
-  Frm.Image1.Picture := TopBarImageHolder.Picture;
+   frm:=TFrmAnimationManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
 
-  if ScreenShot.Width = -1 then
-  ScreenShot.Width := MainView.Width;
+   if ScreenShot.Width = -1 then
+      ScreenShot.Width := MainView.Width;
 
-  if ScreenShot.Height = -1 then
-  ScreenShot.Height := MainView.Height;
+   if ScreenShot.Height = -1 then
+      ScreenShot.Height := MainView.Height;
 
-  Frm.MainViewWidth.Value := ScreenShot.Width;
-  Frm.MainViewWidth.MaxValue := MainView.Width;
-  Frm.MainViewHeight.Value := ScreenShot.Height;
-  Frm.MainViewHeight.MaxValue := MainView.Height;
+   Frm.MainViewWidth.Value := ScreenShot.Width;
+   Frm.MainViewWidth.MaxValue := MainView.Width;
+   Frm.MainViewHeight.Value := ScreenShot.Height;
+   Frm.MainViewHeight.MaxValue := MainView.Height;
 
-  Frm.Frames.Enabled := false;
-  Frm.Label7.Enabled := false;
-  Frm.Label8.Enabled := false;
-  Frm.Label9.Enabled := false;
-  Frm.AnimateCheckBox.Enabled := false;
-  Frm.AnimateCheckBox.Checked := true;
-  
-  frm.ShowModal;
-  frm.Close;
+   Frm.Frames.Enabled := false;
+   Frm.Label7.Enabled := false;
+   Frm.Label8.Enabled := false;
+   Frm.Label9.Enabled := false;
+   Frm.AnimateCheckBox.Enabled := false;
+   Frm.AnimateCheckBox.Checked := true;
 
-  if frm.O then
-  begin
-  AnimationTimer.Enabled := false;
-  MainView.Align := alNone;
-  ScreenShot.Width := Frm.MainViewWidth.Value;
-  ScreenShot.Height := Frm.MainViewHeight.Value;
-  MainView.Width := Frm.MainViewWidth.Value;
-  MainView.Height := Frm.MainViewHeight.Value;
-  ScreenShot.CaptureAnimation := true;
-  ScreenShot.TakeAnimation := true;
-  AnimationBar.Position := 0;
-  AnimationBarChange(Sender);
-  SetCurrentFrame(0);
-  AnimationTimer.Enabled := true;
+   frm.ShowModal;
+   frm.Close;
 
-  ClearRotationAdders;
-  GifAnimateBegin;
-  end;
-  frm.free;
+   if frm.O then
+   begin
+      AnimationTimer.Enabled := false;
+      MainView.Align := alNone;
+      ScreenShot.Width := Frm.MainViewWidth.Value;
+      ScreenShot.Height := Frm.MainViewHeight.Value;
+      MainView.Width := Frm.MainViewWidth.Value;
+      MainView.Height := Frm.MainViewHeight.Value;
+      ScreenShot.CaptureAnimation := true;
+      ScreenShot.TakeAnimation := true;
+      AnimationBar.Position := 0;
+      AnimationBarChange(Sender);
+      SetCurrentFrame(0);
+      AnimationTimer.Enabled := true;
+
+      ClearRotationAdders;
+      GifAnimateBegin;
+   end;
+   frm.free;
 end;
 
 Procedure TFrmMain.ClearRotationAdders;
 var
-V : single;
+   V : single;
 begin
+   btn3DRotateX2.Down := false;
+   btn3DRotateX.Down := false;
+   XRot2 := 0;
+   XRotB := false;
 
-btn3DRotateX2.Down := false;
-btn3DRotateX.Down := false;
-XRot2 := 0;
-XRotB := false;
-
-btn3DRotateY2.Down := false;
-btn3DRotateY.Down := false;
-YRot2 := 0;
-YRotB := false;
-
+   btn3DRotateY2.Down := false;
+   btn3DRotateY.Down := false;
+   YRot2 := 0;
+   YRotB := false;
 end;
 
 procedure TFrmMain.Make360DegreeAnimation1Click(Sender: TObject);
 var
-  frm: TFrmAniamtionManager_New;
+   frm: TFrmAnimationManager_New;
 begin
-  frm:=TFrmAniamtionManager_New.Create(Self);
-  frm.Visible:=False;
-  Frm.Image1.Picture := TopBarImageHolder.Picture;
+   frm:=TFrmAnimationManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
 
-  if ScreenShot.Width = -1 then
-  ScreenShot.Width := MainView.Width;
+   if ScreenShot.Width = -1 then
+      ScreenShot.Width := MainView.Width;
 
-  if ScreenShot.Height = -1 then
-  ScreenShot.Height := MainView.Height;
+   if ScreenShot.Height = -1 then
+      ScreenShot.Height := MainView.Height;
 
-  Frm.MainViewWidth.Value := ScreenShot.Width;
-  Frm.MainViewWidth.MaxValue := MainView.Width;
-  Frm.MainViewHeight.Value := ScreenShot.Height;
-  Frm.MainViewHeight.MaxValue := MainView.Height;
+   Frm.MainViewWidth.Value := ScreenShot.Width;
+   Frm.MainViewWidth.MaxValue := MainView.Width;
+   Frm.MainViewHeight.Value := ScreenShot.Height;
+   Frm.MainViewHeight.MaxValue := MainView.Height;
 
-  Frm.Frames.Value := ScreenShot.Frames;
+   Frm.Frames.Value := ScreenShot.Frames;
 
-{  Frm.Frames.Enabled := false;
-  Frm.Label2.Enabled := false;
-  Frm.Label4.Enabled := false;
-  Frm.Label7.Enabled := false;  }
+{
+   Frm.Frames.Enabled := false;
+   Frm.Label2.Enabled := false;
+   Frm.Label4.Enabled := false;
+   Frm.Label7.Enabled := false;
+}
 
-  if not HVAOpen then
-  Frm.AnimateCheckBox.Enabled := false;
-  
-  frm.ShowModal;
-  frm.Close;
+   if not HVAOpen then
+      Frm.AnimateCheckBox.Enabled := false;
 
-  if frm.O then
-  begin
-  MainView.Align := alNone;
-  ScreenShot.Width := Frm.MainViewWidth.Value;
-  ScreenShot.Height := Frm.MainViewHeight.Value;
-  MainView.Width := Frm.MainViewWidth.Value;
-  MainView.Height := Frm.MainViewHeight.Value;
-  ScreenShot.Frames := Frm.Frames.Value;
-  ScreenShot.FrameAdder := 360/ScreenShot.Frames;
-  ScreenShot.FrameCount := 0;
+   frm.ShowModal;
+   frm.Close;
 
-  ScreenShot.OldYRot := YRot;
-  YRot := 0;
+   if frm.O then
+   begin
+      MainView.Align := alNone;
+      ScreenShot.Width := Frm.MainViewWidth.Value;
+      ScreenShot.Height := Frm.MainViewHeight.Value;
+      MainView.Width := Frm.MainViewWidth.Value;
+      MainView.Height := Frm.MainViewHeight.Value;
+      ScreenShot.Frames := Frm.Frames.Value;
+      ScreenShot.FrameAdder := 360/ScreenShot.Frames;
+      ScreenShot.FrameCount := 0;
+      ScreenShot.OldYRot := YRot;
+      YRot := 0;
+      ScreenShot.Take360DAnimation := true;
+      if Frm.AnimateCheckBox.Checked then
+      begin
+         AnimationBar.Position := 0;
+         AnimationBarChange(Sender);
+         SetCurrentFrame(0);
+         AnimationTimer.Enabled := True;
+      end
+      else
+         AnimationTimer.Enabled := false;
 
-  ScreenShot.Take360DAnimation := true;
-  if Frm.AnimateCheckBox.Checked then
-  begin
-  AnimationBar.Position := 0;
-  AnimationBarChange(Sender);
-  SetCurrentFrame(0);
-  AnimationTimer.Enabled := True;
-  end
-  else
-  AnimationTimer.Enabled := false;
-
-  ClearRotationAdders;
-  GifAnimateBegin;
-  end;
-  frm.free;
+      ClearRotationAdders;
+      GifAnimateBegin;
+   end;
+   frm.free;
 end;
 
-procedure TFrmMain.UpDown1ChangingEx(Sender: TObject;
-  var AllowChange: Boolean; NewValue: Smallint;
-  Direction: TUpDownDirection);
+procedure TFrmMain.UpDown1ChangingEx(Sender: TObject; var AllowChange: Boolean; NewValue: Smallint; Direction: TUpDownDirection);
 begin
-if Direction = updUp then
-AnimationBar.Position := AnimationBar.Position + 1;
+   if Direction = updUp then
+      AnimationBar.Position := AnimationBar.Position + 1;
 
-if Direction = updDown then
-AnimationBar.Position := AnimationBar.Position - 1;
+   if Direction = updDown then
+      AnimationBar.Position := AnimationBar.Position - 1;
 end;
 
 procedure TFrmMain.DrawCenterCheckBoxClick(Sender: TObject);
 begin
-DrawCenter := Not DrawCenter;
-DrawCenterCheckBox.Checked := DrawCenter;
+   DrawCenter := Not DrawCenter;
+   DrawCenterCheckBox.Checked := DrawCenter;
 end;
 
 procedure TFrmMain.HighlightCheckBoxClick(Sender: TObject);
@@ -1204,7 +1180,7 @@ end;
 
 Procedure TFrmMain.CheckHVAFrames2;
 Var
-Sender : TObject;
+   Sender : TObject;
 begin
    if CurrentHVA^.Header.N_Frames > 1 then
       AnimationBar.Max := CurrentHVA^.Header.N_Frames-1;
@@ -1249,8 +1225,8 @@ end;
 
 procedure TFrmMain.ViewTransform1Click(Sender: TObject);
 var
-  frm: TFrmTransformManager_New;
-  HTM,j,k : Integer;
+   frm: TFrmTransformManager_New;
+   HTM,j,k : Integer;
 begin
    frm:=TFrmTransformManager_New.Create(Self);
    frm.Visible:=False;

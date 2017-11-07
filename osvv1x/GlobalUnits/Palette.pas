@@ -38,22 +38,22 @@ Uses VH_Global;
 // latest Delphi versions (2006, 2007?)
 function RGB(r,g,b : integer): TColor;
 begin
-  Result := (r or (g shl 8) or (b shl 16));
+   Result := (r or (g shl 8) or (b shl 16));
 end;
 
 function GetRValue(rgb: TColor): Byte;
 begin
-  Result := Byte(rgb);
+   Result := Byte(rgb);
 end;
 
 function GetGValue(rgb: TColor): Byte;
 begin
-  Result := Byte(rgb shr 8);
+   Result := Byte(rgb shr 8);
 end;
 
 function GetBValue(rgb: TColor): Byte;
 begin
-  Result := Byte(rgb shr 16);
+   Result := Byte(rgb shr 16);
 end;
 
 // Loads TS/RA2 Palette into the VXLPalette

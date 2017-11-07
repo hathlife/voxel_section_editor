@@ -48,10 +48,10 @@ object FrmAbout_New: TFrmAbout_New
   object Label4: TLabel
     Left = 28
     Top = 176
-    Width = 130
+    Width = 135
     Height = 15
     Cursor = crHandPoint
-    Caption = 'http://www.ppmsite.com/'
+    Caption = 'https://www.ppmsite.com/'
     Color = clBtnFace
     Font.Charset = ANSI_CHARSET
     Font.Color = clBlue

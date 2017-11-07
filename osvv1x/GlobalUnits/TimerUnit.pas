@@ -13,25 +13,26 @@ unit TimerUnit;
 
 interface
 
-Const IntervalVal = 10;
-      FrameSliceN = 3*IntervalVal-1;
+Const
+   IntervalVal = 10;
+   FrameSliceN = 3*IntervalVal-1;
 
 type TTimerSystem = class(TObject)
-  private
-    FFrequency : int64;
-    FoldTime   : int64;    // last system time
-  public
-    TotalTime  : double; // time since app started
-    FrameTime  : double; // time elapsed since last frame
-    Frames     : Cardinal;
-    FrameSlices: Array [0..FrameSliceN] of Cardinal;
-    FramesSec  : double;
-    constructor Create;
-    Procedure Refresh;
-    function GetFPS : integer;
-    procedure ClearAverages;
-    function GetAverageFPS : integer;
-  end;
+   private
+      FFrequency : int64;
+      FoldTime   : int64;    // last system time
+   public
+      TotalTime  : double; // time since app started
+      FrameTime  : double; // time elapsed since last frame
+      Frames     : Cardinal;
+      FrameSlices: Array [0..FrameSliceN] of Cardinal;
+      FramesSec  : double;
+      constructor Create;
+      Procedure Refresh;
+      function GetFPS : integer;
+      procedure ClearAverages;
+      function GetAverageFPS : integer;
+   end;
 
 var
    TimerSystem : TTimerSystem;

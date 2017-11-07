@@ -3,57 +3,56 @@ unit FormPreferences;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ImgList, StdCtrls, ComCtrls, ExtCtrls, Registry;
+   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+   Dialogs, ImgList, StdCtrls, ComCtrls, ExtCtrls, Registry;
 
 type
-  TFrmPreferences = class(TForm)
-    GroupBox1: TGroupBox;
-    Pref_List: TTreeView;
-    PageControl1: TPageControl;
-    TabSheet1: TTabSheet;
-    AssociateCheck: TCheckBox;
-    GroupBox3: TGroupBox;
-    IconPrev: TImage;
-    IconID: TTrackBar;
-    BtnApply: TButton;
-    TabSheet2: TTabSheet;
-    CheckBox1: TCheckBox;
-    Label1: TLabel;
-    Label2: TLabel;
-    ComboBox2: TComboBoxEx;
-    ComboBox1: TComboBoxEx;
-    Bevel2: TBevel;
-    Panel1: TPanel;
-    Image1: TImage;
-    Label9: TLabel;
-    Label10: TLabel;
-    Bevel3: TBevel;
-    Panel2: TPanel;
-    Button4: TButton;
-    Button1: TButton;
-    procedure BtnApplyClick(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure IconIDChange(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
-    procedure Pref_ListClick(Sender: TObject);
-    procedure Pref_ListKeyPress(Sender: TObject; var Key: Char);
-    procedure Pref_ListKeyUp(Sender: TObject; var Key: Word;
-      Shift: TShiftState);
-    procedure CheckBox1Click(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-  private
-    { Private declarations }
-  public
-    { Public declarations }
-    IconPath: String;
-    procedure ExtractIcon;
-    procedure GetSettings;
-  end;
+   TFrmPreferences = class(TForm)
+      GroupBox1: TGroupBox;
+      Pref_List: TTreeView;
+      PageControl1: TPageControl;
+      TabSheet1: TTabSheet;
+      AssociateCheck: TCheckBox;
+      GroupBox3: TGroupBox;
+      IconPrev: TImage;
+      IconID: TTrackBar;
+      BtnApply: TButton;
+      TabSheet2: TTabSheet;
+      CheckBox1: TCheckBox;
+      Label1: TLabel;
+      Label2: TLabel;
+      ComboBox2: TComboBoxEx;
+      ComboBox1: TComboBoxEx;
+      Bevel2: TBevel;
+      Panel1: TPanel;
+      Image1: TImage;
+      Label9: TLabel;
+      Label10: TLabel;
+      Bevel3: TBevel;
+      Panel2: TPanel;
+      Button4: TButton;
+      Button1: TButton;
+      procedure BtnApplyClick(Sender: TObject);
+      procedure FormShow(Sender: TObject);
+      procedure IconIDChange(Sender: TObject);
+      procedure Button2Click(Sender: TObject);
+      procedure Pref_ListClick(Sender: TObject);
+      procedure Pref_ListKeyPress(Sender: TObject; var Key: Char);
+      procedure Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
+      procedure CheckBox1Click(Sender: TObject);
+      procedure Button4Click(Sender: TObject);
+      procedure FormCreate(Sender: TObject);
+   private
+      { Private declarations }
+   public
+      { Public declarations }
+      IconPath: String;
+      procedure ExtractIcon;
+      procedure GetSettings;
+   end;
 
 var
-  FrmPreferences: TFrmPreferences;
+   FrmPreferences: TFrmPreferences;
 
 implementation
 
@@ -63,32 +62,33 @@ uses FormMain;
 
 procedure TFrmPreferences.ExtractIcon;
 var
-  sWinDir: String;
-  iLength: Integer;
-  {Res: TResourceStream; }
-  MIcon: TIcon;
+   sWinDir: String;
+   iLength: Integer;
+   {Res: TResourceStream; }
+   MIcon: TIcon;
 begin
+   // Initialize Variable
+   iLength := 255;
+   setLength(sWinDir, iLength);
+   iLength := GetWindowsDirectory(PChar(sWinDir), iLength);
+   setLength(sWinDir, iLength);
+   IconPath := sWinDir + '\hvabuilder'+inttostr(IconID.Position)+'.ico';
 
-  // Initialize Variable
-  iLength := 255;
-  setLength(sWinDir, iLength);
-  iLength := GetWindowsDirectory(PChar(sWinDir), iLength);
-  setLength(sWinDir, iLength);
-  IconPath := sWinDir + '\hvabuilder'+inttostr(IconID.Position)+'.ico';
+   MIcon := TIcon.Create;
+   FrmMain.IconList.GetIcon(IconID.Position,MIcon);
+   MIcon.SaveToFile(IconPath);
+   MIcon.Free;
 
-  MIcon := TIcon.Create;
-  FrmMain.IconList.GetIcon(IconID.Position,MIcon);
-  MIcon.SaveToFile(IconPath);
-  MIcon.Free;
-
-  {Res := TResourceStream.Create(hInstance,'Icon_'+IntToStr(IconID.Position+1),RT_RCDATA);
-  Res.SaveToFile(IconPath);
-  Res.Free;}
+{
+   Res := TResourceStream.Create(hInstance,'Icon_'+IntToStr(IconID.Position+1),RT_RCDATA);
+   Res.SaveToFile(IconPath);
+   Res.Free;
+}
 end;
 
 procedure TFrmPreferences.GetSettings;
 var
-  Reg: TRegistry;
+   Reg: TRegistry;
 begin
    Reg :=TRegistry.Create;
    Reg.RootKey := HKEY_CLASSES_ROOT;
@@ -100,7 +100,7 @@ end;
 
 procedure TFrmPreferences.BtnApplyClick(Sender: TObject);
 var
-  Reg: TRegistry;
+   Reg: TRegistry;
 begin
 //  Config.Icon:=IconID.Position;
    ExtractIcon;
@@ -195,16 +195,14 @@ begin
    end;
 end;
 
-procedure TFrmPreferences.Pref_ListKeyPress(Sender: TObject;
-  var Key: Char);
+procedure TFrmPreferences.Pref_ListKeyPress(Sender: TObject; var Key: Char);
 begin
    Pref_ListClick(sender);
 end;
 
-procedure TFrmPreferences.Pref_ListKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TFrmPreferences.Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-Pref_ListClick(sender);
+   Pref_ListClick(sender);
 end;
 
 procedure TFrmPreferences.CheckBox1Click(Sender: TObject);

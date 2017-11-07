@@ -1,4 +1,4 @@
-object FrmAniamtionManager_New: TFrmAniamtionManager_New
+object FrmAnimationManager_New: TFrmAnimationManager_New
   Left = 388
   Top = 131
   BorderStyle = bsDialog

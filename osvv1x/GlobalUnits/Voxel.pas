@@ -1479,8 +1479,7 @@ begin
 end;
 
 // Insert a new section with SectionIndex :)
-procedure TVoxel.InsertSection(SectionIndex: Integer; Name: String; XSize,
-  YSize, ZSize: Integer);
+procedure TVoxel.InsertSection(SectionIndex: Integer; Name: String; XSize, YSize, ZSize: Integer);
 var
    i: Integer;
 begin
@@ -1513,8 +1512,7 @@ end;
 
 //this function uses basic matrix/vector operations (nice hybrid Koen) to
 //allow flipping and nudging.
-procedure TVoxelSection.FlipMatrix(VectorDir,
-  VectorPos: array of Single; Multiply: Boolean=True);
+procedure TVoxelSection.FlipMatrix(VectorDir, VectorPos: array of Single; Multiply: Boolean=True);
 var
    NewData: array of array of array of TVoxelPacked; // as is 32-bit type, should be packed anyway
    i,j,k,a,b,c: Integer;

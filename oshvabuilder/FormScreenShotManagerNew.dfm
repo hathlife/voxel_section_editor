@@ -234,14 +234,9 @@ object FrmScreenShotManager_New: TFrmScreenShotManager_New
     Enabled = False
     Max = 100
     Min = 1
-    Orientation = trHorizontal
-    Frequency = 1
     Position = 1
-    SelEnd = 0
-    SelStart = 0
     TabOrder = 6
     ThumbLength = 10
-    TickMarks = tmBottomRight
     TickStyle = tsManual
   end
 end

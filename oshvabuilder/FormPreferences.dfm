@@ -101,6 +101,10 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label1: TLabel
           Left = 24
           Top = 24
@@ -135,7 +139,6 @@ object FrmPreferences: TFrmPreferences
           Enabled = False
           ItemHeight = 16
           TabOrder = 1
-          DropDownCount = 8
         end
         object ComboBox1: TComboBoxEx
           Left = 32
@@ -146,7 +149,6 @@ object FrmPreferences: TFrmPreferences
           Enabled = False
           ItemHeight = 16
           TabOrder = 2
-          DropDownCount = 8
         end
       end
     end
@@ -162,9 +164,10 @@ object FrmPreferences: TFrmPreferences
     OnKeyDown = Pref_ListKeyUp
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
-    Items.Data = {
-      010000002A0000000000000001000000FFFFFFFFFFFFFFFF0000000000000000
-      1146696C65204173736F63696174696F6E73}
+    Items.NodeData = {
+      01010000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      0011460069006C00650020004100730073006F00630069006100740069006F00
+      6E007300}
   end
   object Panel1: TPanel
     Left = 0

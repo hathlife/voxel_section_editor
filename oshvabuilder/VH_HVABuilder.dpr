@@ -23,7 +23,7 @@ uses
   FormScreenShotManagerNew in 'FormScreenShotManagerNew.pas' {FrmScreenShotManager_New},
   FTGifAnimate in '..\osvv1x\GlobalUnits\FTGifAnimate.pas',
   gifimage in '..\osvv1x\GlobalUnits\gifimage.pas',
-  FormAnimationManagerNew in 'FormAnimationManagerNew.pas' {FrmAniamtionManager_New},
+  FormAnimationManagerNew in 'FormAnimationManagerNew.pas' {FrmAnimationManager_New},
   VVS in '..\osvv1x\GlobalUnits\VVS.pas',
   FormTransformManagerNew in 'FormTransformManagerNew.pas' {FrmTransformManager_New},
   FormProgress in '..\osvv1x\GlobalUnits\FormProgress.pas' {FrmProgress},
