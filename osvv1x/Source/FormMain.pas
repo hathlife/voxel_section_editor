@@ -2389,7 +2389,7 @@ end;
 
 procedure TVVFrmMain.Timer1Timer(Sender: TObject);
 begin
- FUpdateWorld := True;
+   FUpdateWorld := True;
 end;
 
 procedure TVVFrmMain.UnitCountComboChange(Sender: TObject);

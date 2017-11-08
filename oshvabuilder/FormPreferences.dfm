@@ -34,25 +34,25 @@ object FrmPreferences: TFrmPreferences
     Align = alBottom
     Shape = bsBottomLine
   end
-  object GroupBox1: TGroupBox
+  object GbOptionsBox: TGroupBox
     Left = 176
     Top = 88
     Width = 297
     Height = 265
-    Caption = 'File Assosiation'
+    Caption = 'File Association'
     TabOrder = 0
-    object PageControl1: TPageControl
+    object pcOptions: TPageControl
       Left = 8
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = TabSheet1
+      ActivePage = FileAssociationTab
       Style = tsFlatButtons
       TabOrder = 0
-      object TabSheet1: TTabSheet
-        Caption = 'File_assosiation_tab'
+      object FileAssociationTab: TTabSheet
+        Caption = 'File_association_tab'
         TabVisible = False
-        object AssociateCheck: TCheckBox
+        object cbAssociate: TCheckBox
           Left = 0
           Top = 8
           Width = 209
@@ -60,7 +60,7 @@ object FrmPreferences: TFrmPreferences
           Caption = 'Associate *.hva files with HVA Builder'
           TabOrder = 0
         end
-        object GroupBox3: TGroupBox
+        object gbAssociationIcon: TGroupBox
           Left = 0
           Top = 32
           Width = 113
@@ -86,7 +86,7 @@ object FrmPreferences: TFrmPreferences
             OnChange = IconIDChange
           end
         end
-        object BtnApply: TButton
+        object btnApply: TButton
           Left = 184
           Top = 208
           Width = 81
@@ -94,18 +94,14 @@ object FrmPreferences: TFrmPreferences
           Caption = '&Apply'
           TabOrder = 2
           Visible = False
-          OnClick = BtnApplyClick
+          OnClick = btnApplyClick
         end
       end
-      object TabSheet2: TTabSheet
+      object Palette_tab: TTabSheet
         Caption = 'Palette_tab'
         ImageIndex = 1
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
-        object Label1: TLabel
+        object lblTiberianSunPalette: TLabel
           Left = 24
           Top = 24
           Width = 184
@@ -113,7 +109,7 @@ object FrmPreferences: TFrmPreferences
           Caption = 'Select a palette to use for Tiberian Sun'
           Enabled = False
         end
-        object Label2: TLabel
+        object lblRedAlert2Palette: TLabel
           Left = 24
           Top = 72
           Width = 177
@@ -121,16 +117,16 @@ object FrmPreferences: TFrmPreferences
           Caption = 'Select a palette to use for Red Alert 2'
           Enabled = False
         end
-        object CheckBox1: TCheckBox
+        object cbUseNameSpecificPalettes: TCheckBox
           Left = 0
           Top = 0
           Width = 177
           Height = 17
           Caption = 'Use game specific palettes'
           TabOrder = 0
-          OnClick = CheckBox1Click
+          OnClick = cbUseNameSpecificPalettesClick
         end
-        object ComboBox2: TComboBoxEx
+        object cbRedAlert2Palette: TComboBoxEx
           Left = 32
           Top = 88
           Width = 177
@@ -140,7 +136,7 @@ object FrmPreferences: TFrmPreferences
           ItemHeight = 16
           TabOrder = 1
         end
-        object ComboBox1: TComboBoxEx
+        object cbTiberianSunPalette: TComboBoxEx
           Left = 32
           Top = 40
           Width = 177
@@ -149,6 +145,19 @@ object FrmPreferences: TFrmPreferences
           Enabled = False
           ItemHeight = 16
           TabOrder = 2
+        end
+      end
+      object Rendering_tab: TTabSheet
+        Caption = 'Rendering_tab'
+        ImageIndex = 2
+        TabVisible = False
+        object cbFPSCap: TCheckBox
+          Left = 16
+          Top = 16
+          Width = 246
+          Height = 17
+          Caption = 'Cap rendering speed to 60 frames per second.'
+          TabOrder = 0
         end
       end
     end
@@ -165,11 +174,14 @@ object FrmPreferences: TFrmPreferences
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
     Items.NodeData = {
-      01010000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      01030000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
       0011460069006C00650020004100730073006F00630069006100740069006F00
-      6E007300}
+      6E007300370000000000000000000000FFFFFFFFFFFFFFFF0000000000000000
+      0F500061006C00650074007400650020004F007000740069006F006E0073003B
+      0000000000000000000000FFFFFFFFFFFFFFFF00000000000000001152006500
+      6E0064006500720069006E00670020004F007000740069006F006E007300}
   end
-  object Panel1: TPanel
+  object pnlTop: TPanel
     Left = 0
     Top = 0
     Width = 490
@@ -178,14 +190,14 @@ object FrmPreferences: TFrmPreferences
     BevelOuter = bvNone
     Color = clWhite
     TabOrder = 2
-    object Image1: TImage
+    object ImgPreferences: TImage
       Left = 0
       Top = 0
       Width = 490
       Height = 58
       Align = alClient
     end
-    object Label9: TLabel
+    object lblPreferencesDescription: TLabel
       Left = 24
       Top = 24
       Width = 209
@@ -193,7 +205,7 @@ object FrmPreferences: TFrmPreferences
       Caption = 'Here you can set the settings of the program'
       Transparent = True
     end
-    object Label10: TLabel
+    object lblPreferences: TLabel
       Left = 8
       Top = 8
       Width = 69
@@ -208,7 +220,7 @@ object FrmPreferences: TFrmPreferences
       Transparent = True
     end
   end
-  object Panel2: TPanel
+  object pnlBottom: TPanel
     Left = 0
     Top = 385
     Width = 490
@@ -216,16 +228,16 @@ object FrmPreferences: TFrmPreferences
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 3
-    object Button4: TButton
+    object btnOK: TButton
       Left = 327
       Top = 11
       Width = 75
       Height = 23
       Caption = 'Ok'
       TabOrder = 0
-      OnClick = Button4Click
+      OnClick = btnOKClick
     end
-    object Button1: TButton
+    object btnCancel: TButton
       Left = 408
       Top = 11
       Width = 75
@@ -233,7 +245,7 @@ object FrmPreferences: TFrmPreferences
       Cancel = True
       Caption = 'Cancel'
       TabOrder = 1
-      OnClick = Button2Click
+      OnClick = btnCancelClick
     end
   end
 end

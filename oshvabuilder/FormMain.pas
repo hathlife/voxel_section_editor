@@ -2,222 +2,236 @@ unit FormMain;
 
 interface
 
+//{$define DEBUG_MEMORY_LEAK}
+
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Menus, ExtCtrls, Buttons, StdCtrls, ComCtrls, ImgList, Spin,FTGifAnimate,
-  ToolWin, VH_Voxel, Registry, FormPreferences;
+  ToolWin, VH_Voxel, Registry, FormPreferences, VH_Global;
 
 Const
-APPLICATION_TITLE = 'Open Source HVA Builder';
-APPLICATION_VER = '2.13';
-APPLICATION_BY = 'Stucuk and Banshee';
+   APPLICATION_TITLE = 'Open Source HVA Builder';
+   APPLICATION_VER = '2.14';
+   APPLICATION_BY = 'Stucuk and Banshee';
 
 type
-  TFrmMain = class(TForm)
-    MainMenu1: TMainMenu;
-    File1: TMenuItem;
-    Exit1: TMenuItem;
-    Panel1: TPanel;
-    Panel2: TPanel;
-    MainView: TPanel;
-    OpenVXLDialog: TOpenDialog;
-    Load1: TMenuItem;
-    Panel4: TPanel;
-    lblHVAFrame: TLabel;
-    PlayAnimation: TSpeedButton;
-    PauseAnimation: TSpeedButton;
-    StopAnimation: TSpeedButton;
-    AnimationBar: TTrackBar;
-    Label2: TLabel;
-    RemapImageList: TImageList;
-    Label1: TLabel;
-    Panel5: TPanel;
-    RemapColourBox: TComboBoxEx;
-    AnimationTimer: TTimer;
-    StatusBar1: TStatusBar;
-    RemapTimer: TTimer;
-    ColorDialog: TColorDialog;
-    Help1: TMenuItem;
-    About1: TMenuItem;
-    Panel3: TPanel;
-    SpeedButton2: TSpeedButton;
-    btn3DRotateX: TSpeedButton;
-    btn3DRotateX2: TSpeedButton;
-    btn3DRotateY2: TSpeedButton;
-    btn3DRotateY: TSpeedButton;
-    spin3Djmp: TSpinEdit;
-    Label3: TLabel;
-    Panel6: TPanel;
-    SectionBox: TComboBoxEx;
-    lblSection: TLabel;
-    Label4: TLabel;
-    Options1: TMenuItem;
-    Disable3DView1: TMenuItem;
-    View1: TMenuItem;
-    ools1: TMenuItem;
-    Spectrum1: TMenuItem;
-    Views1: TMenuItem;
-    N1: TMenuItem;
-    CameraManager1: TMenuItem;
-    ColoursNormals1: TMenuItem;
-    N2: TMenuItem;
-    Colours1: TMenuItem;
-    Normals1: TMenuItem;
-    Help2: TMenuItem;
-    N3: TMenuItem;
-    ScreenShot1: TMenuItem;
-    N5: TMenuItem;
-    BackgroundColour1: TMenuItem;
-    extColour1: TMenuItem;
-    CaptureAnimation1: TMenuItem;
-    N6: TMenuItem;
-    OpenVVSDialog: TOpenDialog;
-    Make360DegreeAnimation1: TMenuItem;
-    ToolBar1: TToolBar;
-    BarOpen: TToolButton;
-    BarSaveAs: TToolButton;
-    BarReopen: TToolButton;
-    ToolButton4: TToolButton;
-    ToolButton1: TToolButton;
-    ToolButton2: TToolButton;
-    ToolButton3: TToolButton;
-    ToolButton5: TToolButton;
-    ToolButton7: TToolButton;
-    ToolButton6: TToolButton;
-    ToolButton8: TToolButton;
-    ToolButton13: TToolButton;
-    ToolButton12: TToolButton;
-    ToolButton9: TToolButton;
-    ToolButton10: TToolButton;
-    ToolButton11: TToolButton;
-    ImageList: TImageList;
-    IconList: TImageList;
-    UpDown1: TUpDown;
-    Panel7: TPanel;
-    HighlightCheckBox: TCheckBox;
-    DrawCenterCheckBox: TCheckBox;
-    CheckBox1: TCheckBox;
-    ShowDebugCheckBox: TCheckBox;
-    VoxelCountCheckBox: TCheckBox;
-    TopBarImageHolder: TImage;
-    Panel8: TPanel;
-    ControlY: TSpeedButton;
-    ControlZ: TSpeedButton;
-    ControlX: TSpeedButton;
-    ControlType: TComboBoxEx;
-    Label5: TLabel;
-    SaveVoxel1: TMenuItem;
-    ReOpen1: TMenuItem;
-    N4: TMenuItem;
-    SaveAs1: TMenuItem;
-    SaveVXLDialog: TSaveDialog;
-    ScreenShots1: TMenuItem;
-    ViewTransform1: TMenuItem;
-    N7: TMenuItem;
-    Managers1: TMenuItem;
-    VoxelBounds1: TMenuItem;
-    RotateTo1: TMenuItem;
-    RotateBy1: TMenuItem;
-    HVAPosition1: TMenuItem;
-    Edit1: TMenuItem;
-    Undo1: TMenuItem;
-    Redo1: TMenuItem;
-    N8: TMenuItem;
-    Preferences1: TMenuItem;
-    procedure MainViewResize(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-    procedure DrawFrames;
-    procedure Idle(Sender: TObject; var Done: Boolean);
-    procedure Exit1Click(Sender: TObject);
-    procedure OpenVoxel(var Filename: string);
-    procedure Load1Click(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure MainViewMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure MainViewMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure MainViewMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
-    procedure AnimationTimerTimer(Sender: TObject);
-    procedure PlayAnimationClick(Sender: TObject);
-    procedure PauseAnimationClick(Sender: TObject);
-    procedure StopAnimationClick(Sender: TObject);
-    procedure AnimationBarChange(Sender: TObject);
-    Procedure SetIsHVA;
-    Procedure SetIsEditable;
-    Procedure SetCaption(Filename : String);
-    procedure RemapColourBoxChange(Sender: TObject);
-    procedure RemapTimerTimer(Sender: TObject);
-    procedure About1Click(Sender: TObject);
-    procedure SpeedButton2Click(Sender: TObject);
-    procedure btn3DRotateXClick(Sender: TObject);
-    Procedure SetRotationAdders;
-    procedure btn3DRotateX2Click(Sender: TObject);
-    procedure btn3DRotateY2Click(Sender: TObject);
-    procedure btn3DRotateYClick(Sender: TObject);
-    procedure spin3DjmpChange(Sender: TObject);
-    Procedure SetupSections;
-    procedure SectionBoxChange(Sender: TObject);
-    procedure ShowDebugCheckBoxClick(Sender: TObject);
-    procedure VoxelCountCheckBoxClick(Sender: TObject);
-    procedure Disable3DView1Click(Sender: TObject);
-    procedure ColoursNormals1Click(Sender: TObject);
-    procedure Colours1Click(Sender: TObject);
-    procedure Normals1Click(Sender: TObject);
-    procedure CameraManager1Click(Sender: TObject);
-    procedure Help2Click(Sender: TObject);
-    Procedure ChangeView(Sender : TObject);
-    procedure ScreenShot1Click(Sender: TObject);
-    procedure BackgroundColour1Click(Sender: TObject);
-    procedure extColour1Click(Sender: TObject);
-    procedure CaptureAnimation1Click(Sender: TObject);
-    Procedure ClearRotationAdders;
-    procedure Make360DegreeAnimation1Click(Sender: TObject);
-    procedure UpDown1ChangingEx(Sender: TObject; var AllowChange: Boolean;
-      NewValue: Smallint; Direction: TUpDownDirection);
-    procedure DrawCenterCheckBoxClick(Sender: TObject);
-    procedure HighlightCheckBoxClick(Sender: TObject);
-    procedure ControlYClick(Sender: TObject);
-    procedure ControlZClick(Sender: TObject);
-    procedure ControlXClick(Sender: TObject);
-    procedure ControlTypeChange(Sender: TObject);
-    procedure ToolButton1Click(Sender: TObject);
-    procedure ToolButton2Click(Sender: TObject);
-    procedure ToolButton3Click(Sender: TObject);
-    procedure ToolButton5Click(Sender: TObject);
-    procedure ToolButton6Click(Sender: TObject);
-    procedure ToolButton8Click(Sender: TObject);
-    procedure ToolButton12Click(Sender: TObject);
-    Procedure CheckHVAFrames;
-    Procedure CheckHVAFrames2;
-    procedure SaveVoxel1Click(Sender: TObject);
-    procedure SaveAs1Click(Sender: TObject);
-    procedure ViewTransform1Click(Sender: TObject);
-    procedure VoxelBounds1Click(Sender: TObject);
-    procedure RotateBy1Click(Sender: TObject);
-    procedure HVAPosition1Click(Sender: TObject);
-    Procedure SetUndoRedo;
-    procedure Undo1Click(Sender: TObject);
-    procedure Redo1Click(Sender: TObject);
-    procedure Preferences1Click(Sender: TObject);
-  private
-    { Private declarations }
-  public
-    { Public declarations }
-    VXLFilename2 : String;
-    LoadedProg : Boolean;
-  end;
+   TFrmMain = class(TForm)
+      MainMenu1: TMainMenu;
+      File1: TMenuItem;
+      Exit1: TMenuItem;
+      Panel1: TPanel;
+      Panel2: TPanel;
+      MainView: TPanel;
+      OpenVXLDialog: TOpenDialog;
+      Load1: TMenuItem;
+      Panel4: TPanel;
+      lblHVAFrame: TLabel;
+      PlayAnimation: TSpeedButton;
+      PauseAnimation: TSpeedButton;
+      StopAnimation: TSpeedButton;
+      AnimationBar: TTrackBar;
+      Label2: TLabel;
+      RemapImageList: TImageList;
+      Label1: TLabel;
+      Panel5: TPanel;
+      RemapColourBox: TComboBoxEx;
+      AnimationTimer: TTimer;
+      StatusBar1: TStatusBar;
+      RemapTimer: TTimer;
+      ColorDialog: TColorDialog;
+      Help1: TMenuItem;
+      About1: TMenuItem;
+      Panel3: TPanel;
+      btnResetDepth: TSpeedButton;
+      btn3DRotateX: TSpeedButton;
+      btn3DRotateX2: TSpeedButton;
+      btn3DRotateY2: TSpeedButton;
+      btn3DRotateY: TSpeedButton;
+      spin3Djmp: TSpinEdit;
+      Label3: TLabel;
+      Panel6: TPanel;
+      SectionBox: TComboBoxEx;
+      lblSection: TLabel;
+      Label4: TLabel;
+      Options1: TMenuItem;
+      Disable3DView1: TMenuItem;
+      View1: TMenuItem;
+      ools1: TMenuItem;
+      Spectrum1: TMenuItem;
+      Views1: TMenuItem;
+      N1: TMenuItem;
+      CameraManager1: TMenuItem;
+      ColoursNormals1: TMenuItem;
+      N2: TMenuItem;
+      Colours1: TMenuItem;
+      Normals1: TMenuItem;
+      Help2: TMenuItem;
+      N3: TMenuItem;
+      ScreenShot1: TMenuItem;
+      N5: TMenuItem;
+      BackgroundColour1: TMenuItem;
+      extColour1: TMenuItem;
+      CaptureAnimation1: TMenuItem;
+      N6: TMenuItem;
+      OpenVVSDialog: TOpenDialog;
+      Make360DegreeAnimation1: TMenuItem;
+      ToolBar1: TToolBar;
+      BarOpen: TToolButton;
+      BarSaveAs: TToolButton;
+      BarReopen: TToolButton;
+      ToolButton4: TToolButton;
+      ToolButton1: TToolButton;
+      ToolButton2: TToolButton;
+      ToolButton3: TToolButton;
+      ToolButton5: TToolButton;
+      ToolButton7: TToolButton;
+      ToolButton6: TToolButton;
+      ToolButton8: TToolButton;
+      ToolButton13: TToolButton;
+      ToolButton12: TToolButton;
+      ToolButton9: TToolButton;
+      ToolButton10: TToolButton;
+      ToolButton11: TToolButton;
+      ImageList: TImageList;
+      IconList: TImageList;
+      UpDown1: TUpDown;
+      Panel7: TPanel;
+      HighlightCheckBox: TCheckBox;
+      DrawCenterCheckBox: TCheckBox;
+      CheckBox1: TCheckBox;
+      ShowDebugCheckBox: TCheckBox;
+      VoxelCountCheckBox: TCheckBox;
+      TopBarImageHolder: TImage;
+      Panel8: TPanel;
+      ControlY: TSpeedButton;
+      ControlZ: TSpeedButton;
+      ControlX: TSpeedButton;
+      ControlType: TComboBoxEx;
+      Label5: TLabel;
+      SaveVoxel1: TMenuItem;
+      ReOpen1: TMenuItem;
+      N4: TMenuItem;
+      SaveAs1: TMenuItem;
+      SaveVXLDialog: TSaveDialog;
+      ScreenShots1: TMenuItem;
+      ViewTransform1: TMenuItem;
+      N7: TMenuItem;
+      Managers1: TMenuItem;
+      VoxelBounds1: TMenuItem;
+      RotateTo1: TMenuItem;
+      RotateBy1: TMenuItem;
+      HVAPosition1: TMenuItem;
+      Edit1: TMenuItem;
+      Undo1: TMenuItem;
+      Redo1: TMenuItem;
+      N8: TMenuItem;
+      Preferences1: TMenuItem;
+    Game1: TMenuItem;
+    mnTiberianSunGame: TMenuItem;
+    mnRedAlert2Game: TMenuItem;
+    procedure FormDestroy(Sender: TObject);
+    procedure mnRedAlert2GameClick(Sender: TObject);
+    procedure mnTiberianSunGameClick(Sender: TObject);
+      procedure MainViewResize(Sender: TObject);
+      procedure FormCreate(Sender: TObject);
+      procedure DrawFrames;
+      procedure Idle(Sender: TObject; var Done: Boolean);
+      procedure Exit1Click(Sender: TObject);
+      procedure OpenVoxel(var Filename: string);
+      procedure Load1Click(Sender: TObject);
+      procedure FormShow(Sender: TObject);
+      procedure MainViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure MainViewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+      procedure MainViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+      procedure AnimationTimerTimer(Sender: TObject);
+      procedure PlayAnimationClick(Sender: TObject);
+      procedure PauseAnimationClick(Sender: TObject);
+      procedure StopAnimationClick(Sender: TObject);
+      procedure AnimationBarChange(Sender: TObject);
+      Procedure SetIsHVA;
+      Procedure SetIsEditable;
+      Procedure SetCaption(Filename : String);
+      procedure RemapColourBoxChange(Sender: TObject);
+      procedure RemapTimerTimer(Sender: TObject);
+      procedure About1Click(Sender: TObject);
+      procedure btnResetDepthClick(Sender: TObject);
+      procedure btn3DRotateXClick(Sender: TObject);
+      Procedure SetRotationAdders;
+      procedure btn3DRotateX2Click(Sender: TObject);
+      procedure btn3DRotateY2Click(Sender: TObject);
+      procedure btn3DRotateYClick(Sender: TObject);
+      procedure spin3DjmpChange(Sender: TObject);
+      Procedure SetupSections;
+      procedure SectionBoxChange(Sender: TObject);
+      procedure ShowDebugCheckBoxClick(Sender: TObject);
+      procedure VoxelCountCheckBoxClick(Sender: TObject);
+      procedure Disable3DView1Click(Sender: TObject);
+      procedure ColoursNormals1Click(Sender: TObject);
+      procedure Colours1Click(Sender: TObject);
+      procedure Normals1Click(Sender: TObject);
+      procedure CameraManager1Click(Sender: TObject);
+      procedure Help2Click(Sender: TObject);
+      Procedure ChangeView(Sender : TObject);
+      procedure ScreenShot1Click(Sender: TObject);
+      procedure BackgroundColour1Click(Sender: TObject);
+      procedure extColour1Click(Sender: TObject);
+      procedure CaptureAnimation1Click(Sender: TObject);
+      Procedure ClearRotationAdders;
+      procedure Make360DegreeAnimation1Click(Sender: TObject);
+      procedure UpDown1ChangingEx(Sender: TObject; var AllowChange: Boolean; NewValue: Smallint; Direction: TUpDownDirection);
+      procedure DrawCenterCheckBoxClick(Sender: TObject);
+      procedure HighlightCheckBoxClick(Sender: TObject);
+      procedure ControlYClick(Sender: TObject);
+      procedure ControlZClick(Sender: TObject);
+      procedure ControlXClick(Sender: TObject);
+      procedure ControlTypeChange(Sender: TObject);
+      procedure ToolButton1Click(Sender: TObject);
+      procedure ToolButton2Click(Sender: TObject);
+      procedure ToolButton3Click(Sender: TObject);
+      procedure ToolButton5Click(Sender: TObject);
+      procedure ToolButton6Click(Sender: TObject);
+      procedure ToolButton8Click(Sender: TObject);
+      procedure ToolButton12Click(Sender: TObject);
+      Procedure CheckHVAFrames;
+      Procedure CheckHVAFrames2;
+      procedure SaveVoxel1Click(Sender: TObject);
+      procedure SaveAs1Click(Sender: TObject);
+      procedure ViewTransform1Click(Sender: TObject);
+      procedure VoxelBounds1Click(Sender: TObject);
+      procedure RotateBy1Click(Sender: TObject);
+      procedure HVAPosition1Click(Sender: TObject);
+      Procedure SetUndoRedo;
+      procedure Undo1Click(Sender: TObject);
+      procedure Redo1Click(Sender: TObject);
+      procedure Preferences1Click(Sender: TObject);
+      procedure GetSettings;
+   private
+      { Private declarations }
+      procedure DefaultSettings;
+   public
+      { Public declarations }
+      VXLFilename2 : String;
+      LoadedProg : Boolean;
+      FPSCap: Boolean;
+      Palette: array[0..C_GAME_MAX] of string;
+      UseSpecificPalette: boolean;
+      Game: integer;
+
+      procedure SetFPSCap(const _Enable: boolean);
+      procedure SetGame(const _Game: integer; const _DontLoadPalette: boolean = false);
+      procedure RefreshGame;
+   end;
 
 var
-  FrmMain: TFrmMain;
+   FrmMain: TFrmMain;
 
 implementation
 
-Uses VH_Engine,VH_Global,VH_GL,HVA,FormAboutNew,
+Uses VH_Engine,VH_GL,HVA,FormAboutNew,
      FormCameraManagerNew, ShellAPI,FormScreenShotManagerNew,
      FormAnimationManagerNew,VH_Types,FormTransformManagerNew,
      FormBoundsManagerNew,Math3d,FormRotationManagerNew,
-     FormHVAPositionManagerNew;
+     FormHVAPositionManagerNew, OpenGL15, Palette;
 
 {$R *.dfm}
 
@@ -249,7 +263,7 @@ begin
           else                    msg := 'no text';
           end; // of case
       raise Exception.Create ('ShellExecute error #' + IntToStr (rslt) + ': ' + msg);
-      end;
+   end;
 end;
 
 procedure TFrmMain.MainViewResize(Sender: TObject);
@@ -258,8 +272,110 @@ begin
       glResizeWnd(MainView.Width,MainView.Height);
 end;
 
+procedure TFrmMain.DefaultSettings;
+begin
+   Palette[C_GAME_TS] := 'Palettes\TS\unittem.pal';
+   Palette[C_GAME_RA2] := 'Palettes\RA2\unittem.pal';
+   FPSCap := true;
+   UseSpecificPalette := false;
+   SetGame(C_GAME_TS, true);
+end;
+
+procedure TFrmMain.GetSettings;
+var
+   Reg: TRegistry;
+begin
+   Reg := TRegistry.Create;
+   Reg.RootKey := HKEY_CURRENT_USER;
+   if Reg.KeyExists('\SOFTWARE\CnC Tools\OS HVA Builder\') then
+   begin
+      if Reg.OpenKey('\SOFTWARE\CnC Tools\OS HVA Builder\', true) then
+      begin
+         // Palette Settings
+         UseSpecificPalette := Reg.ReadBool('UseNameSpecificPalette');
+         Game := Reg.ReadInteger('Game');
+         if UseSpecificPalette then
+         begin
+            Palette[C_GAME_TS] := 'Palettes\TS\' + Reg.ReadString('TiberianSunPalette');
+            Palette[C_GAME_RA2] := 'Palettes\RA2\' + Reg.ReadString('RedAlert2Palette');
+         end
+         else
+         begin
+            Palette[C_GAME_TS] := 'Palettes\TS\unittem.pal';
+            Palette[C_GAME_RA2] := 'Palettes\RA2\unittem.pal';
+         end;
+         // Rendering Options
+         FPSCap := Reg.ReadBool('FPSCap');
+         // And it is over.
+         Reg.CloseKey;
+      end
+      else
+      begin
+         DefaultSettings;
+      end;
+   end
+   else
+   begin
+      DefaultSettings;
+   end;
+   Reg.Free;
+end;
+
+procedure TFrmMain.SetFPSCap(const _Enable: boolean);
+begin
+   FPSCap := _Enable;
+   if FPSCap then
+   begin
+      wglSwapIntervalEXT(1);
+   end
+   else
+   begin
+      wglSwapIntervalEXT(0);
+   end;
+end;
+
+procedure TFrmMain.SetGame(const _Game: integer; const _DontLoadPalette: boolean = false);
+var
+   Reg: TRegistry;
+begin
+   Game := _Game;
+   Reg := TRegistry.Create;
+   Reg.RootKey := HKEY_CURRENT_USER;
+   if Reg.OpenKey('\SOFTWARE\CnC Tools\OS HVA Builder\', true) then
+   begin
+      Reg.WriteInteger('Game', Game);
+      Reg.CloseKey;
+   end;
+   Reg.Free;
+   if Game = C_GAME_TS then
+   begin
+      mnTiberianSunGame.Checked := true;
+      mnRedAlert2Game.Checked := false;
+   end
+   else
+   begin
+      mnTiberianSunGame.Checked := false;
+      mnRedAlert2Game.Checked := true;
+   end;
+   if not _DontLoadPalette then
+   begin
+      LoadAPaletteFromFile(ExtractFileDir(ParamStr(0)) + '\' + Palette[Game]);
+      ChangeRemappable(VXLPalette,RemapColour);
+   end;
+end;
+
+procedure TFrmMain.RefreshGame;
+begin
+   SetGame(Game);
+   RebuildLists := true;
+end;
+
 procedure TFrmMain.FormCreate(Sender: TObject);
 begin
+   {$ifdef DEBUG_MEMORY_LEAK}
+   ReportMemoryLeaksOnShutdown := True;
+   {$endif}
+
    LoadedProg := false;
    RemapColourBox.ItemIndex := 1;
    SetIsEditable;
@@ -267,8 +383,9 @@ begin
    DrawAllOfVoxel := True;
    UnitRot := 180;
    DrawCenter := True;
+   GetSettings;
 
-   If not InitalizeVHE(ExtractFileDir(ParamStr(0)),'Palettes\ts\unittem.pal',MainView.Width,MainView.Height,MainView.Handle,-67) then
+   If not InitalizeVHE(ExtractFileDir(ParamStr(0)),Palette[Game],MainView.Width,MainView.Height,MainView.Handle,-67) then
    begin
       Messagebox(0,pchar('Error Initalizing Engine'#13#13'Closing'),'VH Engine',0);
       Application.Terminate;
@@ -279,9 +396,25 @@ begin
 
    ControlType.ItemIndex := 0;
    //PageControl1.ActivePage := TabSheet1;
+   if FPSCap then
+   begin
+      wglSwapIntervalEXT(1);
+   end;
 
    Application.OnIdle := Idle;
    LoadedProg := true;
+end;
+
+procedure TFrmMain.FormDestroy(Sender: TObject);
+begin
+   if VoxelOpen then
+      VoxelFile.Free;
+
+   if VoxelOpenT then
+      VoxelTurret.Free;
+
+   if VoxelOpenB then
+      VoxelBarrel.Free;
 end;
 
 procedure TFrmMain.Idle(Sender: TObject; var Done: Boolean);
@@ -290,7 +423,7 @@ var
 begin
    if not DrawVHWorld then exit;
 
-   if (ScreenShot.Take) or (ScreenShot.TakeAnimation) or (ScreenShot.Take360DAnimation) then
+   if RebuildLists or (ScreenShot.Take) or (ScreenShot.TakeAnimation) or (ScreenShot.Take360DAnimation) then
       FUpdateWorld := True;
    DrawFrames;
 
@@ -361,9 +494,12 @@ begin
    //If HVAOpen then
    SetCaption(FileName);
 
-   SetupSections;
-   SectionBox.ItemIndex := 0;
-   SectionBoxChange(nil);
+   if VoxelOpen then
+   begin
+      SetupSections;
+      SectionBox.ItemIndex := 0;
+      SectionBoxChange(nil);
+   end;
 
    SetIsEditable;
 
@@ -543,7 +679,7 @@ end;
 Procedure TFrmMain.SetIsEditable;
 begin
    RemapColourBox.Enabled := VoxelOpen;
-   SpeedButton2.Enabled := VoxelOpen;
+   btnResetDepth.Enabled := VoxelOpen;
    btn3DRotateX.Enabled := VoxelOpen;
    btn3DRotateX2.Enabled := VoxelOpen;
    btn3DRotateY.Enabled := VoxelOpen;
@@ -586,10 +722,10 @@ begin
    begin
       RemapColour := TVector3bToTVector3f(RemapColourMap[RemapColourBox.ItemIndex-1]);
       ChangeRemappable(VXLPalette,RemapColour);
-      RebuildLists := true;
    end
    else If LoadedProg then
       RemapTimer.Enabled := true;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.RemapTimerTimer(Sender: TObject);
@@ -606,26 +742,27 @@ end;
 
 procedure TFrmMain.About1Click(Sender: TObject);
 var
-  frm: TFrmAbout_New;
+   frm: TFrmAbout_New;
 begin
-  frm:=TFrmAbout_New.Create(Self);
-  frm.Visible:=False;
-  Frm.Image1.Picture := TopBarImageHolder.Picture;
+   frm:=TFrmAbout_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
  { if TB_ENABLED then
   frm.Label2.Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER + ' TB ' + TB_VER
   else    }
-  frm.Label2.Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER;
-  frm.Label1.Caption := frm.Label1.Caption + APPLICATION_BY;
-  frm.Label6.Caption := ENGINE_TITLE + ' v' + ENGINE_VER;
-  frm.Label9.Caption := 'By: ' + ENGINE_BY;
-  frm.ShowModal;
-  frm.Close;
-  frm.Free;
+   frm.Label2.Caption := APPLICATION_TITLE + ' v' + APPLICATION_VER;
+   frm.Label1.Caption := frm.Label1.Caption + APPLICATION_BY;
+   frm.Label6.Caption := ENGINE_TITLE + ' v' + ENGINE_VER;
+   frm.Label9.Caption := 'By: ' + ENGINE_BY;
+   frm.ShowModal;
+   frm.Close;
+   frm.Free;
 end;
 
-procedure TFrmMain.SpeedButton2Click(Sender: TObject);
+procedure TFrmMain.btnResetDepthClick(Sender: TObject);
 begin
    Depth := DefaultDepth;
+   FUpdateWorld := true;
 end;
 
 Procedure TFrmMain.SetRotationAdders;
@@ -824,6 +961,7 @@ begin
    Normals1.Checked := false;
    Colours1.Checked := false;
    ColoursOnly := false;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Colours1Click(Sender: TObject);
@@ -833,6 +971,7 @@ begin
    Normals1.Checked := false;
    Colours1.Checked := true;
    ColoursOnly := True;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Normals1Click(Sender: TObject);
@@ -842,6 +981,7 @@ begin
    Normals1.Checked := true;
    Colours1.Checked := false;
    ColoursOnly := false;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.CameraManager1Click(Sender: TObject);
@@ -865,6 +1005,7 @@ begin
    end;
 
    frm.Free;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Help2Click(Sender: TObject);
@@ -880,6 +1021,7 @@ end;
 Procedure TFrmMain.ChangeView(Sender : TObject);
 begin
    VH_ChangeView(TMenuItem(Sender).Tag);
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.ScreenShot1Click(Sender: TObject);
@@ -935,14 +1077,20 @@ procedure TFrmMain.BackgroundColour1Click(Sender: TObject);
 begin
    ColorDialog.Color := TVector3fToTColor(BGColor);
    if ColorDialog.Execute then
+   begin
       VH_SetBGColour(TColorToTVector3f(ColorDialog.Color));
+      RebuildLists := true;
+   end;
 end;
 
 procedure TFrmMain.extColour1Click(Sender: TObject);
 begin
    ColorDialog.Color := TVector3fToTColor(FontColor);
    if ColorDialog.Execute then
+   begin
       FontColor := TColorToTVector3f(ColorDialog.Color);
+      RebuildLists := true;
+   end;
 end;
 
 procedure TFrmMain.CaptureAnimation1Click(Sender: TObject);
@@ -1073,6 +1221,18 @@ begin
    frm.free;
 end;
 
+procedure TFrmMain.mnRedAlert2GameClick(Sender: TObject);
+begin
+   SetGame(C_GAME_RA2);
+   RebuildLists := true;
+end;
+
+procedure TFrmMain.mnTiberianSunGameClick(Sender: TObject);
+begin
+   SetGame(C_GAME_TS);
+   RebuildLists := true;
+end;
+
 procedure TFrmMain.UpDown1ChangingEx(Sender: TObject; var AllowChange: Boolean; NewValue: Smallint; Direction: TUpDownDirection);
 begin
    if Direction = updUp then
@@ -1086,6 +1246,7 @@ procedure TFrmMain.DrawCenterCheckBoxClick(Sender: TObject);
 begin
    DrawCenter := Not DrawCenter;
    DrawCenterCheckBox.Checked := DrawCenter;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.HighlightCheckBoxClick(Sender: TObject);
@@ -1246,14 +1407,15 @@ begin
 
    if Frm.O then
    begin
-      VH_AddHVAToUndo(CurrentHVA,GetCurrentFrame,CurrentVoxelSection);   VH_ResetRedo;
+      VH_AddHVAToUndo(CurrentHVA,GetCurrentFrame,CurrentVoxelSection);
+      VH_ResetRedo;
       SetUndoRedo;
 
       for j:=1 to 4 do
       begin
          for k:=1 to 3 do
          begin
-            CurrentHVA^.TransformMatrixs[HTM][j][k] := strtofloat(frm.grdTrans.Cells[k-1,j-1]);
+            CurrentHVA^.TransformMatrixs[HTM][j][k] := strtofloat(frm.grdTrans.Cells[j-1,k-1]);
          end;
       end;
    end;
@@ -1389,6 +1551,7 @@ begin
    Undo1.Enabled := ToolButton10.Enabled;
    ToolButton11.Enabled := VH_ISRedo;
    Redo1.Enabled := ToolButton11.Enabled;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Undo1Click(Sender: TObject);

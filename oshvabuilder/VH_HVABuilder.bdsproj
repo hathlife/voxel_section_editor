@@ -130,7 +130,7 @@
       <Directories Name="UsePackages">False</Directories>
     </Directories>
     <Parameters>
-      <Parameters Name="RunParams"></Parameters>
+      <Parameters Name="RunParams">F:\Meus Documentos\1.tnk</Parameters>
       <Parameters Name="HostApplication"></Parameters>
       <Parameters Name="Launcher"></Parameters>
       <Parameters Name="UseLauncher">False</Parameters>

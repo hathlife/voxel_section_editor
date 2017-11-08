@@ -8,39 +8,41 @@ uses
 
 type
    TFrmPreferences = class(TForm)
-      GroupBox1: TGroupBox;
+      GbOptionsBox: TGroupBox;
       Pref_List: TTreeView;
-      PageControl1: TPageControl;
-      TabSheet1: TTabSheet;
-      AssociateCheck: TCheckBox;
-      GroupBox3: TGroupBox;
+      pcOptions: TPageControl;
+      FileAssociationTab: TTabSheet;
+      cbAssociate: TCheckBox;
+      gbAssociationIcon: TGroupBox;
       IconPrev: TImage;
       IconID: TTrackBar;
-      BtnApply: TButton;
-      TabSheet2: TTabSheet;
-      CheckBox1: TCheckBox;
-      Label1: TLabel;
-      Label2: TLabel;
-      ComboBox2: TComboBoxEx;
-      ComboBox1: TComboBoxEx;
+      btnApply: TButton;
+      Palette_tab: TTabSheet;
+      cbUseNameSpecificPalettes: TCheckBox;
+      lblTiberianSunPalette: TLabel;
+      lblRedAlert2Palette: TLabel;
+      cbRedAlert2Palette: TComboBoxEx;
+      cbTiberianSunPalette: TComboBoxEx;
       Bevel2: TBevel;
-      Panel1: TPanel;
-      Image1: TImage;
-      Label9: TLabel;
-      Label10: TLabel;
+      pnlTop: TPanel;
+      ImgPreferences: TImage;
+      lblPreferencesDescription: TLabel;
+      lblPreferences: TLabel;
       Bevel3: TBevel;
-      Panel2: TPanel;
-      Button4: TButton;
-      Button1: TButton;
-      procedure BtnApplyClick(Sender: TObject);
+      pnlBottom: TPanel;
+      btnOK: TButton;
+      btnCancel: TButton;
+      Rendering_tab: TTabSheet;
+      cbFPSCap: TCheckBox;
+      procedure btnCancelClick(Sender: TObject);
+      procedure btnApplyClick(Sender: TObject);
       procedure FormShow(Sender: TObject);
       procedure IconIDChange(Sender: TObject);
-      procedure Button2Click(Sender: TObject);
       procedure Pref_ListClick(Sender: TObject);
       procedure Pref_ListKeyPress(Sender: TObject; var Key: Char);
       procedure Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
-      procedure CheckBox1Click(Sender: TObject);
-      procedure Button4Click(Sender: TObject);
+      procedure cbUseNameSpecificPalettesClick(Sender: TObject);
+      procedure btnOKClick(Sender: TObject);
       procedure FormCreate(Sender: TObject);
    private
       { Private declarations }
@@ -49,6 +51,9 @@ type
       IconPath: String;
       procedure ExtractIcon;
       procedure GetSettings;
+      procedure DefaultSettings;
+      function IsFileInUse(const _FileName: string): Boolean;
+      procedure SetPalette(const _PaletteName: string; var _PaletteCheckBox: TComboBoxEx);
    end;
 
 var
@@ -56,7 +61,7 @@ var
 
 implementation
 
-uses FormMain;
+uses FormMain, VH_Global;
 
 {$R *.dfm}
 
@@ -86,36 +91,144 @@ begin
 }
 end;
 
+function TFrmPreferences.IsFileInUse(const _FileName: string): Boolean;
+var
+   HFileRes: HFILE;
+begin
+   Result := False;
+   if not FileExists(_FileName) then Exit;
+   HFileRes := CreateFile(PChar(_FileName), GENERIC_READ or GENERIC_WRITE, 0, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+   Result := (HFileRes = INVALID_HANDLE_VALUE);
+   if not Result then
+      CloseHandle(HFileRes);
+end;
+
 procedure TFrmPreferences.GetSettings;
 var
    Reg: TRegistry;
+   F: TSearchRec;
+   dir, path, Name: string;
 begin
+   // Let's build the list of items on Tiberian Sun Palette combo box first.
+   dir := IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0)) + '\Palettes\TS');
+   if DirectoryExists(dir) then
+   begin
+      // prepare
+      path := Concat(dir, '*.pal');
+      // find files
+      if FindFirst(path, faAnyFile, f) = 0 then
+         repeat
+            Name := IncludeTrailingPathDelimiter(Dir) + f.Name;
+            if FileExists(Name) and (not IsFileInUse(Name)) then
+            begin
+               cbTiberianSunPalette.ItemsEx.AddItem(f.Name, 0, 0, 0, 0, 0);
+            end;
+         until FindNext(f) <> 0;
+      FindClose(f);
+   end;
+
+   // Let's build the list of items on Red Alert 2 Palette combo box now.
+   dir := IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0)) + '\Palettes\RA2');
+   if DirectoryExists(dir) then
+   begin
+      // prepare
+      path := Concat(dir, '*.pal');
+      // find files
+      if FindFirst(path, faAnyFile, f) = 0 then
+         repeat
+            Name := IncludeTrailingPathDelimiter(Dir) + f.Name;
+            if FileExists(Name) and (not IsFileInUse(Name)) then
+            begin
+               cbRedAlert2Palette.ItemsEx.AddItem(f.Name, 0, 0, 0, 0, 0);
+            end;
+         until FindNext(f) <> 0;
+      FindClose(f);
+   end;
+
+
    Reg :=TRegistry.Create;
+   // File Association
    Reg.RootKey := HKEY_CLASSES_ROOT;
-   AssociateCheck.Checked := Reg.KeyExists('\HVABuilder\shell\');
+   cbAssociate.Checked := Reg.KeyExists('\HVABuilder\shell\');
    Reg.CloseKey;
+   // Other settings
+   Reg.RootKey := HKEY_CURRENT_USER;
+   if Reg.KeyExists('\SOFTWARE\CnC Tools\OS HVA Builder\') then
+   begin
+      if Reg.OpenKey('\SOFTWARE\CnC Tools\OS HVA Builder\', true) then
+      begin
+         // Palette Settings
+         SetPalette(Reg.ReadString('TiberianSunPalette'), cbTiberianSunPalette);
+         SetPalette(Reg.ReadString('RedAlert2Palette'), cbRedAlert2Palette);
+         cbUseNameSpecificPalettes.Checked := Reg.ReadBool('UseNameSpecificPalette');
+         // Rendering Options
+         cbFPSCap.Checked := Reg.ReadBool('FPSCap');
+         // And it is over.
+         Reg.CloseKey;
+      end
+      else
+      begin
+         DefaultSettings;
+      end;
+   end
+   else
+   begin
+      DefaultSettings;
+   end;
    Reg.Free;
    IconIDChange(Self);
 end;
 
-procedure TFrmPreferences.BtnApplyClick(Sender: TObject);
+procedure TFrmPreferences.SetPalette(const _PaletteName: string; var _PaletteCheckBox: TComboBoxEx);
+var
+   i: integer;
+   isEnabled: boolean;
+begin
+   isEnabled := _PaletteCheckBox.Enabled;
+   i := 0;
+   _PaletteCheckBox.ItemIndex := 0;
+   while i < _PaletteCheckBox.ItemsEx.Count do
+   begin
+      if _PaletteCheckBox.ItemsEx.Items[i].Caption = _PaletteName then
+      begin
+         _PaletteCheckBox.ItemIndex := i;
+      end;
+      inc(i);
+   end;
+   _PaletteCheckBox.Enabled := isEnabled;
+end;
+
+procedure TFrmPreferences.DefaultSettings;
+var
+   i: integer;
+begin
+   cbUseNameSpecificPalettes.Checked := false;
+   // Get TS palette.
+   SetPalette('unittem.pal', cbTiberianSunPalette);
+   cbTiberianSunPalette.Enabled := false;
+   // Get RA2 palette.
+   SetPalette('unittem.pal', cbRedAlert2Palette);
+   cbRedAlert2Palette.Enabled := false;
+   // Get FPS cap.
+   cbFPSCap.Checked := true;
+end;
+
+procedure TFrmPreferences.btnApplyClick(Sender: TObject);
 var
    Reg: TRegistry;
 begin
 //  Config.Icon:=IconID.Position;
    ExtractIcon;
-   Reg :=TRegistry.Create;
+   Reg := TRegistry.Create;
    Reg.RootKey := HKEY_CLASSES_ROOT;
    if Reg.OpenKey('\HVABuilder\DefaultIcon\',true) then
    begin
       Reg.WriteString('',IconPath);
       Reg.CloseKey;
    end;
-   Reg.Free;
 
-   if AssociateCheck.Checked = true then
+   if cbAssociate.Checked = true then
    begin
-      Reg :=TRegistry.Create;
       Reg.RootKey := HKEY_CLASSES_ROOT;
       if Reg.OpenKey('\.hva\',true) then
       begin
@@ -138,8 +251,6 @@ begin
          Reg.WriteString('Application',ParamStr(0)+' "%1"');
          Reg.CloseKey;
       end;
-      Reg.Free;
-      Close;
    end
    else
    begin
@@ -154,17 +265,43 @@ begin
       Reg.RootKey := HKEY_CURRENT_USER;
       Reg.DeleteKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.hva\');
       Reg.CloseKey;
-      Reg.Free;
-      Close;
    end;
+
+   // Save the other settings.
+   Reg.RootKey := HKEY_CURRENT_USER;
+   if Reg.OpenKey('\SOFTWARE\CnC Tools\OS HVA Builder\', true) then
+   begin
+      // Palette Settings
+      Reg.WriteString('TiberianSunPalette', cbTiberianSunPalette.ItemsEx.Items[cbTiberianSunPalette.ItemIndex].Caption);
+      Reg.WriteString('RedAlert2Palette', cbRedAlert2Palette.ItemsEx.Items[cbRedAlert2Palette.ItemIndex].Caption);
+      Reg.WriteBool('UseNameSpecificPalette', cbUseNameSpecificPalettes.Checked);
+      if cbUseNameSpecificPalettes.Checked then
+      begin
+         FrmMain.Palette[C_GAME_TS] := 'Palettes\TS\' + cbTiberianSunPalette.ItemsEx.Items[cbTiberianSunPalette.ItemIndex].Caption;
+         FrmMain.Palette[C_GAME_RA2] := 'Palettes\RA2\' + cbRedAlert2Palette.ItemsEx.Items[cbRedAlert2Palette.ItemIndex].Caption;
+      end
+      else
+      begin
+         FrmMain.Palette[C_GAME_TS] := 'Palettes\TS\unittem.pal';
+         FrmMain.Palette[C_GAME_RA2] := 'Palettes\RA2\unittem.pal';
+      end;
+      FrmMain.RefreshGame;
+      // Rendering Options
+      Reg.WriteBool('FPSCap', cbFPSCap.Checked);
+      FrmMain.SetFPSCap(cbFPSCap.Checked);
+      // And it is over.
+      Reg.CloseKey;
+   end;
+   Reg.Free;
+   Close;
 end;
 
 
 procedure TFrmPreferences.FormShow(Sender: TObject);
 begin
    GetSettings;
-   PageControl1.ActivePageIndex := 0;
-   GroupBox1.Caption := 'File Associations';
+   pcOptions.ActivePageIndex := 0;
+   gbOptionsBox.Caption := 'File Associations';
 end;
 
 procedure TFrmPreferences.IconIDChange(Sender: TObject);
@@ -179,19 +316,18 @@ begin
    MIcon.Free;
 end;
 
-procedure TFrmPreferences.Button2Click(Sender: TObject);
-begin
-   Close;
-end;
-
 procedure TFrmPreferences.Pref_ListClick(Sender: TObject);
 begin
    if pref_list.SelectionCount > 0 then
    begin
       if pref_list.Selected.Text = 'File Associations' then
-         PageControl1.ActivePageIndex := 0;
+         pcOptions.ActivePageIndex := 0
+      else if pref_list.Selected.Text = 'Palette Options' then
+         pcOptions.ActivePageIndex := 1
+      else if pref_list.Selected.Text = 'Rendering Options' then
+         pcOptions.ActivePageIndex := 2;
 
-      GroupBox1.Caption := pref_list.Selected.Text;
+      GbOptionsBox.Caption := pref_list.Selected.Text;
    end;
 end;
 
@@ -205,23 +341,28 @@ begin
    Pref_ListClick(sender);
 end;
 
-procedure TFrmPreferences.CheckBox1Click(Sender: TObject);
+procedure TFrmPreferences.cbUseNameSpecificPalettesClick(Sender: TObject);
 begin
-   Label1.Enabled := CheckBox1.Checked;
-   Label2.Enabled := CheckBox1.Checked;
-   ComboBox1.Enabled := CheckBox1.Checked;
-   ComboBox2.Enabled := CheckBox1.Checked;
+   lblTiberianSunPalette.Enabled := cbUseNameSpecificPalettes.Checked;
+   lblRedAlert2Palette.Enabled := cbUseNameSpecificPalettes.Checked;
+   cbTiberianSunPalette.Enabled := cbUseNameSpecificPalettes.Checked;
+   cbRedAlert2Palette.Enabled := cbUseNameSpecificPalettes.Checked;
 end;
 
-procedure TFrmPreferences.Button4Click(Sender: TObject);
+procedure TFrmPreferences.btnCancelClick(Sender: TObject);
 begin
-   BtnApplyClick(Sender);
+   Close;
+end;
+
+procedure TFrmPreferences.btnOKClick(Sender: TObject);
+begin
+   btnApplyClick(Sender);
    Close;
 end;
 
 procedure TFrmPreferences.FormCreate(Sender: TObject);
 begin
-   Panel1.DoubleBuffered := true;
+   pnlTop.DoubleBuffered := true;
 end;
 
 end.

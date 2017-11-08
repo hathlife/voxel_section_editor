@@ -178,6 +178,7 @@ type
          Canvas: {packed} array of {packed} array of TVoxelViewCell;
          Voxel: TVoxelSection; // owner
          constructor Create(Owner: TVoxelSection; o: EVoxelViewOrient; d: EVoxelViewDir);
+         destructor Destroy; override;
          function getViewNameIdx: Integer;
          function getDir: EVoxelViewDir;
          function getOrient: EVoxelViewOrient;
@@ -327,6 +328,9 @@ constructor TVoxelSection.Create; begin end;
 destructor TVoxelSection.Destroy;
 begin
    ClearDataSize;
+   View[0].Free;
+   View[1].Free;
+   View[2].Free;
    inherited Destroy;
 end;
 
@@ -432,7 +436,9 @@ begin
    for x := High(Data) downto Low(Data) do
    begin
       for y := High(Data[x]) downto Low(Data[x]) do
+      begin
          SetLength(Data[x,y],0);
+      end;
       SetLength(Data[x],0);
    end;
    SetLength(Data,0);
@@ -756,6 +762,8 @@ begin
    begin
       Section[i].Free;
    end;
+   SetLength(Section, 0);
+   Filename := '';
    inherited Destroy;
 end;
 
@@ -1004,6 +1012,19 @@ begin
    CalcSwapXYZ;
    Refresh;
 end;
+
+destructor TVoxelView.Destroy;
+var
+   i: integer;
+begin
+   for i := Low(Canvas) to High(Canvas) do
+   begin
+      SetLength(Canvas[i], 0);
+   end;
+   SetLength(Canvas, 0);
+   inherited Destroy;
+end;
+
 
 function TVoxelView.getViewNameIdx: Integer;
 begin
@@ -1577,6 +1598,16 @@ begin
          end;
       end;
    end;
+   // Free memory
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         SetLength(NewData[i,j], 0);
+      end;
+      SetLength(NewData[i], 0);
+   end;
+   SetLength(NewData, 0);
 end;
 
 procedure TVoxelSection.Mirror(MirrorView: EVoxelViewOrient);
@@ -1661,6 +1692,16 @@ begin
          end;
       end;
    end;
+   // Free memory
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         SetLength(NewData[i,j], 0);
+      end;
+      SetLength(NewData[i], 0);
+   end;
+   SetLength(NewData, 0);
 end;
 
 procedure TVoxelSection.ResizeBlowUp(Scale: Integer);
@@ -1713,6 +1754,16 @@ begin
          end;
       end;
    end;
+   // Free memory
+   for i:=0 to Tailer.XSize - 1 do
+   begin
+      for j:=0 to Tailer.YSize - 1 do
+      begin
+         SetLength(NewData[i,j], 0);
+      end;
+      SetLength(NewData[i], 0);
+   end;
+   SetLength(NewData, 0);
 end;
 
 //brushview contains the view of the current editing Window.

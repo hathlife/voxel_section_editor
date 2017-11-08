@@ -290,6 +290,7 @@ begin
    if VoxelOpen then
       try
          Voxel.Free;
+         Voxel := nil;
       finally
          VoxelOpen := false;
       end;

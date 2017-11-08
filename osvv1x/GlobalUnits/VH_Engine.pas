@@ -93,10 +93,16 @@ begin
    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
 
    if XRotB then
+   begin
       XRot := XRot + (XRot2 * 30) * gTimer.FrameTime;
+      FUpdateWorld := true;
+   end;
 
    if YRotB then
+   begin
       YRot := YRot + (YRot2 * 30) * gTimer.FrameTime;
+      FUpdateWorld := true;
+   end;
 
    XRot := CleanAngle(XRot);
    YRot := CleanAngle(YRot);

@@ -94,7 +94,8 @@ begin
       ClearHVA(HVAFile);
    TFilename := extractfiledir(Filename) + '\' + copy(Extractfilename(Filename),1,Length(Extractfilename(Filename))-Length('.hva')) + Ext;
    HVAOpen := false;
-   if not FileExists(TFilename) then exit;
+   if not FileExists(TFilename) then
+      exit;
 
    AssignFile(F,TFilename);  // Open file
    Reset(F,1); // Goto first byte?
@@ -116,6 +117,8 @@ begin
    HVAOpen := True;
    If HVAFile.Header.N_Frames < 1 then
       HVAOpen := False;
+   // Clear memory
+   TFilename := '';
 end;
 
 Procedure SaveHVA(Filename : string);
@@ -178,7 +181,9 @@ begin
    showmessage(inttostr(wrote));
    {$endif}
 
+   // Clear memory
    CloseFile(f);
+   TFilename := '';
 end;
 
 Function GetTMValue2(HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
@@ -284,6 +289,9 @@ var
    i,x : integer;
    //S : string;
 begin
+   if (Vxl = nil) or (not Vxl.Loaded) then
+      exit;
+
    HVA.Header.N_Frames := 1;
    HVA.Header.N_Sections := Vxl.Header.NumSections;
 
@@ -562,6 +570,8 @@ begin
             for y := 1 to 3 do
                for z := 1 to 4 do
                   HVAFile.TransformMatrixs[x*HVAFile.Header.N_Sections+i][y][z] := TransformMatrixs[(x-1)*HVAFile.Header.N_Sections+i][y][z];
+   // Clear memory
+   SetLength(TransformMatrixs,0);
 end;
 
 Procedure CopyHVAFrame(Var HVAFile : THVA);

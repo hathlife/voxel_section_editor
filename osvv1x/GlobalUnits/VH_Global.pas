@@ -6,7 +6,7 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
    ENGINE_TITLE = 'Voxel HVA Engine';
-   ENGINE_VER = '1.36';
+   ENGINE_VER = '1.40';
    ENGINE_BY = 'Stucuk and Banshee';
 
 var
@@ -218,6 +218,11 @@ Const
    ambient:  TGLArrayf4=( 0.5, 0.5, 0.5, 1);
    Light0_Light:  TGLArrayf4=( 1, 1, 1, 1);
    Light0_Spec:  TGLArrayf4=( 1, 0.5, 0, 0);
+
+   //Games
+   C_GAME_TS = 0;
+   C_GAME_RA2 = C_GAME_TS + 1;
+   C_GAME_MAX = C_GAME_RA2;
 
 //var
 //OGLW : TOpenGLWrapper;

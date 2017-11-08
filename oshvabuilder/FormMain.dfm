@@ -2,7 +2,7 @@ object FrmMain: TFrmMain
   Left = 284
   Top = 199
   Caption = 'APPLICATION TITLE'
-  ClientHeight = 541
+  ClientHeight = 561
   ClientWidth = 782
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -14,6 +14,7 @@ object FrmMain: TFrmMain
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -21,17 +22,19 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 23
     Width = 782
-    Height = 499
+    Height = 519
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 499
     object Panel2: TPanel
       Left = 1
       Top = 1
       Width = 136
-      Height = 497
+      Height = 517
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 497
       object Label2: TLabel
         Left = 1
         Top = 233
@@ -309,7 +312,7 @@ object FrmMain: TFrmMain
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 2
-        object SpeedButton2: TSpeedButton
+        object btnResetDepth: TSpeedButton
           Left = 10
           Top = 3
           Width = 23
@@ -345,7 +348,7 @@ object FrmMain: TFrmMain
             00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FFFF00FF}
           ParentShowHint = False
           ShowHint = True
-          OnClick = SpeedButton2Click
+          OnClick = btnResetDepthClick
         end
         object btn3DRotateX: TSpeedButton
           Left = 33
@@ -605,7 +608,7 @@ object FrmMain: TFrmMain
       Left = 137
       Top = 1
       Width = 644
-      Height = 497
+      Height = 517
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
@@ -613,6 +616,7 @@ object FrmMain: TFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
+      ExplicitHeight = 497
       object TopBarImageHolder: TImage
         Left = 64
         Top = 24
@@ -3297,13 +3301,14 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 522
+    Top = 542
     Width = 782
     Height = 19
     Panels = <
       item
         Width = 100
       end>
+    ExplicitTop = 522
   end
   object ToolBar1: TToolBar
     Left = 0
@@ -3591,6 +3596,18 @@ object FrmMain: TFrmMain
       object Disable3DView1: TMenuItem
         Caption = 'Disable 3D View'
         OnClick = Disable3DView1Click
+      end
+      object Game1: TMenuItem
+        Caption = 'Game'
+        object mnTiberianSunGame: TMenuItem
+          Caption = 'Tiberian Sun'
+          Checked = True
+          OnClick = mnTiberianSunGameClick
+        end
+        object mnRedAlert2Game: TMenuItem
+          Caption = 'Red Alert 2'
+          OnClick = mnRedAlert2GameClick
+        end
       end
       object N8: TMenuItem
         Caption = '-'
