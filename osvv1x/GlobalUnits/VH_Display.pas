@@ -306,7 +306,7 @@ end;
 
 Procedure DrawWorld;
 var
-   Scale, Offset: TVector3f;
+   HVAPosition, ScaledUnitShift, Scale, Offset: TVector3f;
 begin
    if FUpdateWorld then
    begin
@@ -376,10 +376,12 @@ begin
 
       If DrawSectionCenter then
       begin
-         GETMinMaxBounds(VoxelFile,0,Scale,Offset);
+         GETMinMaxBounds(CurrentVoxel^,CurrentVoxelSection,Scale,Offset);
          Scale := ScaleVector(Scale, Size);
+         HVAPosition := ApplyMatrix2(CurrentHVA^, CurrentVoxel^, Scale, CurrentVoxelSection, HVACurrentFrame);
          Offset := ScaleVector3f(Offset, Scale);
-         DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(UnitShift.X + Offset.X + (VoxelFile.Section[0].Tailer.XSize * Scale.X * 0.5),UnitShift.Y + Offset.Y + (VoxelFile.Section[0].Tailer.YSize * Scale.Y * 0.5),UnitShift.Z + Offset.Z + (VoxelFile.Section[0].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
+         ScaledUnitShift := ScaleVector3f(UnitShift, Scale);
+         DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(ScaledUnitShift.X + HVAPosition.X + Offset.X + (VoxelFile.Section[0].Tailer.XSize * Scale.X * 0.5),ScaledUnitShift.Y + HVAPosition.Y + Offset.Y + (VoxelFile.Section[0].Tailer.YSize * Scale.Y * 0.5),ScaledUnitShift.Z + HVAPosition.Z + Offset.Z + (VoxelFile.Section[0].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
       end;
 
       if FTexture = 0 then
