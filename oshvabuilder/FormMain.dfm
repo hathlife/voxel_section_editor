@@ -481,7 +481,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 326
         Width = 134
-        Height = 107
+        Height = 123
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 4
@@ -509,7 +509,7 @@ object FrmMain: TFrmMain
         end
         object CheckBox1: TCheckBox
           Left = 8
-          Top = 40
+          Top = 72
           Width = 97
           Height = 17
           Caption = 'Disable 3d View'
@@ -518,7 +518,7 @@ object FrmMain: TFrmMain
         end
         object ShowDebugCheckBox: TCheckBox
           Left = 8
-          Top = 56
+          Top = 88
           Width = 97
           Height = 17
           Caption = 'Show Debug'
@@ -527,12 +527,30 @@ object FrmMain: TFrmMain
         end
         object VoxelCountCheckBox: TCheckBox
           Left = 8
-          Top = 72
+          Top = 104
           Width = 113
           Height = 17
           Caption = 'Show Voxel Count'
           TabOrder = 4
           OnClick = VoxelCountCheckBoxClick
+        end
+        object DrawGridCheckBox: TCheckBox
+          Left = 8
+          Top = 56
+          Width = 97
+          Height = 17
+          Caption = 'Draw Grid'
+          TabOrder = 5
+          OnClick = DrawGridCheckBoxClick
+        end
+        object DrawSectionCenterCheckBox: TCheckBox
+          Left = 8
+          Top = 40
+          Width = 121
+          Height = 17
+          Caption = 'Draw Section Center'
+          TabOrder = 6
+          OnClick = DrawSectionCenterCheckBoxClick
         end
       end
       object Panel8: TPanel
@@ -3315,7 +3333,6 @@ object FrmMain: TFrmMain
     Top = 0
     Width = 782
     Height = 23
-    Caption = 'ToolBar1'
     EdgeInner = esNone
     Images = ImageList
     ParentShowHint = False
@@ -3357,101 +3374,101 @@ object FrmMain: TFrmMain
       ImageIndex = 5
       Style = tbsSeparator
     end
-    object ToolButton1: TToolButton
+    object btnUndo: TToolButton
       Left = 79
       Top = 0
-      Hint = 'View'
-      Caption = 'ToolButton1'
-      ImageIndex = 8
-      OnClick = ToolButton1Click
+      Hint = 'Undo'
+      Caption = 'btnUndo'
+      ImageIndex = 17
+      OnClick = Undo1Click
     end
-    object ToolButton2: TToolButton
+    object btnRedo: TToolButton
       Left = 102
       Top = 0
-      Hint = 'Voxel Offset'
-      Caption = 'ToolButton2'
-      ImageIndex = 7
-      OnClick = ToolButton2Click
-    end
-    object ToolButton3: TToolButton
-      Left = 125
-      Top = 0
-      Hint = 'HVA Position'
-      Caption = 'ToolButton3'
-      ImageIndex = 9
-      OnClick = ToolButton3Click
-    end
-    object ToolButton5: TToolButton
-      Left = 148
-      Top = 0
-      Hint = 'HVA Rotation'
-      Caption = 'ToolButton5'
-      ImageIndex = 9
-      OnClick = ToolButton5Click
-    end
-    object ToolButton7: TToolButton
-      Left = 171
-      Top = 0
-      Width = 8
-      Caption = 'ToolButton7'
-      ImageIndex = 11
-      Style = tbsSeparator
-    end
-    object ToolButton6: TToolButton
-      Left = 179
-      Top = 0
-      Hint = 'Add Frame'
-      Caption = 'ToolButton6'
-      ImageIndex = 15
-      OnClick = ToolButton6Click
-    end
-    object ToolButton8: TToolButton
-      Left = 202
-      Top = 0
-      Hint = 'Delete Frame'
-      Caption = 'ToolButton8'
-      ImageIndex = 16
-      OnClick = ToolButton8Click
-    end
-    object ToolButton13: TToolButton
-      Left = 225
-      Top = 0
-      Width = 8
-      Caption = 'ToolButton13'
-      ImageIndex = 19
-      Style = tbsSeparator
-    end
-    object ToolButton12: TToolButton
-      Left = 233
-      Top = 0
-      Hint = 'Copy Frame'
-      Caption = 'ToolButton12'
-      ImageIndex = 15
-      OnClick = ToolButton12Click
+      Hint = 'Redo'
+      Caption = 'btnRedo'
+      ImageIndex = 18
+      OnClick = Redo1Click
     end
     object ToolButton9: TToolButton
-      Left = 256
+      Left = 125
       Top = 0
       Width = 8
       Caption = 'ToolButton9'
       ImageIndex = 17
       Style = tbsSeparator
     end
-    object ToolButton10: TToolButton
-      Left = 264
+    object btnView: TToolButton
+      Left = 133
       Top = 0
-      Hint = 'Undo'
-      Caption = 'ToolButton10'
-      ImageIndex = 17
-      OnClick = Undo1Click
+      Hint = 'View'
+      Caption = 'btnView'
+      ImageIndex = 8
+      OnClick = btnViewClick
     end
-    object ToolButton11: TToolButton
+    object btnVoxelOffset: TToolButton
+      Left = 156
+      Top = 0
+      Hint = 'Voxel Offset'
+      Caption = 'btnVoxelOffset'
+      ImageIndex = 7
+      OnClick = btnVoxelOffsetClick
+    end
+    object btnHVAPosition: TToolButton
+      Left = 179
+      Top = 0
+      Hint = 'HVA Position'
+      Caption = 'btnHVAPosition'
+      ImageIndex = 9
+      OnClick = btnHVAPositionClick
+    end
+    object btnHVARotation: TToolButton
+      Left = 202
+      Top = 0
+      Hint = 'HVA Rotation'
+      Caption = 'btnHVARotation'
+      ImageIndex = 9
+      OnClick = btnHVARotationClick
+    end
+    object ToolButton7: TToolButton
+      Left = 225
+      Top = 0
+      Width = 8
+      Caption = 'ToolButton7'
+      ImageIndex = 11
+      Style = tbsSeparator
+    end
+    object btnAddFrame: TToolButton
+      Left = 233
+      Top = 0
+      Hint = 'Add Frame'
+      Caption = 'btnAddFrame'
+      ImageIndex = 15
+      OnClick = btnAddFrameClick
+    end
+    object btnDeleteFrame: TToolButton
+      Left = 256
+      Top = 0
+      Hint = 'Delete Frame'
+      Caption = 'btnDeleteFrame'
+      ImageIndex = 16
+      OnClick = btnDeleteFrameClick
+    end
+    object ToolButton13: TToolButton
+      Left = 279
+      Top = 0
+      Width = 8
+      Caption = 'ToolButton13'
+      ImageIndex = 19
+      Style = tbsSeparator
+    end
+    object btnCopyFrames: TToolButton
       Left = 287
       Top = 0
-      Hint = 'Redo'
-      Caption = 'ToolButton11'
-      ImageIndex = 18
-      OnClick = Redo1Click
+      Hint = 'Copy Frame'
+      Caption = 'btnCopyFrames'
+      ImageIndex = 15
+      OnClick = btnCopyFramesClick
     end
   end
   object MainMenu1: TMainMenu
@@ -6605,5 +6622,10 @@ object FrmMain: TFrmMain
       E000007FE000007FE000007FE000007FE00000FFE00000FFE00000FFE00000FF
       E00001FFE00001FFE00001FFE00001FF00000000000000000000000000000000
       000000000000}
+  end
+  object HighlightTimer: TTimer
+    OnTimer = HighlightTimerTimer
+    Left = 248
+    Top = 168
   end
 end

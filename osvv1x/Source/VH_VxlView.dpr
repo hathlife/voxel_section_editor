@@ -24,15 +24,15 @@ uses
   FormCameraManagerNew in 'FormCameraManagerNew.pas' {FrmCameraManager_New},
   FormScreenShotManagerNew in 'FormScreenShotManagerNew.pas' {FrmScreenShotManager_New},
   FTGifAnimate in '..\GlobalUnits\FTGifAnimate.pas',
-  GIFImage in '..\GlobalUnits\gifimage.pas',
+  gifimage in '..\GlobalUnits\gifimage.pas',
   FormAnimationManagerNew in 'FormAnimationManagerNew.pas' {FrmAniamtionManager_New},
   VVS in '..\GlobalUnits\VVS.pas',
   Undo_Engine in '..\GlobalUnits\Undo_Engine.pas',
   OSVVCommEngine in 'OSVVCommEngine.pas',
   FormSurface in 'FormSurface.pas' {FrmSurfaces},
   VH_SurfaceGen in 'VH_SurfaceGen.pas',
-  //OpenGLWrapper in '..\GlobalUnits\OpenGLWrapper.pas',
-  TimerUnit in '..\GlobalUnits\TimerUnit.pas';
+  TimerUnit in '..\GlobalUnits\TimerUnit.pas',
+  pngimage in '..\GlobalUnits\pngimage.pas';
 
 {$R *.res}
 

@@ -6,7 +6,7 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
    ENGINE_TITLE = 'Voxel HVA Engine';
-   ENGINE_VER = '1.40';
+   ENGINE_VER = '1.45';
    ENGINE_BY = 'Stucuk and Banshee';
 
 var
@@ -42,6 +42,7 @@ var
    XRotB,YRotB,oglloaded,DebugMode,
    ShowVoxelCount,VVSLoading,DrawSky,
    DrawCenter,VXLChanged : Boolean;
+   DrawSectionCenter: Boolean;
 
    DrawVHWorld : Boolean = True;
    Highlight : Boolean = True;

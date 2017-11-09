@@ -25,7 +25,7 @@ unit Textures;
 interface
 
 uses
-  Windows, OpenGL15, Graphics, Classes, JPEG, SysUtils;
+  Windows, OpenGL15, Graphics, Classes, JPEG, SysUtils, PNGImage;
 
 type
    TTexInfo = record
@@ -298,6 +298,43 @@ begin
    result :=TRUE;
 end;
 
+function LoadPNGTexture(const _Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
+var
+   PNG : TPNGObject;
+   Bitmap : TBitmap;
+   W, Width, H, Height: integer;
+   Data : Array of LongWord;
+   C : LongWord;
+   Line : ^LongWord;
+begin
+   Bitmap := TBitmap.Create;
+   PNG := TPNGObject.Create;
+   PNG.LoadFromFile(_Filename);
+   Bitmap.PixelFormat := pf32bit;
+   Bitmap.Width := PNG.Width;
+   Bitmap.Height := PNG.Height;
+   Bitmap.Canvas.Draw(0,0,PNG);
+
+   Width := Bitmap.Width;
+   Height :=Bitmap.Height;
+   SetLength(Data, Width*Height);
+
+   For H:=0 to Height-1 do
+   begin
+      Line :=Bitmap.scanline[Height-H-1];   // flip PNG
+      For W:=0 to Width-1 do
+      begin
+         c:=Line^ and $FFFFFF; // Need to do a color swap
+         Data[W+(H*Width)] :=(((c and $FF) shl 16)+(c shr 16)+(c and $FF00)) or $FF000000;  // 4 channel.
+         inc(Line);
+      end;
+   end;
+   Bitmap.Free;
+   PNG.Free;
+
+   Texture :=CreateTexture(Width, Height, GL_RGBA, addr(Data[0]), NoPicMip, NoMipMap);
+   result := TRUE;
+end;
 
 {------------------------------------------------------------------}
 {  Loads 24 and 32bpp (alpha channel) TGA textures                 }
@@ -573,7 +610,9 @@ begin
    else if ext = '.BMP' then
       result := LoadBMPTexture(Filename, Texture, LoadFromRes, NoPicMip, NoMipMap)
    else if ext = '.TGA' then
-      result := LoadTGATexture(Filename, Texture, LoadFromRes, NoPicMip, NoMipMap);
+      result := LoadTGATexture(Filename, Texture, LoadFromRes, NoPicMip, NoMipMap)
+   else if ext = '.PNG' then
+      result := LoadPNGTexture(Filename, Texture, LoadFromRes, NoPicMip, NoMipMap);
 
    if result = false then
       ShowMessage(filename);

@@ -16,12 +16,13 @@ uses
 
    // So, this must be commented out on the C&C version.
 //{$define BZK_BUILD}
+//{$define MEMORY_LEAK_DEBUG}
 
 Const
 APPLICATION_TITLE = 'Open Source Voxel Viewer';
 APPLICATION_VER = '1.83' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
 APPLICATION_VER_ID = '1.83';
-APPLICATION_BY = 'Stucuk && Banshee';
+APPLICATION_BY = 'Stucuk and Banshee';
 
 type
   TVVFrmMain = class(TForm)
@@ -196,6 +197,7 @@ type
     Label40: TLabel;
     UnitShiftZSpinEdit: TSpinEdit;
     Label41: TLabel;
+    procedure FormDestroy(Sender: TObject);
     procedure UnitShiftZSpinEditChange(Sender: TObject);
     procedure EdOffsetZChange(Sender: TObject);
     procedure EdOffsetYChange(Sender: TObject);
@@ -207,12 +209,9 @@ type
     procedure Exit1Click(Sender: TObject);
     procedure Load1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure MainViewMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure MainViewMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure MainViewMouseMove(Sender: TObject; Shift: TShiftState; X,
-      Y: Integer);
+    procedure MainViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure MainViewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure MainViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure AnimationTimerTimer(Sender: TObject);
     procedure PlayAnimationClick(Sender: TObject);
     procedure PauseAnimationClick(Sender: TObject);
@@ -322,33 +321,34 @@ Uses VH_Engine,VH_Global,VH_GL,VH_Voxel{,Voxel},HVA,FormAboutNew,
 {$R *.dfm}
 
 procedure RunAProgram (const theProgram, itsParameters, defaultDirectory : string);
-var rslt     : integer;
-    msg      : string;
+var
+   rslt     : integer;
+   msg      : string;
 begin
-rslt := ShellExecute (0, 'open',
+   rslt := ShellExecute (0, 'open',
                         pChar (theProgram),
                         pChar (itsParameters),
                         pChar (defaultDirectory),
                         sw_ShowNormal);
-if rslt <= 32
-then begin
-     case rslt of
-          0,
-          se_err_OOM :             msg := 'Out of memory/resources';
-          error_File_Not_Found :   msg := 'File "' + theProgram + '" not found';
-          error_Path_Not_Found :   msg := 'Path not found';
-          error_Bad_Format :       msg := 'Damaged or invalid exe';
-          se_err_AccessDenied :    msg := 'Access denied';
-          se_err_NoAssoc,
-          se_err_AssocIncomplete : msg := 'Filename association invalid';
-          se_err_DDEBusy,
-          se_err_DDEFail,
-          se_err_DDETimeOut :      msg := 'DDE error';
+   if rslt <= 32 then
+   begin
+      case rslt of
+         0,
+         se_err_OOM :             msg := 'Out of memory/resources';
+         error_File_Not_Found :   msg := 'File "' + theProgram + '" not found';
+         error_Path_Not_Found :   msg := 'Path not found';
+         error_Bad_Format :       msg := 'Damaged or invalid exe';
+         se_err_AccessDenied :    msg := 'Access denied';
+         se_err_NoAssoc,
+         se_err_AssocIncomplete : msg := 'Filename association invalid';
+         se_err_DDEBusy,
+         se_err_DDEFail,
+         se_err_DDETimeOut :      msg := 'DDE error';
          se_err_Share :        msg := 'Sharing violation';
-          else                    msg := 'no text';
-          end; // of case
-     raise Exception.Create ('ShellExecute error #' + IntToStr (rslt) + ': ' + msg);
-     end;
+         else                    msg := 'no text';
+         end; // of case
+      raise Exception.Create ('ShellExecute error #' + IntToStr (rslt) + ': ' + msg);
+   end;
 end;
 
 procedure TVVFrmMain.MainViewResize(Sender: TObject);
@@ -361,6 +361,10 @@ procedure TVVFrmMain.FormCreate(Sender: TObject);
 var
    frm : TFrmProgress;
 begin
+   {$ifdef MEMORY_LEAK_DEBUG}
+   ReportMemoryLeaksOnShutdown := true;
+   {$endif}
+
    LoadedProg := False;
 
    RemapColourBox.ItemIndex := 1;
@@ -433,6 +437,24 @@ begin
    Application.OnRestore := ActivateView;
 
    LoadedProg := True;
+end;
+
+procedure TVVFrmMain.FormDestroy(Sender: TObject);
+begin
+   if VoxelOpen then
+   begin
+      VoxelFile.Free;
+   end;
+
+   if VoxelOpenT then
+   begin
+      VoxelTurret.Free;
+   end;
+
+   if VoxelOpenB then
+   begin
+      VoxelBarrel.Free;
+   end;
 end;
 
 procedure TVVFrmMain.ActivateView(Sender : TObject);
@@ -517,9 +539,10 @@ end;
 
 procedure TVVFrmMain.DrawFrames;
 begin
-  if not oglloaded then exit;
+   if not oglloaded then
+      exit;
 
-  VH_Draw();                         // Draw the scene
+   VH_Draw();                         // Draw the scene
 end;
 
 procedure TVVFrmMain.EdOffsetXChange(Sender: TObject);
@@ -622,21 +645,18 @@ begin
       OpenVoxel(GetParamStr());
 end;
 
-procedure TVVFrmMain.MainViewMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TVVFrmMain.MainViewMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    VH_MouseDown(Button,X, Y);
 end;
 
-procedure TVVFrmMain.MainViewMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TVVFrmMain.MainViewMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
    VH_MouseUp;
    MainView.Cursor := crCross;
 end;
 
-procedure TVVFrmMain.MainViewMouseMove(Sender: TObject; Shift: TShiftState; X,
-  Y: Integer);
+procedure TVVFrmMain.MainViewMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
    VH_MouseMove(X,Y);
 end;
@@ -1243,7 +1263,7 @@ begin
       except
       end;
 
-FUpdateWorld := True;
+   FUpdateWorld := True;
 end;
 
 Procedure TVVFrmMain.BuildTexList;

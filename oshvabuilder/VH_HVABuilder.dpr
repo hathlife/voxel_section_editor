@@ -32,7 +32,10 @@ uses
   FormHVAPositionManagerNew in 'FormHVAPositionManagerNew.pas' {FrmHVAPositionManager_New},
   Undo_Engine in '..\osvv1x\GlobalUnits\Undo_Engine.pas',
   FormPreferences in 'FormPreferences.pas' {FrmPreferences},
-  TimerUnit in '..\osvv1x\GlobalUnits\TimerUnit.pas';
+  TimerUnit in '..\osvv1x\GlobalUnits\TimerUnit.pas',
+  pngimage in '..\osvv1x\GlobalUnits\pngimage.pas',
+  pngzlib in '..\osvv1x\GlobalUnits\pngzlib.pas',
+  pnglang in '..\osvv1x\GlobalUnits\pnglang.pas';
 
 {$R *.res}
 

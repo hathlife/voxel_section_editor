@@ -11,7 +11,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Open Source HVA Builder';
-   APPLICATION_VER = '2.14';
+   APPLICATION_VER = '2.15';
    APPLICATION_BY = 'Stucuk and Banshee';
 
 type
@@ -80,18 +80,18 @@ type
       BarSaveAs: TToolButton;
       BarReopen: TToolButton;
       ToolButton4: TToolButton;
-      ToolButton1: TToolButton;
-      ToolButton2: TToolButton;
-      ToolButton3: TToolButton;
-      ToolButton5: TToolButton;
+      btnView: TToolButton;
+      btnVoxelOffset: TToolButton;
+      btnHVAPosition: TToolButton;
+      btnHVARotation: TToolButton;
       ToolButton7: TToolButton;
-      ToolButton6: TToolButton;
-      ToolButton8: TToolButton;
+      btnAddFrame: TToolButton;
+      btnDeleteFrame: TToolButton;
       ToolButton13: TToolButton;
-      ToolButton12: TToolButton;
+      btnCopyFrames: TToolButton;
       ToolButton9: TToolButton;
-      ToolButton10: TToolButton;
-      ToolButton11: TToolButton;
+      btnUndo: TToolButton;
+      btnRedo: TToolButton;
       ImageList: TImageList;
       IconList: TImageList;
       UpDown1: TUpDown;
@@ -126,12 +126,18 @@ type
       Redo1: TMenuItem;
       N8: TMenuItem;
       Preferences1: TMenuItem;
-    Game1: TMenuItem;
-    mnTiberianSunGame: TMenuItem;
-    mnRedAlert2Game: TMenuItem;
-    procedure FormDestroy(Sender: TObject);
-    procedure mnRedAlert2GameClick(Sender: TObject);
-    procedure mnTiberianSunGameClick(Sender: TObject);
+      Game1: TMenuItem;
+      mnTiberianSunGame: TMenuItem;
+      mnRedAlert2Game: TMenuItem;
+      HighlightTimer: TTimer;
+      DrawGridCheckBox: TCheckBox;
+    DrawSectionCenterCheckBox: TCheckBox;
+    procedure DrawSectionCenterCheckBoxClick(Sender: TObject);
+      procedure DrawGridCheckBoxClick(Sender: TObject);
+      procedure HighlightTimerTimer(Sender: TObject);
+      procedure FormDestroy(Sender: TObject);
+      procedure mnRedAlert2GameClick(Sender: TObject);
+      procedure mnTiberianSunGameClick(Sender: TObject);
       procedure MainViewResize(Sender: TObject);
       procedure FormCreate(Sender: TObject);
       procedure DrawFrames;
@@ -185,13 +191,13 @@ type
       procedure ControlZClick(Sender: TObject);
       procedure ControlXClick(Sender: TObject);
       procedure ControlTypeChange(Sender: TObject);
-      procedure ToolButton1Click(Sender: TObject);
-      procedure ToolButton2Click(Sender: TObject);
-      procedure ToolButton3Click(Sender: TObject);
-      procedure ToolButton5Click(Sender: TObject);
-      procedure ToolButton6Click(Sender: TObject);
-      procedure ToolButton8Click(Sender: TObject);
-      procedure ToolButton12Click(Sender: TObject);
+      procedure btnViewClick(Sender: TObject);
+      procedure btnVoxelOffsetClick(Sender: TObject);
+      procedure btnHVAPositionClick(Sender: TObject);
+      procedure btnHVARotationClick(Sender: TObject);
+      procedure btnAddFrameClick(Sender: TObject);
+      procedure btnDeleteFrameClick(Sender: TObject);
+      procedure btnCopyFramesClick(Sender: TObject);
       Procedure CheckHVAFrames;
       Procedure CheckHVAFrames2;
       procedure SaveVoxel1Click(Sender: TObject);
@@ -220,6 +226,7 @@ type
       procedure SetFPSCap(const _Enable: boolean);
       procedure SetGame(const _Game: integer; const _DontLoadPalette: boolean = false);
       procedure RefreshGame;
+      procedure SetHighlight(const _Value: boolean);
    end;
 
 var
@@ -383,6 +390,8 @@ begin
    DrawAllOfVoxel := True;
    UnitRot := 180;
    DrawCenter := True;
+   DrawSectionCenter := false;
+   Ground_Tex_Draw := false;
    GetSettings;
 
    If not InitalizeVHE(ExtractFileDir(ParamStr(0)),Palette[Game],MainView.Width,MainView.Height,MainView.Handle,-67) then
@@ -393,6 +402,16 @@ begin
 
    VH_BuildViewMenu(Views1,ChangeView);
    VH_ChangeView(Default_View);
+   VH_LoadGroundTextures('.png');
+   if (GroundTex_No = 0) then
+   begin
+      Messagebox(0,'Error: Couldn''t load Ground Textures','Textures Missing',0);
+      Application.Terminate;
+   end;
+   GroundTex.Id := 0;
+   GroundTex.Tex := GroundTex_Textures[0].Tex;
+   TileGround := GroundTex_Textures[0].Tile;
+   GSize := Trunc(DEPTH_OF_VIEW);
 
    ControlType.ItemIndex := 0;
    //PageControl1.ActivePage := TabSheet1;
@@ -473,6 +492,20 @@ begin
   if not oglloaded then exit;
 
   VH_Draw();                         // Draw the scene
+end;
+
+procedure TFrmMain.DrawGridCheckBoxClick(Sender: TObject);
+begin
+   Ground_Tex_Draw := not Ground_Tex_Draw;
+   DrawGridCheckBox.Checked := Ground_Tex_Draw;
+   RebuildLists := true;
+end;
+
+procedure TFrmMain.DrawSectionCenterCheckBoxClick(Sender: TObject);
+begin
+   DrawSectionCenter := Not DrawSectionCenter;
+   DrawSectionCenterCheckBox.Checked := DrawSectionCenter;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.Exit1Click(Sender: TObject);
@@ -672,7 +705,7 @@ begin
    PauseAnimation.Enabled := V;
    StopAnimation.Enabled  := V;
    lblHVAFrame.Enabled    := V;
-   ToolButton8.Enabled    := V;
+   btnDeleteFrame.Enabled    := V;
    SetUndoRedo;
 end;
 
@@ -687,15 +720,17 @@ begin
    spin3Djmp.Enabled := VoxelOpen;
    SectionBox.Enabled := VoxelOpen;
    ControlType.Enabled := VoxelOpen;
-   ToolButton1.Enabled := VoxelOpen;
-   ToolButton2.Enabled := VoxelOpen;
-   ToolButton3.Enabled := VoxelOpen;
-   ToolButton5.Enabled := VoxelOpen;
+   btnView.Enabled := VoxelOpen;
+   btnVoxelOffset.Enabled := VoxelOpen;
+   btnHVAPosition.Enabled := VoxelOpen;
+   btnHVARotation.Enabled := VoxelOpen;
    BarSaveAs.Enabled := VoxelOpen;
-   ToolButton6.Enabled := VoxelOpen;
-   ToolButton12.Enabled := VoxelOpen;
+   btnAddFrame.Enabled := VoxelOpen;
+   btnCopyFrames.Enabled := VoxelOpen;
    HighlightCheckBox.Enabled := VoxelOpen;
    DrawCenterCheckBox.Enabled := VoxelOpen;
+   DrawSectionCenterCheckBox.Enabled := VoxelOpen;
+   DrawGridCheckBox.Enabled := VoxelOpen;
    ShowDebugCheckBox.Enabled := VoxelOpen;
    VoxelCountCheckBox.Enabled := VoxelOpen;
    CheckBox1.Enabled := VoxelOpen;
@@ -706,6 +741,7 @@ begin
    ools1.Visible := VoxelOpen;
    Edit1.Visible := VoxelOpen;
    SetIsHVA;
+   HighlightTimer.Enabled := VoxelOpen and Highlight;
 end;
 
 Procedure TFrmMain.SetCaption(Filename : String);
@@ -1251,8 +1287,19 @@ end;
 
 procedure TFrmMain.HighlightCheckBoxClick(Sender: TObject);
 begin
-   Highlight := Not Highlight;
+   SetHighlight(Not Highlight);
+   RebuildLists := true;
+end;
+
+procedure TFrmMain.SetHighlight(const _Value: boolean);
+begin
+   Highlight := _Value;
    HighlightCheckBox.Checked := Highlight;
+   HighlightTimer.Enabled := _Value;
+end;
+
+procedure TFrmMain.HighlightTimerTimer(Sender: TObject);
+begin
    RebuildLists := true;
 end;
 
@@ -1283,45 +1330,45 @@ begin
       VHControlType := CThvarotation;
 end;
 
-procedure TFrmMain.ToolButton1Click(Sender: TObject);
+procedure TFrmMain.btnViewClick(Sender: TObject);
 begin
    ControlType.ItemIndex := 0;
    ControlTypeChange(Sender);
 end;
 
-procedure TFrmMain.ToolButton2Click(Sender: TObject);
+procedure TFrmMain.btnVoxelOffsetClick(Sender: TObject);
 begin
    ControlType.ItemIndex := 1;
    ControlTypeChange(Sender);
 end;
 
-procedure TFrmMain.ToolButton3Click(Sender: TObject);
+procedure TFrmMain.btnHVAPositionClick(Sender: TObject);
 begin
    ControlType.ItemIndex := 2;
    ControlTypeChange(Sender);
 end;
 
-procedure TFrmMain.ToolButton5Click(Sender: TObject);
+procedure TFrmMain.btnHVARotationClick(Sender: TObject);
 begin
    ControlType.ItemIndex := 3;
    ControlTypeChange(Sender);
 end;
 
-procedure TFrmMain.ToolButton6Click(Sender: TObject);
+procedure TFrmMain.btnAddFrameClick(Sender: TObject);
 begin
    InsertHVAFrame(CurrentHVA^);
 
    CheckHVAFrames;
 end;
 
-procedure TFrmMain.ToolButton8Click(Sender: TObject);
+procedure TFrmMain.btnDeleteFrameClick(Sender: TObject);
 begin
    DeleteHVAFrame(CurrentHVA^);
 
    CheckHVAFrames;
 end;
 
-procedure TFrmMain.ToolButton12Click(Sender: TObject);
+procedure TFrmMain.btnCopyFramesClick(Sender: TObject);
 begin
    CopyHVAFrame(CurrentHVA^);
 
@@ -1547,10 +1594,10 @@ end;
 
 Procedure TFrmMain.SetUndoRedo;
 begin
-   ToolButton10.Enabled := VH_ISUndo;
-   Undo1.Enabled := ToolButton10.Enabled;
-   ToolButton11.Enabled := VH_ISRedo;
-   Redo1.Enabled := ToolButton11.Enabled;
+   btnUndo.Enabled := VH_ISUndo;
+   Undo1.Enabled := btnUndo.Enabled;
+   btnRedo.Enabled := VH_ISRedo;
+   Redo1.Enabled := btnRedo.Enabled;
    RebuildLists := true;
 end;
 

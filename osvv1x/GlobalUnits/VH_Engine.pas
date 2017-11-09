@@ -26,7 +26,9 @@ Procedure VH_Draw;
 Procedure VH_MouseDown(Button: TMouseButton; X, Y: Integer);
 Procedure VH_MouseUp;
 Procedure VH_MouseMove(X,Y: Integer);
-Procedure VH_LoadGroundTextures(frm: TFrmProgress);
+Procedure VH_LoadGroundTextures(); overload;
+Procedure VH_LoadGroundTextures(frm: TFrmProgress); overload;
+Procedure VH_LoadGroundTextures(const _ext: string); overload;
 Procedure VH_LoadSkyTextures(frm: TFrmProgress);
 Procedure VH_BuildSkyBox;
 Procedure VH_SetSpectrum(Colours : Boolean);
@@ -55,6 +57,10 @@ Function VH_ISRedo : Boolean;
 Procedure VH_DoUndo;
 Procedure VH_DoRedo;
 Procedure VH_AddVOXELToUndo(Voxel : PVoxel; Frame,Section : Integer);
+
+Procedure LoadGroundTexture(Dir,Ext : string; frm: TFrmProgress); overload;
+Procedure LoadGroundTexture(Dir,Ext : string); overload;
+
 
 implementation
 
@@ -238,6 +244,27 @@ begin
    end;
 end;
 
+Procedure LoadGroundTexture(Dir,Ext : string);
+var
+   f: TSearchRec;
+   path: String;
+begin
+   path := Concat(Dir,'*'+Ext);
+   if FindFirst(path,faAnyFile,f) = 0 then
+   repeat
+      inc(GroundTex_No);
+      SetLength(GroundTex_Textures,GroundTex_No);
+      LoadTexture(Concat(Dir,f.Name),GroundTex_Textures[GroundTex_No-1].Tex,False,False,False);
+      GroundTex_Textures[GroundTex_No-1].Name := Copy(f.Name,1,length(f.Name)-length(Ext));
+      //showmessage('|' + ansilowercase(copy(GroundTex_Textures[GroundTex_No-1].Name,length(GroundTex_Textures[GroundTex_No-1].Name)-length('tile')+1,length(GroundTex_Textures[GroundTex_No-1].Name)))+'|');
+      if ansilowercase(copy(GroundTex_Textures[GroundTex_No-1].Name,length(GroundTex_Textures[GroundTex_No-1].Name)-length('tile')+1,length(GroundTex_Textures[GroundTex_No-1].Name))) = 'tile' then
+         GroundTex_Textures[GroundTex_No-1].Tile := true
+      else
+         GroundTex_Textures[GroundTex_No-1].Tile := false;
+   until FindNext(f) <> 0;
+   FindClose(f);
+end;
+
 Procedure LoadGroundTexture(Dir,Ext : string; frm: TFrmProgress);
 var
    f: TSearchRec;
@@ -262,11 +289,24 @@ begin
    FindClose(f);
 end;
 
+Procedure VH_LoadGroundTextures();
+begin
+   GroundTex_No := 0;
+   LoadGroundTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Ground\','.jpg');
+end;
+
 Procedure VH_LoadGroundTextures(frm: TFrmProgress);
 begin
    GroundTex_No := 0;
    LoadGroundTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Ground\','.jpg',frm);
 end;
+
+Procedure VH_LoadGroundTextures(const _ext: string);
+begin
+   GroundTex_No := 0;
+   LoadGroundTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Ground\',_ext);
+end;
+
 
 Procedure LoadSkyTexture2(Ext, Fname, _type : string; id : integer);
 var

@@ -305,6 +305,8 @@ begin
 end;
 
 Procedure DrawWorld;
+var
+   Scale, Offset: TVector3f;
 begin
    if FUpdateWorld then
    begin
@@ -371,6 +373,14 @@ begin
 
       If DrawCenter then
          DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
+
+      If DrawSectionCenter then
+      begin
+         GETMinMaxBounds(VoxelFile,0,Scale,Offset);
+         Scale := ScaleVector(Scale, Size);
+         Offset := ScaleVector3f(Offset, Scale);
+         DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(UnitShift.X + Offset.X + (VoxelFile.Section[0].Tailer.XSize * Scale.X * 0.5),UnitShift.Y + Offset.Y + (VoxelFile.Section[0].Tailer.YSize * Scale.Y * 0.5),UnitShift.Z + Offset.Z + (VoxelFile.Section[0].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
+      end;
 
       if FTexture = 0 then
          glGenTextures(1, @FTexture);
@@ -690,19 +700,19 @@ Procedure DrawCenterLines(Position,Position2,Rotation : TVector3f);
 begin
    If Axis = 2 then
       glColor3f(0,0,1);
-   DrawBox3(Position,Position2,Rotation,SetVector(300*0.1,0.19,0.19));
+   DrawBox3(Position,Position2,Rotation,SetVector(30,0.19,0.19));
    If Axis = 2 then
       glColor3f(1,1,1);
 
    If Axis = 1 then
       glColor3f(0,1,0);
-   DrawBox3(Position,Position2,Rotation,SetVector(0.19,0.19,300*0.1));
+   DrawBox3(Position,Position2,Rotation,SetVector(0.19,0.19,30));
    If Axis = 1 then
       glColor3f(1,1,1);
 
    If Axis = 0 then
       glColor3f(1,0,0);
-   DrawBox3(Position,Position2,Rotation,SetVector(0.19,300*0.1,0.19));
+   DrawBox3(Position,Position2,Rotation,SetVector(0.19,30,0.19));
    If Axis = 0 then
       glColor3f(1,1,1);
 end;

@@ -14,6 +14,7 @@ object VVFrmMain: TVVFrmMain
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -3148,7 +3149,7 @@ object VVFrmMain: TVVFrmMain
         Top = 0
         Width = 788
         Height = 178
-        ActivePage = TabSheet4
+        ActivePage = TabSheet1
         Align = alClient
         TabOrder = 0
         object TabSheet1: TTabSheet

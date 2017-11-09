@@ -271,13 +271,19 @@ begin
 end;
 
 Function GetVXLColorWithSelection(Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
+var
+   Hour, Minutes, Seconds, MiliSeconds: word;
 begin
    Result := GetVXLColor(Color,Normal);
 
    if (Vxl = CurrentVoxel^) and (Section = CurrentVoxelSection) and (Highlight) then
    begin
-      Result.X := (Result.X *255) + 70;
-      Result := CleanV3fCol(Result);
+      DecodeTime(Now, Hour, Minutes, Seconds, Miliseconds);
+      if Seconds mod 2 = 0 then
+      begin
+         Result.X := (Result.X *255) + 70;
+         Result := CleanV3fCol(Result);
+      end;
    end;
 end;
 
