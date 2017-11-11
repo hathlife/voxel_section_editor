@@ -40,9 +40,9 @@ var
 Function GetTexInfoNo(Texture : cardinal) : integer;
 
 function initLocking : boolean;
-function LoadTexture(Filename: String; var Texture : GLuint; LoadFromRes, NoPicMip, NoMipMap : Boolean) : Boolean;
-function LoadQuakeTexture(path, name : string; var Texture : GLUINT; NoPicMip, NoMipMap : boolean) : boolean;
-function LoadTGATexture(Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
+function LoadTexture(const Filename: String; var Texture : GLuint; LoadFromRes, NoPicMip, NoMipMap : Boolean) : Boolean;
+function LoadQuakeTexture(const path, name : string; var Texture : GLUINT; NoPicMip, NoMipMap : boolean) : boolean;
+function LoadTGATexture(const Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
 
 implementation
 
@@ -125,7 +125,7 @@ end;
 {------------------------------------------------------------------}
 {  Load BMP textures                                               }
 {------------------------------------------------------------------}
-function LoadBMPTexture(Filename: String; var Texture : GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean) : Boolean;
+function LoadBMPTexture(const Filename: String; var Texture : GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean) : Boolean;
 var
    FileHeader: BITMAPFILEHEADER;
    InfoHeader: BITMAPINFOHEADER;
@@ -226,7 +226,7 @@ end;
 {------------------------------------------------------------------}
 {  Load JPEG textures                                              }
 {------------------------------------------------------------------}
-function LoadJPGTexture(Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
+function LoadJPGTexture(const Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
 var
    Data : Array of LongWord;
    W, Width : Integer;
@@ -350,7 +350,7 @@ end;
 {------------------------------------------------------------------}
 {  Loads 24 and 32bpp (alpha channel) TGA textures                 }
 {------------------------------------------------------------------}
-function LoadTGATexture(Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
+function LoadTGATexture(const Filename: String; var Texture: GLuint; LoadFromResource, NoPicMip, NoMipMap : Boolean): Boolean;
 var
    TGAHeader : packed record   // Header type for TGA images
       FileType     : Byte;
@@ -609,7 +609,7 @@ end;
 {------------------------------------------------------------------}
 {  Determines file type and sends to correct function              }
 {------------------------------------------------------------------}
-function LoadTexture(Filename: String; var Texture : GLuint; LoadFromRes, NoPicMip, NoMipMap : Boolean) : Boolean;
+function LoadTexture(const Filename: String; var Texture : GLuint; LoadFromRes, NoPicMip, NoMipMap : Boolean) : Boolean;
 var
    ext : string;
 begin
@@ -644,7 +644,7 @@ begin
       result := false;
 end;
 
-function LoadQuakeTexture(path, name : string; var Texture : GLUINT;  NoPicMip, NoMipMap : boolean) : boolean;
+function LoadQuakeTexture(const path, name : string; var Texture : GLUINT;  NoPicMip, NoMipMap : boolean) : boolean;
 var
    ext, fullname : string;
 begin
@@ -655,8 +655,10 @@ begin
          ext := '';
 
       if Length(ext) > 0 then
-         name := Copy(name, 1, Length(name)-4); // remove ext
-      fullname := path + name + '.tga';
+         fullname := Copy(name, 1, Length(name)-4) // remove ext
+      else
+         fullname := Copy(name, 1, Length(name));
+      fullname := path + fullname + '.tga';
       if FileExists(fullname) then
          result := LoadTexture(fullname, Texture, false,  NoPicMip, NoMipMap)
       else

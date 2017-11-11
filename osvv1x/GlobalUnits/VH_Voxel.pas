@@ -9,18 +9,18 @@ procedure UpdateVoxelList;
 procedure UpdateVoxelList2(const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; Var VoxelBox_No : Integer; Const HVAOpen : Boolean; HVA : THVA; Frames : Integer);
 Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var _Scale,_Offset : TVector3f);
 Procedure GetOffsetAndSize(Const Vxl : TVoxel; i : Integer; Var Size,Offset : TVector3f);
-Function GetVXLColorWithSelection(Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
+Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
 
-Procedure LoadVoxel(Filename : String);
+Procedure LoadVoxel(const Filename : String);
 
 Procedure SetSpectrum(Colours : Boolean);
 
-Procedure ChangeOffset(Vxl : TVoxel; Section : integer; X,Y,Z : single);
+Procedure ChangeOffset(const Vxl : TVoxel; Section : integer; X,Y,Z : single);
 procedure ChangeRemappable (var Palette:TPalette; Colour : TVector3f);
 
 implementation
 
-function checkface(Vxl : TVoxelSection; x,y,z : integer) : boolean;
+function checkface(const Vxl : TVoxelSection; x,y,z : integer) : boolean;
 var
    v: TVoxelUnpacked;
 begin
@@ -270,7 +270,7 @@ begin
       Result := CleanV3fCol(SetVector(127,127,127));
 end;
 
-Function GetVXLColorWithSelection(Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
+Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
 var
    Hour, Minutes, Seconds, MiliSeconds: word;
 begin
@@ -287,7 +287,7 @@ begin
    end;
 end;
 
-Procedure LoadVoxel2(Filename,Ext : String; Var Voxel : TVoxel; Var VoxelOpen : Boolean);
+Procedure LoadVoxel2(const Filename,Ext : String; Var Voxel : TVoxel; Var VoxelOpen : Boolean);
 Var
    FName : String;
 begin
@@ -316,7 +316,7 @@ begin
    end;
 end;
 
-Procedure LoadVoxel(Filename : String);
+Procedure LoadVoxel(const Filename : String);
 begin
    VXLChanged := False;
 
@@ -356,7 +356,7 @@ begin
       SpectrumMode := ModeNormals;
 end;
 
-Procedure ChangeOffset(Vxl : TVoxel; Section : integer; X,Y,Z : single);
+Procedure ChangeOffset(const Vxl : TVoxel; Section : integer; X,Y,Z : single);
 var
    CD : TVector3f;
 begin

@@ -21,52 +21,52 @@ Uses Windows,SysUtils,Controls,Classes,Graphics,JPEG,Palette,VH_Global,VH_GL,Ope
      VH_Display,TimerUnit,FormProgress,Textures,Menus,Math3d,GifImage,VVS,Voxel,Undo_Engine,VH_Types,
      HVA;
 
-Function InitalizeVHE(Location,Palette : String; SCREEN_WIDTH,SCREEN_HEIGHT : Integer; Handle : HWND; Depth : single) : Boolean;
+Function InitalizeVHE(const Location,Palette : String; SCREEN_WIDTH,SCREEN_HEIGHT : Integer; Handle : HWND; Depth : single) : Boolean;
 Procedure VH_Draw;
-Procedure VH_MouseDown(Button: TMouseButton; X, Y: Integer);
+Procedure VH_MouseDown(const Button: TMouseButton; X, Y: Integer);
 Procedure VH_MouseUp;
 Procedure VH_MouseMove(X,Y: Integer);
 Procedure VH_LoadGroundTextures(); overload;
-Procedure VH_LoadGroundTextures(frm: TFrmProgress); overload;
+Procedure VH_LoadGroundTextures(const frm: TFrmProgress); overload;
 Procedure VH_LoadGroundTextures(const _ext: string); overload;
-Procedure VH_LoadSkyTextures(frm: TFrmProgress);
+Procedure VH_LoadSkyTextures(const frm: TFrmProgress);
 Procedure VH_BuildSkyBox;
 Procedure VH_SetSpectrum(Colours : Boolean);
 Procedure VH_BuildViewMenu(Var View : TMenuItem; Proc : TNotifyEvent);
 Procedure VH_ChangeView(x : integer);
 Procedure VH_SetBGColour(BGColour : TVector3f);
 
-procedure VH_ScreenShot(Filename : string);
-procedure VH_ScreenShotJPG(Filename : string; Compression : integer);
-procedure VH_ScreenShotGIF(GIFIMAGE : TGIFImage; Filename : string);
+procedure VH_ScreenShot(const Filename : string);
+procedure VH_ScreenShotJPG(const Filename : string; Compression : integer);
+procedure VH_ScreenShotGIF(const GIFIMAGE : TGIFImage; const Filename : string);
 function  VH_ScreenShot_BitmapResult : TBitmap;
 procedure VH_ScreenShotToSHPBuilder;
 
-Procedure VH_LoadVVS(Filename : String);
-Procedure VH_SaveVVS(Filename : String);
+Procedure VH_LoadVVS(const Filename : String);
+Procedure VH_SaveVVS(const Filename : String);
 
-Procedure VH_SaveVoxel(Filename : String);
-Procedure VH_LoadVoxel(Filename : String);
-Procedure VH_SaveHVA(Filename : String);
+Procedure VH_SaveVoxel(const Filename : String);
+Procedure VH_LoadVoxel(const Filename : String);
+Procedure VH_SaveHVA(const Filename : String);
 
 Procedure VH_ResetUndoRedo;
-Procedure VH_AddHVAToUndo(HVA : PHVA; Frame,Section : Integer);
+Procedure VH_AddHVAToUndo(const HVA : PHVA; Frame,Section : Integer);
 Procedure VH_ResetRedo;
 Function VH_ISUndo : Boolean;
 Function VH_ISRedo : Boolean;
 Procedure VH_DoUndo;
 Procedure VH_DoRedo;
-Procedure VH_AddVOXELToUndo(Voxel : PVoxel; Frame,Section : Integer);
+Procedure VH_AddVOXELToUndo(const Voxel : PVoxel; Frame,Section : Integer);
 
-Procedure LoadGroundTexture(Dir,Ext : string; frm: TFrmProgress); overload;
-Procedure LoadGroundTexture(Dir,Ext : string); overload;
+Procedure LoadGroundTexture(const Dir,Ext : string; const frm: TFrmProgress); overload;
+Procedure LoadGroundTexture(const Dir,Ext : string); overload;
 
 
 implementation
 
 uses registry,clipbrd;
 
-Function InitalizeVHE(Location,Palette : String; SCREEN_WIDTH,SCREEN_HEIGHT : Integer; Handle : HWND; Depth : single) : Boolean;
+Function InitalizeVHE(const Location,Palette : String; SCREEN_WIDTH,SCREEN_HEIGHT : Integer; Handle : HWND; Depth : single) : Boolean;
 begin
    Result := False;
 
@@ -118,7 +118,7 @@ begin
    SwapBuffers(H_DC);
 end;
 
-Procedure VH_MouseDown(Button: TMouseButton; X, Y: Integer);
+Procedure VH_MouseDown(const Button: TMouseButton; X, Y: Integer);
 begin
    if (not VoxelOpen) {or (not MVEnabled)} then exit;
 
@@ -244,7 +244,7 @@ begin
    end;
 end;
 
-Procedure LoadGroundTexture(Dir,Ext : string);
+Procedure LoadGroundTexture(const Dir,Ext : string);
 var
    f: TSearchRec;
    path: String;
@@ -263,15 +263,9 @@ begin
          GroundTex_Textures[GroundTex_No-1].Tile := false;
    until FindNext(f) <> 0;
    FindClose(f);
-   if ext = '.png' then
-   begin
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   end;
-
 end;
 
-Procedure LoadGroundTexture(Dir,Ext : string; frm: TFrmProgress);
+Procedure LoadGroundTexture(const Dir,Ext : string; const frm: TFrmProgress);
 var
    f: TSearchRec;
    path: String;
@@ -301,7 +295,7 @@ begin
    LoadGroundTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Ground\','.jpg');
 end;
 
-Procedure VH_LoadGroundTextures(frm: TFrmProgress);
+Procedure VH_LoadGroundTextures(const frm: TFrmProgress);
 begin
    GroundTex_No := 0;
    LoadGroundTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Ground\','.jpg',frm);
@@ -314,7 +308,7 @@ begin
 end;
 
 
-Procedure LoadSkyTexture2(Ext, Fname, _type : string; id : integer);
+Procedure LoadSkyTexture2(const Ext, Fname, _type : string; id : integer);
 var
    Filename : string;
 begin
@@ -326,7 +320,7 @@ begin
    SkyTexList[SkyTexList_No-1].Texture_Name := extractfilename(Copy(Filename,1,length(Filename)-length(Ext)));
 end;
 
-Procedure LoadSkyTexture(Dir,Ext : string; frm: TFrmProgress);
+Procedure LoadSkyTexture(const Dir,Ext : string; frm: TFrmProgress);
 var
    f: TSearchRec;
    path: String;
@@ -351,7 +345,7 @@ begin
    FindClose(f);
 end;
 
-Procedure VH_LoadSkyTextures(frm: TFrmProgress);
+Procedure VH_LoadSkyTextures(const frm: TFrmProgress);
 begin
    SkyTexList_No := 0;
    LoadSkyTexture(ExtractFileDir(ParamStr(0)) + '\Textures\Sky\','_bk.jpg',frm);
@@ -413,7 +407,7 @@ begin
    glClearColor(BGColor.X, BGColor.Y, BGColor.Z, 1.0);
 end;
 
-procedure VH_ScreenShot(Filename : string);
+procedure VH_ScreenShot(const Filename : string);
 var
    i: integer;
    t, FN, FN2, FN3 : string;
@@ -492,7 +486,7 @@ begin
    WinExec(p,sw_ShowNormal);
 end;
 
-procedure VH_ScreenShotJPG(Filename : string; Compression : integer);
+procedure VH_ScreenShotJPG(const Filename : string; Compression : integer);
 var
    i : integer;
    t, FN, FN2, FN3 : string;
@@ -539,7 +533,7 @@ begin
    JPEGImage.Free;
 end;
 
-procedure VH_ScreenShotGIF(GIFIMAGE : TGIFImage; Filename : string);
+procedure VH_ScreenShotGIF(const GIFIMAGE : TGIFImage; const Filename : string);
 var
    i : integer;
    t, FN, FN2, FN3 : string;
@@ -637,24 +631,24 @@ begin
       Result := BMP2;
 end;
 
-Procedure VH_LoadVVS(Filename : String);
+Procedure VH_LoadVVS(const Filename : String);
 begin
    LoadVVS(Filename);
    FUpdateWorld := True;
 end;
 
-Procedure VH_SaveVVS(Filename : String);
+Procedure VH_SaveVVS(const Filename : String);
 begin
    SaveVVS(Filename);
 end;
 
-Procedure VH_LoadVoxel(Filename : String);
+Procedure VH_LoadVoxel(const Filename : String);
 begin
    LoadVoxel(Filename);
    FUpdateWorld := True;
 end;
 
-Procedure SaveVoxel(Vxl : TVoxel; Filename,Ext : String);
+Procedure SaveVoxel(const Vxl : TVoxel; const Filename,Ext : String);
 var
    TFilename : string;
 begin
@@ -663,7 +657,7 @@ begin
    Vxl.SaveToFile(TFilename);
 end;
 
-Procedure VH_SaveVoxel(Filename : String);
+Procedure VH_SaveVoxel(const Filename : String);
 begin
    VXLChanged := False;
    SaveVoxel(VoxelFile,Filename,'.vxl');
@@ -674,7 +668,7 @@ begin
       SaveVoxel(VoxelBarrel,Filename,'barl.vxl');
 end;
 
-Procedure VH_SaveHVA(Filename : String);
+Procedure VH_SaveHVA(const Filename : String);
 begin
    SaveHVA(Filename);
 end;
@@ -684,7 +678,7 @@ begin
    ResetUndoRedo;
 end;
 
-Procedure VH_AddHVAToUndo(HVA : PHVA; Frame,Section : Integer);
+Procedure VH_AddHVAToUndo(const HVA : PHVA; Frame,Section : Integer);
 begin
    AddHVAToUndo(HVA,Frame,Section);
 end;
@@ -714,7 +708,7 @@ begin
    DoRedo;
 end;
 
-Procedure VH_AddVOXELToUndo(Voxel : PVoxel; Frame,Section : Integer);
+Procedure VH_AddVOXELToUndo(const Voxel : PVoxel; Frame,Section : Integer);
 begin
    AddVOXELToUndo(Voxel,Frame,Section);
 end;

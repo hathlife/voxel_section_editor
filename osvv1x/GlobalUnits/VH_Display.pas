@@ -6,8 +6,8 @@ Uses Windows,SysUtils,Math3d,OpenGl15,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,
 
 {$define DEBUG_VOXEL_BOUNDS}
 
-Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; VoxelBox: TVoxelBox);
-Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
+Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox);
+Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 Procedure DrawWorld;
 
@@ -15,11 +15,12 @@ Procedure DrawGround(Tex : Integer; Position,Rotation,Color : TVector3f; Size : 
 procedure DrawSkyBox(Rotation,Rotation2 : TVector3f);
 
 Procedure DrawCenterLines(Position,Position2,Rotation : TVector3f);
+Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f);
 Procedure BuildSkyBox;
 
 procedure BuildFont;
 procedure KillFont;
-procedure glPrint(text : pchar);
+procedure glPrint(const text : pchar);
 
 function GetPow2Size(Size : Cardinal) : Cardinal;
 
@@ -56,7 +57,7 @@ begin
       glNormal3f(RA2Normals[trunc(N)].X{*1.2}, RA2Normals[trunc(N)].Y{*1.2}, RA2Normals[trunc(N)].Z{*1.2});
 end;
 
-Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; VoxelBox: TVoxelBox);
+Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox);
 var
    East,West,South,North,Ceil,Floor : single;
 begin
@@ -173,7 +174,7 @@ begin
 end;
 
 
-Procedure DrawVoxel(PVxl : PVoxel; Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; HVA : THVA; HVAFrame : Integer);
+Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 var
    x,s : integer;
    Scale,FinalScale,Offset : TVector3f;
@@ -305,8 +306,6 @@ begin
 end;
 
 Procedure DrawWorld;
-var
-   HVAPosition, ScaledUnitShift, Scale, Offset: TVector3f;
 begin
    if FUpdateWorld then
    begin
@@ -376,12 +375,7 @@ begin
 
       If DrawSectionCenter then
       begin
-         GETMinMaxBounds(CurrentVoxel^,CurrentVoxelSection,Scale,Offset);
-         Scale := ScaleVector(Scale, Size);
-         HVAPosition := ApplyMatrix2(CurrentHVA^, CurrentVoxel^, Scale, CurrentVoxelSection, HVACurrentFrame);
-         Offset := ScaleVector3f(Offset, Scale);
-         ScaledUnitShift := ScaleVector3f(UnitShift, Scale);
-         DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(ScaledUnitShift.X + HVAPosition.X + Offset.X + (VoxelFile.Section[0].Tailer.XSize * Scale.X * 0.5),ScaledUnitShift.Y + HVAPosition.Y + Offset.Y + (VoxelFile.Section[0].Tailer.YSize * Scale.Y * 0.5),ScaledUnitShift.Z + HVAPosition.Z + Offset.Z + (VoxelFile.Section[0].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
+         DrawSectionCenterLines(CurrentVoxel, CurrentHVA, CurrentVoxelSection, HVACurrentFrame, UnitShift);
       end;
 
       if FTexture = 0 then
@@ -465,7 +459,7 @@ begin
    glDeleteLists(base, 256); 		                // Delete All 96 Characters
 end;
 
-procedure glPrint(text : pchar);	                // Custom GL "Print" Routine
+procedure glPrint(const text : pchar);	                // Custom GL "Print" Routine
 begin
    if (text = '') then   			        // If There's No Text
       Exit;					        // Do Nothing
@@ -717,6 +711,19 @@ begin
    DrawBox3(Position,Position2,Rotation,SetVector(0.19,30,0.19));
    If Axis = 0 then
       glColor3f(1,1,1);
+end;
+
+Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f);
+var
+   HVAPosition, ScaledUnitShift, Scale, Offset: TVector3f;
+begin
+   GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
+   Scale := ScaleVector(Scale, Size);
+   HVAPosition := ApplyMatrix2(_HVA^, _Voxel^, Scale, _Section, _Frame);
+//   HVAPosition := SetVector(0, 0, 0);
+   Offset := ScaleVector3f(Offset, Scale);
+   ScaledUnitShift := ScaleVector3f(_UnitShift, Scale);
+   DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(ScaledUnitShift.X + HVAPosition.X + Offset.X + (_Voxel^.Section[_Section].Tailer.XSize * Scale.X * 0.5),ScaledUnitShift.Y + HVAPosition.Y + Offset.Y + (_Voxel^.Section[_Section].Tailer.YSize * Scale.Y * 0.5),ScaledUnitShift.Z + HVAPosition.Z + Offset.Z + (_Voxel^.Section[_Section].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
 end;
 
 end.

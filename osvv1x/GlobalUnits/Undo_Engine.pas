@@ -11,8 +11,8 @@ Procedure ResetUndoRedo;
 Procedure ResetUndo;
 Procedure ResetRedo;
 
-Procedure AddHVAToUndo(HVA : PHVA; Frame,Section : Integer);
-Procedure AddVOXELToUndo(Voxel : PVoxel; Frame,Section : Integer);
+Procedure AddHVAToUndo(const HVA : PHVA; Frame,Section : Integer);
+Procedure AddVOXELToUndo(const Voxel : PVoxel; Frame,Section : Integer);
 
 Procedure DoUndo;
 Procedure DoRedo;
@@ -40,7 +40,7 @@ begin
    SetLength(Redo.Data,0);
 end;
 
-Procedure AddHVAToUndo(HVA : PHVA; Frame,Section : Integer);
+Procedure AddHVAToUndo(const HVA : PHVA; Frame,Section : Integer);
 begin
    Inc(Undo.Data_No);
    SetLength(Undo.Data,Undo.Data_No);
@@ -55,7 +55,7 @@ begin
    Undo.Data[Undo.Data_No-1].Size := SetVector(0,0,0);
 end;
 
-Procedure AddVOXELToUndo(Voxel : PVoxel; Frame,Section : Integer);
+Procedure AddVOXELToUndo(const Voxel : PVoxel; Frame,Section : Integer);
 begin
    Inc(Undo.Data_No);
    SetLength(Undo.Data,Undo.Data_No);

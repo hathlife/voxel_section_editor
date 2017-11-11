@@ -14,8 +14,8 @@ Uses VH_Types;
 Const
    VVSF_Ver = 1.0; // Only change if header changed or new arrays are added.
 
-Procedure SaveVVS(Filename : string);
-Procedure LoadVVS(Filename : string);
+Procedure SaveVVS(const Filename : string);
+Procedure LoadVVS(const Filename : string);
 
 implementation
 
@@ -193,7 +193,7 @@ begin
    GetFromDataB(Ord(DBLightGround),LightGround);
 end;
 
-Procedure SaveVVS(Filename : string);
+Procedure SaveVVS(const Filename : string);
 var
    f : file;
    Written{,Writtent},x : integer;
@@ -216,7 +216,7 @@ begin
    CloseFile(F); // Close File
 end;
 
-Procedure LoadVVS(Filename : string);
+Procedure LoadVVS(const Filename : string);
 var
    f : file;
    read,x : integer;

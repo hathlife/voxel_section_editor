@@ -10,32 +10,32 @@ uses OpenGl15,geometry,dialogs,sysutils,math3d, voxel, math,VH_Types;
 // Enable it for HVA debug purposes only.
 //{$define DEBUG_HVA_FILE}
 
-Procedure LoadHVA(Filename : string);
+Procedure LoadHVA(const Filename : string);
 Procedure LoadHVA2(var HVAFile : THVA; var HVAOpen : Boolean; const Filename,Ext : string);
 
-Procedure SaveHVA(Filename : string);
+Procedure SaveHVA(const Filename : string);
 Procedure SaveHVA2(var HVAFile : THVA; const Filename,Ext : string);
 
 procedure ClearHVA(var _HVA : THVA);
 
-Function ApplyMatrix2(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section,Frames : Integer) : TVector3f;
-Function ApplyMatrix3(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
+Function ApplyMatrix2(const HVAFile : THVA; const VoxelFile : TVoxel; V : TVector3f; Section,Frames : Integer) : TVector3f;
+Function ApplyMatrix3(const HVAFile : THVA; const VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
 
 Procedure CreateHVA(const Vxl : TVoxel; var HVA : THVA);
 Procedure SetHVAPos(Var HVA : THVA; Const Section : Integer; X,Y,Z : single);
 Procedure SetHVAPos2(Var HVA : THVA; Const Voxel : TVoxel; Section : Integer; Position : TVector3f);
-Function GetHVAPos(HVA : THVA; Voxel : TVoxel; Section : Integer) : TVector3f;
+Function GetHVAPos(const HVA : THVA; const Voxel : TVoxel; Section : Integer) : TVector3f;
 
 Function SETHVAAngle(var HVAFile : THVA; const Section,Frames : Integer; x,y,z : single) : TVector3f;
 Function SETHVAAngle2(var HVAFile : THVA; const Section,Frames : Integer; x,y,z : single) : TVector3f;
-Function GETHVAAngle_DEG(HVAFile : THVA; Section,Frames : Integer) : TVector3f;
+Function GETHVAAngle_DEG(const HVAFile : THVA; Section,Frames : Integer) : TVector3f;
 
 Procedure AddHVAFrame(Var HVAFile : THVA);
 Procedure InsertHVAFrame(Var HVAFile : THVA);
 Procedure DeleteHVAFrame(Var HVAFile : THVA);
 Procedure CopyHVAFrame(Var HVAFile : THVA);
 
-Procedure SetCharArray(Name : String; Var CharArr : Array of Char);
+Procedure SetCharArray(const Name : String; Var CharArr : Array of Char);
 
 Function GetCurrentFrame : Integer;
 Function GetCurrentFrame2(_Type : Integer) : Integer;
@@ -43,13 +43,13 @@ Procedure SetCurrentFrame(Value : Integer);
 Function GetCurrentHVA : PHVA;
 Function GetCurrentHVAB : Boolean;
 
-Function GetTMValue2(HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
+Function GetTMValue2(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
 
 implementation
 
 Uses VH_Global;
 
-Procedure LoadHVA(Filename : string);
+Procedure LoadHVA(const Filename : string);
 begin
    LoadHVA2(HVAFile,HVAOpen,Filename,'.hva');
    If not HVAOpen then
@@ -121,7 +121,7 @@ begin
    TFilename := '';
 end;
 
-Procedure SaveHVA(Filename : string);
+Procedure SaveHVA(const Filename : string);
 begin
    SaveHVA2(HVAFile,Filename,'.hva');
 
@@ -186,12 +186,12 @@ begin
    TFilename := '';
 end;
 
-Function GetTMValue2(HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
+Function GetTMValue2(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
 begin
    Result := HVAFile.TransformMatrixs[Frames*HVAFile.Header.N_Sections+Section][Row][Col];
 end;
 
-Function ApplyMatrix3(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
+Function ApplyMatrix3(const HVAFile : THVA; const VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
 var
    Matrix : TGLMatrixf4;
 begin
@@ -226,7 +226,7 @@ begin
    glMultMatrixf(@Matrix[0,0]);
 end;
 
-Function ApplyMatrix2(HVAFile : THVA; VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
+Function ApplyMatrix2(const HVAFile : THVA; const VoxelFile : TVoxel; V : TVector3f; Section, Frames : Integer) : TVector3f;
 begin
    if Section = -1 then
    begin
@@ -235,11 +235,15 @@ begin
    end;
 
    HVAScale := VoxelFile.Section[Section].Tailer.Det;
-   if HVAScale = 0 then HVAScale := 1;
+//   if HVAScale = 0 then
+//      HVAScale := 1;
 
-   Result.X := ( V.x * GetTMValue2(HVAFile,1,1,Section,Frames) + V.y * GetTMValue2(HVAFile,1,2,Section,Frames) + V.z * GetTMValue2(HVAFile,1,3,Section,Frames) + GetTMValue2(HVAFile,1,4,Section,Frames) * HVAScale);
-   Result.Y := ( V.x * GetTMValue2(HVAFile,2,1,Section,Frames) + V.y * GetTMValue2(HVAFile,2,2,Section,Frames) + V.z * GetTMValue2(HVAFile,2,3,Section,Frames) + GetTMValue2(HVAFile,2,4,Section,Frames) * HVAScale);
-   Result.Z := ( V.x * GetTMValue2(HVAFile,3,1,Section,Frames) + V.y * GetTMValue2(HVAFile,3,2,Section,Frames) + V.z * GetTMValue2(HVAFile,3,3,Section,Frames) + GetTMValue2(HVAFile,3,4,Section,Frames) * HVAScale);
+//   Result.X := ( V.x * GetTMValue2(HVAFile,1,1,Section,Frames) + V.y * GetTMValue2(HVAFile,1,2,Section,Frames) + V.z * GetTMValue2(HVAFile,1,3,Section,Frames) + GetTMValue2(HVAFile,1,4,Section,Frames) * HVAScale);
+//   Result.Y := ( V.x * GetTMValue2(HVAFile,2,1,Section,Frames) + V.y * GetTMValue2(HVAFile,2,2,Section,Frames) + V.z * GetTMValue2(HVAFile,2,3,Section,Frames) + GetTMValue2(HVAFile,2,4,Section,Frames) * HVAScale);
+//   Result.Z := ( V.x * GetTMValue2(HVAFile,3,1,Section,Frames) + V.y * GetTMValue2(HVAFile,3,2,Section,Frames) + V.z * GetTMValue2(HVAFile,3,3,Section,Frames) + GetTMValue2(HVAFile,3,4,Section,Frames) * HVAScale);
+   Result.X := (V.X * GetTMValue2(HVAFile,1,1,Section,Frames) + V.Y * GetTMValue2(HVAFile,1,2,Section,Frames) + V.Z * GetTMValue2(HVAFile,1,3,Section,Frames) + V.x * GetTMValue2(HVAFile,1,4,Section,Frames) * HVAScale);
+   Result.Y := (V.X * GetTMValue2(HVAFile,2,1,Section,Frames) + V.Y * GetTMValue2(HVAFile,2,2,Section,Frames) + V.Z * GetTMValue2(HVAFile,2,3,Section,Frames) + V.y * GetTMValue2(HVAFile,2,4,Section,Frames) * HVAScale);
+   Result.Z := (V.X * GetTMValue2(HVAFile,3,1,Section,Frames) + V.Y * GetTMValue2(HVAFile,3,2,Section,Frames) + V.Z * GetTMValue2(HVAFile,3,3,Section,Frames) + V.z * GetTMValue2(HVAFile,3,4,Section,Frames) * HVAScale);
 end;
 
 Procedure ClearMatrix(Var TM : TTransformMatrix);
@@ -268,7 +272,7 @@ begin
    Result[3][3] := 1;
 end;
 
-Procedure SetCharArray(Name : String; Var CharArr : Array of Char);
+Procedure SetCharArray(const Name : String; Var CharArr : Array of Char);
 const
    MAX_LEN = 16;
 var
@@ -341,7 +345,7 @@ begin
    HVA.TransformMatrixs[HVAD][3][4] := Position.Z / Det;
 end;
 
-Function GetHVAPos(HVA : THVA; Voxel : TVoxel; Section : Integer) : TVector3f;
+Function GetHVAPos(const HVA : THVA; const Voxel : TVoxel; Section : Integer) : TVector3f;
 var
    HVAD : integer;
    Det : single;
@@ -371,7 +375,7 @@ begin
       HVAFile.TransformMatrixs[(HVAFile.Header.N_Frames-1)*HVAFile.Header.N_Sections+x] := CreateTM;
 end;
 
-Function HVAToMatrix(HVAFile : THVA; Section,Frames : Integer) : TMatrix;
+Function HVAToMatrix(const HVAFile : THVA; Section,Frames : Integer) : TMatrix;
 var
    x,y : integer;
 begin
@@ -391,7 +395,7 @@ begin
          HVAFile.TransformMatrixs[HVAFrame*HVAFile.Header.N_Sections+Section][x][y] := m[x-1][y-1];
 end;
 
-Function GETHVAAngle_RAD(HVAFile : THVA; Section,Frames : Integer) : TVector3f;
+Function GETHVAAngle_RAD(const HVAFile : THVA; Section,Frames : Integer) : TVector3f;
 var
    M : TMatrix;
    T : TTransformations;
@@ -431,7 +435,7 @@ begin
    Result.Z := Z;  }
 end;
 
-Function GETHVAAngle_DEG(HVAFile : THVA; Section,Frames : Integer) : TVector3f;
+Function GETHVAAngle_DEG(const HVAFile : THVA; Section,Frames : Integer) : TVector3f;
 var
    Angles : TVector3f;
 begin
