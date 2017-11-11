@@ -129,12 +129,10 @@ type
       Game1: TMenuItem;
       mnTiberianSunGame: TMenuItem;
       mnRedAlert2Game: TMenuItem;
-      HighlightTimer: TTimer;
       DrawGridCheckBox: TCheckBox;
-    DrawSectionCenterCheckBox: TCheckBox;
-    procedure DrawSectionCenterCheckBoxClick(Sender: TObject);
+      DrawSectionCenterCheckBox: TCheckBox;
+      procedure DrawSectionCenterCheckBoxClick(Sender: TObject);
       procedure DrawGridCheckBoxClick(Sender: TObject);
-      procedure HighlightTimerTimer(Sender: TObject);
       procedure FormDestroy(Sender: TObject);
       procedure mnRedAlert2GameClick(Sender: TObject);
       procedure mnTiberianSunGameClick(Sender: TObject);
@@ -741,7 +739,6 @@ begin
    ools1.Visible := VoxelOpen;
    Edit1.Visible := VoxelOpen;
    SetIsHVA;
-   HighlightTimer.Enabled := VoxelOpen and Highlight;
 end;
 
 Procedure TFrmMain.SetCaption(Filename : String);
@@ -1295,12 +1292,6 @@ procedure TFrmMain.SetHighlight(const _Value: boolean);
 begin
    Highlight := _Value;
    HighlightCheckBox.Checked := Highlight;
-   HighlightTimer.Enabled := _Value;
-end;
-
-procedure TFrmMain.HighlightTimerTimer(Sender: TObject);
-begin
-   RebuildLists := true;
 end;
 
 procedure TFrmMain.ControlYClick(Sender: TObject);

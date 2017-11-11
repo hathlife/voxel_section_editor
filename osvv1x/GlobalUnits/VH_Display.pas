@@ -2,11 +2,12 @@ unit VH_Display;
 
 interface
 
-Uses Windows,SysUtils,Math3d,OpenGl15,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,HVA,Math;
+Uses Windows,SysUtils,OpenGl15,Math3d,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,HVA,Math;
 
 {$define DEBUG_VOXEL_BOUNDS}
 
-Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox);
+Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox); overload;
+Procedure DrawBox(Position: TVector3f; Color : TVector4f; Size : TVector3f; const VoxelBox: TVoxelBox); overload;
 Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 Procedure DrawWorld;
@@ -59,6 +60,17 @@ end;
 
 Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox);
 var
+   Color4f: TVector4f;
+begin
+   Color4f.X := Color.X;
+   Color4f.Y := Color.Y;
+   Color4f.Z := Color.Z;
+   Color4f.W := 0;
+   DrawBox(Position, Color4f, Size, VoxelBox);
+end;
+
+Procedure DrawBox(Position: TVector3f; Color : TVector4f; Size : TVector3f; const VoxelBox: TVoxelBox);
+var
    East,West,South,North,Ceil,Floor : single;
 begin
    East := Position.X + Size.X;
@@ -70,7 +82,7 @@ begin
 
    glBegin(GL_QUADS);
 
-      glColor3f(Color.X,Color.Y,Color.Z);			// Set The Color
+      glColor4f(Color.X,Color.Y,Color.Z,Color.W);			// Set The Color
       DoNormals(VoxelBox.Normal);
 
 

@@ -9,7 +9,7 @@ procedure UpdateVoxelList;
 procedure UpdateVoxelList2(const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; Var VoxelBox_No : Integer; Const HVAOpen : Boolean; HVA : THVA; Frames : Integer);
 Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var _Scale,_Offset : TVector3f);
 Procedure GetOffsetAndSize(Const Vxl : TVoxel; i : Integer; Var Size,Offset : TVector3f);
-Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
+Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector4f;
 
 Procedure LoadVoxel(const Filename : String);
 
@@ -223,6 +223,27 @@ begin
    Result := T;
 end;
 
+Function CleanV4fCol(Color : TVector4f) : TVector4f;
+Var
+   T : TVector3f;
+begin
+   T.X := Color.X;
+   T.Y := Color.Y;
+   T.Z := Color.Z;
+   T := CleanV3fCol(T);
+
+   Result.X := T.X;
+   Result.Y := T.Y;
+   Result.Z := T.Z;
+   If Color.W > 255 then
+      Result.W := 255
+   else If Color.W < 0 then
+      Result.W := 0
+   else
+      Result.W := Color.W;
+   Result.W := Result.W / 255;
+end;
+
 // Importing and adapting change remappable from OS SHP Builder.
 procedure ChangeRemappable (var Palette:TPalette; Colour : TVector3f);
 var
@@ -270,20 +291,19 @@ begin
       Result := CleanV3fCol(SetVector(127,127,127));
 end;
 
-Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector3f;
+Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector4f;
 var
-   Hour, Minutes, Seconds, MiliSeconds: word;
+   Color3f: TVector3f;
 begin
-   Result := GetVXLColor(Color,Normal);
+   Color3f := GetVXLColor(Color,Normal);
+   Result.X := Color3f.X;
+   Result.Y := Color3f.Y;
+   Result.Z := Color3f.Z;
+   Result.W := 1;
 
-   if (Vxl = CurrentVoxel^) and (Section = CurrentVoxelSection) and (Highlight) then
+   if ((Vxl <> CurrentVoxel^) or (Section <> CurrentVoxelSection)) and (Highlight) then
    begin
-      DecodeTime(Now, Hour, Minutes, Seconds, Miliseconds);
-      if Seconds mod 2 = 0 then
-      begin
-         Result.X := (Result.X *255) + 70;
-         Result := CleanV3fCol(Result);
-      end;
+      Result.W := 0.1;
    end;
 end;
 

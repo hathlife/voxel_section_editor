@@ -6623,9 +6623,4 @@ object FrmMain: TFrmMain
       E00001FFE00001FFE00001FFE00001FF00000000000000000000000000000000
       000000000000}
   end
-  object HighlightTimer: TTimer
-    OnTimer = HighlightTimerTimer
-    Left = 248
-    Top = 168
-  end
 end
