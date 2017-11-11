@@ -263,6 +263,12 @@ begin
          GroundTex_Textures[GroundTex_No-1].Tile := false;
    until FindNext(f) <> 0;
    FindClose(f);
+   if ext = '.png' then
+   begin
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   end;
+
 end;
 
 Procedure LoadGroundTexture(Dir,Ext : string; frm: TFrmProgress);

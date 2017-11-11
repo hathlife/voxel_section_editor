@@ -66,17 +66,17 @@ end;
 // Swap bitmap format from BGR to RGB
 procedure SwapRGB(data : Pointer; Size : Integer);
 asm
-  mov ebx, eax
-  mov ecx, size
+   mov ebx, eax
+   mov ecx, size
 
 @@loop :
-  mov al,[ebx+0]
-  mov ah,[ebx+2]
-  mov [ebx+2],al
-  mov [ebx+0],ah
-  add ebx,3
-  dec ecx
-  jnz @@loop
+   mov al,[ebx+0]
+   mov ah,[ebx+2]
+   mov [ebx+2],al
+   mov [ebx+0],ah
+   add ebx,3
+   dec ecx
+   jnz @@loop
 end;
 
 
@@ -102,15 +102,15 @@ begin
    end;
    if NoMipMap then
    begin
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, Width, Height, 0, Format, GL_UNSIGNED_BYTE, pData)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, Format, GL_UNSIGNED_BYTE, pData)
    end
    else
    begin
 //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-      gluBuild2DMipmaps(GL_TEXTURE_2D, 4, Width, Height, Format, GL_UNSIGNED_BYTE, pData);
+      gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, Width, Height, Format, GL_UNSIGNED_BYTE, pData);
    end;
    inc(TexInfo_No);
    SetLength(TexInfo,TexInfo_No);
@@ -305,11 +305,18 @@ var
    W, Width, H, Height: integer;
    Data : Array of LongWord;
    C : LongWord;
+   d : byte;
+   alphaIdx : integer;
    Line : ^LongWord;
+   AlphaLine: pByteArray;
+   TransparentColor: TColor;
+   TransparentValue: longword;
 begin
    Bitmap := TBitmap.Create;
    PNG := TPNGObject.Create;
    PNG.LoadFromFile(_Filename);
+   PNG.CreateAlpha;
+
    Bitmap.PixelFormat := pf32bit;
    Bitmap.Width := PNG.Width;
    Bitmap.Height := PNG.Height;
@@ -322,11 +329,15 @@ begin
    For H:=0 to Height-1 do
    begin
       Line :=Bitmap.scanline[Height-H-1];   // flip PNG
+      AlphaLine := PNG.AlphaScanline[Height-H-1];
+      alphaIdx := 0;
       For W:=0 to Width-1 do
       begin
          c:=Line^ and $FFFFFF; // Need to do a color swap
-         Data[W+(H*Width)] :=(((c and $FF) shl 16)+(c shr 16)+(c and $FF00)) or $FF000000;  // 4 channel.
+         d := AlphaLine^[alphaIdx];
+         Data[W+(H*Width)] :=(((c and $FF) shl 16)+((c and $FF0000) shr 16)+ (c and $FF00)) + (d shl 24);  // 4 channel.
          inc(Line);
+         inc(alphaIdx);
       end;
    end;
    Bitmap.Free;
