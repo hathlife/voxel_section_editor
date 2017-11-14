@@ -217,7 +217,7 @@ begin
          end;
 
          glPushMatrix;
-            ApplyMatrix3(HVA,Vxl,FinalScale,s,HVAFrame);
+            ApplyMatrix(HVA,Vxl,FinalScale,s,HVAFrame);
             glTranslatef(Offset.X*Size*2, Offset.Y*Size*2, Offset.Z*Size*2);
             glCallList(VoxelBoxes.Sections[s].List);
          glPopMatrix;
@@ -387,7 +387,7 @@ begin
 
       If DrawSectionCenter then
       begin
-         DrawSectionCenterLines(CurrentVoxel, CurrentHVA, CurrentVoxelSection, HVACurrentFrame, UnitShift);
+         DrawSectionCenterLines(CurrentVoxel, CurrentHVA, CurrentVoxelSection, GetCurrentFrame(), UnitShift);
       end;
 
       if FTexture = 0 then
@@ -727,15 +727,23 @@ end;
 
 Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f);
 var
-   HVAPosition, ScaledUnitShift, Scale, Offset: TVector3f;
+   HVAPosition, Scale, Position, Offset: TVector3f;
+   Rotation: single;
 begin
    GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
-   Scale := ScaleVector(Scale, Size);
-   HVAPosition := ApplyMatrix2(_HVA^, _Voxel^, Scale, _Section, _Frame);
-//   HVAPosition := SetVector(0, 0, 0);
-   Offset := ScaleVector3f(Offset, Scale);
-   ScaledUnitShift := ScaleVector3f(_UnitShift, Scale);
-   DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(ScaledUnitShift.X + HVAPosition.X + Offset.X + (_Voxel^.Section[_Section].Tailer.XSize * Scale.X * 0.5),ScaledUnitShift.Y + HVAPosition.Y + Offset.Y + (_Voxel^.Section[_Section].Tailer.YSize * Scale.Y * 0.5),ScaledUnitShift.Z + HVAPosition.Z + Offset.Z + (_Voxel^.Section[_Section].Tailer.ZSize * Scale.Z * 0.5)),SetVector(XRot,0,YRot));
+   Position.X := (_Voxel^.Section[_Section].Tailer.XSize * size * Scale.X) + UnitShift.X + (Offset.X * Size * 2);
+   Position.Y := (_Voxel^.Section[_Section].Tailer.YSize * size * Scale.Y) + UnitShift.Y + (Offset.Y * Size * 2);
+   Position.Z := (_Voxel^.Section[_Section].Tailer.ZSize * size * Scale.Z) + UnitShift.Z + (Offset.Z * Size * 2);
+   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   begin
+      Position := AddVector(Position, TurretOffset);
+   end;
+   Scale := ScaleVector(Scale, Size * 2);
+   HVAPosition := ApplyMatrixToVector(_HVA^, _Voxel^, Position, Scale, _Section, _Frame);
+   Rotation := DEG2RAD(UnitRot);
+   HVAPosition.X := (HVAPosition.X * cos(Rotation)) - (HVAPosition.Y * sin(Rotation));
+   HVAPosition.Y := (HVAPosition.X * sin(Rotation)) + (HVAPosition.Y * cos(Rotation));
+   DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth), HVAPosition, SetVector(XRot,0,YRot));
 end;
 
 end.
