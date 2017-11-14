@@ -8,6 +8,11 @@ Uses Windows,SysUtils,OpenGl15,Math3d,VH_Types,Voxel,VH_Voxel,VH_Global,Normals,
 
 Procedure DrawBox(Position,Color : TVector3f; Size : TVector3f; const VoxelBox: TVoxelBox); overload;
 Procedure DrawBox(Position: TVector3f; Color : TVector4f; Size : TVector3f; const VoxelBox: TVoxelBox); overload;
+Procedure DrawBox(_CameraPosition, _BoxPosition, _CameraRotation, _BoxSize : TVector3f); overload;
+
+Procedure DrawBoundingBox(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f; const _Rotation: single); overload;
+Procedure DrawBoundingBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize : TVector3f); overload;
+
 Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 Procedure DrawWorld;
@@ -15,8 +20,8 @@ Procedure DrawWorld;
 Procedure DrawGround(Tex : Integer; Position,Rotation,Color : TVector3f; Size : single);
 procedure DrawSkyBox(Rotation,Rotation2 : TVector3f);
 
-Procedure DrawCenterLines(Position,Position2,Rotation : TVector3f);
-Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f);
+Procedure DrawCenterLines(_CameraPosition, _CenterPosition, _CameraRotation : TVector3f);
+Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f; const _Rotation: single);
 Procedure BuildSkyBox;
 
 procedure BuildFont;
@@ -387,7 +392,12 @@ begin
 
       If DrawSectionCenter then
       begin
-         DrawSectionCenterLines(CurrentVoxel, CurrentHVA, CurrentVoxelSection, GetCurrentFrame(), UnitShift);
+         DrawSectionCenterLines(CurrentVoxel, CurrentHVA, CurrentVoxelSection, GetCurrentFrame(), UnitShift, UnitRot);
+      end;
+
+      if Highlight then
+      begin
+         DrawBoundingBox(CurrentVoxel, CurrentHVA, CurrentVoxelSection, GetCurrentFrame(), UnitShift, UnitRot);
       end;
 
       if FTexture = 0 then
@@ -558,10 +568,10 @@ begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
       glBegin(GL_QUADS);
-         glTexCoord2f(1, 0); glVertex3f(px + SkySize.X, py,           pz);
+         glTexCoord2f(1, 0); glVertex3f(px + SkySize.X, py,             pz);
          glTexCoord2f(1, 1); glVertex3f(px + SkySize.X, py + SkySize.Y, pz);
-         glTexCoord2f(0, 1); glVertex3f(px,          py + SkySize.Y, pz);
-         glTexCoord2f(0, 0); glVertex3f(px,          py,           pz);
+         glTexCoord2f(0, 1); glVertex3f(px,             py + SkySize.Y, pz);
+         glTexCoord2f(0, 0); glVertex3f(px,             py,             pz);
       glEnd;
       // Front
       glBindTexture(GL_TEXTURE_2D, SkyTexList[SkyTex].Textures[2]);
@@ -570,10 +580,10 @@ begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
       glBegin(GL_QUADS);
-         glTexCoord2f(1, 0); glVertex3f(px,	      py,           pz + SkySize.Z);
-         glTexCoord2f(1, 1); glVertex3f(px,          py + SkySize.Y, pz + SkySize.Z);
+         glTexCoord2f(1, 0); glVertex3f(px,	           py,             pz + SkySize.Z);
+         glTexCoord2f(1, 1); glVertex3f(px,             py + SkySize.Y, pz + SkySize.Z);
          glTexCoord2f(0, 1); glVertex3f(px + SkySize.X, py + SkySize.Y, pz + SkySize.Z);
-         glTexCoord2f(0, 0); glVertex3f(px + SkySize.X, py,           pz + SkySize.Z);
+         glTexCoord2f(0, 0); glVertex3f(px + SkySize.X, py,             pz + SkySize.Z);
       glEnd;
       // Bottom
       glBindTexture(GL_TEXTURE_2D, SkyTexList[SkyTex].Textures[5]);
@@ -582,8 +592,8 @@ begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
       glBegin(GL_QUADS);
-         glTexCoord2f(1, 1); glVertex3f(px,	     py, pz);
-         glTexCoord2f(1, 0); glVertex3f(px,	     py, pz + SkySize.Z);
+         glTexCoord2f(1, 1); glVertex3f(px,	           py, pz);
+         glTexCoord2f(1, 0); glVertex3f(px,	           py, pz + SkySize.Z);
          glTexCoord2f(0, 0); glVertex3f(px + SkySize.X, py, pz + SkySize.Z);
          glTexCoord2f(0, 1); glVertex3f(px + SkySize.X, py, pz);
       glEnd;
@@ -596,8 +606,8 @@ begin
       glBegin(GL_QUADS);
          glTexCoord2f(0, 0); glVertex3f(px+SkySize.X, py + SkySize.Y, pz);
          glTexCoord2f(1, 0); glVertex3f(px+SkySize.X, py + SkySize.Y, pz + SkySize.Z);
-         glTexCoord2f(1, 1); glVertex3f(px,       py + SkySize.Y, pz + SkySize.Z);
-         glTexCoord2f(0, 1); glVertex3f(px,       py + SkySize.Y, pz);
+         glTexCoord2f(1, 1); glVertex3f(px,           py + SkySize.Y, pz + SkySize.Z);
+         glTexCoord2f(0, 1); glVertex3f(px,           py + SkySize.Y, pz);
       glEnd;
       // Left
       glBindTexture(GL_TEXTURE_2D, SkyTexList[SkyTex].Textures[1]);
@@ -609,8 +619,8 @@ begin
       glBegin(GL_QUADS);
          glTexCoord2f(1, 1); glVertex3f(px, py + SkySize.Y, pz);
          glTexCoord2f(0, 1); glVertex3f(px, py + SkySize.Y, pz + SkySize.Z);
-         glTexCoord2f(0, 0); glVertex3f(px, py,           pz + SkySize.Z);
-         glTexCoord2f(1, 0); glVertex3f(px, py,           pz);
+         glTexCoord2f(0, 0); glVertex3f(px, py,             pz + SkySize.Z);
+         glTexCoord2f(1, 0); glVertex3f(px, py,             pz);
       glEnd;
 
       // Right
@@ -620,8 +630,8 @@ begin
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
       glBegin(GL_QUADS);
-         glTexCoord2f(0, 0); glVertex3f(px + SkySize.X, py,           pz);
-         glTexCoord2f(1, 0); glVertex3f(px + SkySize.X, py,           pz + SkySize.Z);
+         glTexCoord2f(0, 0); glVertex3f(px + SkySize.X, py,             pz);
+         glTexCoord2f(1, 0); glVertex3f(px + SkySize.X, py,             pz + SkySize.Z);
          glTexCoord2f(1, 1); glVertex3f(px + SkySize.X, py + SkySize.Y, pz + SkySize.Z);
          glTexCoord2f(0, 1); glVertex3f(px + SkySize.X, py + SkySize.Y, pz);
       glEnd;
@@ -652,98 +662,107 @@ begin
    glPopMatrix;
 end;
 
-Procedure DrawBox3(Position,Position2,Rotation,Size : TVector3f);
+Procedure DrawBox(_CameraPosition, _BoxPosition, _CameraRotation, _BoxSize : TVector3f);
 var
    x,y,z : GLfloat;
 begin
-   glLoadIdentity();                                       // Reset The View
+   // Reset The View.
+   glLoadIdentity();
 
-   glTranslatef(Position.X, Position.Y, Position.Z);
+   // Camera.
+   glTranslatef(_CameraPosition.X, _CameraPosition.Y, _CameraPosition.Z);
    glNormal3f(0,0,0);
 
-   glRotatef(Rotation.Y, 0, 1, 0);
-   glRotatef(Rotation.X, 1, 0, 0);
-   glRotatef(Rotation.Z, 0, 0, 1);
+   glRotatef(_CameraRotation.Y, 0, 1, 0);
+   glRotatef(_CameraRotation.X, 1, 0, 0);
+   glRotatef(_CameraRotation.Z, 0, 0, 1);
 
-   x := -Size.x /2;
-   y := -Size.y /2;
-   z := -Size.z /2;
+   // Ensure that box ix centralized at _BoxPosition.
+   x := -_BoxSize.x /2;
+   y := -_BoxSize.y /2;
+   z := -_BoxSize.z /2;
 
-   glTranslatef(Position2.X, Position2.Y, Position2.Z);
+   glTranslatef(_BoxPosition.X, _BoxPosition.Y, _BoxPosition.Z);
 
+   // Draw Box.
    glBegin(GL_QUADS);
-      glTexCoord2f(1, 0); glVertex3f(x + Size.X, y,           z);
-      glTexCoord2f(1, 1); glVertex3f(x + Size.X, y + Size.Y,  z);
-      glTexCoord2f(0, 1); glVertex3f(x,          y + Size.Y,  z);
-      glTexCoord2f(0, 0); glVertex3f(x,          y,           z);
+      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y,               z);
+      glTexCoord2f(1, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y,  z);
+      glTexCoord2f(0, 1); glVertex3f(x,              y + _BoxSize.Y,  z);
+      glTexCoord2f(0, 0); glVertex3f(x,              y,               z);
 
-      glTexCoord2f(1, 0); glVertex3f(x,	         y,          z + Size.Z);
-      glTexCoord2f(1, 1); glVertex3f(x,          y + Size.Y, z + Size.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + Size.X, y + Size.Y, z + Size.Z);
-      glTexCoord2f(0, 0); glVertex3f(x + Size.X, y,          z + Size.Z);
+      glTexCoord2f(1, 0); glVertex3f(x,	           y,              z + _BoxSize.Z);
+      glTexCoord2f(1, 1); glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
 
-      glTexCoord2f(1, 1); glVertex3f(x,	         y, z);
-      glTexCoord2f(1, 0); glVertex3f(x,	         y, z + Size.Z);
-      glTexCoord2f(0, 0); glVertex3f(x + Size.X, y, z + Size.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + Size.X, y, z);
+      glTexCoord2f(1, 1); glVertex3f(x,	           y, z);
+      glTexCoord2f(1, 0); glVertex3f(x,	           y, z + _BoxSize.Z);
+      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y, z + _BoxSize.Z);
+      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y, z);
 
-      glTexCoord2f(0, 0); glVertex3f(x + Size.X, y + Size.Y, z);
-      glTexCoord2f(1, 0); glVertex3f(x + Size.X, y + Size.Y, z + Size.Z);
-      glTexCoord2f(1, 1); glVertex3f(x,          y + Size.Y, z + Size.Z);
-      glTexCoord2f(0, 1); glVertex3f(x,          y + Size.Y, z);
+      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
+      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(1, 1); glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(0, 1); glVertex3f(x,              y + _BoxSize.Y, z);
 
-      glTexCoord2f(1, 1); glVertex3f(x, y + Size.Y, z);
-      glTexCoord2f(0, 1); glVertex3f(x, y + Size.Y, z + Size.Z);
-      glTexCoord2f(0, 0); glVertex3f(x, y,          z + Size.Z);
-      glTexCoord2f(1, 0); glVertex3f(x, y,          z);
+      glTexCoord2f(1, 1); glVertex3f(x, y + _BoxSize.Y, z);
+      glTexCoord2f(0, 1); glVertex3f(x, y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(0, 0); glVertex3f(x, y,              z + _BoxSize.Z);
+      glTexCoord2f(1, 0); glVertex3f(x, y,              z);
 
-      glTexCoord2f(0, 0); glVertex3f(x + Size.X, y,          z);
-      glTexCoord2f(1, 0); glVertex3f(x + Size.X, y,          z + Size.Z);
-      glTexCoord2f(1, 1); glVertex3f(x + Size.X, y + Size.Y, z + Size.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + Size.X, y + Size.Y, z);
+      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y,              z);
+      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
+      glTexCoord2f(1, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
    glEnd;
 end;
 
-Procedure DrawCenterLines(Position,Position2,Rotation : TVector3f);
+Procedure DrawCenterLines(_CameraPosition, _CenterPosition, _CameraRotation : TVector3f);
 begin
    If Axis = 2 then
       glColor3f(0,0,1);
-   DrawBox3(Position,Position2,Rotation,SetVector(30,0.19,0.19));
+   DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(30, Size * 2, Size * 2));
    If Axis = 2 then
       glColor3f(1,1,1);
 
    If Axis = 1 then
       glColor3f(0,1,0);
-   DrawBox3(Position,Position2,Rotation,SetVector(0.19,0.19,30));
+   DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(Size * 2, Size * 2, 30));
    If Axis = 1 then
       glColor3f(1,1,1);
 
    If Axis = 0 then
       glColor3f(1,0,0);
-   DrawBox3(Position,Position2,Rotation,SetVector(0.19,30,0.19));
+   DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(Size * 2, 30, Size * 2));
    If Axis = 0 then
       glColor3f(1,1,1);
 end;
 
-Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f);
-var
-   HVAPosition, Scale, Position, Offset: TVector3f;
-   Rotation: single;
+Procedure DrawBoundingBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize : TVector3f);
 begin
-   GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
-   Position.X := (_Voxel^.Section[_Section].Tailer.XSize * size * Scale.X) + UnitShift.X + (Offset.X * Size * 2);
-   Position.Y := (_Voxel^.Section[_Section].Tailer.YSize * size * Scale.Y) + UnitShift.Y + (Offset.Y * Size * 2);
-   Position.Z := (_Voxel^.Section[_Section].Tailer.ZSize * size * Scale.Z) + UnitShift.Z + (Offset.Z * Size * 2);
-   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
-   begin
-      Position := AddVector(Position, TurretOffset);
-   end;
-   Scale := ScaleVector(Scale, Size * 2);
-   HVAPosition := ApplyMatrixToVector(_HVA^, _Voxel^, Position, Scale, _Section, _Frame);
-   Rotation := DEG2RAD(UnitRot);
-   HVAPosition.X := (HVAPosition.X * cos(Rotation)) - (HVAPosition.Y * sin(Rotation));
-   HVAPosition.Y := (HVAPosition.X * sin(Rotation)) + (HVAPosition.Y * cos(Rotation));
-   DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth), HVAPosition, SetVector(XRot,0,YRot));
+   glColor4f(1,1,1,0.5);
+   DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize);
+end;
+
+Procedure DrawBoundingBox(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f; const _Rotation: single);
+var
+   StartPosition, CenterPosition, BoundingBoxSize: TVector3f;
+begin
+   StartPosition := GetSectionStartPosition(_Voxel, _HVA, _Section, _Frame, _UnitShift, TurretOffset, _Rotation, Size);
+   CenterPosition := GetSectionCenterPosition(_Voxel, _HVA, _Section, _Frame, _UnitShift, TurretOffset, _Rotation, Size);
+   BoundingBoxSize.X := (CenterPosition.X - StartPosition.X) * 2;
+   BoundingBoxSize.Y := (CenterPosition.Y - StartPosition.Y) * 2;
+   BoundingBoxSize.Z := (CenterPosition.Z - StartPosition.Z) * 2;
+   DrawBoundingBox(SetVector(CameraCenter.X,CameraCenter.Y, Depth), CenterPosition, SetVector(XRot,0,YRot), BoundingBoxSize);
+end;
+
+Procedure DrawSectionCenterLines(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f; const _Rotation: single);
+var
+   Position: TVector3f;
+begin
+   Position := GetSectionCenterPosition(_Voxel, _HVA, _Section, _Frame, _UnitShift, TurretOffset, _Rotation, Size);
+   DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth), Position, SetVector(XRot,0,YRot));
 end;
 
 end.

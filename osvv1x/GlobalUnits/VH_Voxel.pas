@@ -9,6 +9,8 @@ procedure UpdateVoxelList;
 procedure UpdateVoxelList2(const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; Var VoxelBox_No : Integer; Const HVAOpen : Boolean; HVA : THVA; Frames : Integer);
 Procedure GETMinMaxBounds(Const Vxl : TVoxel; i : Integer; Var _Scale,_Offset : TVector3f);
 Procedure GetOffsetAndSize(Const Vxl : TVoxel; i : Integer; Var Size,Offset : TVector3f);
+function GetSectionStartPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
+function GetSectionCenterPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
 Function GetVXLColorWithSelection(const Vxl : TVoxel; Color,Normal,Section : integer) : TVector4f;
 
 Procedure LoadVoxel(const Filename : String);
@@ -391,6 +393,48 @@ begin
    Vxl.Section[Section].Tailer.MaxBounds[1] := Vxl.Section[Section].Tailer.MaxBounds[1] + X;
    Vxl.Section[Section].Tailer.MaxBounds[2] := Vxl.Section[Section].Tailer.MaxBounds[2] + Y;
    Vxl.Section[Section].Tailer.MaxBounds[3] := Vxl.Section[Section].Tailer.MaxBounds[3] + Z;
+end;
+
+function GetSectionStartPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
+var
+   Scale, Offset: TVector3f;
+   Rotation: single;
+begin
+   GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
+   Result.X := (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Result.Y := (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Result.Z := (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
+   Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);
+   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   begin
+      Result := AddVector(Result, _TurretOffset);
+   end;
+   Rotation := DEG2RAD(_Rotation);
+   Result.X := (Result.X * cos(Rotation)) - (Result.Y * sin(Rotation));
+   Result.Y := (Result.X * sin(Rotation)) + (Result.Y * cos(Rotation));
+   Result := AddVector(Result, _UnitShift);
+end;
+
+function GetSectionCenterPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
+var
+   Scale, Offset: TVector3f;
+   Rotation: single;
+begin
+   GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
+   Result.X := (_Voxel^.Section[_Section].Tailer.XSize * _VoxelBoxSize * Scale.X) + (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Result.Y := (_Voxel^.Section[_Section].Tailer.YSize * _VoxelBoxSize * Scale.Y) + (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Result.Z := (_Voxel^.Section[_Section].Tailer.ZSize * _VoxelBoxSize * Scale.Z) + (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
+   Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);
+   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   begin
+      Result := AddVector(Result, _TurretOffset);
+   end;
+   Rotation := DEG2RAD(_Rotation);
+   Result.X := (Result.X * cos(Rotation)) - (Result.Y * sin(Rotation));
+   Result.Y := (Result.X * sin(Rotation)) + (Result.Y * cos(Rotation));
+   Result := AddVector(Result, _UnitShift);
 end;
 
 begin

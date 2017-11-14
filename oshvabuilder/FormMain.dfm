@@ -491,8 +491,6 @@ object FrmMain: TFrmMain
           Width = 113
           Height = 17
           Caption = 'Highlight Selection'
-          Checked = True
-          State = cbChecked
           TabOrder = 0
           OnClick = HighlightCheckBoxClick
         end

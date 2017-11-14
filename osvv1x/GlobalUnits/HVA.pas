@@ -43,7 +43,7 @@ Procedure SetCurrentFrame(Value : Integer);
 Function GetCurrentHVA : PHVA;
 Function GetCurrentHVAB : Boolean;
 
-Function GetTMValue2(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
+Function GetTMValue(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
 
 implementation
 
@@ -186,7 +186,7 @@ begin
    TFilename := '';
 end;
 
-Function GetTMValue2(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
+Function GetTMValue(const HVAFile : THVA; Row,Col,Section,Frames : integer) : single;
 begin
    Result := HVAFile.TransformMatrixs[Frames*HVAFile.Header.N_Sections+Section][Row][Col];
 end;
@@ -202,24 +202,24 @@ begin
 
    HVAScale := VoxelFile.Section[Section].Tailer.Det;
 
-   Matrix[0,0] := GetTMValue2(HVAFile,1,1,Section,Frames);
-   Matrix[0,1] := GetTMValue2(HVAFile,2,1,Section,Frames);
-   Matrix[0,2] := GetTMValue2(HVAFile,3,1,Section,Frames);
+   Matrix[0,0] := GetTMValue(HVAFile,1,1,Section,Frames);
+   Matrix[0,1] := GetTMValue(HVAFile,2,1,Section,Frames);
+   Matrix[0,2] := GetTMValue(HVAFile,3,1,Section,Frames);
    Matrix[0,3] := 0;
 
-   Matrix[1,0] := GetTMValue2(HVAFile,1,2,Section,Frames);
-   Matrix[1,1] := GetTMValue2(HVAFile,2,2,Section,Frames);
-   Matrix[1,2] := GetTMValue2(HVAFile,3,2,Section,Frames);
+   Matrix[1,0] := GetTMValue(HVAFile,1,2,Section,Frames);
+   Matrix[1,1] := GetTMValue(HVAFile,2,2,Section,Frames);
+   Matrix[1,2] := GetTMValue(HVAFile,3,2,Section,Frames);
    Matrix[1,3] := 0;
 
-   Matrix[2,0] := GetTMValue2(HVAFile,1,3,Section,Frames);
-   Matrix[2,1] := GetTMValue2(HVAFile,2,3,Section,Frames);
-   Matrix[2,2] := GetTMValue2(HVAFile,3,3,Section,Frames);
+   Matrix[2,0] := GetTMValue(HVAFile,1,3,Section,Frames);
+   Matrix[2,1] := GetTMValue(HVAFile,2,3,Section,Frames);
+   Matrix[2,2] := GetTMValue(HVAFile,3,3,Section,Frames);
    Matrix[2,3] := 0;
 
-   Matrix[3,0] := (GetTMValue2(HVAFile,1,4,Section,Frames)* HVAScale) * Scale.X * 2;
-   Matrix[3,1] := (GetTMValue2(HVAFile,2,4,Section,Frames)* HVAScale) * Scale.Y * 2;
-   Matrix[3,2] := (GetTMValue2(HVAFile,3,4,Section,Frames)* HVAScale) * Scale.Z * 2;
+   Matrix[3,0] := (GetTMValue(HVAFile,1,4,Section,Frames)* HVAScale) * Scale.X * 2;
+   Matrix[3,1] := (GetTMValue(HVAFile,2,4,Section,Frames)* HVAScale) * Scale.Y * 2;
+   Matrix[3,2] := (GetTMValue(HVAFile,3,4,Section,Frames)* HVAScale) * Scale.Z * 2;
    Matrix[3,3] := 1;
 
    glMultMatrixf(@Matrix[0,0]);
@@ -235,9 +235,9 @@ begin
 
    HVAScale := VoxelFile.Section[Section].Tailer.Det;
 
-   Result.X := (Position.X * GetTMValue2(HVAFile,1,1,Section,Frames) + Position.Y * GetTMValue2(HVAFile,1,2,Section,Frames) + Position.Z * GetTMValue2(HVAFile,1,3,Section,Frames) + Scale.x * GetTMValue2(HVAFile,1,4,Section,Frames) * HVAScale);
-   Result.Y := (Position.X * GetTMValue2(HVAFile,2,1,Section,Frames) + Position.Y * GetTMValue2(HVAFile,2,2,Section,Frames) + Position.Z * GetTMValue2(HVAFile,2,3,Section,Frames) + Scale.y * GetTMValue2(HVAFile,2,4,Section,Frames) * HVAScale);
-   Result.Z := (Position.X * GetTMValue2(HVAFile,3,1,Section,Frames) + Position.Y * GetTMValue2(HVAFile,3,2,Section,Frames) + Position.Z * GetTMValue2(HVAFile,3,3,Section,Frames) + Scale.z * GetTMValue2(HVAFile,3,4,Section,Frames) * HVAScale);
+   Result.X := (Position.X * GetTMValue(HVAFile,1,1,Section,Frames) + Position.Y * GetTMValue(HVAFile,1,2,Section,Frames) + Position.Z * GetTMValue(HVAFile,1,3,Section,Frames) + Scale.x * GetTMValue(HVAFile,1,4,Section,Frames) * HVAScale);
+   Result.Y := (Position.X * GetTMValue(HVAFile,2,1,Section,Frames) + Position.Y * GetTMValue(HVAFile,2,2,Section,Frames) + Position.Z * GetTMValue(HVAFile,2,3,Section,Frames) + Scale.y * GetTMValue(HVAFile,2,4,Section,Frames) * HVAScale);
+   Result.Z := (Position.X * GetTMValue(HVAFile,3,1,Section,Frames) + Position.Y * GetTMValue(HVAFile,3,2,Section,Frames) + Position.Z * GetTMValue(HVAFile,3,3,Section,Frames) + Scale.z * GetTMValue(HVAFile,3,4,Section,Frames) * HVAScale);
 end;
 
 Procedure ClearMatrix(Var TM : TTransformMatrix);
@@ -377,7 +377,7 @@ begin
 
    for x := 1 to 3 do
       for y := 1 to 4 do
-         Result[x-1][y-1] := GetTMValue2(HVAFile,x,y,Section,Frames);
+         Result[x-1][y-1] := GetTMValue(HVAFile,x,y,Section,Frames);
 end;
 
 Procedure MatrixToHVA(var HVAFile : THVA; const M : TMatrix; Section : Integer);

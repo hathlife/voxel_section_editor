@@ -45,7 +45,7 @@ var
    DrawSectionCenter: Boolean;
 
    DrawVHWorld : Boolean = True;
-   Highlight : Boolean = True;
+   Highlight : Boolean = False;
    DrawAllOfVoxel : Boolean = True;
    DrawTurret : Boolean = True;
    DrawBarrel : Boolean = True;
