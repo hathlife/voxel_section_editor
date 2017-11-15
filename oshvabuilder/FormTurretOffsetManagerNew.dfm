@@ -45,13 +45,13 @@ object FrmTurretOffsetManager_New: TFrmTurretOffsetManager_New
     Font.Style = [fsBold]
     ParentFont = False
   end
-  object lblOffsetZ: TLabel
+  object lblOffsetValue: TLabel
     Left = 32
     Top = 96
-    Width = 17
+    Width = 41
     Height = 22
     AutoSize = False
-    Caption = 'Z'
+    Caption = 'Value:'
     Layout = tlCenter
   end
   object Panel1: TPanel
@@ -121,9 +121,9 @@ object FrmTurretOffsetManager_New: TFrmTurretOffsetManager_New
       OnClick = Button2Click
     end
   end
-  object OffsetZ: TEdit
-    Left = 56
-    Top = 96
+  object Offset: TEdit
+    Left = 65
+    Top = 97
     Width = 121
     Height = 21
     TabOrder = 2

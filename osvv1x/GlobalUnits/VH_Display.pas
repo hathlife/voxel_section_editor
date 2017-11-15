@@ -364,6 +364,7 @@ begin
          DrawVoxels(UnitShift.X,UnitShift.Y,UnitShift.Z,UnitRot);
 
 
+      glDisable(GL_CULL_FACE);
       glEnable(GL_TEXTURE_2D);
       glColor3f(1,1,1);
 
@@ -389,6 +390,19 @@ begin
       if DrawSky then
          DrawSkyBox(SetVector(XRot,0,YRot),SetVector(-90,0,180));
 
+      If Not LightGround then
+      begin
+         glEnable(GL_LIGHT0);
+         glLightfv(GL_LIGHT0, GL_AMBIENT, @LightAmb);				// Set The Ambient Lighting For Light0
+         glLightfv(GL_LIGHT0, GL_DIFFUSE, @LightDif);				// Set The Diffuse Lighting For Light0
+         glEnable(GL_LIGHTING);
+         glEnable(GL_COLOR_MATERIAL);
+         glNormal3f(0,0,0);
+      end;
+
+      glDisable(GL_TEXTURE_2D);
+      glEnable(GL_CULL_FACE);
+
       If DrawCenter then
          DrawCenterLines(SetVector(CameraCenter.X,CameraCenter.Y, Depth),SetVector(0,0,0),SetVector(XRot,0,YRot));
 
@@ -401,6 +415,8 @@ begin
       begin
          DrawBoundingBox(CurrentVoxel, CurrentHVA, CurrentVoxelSection, GetCurrentFrame(), UnitShift, UnitRot);
       end;
+
+      glEnable(GL_TEXTURE_2D);
 
       if FTexture = 0 then
          glGenTextures(1, @FTexture);
@@ -460,10 +476,11 @@ begin
         end;
 
         glMatrixMode(GL_PROJECTION);
-     glPopMatrix;
-     glMatrixMode(GL_MODELVIEW);
-  glPopMatrix;
-  glEnable(GL_DEPTH_TEST);
+      glPopMatrix;
+      glMatrixMode(GL_MODELVIEW);
+   glPopMatrix;
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_CULL_FACE);
 end;
 
 procedure BuildFont;			                // Build Our Bitmap Font
@@ -673,7 +690,6 @@ begin
 
    // Camera.
    glTranslatef(_CameraPosition.X, _CameraPosition.Y, _CameraPosition.Z);
-   glNormal3f(0,0,0);
 
    glRotatef(_CameraRotation.Y, 0, 1, 0);
    glRotatef(_CameraRotation.X, 1, 0, 0);
@@ -687,58 +703,59 @@ begin
    glTranslatef(_BoxPosition.X, _BoxPosition.Y, _BoxPosition.Z);
 
    // Draw Box.
+   glNormal3f(0,0,0);
    glBegin(GL_QUADS);
-      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y,               z);
-      glTexCoord2f(1, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y,  z);
-      glTexCoord2f(0, 1); glVertex3f(x,              y + _BoxSize.Y,  z);
-      glTexCoord2f(0, 0); glVertex3f(x,              y,               z);
+      glVertex3f(x + _BoxSize.X, y,               z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y,  z);
+      glVertex3f(x,              y + _BoxSize.Y,  z);
+      glVertex3f(x,              y,               z);
 
-      glTexCoord2f(1, 0); glVertex3f(x,	           y,              z + _BoxSize.Z);
-      glTexCoord2f(1, 1); glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
+      glVertex3f(x,	           y,              z + _BoxSize.Z);
+      glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
 
-      glTexCoord2f(1, 1); glVertex3f(x,	           y, z);
-      glTexCoord2f(1, 0); glVertex3f(x,	           y, z + _BoxSize.Z);
-      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y, z + _BoxSize.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y, z);
+      glVertex3f(x,	           y, z);
+      glVertex3f(x,	           y, z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y, z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y, z);
 
-      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
-      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(1, 1); glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(0, 1); glVertex3f(x,              y + _BoxSize.Y, z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x,              y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x,              y + _BoxSize.Y, z);
 
-      glTexCoord2f(1, 1); glVertex3f(x, y + _BoxSize.Y, z);
-      glTexCoord2f(0, 1); glVertex3f(x, y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(0, 0); glVertex3f(x, y,              z + _BoxSize.Z);
-      glTexCoord2f(1, 0); glVertex3f(x, y,              z);
+      glVertex3f(x, y + _BoxSize.Y, z);
+      glVertex3f(x, y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x, y,              z + _BoxSize.Z);
+      glVertex3f(x, y,              z);
 
-      glTexCoord2f(0, 0); glVertex3f(x + _BoxSize.X, y,              z);
-      glTexCoord2f(1, 0); glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
-      glTexCoord2f(1, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
-      glTexCoord2f(0, 1); glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
+      glVertex3f(x + _BoxSize.X, y,              z);
+      glVertex3f(x + _BoxSize.X, y,              z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
+      glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
    glEnd;
 end;
 
 Procedure DrawCenterLines(_CameraPosition, _CenterPosition, _CameraRotation : TVector3f);
 begin
    If Axis = 2 then
-      glColor3f(0,0,1);
+      glColor4f(1,1,1,1)
+   else
+      glColor4f(0,0,1,1);
    DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(30, Size * 2, Size * 2));
-   If Axis = 2 then
-      glColor3f(1,1,1);
 
    If Axis = 1 then
-      glColor3f(0,1,0);
+      glColor4f(1,1,1,1)
+   else
+      glColor4f(0,1,0,1);
    DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(Size * 2, Size * 2, 30));
-   If Axis = 1 then
-      glColor3f(1,1,1);
 
    If Axis = 0 then
-      glColor3f(1,0,0);
+      glColor4f(1,1,1,1)
+   else
+      glColor4f(1,0,0,1);
    DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, SetVector(Size * 2, 30, Size * 2));
-   If Axis = 0 then
-      glColor3f(1,1,1);
 end;
 
 Procedure DrawBoundingBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize : TVector3f);

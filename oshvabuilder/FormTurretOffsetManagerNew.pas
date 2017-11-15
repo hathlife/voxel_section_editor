@@ -18,8 +18,8 @@ type
       Button4: TButton;
       Button2: TButton;
       Label3: TLabel;
-    lblOffsetZ: TLabel;
-    OffsetZ: TEdit;
+    lblOffsetValue: TLabel;
+    Offset: TEdit;
       procedure Button4Click(Sender: TObject);
       procedure Button2Click(Sender: TObject);
       procedure FormCreate(Sender: TObject);

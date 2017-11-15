@@ -690,13 +690,13 @@ begin
    frm.Visible:=False;
    Frm.Image1.Picture := TopBarImageHolder.Picture;
 
-   frm.OffsetZ.Text := floattostr(TurretOffset.X);
+   frm.Offset.Text := floattostr(TurretOffset.X);
 
    frm.ShowModal;
 
    if Frm.O then
    begin
-      TurretOffset.X := strtofloatdef(frm.OffsetZ.Text, 0);
+      TurretOffset.X := strtofloatdef(frm.Offset.Text, 0);
       RebuildLists := true;
    end;
 
@@ -1320,16 +1320,19 @@ end;
 procedure TFrmMain.ControlYClick(Sender: TObject);
 begin
    Axis := 0;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.ControlZClick(Sender: TObject);
 begin
    Axis := 1;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.ControlXClick(Sender: TObject);
 begin
    Axis := 2;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.ControlTypeChange(Sender: TObject);
