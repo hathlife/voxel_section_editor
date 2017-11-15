@@ -305,7 +305,7 @@ begin
 
    if ((Vxl <> CurrentVoxel^) or (Section <> CurrentVoxelSection)) and (Highlight) then
    begin
-      Result.W := 0.1;
+      Result.W := 0.05;
    end;
 end;
 
@@ -398,42 +398,54 @@ end;
 function GetSectionStartPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
 var
    Scale, Offset: TVector3f;
-   Rotation: single;
+   UnitRotation, TurretRotation: single;
 begin
    GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
    Result.X := (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Y := (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Z := (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   begin
+      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * C_ONE_LEPTON;
+   end;
    Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
    Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);
    if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
    begin
-      Result := AddVector(Result, _TurretOffset);
+      TurretRotation := DEG2RAD(VXLTurretRotation.X);
+      Result.X := (Result.X * cos(TurretRotation)) - (Result.Y * sin(TurretRotation));
+      Result.Y := (Result.X * sin(TurretRotation)) + (Result.Y * cos(TurretRotation));
    end;
-   Rotation := DEG2RAD(_Rotation);
-   Result.X := (Result.X * cos(Rotation)) - (Result.Y * sin(Rotation));
-   Result.Y := (Result.X * sin(Rotation)) + (Result.Y * cos(Rotation));
+   UnitRotation := DEG2RAD(_Rotation);
+   Result.X := (Result.X * cos(UnitRotation)) - (Result.Y * sin(UnitRotation));
+   Result.Y := (Result.X * sin(UnitRotation)) + (Result.Y * cos(UnitRotation));
    Result := AddVector(Result, _UnitShift);
 end;
 
 function GetSectionCenterPosition(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift, _TurretOffset: TVector3f; const _Rotation: single; const _VoxelBoxSize: single): TVector3f;
 var
    Scale, Offset: TVector3f;
-   Rotation: single;
+   UnitRotation, TurretRotation: single;
 begin
    GETMinMaxBounds(_Voxel^,_Section,Scale,Offset);
    Result.X := (_Voxel^.Section[_Section].Tailer.XSize * _VoxelBoxSize * Scale.X) + (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Y := (_Voxel^.Section[_Section].Tailer.YSize * _VoxelBoxSize * Scale.Y) + (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Z := (_Voxel^.Section[_Section].Tailer.ZSize * _VoxelBoxSize * Scale.Z) + (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
+   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   begin
+      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * C_ONE_LEPTON;
+   end;
    Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
    Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);
    if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
    begin
-      Result := AddVector(Result, _TurretOffset);
+      TurretRotation := DEG2RAD(VXLTurretRotation.X);
+      Result.X := (Result.X * cos(TurretRotation)) - (Result.Y * sin(TurretRotation));
+      Result.Y := (Result.X * sin(TurretRotation)) + (Result.Y * cos(TurretRotation));
    end;
-   Rotation := DEG2RAD(_Rotation);
-   Result.X := (Result.X * cos(Rotation)) - (Result.Y * sin(Rotation));
-   Result.Y := (Result.X * sin(Rotation)) + (Result.Y * cos(Rotation));
+   UnitRotation := DEG2RAD(_Rotation);
+   Result.X := (Result.X * cos(UnitRotation)) - (Result.Y * sin(UnitRotation));
+   Result.Y := (Result.X * sin(UnitRotation)) + (Result.Y * cos(UnitRotation));
    Result := AddVector(Result, _UnitShift);
 end;
 

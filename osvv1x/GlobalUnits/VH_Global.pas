@@ -220,6 +220,8 @@ Const
    Light0_Light:  TGLArrayf4=( 1, 1, 1, 1);
    Light0_Spec:  TGLArrayf4=( 1, 0.5, 0, 0);
 
+   C_ONE_LEPTON = 43/256;
+
    //Games
    C_GAME_TS = 0;
    C_GAME_RA2 = C_GAME_TS + 1;

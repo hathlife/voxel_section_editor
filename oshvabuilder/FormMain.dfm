@@ -3578,6 +3578,10 @@ object FrmMain: TFrmMain
           Caption = 'HVA Position'
           OnClick = HVAPosition1Click
         end
+        object TurretOffset1: TMenuItem
+          Caption = 'Turret Offset'
+          OnClick = TurretOffset1Click
+        end
       end
       object ScreenShots1: TMenuItem
         Caption = 'ScreenShots'

@@ -224,6 +224,8 @@ begin
          glPushMatrix;
             ApplyMatrix(HVA,Vxl,FinalScale,s,HVAFrame);
             glTranslatef(Offset.X*Size*2, Offset.Y*Size*2, Offset.Z*Size*2);
+            if (Vxl = VoxelTurret) or (Vxl = VoxelBarrel) then
+               glTranslatef(TurretOffset.X * Size * 2 * C_ONE_LEPTON,TurretOffset.Y * Size * 2 * C_ONE_LEPTON,TurretOffset.Z * Size * 2 * C_ONE_LEPTON);
             glCallList(VoxelBoxes.Sections[s].List);
          glPopMatrix;
       end;
@@ -251,13 +253,13 @@ begin
    DrawVoxel(@VoxelFile,VoxelFile,VoxelBoxes,VoxelBox_No,True,HVAFile,HVAFrame);
 
    glPushMatrix;
+
    glRotatef(VXLTurretRotation.X, 0, 0, 1);
 
       If DrawTurret then
       begin
          // Temporary code:
          HVATurret.HigherLevel := @HVAFile;
-         glTranslatef(TurretOffset.X * Size,TurretOffset.Y * Size,TurretOffset.Z * Size);
          DrawVoxel(@VoxelTurret,VoxelTurret,VoxelBoxesT,VoxelBox_NoT,True,HVATurret,HVAFrameT);
       end;
       If DrawBarrel then
@@ -741,7 +743,7 @@ end;
 
 Procedure DrawBoundingBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize : TVector3f);
 begin
-   glColor4f(1,1,1,0.5);
+   glColor4f(1,1,1,0.2);
    DrawBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize);
 end;
 

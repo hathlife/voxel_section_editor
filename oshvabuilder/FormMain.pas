@@ -131,6 +131,8 @@ type
       mnRedAlert2Game: TMenuItem;
       DrawGridCheckBox: TCheckBox;
       DrawSectionCenterCheckBox: TCheckBox;
+      TurretOffset1: TMenuItem;
+      procedure TurretOffset1Click(Sender: TObject);
       procedure DrawSectionCenterCheckBoxClick(Sender: TObject);
       procedure DrawGridCheckBoxClick(Sender: TObject);
       procedure FormDestroy(Sender: TObject);
@@ -236,7 +238,7 @@ Uses VH_Engine,VH_GL,HVA,FormAboutNew,
      FormCameraManagerNew, ShellAPI,FormScreenShotManagerNew,
      FormAnimationManagerNew,VH_Types,FormTransformManagerNew,
      FormBoundsManagerNew,Math3d,FormRotationManagerNew,
-     FormHVAPositionManagerNew, OpenGL15, Palette;
+     FormHVAPositionManagerNew, OpenGL15, Palette, FormTurretOffsetManagerNew;
 
 {$R *.dfm}
 
@@ -678,6 +680,27 @@ procedure TFrmMain.StopAnimationClick(Sender: TObject);
 begin
    AnimationTimer.Enabled := False;
    AnimationBar.Position := 0;
+end;
+
+procedure TFrmMain.TurretOffset1Click(Sender: TObject);
+var
+   frm: TFrmTurretOffsetManager_New;
+begin
+   frm:=TFrmTurretOffsetManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
+
+   frm.OffsetZ.Text := floattostr(TurretOffset.X);
+
+   frm.ShowModal;
+
+   if Frm.O then
+   begin
+      TurretOffset.X := strtofloatdef(frm.OffsetZ.Text, 0);
+      RebuildLists := true;
+   end;
+
+   frm.Free;
 end;
 
 procedure TFrmMain.AnimationBarChange(Sender: TObject);
