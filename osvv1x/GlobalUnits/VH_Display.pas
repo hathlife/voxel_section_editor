@@ -13,6 +13,8 @@ Procedure DrawBox(_CameraPosition, _BoxPosition, _CameraRotation, _BoxSize : TVe
 Procedure DrawBoundingBox(const _Voxel: PVoxel; const _HVA: PHVA; const _Section, _Frame: integer; const _UnitShift: TVector3f; const _Rotation: single); overload;
 Procedure DrawBoundingBox(_CameraPosition, _CenterPosition, _CameraRotation, _BoundingSize : TVector3f); overload;
 
+Procedure DrawBullet(_BulletPosition, _BulletSize : TVector3f);
+
 Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 Procedure DrawVoxels(ShiftX,ShiftY,ShiftZ,Rot : Extended);
 Procedure DrawWorld;
@@ -141,60 +143,10 @@ begin
    glEnd();
 end;
 
-Procedure DrawBullet(Position,Color : TVector3f; Size : TVector3f);
-var
-   East,West,South,North,Ceil,Floor : single;
-begin
-   East := Position.X + Size.X;
-   West := Position.X - Size.X;
-   Ceil := Position.Y + Size.Y;
-   Floor := Position.Y - Size.Y;
-   South := Position.Z + Size.Z;
-   North := Position.Z - Size.Z;
-
-   glBegin(GL_QUADS);
-
-      glColor3f(Color.X,Color.Y,Color.Z);			// Set The Color
-
-
-      glNormal3f(0, 0, 1);
-      glVertex3f(East, Ceil, North);			// Top Right Of The Quad (Top)
-	   glVertex3f(West, Ceil, North);			// Top Left Of The Quad (Top)
-      glVertex3f(West, Ceil, South);			// Bottom Left Of The Quad (Top)
-     	glVertex3f(East, Ceil, South);			// Bottom Right Of The Quad (Top)
-      glNormal3f(0, 0, -1);
-	   glVertex3f(East, Floor, South);			// Top Right Of The Quad (Bottom)
-      glVertex3f(West, Floor, South);			// Top Left Of The Quad (Bottom)
-	   glVertex3f(West, Floor, North);			// Bottom Left Of The Quad (Bottom)
-	   glVertex3f(East, Floor, North);			// Bottom Right Of The Quad (Bottom)
-      glNormal3f(0, -1, 0);
-	   glVertex3f(East, Ceil, South);			// Top Right Of The Quad (Front)
-	   glVertex3f(West, Ceil, South);			// Top Left Of The Quad (Front)
-   	glVertex3f(West, Floor,South);			// Bottom Left Of The Quad (Front)
-	   glVertex3f(East, Floor,South);			// Bottom Right Of The Quad (Front)
-      glNormal3f(0, 1, 0);
-	   glVertex3f(East, Floor,North);			// Bottom Left Of The Quad (Back)
-	   glVertex3f(West, Floor,North);			// Bottom Right Of The Quad (Back)
-	   glVertex3f(West, Ceil, North);			// Top Right Of The Quad (Back)
-	   glVertex3f(East, Ceil, North);			// Top Left Of The Quad (Back)
-      glNormal3f(1, 0, 0);
-	   glVertex3f(West, Ceil, South);			// Top Right Of The Quad (Left)
-	   glVertex3f(West, Ceil, North);			// Top Left Of The Quad (Left)
-	   glVertex3f(West, Floor,North);			// Bottom Left Of The Quad (Left)
-	   glVertex3f(West, Floor,South);			// Bottom Right Of The Quad (Left)
-      glNormal3f(-1, 0, 0);
-   	glVertex3f( East, Ceil, North);			// Top Right Of The Quad (Right)
-	   glVertex3f( East, Ceil, South);			// Top Left Of The Quad (Right)
-	   glVertex3f( East, Floor,South);			// Bottom Left Of The Quad (Right)
-	   glVertex3f( East, Floor,North);			// Bottom Right Of The Quad (Right)
-   glEnd();
-end;
-
-
 Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 var
    x,s : integer;
-   Scale,FinalScale,Offset : TVector3f;
+   Scale,FinalScale,Offset, BulletPosition : TVector3f;
 begin
    if VoxelBox_No < 1 then exit;
 
@@ -227,6 +179,12 @@ begin
             if (Vxl = VoxelTurret) or (Vxl = VoxelBarrel) then
                glTranslatef(TurretOffset.X * Size * 2 * C_ONE_LEPTON,TurretOffset.Y * Size * 2 * C_ONE_LEPTON,TurretOffset.Z * Size * 2 * C_ONE_LEPTON);
             glCallList(VoxelBoxes.Sections[s].List);
+            if DrawPrimaryFireFLH and (Vxl = VoxelFile) then
+            begin
+               BulletPosition := ScaleVector(PrimaryFireFLH, Size * 2 * C_ONE_LEPTON);
+               BulletPosition := AddVector(BulletPosition, SetVector((Vxl.Section[s].Tailer.XSize * FinalScale.X) - Size, (Vxl.Section[s].Tailer.YSize * FinalScale.Y) - Size, (Vxl.Section[s].Tailer.ZSize * FinalScale.Z) - Size));
+               DrawBullet(BulletPosition, SetVector(Size * 10, Size * 10, Size * 10));
+            end;
          glPopMatrix;
       end;
 
@@ -269,7 +227,6 @@ begin
          DrawVoxel(@VoxelBarrel,VoxelBarrel,VoxelBoxesB,VoxelBox_NoB,True,HVABarrel,HVAFrameB);
       end;
    glPopMatrix;
-   glTranslatef(PrimaryFireFLH.X,PrimaryFireFLH.Y,PrimaryFireFLH.Z);
 
    If RebuildLists then
       RebuildLists := False;
@@ -735,6 +692,57 @@ begin
       glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z + _BoxSize.Z);
       glVertex3f(x + _BoxSize.X, y + _BoxSize.Y, z);
    glEnd;
+end;
+
+Procedure DrawBullet(_BulletPosition, _BulletSize : TVector3f);
+var
+   East,West,South,North,Ceil,Floor : single;
+begin
+   // Ensure that box ix centralized at _BoxPosition.
+   East := _BulletSize.X/2;
+   West := -_BulletSize.X/ 2;
+   Ceil := _BulletSize.Y/2;
+   Floor := -_BulletSize.Y/2;
+   South := _BulletSize.Z/2;
+   North := -_BulletSize.Z/2;
+
+   glColor4f(1, 1, 1, 1);
+   glNormal3f(0, 0, 0);
+   glTranslatef(_BulletPosition.X, _BulletPosition.Y, _BulletPosition.Z);
+
+   glBegin(GL_TRIANGLES);
+      glVertex3f(0, 0, North);
+	   glVertex3f(West, 0, 0);
+      glVertex3f(0, Ceil, 0);
+
+	   glVertex3f(0, 0, North);
+      glVertex3f(West, 0, 0);
+      glVertex3f(0, Floor, 0);
+
+	   glVertex3f(West, 0, 0);
+      glVertex3f(0, 0, South);
+      glVertex3f(0, Ceil, 0);
+
+      glVertex3f(West, 0, 0);
+	   glVertex3f(0, 0, South);
+      glVertex3f(0, Floor, 0);
+
+	   glVertex3f(East, 0, 0);
+      glVertex3f(0, 0, North);
+      glVertex3f(0, Ceil, 0);
+
+      glVertex3f(East, 0, 0);
+	   glVertex3f(0, 0, North);
+      glVertex3f(0, Floor, 0);
+
+      glVertex3f(0, 0, South);
+	   glVertex3f(East, 0, 0);
+      glVertex3f(0, Ceil, 0);
+
+	   glVertex3f(0, 0, South);
+      glVertex3f(East, 0, 0);
+      glVertex3f(0, Floor, 0);
+   glEnd();
 end;
 
 Procedure DrawCenterLines(_CameraPosition, _CenterPosition, _CameraRotation : TVector3f);

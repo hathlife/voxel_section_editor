@@ -132,6 +132,10 @@ type
       DrawGridCheckBox: TCheckBox;
       DrawSectionCenterCheckBox: TCheckBox;
       TurretOffset1: TMenuItem;
+      PrimaryFireFLH1: TMenuItem;
+      DrawFLHBulletCheck: TCheckBox;
+      procedure DrawFLHBulletCheckClick(Sender: TObject);
+      procedure PrimaryFireFLH1Click(Sender: TObject);
       procedure TurretOffset1Click(Sender: TObject);
       procedure DrawSectionCenterCheckBoxClick(Sender: TObject);
       procedure DrawGridCheckBoxClick(Sender: TObject);
@@ -238,7 +242,8 @@ Uses VH_Engine,VH_GL,HVA,FormAboutNew,
      FormCameraManagerNew, ShellAPI,FormScreenShotManagerNew,
      FormAnimationManagerNew,VH_Types,FormTransformManagerNew,
      FormBoundsManagerNew,Math3d,FormRotationManagerNew,
-     FormHVAPositionManagerNew, OpenGL15, Palette, FormTurretOffsetManagerNew;
+     FormHVAPositionManagerNew, OpenGL15, Palette, FormTurretOffsetManagerNew,
+     FormPrimaryFireFLHManagerNew;
 
 {$R *.dfm}
 
@@ -752,6 +757,7 @@ begin
    DrawCenterCheckBox.Enabled := VoxelOpen;
    DrawSectionCenterCheckBox.Enabled := VoxelOpen;
    DrawGridCheckBox.Enabled := VoxelOpen;
+   DrawFLHBulletCheck.Enabled := VoxelOpen;
    ShowDebugCheckBox.Enabled := VoxelOpen;
    VoxelCountCheckBox.Enabled := VoxelOpen;
    CheckBox1.Enabled := VoxelOpen;
@@ -982,6 +988,13 @@ begin
 
    DebugMode := not DebugMode;
    ShowDebugCheckBox.Checked := DebugMode;
+end;
+
+procedure TFrmMain.DrawFLHBulletCheckClick(Sender: TObject);
+begin
+   DrawPrimaryFireFLH := Not DrawPrimaryFireFLH;
+   DrawFLHBulletCheck.Checked := DrawPrimaryFireFLH;
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.VoxelCountCheckBoxClick(Sender: TObject);
@@ -1638,6 +1651,31 @@ begin
    Frm := TFrmPreferences.Create(self);
    Frm.ShowModal();
    Frm.Release;
+end;
+
+procedure TFrmMain.PrimaryFireFLH1Click(Sender: TObject);
+var
+   frm: TFrmPrimaryFireFLHManager_New;
+   Pos : TVector3f;
+begin
+   frm:=TFrmPrimaryFireFLHManager_New.Create(Self);
+   frm.Visible:=False;
+   Frm.Image1.Picture := TopBarImageHolder.Picture;
+
+   Pos := PrimaryFireFLH;
+
+   frm.PositionX.Text := floattostr(Pos.X);
+   frm.PositionY.Text := floattostr(Pos.Y);
+   frm.PositionZ.Text := floattostr(Pos.Z);
+
+   frm.ShowModal;
+
+   if Frm.O then
+   begin
+      PrimaryFireFLH := SetVector(StrToFloatDef(frm.PositionX.Text, 0), StrToFloatDef(frm.PositionY.Text, 0), StrToFloatDef(frm.PositionZ.Text, 0));
+   end;
+
+   frm.Free;
 end;
 
 end.

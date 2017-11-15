@@ -36,7 +36,8 @@ uses
   pngimage in '..\osvv1x\GlobalUnits\pngimage.pas',
   pngzlib in '..\osvv1x\GlobalUnits\pngzlib.pas',
   pnglang in '..\osvv1x\GlobalUnits\pnglang.pas',
-  FormTurretOffsetManagerNew in 'FormTurretOffsetManagerNew.pas' {FrmTurretOffsetManager_New};
+  FormTurretOffsetManagerNew in 'FormTurretOffsetManagerNew.pas' {FrmTurretOffsetManager_New},
+  FormPrimaryFireFLHManagerNew in 'FormPrimaryFireFLHManagerNew.pas' {FrmPrimaryFireFLHManager_New};
 
 {$R *.res}
 
@@ -46,5 +47,6 @@ begin
   Application.CreateForm(TFrmMain, FrmMain);
   Application.CreateForm(TFrmPreferences, FrmPreferences);
   Application.CreateForm(TFrmTurretOffsetManager_New, FrmTurretOffsetManager_New);
+  Application.CreateForm(TFrmPrimaryFireFLHManager_New, FrmPrimaryFireFLHManager_New);
   Application.Run;
 end.

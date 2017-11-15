@@ -481,7 +481,7 @@ object FrmMain: TFrmMain
         Left = 1
         Top = 326
         Width = 134
-        Height = 123
+        Height = 147
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 4
@@ -507,7 +507,7 @@ object FrmMain: TFrmMain
         end
         object CheckBox1: TCheckBox
           Left = 8
-          Top = 72
+          Top = 88
           Width = 97
           Height = 17
           Caption = 'Disable 3d View'
@@ -516,7 +516,7 @@ object FrmMain: TFrmMain
         end
         object ShowDebugCheckBox: TCheckBox
           Left = 8
-          Top = 88
+          Top = 104
           Width = 97
           Height = 17
           Caption = 'Show Debug'
@@ -525,7 +525,7 @@ object FrmMain: TFrmMain
         end
         object VoxelCountCheckBox: TCheckBox
           Left = 8
-          Top = 104
+          Top = 120
           Width = 113
           Height = 17
           Caption = 'Show Voxel Count'
@@ -549,6 +549,15 @@ object FrmMain: TFrmMain
           Caption = 'Draw Section Center'
           TabOrder = 6
           OnClick = DrawSectionCenterCheckBoxClick
+        end
+        object DrawFLHBulletCheck: TCheckBox
+          Left = 8
+          Top = 72
+          Width = 113
+          Height = 17
+          Caption = 'Draw FLH Bullet'
+          TabOrder = 7
+          OnClick = DrawFLHBulletCheckClick
         end
       end
       object Panel8: TPanel
@@ -3581,6 +3590,10 @@ object FrmMain: TFrmMain
         object TurretOffset1: TMenuItem
           Caption = 'Turret Offset'
           OnClick = TurretOffset1Click
+        end
+        object PrimaryFireFLH1: TMenuItem
+          Caption = 'Fire FLH Simulation'
+          OnClick = PrimaryFireFLH1Click
         end
       end
       object ScreenShots1: TMenuItem

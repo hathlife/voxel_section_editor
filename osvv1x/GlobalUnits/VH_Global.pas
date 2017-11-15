@@ -42,7 +42,8 @@ var
    XRotB,YRotB,oglloaded,DebugMode,
    ShowVoxelCount,VVSLoading,DrawSky,
    DrawCenter,VXLChanged : Boolean;
-   DrawSectionCenter: Boolean;
+   DrawSectionCenter: Boolean = False;
+   DrawPrimaryFireFLH: Boolean = False;
 
    DrawVHWorld : Boolean = True;
    Highlight : Boolean = False;
