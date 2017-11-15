@@ -26,7 +26,6 @@ object FrmMain: TFrmMain
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
-    ExplicitHeight = 499
     object Panel2: TPanel
       Left = 1
       Top = 1
@@ -34,7 +33,6 @@ object FrmMain: TFrmMain
       Height = 517
       Align = alLeft
       TabOrder = 0
-      ExplicitHeight = 497
       object Label2: TLabel
         Left = 1
         Top = 233
@@ -641,7 +639,6 @@ object FrmMain: TFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
-      ExplicitHeight = 497
       object TopBarImageHolder: TImage
         Left = 64
         Top = 24
@@ -3333,7 +3330,6 @@ object FrmMain: TFrmMain
       item
         Width = 100
       end>
-    ExplicitTop = 522
   end
   object ToolBar1: TToolBar
     Left = 0
@@ -3587,6 +3583,9 @@ object FrmMain: TFrmMain
           Caption = 'HVA Position'
           OnClick = HVAPosition1Click
         end
+      end
+      object Simulators1: TMenuItem
+        Caption = 'Simulators'
         object TurretOffset1: TMenuItem
           Caption = 'Turret Offset'
           OnClick = TurretOffset1Click

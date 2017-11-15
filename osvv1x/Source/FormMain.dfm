@@ -3149,7 +3149,7 @@ object VVFrmMain: TVVFrmMain
         Top = 0
         Width = 788
         Height = 178
-        ActivePage = TabSheet1
+        ActivePage = TabSheet4
         Align = alClient
         TabOrder = 0
         object TabSheet1: TTabSheet
@@ -3439,6 +3439,8 @@ object VVFrmMain: TVVFrmMain
         object TabSheet4: TTabSheet
           Caption = 'Unit'
           ImageIndex = 3
+          ExplicitLeft = 1
+          ExplicitTop = 23
           object Label20: TLabel
             Left = 6
             Top = 32
@@ -3523,24 +3525,6 @@ object VVFrmMain: TVVFrmMain
             Caption = 'X'
             Layout = tlCenter
           end
-          object Label39: TLabel
-            Left = 246
-            Top = 56
-            Width = 7
-            Height = 22
-            AutoSize = False
-            Caption = 'Y'
-            Layout = tlCenter
-          end
-          object Label40: TLabel
-            Left = 326
-            Top = 56
-            Width = 7
-            Height = 22
-            AutoSize = False
-            Caption = 'Z'
-            Layout = tlCenter
-          end
           object Label41: TLabel
             Left = 5
             Top = 80
@@ -3548,6 +3532,42 @@ object VVFrmMain: TVVFrmMain
             Height = 22
             AutoSize = False
             Caption = 'Z Shift:'
+            Layout = tlCenter
+          end
+          object lblPrimaryFireFLH: TLabel
+            Left = 166
+            Top = 102
+            Width = 117
+            Height = 22
+            AutoSize = False
+            Caption = 'Fire FLH Coordinates:'
+            Layout = tlCenter
+          end
+          object lblFLHF: TLabel
+            Left = 170
+            Top = 125
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'F'
+            Layout = tlCenter
+          end
+          object lblFLHL: TLabel
+            Left = 250
+            Top = 125
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'L'
+            Layout = tlCenter
+          end
+          object lblFLHH: TLabel
+            Left = 330
+            Top = 125
+            Width = 7
+            Height = 22
+            AutoSize = False
+            Caption = 'H'
             Layout = tlCenter
           end
           object UnitShiftXSpinEdit: TSpinEdit
@@ -3627,22 +3647,6 @@ object VVFrmMain: TVVFrmMain
             TabOrder = 6
             OnChange = EdOffsetXChange
           end
-          object EdOffsetY: TEdit
-            Left = 259
-            Top = 56
-            Width = 48
-            Height = 21
-            TabOrder = 7
-            OnChange = EdOffsetYChange
-          end
-          object EdOffsetZ: TEdit
-            Left = 339
-            Top = 56
-            Width = 48
-            Height = 21
-            TabOrder = 8
-            OnChange = EdOffsetZChange
-          end
           object UnitShiftZSpinEdit: TSpinEdit
             Left = 68
             Top = 80
@@ -3650,9 +3654,42 @@ object VVFrmMain: TVVFrmMain
             Height = 22
             MaxValue = 0
             MinValue = 0
-            TabOrder = 9
+            TabOrder = 7
             Value = 0
             OnChange = UnitShiftZSpinEditChange
+          end
+          object EdFLHF: TEdit
+            Left = 183
+            Top = 125
+            Width = 48
+            Height = 21
+            TabOrder = 8
+            OnChange = EdFLHFChange
+          end
+          object EdFLHL: TEdit
+            Left = 263
+            Top = 125
+            Width = 48
+            Height = 21
+            TabOrder = 9
+            OnChange = EdFLHLChange
+          end
+          object EdFLHH: TEdit
+            Left = 343
+            Top = 125
+            Width = 48
+            Height = 21
+            TabOrder = 10
+            OnChange = EdFLHHChange
+          end
+          object FLHBulletCheckBox: TCheckBox
+            Left = 166
+            Top = 82
+            Width = 120
+            Height = 17
+            Caption = 'Draw Fire FLH Bullet'
+            TabOrder = 11
+            OnClick = FLHBulletCheckBoxClick
           end
         end
         object TabSheet5: TTabSheet

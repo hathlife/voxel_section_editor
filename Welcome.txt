@@ -2,8 +2,8 @@ Welcome to the OS Voxel Tools SVN. This SVN is dedicated to Voxel Section Editor
 
 - VXLSE III 1.3x (for the 1.3 series of Voxel Section Editor III). The current version is the 1.38.
 - VXLSE III 1.4x (for the 1.4 series of Voxel Section Editor III). The current version is the 1.39.273.
-- OS: VV 1.x (for the old 1.x series of Open Source Voxel Viewer). The current version is 1.83.
-- OS: HVA Builder 2.x (for the 2.x series of Open Source HVA Buider). The current version is 2.15.
+- OS: VV 1.x (for the old 1.x series of Open Source Voxel Viewer). The current version is 1.84.
+- OS: HVA Builder 2.x (for the 2.x series of Open Source HVA Buider). The current version is 2.18.
 
 
 You can download the latest unstable version by simply downloading the vxlseiii14x directory and using the program from there.

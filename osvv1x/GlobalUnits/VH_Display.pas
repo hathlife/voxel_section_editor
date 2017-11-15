@@ -179,9 +179,11 @@ begin
             if (Vxl = VoxelTurret) or (Vxl = VoxelBarrel) then
                glTranslatef(TurretOffset.X * Size * 2 * C_ONE_LEPTON,TurretOffset.Y * Size * 2 * C_ONE_LEPTON,TurretOffset.Z * Size * 2 * C_ONE_LEPTON);
             glCallList(VoxelBoxes.Sections[s].List);
-            if DrawPrimaryFireFLH and (Vxl = VoxelFile) then
+            if DrawPrimaryFireFLH and (Vxl = VoxelFile) and (s = (VoxelBoxes.NumSections-1)) then
             begin
-               BulletPosition := ScaleVector(PrimaryFireFLH, Size * 2 * C_ONE_LEPTON);
+               BulletPosition.X := (PrimaryFireFLH.X + TurretOffset.X) * Size * 2 * C_ONE_LEPTON;
+               BulletPosition.Y := PrimaryFireFLH.Y * Size * C_ONE_LEPTON;  // This is a 2.5D trick.
+               BulletPosition.Z := PrimaryFireFLH.Z * Size * C_ONE_LEPTON;  // This is a 2.5D trick.
                BulletPosition := AddVector(BulletPosition, SetVector((Vxl.Section[s].Tailer.XSize * FinalScale.X) - Size, (Vxl.Section[s].Tailer.YSize * FinalScale.Y) - Size, (Vxl.Section[s].Tailer.ZSize * FinalScale.Z) - Size));
                DrawBullet(BulletPosition, SetVector(Size * 10, Size * 10, Size * 10));
             end;
@@ -699,49 +701,48 @@ var
    East,West,South,North,Ceil,Floor : single;
 begin
    // Ensure that box ix centralized at _BoxPosition.
-   East := _BulletSize.X/2;
-   West := -_BulletSize.X/ 2;
-   Ceil := _BulletSize.Y/2;
-   Floor := -_BulletSize.Y/2;
-   South := _BulletSize.Z/2;
-   North := -_BulletSize.Z/2;
+   East := _BulletPosition.X + _BulletSize.X/2;
+   West := _BulletPosition.X - _BulletSize.X/ 2;
+   Ceil := _BulletPosition.Y + _BulletSize.Y/2;
+   Floor := _BulletPosition.Y - _BulletSize.Y/2;
+   South := _BulletPosition.Z + _BulletSize.Z/2;
+   North := _BulletPosition.Z - _BulletSize.Z/2;
 
    glColor4f(1, 1, 1, 1);
    glNormal3f(0, 0, 0);
-   glTranslatef(_BulletPosition.X, _BulletPosition.Y, _BulletPosition.Z);
 
    glBegin(GL_TRIANGLES);
-      glVertex3f(0, 0, North);
-	   glVertex3f(West, 0, 0);
-      glVertex3f(0, Ceil, 0);
+      glVertex3f(_BulletPosition.X, _BulletPosition.Y, North);
+	   glVertex3f(West, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, Ceil, _BulletPosition.Z);
 
-	   glVertex3f(0, 0, North);
-      glVertex3f(West, 0, 0);
-      glVertex3f(0, Floor, 0);
+	   glVertex3f(_BulletPosition.X, _BulletPosition.Y, North);
+      glVertex3f(West, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, Floor, _BulletPosition.Z);
 
-	   glVertex3f(West, 0, 0);
-      glVertex3f(0, 0, South);
-      glVertex3f(0, Ceil, 0);
+	   glVertex3f(West, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, _BulletPosition.Y, South);
+      glVertex3f(_BulletPosition.X, Ceil, _BulletPosition.Z);
 
-      glVertex3f(West, 0, 0);
-	   glVertex3f(0, 0, South);
-      glVertex3f(0, Floor, 0);
+      glVertex3f(West, _BulletPosition.Y, _BulletPosition.Z);
+	   glVertex3f(_BulletPosition.X, _BulletPosition.Y, South);
+      glVertex3f(_BulletPosition.X, Floor, _BulletPosition.Z);
 
-	   glVertex3f(East, 0, 0);
-      glVertex3f(0, 0, North);
-      glVertex3f(0, Ceil, 0);
+	   glVertex3f(East, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, _BulletPosition.Y, North);
+      glVertex3f(_BulletPosition.X, Ceil, _BulletPosition.Z);
 
-      glVertex3f(East, 0, 0);
-	   glVertex3f(0, 0, North);
-      glVertex3f(0, Floor, 0);
+      glVertex3f(East, _BulletPosition.Y, _BulletPosition.Z);
+	   glVertex3f(_BulletPosition.X, _BulletPosition.Y, North);
+      glVertex3f(_BulletPosition.X, Floor, _BulletPosition.Z);
 
-      glVertex3f(0, 0, South);
-	   glVertex3f(East, 0, 0);
-      glVertex3f(0, Ceil, 0);
+      glVertex3f(_BulletPosition.X, _BulletPosition.Y, South);
+	   glVertex3f(East, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, Ceil, _BulletPosition.Z);
 
-	   glVertex3f(0, 0, South);
-      glVertex3f(East, 0, 0);
-      glVertex3f(0, Floor, 0);
+	   glVertex3f(_BulletPosition.X, _BulletPosition.Y, South);
+      glVertex3f(East, _BulletPosition.Y, _BulletPosition.Z);
+      glVertex3f(_BulletPosition.X, Floor, _BulletPosition.Z);
    glEnd();
 end;
 

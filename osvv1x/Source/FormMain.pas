@@ -191,16 +191,22 @@ type
     Label38: TLabel;
     Label37: TLabel;
     EdOffsetX: TEdit;
-    EdOffsetY: TEdit;
-    Label39: TLabel;
-    EdOffsetZ: TEdit;
-    Label40: TLabel;
     UnitShiftZSpinEdit: TSpinEdit;
     Label41: TLabel;
+    EdFLHF: TEdit;
+    EdFLHL: TEdit;
+    EdFLHH: TEdit;
+    lblPrimaryFireFLH: TLabel;
+    lblFLHF: TLabel;
+    lblFLHL: TLabel;
+    lblFLHH: TLabel;
+    FLHBulletCheckBox: TCheckBox;
+    procedure FLHBulletCheckBoxClick(Sender: TObject);
+    procedure EdFLHHChange(Sender: TObject);
+    procedure EdFLHLChange(Sender: TObject);
+    procedure EdFLHFChange(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure UnitShiftZSpinEditChange(Sender: TObject);
-    procedure EdOffsetZChange(Sender: TObject);
-    procedure EdOffsetYChange(Sender: TObject);
     procedure EdOffsetXChange(Sender: TObject);
     procedure MainViewResize(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -355,6 +361,12 @@ procedure TVVFrmMain.MainViewResize(Sender: TObject);
 begin
    If oglloaded then
       glResizeWnd(MainView.Width,MainView.Height);
+end;
+
+procedure TVVFrmMain.FLHBulletCheckBoxClick(Sender: TObject);
+begin
+   DrawPrimaryFireFLH := not DrawPrimaryFireFLH;
+   FLHBulletCheckBox.Checked := DrawPrimaryFireFLH;
 end;
 
 procedure TVVFrmMain.FormCreate(Sender: TObject);
@@ -545,19 +557,24 @@ begin
    VH_Draw();                         // Draw the scene
 end;
 
+procedure TVVFrmMain.EdFLHFChange(Sender: TObject);
+begin
+   PrimaryFireFLH.X := StrToFloatDef(EdFLHF.Text,0);
+end;
+
+procedure TVVFrmMain.EdFLHHChange(Sender: TObject);
+begin
+   PrimaryFireFLH.Z := StrToFloatDef(EdFLHH.Text,0);
+end;
+
+procedure TVVFrmMain.EdFLHLChange(Sender: TObject);
+begin
+   PrimaryFireFLH.Y := StrToFloatDef(EdFLHL.Text,0);
+end;
+
 procedure TVVFrmMain.EdOffsetXChange(Sender: TObject);
 begin
    TurretOffset.X := StrToFloatDef(EdOffsetX.Text,0);
-end;
-
-procedure TVVFrmMain.EdOffsetYChange(Sender: TObject);
-begin
-   TurretOffset.Y := StrToFloatDef(EdOffsetY.Text,0);
-end;
-
-procedure TVVFrmMain.EdOffsetZChange(Sender: TObject);
-begin
-   TurretOffset.Z := StrToFloatDef(EdOffsetZ.Text,0);
 end;
 
 procedure TVVFrmMain.Exit1Click(Sender: TObject);

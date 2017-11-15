@@ -11,7 +11,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Open Source HVA Builder';
-   APPLICATION_VER = '2.15';
+   APPLICATION_VER = '2.18';
    APPLICATION_BY = 'Stucuk and Banshee';
 
 type
@@ -134,6 +134,7 @@ type
       TurretOffset1: TMenuItem;
       PrimaryFireFLH1: TMenuItem;
       DrawFLHBulletCheck: TCheckBox;
+    Simulators1: TMenuItem;
       procedure DrawFLHBulletCheckClick(Sender: TObject);
       procedure PrimaryFireFLH1Click(Sender: TObject);
       procedure TurretOffset1Click(Sender: TObject);
@@ -1673,6 +1674,7 @@ begin
    if Frm.O then
    begin
       PrimaryFireFLH := SetVector(StrToFloatDef(frm.PositionX.Text, 0), StrToFloatDef(frm.PositionY.Text, 0), StrToFloatDef(frm.PositionZ.Text, 0));
+      RebuildLists := true;
    end;
 
    frm.Free;

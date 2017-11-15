@@ -35,7 +35,7 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
   object Label3: TLabel
     Left = 24
     Top = 80
-    Width = 46
+    Width = 103
     Height = 13
     Caption = 'Projectile Position'
     Font.Charset = DEFAULT_CHARSET
@@ -51,7 +51,7 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
     Width = 17
     Height = 22
     AutoSize = False
-    Caption = 'X'
+    Caption = 'F'
     Layout = tlCenter
   end
   object Label6: TLabel
@@ -60,7 +60,7 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
     Width = 17
     Height = 22
     AutoSize = False
-    Caption = 'Y'
+    Caption = 'L'
     Layout = tlCenter
   end
   object Label4: TLabel
@@ -69,7 +69,7 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
     Width = 17
     Height = 22
     AutoSize = False
-    Caption = 'Z'
+    Caption = 'H'
     Layout = tlCenter
   end
   object Panel1: TPanel
@@ -91,9 +91,11 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
     object Label1: TLabel
       Left = 24
       Top = 24
-      Width = 242
+      Width = 434
       Height = 13
-      Caption = 'Please enter the Primary Fire FLH (Forward, Lateral, Height), in leptons, you would like below'
+      Caption = 
+        'Please enter the Primary Fire FLH (Forward, Lateral, Height), in' +
+        ' leptons, you would like below'
       Transparent = True
     end
     object Label2: TLabel
@@ -141,21 +143,21 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
   end
   object PositionX: TEdit
     Left = 56
-    Top = 144
+    Top = 96
     Width = 121
     Height = 21
     TabOrder = 2
   end
   object PositionY: TEdit
     Left = 56
-    Top = 96
+    Top = 120
     Width = 121
     Height = 21
     TabOrder = 3
   end
   object PositionZ: TEdit
     Left = 56
-    Top = 120
+    Top = 144
     Width = 121
     Height = 21
     TabOrder = 4
