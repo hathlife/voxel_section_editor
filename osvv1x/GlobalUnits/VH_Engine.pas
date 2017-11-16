@@ -73,14 +73,14 @@ begin
    VHLocation := Location;
    DefaultDepth := Depth;
 
-   If not Fileexists(Location + '\' + Palette) then
+   If not Fileexists(IncludeTrailingBackslash(Location) + Palette) then
    begin
-      Messagebox(0,pchar('File Not Found: ' +#13+ Location + '\' + Palette),'File Missng',0);
+      Messagebox(0,pchar('File Not Found: ' +#13+ IncludeTrailingBackslash(Location) + Palette),'File Missng',0);
       exit;
    end;
 
    Try
-      LoadAPaletteFromFile(Location + '\' + Palette);
+      LoadAPaletteFromFile(IncludeTrailingBackslash(Location) + Palette);
       InitGL(Handle);
       gTimer := TTimerSystem.Create;
       gTimer.Refresh;

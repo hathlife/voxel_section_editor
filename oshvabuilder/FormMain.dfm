@@ -2,7 +2,7 @@ object FrmMain: TFrmMain
   Left = 284
   Top = 199
   Caption = 'APPLICATION TITLE'
-  ClientHeight = 561
+  ClientHeight = 581
   ClientWidth = 782
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -22,17 +22,19 @@ object FrmMain: TFrmMain
     Left = 0
     Top = 23
     Width = 782
-    Height = 519
+    Height = 539
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 519
     object Panel2: TPanel
       Left = 1
       Top = 1
       Width = 136
-      Height = 517
+      Height = 537
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 517
       object Label2: TLabel
         Left = 1
         Top = 233
@@ -631,7 +633,7 @@ object FrmMain: TFrmMain
       Left = 137
       Top = 1
       Width = 644
-      Height = 517
+      Height = 537
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
@@ -639,6 +641,7 @@ object FrmMain: TFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
+      ExplicitHeight = 517
       object TopBarImageHolder: TImage
         Left = 64
         Top = 24
@@ -3323,13 +3326,14 @@ object FrmMain: TFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 542
+    Top = 562
     Width = 782
     Height = 19
     Panels = <
       item
         Width = 100
       end>
+    ExplicitTop = 542
   end
   object ToolBar1: TToolBar
     Left = 0

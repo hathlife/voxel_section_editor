@@ -287,8 +287,8 @@ end;
 
 procedure TFrmMain.DefaultSettings;
 begin
-   Palette[C_GAME_TS] := 'Palettes\TS\unittem.pal';
-   Palette[C_GAME_RA2] := 'Palettes\RA2\unittem.pal';
+   Palette[C_GAME_TS] := IncludeTrailingBackslash('Palettes') + IncludeTrailingBackslash('TS') + 'unittem.pal';
+   Palette[C_GAME_RA2] := IncludeTrailingBackslash('Palettes') + IncludeTrailingBackslash('RA2') + 'unittem.pal';
    FPSCap := true;
    UseSpecificPalette := false;
    SetGame(C_GAME_TS, true);
@@ -297,6 +297,7 @@ end;
 procedure TFrmMain.GetSettings;
 var
    Reg: TRegistry;
+   PaletteDir: string;
 begin
    Reg := TRegistry.Create;
    Reg.RootKey := HKEY_CURRENT_USER;
@@ -305,22 +306,27 @@ begin
       if Reg.OpenKey('\SOFTWARE\CnC Tools\OS HVA Builder\', true) then
       begin
          // Palette Settings
-         UseSpecificPalette := Reg.ReadBool('UseNameSpecificPalette');
-         Game := Reg.ReadInteger('Game');
-         if UseSpecificPalette then
-         begin
-            Palette[C_GAME_TS] := 'Palettes\TS\' + Reg.ReadString('TiberianSunPalette');
-            Palette[C_GAME_RA2] := 'Palettes\RA2\' + Reg.ReadString('RedAlert2Palette');
-         end
-         else
-         begin
-            Palette[C_GAME_TS] := 'Palettes\TS\unittem.pal';
-            Palette[C_GAME_RA2] := 'Palettes\RA2\unittem.pal';
+         try
+            UseSpecificPalette := Reg.ReadBool('UseNameSpecificPalette');
+            Game := Reg.ReadInteger('Game');
+            PaletteDir := IncludeTrailingBackslash('Palettes');
+            if UseSpecificPalette then
+            begin
+               Palette[C_GAME_TS] := PaletteDir + IncludeTrailingBackslash('TS') + Reg.ReadString('TiberianSunPalette');
+               Palette[C_GAME_RA2] := PaletteDir + IncludeTrailingBackslash('RA2') + Reg.ReadString('RedAlert2Palette');
+            end
+            else
+            begin
+               Palette[C_GAME_TS] :=  PaletteDir + IncludeTrailingBackslash('TS') + 'unittem.pal';
+               Palette[C_GAME_RA2] := PaletteDir + IncludeTrailingBackslash('RA2') + 'unittem.pal';
+            end;
+            // Rendering Options
+            FPSCap := Reg.ReadBool('FPSCap');
+            // And it is over.
+            Reg.CloseKey;
+         except
+            DefaultSettings;
          end;
-         // Rendering Options
-         FPSCap := Reg.ReadBool('FPSCap');
-         // And it is over.
-         Reg.CloseKey;
       end
       else
       begin
@@ -372,7 +378,7 @@ begin
    end;
    if not _DontLoadPalette then
    begin
-      LoadAPaletteFromFile(ExtractFileDir(ParamStr(0)) + '\' + Palette[Game]);
+      LoadAPaletteFromFile(IncludeTrailingPathDelimiter(ExtractFileDir(ParamStr(0))) + Palette[Game]);
       ChangeRemappable(VXLPalette,RemapColour);
    end;
 end;
@@ -1080,12 +1086,12 @@ end;
 
 procedure TFrmMain.Help2Click(Sender: TObject);
 begin
-   if not fileexists(extractfiledir(paramstr(0))+'/help.chm') then
+   if not fileexists(extractfiledir(paramstr(0))+'/hvabhelp.chm') then
    begin
-      messagebox(0,'Help' + #13#13 + 'help.chm not found','Help',0);
+      messagebox(0,'Help' + #13#13 + 'hvahelp.chm not found','Help',0);
       exit;
    end;
-   RunAProgram('help.chm','',extractfiledir(paramstr(0)));
+   RunAProgram('hvabhelp.chm','',extractfiledir(paramstr(0)));
 end;
 
 Procedure TFrmMain.ChangeView(Sender : TObject);
