@@ -185,7 +185,9 @@ begin
                BulletPosition.Y := PrimaryFireFLH.Y * Size * C_ONE_LEPTON;  // This is a 2.5D trick.
                BulletPosition.Z := PrimaryFireFLH.Z * Size * C_ONE_LEPTON;  // This is a 2.5D trick.
                BulletPosition := AddVector(BulletPosition, SetVector((Vxl.Section[s].Tailer.XSize * FinalScale.X) - Size, (Vxl.Section[s].Tailer.YSize * FinalScale.Y) - Size, (Vxl.Section[s].Tailer.ZSize * FinalScale.Z) - Size));
+               glDisable(GL_CULL_FACE);
                DrawBullet(BulletPosition, SetVector(Size * 10, Size * 10, Size * 10));
+               glEnable(GL_CULL_FACE);
             end;
          glPopMatrix;
       end;

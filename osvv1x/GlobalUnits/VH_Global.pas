@@ -6,7 +6,7 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
    ENGINE_TITLE = 'Voxel HVA Engine';
-   ENGINE_VER = '1.45';
+   ENGINE_VER = '1.5';
    ENGINE_BY = 'Stucuk and Banshee';
 
 var

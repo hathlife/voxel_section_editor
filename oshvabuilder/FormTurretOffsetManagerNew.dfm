@@ -81,9 +81,9 @@ object FrmTurretOffsetManager_New: TFrmTurretOffsetManager_New
     object Label2: TLabel
       Left = 8
       Top = 8
-      Width = 126
+      Width = 129
       Height = 13
-      Caption = 'Turret Offset Manager'
+      Caption = 'Turret Offset Simulator'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11

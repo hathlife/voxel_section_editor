@@ -419,11 +419,7 @@ begin
    FN2 := extractfilename(Filename);
    FN2 := copy(FN2,1,length(FN2)-length(Extractfileext(FN2)));
 
- // sys_mkdir
-   {$I-}
-   CreateDir(SSDir);
-//  MkDir(SSDir);
-   {$I+}
+   ForceDirectories(SSDir);
    FN := SSDir+FN2;
 
    for i := 0 to 999 do
@@ -496,14 +492,11 @@ var
 begin
    // create the scrnshots directory if it doesn't exist
    SSDir := extractfiledir(Paramstr(0))+'\ScreenShots\';
+
    FN2 := extractfilename(Filename);
    FN2 := copy(FN2,1,length(FN2)-length(Extractfileext(FN2)));
 
-   // sys_mkdir
-   {$I-}
-   CreateDir(SSDir);
-//  MkDir(SSDir);
-   {$I+}
+   ForceDirectories(SSDir);
    FN := SSDir+FN2;
 
    for i := 0 to 999 do
@@ -544,11 +537,7 @@ begin
    FN2 := extractfilename(Filename);
    FN2 := copy(FN2,1,length(FN2)-length(Extractfileext(FN2)));
 
- // sys_mkdir
-   {$I-}
-   CreateDir(SSDir);
-//  MkDir(SSDir);
-   {$I+}
+   ForceDirectories(SSDir);
    FN := SSDir+FN2;
 
    for i := 0 to 999 do

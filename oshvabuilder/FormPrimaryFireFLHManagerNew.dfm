@@ -101,9 +101,9 @@ object FrmPrimaryFireFLHManager_New: TFrmPrimaryFireFLHManager_New
     object Label2: TLabel
       Left = 8
       Top = 8
-      Width = 128
+      Width = 105
       Height = 13
-      Caption = 'HVA Position Manager'
+      Caption = 'Fire FLH Simulator'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
