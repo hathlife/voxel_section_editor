@@ -11,7 +11,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Open Source HVA Builder';
-   APPLICATION_VER = '2.18c';
+   APPLICATION_VER = '2.18d';
    APPLICATION_BY = 'Stucuk and Banshee';
 
 type

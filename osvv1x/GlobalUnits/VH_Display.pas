@@ -146,7 +146,7 @@ end;
 Procedure DrawVoxel(const PVxl : PVoxel; const Vxl : TVoxel; Var VoxelBoxes : TVoxelBoxs; VoxelBox_No : integer; HVAOpen : boolean; const HVA : THVA; HVAFrame : Integer);
 var
    x,s : integer;
-   Scale,FinalScale,Offset, BulletPosition : TVector3f;
+   Scale,FinalScale,Offset, BulletPosition, TurretTranslate, TurretScale : TVector3f;
 begin
    if VoxelBox_No < 1 then exit;
 
@@ -182,7 +182,7 @@ begin
             if DrawPrimaryFireFLH and (Vxl = VoxelFile) and (s = (VoxelBoxes.NumSections-1)) then
             begin
                BulletPosition.X := (PrimaryFireFLH.X + TurretOffset.X) * FinalScale.X * 2 * LeptonSize;
-               BulletPosition.Y := PrimaryFireFLH.Y * FinalScale.Y * LeptonSize;  // This is a 2.5D trick.
+               BulletPosition.Y := PrimaryFireFLH.Y * FinalScale.Y * 2 * LeptonSize;  // This is a 2.5D trick.
                BulletPosition.Z := PrimaryFireFLH.Z * FinalScale.Z * 2 * LeptonSize;  // This is a 2.5D trick.
                BulletPosition := AddVector(BulletPosition, SetVector((Vxl.Section[s].Tailer.XSize * FinalScale.X) - Size, (Vxl.Section[s].Tailer.YSize * FinalScale.Y) - Size, -1 * Size));
                glDisable(GL_CULL_FACE);
