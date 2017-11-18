@@ -177,17 +177,17 @@ begin
             ApplyMatrix(HVA,Vxl,FinalScale,s,HVAFrame);
             glTranslatef(Offset.X*Size*2, Offset.Y*Size*2, Offset.Z*Size*2);
             if (Vxl = VoxelTurret) or (Vxl = VoxelBarrel) then
-               glTranslatef(TurretOffset.X * Size * 2 * C_ONE_LEPTON,TurretOffset.Y * Size * 2 * C_ONE_LEPTON,TurretOffset.Z * Size * 2 * C_ONE_LEPTON);
+               glTranslatef(TurretOffset.X * Size * 2 * LeptonSize,TurretOffset.Y * Size * 2 * LeptonSize,TurretOffset.Z * Size * 2 * LeptonSize);
             glCallList(VoxelBoxes.Sections[s].List);
             if DrawPrimaryFireFLH and (Vxl = VoxelFile) and (s = (VoxelBoxes.NumSections-1)) then
             begin
-               BulletPosition.X := (PrimaryFireFLH.X + TurretOffset.X) * FinalScale.X * 2 * C_ONE_LEPTON;
-               BulletPosition.Y := PrimaryFireFLH.Y * FinalScale.Y * C_ONE_LEPTON;  // This is a 2.5D trick.
-               BulletPosition.Z := PrimaryFireFLH.Z * FinalScale.Z * 2 * C_ONE_LEPTON;  // This is a 2.5D trick.
+               BulletPosition.X := (PrimaryFireFLH.X + TurretOffset.X) * FinalScale.X * 2 * LeptonSize;
+               BulletPosition.Y := PrimaryFireFLH.Y * FinalScale.Y * LeptonSize;  // This is a 2.5D trick.
+               BulletPosition.Z := PrimaryFireFLH.Z * FinalScale.Z * 2 * LeptonSize;  // This is a 2.5D trick.
                BulletPosition := AddVector(BulletPosition, SetVector((Vxl.Section[s].Tailer.XSize * FinalScale.X) - Size, (Vxl.Section[s].Tailer.YSize * FinalScale.Y) - Size, -1 * Size));
                glDisable(GL_CULL_FACE);
                glDisable(GL_LIGHTING);
-               DrawBullet(BulletPosition, SetVector(Size * 10, Size * 10, Size * 10));
+               DrawBullet(BulletPosition, SetVector(Size * 2 * BulletSize, Size * 2 * BulletSize, Size * 2 * BulletSize));
                glEnable(GL_LIGHTING);
                glEnable(GL_CULL_FACE);
             end;

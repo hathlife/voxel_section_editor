@@ -46,7 +46,7 @@ object FrmPreferences: TFrmPreferences
       Top = 16
       Width = 273
       Height = 241
-      ActivePage = FileAssociationTab
+      ActivePage = Measures_tab
       Style = tsFlatButtons
       TabOrder = 0
       object FileAssociationTab: TTabSheet
@@ -151,13 +151,77 @@ object FrmPreferences: TFrmPreferences
         Caption = 'Rendering_tab'
         ImageIndex = 2
         TabVisible = False
+        object lblBulletSize: TLabel
+          Left = 16
+          Top = 31
+          Width = 96
+          Height = 13
+          Caption = 'Bullet Multiplier Size:'
+        end
         object cbFPSCap: TCheckBox
           Left = 16
-          Top = 16
+          Top = 8
           Width = 246
           Height = 17
           Caption = 'Cap rendering speed to 60 frames per second.'
           TabOrder = 0
+        end
+        object EdBulletSize: TEdit
+          Left = 128
+          Top = 28
+          Width = 121
+          Height = 21
+          TabOrder = 1
+        end
+      end
+      object Measures_tab: TTabSheet
+        Caption = 'Measures_tab'
+        ImageIndex = 3
+        TabVisible = False
+        ExplicitTop = 27
+        ExplicitHeight = 210
+        object lblLeptonSize: TLabel
+          Left = 16
+          Top = 8
+          Width = 59
+          Height = 13
+          Caption = 'Lepton Size:'
+        end
+        object EdLeptonSize: TEdit
+          Left = 81
+          Top = 5
+          Width = 181
+          Height = 21
+          TabOrder = 0
+          OnChange = EdLeptonSizeChange
+        end
+        object rbCustomLeptonSize: TRadioButton
+          Left = 48
+          Top = 40
+          Width = 113
+          Height = 17
+          Caption = 'Custom Size'
+          TabOrder = 1
+        end
+        object rbMiggyLeptonSize: TRadioButton
+          Left = 48
+          Top = 63
+          Width = 217
+          Height = 17
+          Caption = '43/356 (Mig Eater and Lin Kuei Ominae)'
+          Checked = True
+          TabOrder = 2
+          TabStop = True
+          OnClick = rbMiggyLeptonSizeClick
+        end
+        object rbStuLeptonSize: TRadioButton
+          Left = 48
+          Top = 86
+          Width = 185
+          Height = 17
+          Caption = '45/256 (Stucuk and G-E)'
+          TabOrder = 3
+          OnClick = rbStuLeptonSizeClick
         end
       end
     end
@@ -174,12 +238,14 @@ object FrmPreferences: TFrmPreferences
     OnKeyPress = Pref_ListKeyPress
     OnKeyUp = Pref_ListKeyUp
     Items.NodeData = {
-      01030000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
+      01040000003B0000000000000001000000FFFFFFFFFFFFFFFF00000000000000
       0011460069006C00650020004100730073006F00630069006100740069006F00
       6E007300370000000000000000000000FFFFFFFFFFFFFFFF0000000000000000
       0F500061006C00650074007400650020004F007000740069006F006E0073003B
       0000000000000000000000FFFFFFFFFFFFFFFF00000000000000001152006500
-      6E0064006500720069006E00670020004F007000740069006F006E007300}
+      6E0064006500720069006E00670020004F007000740069006F006E0073002900
+      00000000000000000000FFFFFFFFFFFFFFFF0000000000000000084D00650061
+      0073007500720065007300}
   end
   object pnlTop: TPanel
     Left = 0

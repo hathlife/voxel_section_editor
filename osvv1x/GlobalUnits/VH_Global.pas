@@ -6,92 +6,11 @@ Uses Windows,Graphics,Palette,OpenGL15,VH_Types,Math3d,Voxel,TimerUnit,HVA;//,Op
 
 Const
    ENGINE_TITLE = 'Voxel HVA Engine';
-   ENGINE_VER = '1.5';
+   ENGINE_VER = '1.52';
    ENGINE_BY = 'Stucuk and Banshee';
 
-var
-   h_DC   : HDC;
-   h_rc   : HGLRC;
-   h_Wnd  : HWND;
 
-   gTimer : TTimerSystem;
 
-   VoxelFile,VoxelTurret,VoxelBarrel : TVoxel;
-   CurrentVoxel,CurrentSectionVoxel : PVoxel;
-
-   VXLPalette: TPalette;
-   DefaultPalette,VHLocation,VXLFilename : String;
-   VoxelBoxes,VoxelBoxesT,VoxelBoxesB : TVoxelBoxs;
-
-   VoxelBox_No,VoxelBox_NoT,VoxelBox_NoB,
-   base, VoxelsUsed,CurrentVoxelSection,CurrentSection,
-   Xcoord,Xcoord2,Ycoord,Ycoord2,Zcoord,MouseButton,
-   SCREEN_WIDTH,SCREEN_HEIGHT,GroundTex_No,
-   Default_View,Axis : Integer;
-
-   BGColor,FontColor,RemapColour,UnitShift,
-   TurretOffset,CameraCenter : TVector3f;
-
-   // Bullet
-   PrimaryFireFLH, BulletPosition, BulletSpeed : TVector3f;
-   ShowBullet : boolean;
-
-   VoxelOpen,VoxelOpenT,VoxelOpenB,
-   HVAOpen,HVAOpenT,HVAOpenB,
-   ColoursOnly,TileGround,Ground_Tex_Draw,
-   XRotB,YRotB,oglloaded,DebugMode,
-   ShowVoxelCount,VVSLoading,DrawSky,
-   DrawCenter,VXLChanged : Boolean;
-   DrawSectionCenter: Boolean = False;
-   DrawPrimaryFireFLH: Boolean = False;
-
-   DrawVHWorld : Boolean = True;
-   Highlight : Boolean = False;
-   DrawAllOfVoxel : Boolean = True;
-   DrawTurret : Boolean = True;
-   DrawBarrel : Boolean = True;
-   CullFace : Boolean = True;
-
-   GroundTex : TGTI;
-   GroundTex_Textures : array of TGT;
-
-   SkyTexList : array of TSKYTex;
-   SkyTexList_No : integer;
-   SkyList,SkyTex : integer;
-   SkyPos,SkySize : TVector3f;
-
-   CamMov : Single = 0.33333333333;
-
-   SpectrumMode : ESpectrumMode;
-
-   xRot,yRot,xRot2,yRot2,Depth,FOV,DEPTH_OF_VIEW,
-   Size,DefaultDepth,UnitRot,LowestZ,GroundHeightOffset,
-   TexShiftX,TexShiftY,GSize : Single;
-
-   HVAFile,HVABarrel,HVATurret : THVA;
-   HVAFrame : integer = 0;
-   HVAFrameB : integer = 0;
-   HVAFrameT : integer = 0;
-   HVACurrentFrame : integer = 0;
-   HVAScale : single = 1/12;
-   CurrentHVA : PHVA;
-
-   VXLTurretRotation : TVector3f;
-
-   ScreenShot : TScreenShot;
-   VHControlType : TControlType;
-
-   LightAmb,LightDif : TVector4f;
-   LightGround : Boolean = False;
-
-   RebuildLists : Boolean = False;
-   UnitCount : Single = 1;
-   UnitSpace : Single = 15;
-
-   FTexture : Cardinal = 0;
-   FUpdateWorld : Boolean = False;
-
-Const
    RemapColourMap : array [0..8] of TVector3b =
       (
          ( //DarkRed
@@ -222,11 +141,98 @@ Const
    Light0_Spec:  TGLArrayf4=( 1, 0.5, 0, 0);
 
    C_ONE_LEPTON = 43/256;
+   C_ONE_LEPTON_GE = 45/256;
 
    //Games
    C_GAME_TS = 0;
    C_GAME_RA2 = C_GAME_TS + 1;
    C_GAME_MAX = C_GAME_RA2;
+
+   C_DEFAULT_BULLET_SIZE = 5;
+var
+   h_DC   : HDC;
+   h_rc   : HGLRC;
+   h_Wnd  : HWND;
+
+   gTimer : TTimerSystem;
+
+   VoxelFile,VoxelTurret,VoxelBarrel : TVoxel;
+   CurrentVoxel,CurrentSectionVoxel : PVoxel;
+
+   VXLPalette: TPalette;
+   DefaultPalette,VHLocation,VXLFilename : String;
+   VoxelBoxes,VoxelBoxesT,VoxelBoxesB : TVoxelBoxs;
+
+   VoxelBox_No,VoxelBox_NoT,VoxelBox_NoB,
+   base, VoxelsUsed,CurrentVoxelSection,CurrentSection,
+   Xcoord,Xcoord2,Ycoord,Ycoord2,Zcoord,MouseButton,
+   SCREEN_WIDTH,SCREEN_HEIGHT,GroundTex_No,
+   Default_View,Axis : Integer;
+
+   BGColor,FontColor,RemapColour,UnitShift,
+   TurretOffset,CameraCenter : TVector3f;
+
+   // Bullet
+   PrimaryFireFLH, BulletPosition, BulletSpeed : TVector3f;
+   ShowBullet : boolean;
+
+   VoxelOpen,VoxelOpenT,VoxelOpenB,
+   HVAOpen,HVAOpenT,HVAOpenB,
+   ColoursOnly,TileGround,Ground_Tex_Draw,
+   XRotB,YRotB,oglloaded,DebugMode,
+   ShowVoxelCount,VVSLoading,DrawSky,
+   DrawCenter,VXLChanged : Boolean;
+   DrawSectionCenter: Boolean = False;
+   DrawPrimaryFireFLH: Boolean = False;
+
+   DrawVHWorld : Boolean = True;
+   Highlight : Boolean = False;
+   DrawAllOfVoxel : Boolean = True;
+   DrawTurret : Boolean = True;
+   DrawBarrel : Boolean = True;
+   CullFace : Boolean = True;
+
+   GroundTex : TGTI;
+   GroundTex_Textures : array of TGT;
+
+   SkyTexList : array of TSKYTex;
+   SkyTexList_No : integer;
+   SkyList,SkyTex : integer;
+   SkyPos,SkySize : TVector3f;
+
+   CamMov : Single = 0.33333333333;
+
+   SpectrumMode : ESpectrumMode;
+
+   xRot,yRot,xRot2,yRot2,Depth,FOV,DEPTH_OF_VIEW,
+   Size,DefaultDepth,UnitRot,LowestZ,GroundHeightOffset,
+   TexShiftX,TexShiftY,GSize : Single;
+
+   HVAFile,HVABarrel,HVATurret : THVA;
+   HVAFrame : integer = 0;
+   HVAFrameB : integer = 0;
+   HVAFrameT : integer = 0;
+   HVACurrentFrame : integer = 0;
+   HVAScale : single = 1/12;
+   CurrentHVA : PHVA;
+
+   VXLTurretRotation : TVector3f;
+
+   ScreenShot : TScreenShot;
+   VHControlType : TControlType;
+
+   LightAmb,LightDif : TVector4f;
+   LightGround : Boolean = False;
+
+   RebuildLists : Boolean = False;
+   UnitCount : Single = 1;
+   UnitSpace : Single = 15;
+
+   FTexture : Cardinal = 0;
+   FUpdateWorld : Boolean = False;
+
+   LeptonSize : single = C_ONE_LEPTON;
+   BulletSize : single = C_DEFAULT_BULLET_SIZE;
 
 //var
 //OGLW : TOpenGLWrapper;

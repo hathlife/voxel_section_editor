@@ -11,7 +11,7 @@ uses
 
 Const
    APPLICATION_TITLE = 'Open Source HVA Builder';
-   APPLICATION_VER = '2.18b';
+   APPLICATION_VER = '2.18c';
    APPLICATION_BY = 'Stucuk and Banshee';
 
 type
@@ -292,6 +292,8 @@ begin
    FPSCap := true;
    UseSpecificPalette := false;
    SetGame(C_GAME_TS, true);
+   BulletSize := C_DEFAULT_BULLET_SIZE;
+   LeptonSize := C_ONE_LEPTON;
 end;
 
 procedure TFrmMain.GetSettings;
@@ -323,10 +325,18 @@ begin
             // Rendering Options
             FPSCap := Reg.ReadBool('FPSCap');
             // And it is over.
-            Reg.CloseKey;
          except
             DefaultSettings;
          end;
+         // 2.18c options goes here.
+         try
+            BulletSize := Reg.ReadFloat('BulletSize');
+            LeptonSize := Reg.ReadFloat('LeptonSize');
+         except
+            BulletSize := C_DEFAULT_BULLET_SIZE;
+            LeptonSize := C_ONE_LEPTON;
+         end;
+         Reg.CloseKey;
       end
       else
       begin

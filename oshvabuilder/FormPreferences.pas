@@ -34,6 +34,17 @@ type
       btnCancel: TButton;
       Rendering_tab: TTabSheet;
       cbFPSCap: TCheckBox;
+    Measures_tab: TTabSheet;
+    lblLeptonSize: TLabel;
+    EdLeptonSize: TEdit;
+    rbCustomLeptonSize: TRadioButton;
+    rbMiggyLeptonSize: TRadioButton;
+    rbStuLeptonSize: TRadioButton;
+    lblBulletSize: TLabel;
+    EdBulletSize: TEdit;
+    procedure EdLeptonSizeChange(Sender: TObject);
+    procedure rbMiggyLeptonSizeClick(Sender: TObject);
+    procedure rbStuLeptonSizeClick(Sender: TObject);
       procedure btnCancelClick(Sender: TObject);
       procedure btnApplyClick(Sender: TObject);
       procedure FormShow(Sender: TObject);
@@ -64,6 +75,25 @@ implementation
 uses FormMain, VH_Global;
 
 {$R *.dfm}
+
+procedure TFrmPreferences.EdLeptonSizeChange(Sender: TObject);
+var
+   Value: single;
+begin
+   Value := StrToFloatDef(EdLeptonSize.Text, C_ONE_LEPTON);
+   if Value = C_ONE_LEPTON then
+   begin
+      rbMiggyLeptonSize.Checked := true;
+   end
+   else if Value = C_ONE_LEPTON_GE then
+   begin
+      rbStuLeptonSize.Checked := true;
+   end
+   else
+   begin
+      rbCustomLeptonSize.Checked := true;
+   end;
+end;
 
 procedure TFrmPreferences.ExtractIcon;
 var
@@ -163,7 +193,42 @@ begin
          cbUseNameSpecificPalettes.Checked := Reg.ReadBool('UseNameSpecificPalette');
          // Rendering Options
          cbFPSCap.Checked := Reg.ReadBool('FPSCap');
-         // And it is over.
+         try
+            // Bullet Size
+            EdBulletSize.Text := FloatToStr(Reg.ReadFloat('BulletSize'));
+            // Lepton Size
+            EdLeptonSize.Text := FloatToStr(Reg.ReadFloat('LeptonSize'));
+            if Reg.ReadFloat('LeptonSize') = C_ONE_LEPTON then
+            begin
+               rbMiggyLeptonSize.Checked := true;
+            end
+            else if Reg.ReadFloat('LeptonSize') = C_ONE_LEPTON_GE then
+            begin
+               rbStuLeptonSize.Checked := true;
+            end
+            else
+            begin
+               rbCustomLeptonSize.Checked := true;
+            end;
+            // And it is over.
+         except
+            // Bullet Size
+            EdBulletSize.Text := FloatToStr(BulletSize);
+            // Lepton Size
+            EdLeptonSize.Text := FloatToStr(LeptonSize);
+            if LeptonSize = C_ONE_LEPTON then
+            begin
+               rbMiggyLeptonSize.Checked := true;
+            end
+            else if LeptonSize = C_ONE_LEPTON_GE then
+            begin
+               rbStuLeptonSize.Checked := true;
+            end
+            else
+            begin
+               rbCustomLeptonSize.Checked := true;
+            end;
+         end;
          Reg.CloseKey;
       end
       else
@@ -211,6 +276,13 @@ begin
    cbRedAlert2Palette.Enabled := false;
    // Get FPS cap.
    cbFPSCap.Checked := true;
+   // Get Bullet Size
+   EdBulletSize.Text := FloatToStr(C_DEFAULT_BULLET_SIZE);
+   // Get Lepton Size
+   rbMiggyLeptonSize.Checked := true;
+   rbCustomLeptonSize.Checked := false;
+   rbStuLeptonSize.Checked := false;
+   EdLeptonSize.Text := FloatToStr(C_ONE_LEPTON);
 end;
 
 procedure TFrmPreferences.btnApplyClick(Sender: TObject);
@@ -289,6 +361,12 @@ begin
       // Rendering Options
       Reg.WriteBool('FPSCap', cbFPSCap.Checked);
       FrmMain.SetFPSCap(cbFPSCap.Checked);
+      // Bullet Size
+      BulletSize := StrToFloatDef(EdBulletSize.Text, C_DEFAULT_BULLET_SIZE);
+      Reg.WriteFloat('BulletSize', BulletSize);
+      // Lepton Size
+      LeptonSize := StrToFloatDef(EdLeptonSize.Text, C_ONE_LEPTON);
+      Reg.WriteFloat('LeptonSize', LeptonSize);
       // And it is over.
       Reg.CloseKey;
    end;
@@ -325,7 +403,9 @@ begin
       else if pref_list.Selected.Text = 'Palette Options' then
          pcOptions.ActivePageIndex := 1
       else if pref_list.Selected.Text = 'Rendering Options' then
-         pcOptions.ActivePageIndex := 2;
+         pcOptions.ActivePageIndex := 2
+      else if pref_list.Selected.Text = 'Measures' then
+         pcOptions.ActivePageIndex := 3;
 
       GbOptionsBox.Caption := pref_list.Selected.Text;
    end;
@@ -339,6 +419,16 @@ end;
 procedure TFrmPreferences.Pref_ListKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
    Pref_ListClick(sender);
+end;
+
+procedure TFrmPreferences.rbMiggyLeptonSizeClick(Sender: TObject);
+begin
+   EdLeptonSize.Text := FloatToStr(C_ONE_LEPTON);
+end;
+
+procedure TFrmPreferences.rbStuLeptonSizeClick(Sender: TObject);
+begin
+   EdLeptonSize.Text := FloatToStr(C_ONE_LEPTON_GE);
 end;
 
 procedure TFrmPreferences.cbUseNameSpecificPalettesClick(Sender: TObject);
