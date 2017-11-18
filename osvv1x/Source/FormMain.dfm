@@ -2,7 +2,7 @@ object VVFrmMain: TVVFrmMain
   Left = 193
   Top = 106
   Caption = 'APPLICATION TITLE'
-  ClientHeight = 573
+  ClientHeight = 593
   ClientWidth = 790
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -22,17 +22,19 @@ object VVFrmMain: TVVFrmMain
     Left = 0
     Top = 0
     Width = 790
-    Height = 554
+    Height = 574
     Align = alClient
     BevelOuter = bvLowered
     TabOrder = 0
+    ExplicitHeight = 554
     object Panel2: TPanel
       Left = 1
       Top = 1
       Width = 136
-      Height = 374
+      Height = 394
       Align = alLeft
       TabOrder = 0
+      ExplicitHeight = 374
       object Label2: TLabel
         Left = 1
         Top = 161
@@ -448,7 +450,7 @@ object VVFrmMain: TVVFrmMain
       Left = 137
       Top = 1
       Width = 652
-      Height = 374
+      Height = 394
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
@@ -456,6 +458,7 @@ object VVFrmMain: TVVFrmMain
       OnMouseMove = MainViewMouseMove
       OnMouseUp = MainViewMouseUp
       OnResize = MainViewResize
+      ExplicitHeight = 374
       object TopBarImageHolder: TImage
         Left = 32
         Top = 16
@@ -3138,12 +3141,13 @@ object VVFrmMain: TVVFrmMain
     end
     object Panel7: TPanel
       Left = 1
-      Top = 375
+      Top = 395
       Width = 788
       Height = 178
       Align = alBottom
       BevelOuter = bvNone
       TabOrder = 2
+      ExplicitTop = 375
       object PageControl1: TPageControl
         Left = 0
         Top = 0
@@ -4082,13 +4086,14 @@ object VVFrmMain: TVVFrmMain
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 554
+    Top = 574
     Width = 790
     Height = 19
     Panels = <
       item
         Width = 100
       end>
+    ExplicitTop = 554
   end
   object MainMenu1: TMainMenu
     Images = RemapImageList

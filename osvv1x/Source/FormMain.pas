@@ -20,8 +20,8 @@ uses
 
 Const
 APPLICATION_TITLE = 'Open Source Voxel Viewer';
-APPLICATION_VER = '1.84' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
-APPLICATION_VER_ID = '1.84';
+APPLICATION_VER = '1.84b' {$ifdef BZK_BUILD} + ' BZK Edition'{$endif};
+APPLICATION_VER_ID = '1.84b';
 APPLICATION_BY = 'Stucuk and Banshee';
 
 type
@@ -322,7 +322,7 @@ implementation
 
 Uses VH_Engine,VH_Global,VH_GL,VH_Voxel{,Voxel},HVA,FormAboutNew,
      FormCameraManagerNew, ShellAPI,FormProgress,FormScreenShotManagerNew,
-     FormAnimationManagerNew, VH_Types, Math;
+     FormAnimationManagerNew, VH_Types, Math, OpenGL15;
 
 {$R *.dfm}
 
@@ -422,6 +422,7 @@ begin
    BuildSkyTextureComboBox;
    VH_BuildViewMenu(Views1,ChangeView);
    VH_ChangeView(Default_View);
+   wglSwapIntervalEXT(1); // Activate VSync.
 
    RotationEdit.Text := floattostr(UnitRot);
    FOVEdit.Value := Trunc(FOV);
