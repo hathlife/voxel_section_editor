@@ -404,9 +404,9 @@ begin
    Result.X := (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Y := (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Z := (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
-   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   if (_Voxel^ = VoxelTurret) or (_Voxel^ = VoxelBarrel) then
    begin
-      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * C_ONE_LEPTON;
+      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * LeptonSize;
    end;
    Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
    Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);
@@ -431,9 +431,9 @@ begin
    Result.X := (_Voxel^.Section[_Section].Tailer.XSize * _VoxelBoxSize * Scale.X) + (Offset.X * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Y := (_Voxel^.Section[_Section].Tailer.YSize * _VoxelBoxSize * Scale.Y) + (Offset.Y * _VoxelBoxSize * 2) - _VoxelBoxSize;
    Result.Z := (_Voxel^.Section[_Section].Tailer.ZSize * _VoxelBoxSize * Scale.Z) + (Offset.Z * _VoxelBoxSize * 2) - _VoxelBoxSize;
-   if (_Voxel = Addr(VoxelTurret)) or (_Voxel = Addr(VoxelBarrel)) then
+   if (_Voxel^ = VoxelTurret) or (_Voxel^ = VoxelBarrel) then
    begin
-      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * C_ONE_LEPTON;
+      Result.X := Result.X + _TurretOffset.X * _VoxelBoxSize * 2 * LeptonSize;
    end;
    Scale := ScaleVector(Scale, _VoxelBoxSize * 2);
    Result := ApplyMatrixToVector(_HVA^, _Voxel^, Result, Scale, _Section, _Frame);

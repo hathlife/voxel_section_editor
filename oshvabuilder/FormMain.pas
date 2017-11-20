@@ -686,6 +686,7 @@ begin
    else
       AnimationBar.Position := AnimationBar.Position +1;
 
+   RebuildLists := true;
 end;
 
 procedure TFrmMain.PlayAnimationClick(Sender: TObject);

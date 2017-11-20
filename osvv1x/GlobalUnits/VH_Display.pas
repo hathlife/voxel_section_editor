@@ -179,6 +179,7 @@ begin
             if (Vxl = VoxelTurret) or (Vxl = VoxelBarrel) then
                glTranslatef(TurretOffset.X * Size * 2 * LeptonSize,TurretOffset.Y * Size * 2 * LeptonSize,TurretOffset.Z * Size * 2 * LeptonSize);
             glCallList(VoxelBoxes.Sections[s].List);
+            //if DrawPrimaryFireFLH and (((Vxl = VoxelFile) and (s = (VoxelBoxes.NumSections-1)) and (VoxelBarrel = nil)) or ((VoxelBarrel <> nil) and (Vxl = VoxelTurret))) then
             if DrawPrimaryFireFLH and (Vxl = VoxelFile) and (s = (VoxelBoxes.NumSections-1)) then
             begin
                BulletPosition.X := (PrimaryFireFLH.X + TurretOffset.X) * FinalScale.X * 2 * LeptonSize;
